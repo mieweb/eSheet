@@ -84,6 +84,7 @@ If any box is unchecked, **simplify**.
 - **Immutable updates** where the codebase already does so.
 - **Localize complexity**: keep tricky logic private/internal.
 - **Keep functions short** (< ~40 lines when possible).
+- **High-level first**: exported / public functions at the top, private helpers below. Readers see the API before the implementation details. **Note:** `const`/`let` are not hoisted — data constants must still appear before the code that initializes from them.
 
 ### TypeScript Specific
 
