@@ -15,7 +15,7 @@ import { SCHEMA_TYPE } from '../types.js';
 
 function field(
   id: string,
-  fieldType: string = 'text',
+  fieldType = 'text',
   opts?: Partial<FieldDefinition>
 ): FieldDefinition {
   return { id, fieldType, ...opts } as FieldDefinition;
