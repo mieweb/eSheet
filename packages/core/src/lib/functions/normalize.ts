@@ -79,3 +79,34 @@ export function normalizeDefinition(
 
   return { byId, rootIds };
 }
+
+// ---------------------------------------------------------------------------
+// hydrateDefinition()
+// ---------------------------------------------------------------------------
+
+/**
+ * Reconstruct a tree of `FieldDefinition`s from a `NormalizedDefinition`.
+ *
+ * This is the inverse of `normalizeDefinition`. It walks `rootIds` (and
+ * each section's `childIds`) to rebuild the nested `fields` arrays.
+ *
+ * @param normalized - The flat indexed form produced by `normalizeDefinition`.
+ */
+export function hydrateDefinition(
+  normalized: NormalizedDefinition,
+): FieldDefinition[] {
+  function build(ids: readonly string[]): FieldDefinition[] {
+    return ids.map((id) => {
+      const node = normalized.byId[id];
+      if (!node) return { id, fieldType: 'text' } as FieldDefinition;
+
+      const def = { ...node.definition } as FieldDefinition;
+      if (node.childIds.length > 0) {
+        def.fields = build(node.childIds);
+      }
+      return def;
+    });
+  }
+
+  return build(normalized.rootIds);
+}

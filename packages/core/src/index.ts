@@ -45,9 +45,15 @@ export {
 
 export {
   normalizeDefinition,
+  hydrateDefinition,
   type FieldNode,
   type NormalizedDefinition,
 } from './lib/functions/normalize.js';
+
+export {
+  hydrateResponse,
+  type HydratedResponseItem,
+} from './lib/functions/hydrate-response.js';
 
 export {
   evaluateCondition,
@@ -61,3 +67,10 @@ export {
   validateForm,
   type ValidationError,
 } from './lib/logic/validate.js';
+
+export {
+  createFormEngine,
+  type FormEngineState,
+  type FormEngine,
+  type AddFieldOptions,
+} from './lib/engine/store.js';
