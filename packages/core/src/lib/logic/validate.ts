@@ -36,7 +36,7 @@ export interface ValidationError {
  */
 export function validateForm(
   normalized: NormalizedDefinition,
-  responses: FormResponse,
+  responses: FormResponse
 ): ValidationError[] {
   const errors: ValidationError[] = [];
   for (const fieldId of Object.keys(normalized.byId)) {
@@ -67,7 +67,7 @@ export function validateForm(
 export function validateField(
   fieldId: string,
   normalized: NormalizedDefinition,
-  responses: FormResponse,
+  responses: FormResponse
 ): ValidationError[] {
   const node = normalized.byId[fieldId];
   if (!node) return [];
@@ -122,7 +122,9 @@ function isResponseEmpty(response: FieldResponse | undefined): boolean {
   // answer — text, number, boolean
   if (response.answer !== undefined && response.answer !== null) {
     const a =
-      typeof response.answer === 'string' ? response.answer.trim() : response.answer;
+      typeof response.answer === 'string'
+        ? response.answer.trim()
+        : response.answer;
     if (a !== '') return false;
   }
 
@@ -144,7 +146,8 @@ function isResponseEmpty(response: FieldResponse | undefined): boolean {
   }
 
   // signatureData
-  if (response.signatureData && response.signatureData.trim() !== '') return false;
+  if (response.signatureData && response.signatureData.trim() !== '')
+    return false;
 
   // markupData
   if (response.markupData && response.markupData.trim() !== '') return false;

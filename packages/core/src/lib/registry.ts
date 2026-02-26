@@ -2,11 +2,7 @@
 // Field Type Metadata (registry data)
 // ---------------------------------------------------------------------------
 
-import type {
-  FieldType,
-  FieldTypeRegistry,
-  FieldTypeMeta,
-} from './types.js';
+import type { FieldType, FieldTypeRegistry, FieldTypeMeta } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -39,7 +35,7 @@ export function resetFieldTypeRegistry(): void {
 /** Batch-register UI component classes for multiple field types. */
 export function registerFieldElements(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  elements: Record<string, new (...args: any[]) => unknown>,
+  elements: Record<string, new (...args: any[]) => unknown>
 ): void {
   for (const [key, elementClass] of Object.entries(elements)) {
     const meta = registry[key];
@@ -61,7 +57,10 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     hasOptions: false,
     hasMatrix: false,
     defaultProps: { inputType: 'string' },
-    placeholder: { question: 'Enter your question...', answer: 'Enter answer...' },
+    placeholder: {
+      question: 'Enter your question...',
+      answer: 'Enter answer...',
+    },
   },
   longtext: {
     label: 'Long Text Field',
@@ -70,7 +69,10 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     hasOptions: false,
     hasMatrix: false,
     defaultProps: {},
-    placeholder: { question: 'Enter your question...', answer: 'Enter detailed answer...' },
+    placeholder: {
+      question: 'Enter your question...',
+      answer: 'Enter detailed answer...',
+    },
   },
   multitext: {
     label: 'Multi Text Field',
@@ -79,7 +81,10 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     hasOptions: true,
     hasMatrix: false,
     defaultProps: {},
-    placeholder: { question: 'Enter your question...', options: 'Enter option text...' },
+    placeholder: {
+      question: 'Enter your question...',
+      options: 'Enter option text...',
+    },
     defaultOptionCount: 3,
   },
   radio: {
@@ -89,7 +94,10 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     hasOptions: true,
     hasMatrix: false,
     defaultProps: {},
-    placeholder: { question: 'Enter your question...', options: 'Enter option text...' },
+    placeholder: {
+      question: 'Enter your question...',
+      options: 'Enter option text...',
+    },
     defaultOptionCount: 3,
   },
   check: {
@@ -99,7 +107,10 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     hasOptions: true,
     hasMatrix: false,
     defaultProps: {},
-    placeholder: { question: 'Enter your question...', options: 'Enter option text...' },
+    placeholder: {
+      question: 'Enter your question...',
+      options: 'Enter option text...',
+    },
     defaultOptionCount: 3,
   },
   boolean: {
@@ -118,7 +129,10 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     hasOptions: true,
     hasMatrix: false,
     defaultProps: {},
-    placeholder: { question: 'Enter your question...', options: 'Enter option text...' },
+    placeholder: {
+      question: 'Enter your question...',
+      options: 'Enter option text...',
+    },
     defaultOptionCount: 3,
   },
   multiselectdropdown: {
@@ -128,7 +142,10 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     hasOptions: true,
     hasMatrix: false,
     defaultProps: {},
-    placeholder: { question: 'Enter your question...', options: 'Enter option text...' },
+    placeholder: {
+      question: 'Enter your question...',
+      options: 'Enter option text...',
+    },
     defaultOptionCount: 3,
   },
   rating: {
@@ -138,7 +155,10 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     hasOptions: true,
     hasMatrix: false,
     defaultProps: {},
-    placeholder: { question: 'Enter your question...', options: 'Enter rating level...' },
+    placeholder: {
+      question: 'Enter your question...',
+      options: 'Enter rating level...',
+    },
     defaultOptionCount: 5,
   },
   ranking: {
@@ -148,7 +168,10 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     hasOptions: true,
     hasMatrix: false,
     defaultProps: {},
-    placeholder: { question: 'Enter your question...', options: 'Enter item to rank...' },
+    placeholder: {
+      question: 'Enter your question...',
+      options: 'Enter item to rank...',
+    },
     defaultOptionCount: 3,
   },
   slider: {
@@ -158,7 +181,10 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     hasOptions: true,
     hasMatrix: false,
     defaultProps: {},
-    placeholder: { question: 'Enter your question...', options: 'Enter scale label...' },
+    placeholder: {
+      question: 'Enter your question...',
+      options: 'Enter scale label...',
+    },
     defaultOptionCount: 3,
   },
   singlematrix: {
@@ -168,7 +194,11 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     hasOptions: false,
     hasMatrix: true,
     defaultProps: {},
-    placeholder: { question: 'Enter your question...', rows: 'Enter row label...', columns: 'Enter column label...' },
+    placeholder: {
+      question: 'Enter your question...',
+      rows: 'Enter row label...',
+      columns: 'Enter column label...',
+    },
     defaultOptionCount: 3,
   },
   multimatrix: {
@@ -178,7 +208,11 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     hasOptions: false,
     hasMatrix: true,
     defaultProps: {},
-    placeholder: { question: 'Enter your question...', rows: 'Enter row label...', columns: 'Enter column label...' },
+    placeholder: {
+      question: 'Enter your question...',
+      rows: 'Enter row label...',
+      columns: 'Enter column label...',
+    },
     defaultOptionCount: 3,
   },
   image: {
@@ -215,7 +249,10 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     hasOptions: false,
     hasMatrix: false,
     defaultProps: {},
-    placeholder: { question: 'Enter your question...', pad: 'Draw on the diagram' },
+    placeholder: {
+      question: 'Enter your question...',
+      pad: 'Draw on the diagram',
+    },
   },
   expression: {
     label: 'Expression Field',
@@ -224,7 +261,10 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     hasOptions: false,
     hasMatrix: false,
     defaultProps: { displayFormat: 'number', decimalPlaces: 2 },
-    placeholder: { question: 'Expression Field', expression: '{fieldId1} + {fieldId2}' },
+    placeholder: {
+      question: 'Expression Field',
+      expression: '{fieldId1} + {fieldId2}',
+    },
   },
   section: {
     label: 'Section Field',

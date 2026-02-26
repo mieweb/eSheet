@@ -72,11 +72,18 @@ export interface FormEngineState {
   /** Add a new field. Returns the generated field ID, or `null` if the type is unknown. */
   addField: (fieldType: FieldType, options?: AddFieldOptions) => string | null;
   /** Patch a field's definition. Returns `false` if not found or rename collided. */
-  updateField: (fieldId: string, patch: Partial<Omit<FieldDefinition, 'fields'>>) => boolean;
+  updateField: (
+    fieldId: string,
+    patch: Partial<Omit<FieldDefinition, 'fields'>>
+  ) => boolean;
   /** Remove a field (and its children if it is a section). */
   removeField: (fieldId: string) => boolean;
   /** Move a field to a new position/parent. `toParentId` defaults to current parent; pass `null` for root. */
-  moveField: (fieldId: string, toIndex: number, toParentId?: string | null) => boolean;
+  moveField: (
+    fieldId: string,
+    toIndex: number,
+    toParentId?: string | null
+  ) => boolean;
   /** Add an option. Returns the generated option ID. */
   addOption: (fieldId: string, value?: string) => string | null;
   /** Update an option's value. */
@@ -144,8 +151,8 @@ function patchField(
   normalized: NormalizedDefinition,
   fieldId: string,
   updater: (
-    def: Omit<FieldDefinition, 'fields'>,
-  ) => Omit<FieldDefinition, 'fields'> | null,
+    def: Omit<FieldDefinition, 'fields'>
+  ) => Omit<FieldDefinition, 'fields'> | null
 ): NormalizedDefinition | null {
   const node = normalized.byId[fieldId];
   if (!node) return null;
@@ -160,7 +167,7 @@ function patchField(
 /** Re-assign `index` on each FieldNode to match array position. Mutates `byId`. */
 function reindexChildren(
   byId: Record<string, FieldNode>,
-  ids: readonly string[],
+  ids: readonly string[]
 ): void {
   for (let i = 0; i < ids.length; i++) {
     const node = byId[ids[i]];
@@ -173,7 +180,7 @@ function reindexChildren(
 /** Recursively collect all descendant field IDs of a section. */
 function collectDescendants(
   byId: Readonly<Record<string, FieldNode>>,
-  fieldId: string,
+  fieldId: string
 ): string[] {
   const node = byId[fieldId];
   if (!node || node.childIds.length === 0) return [];
@@ -337,7 +344,7 @@ export function createFormEngine(initial?: FormDefinition): FormEngine {
             byId[node.parentId] = {
               ...parent,
               childIds: parent.childIds.map((c) =>
-                c === fieldId ? newId! : c,
+                c === fieldId ? newId! : c
               ),
             };
           }

@@ -3,7 +3,12 @@ import {
   FIELD_TYPES,
   NUMERIC_EXPRESSION_FORMATS,
 } from './types.js';
-import type { FieldDefinition, FieldResponse, FormDefinition, FormResponse } from './types.js';
+import type {
+  FieldDefinition,
+  FieldResponse,
+  FormDefinition,
+  FormResponse,
+} from './types.js';
 
 describe('schema types', () => {
   it('should export the schema type constant', () => {
@@ -44,7 +49,12 @@ describe('schema types', () => {
     const responses: FormResponse = {
       q1: { answer: 'John' },
       q2: { selected: { id: 'opt-yes', value: 'Yes' } },
-      q3: { selected: [{ id: 'opt-a', value: 'Option A' }, { id: 'opt-b', value: 'Option B' }] },
+      q3: {
+        selected: [
+          { id: 'opt-a', value: 'Option A' },
+          { id: 'opt-b', value: 'Option B' },
+        ],
+      },
     };
 
     expect(Object.keys(responses)).toHaveLength(3);

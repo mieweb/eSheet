@@ -42,7 +42,7 @@ export interface HydratedResponseItem {
  */
 export function hydrateResponse(
   normalized: NormalizedDefinition,
-  responses: FormResponse,
+  responses: FormResponse
 ): HydratedResponseItem[] {
   const items: HydratedResponseItem[] = [];
 
@@ -83,7 +83,7 @@ export function hydrateResponse(
 /** Pull the actual answer value out of a FieldResponse based on answer type. */
 function extractAnswer(
   response: FieldResponse | undefined,
-  answerType: string,
+  answerType: string
 ): unknown {
   if (!response) return undefined;
 
@@ -97,8 +97,12 @@ function extractAnswer(
     case 'multitext':
       return response.multitextAnswers;
     case 'media':
-      return response.signatureImage ?? response.signatureData
-        ?? response.markupImage ?? response.markupData;
+      return (
+        response.signatureImage ??
+        response.signatureData ??
+        response.markupImage ??
+        response.markupData
+      );
     default:
       return undefined;
   }

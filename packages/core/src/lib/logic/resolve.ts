@@ -44,7 +44,7 @@ export function resolveEffect(
   effect: ConditionalEffect,
   field: Pick<FieldDefinition, 'rules' | 'required'>,
   normalized: NormalizedDefinition,
-  responses: FormResponse,
+  responses: FormResponse
 ): boolean {
   const rules = field.rules?.filter((r) => r.effect === effect);
 

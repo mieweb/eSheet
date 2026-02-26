@@ -42,14 +42,14 @@ export interface NormalizedDefinition {
  * @param fields - Top-level field definitions (e.g. `FormSchema.fields`).
  */
 export function normalizeDefinition(
-  fields: readonly FieldDefinition[],
+  fields: readonly FieldDefinition[]
 ): NormalizedDefinition {
   const byId: Record<string, FieldNode> = {};
   const rootIds: string[] = [];
 
   function walk(
     defs: readonly FieldDefinition[],
-    parentId: string | null,
+    parentId: string | null
   ): string[] {
     const ids: string[] = [];
 
@@ -93,7 +93,7 @@ export function normalizeDefinition(
  * @param normalized - The flat indexed form produced by `normalizeDefinition`.
  */
 export function hydrateDefinition(
-  normalized: NormalizedDefinition,
+  normalized: NormalizedDefinition
 ): FieldDefinition[] {
   function build(ids: readonly string[]): FieldDefinition[] {
     return ids.map((id) => {

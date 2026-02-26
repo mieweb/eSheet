@@ -55,10 +55,7 @@ export {
   type HydratedResponseItem,
 } from './lib/functions/hydrate-response.js';
 
-export {
-  evaluateCondition,
-  evaluateRule,
-} from './lib/logic/conditions.js';
+export { evaluateCondition, evaluateRule } from './lib/logic/conditions.js';
 
 export { resolveEffect } from './lib/logic/resolve.js';
 

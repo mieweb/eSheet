@@ -10,18 +10,22 @@ Packages live in `packages/` and are pure TypeScript libraries (no React, no UI)
 ## Core Principles
 
 - **KISS — Keep It Simple & Stupid**
-  - Prefer the *simplest* working solution.
+
+  - Prefer the _simplest_ working solution.
   - Remove optional parameters, layers, or abstractions unless proven necessary.
 
 - **DRY — Don't Repeat Yourself**
+
   - Extract small helpers only when repetition is real (≥2 places now, likely 3+).
   - Reuse existing utilities before creating new ones.
 
 - **YAGNI — You Aren't Gonna Need It**
+
   - No speculative features, flags, or extensibility points.
   - Implement only what today's requirement needs.
 
 - **Minimal Diff**
+
   - Change as little code as possible to solve the problem.
   - Prefer **surgical edits** over rewrites; keep file count stable.
   - Avoid introducing new dependencies and new files unless unavoidable.
@@ -37,20 +41,24 @@ Packages live in `packages/` and are pure TypeScript libraries (no React, no UI)
 When proposing code, **adhere to all of the following**:
 
 1. **Stay in Place**
+
    - Modify existing functions before adding new ones.
    - If a helper is needed, place it near its first use within the same file.
 
 2. **Match Style**
+
    - Mirror existing naming, file layout, import style, and error handling patterns.
    - Keep public API shapes and function signatures stable unless a bug requires change.
 
 3. **No New Files by Default**
+
    - Do not create new modules unless duplication or complexity becomes worse without them.
    - Never create standalone markdown documentation files (e.g., PR tickets, feature docs, summaries).
    - Embed all information directly into code comments or verbally respond to user.
    - **Exception:** Internal tickets can be created in `.github/INTERNAL-TICKETS/` for feature planning (gitignored, local only).
 
 4. **Zero Surprises**
+
    - Avoid side effects, global state changes, or cross-cutting refactors.
    - Keep behavior backward-compatible unless the task explicitly requests otherwise.
 
@@ -130,9 +138,10 @@ Only if **all** are true:
 ## Naming & Structure Preservation
 
 - Keep function, variable, and type names **unchanged** unless:
+
   - The name is incorrect or misleading relative to behavior.
   - A bug fix requires a signature change.
-  In those cases, **prefer a wrapper** to keep external call sites stable.
+    In those cases, **prefer a wrapper** to keep external call sites stable.
 
 - Respect the **current layering** (e.g., packages → shared utils). Don't invert it.
 
@@ -152,6 +161,7 @@ Only if **all** are true:
 ## Example: Minimal Diff Refactor
 
 **Before**
+
 ```ts
 function getTotal(items) {
   let total = 0;
@@ -163,6 +173,7 @@ function getTotal(items) {
 ```
 
 **After (KISS + guard clause)**
+
 ```ts
 function getTotal(items) {
   if (!items || items.length === 0) return 0;
@@ -177,12 +188,14 @@ function getTotal(items) {
 ## "Do / Don't" Quick Rules
 
 **Do**
+
 - Keep changes local.
 - Use existing helpers and error patterns.
 - Write short, obvious code.
 - Run `npx nx affected -t lint test build` to verify changes.
 
 **Don't**
+
 - Rename broadly.
 - Add new dependencies/config.
 - Create new architectural layers.
@@ -205,32 +218,41 @@ For feature planning and TODO tracking, use the local-only internal tickets dire
   - Include success criteria and testing requirements
 
 **Ticket Template:**
+
 ```markdown
 # Feature Name
 
 ## Status
+
 🔴 Not Implemented / 🟡 In Progress / 🟢 Completed
 
 ## Priority
+
 High / Medium / Low
 
 ## Problem Statement
+
 [What problem does this solve?]
 
 ## Proposed Solution
+
 [Implementation approach with code examples]
 
 ## Implementation Checklist
+
 - [ ] Task 1
 - [ ] Task 2
 
 ## Technical Considerations
+
 [Edge cases, compatibility, performance]
 
 ## Success Criteria
+
 [How do we know it's done?]
 
 ## Related Files
+
 [List of files that need changes]
 ```
 

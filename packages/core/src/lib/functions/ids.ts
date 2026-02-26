@@ -12,7 +12,7 @@
 export function generateFieldId(
   fieldType: string,
   existingIds: ReadonlySet<string>,
-  parentId?: string,
+  parentId?: string
 ): string {
   const prefix = parentId ? `${parentId}-${fieldType}` : fieldType || 'field';
   return generateId(prefix, existingIds);
@@ -26,7 +26,7 @@ export function generateFieldId(
  */
 export function generateOptionId(
   existingIds: ReadonlySet<string>,
-  fieldId?: string,
+  fieldId?: string
 ): string {
   const prefix = fieldId ? `${fieldId}-option` : 'option';
   return generateId(prefix, existingIds);
@@ -40,7 +40,7 @@ export function generateOptionId(
  */
 export function generateRowId(
   existingIds: ReadonlySet<string>,
-  fieldId?: string,
+  fieldId?: string
 ): string {
   const prefix = fieldId ? `${fieldId}-row` : 'row';
   return generateId(prefix, existingIds);
@@ -54,7 +54,7 @@ export function generateRowId(
  */
 export function generateColumnId(
   existingIds: ReadonlySet<string>,
-  fieldId?: string,
+  fieldId?: string
 ): string {
   const prefix = fieldId ? `${fieldId}-col` : 'col';
   return generateId(prefix, existingIds);

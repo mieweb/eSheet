@@ -10,7 +10,7 @@ import { normalizeDefinition } from '../functions/normalize.js';
 function def(
   id: string,
   fieldType: string = 'text',
-  opts?: Partial<FieldDefinition>,
+  opts?: Partial<FieldDefinition>
 ): FieldDefinition {
   return { id, fieldType, ...opts } as FieldDefinition;
 }
@@ -19,10 +19,7 @@ function norm(fields: FieldDefinition[]) {
   return normalizeDefinition(fields);
 }
 
-function requiredRule(
-  targetId: string,
-  expected: string,
-): ConditionalRule {
+function requiredRule(targetId: string, expected: string): ConditionalRule {
   return {
     effect: 'required',
     logic: 'AND',
@@ -30,10 +27,7 @@ function requiredRule(
   };
 }
 
-function visibleRule(
-  targetId: string,
-  expected: string,
-): ConditionalRule {
+function visibleRule(targetId: string, expected: string): ConditionalRule {
   return {
     effect: 'visible',
     logic: 'AND',
@@ -72,7 +66,9 @@ describe('validateField', () => {
     it('returns no error when required field has answer', () => {
       const field = def('q1', 'text', { required: true });
       const normalized = norm([field]);
-      const errors = validateField('q1', normalized, { q1: { answer: 'hello' } });
+      const errors = validateField('q1', normalized, {
+        q1: { answer: 'hello' },
+      });
       expect(errors).toEqual([]);
     });
 
@@ -183,7 +179,9 @@ describe('validateField', () => {
     it('empty matrix record is empty', () => {
       const field = def('q1', 'singlematrix', { required: true });
       const normalized = norm([field]);
-      const errors = validateField('q1', normalized, { q1: { selected: {} as never } });
+      const errors = validateField('q1', normalized, {
+        q1: { selected: {} as never },
+      });
       expect(errors).toHaveLength(1);
     });
   });
@@ -200,7 +198,7 @@ describe('validateField', () => {
         const normalized = norm([field]);
         const errors = validateField('q1', normalized, {});
         expect(errors).toEqual([]);
-      },
+      }
     );
   });
 

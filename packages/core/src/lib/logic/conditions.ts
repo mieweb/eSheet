@@ -35,7 +35,7 @@ import type { NormalizedDefinition } from '../functions/normalize.js';
 export function evaluateRule(
   rule: ConditionalRule,
   normalized: NormalizedDefinition,
-  responses: FormResponse,
+  responses: FormResponse
 ): boolean {
   if (rule.conditions.length === 0) return true;
 
@@ -45,9 +45,7 @@ export function evaluateRule(
     return evaluateCondition(cond, node.definition, responses[cond.targetId]);
   });
 
-  return rule.logic === 'OR'
-    ? results.some(Boolean)
-    : results.every(Boolean);
+  return rule.logic === 'OR' ? results.some(Boolean) : results.every(Boolean);
 }
 
 // ---------------------------------------------------------------------------
@@ -67,7 +65,7 @@ export function evaluateRule(
 export function evaluateCondition(
   condition: Condition,
   definition: Omit<FieldDefinition, 'fields'>,
-  response: FieldResponse | undefined,
+  response: FieldResponse | undefined
 ): boolean {
   let actual: unknown = getActualValue(definition, response);
   const { operator, expected, propertyAccessor } = condition;
@@ -101,7 +99,7 @@ export function evaluateCondition(
     definition.fieldType === 'expression' &&
     definition.displayFormat != null &&
     (NUMERIC_EXPRESSION_FORMATS as readonly string[]).includes(
-      definition.displayFormat,
+      definition.displayFormat
     );
   const isNumericText =
     definition.fieldType === 'text' && definition.inputType === 'number';
@@ -138,7 +136,7 @@ export function evaluateCondition(
         parts.length === 1
           ? new RegExp(`(?:^|\\s)${escapeRegex(parts[0])}(?:\\s|$)`)
           : new RegExp(
-              `(?:^|\\s)${parts.map(escapeRegex).join('\\s+')}(?:\\s|$)`,
+              `(?:^|\\s)${parts.map(escapeRegex).join('\\s+')}(?:\\s|$)`
             );
       return pattern.test(hay);
     }
@@ -158,7 +156,7 @@ export function evaluateCondition(
 
 function getActualValue(
   definition: Omit<FieldDefinition, 'fields'>,
-  response: FieldResponse | undefined,
+  response: FieldResponse | undefined
 ): string | string[] | Record<string, unknown> | null {
   if (!response) return null;
 
@@ -241,7 +239,7 @@ function isEmpty(value: unknown): boolean {
 function evaluateNumeric(
   actual: number,
   expected: number,
-  operator: string,
+  operator: string
 ): boolean {
   switch (operator) {
     case 'equals':

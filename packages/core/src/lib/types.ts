@@ -266,7 +266,10 @@ export interface FieldResponse {
    * - `SelectedOption[]` for multi-select (check, multiselectdropdown, ranking)
    * - `Record<string, SelectedOption | SelectedOption[]>` for matrix (rowId → column(s))
    */
-  selected?: SelectedOption | SelectedOption[] | Record<string, SelectedOption | SelectedOption[]>;
+  selected?:
+    | SelectedOption
+    | SelectedOption[]
+    | Record<string, SelectedOption | SelectedOption[]>;
   /** Per-option answer text for multitext fields. */
   multitextAnswers?: Record<string, string>;
   /** Serialized signature stroke data (signature field). */

@@ -101,8 +101,8 @@ describe('field type registry', () => {
   });
 
   it('should batch-register element classes via registerFieldElements', () => {
-    class FakeText { }
-    class FakeRadio { }
+    class FakeText {}
+    class FakeRadio {}
 
     registerFieldElements({
       text: FakeText as unknown as new () => unknown,
@@ -116,7 +116,7 @@ describe('field type registry', () => {
   });
 
   it('should skip unknown keys in registerFieldElements', () => {
-    class FakeComponent { }
+    class FakeComponent {}
 
     registerFieldElements({
       nonexistent: FakeComponent as unknown as new () => unknown,

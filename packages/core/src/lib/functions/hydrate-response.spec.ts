@@ -10,7 +10,9 @@ import type { FieldDefinition, FormResponse } from '../types.js';
 // Helpers
 // ---------------------------------------------------------------------------
 
-function mkField(override: Partial<FieldDefinition> & Pick<FieldDefinition, 'id' | 'fieldType'>): FieldDefinition {
+function mkField(
+  override: Partial<FieldDefinition> & Pick<FieldDefinition, 'id' | 'fieldType'>
+): FieldDefinition {
   return { question: 'Q', ...override };
 }
 
@@ -38,7 +40,9 @@ describe('hydrateResponse', () => {
   it('skips section container but includes its children', () => {
     const fields: FieldDefinition[] = [
       {
-        id: 'sec', fieldType: 'section', title: 'Section',
+        id: 'sec',
+        fieldType: 'section',
+        title: 'Section',
         fields: [
           mkField({ id: 'child', fieldType: 'text', question: 'Inside' }),
         ],
@@ -58,11 +62,13 @@ describe('hydrateResponse', () => {
   it('includes id, text (question), and extracted answer', () => {
     const fields = [mkField({ id: 'f1', fieldType: 'text', question: 'Name' })];
     const result = hydrate(fields, { f1: { answer: 'Alice' } });
-    expect(result).toEqual([{
-      id: 'f1',
-      text: 'Name',
-      answer: 'Alice',
-    }]);
+    expect(result).toEqual([
+      {
+        id: 'f1',
+        text: 'Name',
+        answer: 'Alice',
+      },
+    ]);
   });
 
   it('answer is undefined when unanswered', () => {
@@ -118,7 +124,12 @@ describe('hydrateResponse', () => {
 
   it('uses title as text fallback when question is absent', () => {
     const fields: FieldDefinition[] = [
-      mkField({ id: 'f1', fieldType: 'text', question: undefined, title: 'Fallback' } as never),
+      mkField({
+        id: 'f1',
+        fieldType: 'text',
+        question: undefined,
+        title: 'Fallback',
+      } as never),
     ];
     const result = hydrate(fields, {});
     expect(result[0].text).toBe('Fallback');
@@ -128,7 +139,9 @@ describe('hydrateResponse', () => {
     const fields: FieldDefinition[] = [
       mkField({ id: 'a', fieldType: 'text', question: 'A' }),
       {
-        id: 'sec', fieldType: 'section', title: 'Sec',
+        id: 'sec',
+        fieldType: 'section',
+        title: 'Sec',
         fields: [
           mkField({ id: 'b', fieldType: 'text', question: 'B' }),
           mkField({ id: 'c', fieldType: 'text', question: 'C' }),
@@ -137,8 +150,10 @@ describe('hydrateResponse', () => {
       mkField({ id: 'd', fieldType: 'text', question: 'D' }),
     ];
     const result = hydrate(fields, {
-      a: { answer: '1' }, b: { answer: '2' },
-      c: { answer: '3' }, d: { answer: '4' },
+      a: { answer: '1' },
+      b: { answer: '2' },
+      c: { answer: '3' },
+      d: { answer: '4' },
     });
     expect(result.map((r) => r.id)).toEqual(['a', 'b', 'c', 'd']);
   });

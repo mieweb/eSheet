@@ -23,9 +23,7 @@ describe('normalizeDefinition', () => {
   });
 
   it('should set parentId to null for top-level fields', () => {
-    const fields: FieldDefinition[] = [
-      { id: 'q1', fieldType: 'text' },
-    ];
+    const fields: FieldDefinition[] = [{ id: 'q1', fieldType: 'text' }];
 
     const result = normalizeDefinition(fields);
     expect(result.byId['q1'].parentId).toBeNull();
@@ -45,9 +43,7 @@ describe('normalizeDefinition', () => {
   });
 
   it('should set childIds to empty for non-section fields', () => {
-    const fields: FieldDefinition[] = [
-      { id: 'q1', fieldType: 'text' },
-    ];
+    const fields: FieldDefinition[] = [{ id: 'q1', fieldType: 'text' }];
 
     const result = normalizeDefinition(fields);
     expect(result.byId['q1'].childIds).toEqual([]);
@@ -96,9 +92,7 @@ describe('normalizeDefinition', () => {
       {
         id: 's1',
         fieldType: 'section',
-        fields: [
-          { id: 'q1', fieldType: 'text' },
-        ],
+        fields: [{ id: 'q1', fieldType: 'text' }],
       },
     ];
 
@@ -112,9 +106,7 @@ describe('normalizeDefinition', () => {
       {
         id: 's1',
         fieldType: 'section',
-        fields: [
-          { id: 'q1', fieldType: 'text' },
-        ],
+        fields: [{ id: 'q1', fieldType: 'text' }],
       },
       { id: 'q2', fieldType: 'text' },
     ];
@@ -147,9 +139,7 @@ describe('normalizeDefinition', () => {
           {
             id: 'inner',
             fieldType: 'section',
-            fields: [
-              { id: 'deep', fieldType: 'text', question: 'Deep?' },
-            ],
+            fields: [{ id: 'deep', fieldType: 'text', question: 'Deep?' }],
           },
         ],
       },
@@ -180,9 +170,7 @@ describe('normalizeDefinition', () => {
   });
 
   it('should handle section with no fields property', () => {
-    const fields: FieldDefinition[] = [
-      { id: 's1', fieldType: 'section' },
-    ];
+    const fields: FieldDefinition[] = [{ id: 's1', fieldType: 'section' }];
 
     const result = normalizeDefinition(fields);
     expect(result.byId['s1'].childIds).toEqual([]);

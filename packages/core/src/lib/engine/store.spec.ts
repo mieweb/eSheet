@@ -1,7 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createFormEngine } from './store.js';
 import type { FormEngine } from './store.js';
-import type { FormDefinition, FieldDefinition, FieldType, ConditionalRule } from '../types.js';
+import type {
+  FormDefinition,
+  FieldDefinition,
+  FieldType,
+  ConditionalRule,
+} from '../types.js';
 import { SCHEMA_TYPE } from '../types.js';
 
 // ---------------------------------------------------------------------------
@@ -11,7 +16,7 @@ import { SCHEMA_TYPE } from '../types.js';
 function field(
   id: string,
   fieldType: string = 'text',
-  opts?: Partial<FieldDefinition>,
+  opts?: Partial<FieldDefinition>
 ): FieldDefinition {
   return { id, fieldType, ...opts } as FieldDefinition;
 }
@@ -177,22 +182,20 @@ describe('createFormEngine', () => {
         const id = engine.getState().addField('text', {
           patch: { question: 'Hello' },
         });
-        expect(
-          engine.getState().normalized.byId[id!].definition.question,
-        ).toBe('Hello');
+        expect(engine.getState().normalized.byId[id!].definition.question).toBe(
+          'Hello'
+        );
       });
 
       it('returns null for unknown field type', () => {
         engine = createFormEngine(form([]));
-        expect(
-          engine.getState().addField('nope' as FieldType),
-        ).toBeNull();
+        expect(engine.getState().addField('nope' as FieldType)).toBeNull();
       });
 
       it('returns null for nonexistent parent', () => {
         engine = createFormEngine(form([]));
         expect(
-          engine.getState().addField('text', { parentId: 'missing' }),
+          engine.getState().addField('text', { parentId: 'missing' })
         ).toBeNull();
       });
 
@@ -223,23 +226,23 @@ describe('createFormEngine', () => {
     describe('updateField', () => {
       beforeEach(() => {
         engine = createFormEngine(
-          form([field('q1', 'text', { question: 'Old' })]),
+          form([field('q1', 'text', { question: 'Old' })])
         );
       });
 
       it('patches field definition', () => {
+        expect(engine.getState().updateField('q1', { question: 'New' })).toBe(
+          true
+        );
         expect(
-          engine.getState().updateField('q1', { question: 'New' }),
-        ).toBe(true);
-        expect(
-          engine.getState().normalized.byId['q1'].definition.question,
+          engine.getState().normalized.byId['q1'].definition.question
         ).toBe('New');
       });
 
       it('renames field ID', () => {
-        expect(
-          engine.getState().updateField('q1', { id: 'q1-renamed' }),
-        ).toBe(true);
+        expect(engine.getState().updateField('q1', { id: 'q1-renamed' })).toBe(
+          true
+        );
         const s = engine.getState();
         expect(s.normalized.byId['q1']).toBeUndefined();
         expect(s.normalized.byId['q1-renamed']).toBeDefined();
@@ -249,15 +252,13 @@ describe('createFormEngine', () => {
 
       it('rejects rename on collision', () => {
         engine = createFormEngine(form([field('q1'), field('q2')]));
-        expect(
-          engine.getState().updateField('q1', { id: 'q2' }),
-        ).toBe(false);
+        expect(engine.getState().updateField('q1', { id: 'q2' })).toBe(false);
       });
 
       it('returns false for unknown field', () => {
-        expect(
-          engine.getState().updateField('nope', { question: 'X' }),
-        ).toBe(false);
+        expect(engine.getState().updateField('nope', { question: 'X' })).toBe(
+          false
+        );
       });
 
       it('updates children parentId on section rename', () => {
@@ -266,7 +267,7 @@ describe('createFormEngine', () => {
             field('s1', 'section', {
               fields: [field('c1'), field('c2')],
             } as Partial<FieldDefinition>),
-          ]),
+          ])
         );
         engine.getState().updateField('s1', { id: 's1-new' });
         const s = engine.getState();
@@ -276,10 +277,7 @@ describe('createFormEngine', () => {
 
       it('preserves other fields untouched (same reference)', () => {
         engine = createFormEngine(
-          form([
-            field('q1'),
-            field('q2', 'text', { question: 'Keep' }),
-          ]),
+          form([field('q1'), field('q2', 'text', { question: 'Keep' })])
         );
         const before = engine.getState().normalized.byId['q2'];
         engine.getState().updateField('q1', { question: 'Changed' });
@@ -302,7 +300,7 @@ describe('createFormEngine', () => {
             field('s1', 'section', {
               fields: [field('c1'), field('c2')],
             } as Partial<FieldDefinition>),
-          ]),
+          ])
         );
         engine.getState().removeField('s1');
         const s = engine.getState();
@@ -317,7 +315,7 @@ describe('createFormEngine', () => {
             field('s1', 'section', {
               fields: [field('c1'), field('c2')],
             } as Partial<FieldDefinition>),
-          ]),
+          ])
         );
         engine.getState().removeField('c1');
         const s = engine.getState();
@@ -331,9 +329,7 @@ describe('createFormEngine', () => {
       });
 
       it('reindexes siblings after removal', () => {
-        engine = createFormEngine(
-          form([field('a'), field('b'), field('c')]),
-        );
+        engine = createFormEngine(form([field('a'), field('b'), field('c')]));
         engine.getState().removeField('a');
         expect(engine.getState().normalized.byId['b'].index).toBe(0);
         expect(engine.getState().normalized.byId['c'].index).toBe(1);
@@ -342,21 +338,13 @@ describe('createFormEngine', () => {
 
     describe('moveField', () => {
       it('reorders within root', () => {
-        engine = createFormEngine(
-          form([field('a'), field('b'), field('c')]),
-        );
+        engine = createFormEngine(form([field('a'), field('b'), field('c')]));
         engine.getState().moveField('a', 2);
-        expect(engine.getState().normalized.rootIds).toEqual([
-          'b',
-          'c',
-          'a',
-        ]);
+        expect(engine.getState().normalized.rootIds).toEqual(['b', 'c', 'a']);
       });
 
       it('moves field into a section', () => {
-        engine = createFormEngine(
-          form([field('s1', 'section'), field('q1')]),
-        );
+        engine = createFormEngine(form([field('s1', 'section'), field('q1')]));
         engine.getState().moveField('q1', 0, 's1');
         const s = engine.getState();
         expect(s.normalized.rootIds).toEqual(['s1']);
@@ -370,7 +358,7 @@ describe('createFormEngine', () => {
             field('s1', 'section', {
               fields: [field('c1')],
             } as Partial<FieldDefinition>),
-          ]),
+          ])
         );
         engine.getState().moveField('c1', 0, null);
         const s = engine.getState();
@@ -385,7 +373,7 @@ describe('createFormEngine', () => {
             field('s1', 'section', {
               fields: [field('c1')],
             } as Partial<FieldDefinition>),
-          ]),
+          ])
         );
         expect(engine.getState().moveField('s1', 0, 'c1')).toBe(false);
       });
@@ -401,28 +389,22 @@ describe('createFormEngine', () => {
         engine = createFormEngine(form([field('q1', 'text')]));
         const id = engine.getState().addOption('q1', 'Yes');
         expect(id).toBeTruthy();
-        const opts =
-          engine.getState().normalized.byId['q1'].definition.options;
+        const opts = engine.getState().normalized.byId['q1'].definition.options;
         expect(opts).toEqual([{ id, value: 'Yes' }]);
       });
 
       it('updateOption changes an option value', () => {
         engine = createFormEngine(form([field('q1', 'text')]));
         const id = engine.getState().addOption('q1', 'Old');
-        expect(
-          engine.getState().updateOption('q1', id!, 'New'),
-        ).toBe(true);
-        const opts =
-          engine.getState().normalized.byId['q1'].definition.options;
+        expect(engine.getState().updateOption('q1', id!, 'New')).toBe(true);
+        const opts = engine.getState().normalized.byId['q1'].definition.options;
         expect(opts![0].value).toBe('New');
       });
 
       it('removeOption deletes an option', () => {
         engine = createFormEngine(form([field('q1', 'text')]));
         const id = engine.getState().addOption('q1', 'X');
-        expect(
-          engine.getState().removeOption('q1', id!),
-        ).toBe(true);
+        expect(engine.getState().removeOption('q1', id!)).toBe(true);
         const opts =
           engine.getState().normalized.byId['q1'].definition.options ?? [];
         expect(opts).toEqual([]);
@@ -431,57 +413,49 @@ describe('createFormEngine', () => {
       it('returns null/false for nonexistent field', () => {
         engine = createFormEngine(form([]));
         expect(engine.getState().addOption('nope')).toBeNull();
-        expect(engine.getState().updateOption('nope', 'x', 'y')).toBe(
-          false,
-        );
+        expect(engine.getState().updateOption('nope', 'x', 'y')).toBe(false);
         expect(engine.getState().removeOption('nope', 'x')).toBe(false);
       });
     });
 
     describe('row CRUD', () => {
       it('addRow, updateRow, removeRow', () => {
-        engine = createFormEngine(
-          form([field('m1', 'singlematrix')]),
-        );
+        engine = createFormEngine(form([field('m1', 'singlematrix')]));
         const rowId = engine.getState().addRow('m1', 'Row 1');
         expect(rowId).toBeTruthy();
-        expect(
-          engine.getState().normalized.byId['m1'].definition.rows,
-        ).toEqual([{ id: rowId, value: 'Row 1' }]);
+        expect(engine.getState().normalized.byId['m1'].definition.rows).toEqual(
+          [{ id: rowId, value: 'Row 1' }]
+        );
 
         engine.getState().updateRow('m1', rowId!, 'Updated');
         expect(
-          engine.getState().normalized.byId['m1'].definition.rows![0]
-            .value,
+          engine.getState().normalized.byId['m1'].definition.rows![0].value
         ).toBe('Updated');
 
         engine.getState().removeRow('m1', rowId!);
-        expect(
-          engine.getState().normalized.byId['m1'].definition.rows,
-        ).toEqual([]);
+        expect(engine.getState().normalized.byId['m1'].definition.rows).toEqual(
+          []
+        );
       });
     });
 
     describe('column CRUD', () => {
       it('addColumn, updateColumn, removeColumn', () => {
-        engine = createFormEngine(
-          form([field('m1', 'singlematrix')]),
-        );
+        engine = createFormEngine(form([field('m1', 'singlematrix')]));
         const colId = engine.getState().addColumn('m1', 'Col 1');
         expect(colId).toBeTruthy();
         expect(
-          engine.getState().normalized.byId['m1'].definition.columns,
+          engine.getState().normalized.byId['m1'].definition.columns
         ).toEqual([{ id: colId, value: 'Col 1' }]);
 
         engine.getState().updateColumn('m1', colId!, 'Updated');
         expect(
-          engine.getState().normalized.byId['m1'].definition.columns![0]
-            .value,
+          engine.getState().normalized.byId['m1'].definition.columns![0].value
         ).toBe('Updated');
 
         engine.getState().removeColumn('m1', colId!);
         expect(
-          engine.getState().normalized.byId['m1'].definition.columns,
+          engine.getState().normalized.byId['m1'].definition.columns
         ).toEqual([]);
       });
     });
@@ -506,7 +480,7 @@ describe('createFormEngine', () => {
           field('q3', 'text', {
             rules: [requiredRule('trigger', 'yes')],
           }),
-        ]),
+        ])
       );
     });
 
@@ -529,7 +503,9 @@ describe('createFormEngine', () => {
 
       it('returns the response after set', () => {
         engine.getState().setResponse('q1', { answer: 'hello' });
-        expect(engine.getState().getResponse('q1')).toEqual({ answer: 'hello' });
+        expect(engine.getState().getResponse('q1')).toEqual({
+          answer: 'hello',
+        });
       });
     });
 
@@ -638,7 +614,9 @@ describe('createFormEngine', () => {
 
   describe('hydrateDefinition', () => {
     it('reconstructs a flat field list', () => {
-      engine = createFormEngine(form([field('q1', 'text'), field('q2', 'number')]));
+      engine = createFormEngine(
+        form([field('q1', 'text'), field('q2', 'number')])
+      );
       const def = engine.getState().hydrateDefinition();
       expect(def.schemaType).toBe(SCHEMA_TYPE);
       expect(def.fields).toHaveLength(2);

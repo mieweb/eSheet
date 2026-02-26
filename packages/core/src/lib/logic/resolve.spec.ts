@@ -11,7 +11,7 @@ import type { FormResponse } from '../types.js';
 /** Minimal field definition with optional rules & required. */
 function def(
   id: string,
-  opts?: { required?: boolean; rules?: ConditionalRule[] },
+  opts?: { required?: boolean; rules?: ConditionalRule[] }
 ): FieldDefinition {
   return { id, fieldType: 'text', ...opts } as FieldDefinition;
 }
@@ -21,7 +21,7 @@ function makeRule(
   effect: ConditionalRule['effect'],
   targetId: string,
   expected: string,
-  logic: ConditionalRule['logic'] = 'AND',
+  logic: ConditionalRule['logic'] = 'AND'
 ): ConditionalRule {
   return {
     effect,
@@ -58,7 +58,9 @@ describe('resolveEffect', () => {
     });
 
     it('required defaults to false', () => {
-      expect(resolveEffect('required', field, normalized, responses)).toBe(false);
+      expect(resolveEffect('required', field, normalized, responses)).toBe(
+        false
+      );
     });
   });
 
@@ -90,7 +92,9 @@ describe('resolveEffect', () => {
       });
       // Asking for 'visible' — should get default true, not the enable rule
       expect(
-        resolveEffect('visible', field, normalized, { target: { answer: 'no' } }),
+        resolveEffect('visible', field, normalized, {
+          target: { answer: 'no' },
+        })
       ).toBe(true);
     });
 
@@ -103,11 +107,13 @@ describe('resolveEffect', () => {
       });
       // visible rule expects 'yes', response is 'no' → false
       expect(
-        resolveEffect('visible', field, normalized, { target: { answer: 'no' } }),
+        resolveEffect('visible', field, normalized, {
+          target: { answer: 'no' },
+        })
       ).toBe(false);
       // enable rule expects 'no', response is 'no' → true
       expect(
-        resolveEffect('enable', field, normalized, { target: { answer: 'no' } }),
+        resolveEffect('enable', field, normalized, { target: { answer: 'no' } })
       ).toBe(true);
     });
   });
@@ -125,7 +131,9 @@ describe('resolveEffect', () => {
         rules: [makeRule('visible', 'target', 'yes')],
       });
       expect(
-        resolveEffect('visible', field, normalized, { target: { answer: 'yes' } }),
+        resolveEffect('visible', field, normalized, {
+          target: { answer: 'yes' },
+        })
       ).toBe(true);
     });
 
@@ -134,7 +142,9 @@ describe('resolveEffect', () => {
         rules: [makeRule('visible', 'target', 'yes')],
       });
       expect(
-        resolveEffect('visible', field, normalized, { target: { answer: 'no' } }),
+        resolveEffect('visible', field, normalized, {
+          target: { answer: 'no' },
+        })
       ).toBe(false);
     });
   });
@@ -160,7 +170,7 @@ describe('resolveEffect', () => {
         resolveEffect('visible', field, normalized, {
           t1: { answer: 'no' },
           t2: { answer: 'yes' },
-        }),
+        })
       ).toBe(true);
     });
 
@@ -175,7 +185,7 @@ describe('resolveEffect', () => {
         resolveEffect('visible', field, normalized, {
           t1: { answer: 'no' },
           t2: { answer: 'no' },
-        }),
+        })
       ).toBe(false);
     });
   });
@@ -194,7 +204,9 @@ describe('resolveEffect', () => {
         rules: [makeRule('required', 'target', 'yes')],
       });
       expect(
-        resolveEffect('required', field, normalized, { target: { answer: 'yes' } }),
+        resolveEffect('required', field, normalized, {
+          target: { answer: 'yes' },
+        })
       ).toBe(true);
     });
 
@@ -206,7 +218,9 @@ describe('resolveEffect', () => {
         rules: [makeRule('required', 'target', 'yes')],
       });
       expect(
-        resolveEffect('required', field, normalized, { target: { answer: 'no' } }),
+        resolveEffect('required', field, normalized, {
+          target: { answer: 'no' },
+        })
       ).toBe(false);
     });
   });
@@ -217,7 +231,9 @@ describe('resolveEffect', () => {
 
   it('rule with empty conditions is vacuously true', () => {
     const field = def('q1', {
-      rules: [{ effect: 'visible' as const, logic: 'AND' as const, conditions: [] }],
+      rules: [
+        { effect: 'visible' as const, logic: 'AND' as const, conditions: [] },
+      ],
     });
     const normalized = norm([field]);
     expect(resolveEffect('visible', field, normalized, {})).toBe(true);
