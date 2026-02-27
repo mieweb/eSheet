@@ -1,0 +1,9 @@
+{
+  "name": "@msheet/builder",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "targets": {
+    "build": {
+      "dependsOn": ["build:css", "^build"]
+    }
+  }
+}

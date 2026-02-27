@@ -1,0 +1,8 @@
+{
+  "name": "@msheet/builder-app",
+  "version": "0.0.1",
+  "private": true,
+  "nx": {
+    "name": "builder"
+  }
+}

@@ -234,7 +234,8 @@ export function createFormEngine(initial?: FormDefinition): FormEngine {
 
     clearResponse: (fieldId) =>
       set((state) => {
-        const { [fieldId]: _, ...rest } = state.responses;
+        const { [fieldId]: _discarded, ...rest } = state.responses;
+        void _discarded;
         return { responses: rest };
       }),
 
@@ -253,7 +254,8 @@ export function createFormEngine(initial?: FormDefinition): FormEngine {
       const id = generateFieldId(fieldType, existingIds, parentId ?? undefined);
 
       // Build definition from registry defaults + caller patch
-      const { fields: _nested, ...defaults } = meta.defaultProps;
+      const { fields: _nestedFields, ...defaults } = meta.defaultProps;
+      void _nestedFields;
       const definition = {
         ...defaults,
         ...options?.patch,
@@ -331,7 +333,8 @@ export function createFormEngine(initial?: FormDefinition): FormEngine {
         if (normalized.byId[newId!]) return false;
 
         const newDef = { ...node.definition, ...patch };
-        const { [fieldId]: _, ...rest } = normalized.byId;
+        const { [fieldId]: _removed, ...rest } = normalized.byId;
+        void _removed;
         const byId: Record<string, FieldNode> = {
           ...rest,
           [newId!]: { ...node, definition: newDef },

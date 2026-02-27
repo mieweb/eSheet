@@ -1,0 +1,94 @@
+/*! tailwindcss v4.2.1 | MIT License | https://tailwindcss.com */
+@layer properties;
+:root, :host {
+  --ms-font-sans: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+    'Noto Color Emoji';
+  --ms-spacing: 0.25rem;
+  --ms-text-sm: 0.875rem;
+  --ms-text-sm--line-height: calc(1.25 / 0.875);
+  --ms-radius-lg: 0.5rem;
+  --ms-color-mssurface: #ffffff;
+  --ms-color-msborder: #e5e7eb;
+  --ms-color-mstext: #111827;
+  --ms-color-mstextmuted: #6b7280;
+  --ms-color-msbackground: #f9fafb;
+}
+.ms\:flex {
+  display: flex;
+}
+.ms\:min-h-\[400px\] {
+  min-height: 400px;
+}
+.ms\:w-72 {
+  width: calc(var(--ms-spacing) * 72);
+}
+.ms\:w-\[340px\] {
+  width: 340px;
+}
+.ms\:min-w-0 {
+  min-width: calc(var(--ms-spacing) * 0);
+}
+.ms\:flex-1 {
+  flex: 1;
+}
+.ms\:shrink-0 {
+  flex-shrink: 0;
+}
+.ms\:gap-3 {
+  gap: calc(var(--ms-spacing) * 3);
+}
+.ms\:overflow-y-auto {
+  overflow-y: auto;
+}
+.ms\:rounded-lg {
+  border-radius: var(--ms-radius-lg);
+}
+.ms\:border {
+  border-style: var(--tw-border-style);
+  border-width: 1px;
+}
+.ms\:border-msborder {
+  border-color: var(--ms-color-msborder);
+}
+.ms\:bg-msbackground {
+  background-color: var(--ms-color-msbackground);
+}
+.ms\:bg-mssurface {
+  background-color: var(--ms-color-mssurface);
+}
+.ms\:p-4 {
+  padding: calc(var(--ms-spacing) * 4);
+}
+.ms\:font-sans {
+  font-family: var(--ms-font-sans);
+}
+.ms\:text-sm {
+  font-size: var(--ms-text-sm);
+  line-height: var(--tw-leading, var(--ms-text-sm--line-height));
+}
+.ms\:text-mstext {
+  color: var(--ms-color-mstext);
+}
+.ms\:text-mstextmuted {
+  color: var(--ms-color-mstextmuted);
+}
+@layer base {
+  .ms-builder-root, .ms-builder-root *, .ms-builder-root *::before, .ms-builder-root *::after {
+    box-sizing: border-box;
+    border-width: 0;
+    border-style: solid;
+    border-color: var(--ms-color-msborder, #e5e7eb);
+  }
+}
+@property --tw-border-style {
+  syntax: "*";
+  inherits: false;
+  initial-value: solid;
+}
+@layer properties {
+  @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color:rgb(from red r g b)))) {
+    *, ::before, ::after, ::backdrop {
+      --tw-border-style: solid;
+    }
+  }
+}

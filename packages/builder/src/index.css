@@ -1,0 +1,45 @@
+@import 'tailwindcss/theme' prefix(ms);
+@import 'tailwindcss/utilities' prefix(ms);
+
+@source "../**/*.{ts,tsx}";
+
+/* ------------------------------------------------------------------ */
+/* Semantic color tokens                                               */
+/* ------------------------------------------------------------------ */
+@theme {
+  --color-msprimary: #3b82f6;
+  --color-mssecondary: #6b7280;
+  --color-msaccent: #10b981;
+  --color-msdanger: #ef4444;
+  --color-mswarning: #f97316;
+  --color-mssurface: #ffffff;
+  --color-msborder: #e5e7eb;
+  --color-msborderinactive: #9ca3af;
+  --color-mstext: #111827;
+  --color-mstextsecondary: #f8fafc;
+  --color-mstextmuted: #6b7280;
+  --color-msbackground: #f9fafb;
+  --color-msbackgroundsecondary: #f3f4f6;
+  --color-msbackgroundhover: #eceef1;
+  --color-msoverlay: rgba(0, 0, 0, 0.5);
+}
+
+/* ------------------------------------------------------------------ */
+/* Dark mode variant — scoped to wrapper class                         */
+/* ------------------------------------------------------------------ */
+@custom-variant dark (&:where(.ms-builder-root.dark, .ms-builder-root.dark *));
+
+/* ------------------------------------------------------------------ */
+/* Scoped base resets (don't leak into consuming app)                   */
+/* ------------------------------------------------------------------ */
+@layer base {
+  .ms-builder-root,
+  .ms-builder-root *,
+  .ms-builder-root *::before,
+  .ms-builder-root *::after {
+    box-sizing: border-box;
+    border-width: 0;
+    border-style: solid;
+    border-color: var(--ms-color-msborder, #e5e7eb);
+  }
+}
