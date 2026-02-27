@@ -12,8 +12,7 @@ export function App() {
   });
 
   return (
-    <div style={{ padding: '1rem' }}>
-      <h1 style={{ marginBottom: '1rem' }}>Builder Demo</h1>
+    <div style={{ padding: '2rem' }}>
       <MsheetBuilder
         definition={definition}
         onChange={(newDef) => {

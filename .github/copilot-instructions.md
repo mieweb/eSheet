@@ -111,6 +111,36 @@ If any box is unchecked, **simplify**.
 - **Respect module boundaries** — `@nx/enforce-module-boundaries` is enforced. Check tags before adding cross-package imports.
 - **Use `tslib`** — `importHelpers: true` is set in `tsconfig.base.json`. All packages depend on `tslib`.
 
+### React & UI Packages
+
+- **ALL Form Inputs Must Have `id` Attributes with `instanceId` Prefix**: Every `<input>`, `<select>`, and `<textarea>` element across **all** UI packages (`@msheet/builder`, `@msheet/renderer`, `@msheet/fields`, or any future package rendering form elements) must have an `id` attribute. Use the `useInstanceId()` hook to ensure IDs are unique when multiple component instances share the same page.
+
+  **ID pattern:** `${instanceId}-{purpose}-${fieldId}`
+  - Builder mode: `${instanceId}-editor-question-${def.id}`
+  - Preview/renderer mode: `${instanceId}-{fieldType}-answer-${def.id}`
+  - Any input: `${instanceId}-{context}-{purpose}-${def.id}`
+
+  ```tsx
+  // ❌ BAD - no id (breaks autofill), or static id (duplicates with 2 instances)
+  <input type="text" value={value} />
+  <input id="question-field" type="text" value={value} />
+
+  // ✅ GOOD - unique id with instanceId prefix
+  const instanceId = useInstanceId();
+  <input
+    id={`${instanceId}-editor-question-${def.id}`}
+    type="text"
+    value={value}
+  />
+  ```
+
+  **Why this matters:**
+  - Browser autofill requires `id` or `name` attributes to work
+  - Multiple instances on one page would have duplicate IDs without `instanceId`
+  - Accessibility tools use IDs to associate labels with inputs
+  - `React.useId()` powers this — guaranteed unique across the React tree and SSR-safe
+  - This applies to **all modes** (builder, preview, renderer) — not just the editor
+
 ---
 
 ## Anti-Patterns to Avoid
