@@ -20,7 +20,8 @@ export const FieldItem = React.memo(function FieldItem({
       {/* Question */}
       <div className="field-question ms:text-sm ms:text-mstext">
         <input
-          id={`${instanceId}-editor-question-${def.id}`}
+          id={`${instanceId}-field-item-question-${def.id}`}
+          aria-label="Question"
           type="text"
           value={def.question || ''}
           onChange={(e) => onUpdate({ question: e.currentTarget.value })}

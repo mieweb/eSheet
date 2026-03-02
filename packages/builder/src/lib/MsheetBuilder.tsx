@@ -7,6 +7,7 @@ import {
 import { createUIStore, type UIStore } from './ui-store.js';
 import { Canvas } from './components/Canvas.js';
 import { ToolPanel } from './components/ToolPanel.js';
+import { EditPanel } from './components/edit-panel/EditPanel.js';
 
 // ---------------------------------------------------------------------------
 // Contexts
@@ -102,8 +103,8 @@ export function MsheetBuilder({
                 <Canvas engine={engine} ui={ui} dragEnabled={dragEnabled} />
               </div>
             </main>
-            <aside className="panel-editor ms:w-[340px] ms:shrink-0 ms:bg-mssurface ms:rounded-lg ms:border ms:border-msborder ms:overflow-y-auto">
-              <div className="ms:p-4 ms:text-mstextmuted ms:text-sm">Edit Panel</div>
+            <aside className="panel-editor ms:w-[340px] ms:shrink-0 ms:bg-mssurface ms:rounded-lg ms:border ms:border-msborder ms:overflow-hidden">
+              <EditPanel engine={engine} ui={ui} />
             </aside>
           </div>
         </div>

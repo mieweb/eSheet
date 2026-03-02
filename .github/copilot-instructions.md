@@ -141,6 +141,50 @@ If any box is unchecked, **simplify**.
   - `React.useId()` powers this — guaranteed unique across the React tree and SSR-safe
   - This applies to **all modes** (builder, preview, renderer) — not just the editor
 
+- **ALL Form Inputs Must Have an Associated Label**: Every `<input>`, `<select>`, and `<textarea>` must be associated with a label — either via a `<label htmlFor="...">` matching the input's `id`, or via `aria-label` on the input itself. **Never render a form input without one of these.**
+
+  **When to use which:**
+  - **`<label htmlFor>`** — when a visible text label exists (e.g., "Question", "Field ID", "Required")
+  - **`aria-label`** — when the input is in a compact list/row where a visible label would clutter the UI (e.g., option list items, matrix row/column inputs)
+
+  ```tsx
+  // ❌ BAD - input with no label association
+  <label className="...">Field ID</label>
+  <input id={`${instanceId}-editor-id-${fieldId}`} type="text" />
+
+  // ❌ BAD - label exists but no htmlFor, and no aria-label
+  <input id={`${instanceId}-editor-option-${fieldId}-${opt.id}`} type="text" />
+
+  // ✅ GOOD - visible label with htmlFor
+  <label htmlFor={`${instanceId}-editor-id-${fieldId}`} className="...">Field ID</label>
+  <input id={`${instanceId}-editor-id-${fieldId}`} type="text" />
+
+  // ✅ GOOD - aria-label for compact list items
+  <input
+    id={`${instanceId}-editor-option-${fieldId}-${opt.id}`}
+    aria-label={`Option ${idx + 1}`}
+    type="text"
+  />
+  ```
+
+- **No Duplicate IDs Between Panels**: When the same field data appears in multiple panels (e.g., Canvas + EditPanel), use **different purpose segments** in the ID pattern to avoid duplicates:
+  - Canvas inputs: `${instanceId}-canvas-{purpose}-${fieldId}`
+  - EditPanel inputs: `${instanceId}-editor-{purpose}-${fieldId}`
+
+  ```tsx
+  // ❌ BAD - both Canvas and EditPanel produce the same id
+  // FieldItem.tsx (Canvas)
+  <input id={`${instanceId}-editor-question-${def.id}`} />
+  // CommonEditor.tsx (EditPanel)
+  <input id={`${instanceId}-editor-question-${fieldId}`} />
+
+  // ✅ GOOD - different context prefix prevents collision
+  // FieldItem.tsx (Canvas)
+  <input id={`${instanceId}-canvas-question-${def.id}`} />
+  // CommonEditor.tsx (EditPanel)
+  <input id={`${instanceId}-editor-question-${fieldId}`} />
+  ```
+
 ---
 
 ## Anti-Patterns to Avoid

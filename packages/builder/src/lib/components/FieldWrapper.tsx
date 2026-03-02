@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useSyncExternalStore } from 'react';
 import type { FieldDefinition, FieldNode } from '@msheet/core';
 import type { FormEngine } from '@msheet/core';
 import type { UIStore } from '../ui-store.js';
@@ -70,7 +70,11 @@ export function FieldWrapper({
   isDragging = false,
   children,
 }: FieldWrapperProps) {
-  const field = engine.getState().getField(fieldId);
+  const field = useSyncExternalStore(
+    (cb) => engine.subscribe(cb),
+    () => engine.getState().getField(fieldId),
+    () => engine.getState().getField(fieldId),
+  );
   const selectedFieldId = useSelectedFieldId(ui);
   const isSelected = selectedFieldId === fieldId;
 
@@ -121,11 +125,14 @@ export function FieldWrapper({
 
       {/* Field Content */}
       <div className={dragHandleProps ? 'ms:ml-6' : ''}>
-        {/* Field Type Badge + ID */}
+        {/* Field Type Badge + Required + ID */}
         <div className="field-meta ms:flex ms:items-center ms:gap-2 ms:mb-1">
           <div className="field-type-badge ms:inline-block ms:px-2 ms:py-0.5 ms:text-xs ms:font-medium ms:bg-msbackgroundsecondary ms:text-mstextmuted ms:rounded">
             {field.definition.fieldType}
           </div>
+          {field.definition.required && (
+            <span className="required-indicator ms:text-msdanger ms:text-xs ms:font-bold" title="Required">*</span>
+          )}
           {field.definition.id && (
             <div className="field-id ms:text-xs ms:text-mstextmuted ms:font-mono">
               ID: {field.definition.id}
