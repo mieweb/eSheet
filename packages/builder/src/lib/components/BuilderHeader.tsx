@@ -25,6 +25,12 @@ export function BuilderHeader({ engine, ui }: BuilderHeaderProps) {
     () => ui.getState().mode,
   );
 
+  const codeHasError = useSyncExternalStore(
+    (cb) => ui.subscribe(cb),
+    () => ui.getState().codeEditorHasError,
+    () => ui.getState().codeEditorHasError,
+  );
+
   const handleExport = () => {
     const definition = engine.getState().hydrateDefinition();
     const json = JSON.stringify(definition, null, 2);
@@ -66,7 +72,12 @@ export function BuilderHeader({ engine, ui }: BuilderHeaderProps) {
             key={value}
             type="button"
             onClick={() => ui.getState().setMode(value)}
-            className={`mode-btn ms:px-4 ms:py-1 ms:text-sm ms:font-medium ms:rounded-md ms:border-0 ms:outline-none focus:ms:outline-none ms:transition-colors ms:cursor-pointer ${
+            disabled={codeHasError && value !== 'code'}
+            className={`mode-btn ms:px-4 ms:py-1 ms:text-sm ms:font-medium ms:rounded-md ms:border-0 ms:outline-none focus:ms:outline-none ms:transition-colors ${
+              codeHasError && value !== 'code'
+                ? 'ms:opacity-50 ms:cursor-not-allowed'
+                : 'ms:cursor-pointer'
+            } ${
               mode === value
                 ? 'ms:bg-mssurface ms:text-msprimary ms:shadow-sm'
                 : 'ms:bg-transparent ms:text-mstextmuted hover:ms:text-mstext'

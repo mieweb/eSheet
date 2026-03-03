@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSyncExternalStore } from 'react';
 import {
   createFormEngine,
   type FormDefinition,
@@ -9,6 +10,7 @@ import { Canvas } from './components/Canvas.js';
 import { ToolPanel } from './components/ToolPanel.js';
 import { EditPanel } from './components/edit-panel/EditPanel.js';
 import { BuilderHeader } from './components/BuilderHeader.js';
+import { CodeView } from './components/CodeView.js';
 
 // ---------------------------------------------------------------------------
 // Contexts
@@ -81,6 +83,13 @@ export function MsheetBuilder({
   // Stable per-instance ID for unique DOM element IDs
   const instanceId = React.useId();
 
+  // Subscribe to mode for conditional rendering
+  const mode = useSyncExternalStore(
+    (cb) => ui.subscribe(cb),
+    () => ui.getState().mode,
+    () => ui.getState().mode,
+  );
+
   // Subscribe to engine changes and forward to onChange.
   React.useEffect(() => {
     if (!onChange) return;
@@ -96,19 +105,35 @@ export function MsheetBuilder({
         <div className={`ms-builder-root ms:flex ms:flex-col ms:bg-msbackground ms:font-sans ms:text-mstext ${className}`.trim()}>
           <BuilderHeader engine={engine} ui={ui} />
           {children}
-          <div className="builder-layout ms:flex ms:gap-3 ms:flex-1 ms:min-h-0 ms:p-3">
-            <aside className="panel-tools ms:w-72 ms:shrink-0 ms:bg-mssurface ms:rounded-lg ms:border ms:border-msborder ms:overflow-y-auto">
-              <ToolPanel engine={engine} ui={ui} />
-            </aside>
-            <main className="panel-canvas ms:flex-1 ms:min-w-0 ms:bg-mssurface ms:rounded-lg ms:border ms:border-msborder ms:overflow-y-auto">
-              <div className="ms:p-4">
-                <Canvas engine={engine} ui={ui} dragEnabled={dragEnabled} />
+          {mode === 'build' && (
+            <div className="builder-layout ms:flex ms:gap-3 ms:flex-1 ms:min-h-0 ms:p-3">
+              <aside className="panel-tools ms:w-72 ms:shrink-0 ms:bg-mssurface ms:rounded-lg ms:border ms:border-msborder ms:overflow-y-auto">
+                <ToolPanel engine={engine} ui={ui} />
+              </aside>
+              <main className="panel-canvas ms:flex-1 ms:min-w-0 ms:bg-mssurface ms:rounded-lg ms:border ms:border-msborder ms:overflow-y-auto">
+                <div className="ms:p-4">
+                  <Canvas engine={engine} ui={ui} dragEnabled={dragEnabled} />
+                </div>
+              </main>
+              <aside className="panel-editor ms:w-[340px] ms:shrink-0 ms:bg-mssurface ms:rounded-lg ms:border ms:border-msborder ms:overflow-hidden">
+                <EditPanel engine={engine} ui={ui} />
+              </aside>
+            </div>
+          )}
+          {mode === 'code' && (
+            <div className="code-layout ms:flex-1 ms:min-h-0 ms:p-3">
+              <div className="ms:h-full ms:bg-mssurface ms:rounded-lg ms:border ms:border-msborder ms:overflow-hidden">
+                <CodeView engine={engine} ui={ui} />
               </div>
-            </main>
-            <aside className="panel-editor ms:w-[340px] ms:shrink-0 ms:bg-mssurface ms:rounded-lg ms:border ms:border-msborder ms:overflow-hidden">
-              <EditPanel engine={engine} ui={ui} />
-            </aside>
-          </div>
+            </div>
+          )}
+          {mode === 'preview' && (
+            <div className="preview-layout ms:flex-1 ms:min-h-0 ms:p-3 ms:overflow-y-auto">
+              <div className="ms:bg-mssurface ms:rounded-lg ms:border ms:border-msborder ms:min-h-full ms:flex ms:items-center ms:justify-center ms:text-mstextmuted">
+                Preview — coming soon
+              </div>
+            </div>
+          )}
         </div>
         </InstanceIdContext.Provider>
       </UIContext.Provider>

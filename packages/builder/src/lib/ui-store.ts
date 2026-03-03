@@ -21,12 +21,15 @@ export interface UIState {
   editTab: EditTab;
   /** Whether the mobile edit bottom-sheet is open. */
   editModalOpen: boolean;
+  /** True when the code editor has a parse/validation error — blocks mode switch. */
+  codeEditorHasError: boolean;
 
   // --- Actions ---
   selectField: (fieldId: string | null) => void;
   setMode: (mode: BuilderMode) => void;
   setEditTab: (tab: EditTab) => void;
   setEditModalOpen: (open: boolean) => void;
+  setCodeEditorHasError: (hasError: boolean) => void;
 }
 
 /** Store handle returned by `createUIStore`. */
@@ -42,6 +45,7 @@ export function createUIStore() {
     mode: 'build',
     editTab: 'edit',
     editModalOpen: false,
+    codeEditorHasError: false,
 
     selectField: (fieldId) =>
       set({ selectedFieldId: fieldId, editTab: 'edit' }),
@@ -51,5 +55,7 @@ export function createUIStore() {
     setEditTab: (tab) => set({ editTab: tab }),
 
     setEditModalOpen: (open) => set({ editModalOpen: open }),
+
+    setCodeEditorHasError: (hasError) => set({ codeEditorHasError: hasError }),
   }));
 }
