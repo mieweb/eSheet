@@ -30,3 +30,5 @@ export {
   getFieldComponent,
   resetComponentRegistry,
 } from './lib/component-registry.js';
+
+export { BuilderHeader, type BuilderHeaderProps } from './lib/components/BuilderHeader.js';

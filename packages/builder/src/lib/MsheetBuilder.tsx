@@ -8,6 +8,7 @@ import { createUIStore, type UIStore } from './ui-store.js';
 import { Canvas } from './components/Canvas.js';
 import { ToolPanel } from './components/ToolPanel.js';
 import { EditPanel } from './components/edit-panel/EditPanel.js';
+import { BuilderHeader } from './components/BuilderHeader.js';
 
 // ---------------------------------------------------------------------------
 // Contexts
@@ -92,9 +93,10 @@ export function MsheetBuilder({
     <EngineContext.Provider value={engine}>
       <UIContext.Provider value={ui}>
         <InstanceIdContext.Provider value={instanceId}>
-        <div className={`ms-builder-root ms:bg-msbackground ms:font-sans ms:text-mstext ${className}`.trim()}>
+        <div className={`ms-builder-root ms:flex ms:flex-col ms:bg-msbackground ms:font-sans ms:text-mstext ${className}`.trim()}>
+          <BuilderHeader engine={engine} ui={ui} />
           {children}
-          <div className="builder-layout ms:flex ms:gap-3">
+          <div className="builder-layout ms:flex ms:gap-3 ms:flex-1 ms:min-h-0 ms:p-3">
             <aside className="panel-tools ms:w-72 ms:shrink-0 ms:bg-mssurface ms:rounded-lg ms:border ms:border-msborder ms:overflow-y-auto">
               <ToolPanel engine={engine} ui={ui} />
             </aside>
