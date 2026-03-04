@@ -108,7 +108,7 @@ export function MsheetBuilder({
           {children}
           {mode === 'build' && (
             <div className="builder-layout ms:flex ms:gap-3">
-              <aside className="panel-tools ms:w-72 ms:shrink-0 ms:max-h-[calc(100dvh-9rem)] ms:bg-mssurface ms:rounded-lg ms:border ms:border-msborder ms:overflow-y-auto">
+              <aside className="panel-tools ms:w-72 ms:shrink-0 ms:h-min ms:bg-mssurface ms:rounded-lg ms:border ms:border-msborder ms:overflow-y-auto">
                 <ToolPanel form={form} ui={ui} />
               </aside>
               <main className="panel-canvas ms:flex-1 ms:min-w-0 ms:max-h-[calc(100dvh-9rem)] ms:bg-mssurface ms:rounded-lg ms:border ms:border-msborder ms:overflow-y-auto">
@@ -116,7 +116,7 @@ export function MsheetBuilder({
                   <Canvas form={form} ui={ui} dragEnabled={dragEnabled} />
                 </div>
               </main>
-              <aside className="panel-editor ms:w-[340px] ms:shrink-0 ms:max-h-[calc(100dvh-9rem)] ms:bg-mssurface ms:rounded-lg ms:border ms:border-msborder ms:overflow-y-auto">
+              <aside className="panel-editor ms:w-[340px] ms:h-min ms:shrink-0 ms:bg-mssurface ms:rounded-lg ms:border ms:border-msborder ms:overflow-y-auto">
                 <EditPanel form={form} ui={ui} />
               </aside>
             </div>
