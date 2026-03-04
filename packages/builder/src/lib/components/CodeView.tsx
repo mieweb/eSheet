@@ -1,9 +1,8 @@
 import React from 'react';
 import { Editor, type Monaco } from '@monaco-editor/react';
 import YAML from 'js-yaml';
-import type { FormStore } from '@msheet/core';
+import type { FormStore, UIStore } from '@msheet/core';
 import { formDefinitionJSONSchema } from '@msheet/core';
-import type { UIStore } from '../ui-store.js';
 
 const FORM_SCHEMA_URI = 'inmemory://msheet/form-definition.schema.json';
 

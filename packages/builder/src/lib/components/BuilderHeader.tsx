@@ -1,6 +1,5 @@
 import React, { useSyncExternalStore } from 'react';
-import type { FormStore } from '@msheet/core';
-import type { UIStore, BuilderMode } from '../ui-store.js';
+import type { FormStore, UIStore, BuilderMode } from '@msheet/core';
 
 export interface BuilderHeaderProps {
   form: FormStore;

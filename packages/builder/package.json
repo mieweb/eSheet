@@ -37,6 +37,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@monaco-editor/react": "^4.7.0",
     "@msheet/core": "^0.0.1",
+    "@msheet/fields": "^0.0.1",
     "js-yaml": "^4.1.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",

@@ -1,6 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import { getFieldTypeMeta, type FormStore } from '@msheet/core';
-import type { UIStore, EditTab } from '../../ui-store.js';
+import { getFieldTypeMeta, type FormStore, type UIStore, type EditTab } from '@msheet/core';
 import { useInstanceId } from '../../MsheetBuilder.js';
 import { DraftIdEditor } from './DraftIdEditor.js';
 import { CommonEditor } from './CommonEditor.js';

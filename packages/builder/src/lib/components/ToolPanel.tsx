@@ -3,9 +3,17 @@ import {
   getRegisteredFieldTypes,
   getFieldTypeMeta,
   type FormStore,
+  type UIStore,
   type FieldType,
 } from '@msheet/core';
-import type { UIStore } from '../ui-store.js';
+import {
+  TextFieldsIcon,
+  SelectionFieldsIcon,
+  RatingIcon,
+  MatrixIcon,
+  RichContentIcon,
+  OrganizationIcon,
+} from '../icons.js';
 
 export interface ToolPanelProps {
   /** The form store */
@@ -22,6 +30,18 @@ const CATEGORY_LABELS: Record<string, string> = {
   matrix: 'Matrix Fields',
   rich: 'Rich Content',
   organization: 'Organization',
+};
+
+type IconComponent = React.ComponentType<{ className?: string }>;
+
+/** Category icons mapped by display label. */
+const CATEGORY_ICONS: Record<string, IconComponent> = {
+  'Text Fields': TextFieldsIcon,
+  'Selection Fields': SelectionFieldsIcon,
+  'Rating & Ranking': RatingIcon,
+  'Matrix Fields': MatrixIcon,
+  'Rich Content': RichContentIcon,
+  'Organization': OrganizationIcon,
 };
 
 import { getFieldComponent } from '../component-registry.js';
@@ -73,7 +93,8 @@ export const ToolPanel = React.memo(function ToolPanel({
 
       {Object.entries(categories).map(([categoryName, items]) => (
         <div key={categoryName} className="tool-category">
-          <h4 className="tool-category-title ms:sticky ms:top-9 ms:z-[5] ms:bg-msbackgroundsecondary ms:text-xs ms:font-semibold ms:text-mstextmuted ms:px-4 ms:py-2 ms:border-b ms:border-msborder ms:uppercase ms:tracking-wide">
+          <h4 className="tool-category-title ms:sticky ms:top-9 ms:z-[5] ms:bg-msbackgroundsecondary ms:text-xs ms:font-semibold ms:text-mstextmuted ms:px-4 ms:py-2 ms:border-b ms:border-msborder ms:uppercase ms:tracking-wide ms:flex ms:items-center ms:gap-1.5">
+            {CATEGORY_ICONS[categoryName] && React.createElement(CATEGORY_ICONS[categoryName], { className: 'ms:w-3.5 ms:h-3.5 ms:shrink-0' })}
             {categoryName}
           </h4>
           <div className="tool-items ms:grid ms:grid-cols-1 ms:gap-1.5 ms:px-3 ms:py-2">

@@ -18,8 +18,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { restrictToVerticalAxis, restrictToParentElement } from '@dnd-kit/modifiers';
-import type { FormStore } from '@msheet/core';
-import type { UIStore } from '../ui-store.js';
+import type { FormStore, UIStore } from '@msheet/core';
 import { useVisibleFields } from '../hooks/useVisibleFields.js';
 import { FieldWrapper } from './FieldWrapper.js';
 import { FieldItem } from './FieldItem.js';
@@ -51,7 +50,7 @@ function SortableFieldItem({
   });
 
   const style = {
-    transform: CSS.Transform.toString(transform ? { ...transform, x: 0 } : null),
+    transform: CSS.Translate.toString(transform),
     transition,
   };
 

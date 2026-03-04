@@ -9,15 +9,13 @@
     "forceConsistentCasingInFileNames": true,
     "jsx": "react-jsx",
     "lib": ["es2022", "dom", "dom.iterable"],
-    "types": [
-      "node"
-    ]
+    "types": ["node"]
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx"
-  ],
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
   "references": [
+    {
+      "path": "../fields/tsconfig.lib.json"
+    },
     {
       "path": "../core/tsconfig.lib.json"
     }

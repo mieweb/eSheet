@@ -1,8 +1,7 @@
 import React, { useSyncExternalStore } from 'react';
-import type { FieldDefinition, FieldResponse, FieldComponentProps } from '@msheet/core';
-import type { FormStore } from '@msheet/core';
-import type { UIStore } from '@msheet/core';
+import type { FieldDefinition, FieldResponse, FieldComponentProps, FormStore, UIStore } from '@msheet/core';
 import { useSelectedFieldId } from '../hooks/useSelectedFieldId.js';
+import { TrashIcon, ViewBigIcon, ViewSmallIcon, EditIcon, DragHandleIcon } from '../icons.js';
 
 /**
  * Props exposed to the render function for custom field components.
@@ -31,7 +30,7 @@ export interface FieldWrapperProps {
 /**
  * FieldWrapper - Extensibility API for custom field components.
  * 
- * Wraps a field with selection highlighting, edit/delete buttons, and drag handles.
+ * Wraps a field with collapsible header, selection highlighting, edit/delete buttons, and drag handles.
  * Exposes field data and tools to the render function, allowing users to create
  * custom field types while getting all the built-in editor functionality.
  * 
@@ -58,6 +57,8 @@ export function FieldWrapper({
   isDragging = false,
   children,
 }: FieldWrapperProps) {
+  const [isExpanded, setIsExpanded] = React.useState(true);
+  
   const field = useSyncExternalStore(
     (cb) => form.subscribe(cb),
     () => form.getState().getField(fieldId),
@@ -73,6 +74,7 @@ export function FieldWrapper({
     () => ui.getState().mode,
     () => ui.getState().mode,
   );
+  const instanceId = form.getState().instanceId;
   const selectedFieldId = useSelectedFieldId(ui);
   const isPreview = mode === 'preview';
   const isSelected = !isPreview && selectedFieldId === fieldId;
@@ -104,14 +106,29 @@ export function FieldWrapper({
     [form, fieldId]
   );
 
+  const handleToggleExpand = React.useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!isSelected) {
+        handleSelect(e);
+      }
+      setIsExpanded((prev) => !prev);
+    },
+    [isSelected, handleSelect]
+  );
+
   if (!field) {
     return null;
   }
 
   // --- Preview mode: minimal chrome, no builder controls ---
   if (isPreview) {
+    
     return (
-      <div className="field-wrapper ms:mb-2 ms:p-3 ms:bg-mssurface ms:border ms:border-msborder ms:rounded">
+      <div 
+        className="field-wrapper ms:mb-2 ms:p-6 ms:bg-mssurface ms:border ms:border-msborder ms:rounded"
+        data-field-id={fieldId}
+      >
         {children({
           field,
           form,
@@ -127,78 +144,127 @@ export function FieldWrapper({
     );
   }
 
-  // --- Build mode: full editor chrome ---
+  // --- Build/Code mode: collapsible with full editor chrome ---
+  const questionText = field.definition.fieldType === 'section' 
+    ? (field.definition.title || '') 
+    : (field.definition.question || '');
+
+  // Collapse while dragging; restore prior state when drag ends
+  const effectiveExpanded = isExpanded && !isDragging;
+
+  // Base wrapper classes
+  let wrapperClass = isSelected
+    ? 'field-wrapper ms:group ms:relative ms:mb-2 ms:bg-mssurface ms:border-2 ms:border-dashed ms:border-msprimary ms:rounded-lg ms:transition-all'
+    : 'field-wrapper ms:group ms:relative ms:mb-2 ms:bg-mssurface ms:border ms:border-msborder ms:rounded-lg ms:transition-all ms:hover:border-msprimary/30';
+
+  if (!effectiveExpanded) {
+    wrapperClass += ' ms:p-0';
+  } else {
+    wrapperClass += ' ms:p-6';
+  }
+
+  if (isDragging) {
+    wrapperClass += ' ms:opacity-50';
+  }
+
+  // Header padding/margin adjustments
+  const headerClass = effectiveExpanded
+    ? 'field-wrapper-edit-header ms:flex ms:justify-between ms:items-center ms:gap-3 ms:px-3 ms:py-2.5 ms:-mx-6 ms:-mt-6 ms:mb-4 ms:bg-msbackgroundsecondary ms:border-b ms:border-msborder ms:rounded-t-lg'
+    : 'field-wrapper-edit-header ms:flex ms:justify-between ms:items-center ms:gap-3 ms:px-3 ms:py-2.5 ms:m-0 ms:bg-msbackgroundsecondary ms:border-b ms:border-msborder ms:rounded-lg';
+
   return (
     <div
-      className={`field-wrapper ms:relative ms:mb-2 ms:p-3 ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:transition-all ${
-        isSelected ? 'ms:ring-2 ms:ring-msprimary ms:border-msprimary' : ''
-      } ${isDragging ? 'ms:opacity-50' : ''}`}
+      className={wrapperClass}
       onClick={handleSelect}
+      data-field-id={fieldId}
+      data-selected={isSelected ? 'true' : 'false'}
+      aria-selected={isSelected || undefined}
+      tabIndex={-1}
     >
-      {/* Drag Handle */}
-      {dragHandleProps && (
-        <div
-          className="drag-handle ms:absolute ms:left-1 ms:top-3 ms:cursor-grab active:ms:cursor-grabbing ms:text-mstextmuted hover:ms:text-mstext"
-          style={{ touchAction: 'none' }}
-          {...dragHandleProps}
-          {...dragListeners}
-        >
-          <svg className="ms:w-4 ms:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
-          </svg>
-        </div>
-      )}
-
-      {/* Field Content */}
-      <div className={dragHandleProps ? 'ms:ml-6' : ''}>
-        {/* Field Type Badge + Required + ID */}
-        <div className="field-meta ms:flex ms:items-center ms:gap-2 ms:mb-1">
-          <div className="field-type-badge ms:inline-block ms:px-2 ms:py-0.5 ms:text-xs ms:font-medium ms:bg-msbackgroundsecondary ms:text-mstextmuted ms:rounded">
-            {field.definition.fieldType}
+      {/* Collapsible Header */}
+      <div className={headerClass}>
+        {/* Drag handle */}
+        {(dragHandleProps || dragListeners) && (
+          <div
+            {...dragHandleProps}
+            {...(dragListeners as React.HTMLAttributes<HTMLDivElement>)}
+            className="drag-handle ms:flex ms:items-center ms:p-1 ms:text-mstextmuted ms:cursor-grab active:ms:cursor-grabbing ms:shrink-0"
+            style={{ touchAction: 'none' }}
+            aria-label="Drag to reorder"
+          >
+            <DragHandleIcon className="ms:w-4 ms:h-4" />
           </div>
-          {field.definition.required && (
-            <span className="required-indicator ms:text-msdanger ms:text-xs ms:font-bold" title="Required">*</span>
-          )}
-          {field.definition.id && (
-            <div className="field-id ms:text-xs ms:text-mstextmuted ms:font-mono">
-              ID: {field.definition.id}
-            </div>
-          )}
+        )}
+        <div className="ms:text-left ms:flex-1 ms:select-none ms:text-sm ms:text-mstext ms:truncate ms:flex ms:items-center ms:gap-2">
+          <span className="ms:inline-block ms:text-xs ms:font-medium ms:text-msprimary ms:bg-msprimary/10 ms:px-2 ms:py-0.5 ms:rounded ms:shrink-0">
+            {field.definition.fieldType}
+          </span>
+          <span className="ms:truncate">{questionText}</span>
         </div>
-        {children({
-          field,
-          form,
-          ui,
-          isSelected,
-          isPreview: false,
-          response,
-          onRemove: handleRemove,
-          onUpdate: handleUpdate,
-          onResponse: handleResponse,
-        })}
-      </div>
 
-      {/* Actions (shown on select) */}
-      {isSelected && (
-        <div className="field-actions ms:absolute ms:right-2 ms:top-2 ms:flex ms:gap-1">
+        {/* Actions: Edit (mobile), Toggle (expand/collapse), Delete */}
+        <div className="field-wrapper-actions ms:flex ms:items-center ms:gap-1 ms:shrink-0">
+          {/* Edit button (mobile only) - placeholder for future edit panel integration */}
           <button
             type="button"
-            className="action-btn ms:p-1 ms:rounded ms:bg-transparent ms:text-mstextmuted hover:ms:text-msdanger hover:ms:bg-msbackgroundhover ms:border-0 ms:outline-none focus:ms:outline-none ms:transition-colors"
+            onClick={handleSelect}
+            className="field-edit-btn ms:block ms:lg:hidden ms:p-1.5 ms:bg-transparent ms:text-mstextmuted ms:hover:bg-msbackgroundhover ms:rounded ms:transition-colors ms:border-0 ms:outline-none focus:ms:outline-none"
+            title="Edit"
+            aria-label="Edit field"
+          >
+            <EditIcon className="ms:h-5 ms:w-5 ms:text-mstextmuted" />
+          </button>
+
+          {/* Toggle expand/collapse */}
+          <button
+            type="button"
+            onClick={handleToggleExpand}
+            aria-expanded={effectiveExpanded}
+            aria-controls={`${instanceId}-fw-body-${fieldId}`}
+            title={effectiveExpanded ? 'Collapse' : 'Expand'}
+            aria-label={effectiveExpanded ? 'Collapse field' : 'Expand field'}
+            className="field-collapse-btn ms:p-1.5 ms:bg-transparent ms:text-mstextmuted ms:hover:bg-msbackgroundhover ms:rounded ms:transition-colors ms:border-0 ms:outline-none focus:ms:outline-none"
+          >
+            {effectiveExpanded ? (
+              <ViewSmallIcon className="ms:collapse-icon ms:h-5 ms:w-5 ms:text-mstextmuted" />
+            ) : (
+              <ViewBigIcon className="ms:collapse-icon ms:h-5 ms:w-5 ms:text-mstextmuted" />
+            )}
+          </button>
+
+          {/* Delete button */}
+          <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
               handleRemove();
             }}
+            className="field-delete-btn ms:p-1.5 ms:bg-transparent ms:text-mstextmuted ms:hover:bg-msdanger/10 ms:hover:text-msdanger ms:rounded ms:transition-colors ms:border-0 ms:outline-none focus:ms:outline-none"
+            title="Delete"
             aria-label="Delete field"
           >
-            <svg className="ms:w-4 ms:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-              />
-            </svg>
+            <TrashIcon className="ms:h-5 ms:w-5 ms:text-mstextmuted group-hover:ms:text-msdanger" />
           </button>
+        </div>
+      </div>
+
+      {/* Field Body (collapsible) */}
+      {effectiveExpanded && (
+        <div 
+          id={`${instanceId}-fw-body-${fieldId}`} 
+          className="field-wrapper-body"
+        >
+          {children({
+            field,
+            form,
+            ui,
+            isSelected,
+            isPreview: false,
+            response,
+            onRemove: handleRemove,
+            onUpdate: handleUpdate,
+            onResponse: handleResponse,
+          })}
         </div>
       )}
     </div>
