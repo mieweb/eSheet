@@ -107,7 +107,28 @@ export const OrganizationIcon = React.memo(({ className = '' }: IconProps) => (
 ), eq);
 
 // ---------------------------------------------------------------------------
-// BuilderHeader actions
+// BuilderHeader — mode toggle icons
+// ---------------------------------------------------------------------------
+
+export const VEditorIcon = React.memo(({ className = '' }: IconProps) => (
+  <svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2">
+    <path d="M4 20h4L18.5 9.5a2.828 2.828 0 1 0 -4 -4L4 16v4" />
+    <path d="m13.5 6.5 4 4" />
+    <path d="m19 16 -2 3h4l-2 3" />
+  </svg>
+), eq);
+
+export const PreviewIcon = React.memo(({ className = '' }: IconProps) => (
+  <svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2">
+    <path d="M15 8h0.01" />
+    <path d="M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3H6a3 3 0 0 1 -3 -3V6z" />
+    <path d="m3 16 5 -5c0.928 -0.893 2.072 -0.893 3 0l5 5" />
+    <path d="m14 14 1 -1c0.928 -0.893 2.072 -0.893 3 0l3 3" />
+  </svg>
+), eq);
+
+// ---------------------------------------------------------------------------
+// BuilderHeader — action icons
 // ---------------------------------------------------------------------------
 
 export const UploadIcon = React.memo(({ className = '' }: IconProps) => (

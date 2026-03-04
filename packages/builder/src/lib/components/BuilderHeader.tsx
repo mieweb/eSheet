@@ -1,15 +1,16 @@
 import React, { useSyncExternalStore } from 'react';
 import type { FormStore, UIStore, BuilderMode } from '@msheet/core';
+import { VEditorIcon, CodeIcon, PreviewIcon, UploadIcon, DownloadIcon } from '../icons.js';
 
 export interface BuilderHeaderProps {
   form: FormStore;
   ui: UIStore;
 }
 
-const MODES: { value: BuilderMode; label: string }[] = [
-  { value: 'build', label: 'Build' },
-  { value: 'code', label: 'Code' },
-  { value: 'preview', label: 'Preview' },
+const MODES: { value: BuilderMode; label: string; Icon: React.ComponentType<{ className?: string }> }[] = [
+  { value: 'build', label: 'Build', Icon: VEditorIcon },
+  { value: 'code', label: 'Code', Icon: CodeIcon },
+  { value: 'preview', label: 'Preview', Icon: PreviewIcon },
 ];
 
 /**
@@ -60,57 +61,59 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
   };
 
   return (
-    <header className="builder-header ms:flex ms:items-center ms:justify-between ms:px-4 ms:py-2 ms:bg-mssurface ms:border-b ms:border-msborder ms:shrink-0">
-      {/* Left — reserved for form title / branding */}
-      <div className="header-left ms:w-40" />
+    <header className="builder-header ms:w-full ms:bg-mssurface ms:border ms:border-msborder ms:rounded-lg ms:shadow-sm ms:shrink-0">
+      <div className="ms:px-4 ms:py-4">
+        <div className="ms:flex ms:flex-wrap ms:items-center ms:justify-between ms:gap-3">
+          {/* Left — mode toggle */}
+          <div className="mode-toggle ms:flex ms:gap-1 ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackground ms:p-1 ms:w-fit">
+            {MODES.map(({ value, label, Icon }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => ui.getState().setMode(value)}
+                disabled={codeHasError && value !== 'code'}
+                className={`mode-btn ms:flex ms:items-center ms:justify-center ms:gap-2 ms:px-2 ms:lg:px-4 ms:py-2 ms:rounded-lg ms:text-xs ms:lg:text-sm ms:font-medium ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none ${
+                  codeHasError && value !== 'code'
+                    ? 'ms:bg-transparent ms:text-mstextmuted/50 ms:cursor-not-allowed'
+                    : 'ms:cursor-pointer'
+                } ${
+                  mode === value
+                    ? 'ms:bg-msprimary ms:text-mstextsecondary ms:shadow-sm'
+                    : 'ms:bg-transparent ms:text-mstextmuted ms:hover:text-mstext ms:hover:bg-mssurface'
+                }`}
+              >
+                <Icon className="ms:w-5 ms:h-5" />
+                <span>{label}</span>
+              </button>
+            ))}
+          </div>
 
-      {/* Center — mode toggle */}
-      <div className="mode-toggle ms:flex ms:items-center ms:gap-1 ms:bg-msbackground ms:rounded-lg ms:p-1">
-        {MODES.map(({ value, label }) => (
-          <button
-            key={value}
-            type="button"
-            onClick={() => ui.getState().setMode(value)}
-            disabled={codeHasError && value !== 'code'}
-            className={`mode-btn ms:px-4 ms:py-1 ms:text-sm ms:font-medium ms:rounded-md ms:border-0 ms:outline-none ms:focus:outline-none ms:transition-colors ${
-              codeHasError && value !== 'code'
-                ? 'ms:opacity-50 ms:cursor-not-allowed'
-                : 'ms:cursor-pointer'
-            } ${
-              mode === value
-                ? 'ms:bg-mssurface ms:text-msprimary ms:shadow-sm'
-                : 'ms:bg-transparent ms:text-mstextmuted ms:hover:text-mstext'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+          {/* Right — Import / Export */}
+          <div className="header-actions ms:flex ms:gap-1 ms:items-center">
+            <label className="header-import-label ms:group ms:px-2 ms:py-2 ms:lg:px-3 ms:lg:py-2 ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:hover:bg-msprimary ms:hover:text-mstextsecondary ms:hover:border-msprimary ms:cursor-pointer ms:text-xs ms:lg:text-sm ms:font-medium ms:transition-colors ms:flex ms:items-center ms:lg:gap-2 ms:gap-0 ms:text-mstext">
+              <UploadIcon className="ms:w-4 ms:h-4 ms:text-mstext ms:group-hover:text-mstextsecondary ms:transition-colors" />
+              <span className="ms:hidden ms:sm:inline">Import</span>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json,application/json"
+                onChange={handleImport}
+                aria-label="Import form JSON"
+                className="ms:hidden"
+              />
+            </label>
 
-      {/* Right — Import / Export */}
-      <div className="header-actions ms:flex ms:items-center ms:gap-2 ms:w-40 ms:justify-end">
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".json,application/json"
-          onChange={handleImport}
-          aria-label="Import form JSON"
-          className="ms:hidden"
-        />
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          className="import-btn ms:px-3 ms:py-1 ms:text-sm ms:bg-transparent ms:border ms:border-msborder ms:rounded ms:text-mstextmuted ms:hover:text-mstext ms:hover:border-mstext ms:outline-none ms:focus:outline-none ms:transition-colors ms:cursor-pointer"
-        >
-          Import
-        </button>
-        <button
-          type="button"
-          onClick={handleExport}
-          className="export-btn ms:px-3 ms:py-1 ms:text-sm ms:bg-msprimary ms:border ms:border-msprimary ms:rounded ms:text-mstextsecondary ms:hover:bg-msprimary/90 ms:outline-none ms:focus:outline-none ms:transition-colors ms:cursor-pointer"
-        >
-          Export
-        </button>
+            <button
+              type="button"
+              onClick={handleExport}
+              className="export-btn ms:group ms:px-2 ms:py-2 ms:lg:px-3 ms:lg:py-2 ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:hover:bg-msprimary ms:hover:text-mstextsecondary ms:hover:border-msprimary ms:text-xs ms:lg:text-sm ms:font-medium ms:transition-colors ms:flex ms:items-center ms:lg:gap-2 ms:gap-0 ms:outline-none ms:focus:outline-none ms:text-mstext ms:cursor-pointer"
+              title="Export"
+            >
+              <DownloadIcon className="ms:w-4 ms:h-4 ms:text-mstext ms:group-hover:text-mstextsecondary ms:transition-colors" />
+              <span className="ms:hidden ms:sm:inline">Export</span>
+            </button>
+          </div>
+        </div>
       </div>
     </header>
   );

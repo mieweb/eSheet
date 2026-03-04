@@ -154,7 +154,7 @@ export function FieldWrapper({
 
   // Base wrapper classes
   let wrapperClass = isSelected
-    ? 'field-wrapper ms:group ms:relative ms:mb-2 ms:bg-mssurface ms:border-2 ms:border-dashed ms:border-msprimary ms:rounded-lg ms:transition-all ms:outline-none'
+    ? 'field-wrapper ms:group ms:relative ms:mb-2 ms:bg-mssurface ms:border-2 ms:border-msprimary ms:rounded-lg ms:transition-all ms:outline-none'
     : 'field-wrapper ms:group ms:relative ms:mb-2 ms:bg-mssurface ms:border ms:border-msborder ms:rounded-lg ms:transition-all ms:hover:border-msprimary/30 ms:outline-none';
 
   if (!effectiveExpanded) {
