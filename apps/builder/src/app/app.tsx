@@ -41,15 +41,13 @@ export function App() {
   });
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <MsheetBuilder
-        definition={definition}
-        onChange={(newDef) => {
-          console.log('Definition changed:', newDef);
-          setDefinition(newDef);
-        }}
-      />
-    </div>
+    <MsheetBuilder
+      definition={definition}
+      onChange={(newDef) => {
+        console.log('Definition changed:', newDef);
+        setDefinition(newDef);
+      }}
+    />
   );
 }
 

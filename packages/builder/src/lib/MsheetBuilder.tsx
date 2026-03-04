@@ -103,33 +103,33 @@ export function MsheetBuilder({
     <FormStoreContext.Provider value={form}>
       <UIContext.Provider value={ui}>
         <InstanceIdContext.Provider value={instanceId}>
-        <div className={`ms-builder-root ms:flex ms:flex-col ms:bg-msbackground ms:font-sans ms:text-mstext ${className}`.trim()}>
+        <div className={`ms-builder-root ms:flex ms:flex-col ms:p-3 ms:gap-3 ms:bg-msbackground ms:font-sans ms:text-mstext ${className}`.trim()}>
           <BuilderHeader form={form} ui={ui} />
           {children}
           {mode === 'build' && (
-            <div className="builder-layout ms:flex ms:gap-3 ms:flex-1 ms:min-h-0 ms:p-3">
-              <aside className="panel-tools ms:w-72 ms:shrink-0 ms:bg-mssurface ms:rounded-lg ms:border ms:border-msborder ms:overflow-y-auto">
+            <div className="builder-layout ms:flex ms:gap-3">
+              <aside className="panel-tools ms:w-72 ms:shrink-0 ms:max-h-[calc(100dvh-9rem)] ms:bg-mssurface ms:rounded-lg ms:border ms:border-msborder ms:overflow-y-auto">
                 <ToolPanel form={form} ui={ui} />
               </aside>
-              <main className="panel-canvas ms:flex-1 ms:min-w-0 ms:bg-mssurface ms:rounded-lg ms:border ms:border-msborder ms:overflow-y-auto">
+              <main className="panel-canvas ms:flex-1 ms:min-w-0 ms:max-h-[calc(100dvh-9rem)] ms:bg-mssurface ms:rounded-lg ms:border ms:border-msborder ms:overflow-y-auto">
                 <div className="ms:p-4">
                   <Canvas form={form} ui={ui} dragEnabled={dragEnabled} />
                 </div>
               </main>
-              <aside className="panel-editor ms:w-[340px] ms:shrink-0 ms:bg-mssurface ms:rounded-lg ms:border ms:border-msborder ms:overflow-hidden">
+              <aside className="panel-editor ms:w-[340px] ms:shrink-0 ms:max-h-[calc(100dvh-9rem)] ms:bg-mssurface ms:rounded-lg ms:border ms:border-msborder ms:overflow-y-auto">
                 <EditPanel form={form} ui={ui} />
               </aside>
             </div>
           )}
           {mode === 'code' && (
-            <div className="code-layout ms:flex-1 ms:min-h-0 ms:p-3">
-              <div className="ms:h-full ms:bg-mssurface ms:rounded-lg ms:border ms:border-msborder ms:overflow-hidden">
+            <div className="code-layout">
+              <div className="ms:max-h-[calc(100dvh-9rem)] ms:bg-mssurface ms:rounded-lg ms:border ms:border-msborder ms:overflow-hidden">
                 <CodeView form={form} ui={ui} />
               </div>
             </div>
           )}
           {mode === 'preview' && (
-            <div className="preview-layout ms:flex-1 ms:min-h-0 ms:p-3 ms:overflow-y-auto">
+            <div className="preview-layout ms:max-h-[calc(100dvh-9rem)] ms:overflow-y-auto">
               <div className="ms:max-w-2xl ms:mx-auto ms:p-4">
                 <Canvas form={form} ui={ui} dragEnabled={false} />
               </div>

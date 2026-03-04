@@ -13,6 +13,7 @@ import {
   MatrixIcon,
   RichContentIcon,
   OrganizationIcon,
+  ChevronIcon,
 } from '../icons.js';
 
 export interface ToolPanelProps {
@@ -74,6 +75,23 @@ export const ToolPanel = React.memo(function ToolPanel({
   ui,
 }: ToolPanelProps) {
   const categories = React.useMemo(buildCategories, []);
+  const categoryNames = React.useMemo(() => Object.keys(categories), [categories]);
+  const [collapsed, setCollapsed] = React.useState<Set<string>>(() => new Set());
+
+  const toggleCategory = React.useCallback((name: string) => {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  }, []);
+
+  const toggleAll = React.useCallback(() => {
+    setCollapsed((prev) =>
+      prev.size === categoryNames.length ? new Set() : new Set(categoryNames),
+    );
+  }, [categoryNames]);
 
   const handleAdd = React.useCallback(
     (type: string) => {
@@ -85,33 +103,57 @@ export const ToolPanel = React.memo(function ToolPanel({
     [form, ui]
   );
 
+  const allCollapsed = collapsed.size === categoryNames.length;
+
   return (
-    <div className="tool-panel ms:overflow-y-auto">
-      <h3 className="tool-panel-title ms:sticky ms:top-0 ms:z-10 ms:bg-mssurface ms:text-sm ms:font-semibold ms:text-mstext ms:pb-2 ms:pt-3 ms:px-4 ms:border-b ms:border-msborder">
-        Tools
+    <div className="tool-panel ms:flex ms:flex-col ms:h-full">
+      <h3 className="tool-panel-title ms:sticky ms:top-0 ms:z-10 ms:bg-mssurface ms:text-sm ms:font-semibold ms:text-mstext ms:pb-2 ms:pt-3 ms:px-4 ms:border-b ms:border-msborder ms:flex ms:items-center ms:justify-between">
+        <span>Tools</span>
+        <button
+          type="button"
+          onClick={toggleAll}
+          className="toggle-all-btn ms:text-xs ms:font-normal ms:text-mstextmuted ms:hover:text-mstext ms:bg-transparent ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:transition-colors"
+          title={allCollapsed ? 'Expand all' : 'Collapse all'}
+        >
+          {allCollapsed ? 'Expand all' : 'Collapse all'}
+        </button>
       </h3>
 
-      {Object.entries(categories).map(([categoryName, items]) => (
-        <div key={categoryName} className="tool-category">
-          <h4 className="tool-category-title ms:sticky ms:top-9 ms:z-[5] ms:bg-msbackgroundsecondary ms:text-xs ms:font-semibold ms:text-mstextmuted ms:px-4 ms:py-2 ms:border-b ms:border-msborder ms:uppercase ms:tracking-wide ms:flex ms:items-center ms:gap-1.5">
-            {CATEGORY_ICONS[categoryName] && React.createElement(CATEGORY_ICONS[categoryName], { className: 'ms:w-3.5 ms:h-3.5 ms:shrink-0' })}
-            {categoryName}
-          </h4>
-          <div className="tool-items ms:grid ms:grid-cols-1 ms:gap-1.5 ms:px-3 ms:py-2">
-            {items.map(({ type, label }) => (
+      <div className="tool-panel-body ms:overflow-y-auto ms:flex-1">
+        {Object.entries(categories).map(([categoryName, items]) => {
+          const isCollapsed = collapsed.has(categoryName);
+          return (
+            <div key={categoryName} className="tool-category">
               <button
-                key={type}
                 type="button"
-                className="tool-btn ms:px-3 ms:py-2 ms:text-sm ms:text-left ms:border ms:border-msborder ms:rounded ms:bg-mssurface ms:text-mstext ms:transition-colors ms:hover:bg-msprimary/10 ms:hover:border-msprimary/50 ms:hover:text-msprimary ms:cursor-pointer ms:outline-none ms:focus:outline-none ms:focus:ring-2 ms:focus:ring-msprimary"
-                onClick={() => handleAdd(type)}
-                title={`Add ${label}`}
+                onClick={() => toggleCategory(categoryName)}
+                className="tool-category-title ms:w-full ms:sticky ms:top-0 ms:z-[5] ms:bg-mssurface ms:text-xs ms:font-semibold ms:text-mstextmuted ms:px-4 ms:py-2.5 ms:border-b ms:border-msborder ms:border-0 ms:uppercase ms:tracking-wide ms:flex ms:items-center ms:gap-1.5 ms:cursor-pointer ms:hover:bg-msbackgroundhover ms:transition-colors ms:outline-none ms:focus:outline-none"
+                aria-expanded={!isCollapsed}
               >
-                + {label}
+                <ChevronIcon className={`ms:w-3.5 ms:h-3.5 ms:shrink-0 ms:transition-transform ${isCollapsed ? 'ms:-rotate-90' : ''}`} />
+                {CATEGORY_ICONS[categoryName] && React.createElement(CATEGORY_ICONS[categoryName], { className: 'ms:w-3.5 ms:h-3.5 ms:shrink-0' })}
+                <span className="ms:flex-1 ms:text-left">{categoryName}</span>
               </button>
-            ))}
-          </div>
-        </div>
-      ))}
+              {!isCollapsed && (
+                <div className="tool-items ms:grid ms:grid-cols-1 ms:gap-1.5 ms:px-3 ms:py-2">
+                  {items.map(({ type, label }) => (
+                    <button
+                      key={type}
+                      type="button"
+                      className="tool-btn ms:flex ms:items-center ms:gap-2 ms:px-3 ms:py-2 ms:text-sm ms:text-left ms:rounded-md ms:bg-msbackground ms:text-mstext ms:border ms:border-transparent ms:transition-colors ms:hover:bg-msprimary/10 ms:hover:border-msprimary/40 ms:hover:text-msprimary ms:cursor-pointer ms:outline-none ms:focus:outline-none ms:focus-visible:ring-2 ms:focus-visible:ring-msprimary"
+                      onClick={() => handleAdd(type)}
+                      title={`Add ${label}`}
+                    >
+                      <span className="tool-btn-plus ms:flex ms:items-center ms:justify-center ms:w-5 ms:h-5 ms:rounded ms:bg-msbackgroundsecondary ms:text-mstextmuted ms:text-xs ms:font-bold ms:shrink-0">+</span>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 });
