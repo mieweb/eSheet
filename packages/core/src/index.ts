@@ -2,7 +2,26 @@ export {
   // Constants
   SCHEMA_TYPE,
   FIELD_TYPES,
+  TEXT_INPUT_TYPES,
+  EXPRESSION_DISPLAY_FORMATS,
+  CONDITION_OPERATORS,
+  CONDITIONAL_EFFECTS,
   NUMERIC_EXPRESSION_FORMATS,
+
+  // Zod schemas
+  fieldTypeSchema,
+  textInputTypeSchema,
+  expressionDisplayFormatSchema,
+  fieldOptionSchema,
+  matrixRowSchema,
+  matrixColumnSchema,
+  conditionOperatorSchema,
+  conditionalEffectSchema,
+  conditionSchema,
+  conditionalRuleSchema,
+  fieldDefinitionSchema,
+  formDefinitionSchema,
+  formDefinitionJSONSchema,
 
   // Types
   type SchemaType,
@@ -66,8 +85,18 @@ export {
 } from './lib/logic/validate.js';
 
 export {
-  createFormEngine,
-  type FormEngineState,
-  type FormEngine,
+  createFormStore,
+  type FormState,
+  type FormStore,
   type AddFieldOptions,
-} from './lib/engine/store.js';
+} from './lib/stores/form-store.js';
+
+export {
+  createUIStore,
+  type UIState,
+  type UIStore,
+  type BuilderMode,
+  type EditTab,
+} from './lib/stores/ui-store.js';
+
+export { type FieldComponentProps } from './lib/field-component-props.js';

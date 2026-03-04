@@ -33,6 +33,10 @@ export default [
               sourceTag: 'scope:builder',
               onlyDependOnLibsWithTags: ['scope:core', 'scope:builder'],
             },
+            {
+              sourceTag: 'scope:fields',
+              onlyDependOnLibsWithTags: ['scope:core'],
+            },
           ],
         },
       ],

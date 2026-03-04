@@ -1,34 +1,22 @@
 import React, { useSyncExternalStore } from 'react';
-import type { FieldDefinition, FieldNode } from '@msheet/core';
-import type { FormEngine } from '@msheet/core';
-import type { UIStore } from '../ui-store.js';
+import type { FieldDefinition, FieldResponse, FieldComponentProps } from '@msheet/core';
+import type { FormStore } from '@msheet/core';
+import type { UIStore } from '@msheet/core';
 import { useSelectedFieldId } from '../hooks/useSelectedFieldId.js';
 
 /**
  * Props exposed to the render function for custom field components.
- * This is the extensibility API that allows users to create custom fields.
+ * Identical to `FieldComponentProps` from core — kept as a named alias for
+ * backward-compatibility with existing builder consumers.
  */
-export interface FieldWrapperRenderProps {
-  /** The field node (contains definition + metadata) */
-  field: FieldNode;
-  /** The form engine instance */
-  engine: FormEngine;
-  /** The UI store instance */
-  ui: UIStore;
-  /** Whether this field is currently selected */
-  isSelected: boolean;
-  /** Callback to remove this field */
-  onRemove: () => void;
-  /** Callback to update this field */
-  onUpdate: (patch: Partial<Omit<FieldDefinition, 'fields'>>) => void;
-}
+export type FieldWrapperRenderProps = FieldComponentProps;
 
 export interface FieldWrapperProps {
   /** The field ID */
   fieldId: string;
-  /** The form engine instance */
-  engine: FormEngine;
-  /** The UI store instance */
+  /** The form store */
+  form: FormStore;
+  /** The UI store */
   ui: UIStore;
   /** Drag handle attributes from @dnd-kit (optional) */
   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
@@ -49,7 +37,7 @@ export interface FieldWrapperProps {
  * 
  * @example
  * ```tsx
- * <FieldWrapper fieldId={id} engine={engine} ui={ui}>
+ * <FieldWrapper fieldId={id} form={form} ui={ui}>
  *   {({ field, onUpdate, onRemove }) => (
  *     <div>
  *       <input 
@@ -63,7 +51,7 @@ export interface FieldWrapperProps {
  */
 export function FieldWrapper({
   fieldId,
-  engine,
+  form,
   ui,
   dragHandleProps,
   dragListeners,
@@ -71,12 +59,23 @@ export function FieldWrapper({
   children,
 }: FieldWrapperProps) {
   const field = useSyncExternalStore(
-    (cb) => engine.subscribe(cb),
-    () => engine.getState().getField(fieldId),
-    () => engine.getState().getField(fieldId),
+    (cb) => form.subscribe(cb),
+    () => form.getState().getField(fieldId),
+    () => form.getState().getField(fieldId),
+  );
+  const response = useSyncExternalStore(
+    (cb) => form.subscribe(cb),
+    () => form.getState().getResponse(fieldId),
+    () => form.getState().getResponse(fieldId),
+  );
+  const mode = useSyncExternalStore(
+    (cb) => ui.subscribe(cb),
+    () => ui.getState().mode,
+    () => ui.getState().mode,
   );
   const selectedFieldId = useSelectedFieldId(ui);
-  const isSelected = selectedFieldId === fieldId;
+  const isPreview = mode === 'preview';
+  const isSelected = !isPreview && selectedFieldId === fieldId;
 
   // Handlers
   const handleSelect = React.useCallback(
@@ -88,20 +87,47 @@ export function FieldWrapper({
   );
 
   const handleRemove = React.useCallback(() => {
-    engine.getState().removeField(fieldId);
-  }, [engine, fieldId]);
+    form.getState().removeField(fieldId);
+  }, [form, fieldId]);
 
   const handleUpdate = React.useCallback(
     (patch: Partial<Omit<FieldDefinition, 'fields'>>) => {
-      engine.getState().updateField(fieldId, patch);
+      form.getState().updateField(fieldId, patch);
     },
-    [engine, fieldId]
+    [form, fieldId]
+  );
+
+  const handleResponse = React.useCallback(
+    (resp: FieldResponse) => {
+      form.getState().setResponse(fieldId, resp);
+    },
+    [form, fieldId]
   );
 
   if (!field) {
     return null;
   }
 
+  // --- Preview mode: minimal chrome, no builder controls ---
+  if (isPreview) {
+    return (
+      <div className="field-wrapper ms:mb-2 ms:p-3 ms:bg-mssurface ms:border ms:border-msborder ms:rounded">
+        {children({
+          field,
+          form,
+          ui,
+          isSelected: false,
+          isPreview: true,
+          response,
+          onRemove: handleRemove,
+          onUpdate: handleUpdate,
+          onResponse: handleResponse,
+        })}
+      </div>
+    );
+  }
+
+  // --- Build mode: full editor chrome ---
   return (
     <div
       className={`field-wrapper ms:relative ms:mb-2 ms:p-3 ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:transition-all ${
@@ -141,11 +167,14 @@ export function FieldWrapper({
         </div>
         {children({
           field,
-          engine,
+          form,
           ui,
           isSelected,
+          isPreview: false,
+          response,
           onRemove: handleRemove,
           onUpdate: handleUpdate,
+          onResponse: handleResponse,
         })}
       </div>
 

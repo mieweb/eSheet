@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// Engine Store — Zustand vanilla store for form state management
+// Form Store — Zustand vanilla store for form state management
 // ---------------------------------------------------------------------------
 
 import { createStore } from 'zustand/vanilla';
@@ -50,9 +50,11 @@ export interface AddFieldOptions {
   patch?: Partial<Omit<FieldDefinition, 'id' | 'fieldType' | 'fields'>>;
 }
 
-/** The full engine state — data + actions + selectors. */
-export interface FormEngineState {
+/** The full form state — data + actions + selectors. */
+export interface FormState {
   // --- Data ---
+  /** Unique instance ID — used to generate unique DOM IDs when multiple engines share a page. */
+  readonly instanceId: string;
   /** Flat-indexed map — the source of truth for field structure. */
   readonly normalized: NormalizedDefinition;
   /** Current responses keyed by field ID. */
@@ -124,8 +126,8 @@ export interface FormEngineState {
   hydrateResponse: () => HydratedResponseItem[];
 }
 
-/** The engine store handle returned by `createFormEngine`. */
-export type FormEngine = StoreApi<FormEngineState>;
+/** The store handle returned by `createFormStore`. */
+export type FormStore = StoreApi<FormState>;
 
 // ---------------------------------------------------------------------------
 // Empty normalized definition (used before any definition is loaded).
@@ -193,11 +195,11 @@ function collectDescendants(
 }
 
 // ---------------------------------------------------------------------------
-// createFormEngine()
+// createFormStore()
 // ---------------------------------------------------------------------------
 
 /**
- * Create a new form engine store.
+ * Create a new form store.
  *
  * Returns a Zustand vanilla `StoreApi` — call `.getState()` to read,
  * `.setState()` to write, and `.subscribe()` to react to changes.
@@ -212,9 +214,12 @@ function collectDescendants(
  *
  * @param initial - Optional initial form definition to load immediately.
  */
-export function createFormEngine(initial?: FormDefinition): FormEngine {
-  return createStore<FormEngineState>()((set, get) => ({
+let nextInstanceId = 1;
+
+export function createFormStore(initial?: FormDefinition): FormStore {
+  return createStore<FormState>()((set, get) => ({
     // --- Data ---
+    instanceId: `ms-${nextInstanceId++}`,
     normalized: initial
       ? normalizeDefinition(initial.fields)
       : EMPTY_NORMALIZED,

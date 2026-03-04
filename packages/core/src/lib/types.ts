@@ -1,3 +1,5 @@
+import { z } from 'zod/mini';
+
 // ---------------------------------------------------------------------------
 // Schema Version
 // ---------------------------------------------------------------------------
@@ -34,7 +36,8 @@ export const FIELD_TYPES = [
   'section',
 ] as const;
 
-export type FieldType = (typeof FIELD_TYPES)[number];
+export const fieldTypeSchema = z.enum(FIELD_TYPES);
+export type FieldType = z.infer<typeof fieldTypeSchema>;
 
 /** Category groupings for field types. */
 export type FieldCategory =
@@ -73,27 +76,35 @@ export type AnswerType =
 // Input Types (for text field variants)
 // ---------------------------------------------------------------------------
 
-export type TextInputType =
-  | 'string'
-  | 'number'
-  | 'email'
-  | 'tel'
-  | 'date'
-  | 'datetime-local'
-  | 'month'
-  | 'time'
-  | 'url';
+export const TEXT_INPUT_TYPES = [
+  'string',
+  'number',
+  'email',
+  'tel',
+  'date',
+  'datetime-local',
+  'month',
+  'time',
+  'url',
+] as const;
+
+export const textInputTypeSchema = z.enum(TEXT_INPUT_TYPES);
+export type TextInputType = z.infer<typeof textInputTypeSchema>;
 
 // ---------------------------------------------------------------------------
 // Expression Display Formats
 // ---------------------------------------------------------------------------
 
-export type ExpressionDisplayFormat =
-  | 'number'
-  | 'currency'
-  | 'percentage'
-  | 'boolean'
-  | 'string';
+export const EXPRESSION_DISPLAY_FORMATS = [
+  'number',
+  'currency',
+  'percentage',
+  'boolean',
+  'string',
+] as const;
+
+export const expressionDisplayFormatSchema = z.enum(EXPRESSION_DISPLAY_FORMATS);
+export type ExpressionDisplayFormat = z.infer<typeof expressionDisplayFormatSchema>;
 
 /** Display formats that produce numeric results. */
 export const NUMERIC_EXPRESSION_FORMATS: readonly ExpressionDisplayFormat[] = [
@@ -107,23 +118,26 @@ export const NUMERIC_EXPRESSION_FORMATS: readonly ExpressionDisplayFormat[] = [
 // ---------------------------------------------------------------------------
 
 /** A selectable option in a choice field (radio, check, dropdown, etc.). */
-export interface FieldOption {
-  readonly id: string;
-  value: string;
-  text?: string;
-}
+export const fieldOptionSchema = z.object({
+  id: z.string(),
+  value: z.string(),
+  text: z.optional(z.string()),
+});
+export type FieldOption = z.infer<typeof fieldOptionSchema>;
 
 /** A row in a matrix field. */
-export interface MatrixRow {
-  readonly id: string;
-  value: string;
-}
+export const matrixRowSchema = z.object({
+  id: z.string(),
+  value: z.string(),
+});
+export type MatrixRow = z.infer<typeof matrixRowSchema>;
 
 /** A column in a matrix field. */
-export interface MatrixColumn {
-  readonly id: string;
-  value: string;
-}
+export const matrixColumnSchema = z.object({
+  id: z.string(),
+  value: z.string(),
+});
+export type MatrixColumn = z.infer<typeof matrixColumnSchema>;
 
 // ---------------------------------------------------------------------------
 // Conditional Logic (rules)
@@ -131,42 +145,50 @@ export interface MatrixColumn {
 
 export type LogicMode = 'AND' | 'OR';
 
-export type ConditionOperator =
-  | 'equals'
-  | 'notEquals'
-  | 'contains'
-  | 'includes'
-  | 'empty'
-  | 'notEmpty'
-  | 'greaterThan'
-  | 'greaterThanOrEqual'
-  | 'lessThan'
-  | 'lessThanOrEqual';
+export const CONDITION_OPERATORS = [
+  'equals',
+  'notEquals',
+  'contains',
+  'includes',
+  'empty',
+  'notEmpty',
+  'greaterThan',
+  'greaterThanOrEqual',
+  'lessThan',
+  'lessThanOrEqual',
+] as const;
+
+export const conditionOperatorSchema = z.enum(CONDITION_OPERATORS);
+export type ConditionOperator = z.infer<typeof conditionOperatorSchema>;
 
 /** What effect a conditional rule has on the field. */
-export type ConditionalEffect = 'visible' | 'enable' | 'required';
+export const CONDITIONAL_EFFECTS = ['visible', 'enable', 'required'] as const;
+export const conditionalEffectSchema = z.enum(CONDITIONAL_EFFECTS);
+export type ConditionalEffect = z.infer<typeof conditionalEffectSchema>;
 
 /** A single condition that evaluates a target field's response. */
-export interface Condition {
+export const conditionSchema = z.object({
   /** The field ID whose response is evaluated. */
-  targetId: string;
+  targetId: z.string(),
   /** Comparison operator. */
-  operator: ConditionOperator;
-  /** The expected value to compare against (option ID for choice fields, text for text fields). */
-  expected: string;
+  operator: conditionOperatorSchema,
+  /** The expected value to compare against. */
+  expected: z.string(),
   /** Optional property accessor (e.g. 'length', 'count'). */
-  propertyAccessor?: string;
-}
+  propertyAccessor: z.optional(z.string()),
+});
+export type Condition = z.infer<typeof conditionSchema>;
 
 /** A conditional rule that controls a field's behavior based on other fields' responses. */
-export interface ConditionalRule {
+export const conditionalRuleSchema = z.object({
   /** What effect this rule has on the field. */
-  effect: ConditionalEffect;
+  effect: conditionalEffectSchema,
   /** How multiple conditions are combined. */
-  logic: LogicMode;
+  logic: z.enum(['AND', 'OR']),
   /** One or more conditions to evaluate. */
-  conditions: Condition[];
-}
+  conditions: z.array(conditionSchema),
+});
+export type ConditionalRule = z.infer<typeof conditionalRuleSchema>;
 
 // ---------------------------------------------------------------------------
 // Field Definition (structure only — no response values)
@@ -175,62 +197,71 @@ export interface ConditionalRule {
 /**
  * A form field's structure and configuration.
  *
- * This is a "wide" interface — not every property is relevant to every
+ * This is a "wide" schema — not every property is relevant to every
  * field type. Type-specific properties are optional and only meaningful
  * when matched with the corresponding `fieldType`.
  */
-export interface FieldDefinition {
+export const fieldDefinitionSchema: z.ZodMiniType<FieldDefinition> = z.object({
   /** Unique identifier within the form. */
-  id: string;
+  id: z.string(),
   /** Determines rendering and behavior. */
-  fieldType: FieldType;
+  fieldType: fieldTypeSchema,
   /** The question / label shown to the user (all types except section). */
-  question?: string;
-  /** Whether a response is required (can be overridden by a 'required' conditional rule). */
-  required?: boolean;
+  question: z.optional(z.string()),
+  /** Whether a response is required. */
+  required: z.optional(z.boolean()),
   /** Conditional rules that control visibility, enabled state, or required state. */
-  rules?: ConditionalRule[];
+  rules: z.optional(z.array(conditionalRuleSchema)),
 
   // --- Text fields ---
-  /** HTML input type variant (text field only). */
-  inputType?: TextInputType;
-  /** Unit label shown beside the input (text field only). */
-  unit?: string;
+  inputType: z.optional(textInputTypeSchema),
+  unit: z.optional(z.string()),
 
-  // --- Choice fields (radio, check, dropdown, rating, ranking, slider, multitext) ---
-  /** Available options to choose from. */
-  options?: FieldOption[];
+  // --- Choice fields ---
+  options: z.optional(z.array(fieldOptionSchema)),
 
-  // --- Matrix fields (singlematrix, multimatrix) ---
-  /** Row definitions for matrix fields. */
-  rows?: MatrixRow[];
-  /** Column definitions for matrix fields. */
-  columns?: MatrixColumn[];
+  // --- Matrix fields ---
+  rows: z.optional(z.array(matrixRowSchema)),
+  columns: z.optional(z.array(matrixColumnSchema)),
 
   // --- Rich content ---
-  /** Raw HTML content (html field). */
-  htmlContent?: string;
-  /** Image URI (image field). */
-  imageUri?: string;
+  htmlContent: z.optional(z.string()),
+  imageUri: z.optional(z.string()),
 
   // --- Expression fields ---
-  /** Expression formula, e.g. `"{field1} + {field2}"`. */
-  expression?: string;
-  /** How the expression result is formatted. */
-  displayFormat?: ExpressionDisplayFormat;
-  /** Number of decimal places for numeric formats. */
-  decimalPlaces?: number;
+  expression: z.optional(z.string()),
+  displayFormat: z.optional(expressionDisplayFormatSchema),
+  decimalPlaces: z.optional(z.number()),
 
   // --- Section (container) ---
-  /** Section title (used instead of `question`). */
-  title?: string;
-  /** Nested child fields (section only). */
-  fields?: FieldDefinition[];
+  title: z.optional(z.string()),
+  fields: z.optional(z.lazy(() => z.array(fieldDefinitionSchema))),
 
-  // --- Adapter metadata (not user-facing) ---
-  /** Original source data preserved by schema adapter. */
+  // --- Adapter metadata ---
+  _sourceData: z.optional(z.unknown()),
+  _conversionWarnings: z.optional(z.array(z.unknown())),
+});
+
+/** A form field's structure and configuration. */
+export interface FieldDefinition {
+  id: string;
+  fieldType: FieldType;
+  question?: string;
+  required?: boolean;
+  rules?: ConditionalRule[];
+  inputType?: TextInputType;
+  unit?: string;
+  options?: FieldOption[];
+  rows?: MatrixRow[];
+  columns?: MatrixColumn[];
+  htmlContent?: string;
+  imageUri?: string;
+  expression?: string;
+  displayFormat?: ExpressionDisplayFormat;
+  decimalPlaces?: number;
+  title?: string;
+  fields?: FieldDefinition[];
   _sourceData?: unknown;
-  /** Warnings generated during schema conversion. */
   _conversionWarnings?: unknown[];
 }
 
@@ -287,16 +318,17 @@ export interface FieldResponse {
 // ---------------------------------------------------------------------------
 
 /** A complete form definition (no response values). */
-export interface FormDefinition {
-  /** Schema version identifier. */
-  schemaType: SchemaType;
-  /** Form title. */
-  title?: string;
-  /** Form description. */
-  description?: string;
-  /** Ordered list of top-level fields. */
-  fields: FieldDefinition[];
-}
+export const formDefinitionSchema = z.object({
+  schemaType: z.literal(SCHEMA_TYPE),
+  title: z.optional(z.string()),
+  description: z.optional(z.string()),
+  fields: z.array(fieldDefinitionSchema),
+});
+export type FormDefinition = z.infer<typeof formDefinitionSchema>;
+
+/** Pre-computed JSON Schema (Draft-07) for FormDefinition — used by builder's Monaco editor. */
+export const formDefinitionJSONSchema: Record<string, unknown> =
+  z.toJSONSchema(formDefinitionSchema) as Record<string, unknown>;
 
 /** Response store — maps field IDs to their response values. */
 export type FormResponse = Record<string, FieldResponse>;

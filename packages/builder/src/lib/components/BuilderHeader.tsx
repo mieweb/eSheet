@@ -1,9 +1,9 @@
 import React, { useSyncExternalStore } from 'react';
-import type { FormEngine } from '@msheet/core';
+import type { FormStore } from '@msheet/core';
 import type { UIStore, BuilderMode } from '../ui-store.js';
 
 export interface BuilderHeaderProps {
-  engine: FormEngine;
+  form: FormStore;
   ui: UIStore;
 }
 
@@ -16,7 +16,7 @@ const MODES: { value: BuilderMode; label: string }[] = [
 /**
  * BuilderHeader — top bar with Build/Code/Preview mode toggle and Import/Export actions.
  */
-export function BuilderHeader({ engine, ui }: BuilderHeaderProps) {
+export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const mode = useSyncExternalStore(
@@ -32,7 +32,7 @@ export function BuilderHeader({ engine, ui }: BuilderHeaderProps) {
   );
 
   const handleExport = () => {
-    const definition = engine.getState().hydrateDefinition();
+    const definition = form.getState().hydrateDefinition();
     const json = JSON.stringify(definition, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -50,7 +50,7 @@ export function BuilderHeader({ engine, ui }: BuilderHeaderProps) {
     reader.onload = (ev) => {
       try {
         const parsed = JSON.parse(ev.target?.result as string);
-        engine.getState().loadDefinition(parsed);
+        form.getState().loadDefinition(parsed);
       } catch {
         // TODO: surface parse error to user
       }

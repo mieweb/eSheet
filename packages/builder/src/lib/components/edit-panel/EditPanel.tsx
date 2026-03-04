@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import { getFieldTypeMeta, type FormEngine } from '@msheet/core';
+import { getFieldTypeMeta, type FormStore } from '@msheet/core';
 import type { UIStore, EditTab } from '../../ui-store.js';
 import { useInstanceId } from '../../MsheetBuilder.js';
 import { DraftIdEditor } from './DraftIdEditor.js';
@@ -8,7 +8,7 @@ import { OptionListEditor } from './OptionListEditor.js';
 import { MatrixEditor } from './MatrixEditor.js';
 
 export interface EditPanelProps {
-  engine: FormEngine;
+  form: FormStore;
   ui: UIStore;
 }
 
@@ -18,7 +18,7 @@ export interface EditPanelProps {
  * Shows Edit tab (common + per-type editors) and Logic tab (placeholder for now).
  * Renders nothing meaningful when no field is selected.
  */
-export function EditPanel({ engine, ui }: EditPanelProps) {
+export function EditPanel({ form, ui }: EditPanelProps) {
   // Subscribe to UI state for selected field + active tab
   const selectedFieldId = useSyncExternalStore(
     (cb) => ui.subscribe(cb),
@@ -32,11 +32,11 @@ export function EditPanel({ engine, ui }: EditPanelProps) {
     () => ui.getState().editTab,
   );
 
-  // Subscribe to engine so we re-render when the field definition changes
+  // Subscribe to form so we re-render when the field definition changes
   const field = useSyncExternalStore(
-    (cb) => engine.subscribe(cb),
-    () => (selectedFieldId ? engine.getState().getField(selectedFieldId) : undefined),
-    () => (selectedFieldId ? engine.getState().getField(selectedFieldId) : undefined),
+    (cb) => form.subscribe(cb),
+    () => (selectedFieldId ? form.getState().getField(selectedFieldId) : undefined),
+    () => (selectedFieldId ? form.getState().getField(selectedFieldId) : undefined),
   );
 
   // No selection
@@ -52,11 +52,11 @@ export function EditPanel({ engine, ui }: EditPanelProps) {
   const meta = getFieldTypeMeta(def.fieldType);
 
   const handleUpdate = (patch: Partial<Omit<import('@msheet/core').FieldDefinition, 'fields'>>) => {
-    engine.getState().updateField(selectedFieldId, patch);
+    form.getState().updateField(selectedFieldId, patch);
   };
 
   const handleRenameId = (newId: string): boolean => {
-    const success = engine.getState().updateField(selectedFieldId, { id: newId });
+    const success = form.getState().updateField(selectedFieldId, { id: newId });
     if (success) {
       ui.getState().selectField(newId);
     }
@@ -100,7 +100,7 @@ export function EditPanel({ engine, ui }: EditPanelProps) {
             fieldId={selectedFieldId}
             def={def}
             meta={meta}
-            engine={engine}
+            form={form}
             onUpdate={handleUpdate}
             onRenameId={handleRenameId}
           />
@@ -120,12 +120,12 @@ interface EditTabContentProps {
   fieldId: string;
   def: Omit<import('@msheet/core').FieldDefinition, 'fields'>;
   meta: import('@msheet/core').FieldTypeMeta | undefined;
-  engine: FormEngine;
+  form: FormStore;
   onUpdate: (patch: Partial<Omit<import('@msheet/core').FieldDefinition, 'fields'>>) => void;
   onRenameId: (newId: string) => boolean;
 }
 
-function EditTabContent({ fieldId, def, meta, engine, onUpdate, onRenameId }: EditTabContentProps) {
+function EditTabContent({ fieldId, def, meta, form, onUpdate, onRenameId }: EditTabContentProps) {
   const isSection = def.fieldType === 'section';
 
   if (isSection) {
@@ -148,7 +148,7 @@ function EditTabContent({ fieldId, def, meta, engine, onUpdate, onRenameId }: Ed
           fieldId={fieldId}
           fieldType={def.fieldType}
           options={def.options}
-          engine={engine}
+          form={form}
         />
       )}
 
@@ -158,7 +158,7 @@ function EditTabContent({ fieldId, def, meta, engine, onUpdate, onRenameId }: Ed
           fieldId={fieldId}
           rows={def.rows ?? []}
           columns={def.columns ?? []}
-          engine={engine}
+          form={form}
         />
       )}
     </div>

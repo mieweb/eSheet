@@ -4,5 +4,8 @@
   "private": true,
   "nx": {
     "name": "builder-app"
+  },
+  "dependencies": {
+    "@msheet/fields": "^0.0.1"
   }
 }

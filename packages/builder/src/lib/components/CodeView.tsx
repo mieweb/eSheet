@@ -1,13 +1,11 @@
 import React from 'react';
 import { Editor, type Monaco } from '@monaco-editor/react';
-import { configureMonacoYaml } from 'monaco-yaml';
 import YAML from 'js-yaml';
-import type { FormEngine } from '@msheet/core';
+import type { FormStore } from '@msheet/core';
+import { formDefinitionJSONSchema } from '@msheet/core';
 import type { UIStore } from '../ui-store.js';
-import {
-  formDefinitionSchema,
-  FORM_SCHEMA_URI,
-} from '../form-definition-schema.js';
+
+const FORM_SCHEMA_URI = 'inmemory://msheet/form-definition.schema.json';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -16,7 +14,7 @@ import {
 type CodeFormat = 'json' | 'yaml';
 
 export interface CodeViewProps {
-  engine: FormEngine;
+  form: FormStore;
   ui: UIStore;
 }
 
@@ -43,7 +41,7 @@ function parse(text: string, format: CodeFormat): unknown {
  *
  * Serialize on mount, live-validate on edit, auto-save on unmount.
  */
-export function CodeView({ engine, ui }: CodeViewProps) {
+export function CodeView({ form, ui }: CodeViewProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
 
   // Track whether user actually edited (avoids spurious saves from StrictMode double-mount)
@@ -52,7 +50,7 @@ export function CodeView({ engine, ui }: CodeViewProps) {
   const [format, setFormat] = React.useState<CodeFormat>('yaml');
   const initialCode = React.useMemo(() => {
     try {
-      return serialize(engine.getState().hydrateDefinition(), 'yaml');
+      return serialize(form.getState().hydrateDefinition(), 'yaml');
     } catch {
       return '';
     }
@@ -60,7 +58,7 @@ export function CodeView({ engine, ui }: CodeViewProps) {
 
   const codeRef = React.useRef(initialCode);
   const formatRef = React.useRef<CodeFormat>('yaml');
-  const engineRef = React.useRef(engine);
+  const formRef = React.useRef(form);
   const uiRef = React.useRef(ui);
 
   const [code, setCode] = React.useState(initialCode);
@@ -69,7 +67,7 @@ export function CodeView({ engine, ui }: CodeViewProps) {
 
   // Keep refs in sync
   React.useEffect(() => {
-    engineRef.current = engine;
+    formRef.current = form;
     uiRef.current = ui;
     formatRef.current = format;
   });
@@ -94,28 +92,15 @@ export function CodeView({ engine, ui }: CodeViewProps) {
 
   // --- Handlers ---
 
-  /** Register JSON + YAML schemas before Monaco creates the editor. */
+  /** Register JSON schema IntelliSense before Monaco creates the editor. */
   const handleBeforeMount = (monaco: Monaco) => {
-    // JSON schema IntelliSense
     monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
       validate: true,
       schemas: [
         {
           uri: FORM_SCHEMA_URI,
           fileMatch: ['*'],
-          schema: formDefinitionSchema as Record<string, unknown>,
-        },
-      ],
-    });
-
-    // YAML schema IntelliSense (via monaco-yaml)
-    configureMonacoYaml(monaco, {
-      validate: true,
-      schemas: [
-        {
-          uri: FORM_SCHEMA_URI,
-          fileMatch: ['*'],
-          schema: formDefinitionSchema as Record<string, unknown>,
+          schema: formDefinitionJSONSchema,
         },
       ],
     });
@@ -162,12 +147,12 @@ export function CodeView({ engine, ui }: CodeViewProps) {
       if (!dirtyRef.current) return;
 
       const text = codeRef.current.trim();
-      const eng = engineRef.current;
+      const fs = formRef.current;
       const uiApi = uiRef.current;
       const fmt = formatRef.current;
 
       if (!text) {
-        eng.getState().loadDefinition({ schemaType: 'mieforms-v1.0', fields: [] });
+        fs.getState().loadDefinition({ schemaType: 'mieforms-v1.0', fields: [] });
         return;
       }
 
@@ -176,10 +161,10 @@ export function CodeView({ engine, ui }: CodeViewProps) {
         if (!parsed || typeof parsed !== 'object') return;
 
         // Only save if different from current definition
-        const current = eng.getState().hydrateDefinition();
+        const current = fs.getState().hydrateDefinition();
         if (JSON.stringify(current) === JSON.stringify(parsed)) return;
 
-        eng.getState().loadDefinition(parsed as Parameters<ReturnType<typeof eng.getState>['loadDefinition']>[0]);
+        fs.getState().loadDefinition(parsed as Parameters<ReturnType<typeof fs.getState>['loadDefinition']>[0]);
         uiApi.getState().setCodeEditorHasError(false);
       } catch {
         // Error already shown in the editor header — don't push invalid data

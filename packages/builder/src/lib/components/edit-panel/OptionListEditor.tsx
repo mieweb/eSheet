@@ -1,28 +1,28 @@
 import React from 'react';
-import type { FormEngine, FieldOption } from '@msheet/core';
+import type { FormStore, FieldOption } from '@msheet/core';
 import { useInstanceId } from '../../MsheetBuilder.js';
 
 export interface OptionListEditorProps {
   fieldId: string;
   fieldType: string;
   options: readonly FieldOption[];
-  engine: FormEngine;
+  form: FormStore;
 }
 
 /**
  * OptionListEditor — add / edit / remove options for choice fields.
  *
  * Disables delete for boolean (fixed Yes/No).
- * Uses engine.addOption / updateOption / removeOption directly.
+ * Uses form.addOption / updateOption / removeOption directly.
  */
-export function OptionListEditor({ fieldId, fieldType, options, engine }: OptionListEditorProps) {
+export function OptionListEditor({ fieldId, fieldType, options, form }: OptionListEditorProps) {
   const instanceId = useInstanceId();
   const listRef = React.useRef<HTMLDivElement>(null);
   const isBoolean = fieldType === 'boolean';
   const label = fieldType === 'multitext' ? 'Text Inputs' : 'Options';
 
   const handleAdd = () => {
-    engine.getState().addOption(fieldId);
+    form.getState().addOption(fieldId);
     // Scroll to bottom after render
     requestAnimationFrame(() => {
       if (listRef.current) {
@@ -57,14 +57,14 @@ export function OptionListEditor({ fieldId, fieldType, options, engine }: Option
               aria-label={`Option ${idx + 1}`}
               type="text"
               value={opt.value}
-              onChange={(e) => engine.getState().updateOption(fieldId, opt.id, e.currentTarget.value)}
+              onChange={(e) => form.getState().updateOption(fieldId, opt.id, e.currentTarget.value)}
               placeholder={`Option ${idx + 1}`}
               className="ms:flex-1 ms:min-w-0 ms:px-2 ms:py-1 ms:text-sm ms:bg-transparent ms:border ms:border-msborder ms:rounded ms:text-mstext placeholder:ms:text-mstextmuted focus:ms:outline-none focus:ms:ring-2 focus:ms:ring-msprimary focus:ms:border-msprimary"
             />
             {!isBoolean && (
               <button
                 type="button"
-                onClick={() => engine.getState().removeOption(fieldId, opt.id)}
+                onClick={() => form.getState().removeOption(fieldId, opt.id)}
                 aria-label={`Remove option ${idx + 1}`}
                 className="remove-option-btn ms:p-1 ms:rounded ms:bg-transparent ms:text-mstextmuted ms:hover:text-msdanger ms:border-0 ms:outline-none focus:ms:outline-none ms:shrink-0"
               >

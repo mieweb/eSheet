@@ -18,7 +18,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { restrictToVerticalAxis, restrictToParentElement } from '@dnd-kit/modifiers';
-import type { FormEngine } from '@msheet/core';
+import type { FormStore } from '@msheet/core';
 import type { UIStore } from '../ui-store.js';
 import { useVisibleFields } from '../hooks/useVisibleFields.js';
 import { FieldWrapper } from './FieldWrapper.js';
@@ -26,9 +26,9 @@ import { FieldItem } from './FieldItem.js';
 import { getFieldComponent } from '../component-registry.js';
 
 export interface CanvasProps {
-  /** The form engine instance */
-  engine: FormEngine;
-  /** The UI store instance */
+  /** The form store */
+  form: FormStore;
+  /** The UI store */
   ui: UIStore;
   /** Whether drag-and-drop reordering is enabled (default: true) */
   dragEnabled?: boolean;
@@ -39,11 +39,11 @@ export interface CanvasProps {
  */
 function SortableFieldItem({
   id,
-  engine,
+  form,
   ui,
 }: {
   id: string;
-  engine: FormEngine;
+  form: FormStore;
   ui: UIStore;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -59,7 +59,7 @@ function SortableFieldItem({
     <div ref={setNodeRef} style={style}>
       <FieldWrapper
         fieldId={id}
-        engine={engine}
+        form={form}
         ui={ui}
         dragHandleProps={attributes}
         dragListeners={listeners}
@@ -80,8 +80,8 @@ function SortableFieldItem({
  * Displays all root-level fields in a sortable vertical list.
  * Uses @dnd-kit for drag-and-drop reordering.
  */
-export const Canvas = React.memo(function Canvas({ engine, ui, dragEnabled = true }: CanvasProps) {
-  const rootIds = useVisibleFields(engine);
+export const Canvas = React.memo(function Canvas({ form, ui, dragEnabled = true }: CanvasProps) {
+  const rootIds = useVisibleFields(form);
   // Convert readonly array to mutable array for SortableContext
   const items = React.useMemo(() => [...rootIds], [rootIds]);
 
@@ -115,11 +115,11 @@ export const Canvas = React.memo(function Canvas({ engine, ui, dragEnabled = tru
 
         if (oldIndex !== -1 && newIndex !== -1) {
           // Move to root level at the new index
-          engine.getState().moveField(active.id as string, newIndex, null);
+          form.getState().moveField(active.id as string, newIndex, null);
         }
       }
     },
-    [engine, items]
+    [form, items]
   );
 
   // Clear selection when clicking canvas background
@@ -145,7 +145,7 @@ export const Canvas = React.memo(function Canvas({ engine, ui, dragEnabled = tru
   const fieldList = (
     <div className="canvas-fields ms:space-y-0" onClick={handleCanvasClick}>
       {items.map((id) => (
-        <SortableFieldItem key={id} id={id} engine={engine} ui={ui} />
+        <SortableFieldItem key={id} id={id} form={form} ui={ui} />
       ))}
     </div>
   );

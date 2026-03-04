@@ -1,6 +1,5 @@
 import type React from 'react';
-import { registerFieldType, type FieldTypeMeta } from '@msheet/core';
-import type { FieldWrapperRenderProps } from './components/FieldWrapper.js';
+import { registerFieldType, type FieldTypeMeta, type FieldComponentProps } from '@msheet/core';
 
 // ---------------------------------------------------------------------------
 // Builder Component Registry
@@ -9,13 +8,18 @@ import type { FieldWrapperRenderProps } from './components/FieldWrapper.js';
 // Sits alongside core's FieldTypeMeta registry (which is framework-agnostic).
 // ---------------------------------------------------------------------------
 
-type FieldComponent = React.ComponentType<FieldWrapperRenderProps>;
+type FieldComponent = React.ComponentType<FieldComponentProps>;
 
 const componentRegistry = new Map<string, FieldComponent>();
 
 /** Look up the builder component for a field type. Returns undefined if none registered. */
 export function getFieldComponent(key: string): FieldComponent | undefined {
   return componentRegistry.get(key);
+}
+
+/** Returns the field type keys that have a registered React component. */
+export function getRegisteredComponentKeys(): string[] {
+  return [...componentRegistry.keys()];
 }
 
 /**

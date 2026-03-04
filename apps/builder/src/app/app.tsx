@@ -1,6 +1,28 @@
 import { useState } from 'react';
-import { MsheetBuilder } from '@msheet/builder';
+import { MsheetBuilder, registerBuilderComponents } from '@msheet/builder';
+import {
+  TextField,
+  LongTextField,
+  MultiTextField,
+  RadioField,
+  CheckField,
+  BooleanField,
+  DropdownField,
+  MultiSelectDropdownField,
+} from '@msheet/fields';
 import type { FormDefinition } from '@msheet/core';
+
+// Register field components once at module scope
+registerBuilderComponents({
+  text: TextField,
+  longtext: LongTextField,
+  multitext: MultiTextField,
+  radio: RadioField,
+  check: CheckField,
+  boolean: BooleanField,
+  dropdown: DropdownField,
+  multiselect: MultiSelectDropdownField,
+});
 
 export function App() {
   const [definition, setDefinition] = useState<FormDefinition>({

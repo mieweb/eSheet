@@ -1,5 +1,5 @@
 import { render, cleanup, act } from '@testing-library/react';
-import { MsheetBuilder, useEngine, useUI } from './MsheetBuilder.js';
+import { MsheetBuilder, useFormStore, useUI } from './MsheetBuilder.js';
 
 afterEach(cleanup);
 
@@ -16,8 +16,8 @@ describe('MsheetBuilder', () => {
     let engineFields: readonly string[] = [];
 
     function Inspector() {
-      const engine = useEngine();
-      engineFields = engine.getState().normalized.rootIds;
+      const form = useFormStore();
+      engineFields = form.getState().normalized.rootIds;
       return null;
     }
 
@@ -36,12 +36,12 @@ describe('MsheetBuilder', () => {
     expect(engineFields).toContain('q1');
   });
 
-  it('should fire onChange when engine updates', () => {
+  it('should fire onChange when form updates', () => {
     const changes: unknown[] = [];
-    let engine: ReturnType<typeof useEngine> | null = null;
+    let form: ReturnType<typeof useFormStore> | null = null;
 
     function Capture() {
-      engine = useEngine();
+      form = useFormStore();
       return null;
     }
 
@@ -52,7 +52,7 @@ describe('MsheetBuilder', () => {
     );
 
     act(() => {
-      engine!.getState().loadDefinition({
+      form!.getState().loadDefinition({
         schemaType: 'mieforms-v1.0',
         fields: [{ id: 'f1', fieldType: 'text' }],
       });
@@ -61,14 +61,14 @@ describe('MsheetBuilder', () => {
     expect(changes.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('should provide engine and ui via context hooks', () => {
-    let hasEngine = false;
+  it('should provide form and ui via context hooks', () => {
+    let hasForm = false;
     let hasUI = false;
 
     function Inspector() {
-      const engine = useEngine();
+      const form = useFormStore();
       const ui = useUI();
-      hasEngine = !!engine;
+      hasForm = !!form;
       hasUI = !!ui;
       return null;
     }
@@ -79,7 +79,7 @@ describe('MsheetBuilder', () => {
       </MsheetBuilder>
     );
 
-    expect(hasEngine).toBe(true);
+    expect(hasForm).toBe(true);
     expect(hasUI).toBe(true);
   });
 });

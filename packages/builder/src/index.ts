@@ -1,19 +1,21 @@
 import './index.output.css';
 
+// Re-export UIStore from core for backward compat
 export {
   createUIStore,
   type UIState,
   type UIStore,
   type BuilderMode,
   type EditTab,
-} from './lib/ui-store.js';
+  type FieldComponentProps,
+} from '@msheet/core';
 
 export {
   MsheetBuilder,
-  EngineContext,
+  FormStoreContext,
   UIContext,
   InstanceIdContext,
-  useEngine,
+  useFormStore,
   useUI,
   useInstanceId,
   type MsheetBuilderProps,
@@ -27,7 +29,9 @@ export {
 
 export {
   registerBuilderFieldTypes,
+  registerBuilderComponents,
   getFieldComponent,
+  getRegisteredComponentKeys,
   resetComponentRegistry,
 } from './lib/component-registry.js';
 

@@ -2,15 +2,15 @@ import React from 'react';
 import {
   getRegisteredFieldTypes,
   getFieldTypeMeta,
-  type FormEngine,
+  type FormStore,
   type FieldType,
 } from '@msheet/core';
 import type { UIStore } from '../ui-store.js';
 
 export interface ToolPanelProps {
-  /** The form engine instance */
-  engine: FormEngine;
-  /** The UI store instance */
+  /** The form store */
+  form: FormStore;
+  /** The UI store */
   ui: UIStore;
 }
 
@@ -24,11 +24,14 @@ const CATEGORY_LABELS: Record<string, string> = {
   organization: 'Organization',
 };
 
-/** Build category → field type[] map from the registry. */
+import { getFieldComponent } from '../component-registry.js';
+
+/** Build category → field type[] map from the registry. Only includes types with a registered React component. */
 function buildCategories(): Record<string, { type: string; label: string }[]> {
   const result: Record<string, { type: string; label: string }[]> = {};
 
   for (const type of getRegisteredFieldTypes()) {
+    if (!getFieldComponent(type)) continue;
     const meta = getFieldTypeMeta(type);
     if (!meta) continue;
     const cat = meta.category ?? 'other';
@@ -43,23 +46,23 @@ function buildCategories(): Record<string, { type: string; label: string }[]> {
 /**
  * ToolPanel - Left panel listing available field types.
  *
- * Clicking a button calls `engine.addField(type)` and auto-selects
+ * Clicking a button calls `form.addField(type)` and auto-selects
  * the new field. Groups field types by category from the registry.
  */
 export const ToolPanel = React.memo(function ToolPanel({
-  engine,
+  form,
   ui,
 }: ToolPanelProps) {
   const categories = React.useMemo(buildCategories, []);
 
   const handleAdd = React.useCallback(
     (type: string) => {
-      const newId = engine.getState().addField(type as FieldType);
+      const newId = form.getState().addField(type as FieldType);
       if (newId) {
         ui.getState().selectField(newId);
       }
     },
-    [engine, ui]
+    [form, ui]
   );
 
   return (
