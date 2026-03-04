@@ -185,10 +185,10 @@ export function CodeView({ form, ui }: CodeViewProps) {
               key={fmt}
               type="button"
               onClick={() => handleFormatChange(fmt)}
-              className={`format-btn ms:px-3 ms:py-1 ms:rounded-md ms:text-sm ms:font-medium ms:transition-colors ms:border-0 ms:outline-none focus:ms:outline-none ms:cursor-pointer ${
+              className={`format-btn ms:px-3 ms:py-1 ms:rounded-md ms:text-sm ms:font-medium ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ${
                 format === fmt
                   ? 'ms:bg-msprimary ms:text-mstextsecondary ms:shadow-sm'
-                  : 'ms:bg-transparent ms:text-mstextmuted hover:ms:text-mstext hover:ms:bg-mssurface'
+                  : 'ms:bg-transparent ms:text-mstextmuted ms:hover:text-mstext ms:hover:bg-mssurface'
               }`}
             >
               {fmt.toUpperCase()}

@@ -72,14 +72,14 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
             type="button"
             onClick={() => ui.getState().setMode(value)}
             disabled={codeHasError && value !== 'code'}
-            className={`mode-btn ms:px-4 ms:py-1 ms:text-sm ms:font-medium ms:rounded-md ms:border-0 ms:outline-none focus:ms:outline-none ms:transition-colors ${
+            className={`mode-btn ms:px-4 ms:py-1 ms:text-sm ms:font-medium ms:rounded-md ms:border-0 ms:outline-none ms:focus:outline-none ms:transition-colors ${
               codeHasError && value !== 'code'
                 ? 'ms:opacity-50 ms:cursor-not-allowed'
                 : 'ms:cursor-pointer'
             } ${
               mode === value
                 ? 'ms:bg-mssurface ms:text-msprimary ms:shadow-sm'
-                : 'ms:bg-transparent ms:text-mstextmuted hover:ms:text-mstext'
+                : 'ms:bg-transparent ms:text-mstextmuted ms:hover:text-mstext'
             }`}
           >
             {label}
@@ -100,14 +100,14 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className="import-btn ms:px-3 ms:py-1 ms:text-sm ms:bg-transparent ms:border ms:border-msborder ms:rounded ms:text-mstextmuted hover:ms:text-mstext hover:ms:border-mstext ms:outline-none focus:ms:outline-none ms:transition-colors ms:cursor-pointer"
+          className="import-btn ms:px-3 ms:py-1 ms:text-sm ms:bg-transparent ms:border ms:border-msborder ms:rounded ms:text-mstextmuted ms:hover:text-mstext ms:hover:border-mstext ms:outline-none ms:focus:outline-none ms:transition-colors ms:cursor-pointer"
         >
           Import
         </button>
         <button
           type="button"
           onClick={handleExport}
-          className="export-btn ms:px-3 ms:py-1 ms:text-sm ms:bg-msprimary ms:border ms:border-msprimary ms:rounded ms:text-mstextsecondary hover:ms:bg-msprimary/90 ms:outline-none focus:ms:outline-none ms:transition-colors ms:cursor-pointer"
+          className="export-btn ms:px-3 ms:py-1 ms:text-sm ms:bg-msprimary ms:border ms:border-msprimary ms:rounded ms:text-mstextsecondary ms:hover:bg-msprimary/90 ms:outline-none ms:focus:outline-none ms:transition-colors ms:cursor-pointer"
         >
           Export
         </button>

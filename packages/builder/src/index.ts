@@ -1,4 +1,5 @@
 import './index.output.css';
+import './lib/register-defaults.js';
 
 // Re-export UIStore from core for backward compat
 export {

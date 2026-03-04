@@ -113,6 +113,19 @@ If any box is unchecked, **simplify**.
 
 ### React & UI Packages
 
+- **CRITICAL: `ms:` Prefix MUST Come Before Variant Modifiers**: This project uses Tailwind v4 with `prefix(ms)`. The `ms:` prefix must appear **before** any variant modifier (hover, focus, active, sm, md, lg, etc.). Getting this wrong silently breaks styles.
+
+  ```tsx
+  // ✅ CORRECT - ms: before variant
+  <div className="ms:hover:bg-msprimary ms:focus:outline-none ms:sm:grid-cols-2 ms:active:cursor-grabbing ms:group-hover:text-msdanger ms:placeholder:text-mstextmuted">
+
+  // ❌ WRONG - variant before ms: (WILL NOT WORK)
+  <div className="hover:ms:bg-msprimary focus:ms:outline-none sm:ms:grid-cols-2 active:ms:cursor-grabbing group-hover:ms:text-msdanger placeholder:ms:text-mstextmuted">
+
+  // ❌ WRONG - double prefix (WILL NOT WORK)
+  <div className="ms:hover:ms:bg-msprimary">
+  ```
+
 - **ALL Form Inputs Must Have `id` Attributes with `instanceId` Prefix**: Every `<input>`, `<select>`, and `<textarea>` element across **all** UI packages (`@msheet/builder`, `@msheet/renderer`, `@msheet/fields`, or any future package rendering form elements) must have an `id` attribute. Use the `useInstanceId()` hook to ensure IDs are unique when multiple component instances share the same page.
 
   **ID pattern:** `${instanceId}-{purpose}-${fieldId}`

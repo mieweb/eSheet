@@ -26,7 +26,7 @@ export const FieldItem = React.memo(function FieldItem({
           value={def.question || ''}
           onChange={(e) => onUpdate({ question: e.currentTarget.value })}
           placeholder="Enter question..."
-          className="ms:w-full ms:min-w-0 ms:px-2 ms:py-1 ms:bg-transparent ms:border ms:border-msborder ms:rounded ms:text-mstext placeholder:ms:text-mstextmuted focus:ms:outline-none focus:ms:ring-2 focus:ms:ring-msprimary focus:ms:border-msprimary"
+          className="ms:w-full ms:min-w-0 ms:px-2 ms:py-1 ms:bg-transparent ms:border ms:border-msborder ms:rounded ms:text-mstext ms:placeholder:text-mstextmuted ms:focus:outline-none ms:focus:ring-2 ms:focus:ring-msprimary ms:focus:border-msprimary"
         />
       </div>
     </div>

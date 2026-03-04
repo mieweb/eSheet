@@ -39,7 +39,7 @@ export function OptionListEditor({ fieldId, fieldType, options, form }: OptionLi
           <button
             type="button"
             onClick={handleAdd}
-            className="add-option-btn ms:text-xs ms:text-msprimary ms:bg-transparent ms:border-0 ms:outline-none focus:ms:outline-none ms:cursor-pointer ms:hover:underline"
+            className="add-option-btn ms:text-xs ms:text-msprimary ms:bg-transparent ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:hover:underline"
           >
             + Add {fieldType === 'multitext' ? 'Input' : 'Option'}
           </button>
@@ -59,14 +59,14 @@ export function OptionListEditor({ fieldId, fieldType, options, form }: OptionLi
               value={opt.value}
               onChange={(e) => form.getState().updateOption(fieldId, opt.id, e.currentTarget.value)}
               placeholder={`Option ${idx + 1}`}
-              className="ms:flex-1 ms:min-w-0 ms:px-2 ms:py-1 ms:text-sm ms:bg-transparent ms:border ms:border-msborder ms:rounded ms:text-mstext placeholder:ms:text-mstextmuted focus:ms:outline-none focus:ms:ring-2 focus:ms:ring-msprimary focus:ms:border-msprimary"
+              className="ms:flex-1 ms:min-w-0 ms:px-2 ms:py-1 ms:text-sm ms:bg-transparent ms:border ms:border-msborder ms:rounded ms:text-mstext ms:placeholder:text-mstextmuted ms:focus:outline-none ms:focus:ring-2 ms:focus:ring-msprimary ms:focus:border-msprimary"
             />
             {!isBoolean && (
               <button
                 type="button"
                 onClick={() => form.getState().removeOption(fieldId, opt.id)}
                 aria-label={`Remove option ${idx + 1}`}
-                className="remove-option-btn ms:p-1 ms:rounded ms:bg-transparent ms:text-mstextmuted ms:hover:text-msdanger ms:border-0 ms:outline-none focus:ms:outline-none ms:shrink-0"
+                className="remove-option-btn ms:p-1 ms:rounded ms:bg-transparent ms:text-mstextmuted ms:hover:text-msdanger ms:border-0 ms:outline-none ms:focus:outline-none ms:shrink-0"
               >
                 <svg className="ms:w-3.5 ms:h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

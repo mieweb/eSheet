@@ -12,14 +12,14 @@ type IconProps = { className?: string };
 const eq = (a: IconProps, b: IconProps) => a.className === b.className;
 
 // ---------------------------------------------------------------------------
-// Field Wrapper actions
+// Shared icons — re-exported from @msheet/fields
 // ---------------------------------------------------------------------------
 
-export const TrashIcon = React.memo(({ className = '' }: IconProps) => (
-  <svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M4 7h16M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3m-5 5l4 4m0-4l-4 4" />
-  </svg>
-), eq);
+export { TrashIcon, PlusIcon, ArrowUpIcon, ArrowDownIcon, UpDownArrowIcon } from '@msheet/fields';
+
+// ---------------------------------------------------------------------------
+// Field Wrapper actions
+// ---------------------------------------------------------------------------
 
 export const ViewBigIcon = React.memo(({ className = '' }: IconProps) => (
   <svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -162,12 +162,5 @@ export const DragHandleIcon = React.memo(({ className = '' }: IconProps) => (
     <circle cx="15" cy="5" r="1" />
     <circle cx="15" cy="12" r="1" />
     <circle cx="15" cy="19" r="1" />
-  </svg>
-), eq);
-
-export const ArrowDownIcon = React.memo(({ className = '' }: IconProps) => (
-  <svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-    <path d="M6 9l6 6l6 -6" />
   </svg>
 ), eq);

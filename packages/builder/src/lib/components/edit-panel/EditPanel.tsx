@@ -71,7 +71,7 @@ export function EditPanel({ form, ui }: EditPanelProps) {
         <button
           type="button"
           onClick={() => setTab('edit')}
-          className={`edit-tab-btn ms:flex-1 ms:py-2 ms:text-sm ms:font-medium ms:bg-transparent ms:border-0 ms:outline-none focus:ms:outline-none ms:transition-colors ms:cursor-pointer ${
+          className={`edit-tab-btn ms:flex-1 ms:py-2 ms:text-sm ms:font-medium ms:bg-transparent ms:border-0 ms:outline-none ms:focus:outline-none ms:transition-colors ms:cursor-pointer ${
             editTab === 'edit'
               ? 'ms:text-msprimary ms:border-b-2 ms:border-msprimary'
               : 'ms:text-mstextmuted ms:hover:text-mstext'
@@ -82,7 +82,7 @@ export function EditPanel({ form, ui }: EditPanelProps) {
         <button
           type="button"
           onClick={() => setTab('logic')}
-          className={`logic-tab-btn ms:flex-1 ms:py-2 ms:text-sm ms:font-medium ms:bg-transparent ms:border-0 ms:outline-none focus:ms:outline-none ms:transition-colors ms:cursor-pointer ${
+          className={`logic-tab-btn ms:flex-1 ms:py-2 ms:text-sm ms:font-medium ms:bg-transparent ms:border-0 ms:outline-none ms:focus:outline-none ms:transition-colors ms:cursor-pointer ${
             editTab === 'logic'
               ? 'ms:text-msprimary ms:border-b-2 ms:border-msprimary'
               : 'ms:text-mstextmuted ms:hover:text-mstext'
@@ -205,7 +205,7 @@ function SectionEditContent({ fieldId, def, onUpdate, onRenameId }: SectionEditC
           value={def.title ?? ''}
           onChange={(e) => onUpdate({ title: e.currentTarget.value })}
           placeholder="Enter section title..."
-          className="ms:w-full ms:min-w-0 ms:px-2 ms:py-1 ms:text-sm ms:bg-transparent ms:border ms:border-msborder ms:rounded ms:text-mstext placeholder:ms:text-mstextmuted focus:ms:outline-none focus:ms:ring-2 focus:ms:ring-msprimary focus:ms:border-msprimary"
+          className="ms:w-full ms:min-w-0 ms:px-2 ms:py-1 ms:text-sm ms:bg-transparent ms:border ms:border-msborder ms:rounded ms:text-mstext ms:placeholder:text-mstextmuted ms:focus:outline-none ms:focus:ring-2 ms:focus:ring-msprimary ms:focus:border-msprimary"
         />
       </div>
     </div>

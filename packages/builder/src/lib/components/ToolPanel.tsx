@@ -102,7 +102,7 @@ export const ToolPanel = React.memo(function ToolPanel({
               <button
                 key={type}
                 type="button"
-                className="tool-btn ms:px-3 ms:py-2 ms:text-sm ms:text-left ms:border ms:border-msborder ms:rounded ms:bg-mssurface ms:text-mstext ms:transition-colors hover:ms:bg-msprimary/10 hover:ms:border-msprimary/50 hover:ms:text-msprimary ms:cursor-pointer ms:outline-none focus:ms:outline-none focus:ms:ring-2 focus:ms:ring-msprimary"
+                className="tool-btn ms:px-3 ms:py-2 ms:text-sm ms:text-left ms:border ms:border-msborder ms:rounded ms:bg-mssurface ms:text-mstext ms:transition-colors ms:hover:bg-msprimary/10 ms:hover:border-msprimary/50 ms:hover:text-msprimary ms:cursor-pointer ms:outline-none ms:focus:outline-none ms:focus:ring-2 ms:focus:ring-msprimary"
                 onClick={() => handleAdd(type)}
                 title={`Add ${label}`}
               >

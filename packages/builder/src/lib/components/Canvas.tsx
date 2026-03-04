@@ -49,9 +49,10 @@ function SortableFieldItem({
     id,
   });
 
-  const style = {
+  const style: React.CSSProperties = {
     transform: CSS.Translate.toString(transform),
     transition,
+    ...(isDragging ? { position: 'relative', zIndex: 10 } : undefined),
   };
 
   return (

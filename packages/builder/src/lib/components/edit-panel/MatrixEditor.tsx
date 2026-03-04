@@ -45,7 +45,7 @@ export function MatrixEditor({ fieldId, rows, columns, form }: MatrixEditorProps
             <button
               type="button"
               onClick={handleAddRow}
-              className="add-row-btn ms:text-xs ms:text-msprimary ms:bg-transparent ms:border-0 ms:outline-none focus:ms:outline-none ms:cursor-pointer ms:hover:underline"
+              className="add-row-btn ms:text-xs ms:text-msprimary ms:bg-transparent ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:hover:underline"
             >
               + Add Row
             </button>
@@ -67,13 +67,13 @@ export function MatrixEditor({ fieldId, rows, columns, form }: MatrixEditorProps
                 value={row.value}
                 onChange={(e) => form.getState().updateRow(fieldId, row.id, e.currentTarget.value)}
                 placeholder={`Row ${idx + 1}`}
-                className="ms:flex-1 ms:min-w-0 ms:px-2 ms:py-1 ms:text-sm ms:bg-transparent ms:border ms:border-msborder ms:rounded ms:text-mstext placeholder:ms:text-mstextmuted focus:ms:outline-none focus:ms:ring-2 focus:ms:ring-msprimary focus:ms:border-msprimary"
+                className="ms:flex-1 ms:min-w-0 ms:px-2 ms:py-1 ms:text-sm ms:bg-transparent ms:border ms:border-msborder ms:rounded ms:text-mstext ms:placeholder:text-mstextmuted ms:focus:outline-none ms:focus:ring-2 ms:focus:ring-msprimary ms:focus:border-msprimary"
               />
               <button
                 type="button"
                 onClick={() => form.getState().removeRow(fieldId, row.id)}
                 aria-label={`Remove row ${idx + 1}`}
-                className="remove-row-btn ms:p-1 ms:rounded ms:bg-transparent ms:text-mstextmuted ms:hover:text-msdanger ms:border-0 ms:outline-none focus:ms:outline-none ms:shrink-0"
+                className="remove-row-btn ms:p-1 ms:rounded ms:bg-transparent ms:text-mstextmuted ms:hover:text-msdanger ms:border-0 ms:outline-none ms:focus:outline-none ms:shrink-0"
               >
                 <svg className="ms:w-3.5 ms:h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -92,7 +92,7 @@ export function MatrixEditor({ fieldId, rows, columns, form }: MatrixEditorProps
             <button
               type="button"
               onClick={handleAddColumn}
-              className="add-col-btn ms:text-xs ms:text-msprimary ms:bg-transparent ms:border-0 ms:outline-none focus:ms:outline-none ms:cursor-pointer ms:hover:underline"
+              className="add-col-btn ms:text-xs ms:text-msprimary ms:bg-transparent ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:hover:underline"
             >
               + Add Column
             </button>
@@ -114,13 +114,13 @@ export function MatrixEditor({ fieldId, rows, columns, form }: MatrixEditorProps
                 value={col.value}
                 onChange={(e) => form.getState().updateColumn(fieldId, col.id, e.currentTarget.value)}
                 placeholder={`Column ${idx + 1}`}
-                className="ms:flex-1 ms:min-w-0 ms:px-2 ms:py-1 ms:text-sm ms:bg-transparent ms:border ms:border-msborder ms:rounded ms:text-mstext placeholder:ms:text-mstextmuted focus:ms:outline-none focus:ms:ring-2 focus:ms:ring-msprimary focus:ms:border-msprimary"
+                className="ms:flex-1 ms:min-w-0 ms:px-2 ms:py-1 ms:text-sm ms:bg-transparent ms:border ms:border-msborder ms:rounded ms:text-mstext ms:placeholder:text-mstextmuted ms:focus:outline-none ms:focus:ring-2 ms:focus:ring-msprimary ms:focus:border-msprimary"
               />
               <button
                 type="button"
                 onClick={() => form.getState().removeColumn(fieldId, col.id)}
                 aria-label={`Remove column ${idx + 1}`}
-                className="remove-col-btn ms:p-1 ms:rounded ms:bg-transparent ms:text-mstextmuted ms:hover:text-msdanger ms:border-0 ms:outline-none focus:ms:outline-none ms:shrink-0"
+                className="remove-col-btn ms:p-1 ms:rounded ms:bg-transparent ms:text-mstextmuted ms:hover:text-msdanger ms:border-0 ms:outline-none ms:focus:outline-none ms:shrink-0"
               >
                 <svg className="ms:w-3.5 ms:h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

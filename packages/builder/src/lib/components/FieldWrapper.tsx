@@ -154,8 +154,8 @@ export function FieldWrapper({
 
   // Base wrapper classes
   let wrapperClass = isSelected
-    ? 'field-wrapper ms:group ms:relative ms:mb-2 ms:bg-mssurface ms:border-2 ms:border-dashed ms:border-msprimary ms:rounded-lg ms:transition-all'
-    : 'field-wrapper ms:group ms:relative ms:mb-2 ms:bg-mssurface ms:border ms:border-msborder ms:rounded-lg ms:transition-all ms:hover:border-msprimary/30';
+    ? 'field-wrapper ms:group ms:relative ms:mb-2 ms:bg-mssurface ms:border-2 ms:border-dashed ms:border-msprimary ms:rounded-lg ms:transition-all ms:outline-none'
+    : 'field-wrapper ms:group ms:relative ms:mb-2 ms:bg-mssurface ms:border ms:border-msborder ms:rounded-lg ms:transition-all ms:hover:border-msprimary/30 ms:outline-none';
 
   if (!effectiveExpanded) {
     wrapperClass += ' ms:p-0';
@@ -188,7 +188,7 @@ export function FieldWrapper({
           <div
             {...dragHandleProps}
             {...(dragListeners as React.HTMLAttributes<HTMLDivElement>)}
-            className="drag-handle ms:flex ms:items-center ms:p-1 ms:text-mstextmuted ms:cursor-grab active:ms:cursor-grabbing ms:shrink-0"
+            className="drag-handle ms:flex ms:items-center ms:p-1 ms:text-mstextmuted ms:cursor-grab ms:active:cursor-grabbing ms:shrink-0"
             style={{ touchAction: 'none' }}
             aria-label="Drag to reorder"
           >
@@ -200,6 +200,9 @@ export function FieldWrapper({
             {field.definition.fieldType}
           </span>
           <span className="ms:truncate">{questionText}</span>
+          {field.definition.required && (
+            <span className="required-indicator ms:text-msdanger ms:text-sm ms:font-bold ms:shrink-0" aria-label="Required">*</span>
+          )}
         </div>
 
         {/* Actions: Edit (mobile), Toggle (expand/collapse), Delete */}
@@ -208,7 +211,7 @@ export function FieldWrapper({
           <button
             type="button"
             onClick={handleSelect}
-            className="field-edit-btn ms:block ms:lg:hidden ms:p-1.5 ms:bg-transparent ms:text-mstextmuted ms:hover:bg-msbackgroundhover ms:rounded ms:transition-colors ms:border-0 ms:outline-none focus:ms:outline-none"
+            className="field-edit-btn ms:block ms:lg:hidden ms:p-1.5 ms:bg-transparent ms:text-mstextmuted ms:hover:bg-msbackgroundhover ms:rounded ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none"
             title="Edit"
             aria-label="Edit field"
           >
@@ -223,7 +226,7 @@ export function FieldWrapper({
             aria-controls={`${instanceId}-fw-body-${fieldId}`}
             title={effectiveExpanded ? 'Collapse' : 'Expand'}
             aria-label={effectiveExpanded ? 'Collapse field' : 'Expand field'}
-            className="field-collapse-btn ms:p-1.5 ms:bg-transparent ms:text-mstextmuted ms:hover:bg-msbackgroundhover ms:rounded ms:transition-colors ms:border-0 ms:outline-none focus:ms:outline-none"
+            className="field-collapse-btn ms:p-1.5 ms:bg-transparent ms:text-mstextmuted ms:hover:bg-msbackgroundhover ms:rounded ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none"
           >
             {effectiveExpanded ? (
               <ViewSmallIcon className="ms:collapse-icon ms:h-5 ms:w-5 ms:text-mstextmuted" />
@@ -239,11 +242,11 @@ export function FieldWrapper({
               e.stopPropagation();
               handleRemove();
             }}
-            className="field-delete-btn ms:p-1.5 ms:bg-transparent ms:text-mstextmuted ms:hover:bg-msdanger/10 ms:hover:text-msdanger ms:rounded ms:transition-colors ms:border-0 ms:outline-none focus:ms:outline-none"
+            className="field-delete-btn ms:p-1.5 ms:bg-transparent ms:text-mstextmuted ms:hover:bg-msdanger/10 ms:hover:text-msdanger ms:rounded ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none"
             title="Delete"
             aria-label="Delete field"
           >
-            <TrashIcon className="ms:h-5 ms:w-5 ms:text-mstextmuted group-hover:ms:text-msdanger" />
+            <TrashIcon className="ms:h-5 ms:w-5" />
           </button>
         </div>
       </div>

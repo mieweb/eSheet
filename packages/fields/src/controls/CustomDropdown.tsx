@@ -98,7 +98,7 @@ export function CustomDropdown(props: CustomDropdownProps) {
         className="custom-dropdown custom-dropdown-multi ms:relative ms:w-full ms:overflow-visible"
       >
         <div
-          className={`custom-dropdown-trigger ms:w-full ms:min-h-10 ms:px-3 ms:py-2 ms:shadow ms:border ms:border-msborder ms:rounded-lg ms:cursor-pointer ms:bg-mssurface ms:flex ms:flex-wrap ms:gap-2 ms:items-center hover:ms:border-msprimary/50 focus:ms:border-msprimary focus:ms:ring-1 focus:ms:ring-msprimary ms:transition-colors ${
+          className={`custom-dropdown-trigger ms:w-full ms:min-h-10 ms:px-3 ms:py-2 ms:shadow ms:border ms:border-msborder ms:rounded-lg ms:cursor-pointer ms:bg-mssurface ms:flex ms:flex-wrap ms:gap-2 ms:items-center ms:hover:border-msprimary/50 ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary ms:transition-colors ${
             disabled
               ? 'ms:opacity-50 ms:cursor-not-allowed ms:bg-msbackground ms:border-msborder'
               : ''
@@ -120,7 +120,7 @@ export function CustomDropdown(props: CustomDropdownProps) {
                     e.stopPropagation();
                     handleRemove(option.id);
                   }}
-                  className="custom-dropdown-remove-btn ms:flex ms:items-center ms:justify-center ms:bg-transparent ms:text-mstextsecondary hover:ms:bg-msprimary/80 ms:rounded ms:border-0 ms:outline-none focus:ms:outline-none"
+                  className="custom-dropdown-remove-btn ms:flex ms:items-center ms:justify-center ms:bg-transparent ms:text-mstextsecondary ms:hover:bg-msprimary/80 ms:rounded ms:border-0 ms:outline-none ms:focus:outline-none"
                   aria-label={`Remove ${option.value}`}
                 >
                   <CloseIcon className="ms:w-4 ms:h-4" />
@@ -142,7 +142,7 @@ export function CustomDropdown(props: CustomDropdownProps) {
             {availableOptions.map((option) => (
               <div
                 key={option.id}
-                className="custom-dropdown-option ms:px-4 ms:py-2 ms:text-mstext hover:ms:bg-msprimary/10 ms:cursor-pointer ms:transition-colors"
+                className="custom-dropdown-option ms:px-4 ms:py-2 ms:text-mstext ms:hover:bg-msprimary/10 ms:cursor-pointer ms:transition-colors"
                 onClick={() => handleSelect(option.id)}
               >
                 {option.value}
@@ -170,7 +170,7 @@ export function CustomDropdown(props: CustomDropdownProps) {
       className="custom-dropdown custom-dropdown-single ms:relative ms:w-full ms:overflow-visible"
     >
       <div
-        className={`custom-dropdown-trigger ms:w-full ms:px-4 ms:py-2 ms:h-10 ms:shadow ms:border ms:border-msborder ms:rounded-lg ms:cursor-pointer ms:bg-mssurface ms:flex ms:items-center ms:justify-between hover:ms:border-msprimary/50 focus:ms:border-msprimary focus:ms:ring-1 focus:ms:ring-msprimary ms:transition-colors ${
+        className={`custom-dropdown-trigger ms:w-full ms:px-4 ms:py-2 ms:h-10 ms:shadow ms:border ms:border-msborder ms:rounded-lg ms:cursor-pointer ms:bg-mssurface ms:flex ms:items-center ms:justify-between ms:hover:border-msprimary/50 ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary ms:transition-colors ${
           disabled
             ? 'ms:opacity-50 ms:cursor-not-allowed ms:bg-msbackground ms:border-msborder'
             : ''
@@ -197,7 +197,7 @@ export function CustomDropdown(props: CustomDropdownProps) {
         >
           {showClearOption && (
             <div
-              className="custom-dropdown-clear-option ms:px-4 ms:py-2 ms:text-mstext hover:ms:bg-msprimary/10 ms:cursor-pointer ms:transition-colors"
+              className="custom-dropdown-clear-option ms:px-4 ms:py-2 ms:text-mstext ms:hover:bg-msprimary/10 ms:cursor-pointer ms:transition-colors"
               onClick={() => {
                 onChange(null);
                 setIsOpen(false);
@@ -209,7 +209,7 @@ export function CustomDropdown(props: CustomDropdownProps) {
           {options.map((option) => (
             <div
               key={option.id}
-              className={`custom-dropdown-option ms:px-4 ms:py-2 hover:ms:bg-msprimary/10 ms:cursor-pointer ms:transition-colors ${
+              className={`custom-dropdown-option ms:px-4 ms:py-2 ms:hover:bg-msprimary/10 ms:cursor-pointer ms:transition-colors ${
                 value === option.id
                   ? 'ms:bg-msprimary/20 ms:text-msprimary'
                   : 'ms:text-mstext'
