@@ -1,5 +1,6 @@
 import React from 'react';
 import type { FormStore, FieldOption } from '@msheet/core';
+import { TrashIcon } from '@msheet/fields';
 import { useInstanceId } from '../../MsheetBuilder.js';
 
 export interface OptionListEditorProps {
@@ -33,25 +34,14 @@ export function OptionListEditor({ fieldId, fieldType, options, form }: OptionLi
 
   return (
     <div className="option-list-editor ms:space-y-2">
-      <div className="ms:flex ms:items-center ms:justify-between">
-        <span className="edit-label ms:text-xs ms:font-medium ms:text-mstextmuted">{label}</span>
-        {!isBoolean && (
-          <button
-            type="button"
-            onClick={handleAdd}
-            className="add-option-btn ms:text-xs ms:text-msprimary ms:bg-transparent ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:hover:underline"
-          >
-            + Add {fieldType === 'multitext' ? 'Input' : 'Option'}
-          </button>
-        )}
-      </div>
+      <span className="edit-label ms:block ms:text-sm ms:font-medium ms:text-mstext">{label}</span>
 
-      <div ref={listRef} className="option-list ms:space-y-1 ms:max-h-48 ms:overflow-y-auto">
+      <div ref={listRef} className="option-list ms:space-y-2">
         {options.map((opt, idx) => (
-          <div key={opt.id} className="option-row ms:flex ms:items-center ms:gap-1">
-            <span className="ms:text-xs ms:text-mstextmuted ms:w-5 ms:text-right ms:shrink-0">
-              {idx + 1}.
-            </span>
+          <div
+            key={opt.id}
+            className="option-row ms:flex ms:items-center ms:gap-2 ms:px-3 ms:py-2 ms:border ms:border-msborder ms:rounded-lg ms:shadow-sm ms:hover:border-msprimary/50 ms:transition-colors"
+          >
             <input
               id={`${instanceId}-editor-option-${fieldId}-${opt.id}`}
               aria-label={`Option ${idx + 1}`}
@@ -59,23 +49,31 @@ export function OptionListEditor({ fieldId, fieldType, options, form }: OptionLi
               value={opt.value}
               onChange={(e) => form.getState().updateOption(fieldId, opt.id, e.currentTarget.value)}
               placeholder={`Option ${idx + 1}`}
-              className="ms:flex-1 ms:min-w-0 ms:px-2 ms:py-1 ms:text-sm ms:bg-transparent ms:border ms:border-msborder ms:rounded ms:text-mstext ms:placeholder:text-mstextmuted ms:focus:outline-none ms:focus:ring-2 ms:focus:ring-msprimary ms:focus:border-msprimary"
+              className="ms:flex-1 ms:min-w-0 ms:outline-none ms:bg-transparent ms:text-mstext ms:placeholder:text-mstextmuted ms:border-0 ms:text-sm"
             />
             {!isBoolean && (
               <button
                 type="button"
                 onClick={() => form.getState().removeOption(fieldId, opt.id)}
                 aria-label={`Remove option ${idx + 1}`}
-                className="remove-option-btn ms:p-1 ms:rounded ms:bg-transparent ms:text-mstextmuted ms:hover:text-msdanger ms:border-0 ms:outline-none ms:focus:outline-none ms:shrink-0"
+                className="remove-option-btn ms:shrink-0 ms:p-0.5 ms:rounded ms:bg-transparent ms:text-mstextmuted ms:hover:text-msdanger ms:border-0 ms:outline-none ms:focus:outline-none ms:transition-colors ms:cursor-pointer"
               >
-                <svg className="ms:w-3.5 ms:h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <TrashIcon className="ms:w-4 ms:h-4" />
               </button>
             )}
           </div>
         ))}
       </div>
+
+      {!isBoolean && (
+        <button
+          type="button"
+          onClick={handleAdd}
+          className="add-option-btn ms:w-full ms:px-3 ms:py-2 ms:text-sm ms:font-medium ms:bg-mssurface ms:text-msprimary ms:border ms:border-msprimary/50 ms:rounded-lg ms:hover:bg-msprimary/10 ms:transition-colors ms:outline-none ms:focus:outline-none ms:cursor-pointer"
+        >
+          + Add {fieldType === 'multitext' ? 'Input' : 'Option'}
+        </button>
+      )}
     </div>
   );
 }

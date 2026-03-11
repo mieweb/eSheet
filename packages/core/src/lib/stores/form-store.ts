@@ -194,6 +194,28 @@ function collectDescendants(
   return result;
 }
 
+function getDefaultQuestion(fieldType: FieldType, label: string): string | undefined {
+  if (fieldType === 'section' || fieldType === 'html') return undefined;
+  if (fieldType === 'expression') return 'Expression Field';
+  if (fieldType === 'image') return 'Image Block';
+  return `${label} question`;
+}
+
+function getDefaultOptionValue(fieldType: FieldType, index: number, total: number): string {
+  if (fieldType === 'boolean') {
+    return index === 0 ? 'Yes' : index === 1 ? 'No' : `Option ${index + 1}`;
+  }
+  if (fieldType === 'rating') return `${index + 1}`;
+  if (fieldType === 'slider') {
+    if (index === 0) return 'Low';
+    if (index === total - 1) return 'High';
+    if (total >= 3 && index === Math.floor(total / 2)) return 'Medium';
+  }
+  if (fieldType === 'multitext') return `Input ${index + 1}`;
+  if (fieldType === 'ranking') return `Item ${index + 1}`;
+  return `Option ${index + 1}`;
+}
+
 // ---------------------------------------------------------------------------
 // createFormStore()
 // ---------------------------------------------------------------------------
@@ -268,6 +290,13 @@ export function createFormStore(initial?: FormDefinition): FormStore {
         fieldType,
       } as Omit<FieldDefinition, 'fields'>;
 
+      if (!definition.question) {
+        const defaultQuestion = getDefaultQuestion(fieldType, meta.label);
+        if (defaultQuestion) {
+          (definition as Record<string, unknown>).question = defaultQuestion;
+        }
+      }
+
       // Auto-generate starter options / rows / columns
       const count =
         meta.defaultOptionCount ?? (meta.hasOptions || meta.hasMatrix ? 3 : 0);
@@ -278,7 +307,7 @@ export function createFormStore(initial?: FormDefinition): FormStore {
         for (let i = 0; i < count; i++) {
           const oid = generateOptionId(oIds, id);
           oIds.add(oid);
-          opts.push({ id: oid, value: '' });
+          opts.push({ id: oid, value: getDefaultOptionValue(fieldType, i, count) });
         }
         (definition as Record<string, unknown>).options = opts;
       }
@@ -290,7 +319,7 @@ export function createFormStore(initial?: FormDefinition): FormStore {
           for (let i = 0; i < count; i++) {
             const rid = generateRowId(rIds, id);
             rIds.add(rid);
-            rows.push({ id: rid, value: '' });
+            rows.push({ id: rid, value: `Row ${i + 1}` });
           }
           (definition as Record<string, unknown>).rows = rows;
         }
@@ -300,7 +329,7 @@ export function createFormStore(initial?: FormDefinition): FormStore {
           for (let i = 0; i < count; i++) {
             const cid = generateColumnId(cIds, id);
             cIds.add(cid);
-            cols.push({ id: cid, value: '' });
+            cols.push({ id: cid, value: `Column ${i + 1}` });
           }
           (definition as Record<string, unknown>).columns = cols;
         }

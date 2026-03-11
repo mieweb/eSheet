@@ -23,6 +23,8 @@ export interface FieldWrapperProps {
   dragListeners?: Record<string, Function>;
   /** Whether the field is being dragged */
   isDragging?: boolean;
+  /** Whether any drag operation is active in the canvas. */
+  collapseWhileDragging?: boolean;
   /** Render function that receives field data and tools */
   children: (props: FieldWrapperRenderProps) => React.ReactNode;
 }
@@ -55,6 +57,7 @@ export function FieldWrapper({
   dragHandleProps,
   dragListeners,
   isDragging = false,
+  collapseWhileDragging = false,
   children,
 }: FieldWrapperProps) {
   const [isExpanded, setIsExpanded] = React.useState(true);
@@ -150,7 +153,7 @@ export function FieldWrapper({
     : (field.definition.question || '');
 
   // Collapse while dragging; restore prior state when drag ends
-  const effectiveExpanded = isExpanded && !isDragging;
+  const effectiveExpanded = isExpanded && !collapseWhileDragging;
 
   // Base wrapper classes
   let wrapperClass = isSelected

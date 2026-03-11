@@ -106,8 +106,8 @@ export const ToolPanel = React.memo(function ToolPanel({
   const allCollapsed = collapsed.size === categoryNames.length;
 
   return (
-    <div className="tool-panel ms:flex ms:flex-col ms:h-full">
-      <h3 className="tool-panel-title ms:sticky ms:top-0 ms:z-10 ms:bg-mssurface ms:text-sm ms:font-semibold ms:text-mstext ms:pb-2 ms:pt-3 ms:px-4 ms:border-b ms:border-msborder ms:flex ms:items-center ms:justify-between">
+    <div className="tool-panel ms:flex ms:flex-col">
+      <h3 className="tool-panel-title ms:sticky ms:top-0 ms:z-10 ms:bg-mssurface ms:text-sm ms:font-semibold ms:text-mstext ms:pb-2 ms:pt-1.5 ms:px-4 ms:border-b ms:border-msborder ms:flex ms:items-center ms:justify-between">
         <span>Tools</span>
         <button
           type="button"
@@ -119,7 +119,7 @@ export const ToolPanel = React.memo(function ToolPanel({
         </button>
       </h3>
 
-      <div className="tool-panel-body ms:overflow-y-auto ms:flex-1">
+      <div className="tool-panel-body ms:max-h-[calc(100dvh-16rem)] ms:overflow-y-auto">
         {Object.entries(categories).map(([categoryName, items]) => {
           const isCollapsed = collapsed.has(categoryName);
           return (

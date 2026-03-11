@@ -1,5 +1,6 @@
 
 import type { FieldDefinition, TextInputType } from '@msheet/core';
+import { CustomCheckbox } from '@msheet/fields';
 import { useInstanceId } from '../../MsheetBuilder.js';
 import { DraftIdEditor } from './DraftIdEditor.js';
 import { InputTypeEditor } from './InputTypeEditor.js';
@@ -28,7 +29,7 @@ export function CommonEditor({ fieldId, def, onUpdate, onRenameId }: CommonEdito
       <div>
         <label
           htmlFor={`${instanceId}-editor-id-${fieldId}`}
-          className="edit-label ms:block ms:text-xs ms:font-medium ms:text-mstextmuted ms:mb-1"
+          className="edit-label ms:block ms:text-sm ms:font-medium ms:text-mstext ms:mb-1"
         >
           Field ID
         </label>
@@ -39,32 +40,31 @@ export function CommonEditor({ fieldId, def, onUpdate, onRenameId }: CommonEdito
       <div>
         <label
           htmlFor={`${instanceId}-editor-question-${fieldId}`}
-          className="edit-label ms:block ms:text-xs ms:font-medium ms:text-mstextmuted ms:mb-1"
+          className="edit-label ms:block ms:text-sm ms:text-mstext ms:mb-1"
         >
-          Question
+          Label / Question
         </label>
         <input
           id={`${instanceId}-editor-question-${fieldId}`}
           type="text"
           value={def.question ?? ''}
           onChange={(e) => onUpdate({ question: e.currentTarget.value })}
-          placeholder="Enter question..."
-          className="ms:w-full ms:min-w-0 ms:px-2 ms:py-1 ms:text-sm ms:bg-transparent ms:border ms:border-msborder ms:rounded ms:text-mstext ms:placeholder:text-mstextmuted ms:focus:outline-none ms:focus:ring-2 ms:focus:ring-msprimary ms:focus:border-msprimary"
+          placeholder="Enter question text"
+          className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:placeholder:text-mstextmuted ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
         />
       </div>
 
       {/* Required */}
-      <div className="required-toggle ms:flex ms:items-center ms:gap-2">
-        <input
+      <div className="required-toggle ms:flex ms:items-center ms:gap-2 ms:text-sm ms:text-mstext">
+        <CustomCheckbox
           id={`${instanceId}-editor-required-${fieldId}`}
-          type="checkbox"
           checked={def.required ?? false}
-          onChange={(e) => onUpdate({ required: e.currentTarget.checked })}
-          className="ms:w-4 ms:h-4 ms:rounded ms:border-msborderinactive ms:text-msprimary ms:focus:ring-msprimary"
+          onChange={(checked) => onUpdate({ required: checked })}
+          size="sm"
         />
         <label
           htmlFor={`${instanceId}-editor-required-${fieldId}`}
-          className="ms:text-sm ms:text-mstext ms:select-none"
+          className="ms:cursor-pointer ms:select-none"
         >
           Required
         </label>

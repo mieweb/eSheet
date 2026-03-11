@@ -207,6 +207,37 @@ describe('createFormStore', () => {
         expect(def.options![0].id).toBeTruthy();
       });
 
+      it('prefills question and option values for choice fields', () => {
+        store = createFormStore(form([]));
+        const id = store.getState().addField('radio');
+        const def = store.getState().normalized.byId[id!].definition;
+        expect(def.question).toBe('Radio question');
+        expect(def.options?.map((o) => o.value)).toEqual(['Option 1', 'Option 2', 'Option 3']);
+      });
+
+      it('uses type-specific option defaults for boolean fields', () => {
+        store = createFormStore(form([]));
+        const id = store.getState().addField('boolean');
+        const def = store.getState().normalized.byId[id!].definition;
+        expect(def.options?.slice(0, 2).map((o) => o.value)).toEqual(['Yes', 'No']);
+      });
+
+      it('keeps caller patch values over generated defaults', () => {
+        store = createFormStore(form([]));
+        const id = store.getState().addField('radio', {
+          patch: {
+            question: 'Preferred color?',
+            options: [
+              { id: 'manual-1', value: 'Red' },
+              { id: 'manual-2', value: 'Blue' },
+            ],
+          },
+        });
+        const def = store.getState().normalized.byId[id!].definition;
+        expect(def.question).toBe('Preferred color?');
+        expect(def.options?.map((o) => o.value)).toEqual(['Red', 'Blue']);
+      });
+
       it('auto-generates rows and columns for matrix fields', () => {
         store = createFormStore(form([]));
         const id = store.getState().addField('singlematrix');

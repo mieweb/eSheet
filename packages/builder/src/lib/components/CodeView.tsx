@@ -41,8 +41,6 @@ function parse(text: string, format: CodeFormat): unknown {
  * Serialize on mount, live-validate on edit, auto-save on unmount.
  */
 export function CodeView({ form, ui }: CodeViewProps) {
-  const containerRef = React.useRef<HTMLDivElement>(null);
-
   // Track whether user actually edited (avoids spurious saves from StrictMode double-mount)
   const dirtyRef = React.useRef(false);
 
@@ -62,7 +60,6 @@ export function CodeView({ form, ui }: CodeViewProps) {
 
   const [code, setCode] = React.useState(initialCode);
   const [error, setError] = React.useState('');
-  const [editorHeight, setEditorHeight] = React.useState(640);
 
   // Keep refs in sync
   React.useEffect(() => {
@@ -75,19 +72,6 @@ export function CodeView({ form, ui }: CodeViewProps) {
   React.useEffect(() => {
     ui.getState().setCodeEditorHasError(false);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Calculate available height
-  React.useEffect(() => {
-    const calculateHeight = () => {
-      if (containerRef.current) {
-        const top = containerRef.current.getBoundingClientRect().top;
-        setEditorHeight(Math.max(400, window.innerHeight - top - 20));
-      }
-    };
-    calculateHeight();
-    window.addEventListener('resize', calculateHeight);
-    return () => window.removeEventListener('resize', calculateHeight);
-  }, []);
 
   // --- Handlers ---
 
@@ -172,11 +156,7 @@ export function CodeView({ form, ui }: CodeViewProps) {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div
-      ref={containerRef}
-      className="code-view-container ms:flex ms:flex-col ms:bg-msbackground"
-      style={{ height: `${editorHeight}px` }}
-    >
+    <div className="code-view-container ms:flex ms:flex-col ms:h-full ms:bg-msbackground">
       {/* Header — format toggle + status */}
       <div className="code-view-header ms:flex ms:items-center ms:justify-between ms:gap-3 ms:p-3 ms:bg-mssurface ms:border-b ms:border-msborder">
         <div className="format-toggle ms:flex ms:gap-1 ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackground ms:p-1">

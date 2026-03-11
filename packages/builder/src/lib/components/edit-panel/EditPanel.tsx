@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import { getFieldTypeMeta, type FormStore, type UIStore, type EditTab } from '@msheet/core';
 import { useInstanceId } from '../../MsheetBuilder.js';
+import { EditIcon, LogicIcon } from '../../icons.js';
 import { DraftIdEditor } from './DraftIdEditor.js';
 import { CommonEditor } from './CommonEditor.js';
 import { OptionListEditor } from './OptionListEditor.js';
@@ -66,34 +67,38 @@ export function EditPanel({ form, ui }: EditPanelProps) {
 
   return (
     <div className="edit-panel ms:flex ms:flex-col ms:h-full">
-      {/* Tab Bar */}
-      <div className="edit-panel-tabs ms:flex ms:border-b ms:border-msborder ms:shrink-0">
-        <button
-          type="button"
-          onClick={() => setTab('edit')}
-          className={`edit-tab-btn ms:flex-1 ms:py-2 ms:text-sm ms:font-medium ms:bg-transparent ms:border-0 ms:outline-none ms:focus:outline-none ms:transition-colors ms:cursor-pointer ${
-            editTab === 'edit'
-              ? 'ms:text-msprimary ms:border-b-2 ms:border-msprimary'
-              : 'ms:text-mstextmuted ms:hover:text-mstext'
-          }`}
-        >
-          Edit
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab('logic')}
-          className={`logic-tab-btn ms:flex-1 ms:py-2 ms:text-sm ms:font-medium ms:bg-transparent ms:border-0 ms:outline-none ms:focus:outline-none ms:transition-colors ms:cursor-pointer ${
-            editTab === 'logic'
-              ? 'ms:text-msprimary ms:border-b-2 ms:border-msprimary'
-              : 'ms:text-mstextmuted ms:hover:text-mstext'
-          }`}
-        >
-          Logic
-        </button>
+      {/* Tab Bar — pill segment style */}
+      <div className="edit-panel-tabs ms:sticky ms:top-0 ms:z-10 ms:bg-mssurface ms:border-b ms:border-msborder ms:px-3 ms:pt-3 ms:pb-2 ms:shrink-0">
+        <div className="ms:flex ms:gap-1 ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackground ms:p-1">
+          <button
+            type="button"
+            onClick={() => setTab('edit')}
+            className={`edit-tab-btn ms:flex-1 ms:flex ms:items-center ms:justify-center ms:gap-1.5 ms:px-3 ms:py-1.5 ms:rounded-md ms:text-xs ms:font-medium ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ${
+              editTab === 'edit'
+                ? 'ms:bg-msprimary ms:text-mstextsecondary ms:shadow-sm'
+                : 'ms:bg-transparent ms:text-mstextmuted ms:hover:text-mstext ms:hover:bg-mssurface'
+            }`}
+          >
+            <EditIcon className="ms:w-3.5 ms:h-3.5" />
+            <span>Edit</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab('logic')}
+            className={`logic-tab-btn ms:flex-1 ms:flex ms:items-center ms:justify-center ms:gap-1.5 ms:px-3 ms:py-1.5 ms:rounded-md ms:text-xs ms:font-medium ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ${
+              editTab === 'logic'
+                ? 'ms:bg-msprimary ms:text-mstextsecondary ms:shadow-sm'
+                : 'ms:bg-transparent ms:text-mstextmuted ms:hover:text-mstext ms:hover:bg-mssurface'
+            }`}
+          >
+            <LogicIcon className="ms:w-3.5 ms:h-3.5" />
+            <span>Logic</span>
+          </button>
+        </div>
       </div>
 
       {/* Tab Content */}
-      <div className="edit-panel-content ms:flex-1 ms:overflow-y-auto ms:p-4">
+      <div className="edit-panel-content ms:flex-1 ms:max-h-[calc(100dvh-16rem)] ms:overflow-y-auto ms:p-4">
         {editTab === 'edit' ? (
           <EditTabContent
             fieldId={selectedFieldId}
@@ -184,7 +189,7 @@ function SectionEditContent({ fieldId, def, onUpdate, onRenameId }: SectionEditC
       <div>
         <label
           htmlFor={`${instanceId}-editor-id-${fieldId}`}
-          className="edit-label ms:block ms:text-xs ms:font-medium ms:text-mstextmuted ms:mb-1"
+          className="edit-label ms:block ms:text-sm ms:font-medium ms:text-mstext ms:mb-1"
         >
           Section ID
         </label>
@@ -195,7 +200,7 @@ function SectionEditContent({ fieldId, def, onUpdate, onRenameId }: SectionEditC
       <div>
         <label
           htmlFor={`${instanceId}-editor-title-${fieldId}`}
-          className="edit-label ms:block ms:text-xs ms:font-medium ms:text-mstextmuted ms:mb-1"
+          className="edit-label ms:block ms:text-sm ms:text-mstext ms:mb-1"
         >
           Section Title
         </label>
@@ -205,7 +210,7 @@ function SectionEditContent({ fieldId, def, onUpdate, onRenameId }: SectionEditC
           value={def.title ?? ''}
           onChange={(e) => onUpdate({ title: e.currentTarget.value })}
           placeholder="Enter section title..."
-          className="ms:w-full ms:min-w-0 ms:px-2 ms:py-1 ms:text-sm ms:bg-transparent ms:border ms:border-msborder ms:rounded ms:text-mstext ms:placeholder:text-mstextmuted ms:focus:outline-none ms:focus:ring-2 ms:focus:ring-msprimary ms:focus:border-msprimary"
+          className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:placeholder:text-mstextmuted ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
         />
       </div>
     </div>

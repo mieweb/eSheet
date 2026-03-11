@@ -304,6 +304,16 @@ For feature planning and TODO tracking, use the local-only internal tickets dire
   - Reference related files and existing code patterns
   - Include success criteria and testing requirements
 
+**Rewrite Roadmap** (`.github/INTERNAL-TICKETS/rewrite-roadmap.md`):
+- This is the master QB → mSheet migration tracker. **Update it whenever implementation work changes the status of a tracked feature** (e.g., a field component is completed, a phase moves from 🔴 to ✅).
+- After completing a task that corresponds to an item in the roadmap, mark it done and update the progress summary percentages.
+- Keep the "Feature Parity Tracker" table and per-package progress summary current so the roadmap always reflects reality.
+
+**@mieweb/ui Capability Audit** (`.github/INTERNAL-TICKETS/mieweb-ui-capability-audit.md`):
+- This is the source-of-truth snapshot for @mieweb/ui exports, `*Props` interfaces, and key variant names.
+- When using or refactoring @mieweb/ui components in mSheet, consult this ticket before choosing `variant`, `size`, or component-specific props.
+- If @mieweb/ui changes materially (new components, variant changes, prop changes), regenerate/update this audit ticket first, then implement mSheet changes.
+
 **Ticket Template:**
 
 ```markdown
@@ -354,3 +364,4 @@ Naming/structure preserved: yes
 No new deps/files: yes
 Tests/docs touched minimally: yes
 ```
+

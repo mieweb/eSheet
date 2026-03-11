@@ -103,33 +103,40 @@ export function MsheetBuilder({
     <FormStoreContext.Provider value={form}>
       <UIContext.Provider value={ui}>
         <InstanceIdContext.Provider value={instanceId}>
-        <div className={`ms-builder-root ms:flex ms:flex-col ms:p-3 ms:gap-3 ms:bg-msbackground ms:font-sans ms:text-mstext ${className}`.trim()}>
-          <BuilderHeader form={form} ui={ui} />
+        <div className={`ms-builder-root ms:flex ms:h-full ms:min-h-0 ms:w-full ms:min-w-0 ms:max-w-full ms:flex-col ms:gap-2 ms:overflow-y-auto
+            ms:overflow-x-hidden ms:bg-msbackground ms:text-mstext ${className}`.trim()}>
+          <div className="ms:sticky ms:top-0 ms:z-30 ms:bg-msbackground">
+            <BuilderHeader form={form} ui={ui} />
+          </div>
           {children}
           {mode === 'build' && (
-            <div className="builder-layout ms:flex ms:gap-3">
-              <aside className="panel-tools ms:w-72 ms:shrink-0 ms:h-min ms:bg-mssurface ms:rounded-lg ms:border ms:border-msborder ms:overflow-y-auto">
-                <ToolPanel form={form} ui={ui} />
-              </aside>
-              <main className="panel-canvas ms:flex-1 ms:min-w-0 ms:max-h-[calc(100dvh-9rem)] ms:bg-mssurface ms:rounded-lg ms:border ms:border-msborder ms:overflow-y-auto">
+            <div className="builder-layout ms:grid ms:min-w-0 ms:grid-cols-[18rem_minmax(0,1fr)_340px] ms:items-start ms:gap-3">
+              <div className="panel-tools-wrap ms:sticky ms:top-22 ms:self-start">
+                <aside className="panel-tools ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
+                  <ToolPanel form={form} ui={ui} />
+                </aside>
+              </div>
+              <main className="panel-canvas ms:min-w-0 ms:self-start ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
                 <div className="ms:p-4">
                   <Canvas form={form} ui={ui} dragEnabled={dragEnabled} />
                 </div>
               </main>
-              <aside className="panel-editor ms:w-[340px] ms:h-min ms:shrink-0 ms:bg-mssurface ms:rounded-lg ms:border ms:border-msborder ms:overflow-y-auto">
-                <EditPanel form={form} ui={ui} />
-              </aside>
+              <div className="panel-editor-wrap ms:sticky ms:top-22 ms:self-start">
+                <aside className="panel-editor ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
+                  <EditPanel form={form} ui={ui} />
+                </aside>
+              </div>
             </div>
           )}
           {mode === 'code' && (
-            <div className="code-layout">
-              <div className="ms:max-h-[calc(100dvh-9rem)] ms:bg-mssurface ms:rounded-lg ms:border ms:border-msborder ms:overflow-hidden">
+            <div className="code-layout ms:min-h-0 ms:min-w-0 ms:flex-1">
+              <div className="ms:h-full ms:overflow-hidden ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
                 <CodeView form={form} ui={ui} />
               </div>
             </div>
           )}
           {mode === 'preview' && (
-            <div className="preview-layout ms:max-h-[calc(100dvh-9rem)] ms:overflow-y-auto">
+            <div className="preview-layout ms:min-h-0 ms:min-w-0 ms:flex-1">
               <div className="ms:max-w-2xl ms:mx-auto ms:p-4">
                 <Canvas form={form} ui={ui} dragEnabled={false} />
               </div>

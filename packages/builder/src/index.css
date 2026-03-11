@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Titillium+Web:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700&display=swap');
 @import 'tailwindcss/theme' prefix(ms);
 @import 'tailwindcss/utilities' prefix(ms);
 
@@ -30,9 +31,13 @@
 @custom-variant dark (&:where(.ms-builder-root.dark, .ms-builder-root.dark *));
 
 /* ------------------------------------------------------------------ */
-/* Scoped base resets (don't leak into consuming app)                   */
+/* Scoped resets (don't leak into consuming app)                        */
 /* ------------------------------------------------------------------ */
-@layer base {
+@layer utilities {
+  .ms-builder-root {
+    font-family: 'Titillium Web', ui-sans-serif, system-ui, sans-serif;
+  }
+
   .ms-builder-root,
   .ms-builder-root *,
   .ms-builder-root *::before,
@@ -41,5 +46,12 @@
     border-width: 0;
     border-style: solid;
     border-color: var(--ms-color-msborder, #e5e7eb);
+  }
+
+  .ms-builder-root button,
+  .ms-builder-root input,
+  .ms-builder-root select,
+  .ms-builder-root textarea {
+    font: inherit;
   }
 }
