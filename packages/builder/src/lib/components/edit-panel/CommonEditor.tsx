@@ -1,4 +1,3 @@
-
 import type { FieldDefinition, TextInputType } from '@msheet/core';
 import { CustomCheckbox } from '@msheet/fields';
 import { useInstanceId } from '../../MsheetBuilder.js';
@@ -19,9 +18,15 @@ export interface CommonEditorProps {
  * Renders: ID, Question, Sublabel (description), Required toggle,
  * and InputTypeEditor for text/longtext fields.
  */
-export function CommonEditor({ fieldId, def, onUpdate, onRenameId }: CommonEditorProps) {
+export function CommonEditor({
+  fieldId,
+  def,
+  onUpdate,
+  onRenameId,
+}: CommonEditorProps) {
   const instanceId = useInstanceId();
-  const showInputType = def.fieldType === 'text' || def.fieldType === 'longtext';
+  const showInputType =
+    def.fieldType === 'text' || def.fieldType === 'longtext';
 
   return (
     <div className="common-editor ms:space-y-3">

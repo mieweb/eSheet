@@ -13,92 +13,107 @@ export const SliderField = React.memo(function SliderField({
   const def = field.definition;
   const instanceId = form.getState().instanceId;
   const options = def.options || [];
-  const selectedId = (response?.selected as SelectedOption | undefined)?.id ?? null;
+  const selectedId =
+    (response?.selected as SelectedOption | undefined)?.id ?? null;
   const selectedIndex = options.findIndex((opt) => opt.id === selectedId);
 
   if (isPreview) {
     return (
-      <div className="slider-field-preview ms:text-mstext">
-        <div
-          className={`ms:grid ms:gap-2 ms:pb-4 ${options.length > 5 ? 'ms:grid-cols-1' : 'ms:grid-cols-1 ms:sm:grid-cols-2'}`}
-        >
-          <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
-            {def.question || 'Question'}
-          </div>
-          <div className="ms:py-2">
-            {options.length > 0 ? (
-              <div className="ms:relative ms:pt-1">
-                <input
-                  id={`${instanceId}-slider-answer-${def.id}`}
-                  aria-label={def.question || 'Question'}
-                  type="range"
-                  min="0"
-                  max={options.length - 1}
-                  step="1"
-                  value={selectedIndex >= 0 ? selectedIndex : 0}
-                  onChange={(e) => {
-                    const idx = parseInt(e.target.value);
-                    const opt = options[idx];
-                    if (opt) onResponse({ selected: { id: opt.id, value: opt.value } });
-                  }}
-                  className="ms:w-full ms:h-1 ms:bg-msborder ms:rounded-lg ms:appearance-none ms:cursor-pointer slider-thumb"
-                />
-
-                {/* Scale markers and labels */}
-                <div className="ms:relative ms:mt-2 ms:px-2">
-                  <div className="ms:relative ms:h-4 ms:text-mstextmuted ms:text-center">
-                    {options.map((option, index) => {
-                      const position =
-                        options.length > 1 ? (index / (options.length - 1)) * 100 : 50;
-                      return (
-                        <span
-                          key={option.id}
-                          className="ms:absolute"
-                          style={{ left: `${position}%`, transform: 'translateX(-50%)' }}
-                        >
-                          ╹
-                        </span>
-                      );
-                    })}
-                  </div>
-                  <div className="ms:relative ms:mt-1">
-                    {options.map((option, index) => {
-                      const position =
-                        options.length > 1 ? (index / (options.length - 1)) * 100 : 50;
-                      return (
-                        <div
-                          key={option.id}
-                          className="ms:absolute"
-                          style={{ left: `${position}%`, transform: 'translateX(-50%)' }}
-                        >
-                          <button
-                            type="button"
-                            onClick={() =>
-                              onResponse({ selected: { id: option.id, value: option.value } })
-                            }
-                            className="ms:cursor-pointer ms:bg-transparent ms:border-0 ms:outline-none ms:focus:outline-none ms:whitespace-nowrap"
-                          >
-                            <span
-                              className={`ms:text-sm ${
-                                selectedIndex === index
-                                  ? 'ms:text-msprimary ms:font-semibold'
-                                  : 'ms:text-mstextmuted ms:hover:text-msprimary'
-                              }`}
-                            >
-                              {option.value}
-                            </span>
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="ms:text-sm ms:text-mstextmuted ms:italic">No options available</div>
-            )}
-          </div>
+      <div
+        className={`slider-field-preview ms:text-mstext ms:grid ms:gap-2 ms:pb-4 ${
+          options.length > 5
+            ? 'ms:grid-cols-1'
+            : 'ms:grid-cols-1 ms:sm:grid-cols-2'
+        }`}
+      >
+        <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
+          {def.question || 'Question'}
         </div>
+        {options.length > 0 ? (
+          <div className="ms:relative ms:pt-1">
+            <input
+              id={`${instanceId}-slider-answer-${def.id}`}
+              aria-label={def.question || 'Question'}
+              type="range"
+              min="0"
+              max={options.length - 1}
+              step="1"
+              value={selectedIndex >= 0 ? selectedIndex : 0}
+              onChange={(e) => {
+                const idx = parseInt(e.target.value);
+                const opt = options[idx];
+                if (opt)
+                  onResponse({ selected: { id: opt.id, value: opt.value } });
+              }}
+              className="ms:w-full ms:h-1 ms:bg-msborder ms:rounded-lg ms:appearance-none ms:cursor-pointer slider-thumb"
+            />
+
+            <div className="ms:relative ms:mt-2 ms:px-2">
+              <div className="ms:relative ms:h-4 ms:text-mstextmuted ms:text-center">
+                {options.map((option, index) => {
+                  const position =
+                    options.length > 1
+                      ? (index / (options.length - 1)) * 100
+                      : 50;
+                  return (
+                    <span
+                      key={option.id}
+                      className="ms:absolute"
+                      style={{
+                        left: `${position}%`,
+                        transform: 'translateX(-50%)',
+                      }}
+                    >
+                      ╹
+                    </span>
+                  );
+                })}
+              </div>
+              <div className="ms:relative ms:mt-1">
+                {options.map((option, index) => {
+                  const position =
+                    options.length > 1
+                      ? (index / (options.length - 1)) * 100
+                      : 50;
+                  return (
+                    <div
+                      key={option.id}
+                      className="ms:absolute"
+                      style={{
+                        left: `${position}%`,
+                        transform: 'translateX(-50%)',
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onResponse({
+                            selected: { id: option.id, value: option.value },
+                          })
+                        }
+                        className="ms:cursor-pointer ms:bg-transparent ms:border-0 ms:outline-none ms:focus:outline-none ms:whitespace-nowrap"
+                      >
+                        <span
+                          className={`ms:text-sm ${
+                            selectedIndex === index
+                              ? 'ms:text-msprimary ms:font-semibold'
+                              : 'ms:text-mstextmuted ms:hover:text-msprimary'
+                          }`}
+                        >
+                          {option.value}
+                        </span>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="ms:text-sm ms:text-mstextmuted ms:italic">
+            No options available
+          </div>
+        )}
       </div>
     );
   }
@@ -140,7 +155,9 @@ export const SliderField = React.memo(function SliderField({
                 type="text"
                 value={option.value}
                 onChange={(e) =>
-                  form.getState().updateOption(def.id, option.id, e.target.value)
+                  form
+                    .getState()
+                    .updateOption(def.id, option.id, e.target.value)
                 }
                 placeholder="Option label"
                 className="ms:flex-1 ms:min-w-0 ms:outline-none ms:bg-transparent ms:text-mstext"

@@ -1,5 +1,9 @@
 import type React from 'react';
-import { registerFieldType, type FieldTypeMeta, type FieldComponentProps } from '@msheet/core';
+import {
+  registerFieldType,
+  type FieldTypeMeta,
+  type FieldComponentProps,
+} from '@msheet/core';
 
 // ---------------------------------------------------------------------------
 // Builder Component Registry
@@ -39,7 +43,7 @@ export function getRegisteredComponentKeys(): string[] {
  * ```
  */
 export function registerBuilderFieldTypes(
-  entries: Record<string, FieldTypeMeta & { component: FieldComponent }>,
+  entries: Record<string, FieldTypeMeta & { component: FieldComponent }>
 ): void {
   for (const [key, meta] of Object.entries(entries)) {
     const { component, ...coreMeta } = meta;
@@ -62,7 +66,7 @@ export function registerBuilderFieldTypes(
  * ```
  */
 export function registerBuilderComponents(
-  components: Record<string, FieldComponent>,
+  components: Record<string, FieldComponent>
 ): void {
   for (const [key, component] of Object.entries(components)) {
     componentRegistry.set(key, component);

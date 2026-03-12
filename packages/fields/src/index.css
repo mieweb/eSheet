@@ -1,5 +1,5 @@
-@import 'tailwindcss/theme' prefix(ms);
-@import 'tailwindcss/utilities' prefix(ms);
+@import 'tailwindcss/theme'prefix(ms);
+@import 'tailwindcss/utilities'prefix(ms);
 
 @source "../**/*.{ts,tsx}";
 

@@ -40,7 +40,12 @@ export interface InputTypeEditorProps {
  * InputTypeEditor — dropdown for input type + optional unit selector.
  * Only relevant for `text` and `longtext` fields.
  */
-export function InputTypeEditor({ fieldId, inputType, unit, onChange }: InputTypeEditorProps) {
+export function InputTypeEditor({
+  fieldId,
+  inputType,
+  unit,
+  onChange,
+}: InputTypeEditorProps) {
   const instanceId = useInstanceId();
   const showUnit = inputType === 'number';
 
@@ -57,11 +62,15 @@ export function InputTypeEditor({ fieldId, inputType, unit, onChange }: InputTyp
         <select
           id={`${instanceId}-editor-inputtype-${fieldId}`}
           value={inputType}
-          onChange={(e) => onChange({ inputType: e.currentTarget.value as TextInputType })}
+          onChange={(e) =>
+            onChange({ inputType: e.currentTarget.value as TextInputType })
+          }
           className="ms:w-full ms:min-w-0 ms:px-2 ms:py-1 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-2 ms:focus:ring-msprimary ms:focus:border-msprimary"
         >
           {INPUT_TYPES.map((t) => (
-            <option key={t.value} value={t.value}>{t.label}</option>
+            <option key={t.value} value={t.value}>
+              {t.label}
+            </option>
           ))}
         </select>
       </div>
@@ -78,14 +87,18 @@ export function InputTypeEditor({ fieldId, inputType, unit, onChange }: InputTyp
           <select
             id={`${instanceId}-editor-unit-${fieldId}`}
             value={unit ?? ''}
-            onChange={(e) => onChange({ unit: e.currentTarget.value || undefined })}
+            onChange={(e) =>
+              onChange({ unit: e.currentTarget.value || undefined })
+            }
             className="ms:w-full ms:min-w-0 ms:px-2 ms:py-1 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-2 ms:focus:ring-msprimary ms:focus:border-msprimary"
           >
             <option value="">None</option>
             {Object.entries(UNITS).map(([group, units]) => (
               <optgroup key={group} label={group}>
                 {units.map((u) => (
-                  <option key={u} value={u}>{u}</option>
+                  <option key={u} value={u}>
+                    {u}
+                  </option>
                 ))}
               </optgroup>
             ))}

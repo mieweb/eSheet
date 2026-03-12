@@ -1,6 +1,12 @@
 import React from 'react';
 import type { FieldComponentProps, SelectedOption } from '@msheet/core';
-import { TrashIcon, PlusIcon, ArrowUpIcon, ArrowDownIcon, UpDownArrowIcon } from '../../icons.js';
+import {
+  TrashIcon,
+  PlusIcon,
+  ArrowUpIcon,
+  ArrowDownIcon,
+  UpDownArrowIcon,
+} from '../../icons.js';
 
 export const RankingField = React.memo(function RankingField({
   field,
@@ -20,7 +26,8 @@ export const RankingField = React.memo(function RankingField({
 
   // Build ranking: use response order if valid, otherwise default to definition order
   const ranking =
-    rankedIds.length === options.length && rankedIds.every((id) => options.some((o) => o.id === id))
+    rankedIds.length === options.length &&
+    rankedIds.every((id) => options.some((o) => o.id === id))
       ? rankedIds
       : options.map((o) => o.id);
 
@@ -52,47 +59,53 @@ export const RankingField = React.memo(function RankingField({
 
   if (isPreview) {
     return (
-      <div className="ranking-field-preview ms:text-mstext">
-        <div className="ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
-          <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
-            {def.question || 'Question'}
-          </div>
-          <div>
-            {ranking.map((optId, index) => {
-              const canMoveUp = index > 0;
-              const canMoveDown = index < ranking.length - 1;
-
-              return (
-                <div
-                  key={optId}
-                  className="ranking-field-item ms:flex ms:items-center ms:px-3 ms:py-2 ms:my-2 ms:bg-mssurface ms:border ms:border-msborder ms:rounded-lg ms:shadow-sm ms:hover:border-msprimary/50 ms:hover:bg-msprimary/10 ms:transition-colors"
-                >
-                  <div className="ms:flex ms:items-center ms:flex-1">
-                    <span className="ms:text-mstext">{optionsMap[optId] || 'Unknown option'}</span>
-                  </div>
-                  <div className="ms:flex ms:items-center ms:gap-1 ms:ml-2">
-                    <button
-                      onClick={() => moveItem(optId, 'up')}
-                      disabled={!canMoveUp}
-                      className={`ms:p-1 ms:bg-transparent ms:border-0 ms:outline-none ms:focus:outline-none ${canMoveUp ? 'ms:text-mstext ms:hover:text-msprimary' : 'ms:text-msborder ms:cursor-not-allowed'}`}
-                      aria-label="Move up"
-                    >
-                      <ArrowUpIcon className="ms:h-6 ms:w-6" />
-                    </button>
-                    <button
-                      onClick={() => moveItem(optId, 'down')}
-                      disabled={!canMoveDown}
-                      className={`ms:p-1 ms:bg-transparent ms:border-0 ms:outline-none ms:focus:outline-none ${canMoveDown ? 'ms:text-mstext ms:hover:text-msprimary' : 'ms:text-msborder ms:cursor-not-allowed'}`}
-                      aria-label="Move down"
-                    >
-                      <ArrowDownIcon className="ms:h-6 ms:w-6" />
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+      <div className="ranking-field-preview ms:text-mstext ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
+        <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
+          {def.question || 'Question'}
         </div>
+        {ranking.map((optId, index) => {
+          const canMoveUp = index > 0;
+          const canMoveDown = index < ranking.length - 1;
+
+          return (
+            <div
+              key={optId}
+              className="ranking-field-item ms:flex ms:items-center ms:px-3 ms:py-2 ms:my-2 ms:bg-mssurface ms:border ms:border-msborder ms:rounded-lg ms:shadow-sm ms:hover:border-msprimary/50 ms:hover:bg-msprimary/10 ms:transition-colors"
+            >
+              <div className="ms:flex ms:items-center ms:flex-1">
+                <span className="ms:text-mstext">
+                  {optionsMap[optId] || 'Unknown option'}
+                </span>
+              </div>
+              <div className="ms:flex ms:items-center ms:gap-1 ms:ml-2">
+                <button
+                  onClick={() => moveItem(optId, 'up')}
+                  disabled={!canMoveUp}
+                  className={`ms:p-1 ms:bg-transparent ms:border-0 ms:outline-none ms:focus:outline-none ${
+                    canMoveUp
+                      ? 'ms:text-mstext ms:hover:text-msprimary'
+                      : 'ms:text-msborder ms:cursor-not-allowed'
+                  }`}
+                  aria-label="Move up"
+                >
+                  <ArrowUpIcon className="ms:h-6 ms:w-6" />
+                </button>
+                <button
+                  onClick={() => moveItem(optId, 'down')}
+                  disabled={!canMoveDown}
+                  className={`ms:p-1 ms:bg-transparent ms:border-0 ms:outline-none ms:focus:outline-none ${
+                    canMoveDown
+                      ? 'ms:text-mstext ms:hover:text-msprimary'
+                      : 'ms:text-msborder ms:cursor-not-allowed'
+                  }`}
+                  aria-label="Move down"
+                >
+                  <ArrowDownIcon className="ms:h-6 ms:w-6" />
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
     );
   }
@@ -134,7 +147,9 @@ export const RankingField = React.memo(function RankingField({
                 type="text"
                 value={option.value}
                 onChange={(e) =>
-                  form.getState().updateOption(def.id, option.id, e.target.value)
+                  form
+                    .getState()
+                    .updateOption(def.id, option.id, e.target.value)
                 }
                 placeholder="Option text"
                 className="ms:flex-1 ms:min-w-0 ms:outline-none ms:bg-transparent ms:text-mstext"

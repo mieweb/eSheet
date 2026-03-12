@@ -42,7 +42,7 @@ export function EditPanel({ form, ui }: EditPanelProps) {
   // No selection
   if (!selectedFieldId || !field) {
     return (
-      <div className="edit-panel-empty ms:flex ms:items-center ms:justify-center ms:h-full ms:text-mstextmuted ms:text-sm ms:p-4 ms:text-center">
+      <div className="edit-panel-empty ms:flex ms:flex-1 ms:min-h-0 ms:items-center ms:justify-center ms:text-mstextmuted ms:text-sm ms:p-4 ms:text-center">
         Select a field to edit its properties
       </div>
     );
@@ -66,7 +66,7 @@ export function EditPanel({ form, ui }: EditPanelProps) {
   const setTab = (tab: EditTab) => ui.getState().setEditTab(tab);
 
   return (
-    <div className="edit-panel ms:flex ms:flex-col ms:h-full">
+    <div className="edit-panel ms:flex ms:flex-1 ms:flex-col ms:min-h-0">
       {/* Tab Bar — pill segment style */}
       <div className="edit-panel-tabs ms:sticky ms:top-0 ms:z-10 ms:bg-mssurface ms:border-b ms:border-msborder ms:px-3 ms:pt-3 ms:pb-2 ms:shrink-0">
         <div className="ms:flex ms:gap-1 ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackground ms:p-1">
@@ -98,7 +98,7 @@ export function EditPanel({ form, ui }: EditPanelProps) {
       </div>
 
       {/* Tab Content */}
-      <div className="edit-panel-content ms:flex-1 ms:max-h-[calc(100dvh-16rem)] ms:overflow-y-auto ms:p-4">
+      <div className="edit-panel-content ms:flex-1 ms:min-h-0 ms:p-4">
         {editTab === 'edit' ? (
           <EditTabContent
             fieldId={selectedFieldId}

@@ -16,7 +16,12 @@ export interface OptionListEditorProps {
  * Disables delete for boolean (fixed Yes/No).
  * Uses form.addOption / updateOption / removeOption directly.
  */
-export function OptionListEditor({ fieldId, fieldType, options, form }: OptionListEditorProps) {
+export function OptionListEditor({
+  fieldId,
+  fieldType,
+  options,
+  form,
+}: OptionListEditorProps) {
   const instanceId = useInstanceId();
   const listRef = React.useRef<HTMLDivElement>(null);
   const isBoolean = fieldType === 'boolean';
@@ -34,7 +39,9 @@ export function OptionListEditor({ fieldId, fieldType, options, form }: OptionLi
 
   return (
     <div className="option-list-editor ms:space-y-2">
-      <span className="edit-label ms:block ms:text-sm ms:font-medium ms:text-mstext">{label}</span>
+      <span className="edit-label ms:block ms:text-sm ms:font-medium ms:text-mstext">
+        {label}
+      </span>
 
       <div ref={listRef} className="option-list ms:space-y-2">
         {options.map((opt, idx) => (
@@ -47,7 +54,11 @@ export function OptionListEditor({ fieldId, fieldType, options, form }: OptionLi
               aria-label={`Option ${idx + 1}`}
               type="text"
               value={opt.value}
-              onChange={(e) => form.getState().updateOption(fieldId, opt.id, e.currentTarget.value)}
+              onChange={(e) =>
+                form
+                  .getState()
+                  .updateOption(fieldId, opt.id, e.currentTarget.value)
+              }
               placeholder={`Option ${idx + 1}`}
               className="ms:flex-1 ms:min-w-0 ms:outline-none ms:bg-transparent ms:text-mstext ms:placeholder:text-mstextmuted ms:border-0 ms:text-sm"
             />

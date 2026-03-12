@@ -1,13 +1,23 @@
 import React, { useSyncExternalStore } from 'react';
 import type { FormStore, UIStore, BuilderMode } from '@msheet/core';
-import { VEditorIcon, CodeIcon, PreviewIcon, UploadIcon, DownloadIcon } from '../icons.js';
+import {
+  VEditorIcon,
+  CodeIcon,
+  PreviewIcon,
+  UploadIcon,
+  DownloadIcon,
+} from '../icons.js';
 
 export interface BuilderHeaderProps {
   form: FormStore;
   ui: UIStore;
 }
 
-const MODES: { value: BuilderMode; label: string; Icon: React.ComponentType<{ className?: string }> }[] = [
+const MODES: {
+  value: BuilderMode;
+  label: string;
+  Icon: React.ComponentType<{ className?: string }>;
+}[] = [
   { value: 'build', label: 'Build', Icon: VEditorIcon },
   { value: 'code', label: 'Code', Icon: CodeIcon },
   { value: 'preview', label: 'Preview', Icon: PreviewIcon },
@@ -22,13 +32,13 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
   const mode = useSyncExternalStore(
     (cb) => ui.subscribe(cb),
     () => ui.getState().mode,
-    () => ui.getState().mode,
+    () => ui.getState().mode
   );
 
   const codeHasError = useSyncExternalStore(
     (cb) => ui.subscribe(cb),
     () => ui.getState().codeEditorHasError,
-    () => ui.getState().codeEditorHasError,
+    () => ui.getState().codeEditorHasError
   );
 
   const handleExport = () => {

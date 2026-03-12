@@ -194,14 +194,21 @@ function collectDescendants(
   return result;
 }
 
-function getDefaultQuestion(fieldType: FieldType, label: string): string | undefined {
+function getDefaultQuestion(
+  fieldType: FieldType,
+  label: string
+): string | undefined {
   if (fieldType === 'section' || fieldType === 'html') return undefined;
   if (fieldType === 'expression') return 'Expression Field';
   if (fieldType === 'image') return 'Image Block';
   return `${label} question`;
 }
 
-function getDefaultOptionValue(fieldType: FieldType, index: number, total: number): string {
+function getDefaultOptionValue(
+  fieldType: FieldType,
+  index: number,
+  total: number
+): string {
   if (fieldType === 'boolean') {
     return index === 0 ? 'Yes' : index === 1 ? 'No' : `Option ${index + 1}`;
   }
@@ -307,7 +314,10 @@ export function createFormStore(initial?: FormDefinition): FormStore {
         for (let i = 0; i < count; i++) {
           const oid = generateOptionId(oIds, id);
           oIds.add(oid);
-          opts.push({ id: oid, value: getDefaultOptionValue(fieldType, i, count) });
+          opts.push({
+            id: oid,
+            value: getDefaultOptionValue(fieldType, i, count),
+          });
         }
         (definition as Record<string, unknown>).options = opts;
       }

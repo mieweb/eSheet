@@ -33,14 +33,34 @@ type CustomDropdownProps = SingleSelectProps | MultiSelectProps;
 
 // Inline SVG icons
 const ChevronIcon = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+  <svg
+    className={className}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M19 9l-7 7-7-7"
+    />
   </svg>
 );
 
 const CloseIcon = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+  <svg
+    className={className}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M6 18L18 6M6 6l12 12"
+    />
   </svg>
 );
 
@@ -75,9 +95,11 @@ export function CustomDropdown(props: CustomDropdownProps) {
     const value = (props as MultiSelectProps).value;
     const onChange = (props as MultiSelectProps).onChange;
     const selectedIds = Array.isArray(value) ? value : [];
-    const selectedOptions = options.filter((opt) => selectedIds.includes(opt.id));
+    const selectedOptions = options.filter((opt) =>
+      selectedIds.includes(opt.id)
+    );
     const availableOptions = options.filter(
-      (opt) => !selectedIds.includes(opt.id),
+      (opt) => !selectedIds.includes(opt.id)
     );
 
     const handleSelect = (optionId: string) => {

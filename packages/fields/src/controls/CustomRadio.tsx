@@ -1,6 +1,8 @@
 import React from 'react';
 
-const noop = () => { /* controlled radio */ };
+const noop = () => {
+  /* controlled radio */
+};
 
 // ---------------------------------------------------------------------------
 // Size presets

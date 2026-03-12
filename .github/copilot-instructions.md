@@ -198,6 +198,37 @@ If any box is unchecked, **simplify**.
   <input id={`${instanceId}-editor-question-${fieldId}`} />
   ```
 
+- **Flatten Redundant Wrapper Divs**: When preview mode sections have nested layout containers where the outer wrapper only contains an inner layout div (with no additional semantic meaning or styling constraints), merge them into a single element. This pattern is common in field preview sections.
+
+  **When to flatten:**
+  - Outer div: `className="*-field-preview ...basic utilities..."` (semantic class for styling/debugging)
+  - Inner div: `className="ms:grid ms:grid-cols-1 ..."` (pure layout utilities)
+  - The outer wrapper adds nothing but an extra nesting level
+
+  **Pattern (applies to field preview sections):**
+  ```tsx
+  // BEFORE - redundant nesting
+  <div className="text-field-preview">
+    <div className="ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
+      <div className="ms:font-light ms:text-mstext">Question</div>
+      <input />
+    </div>
+  </div>
+
+  // AFTER - flattened and cleaner
+  <div className="text-field-preview ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
+    <div className="ms:font-light ms:text-mstext">Question</div>
+    <input />
+  </div>
+  ```
+
+  **Rules:**
+  - Keep the semantic class name (e.g., `text-field-preview`, `rating-field-preview`) on the merged element
+  - Merge layout utilities from the inner div to the outer element
+  - Only flatten when the outer wrapper provides no semantic layout purpose (just a nesting container)
+  - Don't flatten wrapper divs that provide conditional rendering logic or have complex state management
+  - Don't flatten wrappers that provide animation/transition context (those serve a purpose)
+
 ---
 
 ## Anti-Patterns to Avoid

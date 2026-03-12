@@ -14,42 +14,43 @@ export const RadioField = React.memo(function RadioField({
   const def = field.definition;
   const instanceId = form.getState().instanceId;
   const options = def.options || [];
-  const selectedId = (response?.selected as SelectedOption | undefined)?.id ?? null;
+  const selectedId =
+    (response?.selected as SelectedOption | undefined)?.id ?? null;
 
   if (isPreview) {
     return (
-      <div className="radio-field-preview">
-        <div className="ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
-          <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
-            {def.question || 'Question'}
-          </div>
-          <div>
-            {options.map((option) => {
-              const inputId = `${instanceId}-radio-answer-${def.id}-${option.id}`;
-              const isSelected = selectedId === option.id;
+      <div className="radio-field-preview ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
+        <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
+          {def.question || 'Question'}
+        </div>
+        <div>
+          {options.map((option) => {
+            const inputId = `${instanceId}-radio-answer-${def.id}-${option.id}`;
+            const isSelected = selectedId === option.id;
 
-              return (
-                <label
-                  key={option.id}
-                  htmlFor={inputId}
-                  className="ms:flex ms:items-center ms:gap-3 ms:px-3 ms:py-2 ms:my-2 ms:cursor-pointer ms:rounded-lg ms:hover:bg-msprimary/10 ms:transition-colors"
-                >
-                  <CustomRadio
-                    id={inputId}
-                    name={`question-${def.id}`}
-                    value={option.id}
-                    checked={isSelected}
-                    onSelect={() =>
-                      onResponse({ selected: { id: option.id, value: option.value } })
-                    }
-                    onUnselect={() => onResponse({ selected: undefined })}
-                    size="lg"
-                  />
-                  <span className="ms:text-mstext">{option.value}</span>
-                </label>
-              );
-            })}
-          </div>
+            return (
+              <label
+                key={option.id}
+                htmlFor={inputId}
+                className="ms:flex ms:items-center ms:gap-3 ms:px-3 ms:py-2 ms:my-2 ms:cursor-pointer ms:rounded-lg ms:hover:bg-msprimary/10 ms:transition-colors"
+              >
+                <CustomRadio
+                  id={inputId}
+                  name={`question-${def.id}`}
+                  value={option.id}
+                  checked={isSelected}
+                  onSelect={() =>
+                    onResponse({
+                      selected: { id: option.id, value: option.value },
+                    })
+                  }
+                  onUnselect={() => onResponse({ selected: undefined })}
+                  size="lg"
+                />
+                <span className="ms:text-mstext">{option.value}</span>
+              </label>
+            );
+          })}
         </div>
       </div>
     );
@@ -92,7 +93,9 @@ export const RadioField = React.memo(function RadioField({
                 type="text"
                 value={option.value}
                 onChange={(e) =>
-                  form.getState().updateOption(def.id, option.id, e.target.value)
+                  form
+                    .getState()
+                    .updateOption(def.id, option.id, e.target.value)
                 }
                 placeholder="Option text"
                 className="ms:flex-1 ms:min-w-0 ms:outline-none ms:bg-transparent ms:text-mstext"

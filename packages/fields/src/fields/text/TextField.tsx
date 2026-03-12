@@ -18,7 +18,8 @@ function formatPhoneNumber(value: string): string {
   const digits = value.replace(/[^\d]/g, '');
   if (digits.length < 4) return digits;
   if (digits.length < 7) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
-  if (digits.length <= 10) return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  if (digits.length <= 10)
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
   return value;
 }
 
@@ -50,30 +51,32 @@ export const TextField = React.memo(function TextField({
 
   if (isPreview) {
     return (
-      <div className="text-field-preview">
-        <div className="ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
-          <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
-            {def.question || 'Question'}
-          </div>
-          <div className="ms:relative">
-            <input
-              id={`${instanceId}-text-answer-${def.id}`}
-              aria-label={def.question || 'Question'}
-              type={inputType}
-              value={response?.answer || ''}
-              onChange={(e) => {
-                const val = isTel ? formatPhoneNumber(e.target.value) : e.target.value;
-                onResponse({ answer: val });
-              }}
-              placeholder={placeholder}
-              className={`ms:px-4 ms:py-2 ms:h-10 ms:w-full ms:min-w-0 ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:shadow-sm ms:rounded-lg ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary/30 ms:outline-none ms:transition-colors ${unit ? 'ms:pr-16' : ''}`}
-            />
-            {unit && (
-              <span className="ms:absolute ms:right-3 ms:top-1/2 ms:-translate-y-1/2 ms:text-sm ms:text-mstextmuted ms:pointer-events-none">
-                {unit}
-              </span>
-            )}
-          </div>
+      <div className="text-field-preview ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
+        <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
+          {def.question || 'Question'}
+        </div>
+        <div className="ms:relative">
+          <input
+            id={`${instanceId}-text-answer-${def.id}`}
+            aria-label={def.question || 'Question'}
+            type={inputType}
+            value={response?.answer || ''}
+            onChange={(e) => {
+              const val = isTel
+                ? formatPhoneNumber(e.target.value)
+                : e.target.value;
+              onResponse({ answer: val });
+            }}
+            placeholder={placeholder}
+            className={`ms:px-4 ms:py-2 ms:h-10 ms:w-full ms:min-w-0 ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:shadow-sm ms:rounded-lg ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary/30 ms:outline-none ms:transition-colors ${
+              unit ? 'ms:pr-16' : ''
+            }`}
+          />
+          {unit && (
+            <span className="ms:absolute ms:right-3 ms:top-1/2 ms:-translate-y-1/2 ms:text-sm ms:text-mstextmuted ms:pointer-events-none">
+              {unit}
+            </span>
+          )}
         </div>
       </div>
     );
@@ -105,7 +108,9 @@ export const TextField = React.memo(function TextField({
           type={inputType}
           value=""
           placeholder={placeholder}
-          className={`ms:px-4 ms:py-2 ms:w-full ms:border ms:border-msborder ms:shadow-sm ms:rounded-lg ms:bg-msbackground ms:text-mstextmuted ${unit ? 'ms:pr-16' : ''}`}
+          className={`ms:px-4 ms:py-2 ms:w-full ms:border ms:border-msborder ms:shadow-sm ms:rounded-lg ms:bg-msbackground ms:text-mstextmuted ${
+            unit ? 'ms:pr-16' : ''
+          }`}
           disabled
         />
         {unit && (

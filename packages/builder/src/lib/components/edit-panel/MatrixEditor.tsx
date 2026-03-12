@@ -17,7 +17,12 @@ export interface MatrixEditorProps {
  * MatrixEditor — add / edit / remove rows and columns for matrix fields.
  * Max 10 rows, max 10 columns.
  */
-export function MatrixEditor({ fieldId, rows, columns, form }: MatrixEditorProps) {
+export function MatrixEditor({
+  fieldId,
+  rows,
+  columns,
+  form,
+}: MatrixEditorProps) {
   const instanceId = useInstanceId();
   const rowsRef = React.useRef<HTMLDivElement>(null);
   const colsRef = React.useRef<HTMLDivElement>(null);
@@ -25,14 +30,16 @@ export function MatrixEditor({ fieldId, rows, columns, form }: MatrixEditorProps
   const handleAddRow = () => {
     form.getState().addRow(fieldId);
     requestAnimationFrame(() => {
-      if (rowsRef.current) rowsRef.current.scrollTop = rowsRef.current.scrollHeight;
+      if (rowsRef.current)
+        rowsRef.current.scrollTop = rowsRef.current.scrollHeight;
     });
   };
 
   const handleAddColumn = () => {
     form.getState().addColumn(fieldId);
     requestAnimationFrame(() => {
-      if (colsRef.current) colsRef.current.scrollTop = colsRef.current.scrollHeight;
+      if (colsRef.current)
+        colsRef.current.scrollTop = colsRef.current.scrollHeight;
     });
   };
 
@@ -40,9 +47,13 @@ export function MatrixEditor({ fieldId, rows, columns, form }: MatrixEditorProps
     <div className="matrix-editor ms:space-y-4">
       {/* Rows */}
       <div className="matrix-rows ms:space-y-2">
-        <span className="edit-label ms:block ms:text-sm ms:font-medium ms:text-mstext">Rows</span>
+        <span className="edit-label ms:block ms:text-sm ms:font-medium ms:text-mstext">
+          Rows
+        </span>
         {rows.length >= MAX_ROWS && (
-          <div className="ms:text-xs ms:text-mstextmuted ms:italic">Maximum {MAX_ROWS} rows</div>
+          <div className="ms:text-xs ms:text-mstextmuted ms:italic">
+            Maximum {MAX_ROWS} rows
+          </div>
         )}
         <div ref={rowsRef} className="row-list ms:space-y-2">
           {rows.map((row, idx) => (
@@ -58,7 +69,11 @@ export function MatrixEditor({ fieldId, rows, columns, form }: MatrixEditorProps
                 aria-label={`Row ${idx + 1}`}
                 type="text"
                 value={row.value}
-                onChange={(e) => form.getState().updateRow(fieldId, row.id, e.currentTarget.value)}
+                onChange={(e) =>
+                  form
+                    .getState()
+                    .updateRow(fieldId, row.id, e.currentTarget.value)
+                }
                 placeholder={`Row ${idx + 1}`}
                 className="ms:flex-1 ms:min-w-0 ms:outline-none ms:bg-transparent ms:text-mstext ms:placeholder:text-mstextmuted ms:border-0 ms:text-sm"
               />
@@ -86,9 +101,13 @@ export function MatrixEditor({ fieldId, rows, columns, form }: MatrixEditorProps
 
       {/* Columns */}
       <div className="matrix-columns ms:space-y-2">
-        <span className="edit-label ms:block ms:text-sm ms:font-medium ms:text-mstext">Columns</span>
+        <span className="edit-label ms:block ms:text-sm ms:font-medium ms:text-mstext">
+          Columns
+        </span>
         {columns.length >= MAX_COLUMNS && (
-          <div className="ms:text-xs ms:text-mstextmuted ms:italic">Maximum {MAX_COLUMNS} columns</div>
+          <div className="ms:text-xs ms:text-mstextmuted ms:italic">
+            Maximum {MAX_COLUMNS} columns
+          </div>
         )}
         <div ref={colsRef} className="column-list ms:space-y-2">
           {columns.map((col, idx) => (
@@ -104,7 +123,11 @@ export function MatrixEditor({ fieldId, rows, columns, form }: MatrixEditorProps
                 aria-label={`Column ${idx + 1}`}
                 type="text"
                 value={col.value}
-                onChange={(e) => form.getState().updateColumn(fieldId, col.id, e.currentTarget.value)}
+                onChange={(e) =>
+                  form
+                    .getState()
+                    .updateColumn(fieldId, col.id, e.currentTarget.value)
+                }
                 placeholder={`Column ${idx + 1}`}
                 className="ms:flex-1 ms:min-w-0 ms:outline-none ms:bg-transparent ms:text-mstext ms:placeholder:text-mstextmuted ms:border-0 ms:text-sm"
               />

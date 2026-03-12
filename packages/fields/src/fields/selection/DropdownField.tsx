@@ -14,30 +14,30 @@ export const DropdownField = React.memo(function DropdownField({
   const def = field.definition;
   const instanceId = form.getState().instanceId;
   const options = def.options || [];
-  const selectedId = (response?.selected as SelectedOption | undefined)?.id ?? null;
+  const selectedId =
+    (response?.selected as SelectedOption | undefined)?.id ?? null;
 
   if (isPreview) {
     return (
-      <div className="dropdown-field-preview">
-        <div className="ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
-          <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
-            {def.question || 'Question'}
-          </div>
-          <CustomDropdown
-            options={options}
-            value={selectedId}
-            onChange={(id) => {
-              if (id == null) {
-                onResponse({ selected: undefined });
-              } else {
-                const opt = options.find((o) => o.id === id);
-                if (opt) onResponse({ selected: { id: opt.id, value: opt.value } });
-              }
-            }}
-            placeholder="Select an option"
-            showClearOption
-          />
+      <div className="dropdown-field-preview ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
+        <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
+          {def.question || 'Question'}
         </div>
+        <CustomDropdown
+          options={options}
+          value={selectedId}
+          onChange={(id) => {
+            if (id == null) {
+              onResponse({ selected: undefined });
+            } else {
+              const opt = options.find((o) => o.id === id);
+              if (opt)
+                onResponse({ selected: { id: opt.id, value: opt.value } });
+            }
+          }}
+          placeholder="Select an option"
+          showClearOption
+        />
       </div>
     );
   }
@@ -78,7 +78,9 @@ export const DropdownField = React.memo(function DropdownField({
                 type="text"
                 value={option.value}
                 onChange={(e) =>
-                  form.getState().updateOption(def.id, option.id, e.target.value)
+                  form
+                    .getState()
+                    .updateOption(def.id, option.id, e.target.value)
                 }
                 placeholder="Option text"
                 className="ms:flex-1 ms:min-w-0 ms:outline-none ms:bg-transparent ms:text-mstext"

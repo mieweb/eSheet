@@ -17,7 +17,10 @@ export const MultiMatrixField = React.memo(function MultiMatrixField({
   const columns = def.columns || [];
 
   // selected is Record<rowId, SelectedOption[]> for multi-select per row
-  const selected = (response?.selected ?? {}) as Record<string, SelectedOption[]>;
+  const selected = (response?.selected ?? {}) as Record<
+    string,
+    SelectedOption[]
+  >;
 
   const toggleSelection = (rowId: string, colId: string, colValue: string) => {
     const updated: Record<string, SelectedOption[]> = {};
@@ -37,61 +40,70 @@ export const MultiMatrixField = React.memo(function MultiMatrixField({
 
   if (isPreview) {
     return (
-      <div className="multimatrix-field-preview ms:text-mstext">
-        <div className="ms:pb-4">
-          <div className="ms:font-light ms:mb-3 ms:text-mstext ms:break-words ms:overflow-hidden">
-            {def.question || 'Question'}
-          </div>
-
-          {rows.length > 0 && columns.length > 0 ? (
-            <div
-              className="multimatrix-field-grid ms:border-t ms:border-msborder ms:pt-3"
-              style={{ display: 'grid', gridTemplateColumns: `auto repeat(${columns.length}, 1fr)`, gap: '0.5rem 1rem', alignItems: 'center' }}
-            >
-              {/* Top-left empty cell */}
-              <div />
-              {/* Column headers */}
-              {columns.map((col) => (
-                <div
-                  key={col.id}
-                  className="ms:text-center ms:font-normal ms:text-mstext ms:py-1"
-                >
-                  {col.value}
-                </div>
-              ))}
-
-              {/* Data rows */}
-              {rows.map((row, rowIndex) => {
-                const rowSelections = selected[row.id] || [];
-
-                return (
-                  <React.Fragment key={row.id}>
-                    <div className="ms:font-normal ms:text-mstext ms:py-2">{row.value}</div>
-                    {columns.map((col, colIndex) => {
-                      const isChecked = rowSelections.some((s) => s.id === col.id);
-                      const inputId = `${instanceId}-multimatrix-answer-${def.id}-${rowIndex}-${colIndex}`;
-
-                      return (
-                        <div key={col.id} className="ms:flex ms:justify-center ms:py-2">
-                          <CustomCheckbox
-                            id={inputId}
-                            checked={isChecked}
-                            onChange={() => toggleSelection(row.id, col.id, col.value)}
-                            size="lg"
-                          />
-                        </div>
-                      );
-                    })}
-                  </React.Fragment>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="ms:text-mstextmuted ms:text-sm">
-              Configure rows and columns in edit mode
-            </div>
-          )}
+      <div className="multimatrix-field-preview ms:text-mstext ms:pb-4">
+        <div className="ms:font-light ms:mb-3 ms:text-mstext ms:break-words ms:overflow-hidden">
+          {def.question || 'Question'}
         </div>
+
+        {rows.length > 0 && columns.length > 0 ? (
+          <div
+            className="multimatrix-field-grid ms:border-t ms:border-msborder ms:pt-3"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: `auto repeat(${columns.length}, 1fr)`,
+              gap: '0.5rem 1rem',
+              alignItems: 'center',
+            }}
+          >
+            <div />
+            {columns.map((col) => (
+              <div
+                key={col.id}
+                className="ms:text-center ms:font-normal ms:text-mstext ms:py-1"
+              >
+                {col.value}
+              </div>
+            ))}
+
+            {rows.map((row, rowIndex) => {
+              const rowSelections = selected[row.id] || [];
+
+              return (
+                <React.Fragment key={row.id}>
+                  <div className="ms:font-normal ms:text-mstext ms:py-2">
+                    {row.value}
+                  </div>
+                  {columns.map((col, colIndex) => {
+                    const isChecked = rowSelections.some(
+                      (s) => s.id === col.id
+                    );
+                    const inputId = `${instanceId}-multimatrix-answer-${def.id}-${rowIndex}-${colIndex}`;
+
+                    return (
+                      <div
+                        key={col.id}
+                        className="ms:flex ms:justify-center ms:py-2"
+                      >
+                        <CustomCheckbox
+                          id={inputId}
+                          checked={isChecked}
+                          onChange={() =>
+                            toggleSelection(row.id, col.id, col.value)
+                          }
+                          size="lg"
+                        />
+                      </div>
+                    );
+                  })}
+                </React.Fragment>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="ms:text-mstextmuted ms:text-sm">
+            Configure rows and columns in edit mode
+          </div>
+        )}
       </div>
     );
   }
@@ -132,7 +144,9 @@ export const MultiMatrixField = React.memo(function MultiMatrixField({
                 aria-label={`Row ${row.id}`}
                 type="text"
                 value={row.value}
-                onChange={(e) => form.getState().updateRow(def.id, row.id, e.target.value)}
+                onChange={(e) =>
+                  form.getState().updateRow(def.id, row.id, e.target.value)
+                }
                 placeholder="Row text"
                 className="ms:flex-1 ms:min-w-0 ms:outline-none ms:bg-transparent ms:text-mstext"
               />
@@ -147,10 +161,14 @@ export const MultiMatrixField = React.memo(function MultiMatrixField({
           ))}
         </div>
         {rows.length >= 10 ? (
-          <div className="ms:mt-2 ms:text-mstextmuted ms:text-sm">Max rows reached</div>
+          <div className="ms:mt-2 ms:text-mstextmuted ms:text-sm">
+            Max rows reached
+          </div>
         ) : (
           <button
-            onClick={() => form.getState().addRow(def.id, `Row ${rows.length + 1}`)}
+            onClick={() =>
+              form.getState().addRow(def.id, `Row ${rows.length + 1}`)
+            }
             className="ms:mt-2 ms:w-full ms:px-3 ms:py-2 ms:text-sm ms:font-medium ms:text-msprimary ms:border ms:border-msprimary/50 ms:rounded-lg ms:bg-mssurface ms:hover:bg-msprimary/10 ms:transition-colors ms:flex ms:items-center ms:justify-center ms:gap-2"
           >
             <PlusIcon className="ms:w-5 ms:h-5" /> Add Row
@@ -191,7 +209,9 @@ export const MultiMatrixField = React.memo(function MultiMatrixField({
           ))}
         </div>
         {columns.length >= 10 ? (
-          <div className="ms:mt-2 ms:text-mstextmuted ms:text-sm">Max columns reached</div>
+          <div className="ms:mt-2 ms:text-mstextmuted ms:text-sm">
+            Max columns reached
+          </div>
         ) : (
           <button
             onClick={() =>

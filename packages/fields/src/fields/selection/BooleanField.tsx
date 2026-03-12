@@ -19,48 +19,53 @@ export const BooleanField = React.memo(function BooleanField({
           { id: 'yes', value: 'Yes' },
           { id: 'no', value: 'No' },
         ];
-  const selectedId = (response?.selected as SelectedOption | undefined)?.id ?? null;
+  const selectedId =
+    (response?.selected as SelectedOption | undefined)?.id ?? null;
 
   if (isPreview) {
     return (
-      <div className="boolean-field-preview">
-        <div className="ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
-          <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
-            {def.question || 'Question'}
-          </div>
-          <div className="ms:flex ms:gap-2">
-            {options.map((option) => {
-              const inputId = `${instanceId}-boolean-answer-${def.id}-${option.id}`;
-              const isSelected = selectedId === option.id;
+      <div className="boolean-field-preview ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
+        <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
+          {def.question || 'Question'}
+        </div>
+        <div className="ms:flex ms:gap-2">
+          {options.map((option) => {
+            const inputId = `${instanceId}-boolean-answer-${def.id}-${option.id}`;
+            const isSelected = selectedId === option.id;
 
-              return (
-                <label
-                  key={option.id}
-                  htmlFor={inputId}
-                  className={`ms:flex-1 ms:flex ms:items-center ms:justify-center ms:px-4 ms:py-2 ms:h-10 ms:border-2 ms:rounded-lg ms:cursor-pointer ms:transition-all ${
-                    isSelected
-                      ? 'ms:bg-msprimary ms:text-mstextsecondary ms:border-msprimary'
-                      : 'ms:border-msborder ms:bg-mssurface ms:hover:bg-msprimary/10 ms:hover:border-msprimary/50'
-                  }`}
+            return (
+              <label
+                key={option.id}
+                htmlFor={inputId}
+                className={`ms:flex-1 ms:flex ms:items-center ms:justify-center ms:px-4 ms:py-2 ms:h-10 ms:border-2 ms:rounded-lg ms:cursor-pointer ms:transition-all ${
+                  isSelected
+                    ? 'ms:bg-msprimary ms:text-mstextsecondary ms:border-msprimary'
+                    : 'ms:border-msborder ms:bg-mssurface ms:hover:bg-msprimary/10 ms:hover:border-msprimary/50'
+                }`}
+              >
+                <CustomRadio
+                  id={inputId}
+                  name={`question-${def.id}`}
+                  value={option.id}
+                  checked={isSelected}
+                  onSelect={() =>
+                    onResponse({
+                      selected: { id: option.id, value: option.value },
+                    })
+                  }
+                  onUnselect={() => onResponse({ selected: undefined })}
+                  hidden
+                />
+                <span
+                  className={
+                    isSelected ? 'ms:text-mstextsecondary' : 'ms:text-mstext'
+                  }
                 >
-                  <CustomRadio
-                    id={inputId}
-                    name={`question-${def.id}`}
-                    value={option.id}
-                    checked={isSelected}
-                    onSelect={() =>
-                      onResponse({ selected: { id: option.id, value: option.value } })
-                    }
-                    onUnselect={() => onResponse({ selected: undefined })}
-                    hidden
-                  />
-                  <span className={isSelected ? 'ms:text-mstextsecondary' : 'ms:text-mstext'}>
-                    {option.value}
-                  </span>
-                </label>
-              );
-            })}
-          </div>
+                  {option.value}
+                </span>
+              </label>
+            );
+          })}
         </div>
       </div>
     );

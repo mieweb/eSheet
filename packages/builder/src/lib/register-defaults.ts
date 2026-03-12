@@ -38,4 +38,3 @@ registerBuilderComponents({
   singlematrix: SingleMatrixField,
   multimatrix: MultiMatrixField,
 });
-

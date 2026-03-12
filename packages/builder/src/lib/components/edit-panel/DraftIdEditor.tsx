@@ -27,9 +27,9 @@ export function DraftIdEditor({ id, fieldId, onCommit }: DraftIdEditorProps) {
 
   const commit = () => {
     const trimmed = draft.trim();
-    if (trimmed === id) return;             // no change
+    if (trimmed === id) return; // no change
     if (!trimmed || !onCommit(trimmed)) {
-      setDraft(id);                         // revert on rejection  
+      setDraft(id); // revert on rejection
     }
   };
 

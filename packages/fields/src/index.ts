@@ -4,7 +4,13 @@ export { CustomCheckbox } from './controls/CustomCheckbox.js';
 export { CustomDropdown } from './controls/CustomDropdown.js';
 
 // Icons (shared with builder)
-export { TrashIcon, PlusIcon, ArrowUpIcon, ArrowDownIcon, UpDownArrowIcon } from './icons.js';
+export {
+  TrashIcon,
+  PlusIcon,
+  ArrowUpIcon,
+  ArrowDownIcon,
+  UpDownArrowIcon,
+} from './icons.js';
 
 // Field components
 export {

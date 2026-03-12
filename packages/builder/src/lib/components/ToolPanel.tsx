@@ -42,7 +42,7 @@ const CATEGORY_ICONS: Record<string, IconComponent> = {
   'Rating & Ranking': RatingIcon,
   'Matrix Fields': MatrixIcon,
   'Rich Content': RichContentIcon,
-  'Organization': OrganizationIcon,
+  Organization: OrganizationIcon,
 };
 
 import { getFieldComponent } from '../component-registry.js';
@@ -75,8 +75,13 @@ export const ToolPanel = React.memo(function ToolPanel({
   ui,
 }: ToolPanelProps) {
   const categories = React.useMemo(buildCategories, []);
-  const categoryNames = React.useMemo(() => Object.keys(categories), [categories]);
-  const [collapsed, setCollapsed] = React.useState<Set<string>>(() => new Set());
+  const categoryNames = React.useMemo(
+    () => Object.keys(categories),
+    [categories]
+  );
+  const [collapsed, setCollapsed] = React.useState<Set<string>>(
+    () => new Set()
+  );
 
   const toggleCategory = React.useCallback((name: string) => {
     setCollapsed((prev) => {
@@ -89,7 +94,7 @@ export const ToolPanel = React.memo(function ToolPanel({
 
   const toggleAll = React.useCallback(() => {
     setCollapsed((prev) =>
-      prev.size === categoryNames.length ? new Set() : new Set(categoryNames),
+      prev.size === categoryNames.length ? new Set() : new Set(categoryNames)
     );
   }, [categoryNames]);
 
@@ -106,7 +111,7 @@ export const ToolPanel = React.memo(function ToolPanel({
   const allCollapsed = collapsed.size === categoryNames.length;
 
   return (
-    <div className="tool-panel ms:flex ms:flex-col">
+    <div className="tool-panel ms:flex ms:flex-1 ms:flex-col ms:min-h-0">
       <h3 className="tool-panel-title ms:sticky ms:top-0 ms:z-10 ms:bg-mssurface ms:text-sm ms:font-semibold ms:text-mstext ms:pb-2 ms:pt-1.5 ms:px-4 ms:border-b ms:border-msborder ms:flex ms:items-center ms:justify-between">
         <span>Tools</span>
         <button
@@ -119,7 +124,7 @@ export const ToolPanel = React.memo(function ToolPanel({
         </button>
       </h3>
 
-      <div className="tool-panel-body ms:max-h-[calc(100dvh-16rem)] ms:overflow-y-auto">
+      <div className="tool-panel-body ms:flex-1 ms:min-h-0">
         {Object.entries(categories).map(([categoryName, items]) => {
           const isCollapsed = collapsed.has(categoryName);
           return (
@@ -130,8 +135,15 @@ export const ToolPanel = React.memo(function ToolPanel({
                 className="tool-category-title ms:w-full ms:sticky ms:top-0 ms:z-[5] ms:bg-mssurface ms:text-xs ms:font-semibold ms:text-mstextmuted ms:px-4 ms:py-2.5 ms:border-b ms:border-msborder ms:border-0 ms:uppercase ms:tracking-wide ms:flex ms:items-center ms:gap-1.5 ms:cursor-pointer ms:hover:bg-msbackgroundhover ms:transition-colors ms:outline-none ms:focus:outline-none"
                 aria-expanded={!isCollapsed}
               >
-                <ChevronIcon className={`ms:w-3.5 ms:h-3.5 ms:shrink-0 ms:transition-transform ${isCollapsed ? 'ms:-rotate-90' : ''}`} />
-                {CATEGORY_ICONS[categoryName] && React.createElement(CATEGORY_ICONS[categoryName], { className: 'ms:w-3.5 ms:h-3.5 ms:shrink-0' })}
+                <ChevronIcon
+                  className={`ms:w-3.5 ms:h-3.5 ms:shrink-0 ms:transition-transform ${
+                    isCollapsed ? 'ms:-rotate-90' : ''
+                  }`}
+                />
+                {CATEGORY_ICONS[categoryName] &&
+                  React.createElement(CATEGORY_ICONS[categoryName], {
+                    className: 'ms:w-3.5 ms:h-3.5 ms:shrink-0',
+                  })}
                 <span className="ms:flex-1 ms:text-left">{categoryName}</span>
               </button>
               {!isCollapsed && (
@@ -144,7 +156,9 @@ export const ToolPanel = React.memo(function ToolPanel({
                       onClick={() => handleAdd(type)}
                       title={`Add ${label}`}
                     >
-                      <span className="tool-btn-plus ms:flex ms:items-center ms:justify-center ms:w-5 ms:h-5 ms:rounded ms:bg-msbackgroundsecondary ms:text-mstextmuted ms:text-xs ms:font-bold ms:shrink-0">+</span>
+                      <span className="tool-btn-plus ms:flex ms:items-center ms:justify-center ms:w-5 ms:h-5 ms:rounded ms:bg-msbackgroundsecondary ms:text-mstextmuted ms:text-xs ms:font-bold ms:shrink-0">
+                        +
+                      </span>
                       {label}
                     </button>
                   ))}

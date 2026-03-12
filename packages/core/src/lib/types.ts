@@ -104,7 +104,9 @@ export const EXPRESSION_DISPLAY_FORMATS = [
 ] as const;
 
 export const expressionDisplayFormatSchema = z.enum(EXPRESSION_DISPLAY_FORMATS);
-export type ExpressionDisplayFormat = z.infer<typeof expressionDisplayFormatSchema>;
+export type ExpressionDisplayFormat = z.infer<
+  typeof expressionDisplayFormatSchema
+>;
 
 /** Display formats that produce numeric results. */
 export const NUMERIC_EXPRESSION_FORMATS: readonly ExpressionDisplayFormat[] = [
@@ -327,8 +329,9 @@ export const formDefinitionSchema = z.object({
 export type FormDefinition = z.infer<typeof formDefinitionSchema>;
 
 /** Pre-computed JSON Schema (Draft-07) for FormDefinition — used by builder's Monaco editor. */
-export const formDefinitionJSONSchema: Record<string, unknown> =
-  z.toJSONSchema(formDefinitionSchema) as Record<string, unknown>;
+export const formDefinitionJSONSchema: Record<string, unknown> = z.toJSONSchema(
+  formDefinitionSchema
+) as Record<string, unknown>;
 
 /** Response store — maps field IDs to their response values. */
 export type FormResponse = Record<string, FieldResponse>;

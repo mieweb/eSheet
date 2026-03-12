@@ -17,40 +17,41 @@ export const MultiTextField = React.memo(function MultiTextField({
 
   if (isPreview) {
     return (
-      <div className="multitext-field-preview ms:text-mstext">
-        <div className="ms:space-y-3 ms:pb-4">
-          {def.question && (
-            <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
-              {def.question}
-            </div>
-          )}
-          <div className="ms:space-y-2 ms:w-full">
-            {options.map((option) => {
-              const inputId = `${instanceId}-multitext-answer-${def.id}-${option.id}`;
-              return (
-                <div key={option.id} className="ms:flex ms:flex-col ms:gap-1">
-                  <label
-                    htmlFor={inputId}
-                    className="ms:text-xs ms:font-medium ms:text-mstextmuted ms:px-0 ms:text-left"
-                  >
-                    {option.value}
-                  </label>
-                  <input
-                    id={inputId}
-                    type="text"
-                    value={multitextAnswers[option.id] || ''}
-                    onChange={(e) =>
-                      onResponse({
-                        multitextAnswers: { ...multitextAnswers, [option.id]: e.target.value },
-                      })
-                    }
-                    placeholder=""
-                    className="ms:w-full ms:px-4 ms:py-2 ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:rounded-lg ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary ms:outline-none ms:transition-colors ms:min-w-0"
-                  />
-                </div>
-              );
-            })}
+      <div className="multitext-field-preview ms:text-mstext ms:space-y-3 ms:pb-4">
+        {def.question && (
+          <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
+            {def.question}
           </div>
+        )}
+        <div className="ms:space-y-2 ms:w-full">
+          {options.map((option) => {
+            const inputId = `${instanceId}-multitext-answer-${def.id}-${option.id}`;
+            return (
+              <div key={option.id} className="ms:flex ms:flex-col ms:gap-1">
+                <label
+                  htmlFor={inputId}
+                  className="ms:text-xs ms:font-medium ms:text-mstextmuted ms:px-0 ms:text-left"
+                >
+                  {option.value}
+                </label>
+                <input
+                  id={inputId}
+                  type="text"
+                  value={multitextAnswers[option.id] || ''}
+                  onChange={(e) =>
+                    onResponse({
+                      multitextAnswers: {
+                        ...multitextAnswers,
+                        [option.id]: e.target.value,
+                      },
+                    })
+                  }
+                  placeholder=""
+                  className="ms:w-full ms:px-4 ms:py-2 ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:rounded-lg ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary ms:outline-none ms:transition-colors ms:min-w-0"
+                />
+              </div>
+            );
+          })}
         </div>
       </div>
     );
@@ -92,7 +93,9 @@ export const MultiTextField = React.memo(function MultiTextField({
                 type="text"
                 value={option.value}
                 onChange={(e) =>
-                  form.getState().updateOption(def.id, option.id, e.target.value)
+                  form
+                    .getState()
+                    .updateOption(def.id, option.id, e.target.value)
                 }
                 placeholder="Field label"
                 className="ms:flex-1 ms:min-w-0 ms:outline-none ms:bg-transparent ms:text-mstext"

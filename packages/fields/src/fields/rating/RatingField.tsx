@@ -14,53 +14,62 @@ export const RatingField = React.memo(function RatingField({
   const def = field.definition;
   const instanceId = form.getState().instanceId;
   const options = def.options || [];
-  const selectedId = (response?.selected as SelectedOption | undefined)?.id ?? null;
+  const selectedId =
+    (response?.selected as SelectedOption | undefined)?.id ?? null;
   const selectedIndex = options.findIndex((opt) => opt.id === selectedId);
 
   if (isPreview) {
     return (
-      <div className="rating-field-preview ms:text-mstext">
-        <div
-          className={`ms:grid ms:gap-2 ms:pb-4 ${options.length > 5 ? 'ms:grid-cols-1' : 'ms:grid-cols-1 ms:lg:grid-cols-2'}`}
-        >
-          <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
-            {def.question || 'Question'}
-          </div>
-          <div className="ms:py-2">
-            {options.length > 0 ? (
-              <div className="ms:flex ms:flex-wrap ms:justify-evenly ms:gap-2">
-                {options.map((option, index) => {
-                  const inputId = `${instanceId}-rating-answer-${def.id}-${option.id}`;
-                  const isSelected = selectedIndex === index;
-                  const labelClasses = isSelected
-                    ? 'ms:flex ms:items-center ms:justify-center ms:min-w-11 ms:h-11 ms:px-3 ms:rounded-full ms:border-2 ms:transition-all ms:cursor-pointer ms:bg-msprimary ms:text-mstextsecondary ms:border-msprimary ms:scale-105'
-                    : 'ms:flex ms:items-center ms:justify-center ms:min-w-11 ms:h-11 ms:px-3 ms:rounded-full ms:border-2 ms:transition-all ms:cursor-pointer ms:bg-mssurface ms:text-mstext ms:border-msborder ms:hover:border-msprimary/50 ms:hover:bg-msprimary/10 ms:hover:scale-105';
-
-                  return (
-                    <label key={option.id} htmlFor={inputId} className={labelClasses}>
-                      <CustomRadio
-                        id={inputId}
-                        name={`rating-${def.id}`}
-                        value={option.id}
-                        checked={isSelected}
-                        onSelect={() =>
-                          onResponse({ selected: { id: option.id, value: option.value } })
-                        }
-                        onUnselect={() => onResponse({ selected: undefined })}
-                        hidden
-                      />
-                      <span className="ms:text-sm ms:font-medium ms:whitespace-nowrap">
-                        {option.text || option.value}
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="ms:text-sm ms:text-mstextmuted ms:italic">No options available</div>
-            )}
-          </div>
+      <div
+        className={`rating-field-preview ms:text-mstext ms:grid ms:gap-2 ms:pb-4 ${
+          options.length > 5
+            ? 'ms:grid-cols-1'
+            : 'ms:grid-cols-1 ms:lg:grid-cols-2'
+        }`}
+      >
+        <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
+          {def.question || 'Question'}
         </div>
+        {options.length > 0 ? (
+          <div className="ms:flex ms:flex-wrap ms:justify-evenly ms:gap-2">
+            {options.map((option, index) => {
+              const inputId = `${instanceId}-rating-answer-${def.id}-${option.id}`;
+              const isSelected = selectedIndex === index;
+              const labelClasses = isSelected
+                ? 'ms:flex ms:items-center ms:justify-center ms:min-w-11 ms:h-11 ms:px-3 ms:rounded-full ms:border-2 ms:transition-all ms:cursor-pointer ms:bg-msprimary ms:text-mstextsecondary ms:border-msprimary ms:scale-105'
+                : 'ms:flex ms:items-center ms:justify-center ms:min-w-11 ms:h-11 ms:px-3 ms:rounded-full ms:border-2 ms:transition-all ms:cursor-pointer ms:bg-mssurface ms:text-mstext ms:border-msborder ms:hover:border-msprimary/50 ms:hover:bg-msprimary/10 ms:hover:scale-105';
+
+              return (
+                <label
+                  key={option.id}
+                  htmlFor={inputId}
+                  className={labelClasses}
+                >
+                  <CustomRadio
+                    id={inputId}
+                    name={`rating-${def.id}`}
+                    value={option.id}
+                    checked={isSelected}
+                    onSelect={() =>
+                      onResponse({
+                        selected: { id: option.id, value: option.value },
+                      })
+                    }
+                    onUnselect={() => onResponse({ selected: undefined })}
+                    hidden
+                  />
+                  <span className="ms:text-sm ms:font-medium ms:whitespace-nowrap">
+                    {option.text || option.value}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="ms:text-sm ms:text-mstextmuted ms:italic">
+            No options available
+          </div>
+        )}
       </div>
     );
   }
@@ -102,7 +111,9 @@ export const RatingField = React.memo(function RatingField({
                 type="text"
                 value={option.text || option.value}
                 onChange={(e) =>
-                  form.getState().updateOption(def.id, option.id, e.target.value)
+                  form
+                    .getState()
+                    .updateOption(def.id, option.id, e.target.value)
                 }
                 placeholder="Option label"
                 className="ms:flex-1 ms:min-w-0 ms:outline-none ms:bg-transparent ms:text-mstext"

@@ -18,7 +18,10 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { restrictToVerticalAxis, restrictToParentElement } from '@dnd-kit/modifiers';
+import {
+  restrictToVerticalAxis,
+  restrictToParentElement,
+} from '@dnd-kit/modifiers';
 import type { FormStore, UIStore } from '@msheet/core';
 import { useVisibleFields } from '../hooks/useVisibleFields.js';
 import { FieldWrapper } from './FieldWrapper.js';
@@ -48,7 +51,14 @@ function SortableFieldItem({
   ui: UIStore;
   collapseWhileDragging?: boolean;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
     id,
   });
 
@@ -70,7 +80,8 @@ function SortableFieldItem({
         collapseWhileDragging={collapseWhileDragging}
       >
         {(props) => {
-          const Component = getFieldComponent(props.field.definition.fieldType) ?? FieldItem;
+          const Component =
+            getFieldComponent(props.field.definition.fieldType) ?? FieldItem;
           return <Component {...props} />;
         }}
       </FieldWrapper>
@@ -80,11 +91,15 @@ function SortableFieldItem({
 
 /**
  * Canvas - The main field list panel with drag-and-drop support.
- * 
+ *
  * Displays all root-level fields in a sortable vertical list.
  * Uses @dnd-kit for drag-and-drop reordering.
  */
-export const Canvas = React.memo(function Canvas({ form, ui, dragEnabled = true }: CanvasProps) {
+export const Canvas = React.memo(function Canvas({
+  form,
+  ui,
+  dragEnabled = true,
+}: CanvasProps) {
   const rootIds = useVisibleFields(form);
   // Convert readonly array to mutable array for SortableContext
   const items = React.useMemo(() => [...rootIds], [rootIds]);
@@ -129,25 +144,25 @@ export const Canvas = React.memo(function Canvas({ form, ui, dragEnabled = true 
     [form, items]
   );
 
-  const handleDragCancel = React.useCallback(
-    (_event: DragCancelEvent) => {
-      setActiveDragId(null);
-    },
-    []
-  );
+  const handleDragCancel = React.useCallback((_event: DragCancelEvent) => {
+    setActiveDragId(null);
+  }, []);
 
   // Clear selection when clicking canvas background
-  const handleCanvasClick = React.useCallback((e: React.MouseEvent) => {
-    // Only clear if clicking directly on the canvas, not on a field
-    if (e.target === e.currentTarget) {
-      ui.getState().selectField(null);
-    }
-  }, [ui]);
+  const handleCanvasClick = React.useCallback(
+    (e: React.MouseEvent) => {
+      // Only clear if clicking directly on the canvas, not on a field
+      if (e.target === e.currentTarget) {
+        ui.getState().selectField(null);
+      }
+    },
+    [ui]
+  );
 
   // Handle empty state
   if (items.length === 0) {
     return (
-      <div 
+      <div
         className="canvas-empty ms:flex ms:items-center ms:justify-center ms:min-h-[200px] ms:text-mstextmuted ms:text-sm"
         onClick={handleCanvasClick}
       >
@@ -175,9 +190,9 @@ export const Canvas = React.memo(function Canvas({ form, ui, dragEnabled = true 
   }
 
   return (
-    <DndContext 
-      sensors={sensors} 
-      collisionDetection={closestCenter} 
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
       modifiers={[restrictToVerticalAxis, restrictToParentElement]}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}

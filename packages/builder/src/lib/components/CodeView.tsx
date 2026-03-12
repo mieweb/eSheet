@@ -135,7 +135,10 @@ export function CodeView({ form, ui }: CodeViewProps) {
       const fmt = formatRef.current;
 
       if (!text) {
-        fs.getState().loadDefinition({ schemaType: 'mieforms-v1.0', fields: [] });
+        fs.getState().loadDefinition({
+          schemaType: 'mieforms-v1.0',
+          fields: [],
+        });
         return;
       }
 
@@ -147,7 +150,11 @@ export function CodeView({ form, ui }: CodeViewProps) {
         const current = fs.getState().hydrateDefinition();
         if (JSON.stringify(current) === JSON.stringify(parsed)) return;
 
-        fs.getState().loadDefinition(parsed as Parameters<ReturnType<typeof fs.getState>['loadDefinition']>[0]);
+        fs.getState().loadDefinition(
+          parsed as Parameters<
+            ReturnType<typeof fs.getState>['loadDefinition']
+          >[0]
+        );
         uiApi.getState().setCodeEditorHasError(false);
       } catch {
         // Error already shown in the editor header — don't push invalid data
@@ -177,7 +184,9 @@ export function CodeView({ form, ui }: CodeViewProps) {
         </div>
 
         <div className="code-view-status ms:flex ms:items-center ms:gap-2">
-          <span className="ms:text-xs ms:text-mstextmuted">Auto-saves when switching tabs</span>
+          <span className="ms:text-xs ms:text-mstextmuted">
+            Auto-saves when switching tabs
+          </span>
           {error && (
             <span className="ms:text-xs ms:text-msdanger ms:bg-msdanger/10 ms:px-3 ms:py-1 ms:rounded-lg">
               {error}

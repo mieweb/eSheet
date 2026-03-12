@@ -78,7 +78,12 @@ export const CustomCheckbox = React.memo(function CustomCheckbox({
             ? 'ms:border-msprimary ms:bg-msprimary'
             : 'ms:border-msborderinactive ms:bg-mssurface'
         } ${disabled ? 'ms:opacity-50' : ''}`}
-        style={{ width: s.outer, height: s.outer, minWidth: s.outer, minHeight: s.outer }}
+        style={{
+          width: s.outer,
+          height: s.outer,
+          minWidth: s.outer,
+          minHeight: s.outer,
+        }}
         aria-hidden="true"
       >
         <svg
@@ -89,7 +94,11 @@ export const CustomCheckbox = React.memo(function CustomCheckbox({
           viewBox="0 0 24 24"
           strokeWidth={3}
         >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M5 13l4 4L19 7"
+          />
         </svg>
       </span>
     </label>

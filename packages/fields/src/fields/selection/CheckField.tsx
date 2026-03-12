@@ -14,7 +14,8 @@ export const CheckField = React.memo(function CheckField({
   const def = field.definition;
   const instanceId = form.getState().instanceId;
   const options = def.options || [];
-  const selectedArr = (response?.selected as SelectedOption[] | undefined) ?? [];
+  const selectedArr =
+    (response?.selected as SelectedOption[] | undefined) ?? [];
   const selectedIds = selectedArr.map((s) => s.id);
 
   const toggleOption = (optionId: string, optionValue: string) => {
@@ -27,29 +28,27 @@ export const CheckField = React.memo(function CheckField({
 
   if (isPreview) {
     return (
-      <div className="check-field-preview">
-        <div className="ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
-          <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
-            {def.question || 'Question'}
-          </div>
-          <div className="ms:space-y-2">
-            {options.map((option) => (
-              <label
-                key={option.id}
-                className="ms:flex ms:items-center ms:gap-3 ms:px-3 ms:py-2 ms:cursor-pointer ms:rounded-lg ms:hover:bg-msprimary/10 ms:transition-colors"
-              >
-                <CustomCheckbox
-                  id={`${instanceId}-check-answer-${def.id}-${option.id}`}
-                  checked={selectedIds.includes(option.id)}
-                  onChange={() => toggleOption(option.id, option.value)}
-                  size="lg"
-                />
-                <span className="ms:text-mstext ms:break-words ms:overflow-hidden">
-                  {option.value}
-                </span>
-              </label>
-            ))}
-          </div>
+      <div className="check-field-preview ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
+        <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
+          {def.question || 'Question'}
+        </div>
+        <div className="ms:space-y-2">
+          {options.map((option) => (
+            <label
+              key={option.id}
+              className="ms:flex ms:items-center ms:gap-3 ms:px-3 ms:py-2 ms:cursor-pointer ms:rounded-lg ms:hover:bg-msprimary/10 ms:transition-colors"
+            >
+              <CustomCheckbox
+                id={`${instanceId}-check-answer-${def.id}-${option.id}`}
+                checked={selectedIds.includes(option.id)}
+                onChange={() => toggleOption(option.id, option.value)}
+                size="lg"
+              />
+              <span className="ms:text-mstext ms:break-words ms:overflow-hidden">
+                {option.value}
+              </span>
+            </label>
+          ))}
         </div>
       </div>
     );
@@ -92,7 +91,9 @@ export const CheckField = React.memo(function CheckField({
                 type="text"
                 value={option.value}
                 onChange={(e) =>
-                  form.getState().updateOption(def.id, option.id, e.target.value)
+                  form
+                    .getState()
+                    .updateOption(def.id, option.id, e.target.value)
                 }
                 placeholder="Option text"
                 className="ms:flex-1 ms:min-w-0 ms:outline-none ms:bg-transparent ms:text-mstext"

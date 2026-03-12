@@ -1,7 +1,19 @@
 import React, { useSyncExternalStore } from 'react';
-import type { FieldDefinition, FieldResponse, FieldComponentProps, FormStore, UIStore } from '@msheet/core';
+import type {
+  FieldDefinition,
+  FieldResponse,
+  FieldComponentProps,
+  FormStore,
+  UIStore,
+} from '@msheet/core';
 import { useSelectedFieldId } from '../hooks/useSelectedFieldId.js';
-import { TrashIcon, ViewBigIcon, ViewSmallIcon, EditIcon, DragHandleIcon } from '../icons.js';
+import {
+  TrashIcon,
+  ViewBigIcon,
+  ViewSmallIcon,
+  EditIcon,
+  DragHandleIcon,
+} from '../icons.js';
 
 /**
  * Props exposed to the render function for custom field components.
@@ -31,17 +43,17 @@ export interface FieldWrapperProps {
 
 /**
  * FieldWrapper - Extensibility API for custom field components.
- * 
+ *
  * Wraps a field with collapsible header, selection highlighting, edit/delete buttons, and drag handles.
  * Exposes field data and tools to the render function, allowing users to create
  * custom field types while getting all the built-in editor functionality.
- * 
+ *
  * @example
  * ```tsx
  * <FieldWrapper fieldId={id} form={form} ui={ui}>
  *   {({ field, onUpdate, onRemove }) => (
  *     <div>
- *       <input 
+ *       <input
  *         value={field.question}
  *         onChange={(e) => onUpdate({ question: e.target.value })}
  *       />
@@ -61,21 +73,21 @@ export function FieldWrapper({
   children,
 }: FieldWrapperProps) {
   const [isExpanded, setIsExpanded] = React.useState(true);
-  
+
   const field = useSyncExternalStore(
     (cb) => form.subscribe(cb),
     () => form.getState().getField(fieldId),
-    () => form.getState().getField(fieldId),
+    () => form.getState().getField(fieldId)
   );
   const response = useSyncExternalStore(
     (cb) => form.subscribe(cb),
     () => form.getState().getResponse(fieldId),
-    () => form.getState().getResponse(fieldId),
+    () => form.getState().getResponse(fieldId)
   );
   const mode = useSyncExternalStore(
     (cb) => ui.subscribe(cb),
     () => ui.getState().mode,
-    () => ui.getState().mode,
+    () => ui.getState().mode
   );
   const instanceId = form.getState().instanceId;
   const selectedFieldId = useSelectedFieldId(ui);
@@ -126,9 +138,8 @@ export function FieldWrapper({
 
   // --- Preview mode: minimal chrome, no builder controls ---
   if (isPreview) {
-    
     return (
-      <div 
+      <div
         className="field-wrapper ms:mb-2 ms:p-6 ms:bg-mssurface ms:border ms:border-msborder ms:rounded"
         data-field-id={fieldId}
       >
@@ -148,9 +159,10 @@ export function FieldWrapper({
   }
 
   // --- Build/Code mode: collapsible with full editor chrome ---
-  const questionText = field.definition.fieldType === 'section' 
-    ? (field.definition.title || '') 
-    : (field.definition.question || '');
+  const questionText =
+    field.definition.fieldType === 'section'
+      ? field.definition.title || ''
+      : field.definition.question || '';
 
   // Collapse while dragging; restore prior state when drag ends
   const effectiveExpanded = isExpanded && !collapseWhileDragging;
@@ -204,7 +216,12 @@ export function FieldWrapper({
           </span>
           <span className="ms:truncate">{questionText}</span>
           {field.definition.required && (
-            <span className="required-indicator ms:text-msdanger ms:text-sm ms:font-bold ms:shrink-0" aria-label="Required">*</span>
+            <span
+              className="required-indicator ms:text-msdanger ms:text-sm ms:font-bold ms:shrink-0"
+              aria-label="Required"
+            >
+              *
+            </span>
           )}
         </div>
 
@@ -256,8 +273,8 @@ export function FieldWrapper({
 
       {/* Field Body (collapsible) */}
       {effectiveExpanded && (
-        <div 
-          id={`${instanceId}-fw-body-${fieldId}`} 
+        <div
+          id={`${instanceId}-fw-body-${fieldId}`}
           className="field-wrapper-body"
         >
           {children({
