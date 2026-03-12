@@ -116,7 +116,7 @@ export function MsheetBuilder({
                 <aside className="panel-tools-wrap panel-tools ms:flex ms:self-start ms:min-h-0 ms:max-h-[calc(100dvh-11.4rem)] ms:overflow-y-auto ms:flex-col ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
                   <ToolPanel form={form} ui={ui} />
                 </aside>
-                <main className="panel-canvas ms:min-w-0 ms:min-h-0 ms:overflow-y-auto ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:p-4">
+                <main className="panel-canvas ms:self-start ms:min-w-0 ms:max-h-[calc(100dvh-11.4rem)] ms:overflow-y-auto ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:p-4">
                   <Canvas form={form} ui={ui} dragEnabled={dragEnabled} />
                 </main>
                 <aside className="panel-editor-wrap panel-editor ms:flex ms:self-start ms:min-h-0 ms:max-h-[calc(100dvh-11.4rem)] ms:overflow-y-auto ms:flex-col ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
