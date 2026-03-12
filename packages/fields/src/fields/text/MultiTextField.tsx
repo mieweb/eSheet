@@ -6,6 +6,8 @@ export const MultiTextField = React.memo(function MultiTextField({
   field,
   form,
   isPreview,
+  isEnabled,
+  isRequired,
   response,
   onUpdate,
   onResponse,
@@ -18,9 +20,12 @@ export const MultiTextField = React.memo(function MultiTextField({
   if (isPreview) {
     return (
       <div className="multitext-field-preview ms:text-mstext ms:space-y-3 ms:pb-4">
-        {def.question && (
+        {(def.question || isRequired) && (
           <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
-            {def.question}
+            {def.question || 'Question'}
+            {isRequired && (
+              <span className="ms:text-msdanger ms:ml-0.5">*</span>
+            )}
           </div>
         )}
         <div className="ms:space-y-2 ms:w-full">
@@ -37,6 +42,7 @@ export const MultiTextField = React.memo(function MultiTextField({
                 <input
                   id={inputId}
                   type="text"
+                  disabled={!isEnabled}
                   value={multitextAnswers[option.id] || ''}
                   onChange={(e) =>
                     onResponse({

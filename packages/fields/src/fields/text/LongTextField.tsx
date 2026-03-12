@@ -5,6 +5,8 @@ export const LongTextField = React.memo(function LongTextField({
   field,
   form,
   isPreview,
+  isEnabled,
+  isRequired,
   response,
   onUpdate,
   onResponse,
@@ -17,10 +19,15 @@ export const LongTextField = React.memo(function LongTextField({
       <div className="longtext-field-preview ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
         <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
           {def.question || 'Question'}
+          {isRequired && (
+            <span className="ms:text-msdanger ms:ml-0.5">*</span>
+          )}
         </div>
         <textarea
           id={`${instanceId}-longtext-answer-${def.id}`}
           aria-label={def.question || 'Question'}
+          disabled={!isEnabled}
+          aria-required={isRequired || undefined}
           value={response?.answer || ''}
           onChange={(e) => onResponse({ answer: e.target.value })}
           placeholder="Type your answer"

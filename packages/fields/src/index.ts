@@ -27,4 +27,5 @@ export {
   SliderField,
   SingleMatrixField,
   MultiMatrixField,
+  SectionField,
 } from './fields/index.js';

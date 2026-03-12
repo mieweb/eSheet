@@ -163,7 +163,7 @@ export function CodeView({ form, ui }: CodeViewProps) {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="code-view-container ms:flex ms:flex-col ms:h-full ms:bg-msbackground">
+    <div className="code-view-container ms:flex ms:flex-col ms:flex-1 ms:min-h-0 ms:bg-msbackground">
       {/* Header — format toggle + status */}
       <div className="code-view-header ms:flex ms:items-center ms:justify-between ms:gap-3 ms:p-3 ms:bg-mssurface ms:border-b ms:border-msborder">
         <div className="format-toggle ms:flex ms:gap-1 ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackground ms:p-1">

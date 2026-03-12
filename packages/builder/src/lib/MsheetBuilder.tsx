@@ -104,7 +104,7 @@ export function MsheetBuilder({
       <UIContext.Provider value={ui}>
         <InstanceIdContext.Provider value={instanceId}>
           <div
-            className={`ms-builder-root ms:flex ms:flex-1 ms:min-h-0 ms:max-h-full ms:w-full ms:min-w-0 ms:max-w-full ms:flex-col ms:gap-2 
+            className={`ms-builder-root ms:flex ms:h-full ms:flex-1 ms:min-h-0 ms:max-h-full ms:w-full ms:min-w-0 ms:max-w-full ms:flex-col ms:gap-2 
                         ms:overflow-x-hidden ms:bg-msbackground ms:text-mstext ${className}`.trim()}
           >
             <div className="ms:sticky ms:top-0 ms:z-999 ms:bg-msbackground">
@@ -113,13 +113,13 @@ export function MsheetBuilder({
             {children}
             {mode === 'build' && (
               <div className="builder-layout ms:grid ms:flex-1 ms:min-h-0 ms:min-w-0 ms:grid-cols-[18rem_minmax(0,1fr)_340px] ms:gap-3 ms:overflow-hidden">
-                <aside className="panel-tools-wrap panel-tools ms:flex ms:min-h-0 ms:flex-col ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
+                <aside className="panel-tools-wrap panel-tools ms:flex ms:self-start ms:min-h-0 ms:max-h-[calc(100dvh-11.4rem)] ms:overflow-y-auto ms:flex-col ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
                   <ToolPanel form={form} ui={ui} />
                 </aside>
                 <main className="panel-canvas ms:min-w-0 ms:min-h-0 ms:overflow-y-auto ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:p-4">
                   <Canvas form={form} ui={ui} dragEnabled={dragEnabled} />
                 </main>
-                <aside className="panel-editor-wrap panel-editor ms:flex ms:min-h-0 ms:flex-col ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
+                <aside className="panel-editor-wrap panel-editor ms:flex ms:self-start ms:min-h-0 ms:max-h-[calc(100dvh-11.4rem)] ms:overflow-y-auto ms:flex-col ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
                   <EditPanel form={form} ui={ui} />
                 </aside>
               </div>

@@ -37,6 +37,12 @@ export interface FieldWrapperProps {
   isDragging?: boolean;
   /** Whether any drag operation is active in the canvas. */
   collapseWhileDragging?: boolean;
+  /** Optional override for selection state (used by nested section child interaction). */
+  isSelectedOverride?: boolean;
+  /** Optional override for click selection behavior. */
+  onSelectOverride?: (e: React.MouseEvent) => void;
+  /** Optional selected styling variant. */
+  selectedVariant?: 'default' | 'nested';
   /** Render function that receives field data and tools */
   children: (props: FieldWrapperRenderProps) => React.ReactNode;
 }
@@ -70,6 +76,9 @@ export function FieldWrapper({
   dragListeners,
   isDragging = false,
   collapseWhileDragging = false,
+  isSelectedOverride,
+  onSelectOverride,
+  selectedVariant = 'default',
   children,
 }: FieldWrapperProps) {
   const [isExpanded, setIsExpanded] = React.useState(true);
@@ -89,18 +98,39 @@ export function FieldWrapper({
     () => ui.getState().mode,
     () => ui.getState().mode
   );
+  // Conditional states — subscribe so we re-render when other field responses
+  // change (which may flip this field's visibility / enabled / required state).
+  const isVisible = useSyncExternalStore(
+    (cb) => form.subscribe(cb),
+    () => form.getState().isVisible(fieldId),
+    () => true
+  );
+  const isEnabled = useSyncExternalStore(
+    (cb) => form.subscribe(cb),
+    () => form.getState().isEnabled(fieldId),
+    () => true
+  );
+  const isRequired = useSyncExternalStore(
+    (cb) => form.subscribe(cb),
+    () => form.getState().isRequired(fieldId),
+    () => false
+  );
   const instanceId = form.getState().instanceId;
   const selectedFieldId = useSelectedFieldId(ui);
   const isPreview = mode === 'preview';
-  const isSelected = !isPreview && selectedFieldId === fieldId;
+  const isSelected = !isPreview && (isSelectedOverride ?? selectedFieldId === fieldId);
 
   // Handlers
   const handleSelect = React.useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
+      if (onSelectOverride) {
+        onSelectOverride(e);
+        return;
+      }
       ui.getState().selectField(fieldId);
     },
-    [ui, fieldId]
+    [ui, fieldId, onSelectOverride]
   );
 
   const handleRemove = React.useCallback(() => {
@@ -136,12 +166,20 @@ export function FieldWrapper({
     return null;
   }
 
+  // In preview mode, hide fields whose visibility rules evaluate to false.
+  if (isPreview && !isVisible) {
+    return null;
+  }
+
   // --- Preview mode: minimal chrome, no builder controls ---
   if (isPreview) {
     return (
       <div
-        className="field-wrapper ms:mb-2 ms:p-6 ms:bg-mssurface ms:border ms:border-msborder ms:rounded"
+        className={`field-wrapper ms:mb-2 ms:p-6 ms:bg-mssurface ms:border ms:border-msborder ms:rounded${
+          !isEnabled ? ' ms:opacity-50 ms:pointer-events-none' : ''
+        }${isRequired ? ' ms:border-l-2 ms:border-l-msdanger' : ''}`}
         data-field-id={fieldId}
+        aria-disabled={!isEnabled || undefined}
       >
         {children({
           field,
@@ -149,6 +187,8 @@ export function FieldWrapper({
           ui,
           isSelected: false,
           isPreview: true,
+          isEnabled,
+          isRequired,
           response,
           onRemove: handleRemove,
           onUpdate: handleUpdate,
@@ -169,7 +209,9 @@ export function FieldWrapper({
 
   // Base wrapper classes
   let wrapperClass = isSelected
-    ? 'field-wrapper ms:group ms:relative ms:mb-2 ms:bg-mssurface ms:border-2 ms:border-msprimary ms:rounded-lg ms:transition-all ms:outline-none'
+    ? selectedVariant === 'nested'
+      ? 'field-wrapper ms:group ms:relative ms:mb-2 ms:bg-mssurface ms:border-2 ms:border-dashed ms:border-msprimary ms:rounded-lg ms:transition-all ms:outline-none'
+      : 'field-wrapper ms:group ms:relative ms:mb-2 ms:bg-mssurface ms:border-2 ms:border-msprimary ms:rounded-lg ms:transition-all ms:outline-none'
     : 'field-wrapper ms:group ms:relative ms:mb-2 ms:bg-mssurface ms:border ms:border-msborder ms:rounded-lg ms:transition-all ms:hover:border-msprimary/30 ms:outline-none';
 
   if (!effectiveExpanded) {
@@ -283,6 +325,8 @@ export function FieldWrapper({
             ui,
             isSelected,
             isPreview: false,
+            isEnabled,
+            isRequired,
             response,
             onRemove: handleRemove,
             onUpdate: handleUpdate,

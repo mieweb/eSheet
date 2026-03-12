@@ -12,6 +12,8 @@ export const RankingField = React.memo(function RankingField({
   field,
   form,
   isPreview,
+  isEnabled,
+  isRequired,
   response,
   onUpdate,
   onResponse,
@@ -62,6 +64,9 @@ export const RankingField = React.memo(function RankingField({
       <div className="ranking-field-preview ms:text-mstext ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
         <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
           {def.question || 'Question'}
+          {isRequired && (
+            <span className="ms:text-msdanger ms:ml-0.5">*</span>
+          )}
         </div>
         {ranking.map((optId, index) => {
           const canMoveUp = index > 0;
@@ -80,7 +85,7 @@ export const RankingField = React.memo(function RankingField({
               <div className="ms:flex ms:items-center ms:gap-1 ms:ml-2">
                 <button
                   onClick={() => moveItem(optId, 'up')}
-                  disabled={!canMoveUp}
+                  disabled={!canMoveUp || !isEnabled}
                   className={`ms:p-1 ms:bg-transparent ms:border-0 ms:outline-none ms:focus:outline-none ${
                     canMoveUp
                       ? 'ms:text-mstext ms:hover:text-msprimary'
@@ -92,7 +97,7 @@ export const RankingField = React.memo(function RankingField({
                 </button>
                 <button
                   onClick={() => moveItem(optId, 'down')}
-                  disabled={!canMoveDown}
+                  disabled={!canMoveDown || !isEnabled}
                   className={`ms:p-1 ms:bg-transparent ms:border-0 ms:outline-none ms:focus:outline-none ${
                     canMoveDown
                       ? 'ms:text-mstext ms:hover:text-msprimary'

@@ -21,6 +21,7 @@ import {
   SliderField,
   SingleMatrixField,
   MultiMatrixField,
+  SectionField,
 } from '@msheet/fields';
 
 registerBuilderComponents({
@@ -37,4 +38,5 @@ registerBuilderComponents({
   slider: SliderField,
   singlematrix: SingleMatrixField,
   multimatrix: MultiMatrixField,
+  section: SectionField,
 });

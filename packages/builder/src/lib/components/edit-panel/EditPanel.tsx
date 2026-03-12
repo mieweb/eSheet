@@ -1,11 +1,18 @@
-import { useSyncExternalStore } from 'react';
-import { getFieldTypeMeta, type FormStore, type UIStore, type EditTab } from '@msheet/core';
+import React, { useSyncExternalStore } from 'react';
+import {
+  getFieldTypeMeta,
+  type FieldDefinition,
+  type FormStore,
+  type UIStore,
+  type EditTab,
+} from '@msheet/core';
 import { useInstanceId } from '../../MsheetBuilder.js';
 import { EditIcon, LogicIcon } from '../../icons.js';
 import { DraftIdEditor } from './DraftIdEditor.js';
 import { CommonEditor } from './CommonEditor.js';
 import { OptionListEditor } from './OptionListEditor.js';
 import { MatrixEditor } from './MatrixEditor.js';
+import { LogicEditor } from './LogicEditor.js';
 
 export interface EditPanelProps {
   form: FormStore;
@@ -105,11 +112,16 @@ export function EditPanel({ form, ui }: EditPanelProps) {
             def={def}
             meta={meta}
             form={form}
+            ui={ui}
             onUpdate={handleUpdate}
             onRenameId={handleRenameId}
           />
         ) : (
-          <LogicTabPlaceholder />
+          <LogicEditor
+            fieldId={selectedFieldId}
+            rules={def.rules ?? []}
+            form={form}
+          />
         )}
       </div>
     </div>
@@ -125,15 +137,33 @@ interface EditTabContentProps {
   def: Omit<import('@msheet/core').FieldDefinition, 'fields'>;
   meta: import('@msheet/core').FieldTypeMeta | undefined;
   form: FormStore;
+  ui: UIStore;
   onUpdate: (patch: Partial<Omit<import('@msheet/core').FieldDefinition, 'fields'>>) => void;
   onRenameId: (newId: string) => boolean;
 }
 
-function EditTabContent({ fieldId, def, meta, form, onUpdate, onRenameId }: EditTabContentProps) {
+function EditTabContent({
+  fieldId,
+  def,
+  meta,
+  form,
+  ui,
+  onUpdate,
+  onRenameId,
+}: EditTabContentProps) {
   const isSection = def.fieldType === 'section';
 
   if (isSection) {
-    return <SectionEditContent fieldId={fieldId} def={def} onUpdate={onUpdate} onRenameId={onRenameId} />;
+    return (
+      <SectionEditContent
+        fieldId={fieldId}
+        def={def}
+        form={form}
+        ui={ui}
+        onUpdate={onUpdate}
+        onRenameId={onRenameId}
+      />
+    );
   }
 
   return (
@@ -176,12 +206,93 @@ function EditTabContent({ fieldId, def, meta, form, onUpdate, onRenameId }: Edit
 interface SectionEditContentProps {
   fieldId: string;
   def: Omit<import('@msheet/core').FieldDefinition, 'fields'>;
+  form: FormStore;
+  ui: UIStore;
   onUpdate: (patch: Partial<Omit<import('@msheet/core').FieldDefinition, 'fields'>>) => void;
   onRenameId: (newId: string) => boolean;
 }
 
-function SectionEditContent({ fieldId, def, onUpdate, onRenameId }: SectionEditContentProps) {
+function SectionEditContent({
+  fieldId,
+  def,
+  form,
+  ui,
+  onUpdate,
+  onRenameId,
+}: SectionEditContentProps) {
   const instanceId = useInstanceId();
+  const normalized = useSyncExternalStore(
+    (cb) => form.subscribe(cb),
+    () => form.getState().normalized,
+    () => form.getState().normalized,
+  );
+  const selectedFieldId = useSyncExternalStore(
+    (cb) => ui.subscribe(cb),
+    () => ui.getState().selectedFieldId,
+    () => ui.getState().selectedFieldId,
+  );
+  const selectedFieldChildId = useSyncExternalStore(
+    (cb) => ui.subscribe(cb),
+    () => ui.getState().selectedFieldChildId,
+    () => ui.getState().selectedFieldChildId,
+  );
+
+  const childIds = normalized.byId[fieldId]?.childIds ?? [];
+  const childFields = childIds
+    .map((id) => normalized.byId[id])
+    .filter((node): node is NonNullable<typeof normalized.byId[string]> =>
+      Boolean(node),
+    );
+
+  const activeChildId =
+    selectedFieldId === fieldId ? selectedFieldChildId : null;
+  const resolvedActiveChildId = childFields.some(
+    (node) => node.definition.id === activeChildId,
+  )
+    ? activeChildId
+    : childFields[0]?.definition.id ?? null;
+  const activeChildNode = childFields.find(
+    (node) => node.definition.id === resolvedActiveChildId,
+  );
+  const activeChildDef = activeChildNode?.definition;
+  const activeChildMeta = activeChildDef
+    ? getFieldTypeMeta(activeChildDef.fieldType)
+    : undefined;
+
+  React.useEffect(() => {
+    if (resolvedActiveChildId !== activeChildId) {
+      ui.getState().selectFieldChild(fieldId, resolvedActiveChildId);
+    }
+  }, [activeChildId, fieldId, resolvedActiveChildId, ui]);
+
+  const handleSelectChild = (childId: string) => {
+    ui.getState().selectFieldChild(fieldId, childId);
+  };
+
+  const handleRenameChildId = (newId: string): boolean => {
+    if (!activeChildDef) return false;
+    const success = form.getState().updateField(activeChildDef.id, { id: newId });
+    if (success) {
+      ui.getState().selectFieldChild(fieldId, newId);
+    }
+    return success;
+  };
+
+  const handleUpdateChild = (
+    patch: Partial<Omit<FieldDefinition, 'fields'>>,
+  ) => {
+    if (!activeChildDef) return;
+    form.getState().updateField(activeChildDef.id, patch);
+  };
+
+  const handleDeleteChild = () => {
+    if (!activeChildDef) return;
+    form.getState().removeField(activeChildDef.id);
+    const nextChildId = childFields.find(
+      (node) => node.definition.id !== activeChildDef.id,
+    )?.definition.id;
+    ui.getState().selectFieldChild(fieldId, nextChildId ?? null);
+  };
 
   return (
     <div className="section-editor ms:space-y-3">
@@ -213,24 +324,128 @@ function SectionEditContent({ fieldId, def, onUpdate, onRenameId }: SectionEditC
           className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:placeholder:text-mstextmuted ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
         />
       </div>
-    </div>
-  );
-}
 
-// ---------------------------------------------------------------------------
-// Logic tab placeholder
-// ---------------------------------------------------------------------------
+      <div className="ms:space-y-2">
+        <div className="ms:flex ms:items-center ms:justify-between ms:gap-2">
+          <span className="ms:text-sm ms:font-medium ms:text-mstext">
+            Section Fields
+          </span>
+          <span className="ms:text-xs ms:text-mstextmuted">
+            {childFields.length} item{childFields.length === 1 ? '' : 's'}
+          </span>
+        </div>
 
-function LogicTabPlaceholder() {
-  return (
-    <div className="logic-placeholder ms:text-sm ms:text-mstextmuted ms:text-center ms:py-8">
-      <div className="ms:mb-2">
-        <svg className="ms:w-8 ms:h-8 ms:mx-auto ms:text-mstextmuted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
-        </svg>
+        {childFields.length === 0 ? (
+          <div className="ms:text-sm ms:text-mstextmuted ms:px-3 ms:py-2 ms:bg-msbackground ms:border ms:border-msborder ms:rounded">
+            No fields in this section yet.
+          </div>
+        ) : (
+          <select
+            id={`${instanceId}-editor-section-child-${fieldId}`}
+            aria-label="Section child field selector"
+            className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:cursor-pointer"
+            value={resolvedActiveChildId ?? ''}
+            onChange={(e) => handleSelectChild(e.currentTarget.value)}
+          >
+            {childFields.map((node) => {
+              const childMeta = getFieldTypeMeta(node.definition.fieldType);
+              const label =
+                node.definition.fieldType === 'section'
+                  ? node.definition.title || node.definition.id
+                  : node.definition.question || node.definition.id;
+              return (
+                <option key={node.definition.id} value={node.definition.id}>
+                  {label} - {childMeta?.label || node.definition.fieldType}
+                </option>
+              );
+            })}
+          </select>
+        )}
       </div>
-      Conditional logic editor coming soon.
-      <div className="ms:text-xs ms:mt-1">Rules: visible, enable, required</div>
+
+      {activeChildDef && (
+        <div className="ms:space-y-4 ms:p-4 ms:bg-msbackground ms:border ms:border-msborder ms:rounded-lg">
+          <div className="ms:flex ms:items-center ms:justify-between ms:gap-2">
+            <span className="ms:inline-flex ms:items-center ms:px-2.5 ms:py-0.5 ms:rounded-full ms:text-xs ms:font-medium ms:bg-msprimary/10 ms:text-msprimary">
+              {activeChildMeta?.label || activeChildDef.fieldType}
+            </span>
+            <button
+              type="button"
+              onClick={handleDeleteChild}
+              className="ms:flex ms:items-center ms:gap-1.5 ms:px-3 ms:py-1.5 ms:text-xs ms:font-medium ms:bg-mssurface ms:text-msdanger ms:hover:text-msdanger ms:hover:bg-msdanger/10 ms:border ms:border-msdanger/50 ms:rounded ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer"
+              title="Delete this field"
+            >
+              <span className="ms:font-bold">×</span>
+              Delete
+            </button>
+          </div>
+
+          {activeChildDef.fieldType === 'section' ? (
+            <div className="ms:space-y-3">
+              <div>
+                <label
+                  htmlFor={`${instanceId}-editor-active-section-id-${activeChildDef.id}`}
+                  className="edit-label ms:block ms:text-sm ms:font-medium ms:text-mstext ms:mb-1"
+                >
+                  Section ID
+                </label>
+                <DraftIdEditor
+                  id={activeChildDef.id}
+                  fieldId={activeChildDef.id}
+                  onCommit={handleRenameChildId}
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor={`${instanceId}-editor-active-section-title-${activeChildDef.id}`}
+                  className="edit-label ms:block ms:text-sm ms:text-mstext ms:mb-1"
+                >
+                  Section Title
+                </label>
+                <input
+                  id={`${instanceId}-editor-active-section-title-${activeChildDef.id}`}
+                  type="text"
+                  value={activeChildDef.title ?? ''}
+                  onChange={(e) => handleUpdateChild({ title: e.currentTarget.value })}
+                  placeholder="Enter section title..."
+                  className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:placeholder:text-mstextmuted ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
+                />
+              </div>
+            </div>
+          ) : (
+            <CommonEditor
+              fieldId={activeChildDef.id}
+              def={activeChildDef}
+              onUpdate={handleUpdateChild}
+              onRenameId={handleRenameChildId}
+            />
+          )}
+
+          {(activeChildMeta?.hasOptions || activeChildMeta?.hasMatrix) && (
+            <hr className="ms:border-msborder" />
+          )}
+
+          {activeChildMeta?.hasOptions && activeChildDef.options && (
+            <OptionListEditor
+              fieldId={activeChildDef.id}
+              fieldType={activeChildDef.fieldType}
+              options={activeChildDef.options}
+              form={form}
+            />
+          )}
+
+          {activeChildMeta?.hasMatrix && (
+            <MatrixEditor
+              fieldId={activeChildDef.id}
+              rows={activeChildDef.rows ?? []}
+              columns={activeChildDef.columns ?? []}
+              form={form}
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 }
+
+

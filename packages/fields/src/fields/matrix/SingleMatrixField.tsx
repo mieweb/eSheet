@@ -7,6 +7,8 @@ export const SingleMatrixField = React.memo(function SingleMatrixField({
   field,
   form,
   isPreview,
+  isEnabled,
+  isRequired,
   response,
   onUpdate,
   onResponse,
@@ -24,6 +26,9 @@ export const SingleMatrixField = React.memo(function SingleMatrixField({
       <div className="singlematrix-field-preview ms:text-mstext ms:pb-4">
         <div className="ms:font-light ms:mb-3 ms:text-mstext ms:break-words ms:overflow-hidden">
           {def.question || 'Question'}
+          {isRequired && (
+            <span className="ms:text-msdanger ms:ml-0.5">*</span>
+          )}
         </div>
 
         {rows.length > 0 && columns.length > 0 ? (
@@ -65,6 +70,7 @@ export const SingleMatrixField = React.memo(function SingleMatrixField({
                         name={`matrix-${def.id}-${row.id}`}
                         value={col.id}
                         checked={isSelected}
+                        disabled={!isEnabled}
                         size="lg"
                         onSelect={() => {
                           const updated: Record<string, SelectedOption> = {};

@@ -6,6 +6,8 @@ export const SliderField = React.memo(function SliderField({
   field,
   form,
   isPreview,
+  isEnabled,
+  isRequired,
   response,
   onUpdate,
   onResponse,
@@ -28,6 +30,9 @@ export const SliderField = React.memo(function SliderField({
       >
         <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
           {def.question || 'Question'}
+          {isRequired && (
+            <span className="ms:text-msdanger ms:ml-0.5">*</span>
+          )}
         </div>
         {options.length > 0 ? (
           <div className="ms:relative ms:pt-1">
@@ -39,6 +44,7 @@ export const SliderField = React.memo(function SliderField({
               max={options.length - 1}
               step="1"
               value={selectedIndex >= 0 ? selectedIndex : 0}
+              disabled={!isEnabled}
               onChange={(e) => {
                 const idx = parseInt(e.target.value);
                 const opt = options[idx];

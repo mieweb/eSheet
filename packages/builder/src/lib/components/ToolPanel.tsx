@@ -74,11 +74,34 @@ export const ToolPanel = React.memo(function ToolPanel({
   form,
   ui,
 }: ToolPanelProps) {
+  const selectedFieldId = React.useSyncExternalStore(
+    (cb) => ui.subscribe(cb),
+    () => ui.getState().selectedFieldId,
+    () => ui.getState().selectedFieldId
+  );
+  const selectedField = React.useSyncExternalStore(
+    (cb) => form.subscribe(cb),
+    () => (selectedFieldId ? form.getState().getField(selectedFieldId) : undefined),
+    () => (selectedFieldId ? form.getState().getField(selectedFieldId) : undefined)
+  );
+  const selectedSectionId =
+    selectedField?.definition.fieldType === 'section' ? selectedFieldId : undefined;
+  const selectedSectionLabel = selectedSectionId
+    ? selectedField?.definition.title || selectedField?.definition.id || selectedSectionId
+    : null;
+
   const categories = React.useMemo(buildCategories, []);
   const categoryNames = React.useMemo(
     () => Object.keys(categories),
     [categories]
   );
+  const orderedCategoryNames = React.useMemo(() => {
+    const org = categoryNames.includes('Organization')
+      ? ['Organization']
+      : [];
+    const rest = categoryNames.filter((name) => name !== 'Organization');
+    return [...org, ...rest];
+  }, [categoryNames]);
   const [collapsed, setCollapsed] = React.useState<Set<string>>(
     () => new Set()
   );
@@ -100,9 +123,25 @@ export const ToolPanel = React.memo(function ToolPanel({
 
   const handleAdd = React.useCallback(
     (type: string) => {
-      const newId = form.getState().addField(type as FieldType);
+      const selectedFieldId = ui.getState().selectedFieldId;
+      const selectedField = selectedFieldId
+        ? form.getState().getField(selectedFieldId)
+        : undefined;
+      const sectionParentId =
+        selectedField?.definition.fieldType === 'section'
+          ? selectedFieldId
+          : undefined;
+
+      const newId = form.getState().addField(
+        type as FieldType,
+        sectionParentId ? { parentId: sectionParentId } : undefined
+      );
       if (newId) {
-        ui.getState().selectField(newId);
+        if (sectionParentId) {
+          ui.getState().selectFieldChild(sectionParentId, newId);
+        } else {
+          ui.getState().selectField(newId);
+        }
       }
     },
     [form, ui]
@@ -112,8 +151,23 @@ export const ToolPanel = React.memo(function ToolPanel({
 
   return (
     <div className="tool-panel ms:flex ms:flex-1 ms:flex-col ms:min-h-0">
-      <h3 className="tool-panel-title ms:sticky ms:top-0 ms:z-10 ms:bg-mssurface ms:text-sm ms:font-semibold ms:text-mstext ms:pb-2 ms:pt-1.5 ms:px-4 ms:border-b ms:border-msborder ms:flex ms:items-center ms:justify-between">
-        <span>Tools</span>
+      <h3 className="tool-panel-title ms:sticky ms:top-0 ms:z-10 ms:bg-mssurface ms:text-sm ms:font-semibold ms:text-mstext ms:py-2 ms:px-4 ms:border-b ms:border-msborder ms:flex ms:items-center ms:justify-between">
+        <div className="ms:flex ms:min-w-0 ms:items-center ms:gap-2">
+          <span>Tools</span>
+          {selectedSectionId ? (
+            <span
+              className="ms:inline-flex ms:max-w-[160px] ms:items-center ms:gap-1.5 ms:rounded-full ms:bg-msprimary/10 ms:px-2 ms:py-0.5 ms:text-[11px] ms:font-medium ms:text-msprimary"
+              title={`Adding into section: ${selectedSectionLabel ?? ''}`}
+            >
+              <span className="ms:inline-flex ms:h-1.5 ms:w-1.5 ms:rounded-full ms:bg-msprimary" />
+              <span className="ms:truncate">{selectedSectionLabel}</span>
+            </span>
+          ) : (
+            <span className="ms:text-[11px] ms:font-normal ms:text-mstextmuted">
+              root
+            </span>
+          )}
+        </div>
         <button
           type="button"
           onClick={toggleAll}
@@ -124,8 +178,9 @@ export const ToolPanel = React.memo(function ToolPanel({
         </button>
       </h3>
 
-      <div className="tool-panel-body ms:flex-1 ms:min-h-0">
-        {Object.entries(categories).map(([categoryName, items]) => {
+      <div className="tool-panel-body ms:flex-1 ms:min-h-0 ms:overflow-y-auto">
+        {orderedCategoryNames.map((categoryName) => {
+          const items = categories[categoryName] ?? [];
           const isCollapsed = collapsed.has(categoryName);
           return (
             <div key={categoryName} className="tool-category">

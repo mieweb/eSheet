@@ -15,3 +15,6 @@ export { RatingField, RankingField, SliderField } from './rating/index.js';
 
 // Matrix Fields
 export { SingleMatrixField, MultiMatrixField } from './matrix/index.js';
+
+// Organization Fields
+export { SectionField } from './section/index.js';

@@ -15,6 +15,8 @@ export interface UIState {
   // --- Data ---
   /** Currently selected field ID (blue dashed border in canvas). */
   selectedFieldId: string | null;
+  /** Selected child field ID within the selected parent field editor. */
+  selectedFieldChildId: string | null;
   /** Editor mode. */
   mode: BuilderMode;
   /** Active tab in the edit panel (only relevant when mode === 'build'). */
@@ -26,6 +28,7 @@ export interface UIState {
 
   // --- Actions ---
   selectField: (fieldId: string | null) => void;
+  selectFieldChild: (parentId: string | null, childId: string | null) => void;
   setMode: (mode: BuilderMode) => void;
   setEditTab: (tab: EditTab) => void;
   setEditModalOpen: (open: boolean) => void;
@@ -42,13 +45,25 @@ export type UIStore = ReturnType<typeof createUIStore>;
 export function createUIStore() {
   return createStore<UIState>((set) => ({
     selectedFieldId: null,
+    selectedFieldChildId: null,
     mode: 'build',
     editTab: 'edit',
     editModalOpen: false,
     codeEditorHasError: false,
 
     selectField: (fieldId) =>
-      set({ selectedFieldId: fieldId, editTab: 'edit' }),
+      set({
+        selectedFieldId: fieldId,
+        selectedFieldChildId: null,
+        editTab: 'edit',
+      }),
+
+    selectFieldChild: (parentId, childId) =>
+      set({
+        selectedFieldId: parentId,
+        selectedFieldChildId: childId,
+        editTab: 'edit',
+      }),
 
     setMode: (mode) => set({ mode }),
 

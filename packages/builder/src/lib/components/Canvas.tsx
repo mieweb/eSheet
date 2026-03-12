@@ -22,7 +22,7 @@ import {
   restrictToVerticalAxis,
   restrictToParentElement,
 } from '@dnd-kit/modifiers';
-import type { FormStore, UIStore } from '@msheet/core';
+import type { FieldComponentProps, FormStore, UIStore } from '@msheet/core';
 import { useVisibleFields } from '../hooks/useVisibleFields.js';
 import { FieldWrapper } from './FieldWrapper.js';
 import { FieldItem } from './FieldItem.js';
@@ -45,11 +45,13 @@ function SortableFieldItem({
   form,
   ui,
   collapseWhileDragging = false,
+  nestedChildren,
 }: {
   id: string;
   form: FormStore;
   ui: UIStore;
   collapseWhileDragging?: boolean;
+  nestedChildren?: React.ReactNode;
 }) {
   const {
     attributes,
@@ -69,7 +71,7 @@ function SortableFieldItem({
   };
 
   return (
-    <div ref={setNodeRef} style={style}>
+    <div className='field-canvas-wrapper' ref={setNodeRef} style={style}>
       <FieldWrapper
         fieldId={id}
         form={form}
@@ -78,6 +80,58 @@ function SortableFieldItem({
         dragListeners={listeners}
         isDragging={isDragging}
         collapseWhileDragging={collapseWhileDragging}
+      >
+        {(props) => {
+          const Component =
+            getFieldComponent(props.field.definition.fieldType) ?? FieldItem;
+          if (props.field.definition.fieldType === 'section') {
+            const SectionComponent =
+              Component as React.ComponentType<
+                FieldComponentProps & { nestedChildren?: React.ReactNode }
+              >;
+            return <SectionComponent {...props} nestedChildren={nestedChildren} />;
+          }
+          return <Component {...props} />;
+        }}
+      </FieldWrapper>
+    </div>
+  );
+}
+
+function PlainFieldItem({
+  id,
+  form,
+  ui,
+  parentId,
+  isActiveChild = false,
+  collapseWhileDragging = false,
+}: {
+  id: string;
+  form: FormStore;
+  ui: UIStore;
+  parentId?: string;
+  isActiveChild?: boolean;
+  collapseWhileDragging?: boolean;
+}) {
+  const handleSelectOverride = React.useCallback(
+    (e: React.MouseEvent) => {
+      if (!parentId) return;
+      e.stopPropagation();
+      ui.getState().selectFieldChild(parentId, id);
+    },
+    [id, parentId, ui]
+  );
+
+  return (
+    <div className="field-canvas-wrapper section-child-wrapper">
+      <FieldWrapper
+        fieldId={id}
+        form={form}
+        ui={ui}
+        collapseWhileDragging={collapseWhileDragging}
+        isSelectedOverride={parentId ? isActiveChild : undefined}
+        onSelectOverride={parentId ? handleSelectOverride : undefined}
+        selectedVariant={parentId ? 'nested' : 'default'}
       >
         {(props) => {
           const Component =
@@ -100,10 +154,74 @@ export const Canvas = React.memo(function Canvas({
   ui,
   dragEnabled = true,
 }: CanvasProps) {
-  const rootIds = useVisibleFields(form);
+  const rootIds = useVisibleFields(form, ui);
+  const normalized = React.useSyncExternalStore(
+    (cb) => form.subscribe(cb),
+    () => form.getState().normalized,
+    () => form.getState().normalized
+  );
+  const mode = React.useSyncExternalStore(
+    (cb) => ui.subscribe(cb),
+    () => ui.getState().mode,
+    () => ui.getState().mode
+  );
+  const selectedFieldId = React.useSyncExternalStore(
+    (cb) => ui.subscribe(cb),
+    () => ui.getState().selectedFieldId,
+    () => ui.getState().selectedFieldId
+  );
+  const selectedFieldChildId = React.useSyncExternalStore(
+    (cb) => ui.subscribe(cb),
+    () => ui.getState().selectedFieldChildId,
+    () => ui.getState().selectedFieldChildId
+  );
   // Convert readonly array to mutable array for SortableContext
   const items = React.useMemo(() => [...rootIds], [rootIds]);
   const [activeDragId, setActiveDragId] = React.useState<string | null>(null);
+
+  const getVisibleChildIds = React.useCallback(
+    (parentId: string): readonly string[] => {
+      const parent = normalized.byId[parentId];
+      if (!parent || parent.childIds.length === 0) return [];
+      if (mode !== 'preview') return parent.childIds;
+      return parent.childIds.filter((childId) => form.getState().isVisible(childId));
+    },
+    [form, mode, normalized]
+  );
+
+  const renderNestedChildren = React.useCallback(
+    (parentId: string, depth = 1): React.ReactNode => {
+      const childIds = getVisibleChildIds(parentId);
+      if (childIds.length === 0) return null;
+
+      const containerClass =
+        depth === 1
+          ? 'section-children ms:space-y-2'
+          : 'section-children ms:space-y-2 ms:border-l ms:border-msborder ms:pl-3';
+
+      return (
+        <div className={containerClass} data-depth={depth}>
+          {childIds.map((childId) => (
+            <React.Fragment key={childId}>
+              <PlainFieldItem
+                id={childId}
+                form={form}
+                ui={ui}
+                parentId={parentId}
+                isActiveChild={
+                  selectedFieldId === parentId &&
+                  selectedFieldChildId === childId
+                }
+                collapseWhileDragging={activeDragId !== null}
+              />
+              {renderNestedChildren(childId, depth + 1)}
+            </React.Fragment>
+          ))}
+        </div>
+      );
+    },
+    [activeDragId, form, getVisibleChildIds, selectedFieldId, selectedFieldChildId, ui]
+  );
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -180,6 +298,7 @@ export const Canvas = React.memo(function Canvas({
           form={form}
           ui={ui}
           collapseWhileDragging={activeDragId !== null}
+          nestedChildren={renderNestedChildren(id)}
         />
       ))}
     </div>

@@ -7,6 +7,8 @@ export const CheckField = React.memo(function CheckField({
   field,
   form,
   isPreview,
+  isEnabled,
+  isRequired,
   response,
   onUpdate,
   onResponse,
@@ -31,6 +33,9 @@ export const CheckField = React.memo(function CheckField({
       <div className="check-field-preview ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
         <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
           {def.question || 'Question'}
+          {isRequired && (
+            <span className="ms:text-msdanger ms:ml-0.5">*</span>
+          )}
         </div>
         <div className="ms:space-y-2">
           {options.map((option) => (
@@ -42,6 +47,7 @@ export const CheckField = React.memo(function CheckField({
                 id={`${instanceId}-check-answer-${def.id}-${option.id}`}
                 checked={selectedIds.includes(option.id)}
                 onChange={() => toggleOption(option.id, option.value)}
+                disabled={!isEnabled}
                 size="lg"
               />
               <span className="ms:text-mstext ms:break-words ms:overflow-hidden">

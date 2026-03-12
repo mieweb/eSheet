@@ -24,6 +24,10 @@ export interface FieldComponentProps {
   isSelected: boolean;
   /** Whether the host is in preview / render mode (read-only chrome). */
   isPreview: boolean;
+  /** Computed conditional enabled state (`true` when no rules override). */
+  isEnabled: boolean;
+  /** Computed conditional required state (static `required` OR conditional rules). */
+  isRequired: boolean;
   /** Current response data for this field (`undefined` if none yet). */
   response: FieldResponse | undefined;
   /** Remove this field from the form. */

@@ -6,6 +6,8 @@ export const BooleanField = React.memo(function BooleanField({
   field,
   form,
   isPreview,
+  isEnabled,
+  isRequired,
   response,
   onUpdate,
   onResponse,
@@ -27,6 +29,9 @@ export const BooleanField = React.memo(function BooleanField({
       <div className="boolean-field-preview ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
         <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
           {def.question || 'Question'}
+          {isRequired && (
+            <span className="ms:text-msdanger ms:ml-0.5">*</span>
+          )}
         </div>
         <div className="ms:flex ms:gap-2">
           {options.map((option) => {
@@ -48,6 +53,7 @@ export const BooleanField = React.memo(function BooleanField({
                   name={`question-${def.id}`}
                   value={option.id}
                   checked={isSelected}
+                  disabled={!isEnabled}
                   onSelect={() =>
                     onResponse({
                       selected: { id: option.id, value: option.value },
