@@ -1,7 +1,6 @@
 import {
   SCHEMA_TYPE,
   FIELD_TYPES,
-  NUMERIC_EXPRESSION_FORMATS,
 } from './types.js';
 import type {
   FieldDefinition,
@@ -18,14 +17,8 @@ describe('schema types', () => {
   it('should export all field types', () => {
     expect(FIELD_TYPES).toContain('text');
     expect(FIELD_TYPES).toContain('section');
-    expect(FIELD_TYPES).toContain('expression');
+    expect(FIELD_TYPES).toContain('display');
     expect(FIELD_TYPES).toHaveLength(19);
-  });
-
-  it('should export numeric expression formats', () => {
-    expect(NUMERIC_EXPRESSION_FORMATS).toContain('number');
-    expect(NUMERIC_EXPRESSION_FORMATS).toContain('currency');
-    expect(NUMERIC_EXPRESSION_FORMATS).toContain('percentage');
   });
 
   it('should allow constructing a valid FormDefinition', () => {

@@ -866,11 +866,7 @@ function buildOtherFields(normalized: NormalizedDefinition, selfId: string): Tar
     const supportsNumericCompare =
       node.definition.fieldType === 'rating' ||
       node.definition.fieldType === 'slider' ||
-      (node.definition.fieldType === 'text' && node.definition.inputType === 'number') ||
-      (node.definition.fieldType === 'expression' &&
-        (node.definition.displayFormat === 'number' ||
-          node.definition.displayFormat === 'currency' ||
-          node.definition.displayFormat === 'percentage'));
+      (node.definition.fieldType === 'text' && node.definition.inputType === 'number');
     result.push({
       id,
       label: node.definition.question || node.definition.id,

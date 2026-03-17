@@ -40,11 +40,8 @@ function ratingDef(id: string, options?: FieldDefinition['options']): Def {
   return { id, fieldType: 'rating', question: 'Q', options };
 }
 
-function exprDef(
-  id: string,
-  displayFormat: FieldDefinition['displayFormat']
-): Def {
-  return { id, fieldType: 'expression', question: 'Q', displayFormat };
+function numericTextDef(id: string): Def {
+  return { id, fieldType: 'text', inputType: 'number', question: 'Q' };
 }
 
 function cond(
@@ -209,8 +206,8 @@ describe('evaluateCondition', () => {
       ).toBe(false);
     });
 
-    it('numeric expression field uses float comparison for equals', () => {
-      const def = exprDef('f', 'number');
+    it('numeric text field uses float comparison for equals', () => {
+      const def = numericTextDef('f');
       expect(
         evaluateCondition(cond('f', 'equals', '0.3'), def, {
           answer: String(0.1 + 0.2),

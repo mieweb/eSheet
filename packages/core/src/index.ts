@@ -3,15 +3,12 @@ export {
   SCHEMA_TYPE,
   FIELD_TYPES,
   TEXT_INPUT_TYPES,
-  EXPRESSION_DISPLAY_FORMATS,
   CONDITION_OPERATORS,
   CONDITIONAL_EFFECTS,
-  NUMERIC_EXPRESSION_FORMATS,
 
   // Zod schemas
   fieldTypeSchema,
   textInputTypeSchema,
-  expressionDisplayFormatSchema,
   fieldOptionSchema,
   matrixRowSchema,
   matrixColumnSchema,
@@ -29,7 +26,6 @@ export {
   type FieldCategory,
   type AnswerType,
   type TextInputType,
-  type ExpressionDisplayFormat,
   type FieldOption,
   type MatrixRow,
   type MatrixColumn,
@@ -74,7 +70,12 @@ export {
   type HydratedResponseItem,
 } from './lib/functions/hydrate-response.js';
 
-export { evaluateCondition, evaluateRule, isExpressionValid } from './lib/logic/conditions.js';
+export {
+  evaluateCondition,
+  evaluateRule,
+  isExpressionValid,
+  evaluateExpression,
+} from './lib/logic/conditions.js';
 
 export { resolveEffect } from './lib/logic/resolve.js';
 

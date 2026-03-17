@@ -18,3 +18,14 @@ export { SingleMatrixField, MultiMatrixField } from './matrix/index.js';
 
 // Organization Fields
 export { SectionField } from './section/index.js';
+
+// Rich Content Fields
+export {
+  DrawingPad,
+  DiagramField,
+  DisplayField,
+  HtmlField,
+  ImageField,
+  SignatureField,
+} from './rich/index.js';
+export type { DrawingData, DrawingPadConfig, DrawingPadPayload, NormalizedPoint, Stroke } from './rich/index.js';

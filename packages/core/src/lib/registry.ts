@@ -254,16 +254,15 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
       pad: 'Draw on the diagram',
     },
   },
-  expression: {
-    label: 'Expression',
+  display: {
+    label: 'Display',
     category: 'rich',
-    answerType: 'text',
+    answerType: 'display',
     hasOptions: false,
     hasMatrix: false,
-    defaultProps: { displayFormat: 'number', decimalPlaces: 2 },
+    defaultProps: {},
     placeholder: {
-      question: 'Expression Field',
-      expression: '{fieldId1} + {fieldId2}',
+      content: 'Your BMI is **{weight-kg} / (({height-cm}/100) * ({height-cm}/100))**',
     },
   },
   section: {

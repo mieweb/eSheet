@@ -198,8 +198,13 @@ function getDefaultQuestion(
   fieldType: FieldType,
   label: string
 ): string | undefined {
-  if (fieldType === 'section' || fieldType === 'html') return undefined;
-  if (fieldType === 'expression') return 'Expression Field';
+  if (
+    fieldType === 'section' ||
+    fieldType === 'html' ||
+    fieldType === 'display'
+  ) {
+    return undefined;
+  }
   if (fieldType === 'image') return 'Image Block';
   return `${label} question`;
 }

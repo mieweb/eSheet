@@ -32,7 +32,7 @@ export const FIELD_TYPES = [
   'html',
   'signature',
   'diagram',
-  'expression',
+  'display',
   'section',
 ] as const;
 
@@ -90,30 +90,6 @@ export const TEXT_INPUT_TYPES = [
 
 export const textInputTypeSchema = z.enum(TEXT_INPUT_TYPES);
 export type TextInputType = z.infer<typeof textInputTypeSchema>;
-
-// ---------------------------------------------------------------------------
-// Expression Display Formats
-// ---------------------------------------------------------------------------
-
-export const EXPRESSION_DISPLAY_FORMATS = [
-  'number',
-  'currency',
-  'percentage',
-  'boolean',
-  'string',
-] as const;
-
-export const expressionDisplayFormatSchema = z.enum(EXPRESSION_DISPLAY_FORMATS);
-export type ExpressionDisplayFormat = z.infer<
-  typeof expressionDisplayFormatSchema
->;
-
-/** Display formats that produce numeric results. */
-export const NUMERIC_EXPRESSION_FORMATS: readonly ExpressionDisplayFormat[] = [
-  'number',
-  'currency',
-  'percentage',
-];
 
 // ---------------------------------------------------------------------------
 // Options (for choice / matrix fields)
@@ -237,11 +213,13 @@ export const fieldDefinitionSchema: z.ZodMiniType<FieldDefinition> = z.object({
   // --- Rich content ---
   htmlContent: z.optional(z.string()),
   imageUri: z.optional(z.string()),
-
-  // --- Expression fields ---
-  expression: z.optional(z.string()),
-  displayFormat: z.optional(expressionDisplayFormatSchema),
-  decimalPlaces: z.optional(z.number()),
+  altText: z.optional(z.string()),
+  caption: z.optional(z.string()),
+  iframeHeight: z.optional(z.number()),
+  /** Placeholder text shown on the drawing canvas (signature / diagram fields). */
+  padPlaceholder: z.optional(z.string()),
+  /** Markdown-like content with inline expression placeholders (display field). */
+  content: z.optional(z.string()),
 
   // --- Section (container) ---
   title: z.optional(z.string()),
@@ -266,9 +244,13 @@ export interface FieldDefinition {
   columns?: MatrixColumn[];
   htmlContent?: string;
   imageUri?: string;
-  expression?: string;
-  displayFormat?: ExpressionDisplayFormat;
-  decimalPlaces?: number;
+  altText?: string;
+  caption?: string;
+  iframeHeight?: number;
+  /** Placeholder text shown on the drawing canvas (signature / diagram fields). */
+  padPlaceholder?: string;
+  /** Markdown-like content with inline expression placeholders (display field). */
+  content?: string;
   title?: string;
   fields?: FieldDefinition[];
   _sourceData?: unknown;
@@ -299,7 +281,7 @@ export interface SelectedOption {
  * time (Phase 4) for human-readable output.
  */
 export interface FieldResponse {
-  /** Text answer (text, longtext, expression fields). */
+  /** Text answer (text and longtext fields). */
   answer?: string;
   /**
    * Selected option(s).

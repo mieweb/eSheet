@@ -10,7 +10,6 @@ import type {
   FormResponse,
   SelectedOption,
 } from '../types.js';
-import { NUMERIC_EXPRESSION_FORMATS } from '../types.js';
 import type { NormalizedDefinition } from '../functions/normalize.js';
 
 // ---------------------------------------------------------------------------
@@ -107,18 +106,11 @@ export function evaluateCondition(
   }
 
   // Decide numeric vs string path
-  const isNumericExpr =
-    definition.fieldType === 'expression' &&
-    definition.displayFormat != null &&
-    (NUMERIC_EXPRESSION_FORMATS as readonly string[]).includes(
-      definition.displayFormat
-    );
   const isNumericText =
     definition.fieldType === 'text' && definition.inputType === 'number';
   const isNumeric =
     NUMERIC_OPERATORS.has(operator) ||
     typeof actual === 'number' ||
-    isNumericExpr ||
     isNumericText;
 
   if (isNumeric) {
@@ -237,6 +229,15 @@ function evaluateExpressionToValue(
 ): unknown {
   const data = buildExpressionData(normalized, responses);
   return evaluateSafeExpression(expression, data);
+}
+
+/** Evaluate an expression and return the raw computed value (no boolean coercion). */
+export function evaluateExpression(
+  expression: string,
+  normalized: NormalizedDefinition,
+  responses: FormResponse
+): unknown {
+  return evaluateExpressionToValue(expression, normalized, responses);
 }
 
 type ExprTokenType =
@@ -466,6 +467,12 @@ function parseExpression(tokens: ExprToken[]): ExprNode | null {
     }
 
     if (t.type === 'field') {
+      consume();
+      return { type: 'field', id: String(t.value) };
+    }
+
+    // Bare identifiers (e.g. q3 in display interpolation) resolve as field refs.
+    if (t.type === 'identifier') {
       consume();
       return { type: 'field', id: String(t.value) };
     }
@@ -729,8 +736,7 @@ function getExpressionFieldValue(
 
   if (
     definition.fieldType === 'text' ||
-    definition.fieldType === 'longtext' ||
-    definition.fieldType === 'expression'
+    definition.fieldType === 'longtext'
   ) {
     const raw = response.answer ?? '';
     const parsed = parseFloat(String(raw));
@@ -788,7 +794,6 @@ function getActualValue(
   switch (definition.fieldType) {
     case 'text':
     case 'longtext':
-    case 'expression':
       return response.answer ?? '';
 
     case 'multitext':

@@ -154,29 +154,35 @@ export const ToolPanel = React.memo(function ToolPanel({
       <h3 className="tool-panel-title ms:sticky ms:top-0 ms:z-10 ms:bg-mssurface ms:text-sm ms:font-semibold ms:text-mstext ms:py-2 ms:px-4 ms:border-b ms:border-msborder ms:flex ms:items-center ms:justify-between">
         <div className="ms:flex ms:min-w-0 ms:items-center ms:gap-2">
           <span>Tools</span>
-          {selectedSectionId ? (
-            <div className="ms:inline-flex ms:max-w-[190px] ms:items-center ms:gap-1 ms:rounded-full ms:bg-msprimary/10 ms:px-2 ms:py-0.5 ms:text-[11px] ms:font-medium ms:text-msprimary">
-              <span className="ms:inline-flex ms:h-1.5 ms:w-1.5 ms:rounded-full ms:bg-msprimary" />
-              <span
-                className="ms:truncate"
-                title={`Adding into section: ${selectedSectionLabel ?? ''}`}
-              >
-                {selectedSectionLabel}
-              </span>
-              <button
-                type="button"
-                onClick={() => ui.getState().selectField(null)}
-                className="ms:ml-0.5 ms:inline-flex ms:h-4 ms:w-4 ms:items-center ms:justify-center ms:rounded-full ms:bg-transparent ms:text-msprimary/80 ms:hover:bg-msprimary/15 ms:hover:text-msprimary ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer"
-                title="Clear selected section"
-                aria-label="Clear selected section"
-              >
-                ×
-              </button>
-            </div>
-          ) : (
-            <span className="ms:text-[11px] ms:font-normal ms:text-mstextmuted">
-              root
+          <span
+            className={`ms:inline-flex ms:max-w-[200px] ms:items-center ms:gap-1 ms:rounded-full ms:px-2.5 ms:py-1 ms:text-[11px] ms:font-medium ${
+              selectedSectionId
+                ? 'ms:bg-msprimary/10 ms:text-msprimary'
+                : 'ms:bg-msbackgroundsecondary ms:text-mstextmuted'
+            }`}
+            title={
+              selectedSectionId
+                ? `Adding into section: ${selectedSectionLabel ?? ''}`
+                : 'Adding into root'
+            }
+          >
+            <span className={`ms:inline-flex ms:h-1.5 ms:w-1.5 ms:rounded-full ${selectedSectionId ? 'ms:bg-msprimary' : 'ms:bg-mstextmuted'}`} />
+            <span className="ms:truncate">
+              {selectedSectionId
+                ? `Adding into section: ${selectedSectionLabel}`
+                : 'Adding into root'}
             </span>
+          </span>
+          {selectedSectionId && (
+            <button
+              type="button"
+              onClick={() => ui.getState().selectField(null)}
+              className="ms:inline-flex ms:h-7 ms:w-7 ms:items-center ms:justify-center ms:rounded-full ms:bg-msbackgroundsecondary ms:text-mstextmuted ms:hover:bg-msbackgroundhover ms:hover:text-mstext ms:border ms:border-msborder ms:outline-none ms:focus:outline-none ms:cursor-pointer"
+              title="Switch to adding into root"
+              aria-label="Switch to adding into root"
+            >
+              ×
+            </button>
           )}
         </div>
         <button

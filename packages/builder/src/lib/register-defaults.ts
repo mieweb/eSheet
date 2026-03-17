@@ -22,6 +22,11 @@ import {
   SingleMatrixField,
   MultiMatrixField,
   SectionField,
+  SignatureField,
+  DiagramField,
+  ImageField,
+  HtmlField,
+  DisplayField,
 } from '@msheet/fields';
 
 registerBuilderComponents({
@@ -39,4 +44,9 @@ registerBuilderComponents({
   singlematrix: SingleMatrixField,
   multimatrix: MultiMatrixField,
   section: SectionField,
+  signature: SignatureField,
+  diagram: DiagramField,
+  image: ImageField,
+  html: HtmlField,
+  display: DisplayField,
 });

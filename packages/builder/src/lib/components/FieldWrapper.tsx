@@ -294,7 +294,15 @@ export function FieldWrapper({
           {/* Edit button (mobile only) */}
           <button
             type="button"
-            onClick={handleSelect}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onSelectOverride) {
+                onSelectOverride(e);
+              } else {
+                ui.getState().selectField(fieldId);
+              }
+              ui.getState().setEditModalOpen(true);
+            }}
             className="field-edit-btn ms:block ms:lg:hidden ms:p-1.5 ms:bg-transparent ms:text-mstextmuted ms:hover:bg-msbackgroundhover ms:rounded ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none"
             title="Edit"
             aria-label="Edit field"

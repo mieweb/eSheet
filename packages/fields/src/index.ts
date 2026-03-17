@@ -28,4 +28,12 @@ export {
   SingleMatrixField,
   MultiMatrixField,
   SectionField,
+  // Rich content
+  DrawingPad,
+  DiagramField,
+  DisplayField,
+  HtmlField,
+  ImageField,
+  SignatureField,
 } from './fields/index.js';
+export type { DrawingData, DrawingPadConfig, DrawingPadPayload, NormalizedPoint, Stroke } from './fields/index.js';
