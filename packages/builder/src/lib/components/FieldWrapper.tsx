@@ -29,20 +29,16 @@ export interface FieldWrapperProps {
   form: FormStore;
   /** The UI store */
   ui: UIStore;
-  /** Drag handle attributes from @dnd-kit (optional) */
-  dragHandleProps?: React.HTMLAttributes<HTMLElement>;
-  /** Drag listeners from @dnd-kit (optional) */
-  dragListeners?: Record<string, Function>;
-  /** Whether the field is being dragged */
-  isDragging?: boolean;
-  /** Whether any drag operation is active in the canvas. */
-  collapseWhileDragging?: boolean;
+  /** Ref attached to the drag-handle element. */
+  dragHandleRef?: React.RefObject<HTMLDivElement | null>;
   /** Optional override for selection state (used by nested section child interaction). */
   isSelectedOverride?: boolean;
   /** Optional override for click selection behavior. */
   onSelectOverride?: (e: React.MouseEvent) => void;
   /** Optional selected styling variant. */
   selectedVariant?: 'default' | 'nested';
+  /** Optional signal used to force expand a field wrapper (used for section drop UX). */
+  forceExpandVersion?: number;
   /** Render function that receives field data and tools */
   children: (props: FieldWrapperRenderProps) => React.ReactNode;
 }
@@ -72,16 +68,15 @@ export function FieldWrapper({
   fieldId,
   form,
   ui,
-  dragHandleProps,
-  dragListeners,
-  isDragging = false,
-  collapseWhileDragging = false,
+  dragHandleRef,
   isSelectedOverride,
   onSelectOverride,
   selectedVariant = 'default',
+  forceExpandVersion,
   children,
 }: FieldWrapperProps) {
   const [isExpanded, setIsExpanded] = React.useState(true);
+  const lastForceExpandVersionRef = React.useRef<number | undefined>(undefined);
 
   const field = useSyncExternalStore(
     (cb) => form.subscribe(cb),
@@ -162,6 +157,16 @@ export function FieldWrapper({
     [isSelected, handleSelect]
   );
 
+  React.useEffect(() => {
+    if (!field) return;
+    if (field.definition.fieldType !== 'section') return;
+    if (forceExpandVersion === undefined) return;
+    if (lastForceExpandVersionRef.current === forceExpandVersion) return;
+
+    lastForceExpandVersionRef.current = forceExpandVersion;
+    setIsExpanded((prev) => (prev ? prev : true));
+  }, [field?.definition.fieldType, forceExpandVersion]);
+
   if (!field) {
     return null;
   }
@@ -173,12 +178,19 @@ export function FieldWrapper({
 
   // --- Preview mode: minimal chrome, no builder controls ---
   if (isPreview) {
+    const isSection = field.definition.fieldType === 'section';
+    const parentNode = field.parentId 
+      ? form.getState().getField(field.parentId)
+      : null;
+    const isChildOfSection = parentNode?.definition.fieldType === 'section';
+    
     return (
       <div
-        className={`field-wrapper ms:mb-2 ms:p-6 ms:bg-mssurface ms:border ms:border-msborder ms:rounded${
+        className={`field-wrapper ms:bg-mssurface${isSection ? ' ms:mb-2 ms:border ms:border-msborder ms:rounded' : ''}${!isSection && !isChildOfSection ? ' ms:mb-2 ms:p-6 ms:border ms:border-msborder ms:rounded' : ''}${isChildOfSection ? ' ms:p-6 ms:border-b ms:border-msborder ms:last:border-b-0' : ''}${
           !isEnabled ? ' ms:opacity-50 ms:pointer-events-none' : ''
-        }${isRequired ? ' ms:border-l-2 ms:border-l-msdanger' : ''}`}
+        }${isRequired && !isSection && !isChildOfSection ? ' ms:border-l-2 ms:border-l-msdanger' : ''}`}
         data-field-id={fieldId}
+        data-field-type={field.definition.fieldType}
         aria-disabled={!isEnabled || undefined}
       >
         {children({
@@ -203,9 +215,14 @@ export function FieldWrapper({
     field.definition.fieldType === 'section'
       ? field.definition.title || ''
       : field.definition.question || '';
+  const questionPreview = questionText
+    ? questionText.length > 18
+      ? `${questionText.slice(0, 18)}...`
+      : questionText
+    : 'Untitled';
 
-  // Collapse while dragging; restore prior state when drag ends
-  const effectiveExpanded = isExpanded && !collapseWhileDragging;
+  // While collapsed, keep the wrapper compact.
+  const effectiveExpanded = isExpanded;
 
   // Base wrapper classes
   let wrapperClass = isSelected
@@ -220,10 +237,6 @@ export function FieldWrapper({
     wrapperClass += ' ms:p-6';
   }
 
-  if (isDragging) {
-    wrapperClass += ' ms:opacity-50';
-  }
-
   // Header padding/margin adjustments
   const headerClass = effectiveExpanded
     ? 'field-wrapper-edit-header ms:flex ms:justify-between ms:items-center ms:gap-3 ms:px-3 ms:py-2.5 ms:-mx-6 ms:-mt-6 ms:mb-4 ms:bg-msbackgroundsecondary ms:border-b ms:border-msborder ms:rounded-t-lg'
@@ -234,6 +247,7 @@ export function FieldWrapper({
       className={wrapperClass}
       onClick={handleSelect}
       data-field-id={fieldId}
+      data-field-type={field.definition.fieldType}
       data-selected={isSelected ? 'true' : 'false'}
       aria-selected={isSelected || undefined}
       tabIndex={-1}
@@ -241,10 +255,9 @@ export function FieldWrapper({
       {/* Collapsible Header */}
       <div className={headerClass}>
         {/* Drag handle */}
-        {(dragHandleProps || dragListeners) && (
+        {dragHandleRef !== undefined && (
           <div
-            {...dragHandleProps}
-            {...(dragListeners as React.HTMLAttributes<HTMLDivElement>)}
+            ref={dragHandleRef}
             className="drag-handle ms:flex ms:items-center ms:p-1 ms:text-mstextmuted ms:cursor-grab ms:active:cursor-grabbing ms:shrink-0"
             style={{ touchAction: 'none' }}
             aria-label="Drag to reorder"
@@ -252,14 +265,23 @@ export function FieldWrapper({
             <DragHandleIcon className="ms:w-4 ms:h-4" />
           </div>
         )}
-        <div className="ms:text-left ms:flex-1 ms:select-none ms:text-sm ms:text-mstext ms:truncate ms:flex ms:items-center ms:gap-2">
-          <span className="ms:inline-block ms:text-xs ms:font-medium ms:text-msprimary ms:bg-msprimary/10 ms:px-2 ms:py-0.5 ms:rounded ms:shrink-0">
+        <div className="ms:flex-1 ms:flex ms:items-center ms:gap-1.5 ms:min-w-0 ms:select-none">
+          {/* Type chip — tinted primary bg, same as before */}
+          <span className="fieldtype-chip ms:inline-block ms:shrink-0 ms:text-xs ms:font-medium ms:text-msprimary ms:bg-msprimary/10 ms:px-2 ms:py-0.5 ms:rounded">
             {field.definition.fieldType}
           </span>
-          <span className="ms:truncate">{questionText}</span>
+          {/* ID chip — explicit label for quick scanning */}
+          <span className="id-chip ms:inline-flex ms:items-center ms:gap-1 ms:shrink-0 ms:text-xs ms:font-mono ms:text-mssecondary ms:bg-mssecondary/10 ms:px-2 ms:py-0.5 ms:rounded">
+            <span className="ms:opacity-70">id:</span>
+            <span className="ms:font-semibold">{field.definition.id}</span>
+          </span>
+          {/* Question — plain muted text */}
+          <span className="question-label ms:text-xs ms:text-mstextmuted ms:truncate ms:min-w-0">
+            {questionPreview}
+          </span>
           {field.definition.required && (
             <span
-              className="required-indicator ms:text-msdanger ms:text-sm ms:font-bold ms:shrink-0"
+              className="required-indicator ms:text-msdanger ms:text-xs ms:font-bold ms:shrink-0"
               aria-label="Required"
             >
               *
@@ -269,7 +291,7 @@ export function FieldWrapper({
 
         {/* Actions: Edit (mobile), Toggle (expand/collapse), Delete */}
         <div className="field-wrapper-actions ms:flex ms:items-center ms:gap-1 ms:shrink-0">
-          {/* Edit button (mobile only) - placeholder for future edit panel integration */}
+          {/* Edit button (mobile only) */}
           <button
             type="button"
             onClick={handleSelect}

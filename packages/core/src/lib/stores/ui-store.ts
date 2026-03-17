@@ -52,18 +52,18 @@ export function createUIStore() {
     codeEditorHasError: false,
 
     selectField: (fieldId) =>
-      set({
+      set((state) => ({
         selectedFieldId: fieldId,
         selectedFieldChildId: null,
-        editTab: 'edit',
-      }),
+        editTab: state.editTab,
+      })),
 
     selectFieldChild: (parentId, childId) =>
-      set({
+      set((state) => ({
         selectedFieldId: parentId,
         selectedFieldChildId: childId,
-        editTab: 'edit',
-      }),
+        editTab: state.editTab,
+      })),
 
     setMode: (mode) => set({ mode }),
 

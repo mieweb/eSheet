@@ -523,4 +523,208 @@ describe('evaluateRule', () => {
     };
     expect(evaluateRule(rule, normalized, {})).toBe(false);
   });
+
+  describe('expression conditions', () => {
+    const exprNormalized = norm({
+      'expense-amount': node(textDef('expense-amount', 'number')),
+      department: node(
+        {
+          id: 'department',
+          fieldType: 'dropdown',
+          question: 'Department',
+          options: [
+            { id: 'dep-finance', value: 'finance' },
+            { id: 'dep-it', value: 'it' },
+          ],
+        },
+        1
+      ),
+      'full-name': node(textDef('full-name'), 2),
+    });
+
+    it('evaluates expression conditions with hyphenated field IDs', () => {
+      const rule: ConditionalRule = {
+        effect: 'visible',
+        logic: 'AND',
+        conditions: [
+          {
+            conditionType: 'expression',
+            expression: "{expense-amount} > 1000 && {department} === 'finance'",
+            operator: 'equals',
+            expected: 'true',
+          },
+        ],
+      };
+
+      const responses = {
+        'expense-amount': { answer: '1200' },
+        department: { selected: { id: 'dep-finance', value: 'Finance' } },
+      } as Record<string, FieldResponse>;
+
+      expect(evaluateRule(rule, exprNormalized, responses)).toBe(true);
+    });
+
+    it('evaluates false when expression result does not match expected', () => {
+      const rule: ConditionalRule = {
+        effect: 'visible',
+        logic: 'AND',
+        conditions: [
+          {
+            conditionType: 'expression',
+            expression: "{expense-amount} > 1000 && {department} === 'finance'",
+            operator: 'equals',
+            expected: 'true',
+          },
+        ],
+      };
+
+      const responses = {
+        'expense-amount': { answer: '500' },
+        department: { selected: { id: 'dep-finance', value: 'Finance' } },
+      } as Record<string, FieldResponse>;
+
+      expect(evaluateRule(rule, exprNormalized, responses)).toBe(false);
+    });
+
+    it('supports boolean expression checks without explicit expected value', () => {
+      const rule: ConditionalRule = {
+        effect: 'visible',
+        logic: 'AND',
+        conditions: [
+          {
+            conditionType: 'expression',
+            expression: '{full-name}.length > 0',
+            operator: 'equals',
+            expected: '',
+          },
+        ],
+      };
+
+      const responses = {
+        'full-name': { answer: 'Jane' },
+      } as Record<string, FieldResponse>;
+
+      expect(evaluateRule(rule, exprNormalized, responses)).toBe(true);
+    });
+
+    it('supports expression conditions without operator when result is boolean true', () => {
+      const rule: ConditionalRule = {
+        effect: 'visible',
+        logic: 'AND',
+        conditions: [
+          {
+            conditionType: 'expression',
+            expression: '{full-name}.length > 0',
+          },
+        ],
+      };
+
+      const responses = {
+        'full-name': { answer: 'Jane' },
+      } as Record<string, FieldResponse>;
+
+      expect(evaluateRule(rule, exprNormalized, responses)).toBe(true);
+    });
+
+    it('supports expression conditions without operator when result is boolean false', () => {
+      const rule: ConditionalRule = {
+        effect: 'visible',
+        logic: 'AND',
+        conditions: [
+          {
+            conditionType: 'expression',
+            expression: '{full-name}.length > 0',
+          },
+        ],
+      };
+
+      const responses = {
+        'full-name': { answer: '' },
+      } as Record<string, FieldResponse>;
+
+      expect(evaluateRule(rule, exprNormalized, responses)).toBe(false);
+    });
+
+    it('returns false for malformed expressions', () => {
+      const rule: ConditionalRule = {
+        effect: 'visible',
+        logic: 'AND',
+        conditions: [
+          {
+            conditionType: 'expression',
+            expression: '{expense-amount} >',
+            operator: 'equals',
+            expected: 'true',
+          },
+        ],
+      };
+
+      const responses = {
+        'expense-amount': { answer: '1200' },
+      } as Record<string, FieldResponse>;
+
+      expect(evaluateRule(rule, exprNormalized, responses)).toBe(false);
+    });
+
+    it('supports arithmetic and member access without eval', () => {
+      const normalizedWithMulti = norm({
+        ...exprNormalized.byId,
+        interests: node(
+          {
+            id: 'interests',
+            fieldType: 'check',
+            question: 'Interests',
+            options: [
+              { id: 'a', value: 'A' },
+              { id: 'b', value: 'B' },
+              { id: 'c', value: 'C' },
+            ],
+          },
+          3
+        ),
+      });
+
+      const rule: ConditionalRule = {
+        effect: 'visible',
+        logic: 'AND',
+        conditions: [
+          {
+            conditionType: 'expression',
+            expression: '({expense-amount} * 2) > 1000 && {interests}.length >= 2',
+            operator: 'equals',
+            expected: 'true',
+          },
+        ],
+      };
+
+      const responses = {
+        'expense-amount': { answer: '600' },
+        interests: {
+          selected: [
+            { id: 'a', value: 'A' },
+            { id: 'b', value: 'B' },
+          ],
+        },
+      } as Record<string, FieldResponse>;
+
+      expect(evaluateRule(rule, normalizedWithMulti, responses)).toBe(true);
+    });
+
+    it('rejects unsupported function-call syntax', () => {
+      const rule: ConditionalRule = {
+        effect: 'visible',
+        logic: 'AND',
+        conditions: [
+          {
+            conditionType: 'expression',
+            expression: 'Math.max(1, 2) > 1',
+            operator: 'equals',
+            expected: 'true',
+          },
+        ],
+      };
+
+      expect(evaluateRule(rule, exprNormalized, {})).toBe(false);
+    });
+  });
 });

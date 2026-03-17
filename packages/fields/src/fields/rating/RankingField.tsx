@@ -1,12 +1,182 @@
 import React from 'react';
 import type { FieldComponentProps, SelectedOption } from '@msheet/core';
 import {
+  applySheetDnd,
+  getReorderDestinationIndex,
+  type SheetDndDropDetail,
+} from '@msheet/core';
+import {
   TrashIcon,
   PlusIcon,
   ArrowUpIcon,
   ArrowDownIcon,
   UpDownArrowIcon,
+  DragHandleIcon,
 } from '../../icons.js';
+
+// ---------------------------------------------------------------------------
+// Draggable ranking item (preview mode only)
+// ---------------------------------------------------------------------------
+
+function DraggableRankItem({
+  optId,
+  label,
+  index,
+  total,
+  fieldId,
+  isEnabled,
+  onMove,
+}: {
+  optId: string;
+  label: string;
+  index: number;
+  total: number;
+  fieldId: string;
+  isEnabled: boolean;
+  onMove: (optId: string, direction: 'up' | 'down') => void;
+}) {
+  const ref = React.useRef<HTMLDivElement | null>(null);
+  const handleRef = React.useRef<HTMLDivElement | null>(null);
+
+  const canMoveUp = index > 0;
+  const canMoveDown = index < total - 1;
+
+  React.useEffect(() => {
+    const el = ref.current;
+    if (!el || !isEnabled) return;
+
+    const dragHandleEl = handleRef.current ?? el;
+    return applySheetDnd(dragHandleEl as HTMLElement, 'data-opt-id');
+  }, [isEnabled, optId, fieldId, index]);
+
+  return (
+    <div
+      ref={ref}
+      data-opt-id={optId}
+      className="ranking-field-item ms:relative ms:flex ms:items-center ms:px-3 ms:py-2 ms:bg-mssurface ms:border ms:border-msborder ms:rounded-lg ms:shadow-sm ms:hover:border-msprimary/50 ms:hover:bg-msprimary/10 ms:transition-colors"
+    >
+      <div
+        ref={handleRef}
+        className="rank-drag-handle ms:flex ms:items-center ms:mr-2 ms:text-mstextmuted ms:cursor-grab ms:active:cursor-grabbing"
+        style={{ touchAction: 'none' }}
+        aria-label="Drag to reorder"
+      >
+        <DragHandleIcon className="ms:w-5 ms:h-5" />
+      </div>
+      <div className="ms:flex ms:items-center ms:flex-1">
+        <span className="ms:text-mstext">{label}</span>
+      </div>
+      <div className="ms:flex ms:items-center ms:gap-1 ms:ml-2">
+        <button
+          onClick={() => onMove(optId, 'up')}
+          disabled={!canMoveUp || !isEnabled}
+          className={`ms:p-1 ms:bg-transparent ms:border-0 ms:outline-none ms:focus:outline-none ${
+            canMoveUp
+              ? 'ms:text-mstext ms:hover:text-msprimary'
+              : 'ms:text-msborder ms:cursor-not-allowed'
+          }`}
+          aria-label="Move up"
+        >
+          <ArrowUpIcon className="ms:h-6 ms:w-6" />
+        </button>
+        <button
+          onClick={() => onMove(optId, 'down')}
+          disabled={!canMoveDown || !isEnabled}
+          className={`ms:p-1 ms:bg-transparent ms:border-0 ms:outline-none ms:focus:outline-none ${
+            canMoveDown
+              ? 'ms:text-mstext ms:hover:text-msprimary'
+              : 'ms:text-msborder ms:cursor-not-allowed'
+          }`}
+          aria-label="Move down"
+        >
+          <ArrowDownIcon className="ms:h-6 ms:w-6" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Preview wrapper — owns the sheetdrop handler for drag-to-reorder
+// ---------------------------------------------------------------------------
+
+function RankingPreview({
+  ranking,
+  optionsMap,
+  fieldId,
+  isEnabled,
+  isRequired,
+  question,
+  moveItem,
+  setRanking,
+}: {
+  ranking: string[];
+  optionsMap: Record<string, string>;
+  fieldId: string;
+  isEnabled: boolean;
+  isRequired: boolean;
+  question: string | undefined;
+  moveItem: (optId: string, direction: 'up' | 'down') => void;
+  setRanking: (newOrder: string[]) => void;
+}) {
+  const containerRef = React.useRef<HTMLDivElement | null>(null);
+
+  // Sheet DnD handler for ranking reorder
+  React.useEffect(() => {
+    const el = containerRef.current;
+    if (!el || !isEnabled) return;
+
+    const handler = (e: Event) => {
+      const { sourceId, targetId, edge } = (e as CustomEvent<SheetDndDropDetail>).detail;
+      const startIndex = ranking.indexOf(sourceId);
+      const targetIndex = ranking.indexOf(targetId);
+      if (startIndex === -1 || targetIndex === -1) return;
+
+      const destinationIndex = getReorderDestinationIndex({
+        startIndex,
+        indexOfTarget: targetIndex,
+        closestEdgeOfTarget: edge,
+      });
+
+      const next = [...ranking];
+      const [moved] = next.splice(startIndex, 1);
+      next.splice(destinationIndex, 0, moved);
+      setRanking(next);
+    };
+
+    el.addEventListener('sheetdrop', handler);
+    return () => el.removeEventListener('sheetdrop', handler);
+  }, [isEnabled, ranking, setRanking]);
+
+  return (
+    <div ref={containerRef} className="ranking-field-preview ms:text-mstext ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
+      <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
+        {question || 'Question'}
+        {isRequired && (
+          <span className="ms:text-msdanger ms:ml-0.5">*</span>
+        )}
+      </div>
+      <div className="ms:flex ms:flex-col ms:gap-2">
+        {ranking.map((optId, index) => (
+          <DraggableRankItem
+            key={optId}
+            optId={optId}
+            label={optionsMap[optId] || 'Unknown option'}
+            index={index}
+            total={ranking.length}
+            fieldId={fieldId}
+            isEnabled={isEnabled}
+            onMove={moveItem}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// RankingField
+// ---------------------------------------------------------------------------
 
 export const RankingField = React.memo(function RankingField({
   field,
@@ -61,57 +231,16 @@ export const RankingField = React.memo(function RankingField({
 
   if (isPreview) {
     return (
-      <div className="ranking-field-preview ms:text-mstext ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
-        <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
-          {def.question || 'Question'}
-          {isRequired && (
-            <span className="ms:text-msdanger ms:ml-0.5">*</span>
-          )}
-        </div>
-        {ranking.map((optId, index) => {
-          const canMoveUp = index > 0;
-          const canMoveDown = index < ranking.length - 1;
-
-          return (
-            <div
-              key={optId}
-              className="ranking-field-item ms:flex ms:items-center ms:px-3 ms:py-2 ms:my-2 ms:bg-mssurface ms:border ms:border-msborder ms:rounded-lg ms:shadow-sm ms:hover:border-msprimary/50 ms:hover:bg-msprimary/10 ms:transition-colors"
-            >
-              <div className="ms:flex ms:items-center ms:flex-1">
-                <span className="ms:text-mstext">
-                  {optionsMap[optId] || 'Unknown option'}
-                </span>
-              </div>
-              <div className="ms:flex ms:items-center ms:gap-1 ms:ml-2">
-                <button
-                  onClick={() => moveItem(optId, 'up')}
-                  disabled={!canMoveUp || !isEnabled}
-                  className={`ms:p-1 ms:bg-transparent ms:border-0 ms:outline-none ms:focus:outline-none ${
-                    canMoveUp
-                      ? 'ms:text-mstext ms:hover:text-msprimary'
-                      : 'ms:text-msborder ms:cursor-not-allowed'
-                  }`}
-                  aria-label="Move up"
-                >
-                  <ArrowUpIcon className="ms:h-6 ms:w-6" />
-                </button>
-                <button
-                  onClick={() => moveItem(optId, 'down')}
-                  disabled={!canMoveDown || !isEnabled}
-                  className={`ms:p-1 ms:bg-transparent ms:border-0 ms:outline-none ms:focus:outline-none ${
-                    canMoveDown
-                      ? 'ms:text-mstext ms:hover:text-msprimary'
-                      : 'ms:text-msborder ms:cursor-not-allowed'
-                  }`}
-                  aria-label="Move down"
-                >
-                  <ArrowDownIcon className="ms:h-6 ms:w-6" />
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      <RankingPreview
+        ranking={ranking}
+        optionsMap={optionsMap}
+        fieldId={def.id}
+        isEnabled={isEnabled}
+        isRequired={isRequired}
+        question={def.question}
+        moveItem={moveItem}
+        setRanking={setRanking}
+      />
     );
   }
 

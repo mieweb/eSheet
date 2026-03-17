@@ -381,6 +381,23 @@ describe('createFormStore', () => {
         expect(store.getState().normalized.rootIds).toEqual(['b', 'c', 'a']);
       });
 
+      it('reorders within same section', () => {
+        store = createFormStore(
+          form([
+            field('s1', 'section', {
+              fields: [field('c1'), field('c2'), field('c3')],
+            } as Partial<FieldDefinition>),
+          ])
+        );
+
+        store.getState().moveField('c1', 2, 's1');
+        const s = store.getState();
+        expect(s.normalized.byId['s1'].childIds).toEqual(['c2', 'c3', 'c1']);
+        expect(s.normalized.byId['c2'].index).toBe(0);
+        expect(s.normalized.byId['c3'].index).toBe(1);
+        expect(s.normalized.byId['c1'].index).toBe(2);
+      });
+
       it('moves field into a section', () => {
         store = createFormStore(form([field('s1', 'section'), field('q1')]));
         store.getState().moveField('q1', 0, 's1');
@@ -403,6 +420,25 @@ describe('createFormStore', () => {
         expect(s.normalized.rootIds).toContain('c1');
         expect(s.normalized.byId['s1'].childIds).toEqual([]);
         expect(s.normalized.byId['c1'].parentId).toBeNull();
+      });
+
+      it('moves field from one section to another at target index', () => {
+        store = createFormStore(
+          form([
+            field('s1', 'section', {
+              fields: [field('c1'), field('c2')],
+            } as Partial<FieldDefinition>),
+            field('s2', 'section', {
+              fields: [field('d1')],
+            } as Partial<FieldDefinition>),
+          ])
+        );
+
+        store.getState().moveField('c2', 0, 's2');
+        const s = store.getState();
+        expect(s.normalized.byId['s1'].childIds).toEqual(['c1']);
+        expect(s.normalized.byId['s2'].childIds).toEqual(['c2', 'd1']);
+        expect(s.normalized.byId['c2'].parentId).toBe('s2');
       });
 
       it('rejects move into own descendant', () => {

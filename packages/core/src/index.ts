@@ -74,7 +74,7 @@ export {
   type HydratedResponseItem,
 } from './lib/functions/hydrate-response.js';
 
-export { evaluateCondition, evaluateRule } from './lib/logic/conditions.js';
+export { evaluateCondition, evaluateRule, isExpressionValid } from './lib/logic/conditions.js';
 
 export { resolveEffect } from './lib/logic/resolve.js';
 
@@ -100,3 +100,5 @@ export {
 } from './lib/stores/ui-store.js';
 
 export { type FieldComponentProps } from './lib/field-component-props.js';
+
+export { applySheetDnd, type SheetDndDropDetail, getReorderDestinationIndex } from './lib/sheet-dnd.js';

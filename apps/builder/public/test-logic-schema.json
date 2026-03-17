@@ -1,0 +1,376 @@
+{
+  "schemaType": "mieforms-v1.0",
+  "id": "test-logic-schema",
+  "title": "Logic & Expression Test Form",
+  "fields": [
+    {
+      "id": "q1",
+      "fieldType": "radio",
+      "question": "Are you a returning customer? (selecting Yes will show the loyalty section below)",
+      "required": true,
+      "options": [
+        { "id": "q1-yes", "value": "yes", "text": "Yes — I have ordered before" },
+        { "id": "q1-no",  "value": "no",  "text": "No — this is my first order" }
+      ]
+    },
+
+    {
+      "id": "loyalty-section",
+      "fieldType": "section",
+      "title": "Loyalty Programme",
+      "rules": [
+        {
+          "effect": "visible",
+          "logic": "AND",
+          "conditions": [
+            { "conditionType": "field", "targetId": "q1", "operator": "equals", "expected": "q1-yes" }
+          ]
+        }
+      ],
+      "fields": [
+        {
+          "id": "q2",
+          "fieldType": "text",
+          "question": "What is your loyalty card number? (entering 'GOLD' makes the bonus field required)",
+          "inputType": "string"
+        },
+        {
+          "id": "q2b",
+          "fieldType": "text",
+          "question": "Bonus reward code (only required when loyalty tier is GOLD)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                { "conditionType": "field", "targetId": "q2", "operator": "equals", "expected": "GOLD" }
+              ]
+            },
+            {
+              "effect": "required",
+              "logic": "AND",
+              "conditions": [
+                { "conditionType": "field", "targetId": "q2", "operator": "equals", "expected": "GOLD" }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "q3",
+      "fieldType": "dropdown",
+      "question": "What kind of product are you ordering? (changes which detail fields appear below)",
+      "required": true,
+      "options": [
+        { "id": "q3-hw", "value": "hardware",  "text": "Hardware" },
+        { "id": "q3-sw", "value": "software",  "text": "Software" },
+        { "id": "q3-svc","value": "service",   "text": "Professional Service" }
+      ]
+    },
+
+    {
+      "id": "q4",
+      "fieldType": "text",
+      "question": "Serial / part number (visible only for Hardware orders)",
+      "inputType": "string",
+      "rules": [
+        {
+          "effect": "visible",
+          "logic": "AND",
+          "conditions": [
+            { "conditionType": "field", "targetId": "q3", "operator": "equals", "expected": "q3-hw" }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "q5",
+      "fieldType": "text",
+      "question": "Licence key (visible only for Software orders)",
+      "inputType": "string",
+      "rules": [
+        {
+          "effect": "visible",
+          "logic": "AND",
+          "conditions": [
+            { "conditionType": "field", "targetId": "q3", "operator": "equals", "expected": "q3-sw" }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "q6",
+      "fieldType": "text",
+      "question": "Consultant name (visible for Software OR Professional Service)",
+      "inputType": "string",
+      "rules": [
+        {
+          "effect": "visible",
+          "logic": "OR",
+          "conditions": [
+            { "conditionType": "field", "targetId": "q3", "operator": "equals", "expected": "q3-sw" },
+            { "conditionType": "field", "targetId": "q3", "operator": "equals", "expected": "q3-svc" }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "q7",
+      "fieldType": "slider",
+      "question": "How many units do you need? (1–20; entering 10+ reveals a bulk-discount question)",
+      "required": true,
+      "options": [
+        { "id": "q7-1", "value": "1", "text": "1" },
+        { "id": "q7-2", "value": "2", "text": "2" },
+        { "id": "q7-3", "value": "3", "text": "3" },
+        { "id": "q7-4", "value": "4", "text": "4" },
+        { "id": "q7-5", "value": "5", "text": "5" },
+        { "id": "q7-6", "value": "6", "text": "6" },
+        { "id": "q7-7", "value": "7", "text": "7" },
+        { "id": "q7-8", "value": "8", "text": "8" },
+        { "id": "q7-9", "value": "9", "text": "9" },
+        { "id": "q7-10", "value": "10", "text": "10" },
+        { "id": "q7-11", "value": "11", "text": "11" },
+        { "id": "q7-12", "value": "12", "text": "12" },
+        { "id": "q7-13", "value": "13", "text": "13" },
+        { "id": "q7-14", "value": "14", "text": "14" },
+        { "id": "q7-15", "value": "15", "text": "15" },
+        { "id": "q7-16", "value": "16", "text": "16" },
+        { "id": "q7-17", "value": "17", "text": "17" },
+        { "id": "q7-18", "value": "18", "text": "18" },
+        { "id": "q7-19", "value": "19", "text": "19" },
+        { "id": "q7-20", "value": "20", "text": "20" }
+      ]
+    },
+
+    {
+      "id": "q8",
+      "fieldType": "radio",
+      "question": "Would you like the bulk discount applied? (only shown when quantity ≥ 10)",
+      "options": [
+        { "id": "q8-yes", "value": "yes", "text": "Yes please" },
+        { "id": "q8-no",  "value": "no",  "text": "No thanks" }
+      ],
+      "rules": [
+        {
+          "effect": "visible",
+          "logic": "AND",
+          "conditions": [
+            { "conditionType": "field", "targetId": "q7", "operator": "greaterThanOrEqual", "expected": "10" }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "q9",
+      "fieldType": "rating",
+      "question": "Rate your urgency (1 = no rush, 5 = critical; rating ≥ 4 makes delivery date required)",
+      "required": true,
+      "options": [
+        { "id": "q9-1", "value": "1", "text": "1" },
+        { "id": "q9-2", "value": "2", "text": "2" },
+        { "id": "q9-3", "value": "3", "text": "3" },
+        { "id": "q9-4", "value": "4", "text": "4" },
+        { "id": "q9-5", "value": "5", "text": "5" }
+      ]
+    },
+
+    {
+      "id": "q10",
+      "fieldType": "text",
+      "question": "Required delivery date (required only when urgency is 4 or 5)",
+      "inputType": "date",
+      "rules": [
+        {
+          "effect": "visible",
+          "logic": "AND",
+          "conditions": [
+            { "conditionType": "field", "targetId": "q9", "operator": "greaterThanOrEqual", "expected": "4" }
+          ]
+        },
+        {
+          "effect": "required",
+          "logic": "AND",
+          "conditions": [
+            { "conditionType": "field", "targetId": "q9", "operator": "greaterThanOrEqual", "expected": "4" }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "q11",
+      "fieldType": "check",
+      "question": "Which add-ons would you like? (selecting 'Extended Warranty' unlocks warranty years)",
+      "options": [
+        { "id": "q11-war", "value": "Extended Warranty",  "text": "Extended Warranty" },
+        { "id": "q11-ins", "value": "Install & Configure","text": "Install & Configure" },
+        { "id": "q11-trn", "value": "Training Session",   "text": "Training Session" }
+      ]
+    },
+
+    {
+      "id": "q12",
+      "fieldType": "radio",
+      "question": "How many years of extended warranty? (only shown when warranty add-on is selected)",
+      "options": [
+        { "id": "q12-1", "value": "1", "text": "1 year"  },
+        { "id": "q12-2", "value": "2", "text": "2 years" },
+        { "id": "q12-3", "value": "3", "text": "3 years" }
+      ],
+      "rules": [
+        {
+          "effect": "visible",
+          "logic": "AND",
+          "conditions": [
+            { "conditionType": "field", "targetId": "q11", "operator": "includes", "expected": "q11-war" }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "q13",
+      "fieldType": "ranking",
+      "question": "Rank these priorities (tests ranking field behavior in preview)",
+      "options": [
+        { "id": "q13-cost", "value": "Cost", "text": "Cost" },
+        { "id": "q13-speed", "value": "Delivery Speed", "text": "Delivery Speed" },
+        { "id": "q13-quality", "value": "Quality", "text": "Quality" }
+      ]
+    },
+
+    {
+      "id": "q14",
+      "fieldType": "text",
+      "question": "Special instructions (enabled only when either Training OR Install add-on is selected)",
+      "inputType": "string",
+      "rules": [
+        {
+          "effect": "enable",
+          "logic": "OR",
+          "conditions": [
+            { "conditionType": "field", "targetId": "q11", "operator": "includes", "expected": "q11-ins" },
+            { "conditionType": "field", "targetId": "q11", "operator": "includes", "expected": "q11-trn" }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "q15",
+      "fieldType": "boolean",
+      "question": "Do you agree to the terms and conditions? (used by rules; preview mode has no submit button)",
+      "required": true,
+      "options": [
+        { "id": "true", "value": "Yes", "text": "Yes — I agree" },
+        { "id": "false", "value": "No", "text": "No — I do not agree" }
+      ]
+    },
+
+    {
+      "id": "q16",
+      "fieldType": "longtext",
+      "question": "Additional notes (visible only when T&C accepted AND product is a Service)",
+      "rules": [
+        {
+          "effect": "visible",
+          "logic": "AND",
+          "conditions": [
+            { "conditionType": "field", "targetId": "q15", "operator": "equals",  "expected": "true" },
+            { "conditionType": "field", "targetId": "q3",  "operator": "equals",  "expected": "q3-svc" }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "q17",
+      "fieldType": "radio",
+      "question": "Expression mode test — select a tier (expression condition will show the result field when tier score > 2)",
+      "options": [
+        { "id": "q17-bronze", "value": "1", "text": "Bronze (score 1 — result field stays hidden)" },
+        { "id": "q17-silver", "value": "2", "text": "Silver (score 2 — result field stays hidden)" },
+        { "id": "q17-gold",   "value": "3", "text": "Gold   (score 3 — result field appears)" },
+        { "id": "q17-plat",  "value": "4", "text": "Platinum (score 4 — result field appears)" }
+      ]
+    },
+
+    {
+      "id": "q18",
+      "fieldType": "text",
+      "question": "VIP confirmation code (appears when tier score > 2, tested via expression {q17} > 2)",
+      "inputType": "string",
+      "rules": [
+        {
+          "effect": "visible",
+          "logic": "AND",
+          "conditions": [
+            {
+              "conditionType": "expression",
+              "expression": "{q17} > 2",
+              "operator": "equals",
+              "expected": ""
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "q19",
+      "fieldType": "singlematrix",
+      "question": "Rate each area (tests single-matrix field behavior in preview)",
+      "rows": [
+        { "id": "q19-usability", "value": "Usability" },
+        { "id": "q19-reliability", "value": "Reliability" },
+        { "id": "q19-support", "value": "Support" }
+      ],
+      "columns": [
+        { "id": "q19-poor", "value": "Poor" },
+        { "id": "q19-ok", "value": "Okay" },
+        { "id": "q19-good", "value": "Good" }
+      ]
+    },
+
+    {
+      "id": "q20",
+      "fieldType": "text",
+      "question": "Priority contact phone (required when combined score ≥ 7, via expression {q9} + {q17} >= 7)",
+      "inputType": "tel",
+      "rules": [
+        {
+          "effect": "visible",
+          "logic": "AND",
+          "conditions": [
+            {
+              "conditionType": "expression",
+              "expression": "{q9} + {q17} >= 7",
+              "operator": "equals",
+              "expected": ""
+            }
+          ]
+        },
+        {
+          "effect": "required",
+          "logic": "AND",
+          "conditions": [
+            {
+              "conditionType": "expression",
+              "expression": "{q9} + {q17} >= 7",
+              "operator": "equals",
+              "expected": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

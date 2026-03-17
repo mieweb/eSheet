@@ -19,6 +19,7 @@ export const SectionField = React.memo(function SectionField({
   const def = field.definition;
   const title = def.title || 'Section';
   const hasChildren = field.childIds ? field.childIds.length > 0 : false;
+  const hasNestedContent = nestedChildren !== null && nestedChildren !== undefined;
 
   if (isPreview) {
     return (
@@ -27,6 +28,11 @@ export const SectionField = React.memo(function SectionField({
           {title}
           {isRequired && <span className="ms:text-mstextsecondary ms:ml-1">*</span>}
         </div>
+        {nestedChildren && (
+          <div className="ms:bg-mssurface ms:space-y-3">
+            {nestedChildren}
+          </div>
+        )}
       </section>
     );
   }
@@ -53,7 +59,7 @@ export const SectionField = React.memo(function SectionField({
         </div>
       </div>
 
-      {!hasChildren && (
+      {!hasChildren && !hasNestedContent && (
         <div className="ms:flex ms:flex-col ms:items-center ms:justify-center ms:p-8 ms:bg-gradient-to-br ms:from-msbackground ms:to-msbackgroundsecondary ms:border-2 ms:border-dashed ms:border-msprimary/30 ms:rounded-lg ms:shadow-sm ms:text-center">
           <p className="ms:text-sm ms:font-semibold ms:text-mstext ms:mb-2">
             No fields in this section
@@ -61,6 +67,12 @@ export const SectionField = React.memo(function SectionField({
           <p className="ms:text-xs ms:text-mstextmuted ms:leading-relaxed">
             Use the Tool Panel on the left to add fields.
           </p>
+        </div>
+      )}
+
+      {!hasChildren && hasNestedContent && (
+        <div className="section-edit-empty-drop ms:mt-2">
+          {nestedChildren}
         </div>
       )}
 

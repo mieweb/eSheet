@@ -113,6 +113,8 @@ If any box is unchecked, **simplify**.
 
 ### React & UI Packages
 
+- **Logic Editor Expression Testing Rule**: For logic testing in builder/preview, use rule conditions with `conditionType: "expression"` on supported field types (e.g., text/radio/slider), and do **not** depend on `fieldType: "expression"` being present in the builder toolbox. Expression authoring is validated in the Logic Editor condition row, not by requiring an expression field component in test schemas.
+
 - **CRITICAL: `ms:` Prefix MUST Come Before Variant Modifiers**: This project uses Tailwind v4 with `prefix(ms)`. The `ms:` prefix must appear **before** any variant modifier (hover, focus, active, sm, md, lg, etc.). Getting this wrong silently breaks styles.
 
   ```tsx

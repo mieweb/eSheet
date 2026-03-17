@@ -1,8 +1,16 @@
 import React from 'react';
 import { Editor, type Monaco } from '@monaco-editor/react';
 import YAML from 'js-yaml';
-import type { FormStore, UIStore } from '@msheet/core';
-import { formDefinitionJSONSchema } from '@msheet/core';
+import {
+  formDefinitionJSONSchema,
+  formDefinitionSchema,
+  type FormStore,
+  type UIStore,
+} from '@msheet/core';
+import {
+  FeedbackModal,
+  type FeedbackModalVariant,
+} from './FeedbackModal.js';
 
 const FORM_SCHEMA_URI = 'inmemory://msheet/form-definition.schema.json';
 
@@ -15,6 +23,14 @@ type CodeFormat = 'json' | 'yaml';
 export interface CodeViewProps {
   form: FormStore;
   ui: UIStore;
+}
+
+interface FeedbackState {
+  open: boolean;
+  title: string;
+  message: string;
+  details?: string;
+  variant: FeedbackModalVariant;
 }
 
 // ---------------------------------------------------------------------------
@@ -60,6 +76,31 @@ export function CodeView({ form, ui }: CodeViewProps) {
 
   const [code, setCode] = React.useState(initialCode);
   const [error, setError] = React.useState('');
+  const [feedback, setFeedback] = React.useState<FeedbackState>({
+    open: false,
+    title: '',
+    message: '',
+    details: undefined,
+    variant: 'info',
+  });
+
+  const showFeedback = React.useCallback(
+    (
+      variant: FeedbackModalVariant,
+      title: string,
+      message: string,
+      details?: string,
+    ) => {
+      setFeedback({
+        open: true,
+        title,
+        message,
+        details,
+        variant,
+      });
+    },
+    []
+  );
 
   // Keep refs in sync
   React.useEffect(() => {
@@ -98,8 +139,10 @@ export function CodeView({ form, ui }: CodeViewProps) {
     // Live validation
     try {
       const parsed = parse(text || '{}', format);
-      if (!parsed || typeof parsed !== 'object') {
-        throw new Error('Must be an object');
+      const validated = formDefinitionSchema.safeParse(parsed);
+      if (!validated.success) {
+        const first = validated.error.issues[0];
+        throw new Error(first?.message ?? 'Schema validation failed');
       }
       setError('');
       ui.getState().setCodeEditorHasError(false);
@@ -119,8 +162,10 @@ export function CodeView({ form, ui }: CodeViewProps) {
       setError('');
       ui.getState().setCodeEditorHasError(false);
     } catch (err) {
-      setError(`Cannot convert: ${(err as Error).message}`);
+      const message = `Cannot convert: ${(err as Error).message}`;
+      setError(message);
       ui.getState().setCodeEditorHasError(true);
+      showFeedback('error', 'Format Conversion Failed', message);
     }
   };
 
@@ -144,14 +189,16 @@ export function CodeView({ form, ui }: CodeViewProps) {
 
       try {
         const parsed = parse(text, fmt);
-        if (!parsed || typeof parsed !== 'object') return;
+        const validated = formDefinitionSchema.safeParse(parsed);
+        if (!validated.success) return;
+        const next = validated.data;
 
         // Only save if different from current definition
         const current = fs.getState().hydrateDefinition();
-        if (JSON.stringify(current) === JSON.stringify(parsed)) return;
+        if (JSON.stringify(current) === JSON.stringify(next)) return;
 
         fs.getState().loadDefinition(
-          parsed as Parameters<
+          next as Parameters<
             ReturnType<typeof fs.getState>['loadDefinition']
           >[0]
         );
@@ -164,6 +211,20 @@ export function CodeView({ form, ui }: CodeViewProps) {
 
   return (
     <div className="code-view-container ms:flex ms:flex-col ms:flex-1 ms:min-h-0 ms:bg-msbackground">
+      <FeedbackModal
+        open={feedback.open}
+        title={feedback.title}
+        message={feedback.message}
+        details={feedback.details}
+        variant={feedback.variant}
+        onClose={() =>
+          setFeedback((prev) => ({
+            ...prev,
+            open: false,
+          }))
+        }
+      />
+
       {/* Header — format toggle + status */}
       <div className="code-view-header ms:flex ms:items-center ms:justify-between ms:gap-3 ms:p-3 ms:bg-mssurface ms:border-b ms:border-msborder">
         <div className="format-toggle ms:flex ms:gap-1 ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackground ms:p-1">

@@ -1,28 +1,10 @@
 import React from 'react';
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-  type DragCancelEvent,
-  type DragEndEvent,
-  type DragStartEvent,
-} from '@dnd-kit/core';
-import {
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-  useSortable,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import {
-  restrictToVerticalAxis,
-  restrictToParentElement,
-} from '@dnd-kit/modifiers';
 import type { FieldComponentProps, FormStore, UIStore } from '@msheet/core';
+import {
+  applySheetDnd,
+  getReorderDestinationIndex,
+  type SheetDndDropDetail,
+} from '@msheet/core';
 import { useVisibleFields } from '../hooks/useVisibleFields.js';
 import { FieldWrapper } from './FieldWrapper.js';
 import { FieldItem } from './FieldItem.js';
@@ -37,82 +19,47 @@ export interface CanvasProps {
   dragEnabled?: boolean;
 }
 
-/**
- * SortableFieldItem - A sortable wrapper for a field item.
- */
-function SortableFieldItem({
+// ---------------------------------------------------------------------------
+// DraggableFieldItem — each field is both draggable and a drop target
+// ---------------------------------------------------------------------------
+
+function DraggableFieldItem({
   id,
   form,
   ui,
-  collapseWhileDragging = false,
+  parentId,
+  dragEnabled,
+  isActiveChild = false,
+  forceExpandVersion,
   nestedChildren,
 }: {
   id: string;
   form: FormStore;
   ui: UIStore;
-  collapseWhileDragging?: boolean;
+  parentId?: string;
+  dragEnabled: boolean;
+  isActiveChild?: boolean;
+  forceExpandVersion?: number;
   nestedChildren?: React.ReactNode;
 }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
-    id,
-  });
+  const ref = React.useRef<HTMLDivElement | null>(null);
+  const handleRef = React.useRef<HTMLDivElement | null>(null);
 
-  const style: React.CSSProperties = {
-    transform: CSS.Translate.toString(transform),
-    transition,
-    ...(isDragging ? { position: 'relative', zIndex: 10 } : undefined),
-  };
+  React.useEffect(() => {
+    const el = ref.current;
+    if (!el || !dragEnabled) return;
 
-  return (
-    <div className='field-canvas-wrapper' ref={setNodeRef} style={style}>
-      <FieldWrapper
-        fieldId={id}
-        form={form}
-        ui={ui}
-        dragHandleProps={attributes}
-        dragListeners={listeners}
-        isDragging={isDragging}
-        collapseWhileDragging={collapseWhileDragging}
-      >
-        {(props) => {
-          const Component =
-            getFieldComponent(props.field.definition.fieldType) ?? FieldItem;
-          if (props.field.definition.fieldType === 'section') {
-            const SectionComponent =
-              Component as React.ComponentType<
-                FieldComponentProps & { nestedChildren?: React.ReactNode }
-              >;
-            return <SectionComponent {...props} nestedChildren={nestedChildren} />;
-          }
-          return <Component {...props} />;
-        }}
-      </FieldWrapper>
-    </div>
-  );
-}
+    const dragHandleEl = handleRef.current ?? el;
 
-function PlainFieldItem({
-  id,
-  form,
-  ui,
-  parentId,
-  isActiveChild = false,
-  collapseWhileDragging = false,
-}: {
-  id: string;
-  form: FormStore;
-  ui: UIStore;
-  parentId?: string;
-  isActiveChild?: boolean;
-  collapseWhileDragging?: boolean;
-}) {
+    return applySheetDnd(dragHandleEl as HTMLElement, undefined, (sourceId) => {
+      if (parentId) {
+        ui.getState().selectFieldChild(parentId, sourceId);
+      } else {
+        ui.getState().selectField(sourceId);
+      }
+    });
+  }, [dragEnabled, id, parentId]);
+
   const handleSelectOverride = React.useCallback(
     (e: React.MouseEvent) => {
       if (!parentId) return;
@@ -123,12 +70,16 @@ function PlainFieldItem({
   );
 
   return (
-    <div className="field-canvas-wrapper section-child-wrapper">
+    <div
+      ref={ref}
+      className="field-canvas-wrapper ms:relative"
+    >
       <FieldWrapper
         fieldId={id}
         form={form}
         ui={ui}
-        collapseWhileDragging={collapseWhileDragging}
+        dragHandleRef={handleRef}
+        forceExpandVersion={forceExpandVersion}
         isSelectedOverride={parentId ? isActiveChild : undefined}
         onSelectOverride={parentId ? handleSelectOverride : undefined}
         selectedVariant={parentId ? 'nested' : 'default'}
@@ -136,6 +87,15 @@ function PlainFieldItem({
         {(props) => {
           const Component =
             getFieldComponent(props.field.definition.fieldType) ?? FieldItem;
+          if (props.field.definition.fieldType === 'section') {
+            const SectionComponent =
+              Component as React.ComponentType<
+                FieldComponentProps & { nestedChildren?: React.ReactNode }
+              >;
+            return (
+              <SectionComponent {...props} nestedChildren={nestedChildren} />
+            );
+          }
           return <Component {...props} />;
         }}
       </FieldWrapper>
@@ -143,17 +103,16 @@ function PlainFieldItem({
   );
 }
 
-/**
- * Canvas - The main field list panel with drag-and-drop support.
- *
- * Displays all root-level fields in a sortable vertical list.
- * Uses @dnd-kit for drag-and-drop reordering.
- */
+// ---------------------------------------------------------------------------
+// Canvas — main field list panel with Sheet DnD
+// ---------------------------------------------------------------------------
+
 export const Canvas = React.memo(function Canvas({
   form,
   ui,
   dragEnabled = true,
 }: CanvasProps) {
+  const canvasRef = React.useRef<HTMLDivElement | null>(null);
   const rootIds = useVisibleFields(form, ui);
   const normalized = React.useSyncExternalStore(
     (cb) => form.subscribe(cb),
@@ -165,6 +124,11 @@ export const Canvas = React.memo(function Canvas({
     () => ui.getState().mode,
     () => ui.getState().mode
   );
+  const responses = React.useSyncExternalStore(
+    (cb) => form.subscribe(cb),
+    () => form.getState().responses,
+    () => form.getState().responses
+  );
   const selectedFieldId = React.useSyncExternalStore(
     (cb) => ui.subscribe(cb),
     () => ui.getState().selectedFieldId,
@@ -175,18 +139,130 @@ export const Canvas = React.memo(function Canvas({
     () => ui.getState().selectedFieldChildId,
     () => ui.getState().selectedFieldChildId
   );
-  // Convert readonly array to mutable array for SortableContext
-  const items = React.useMemo(() => [...rootIds], [rootIds]);
-  const [activeDragId, setActiveDragId] = React.useState<string | null>(null);
+  const [sectionExpandSignal, setSectionExpandSignal] = React.useState<{
+    sectionId: string;
+    version: number;
+  } | null>(null);
+
+  // Sheet DnD drop handler — unified for mouse and touch
+  React.useEffect(() => {
+    const el = canvasRef.current;
+    if (!el || !dragEnabled) return;
+
+    const handler = (e: Event) => {
+      const { sourceId, targetId, edge, operation } = (e as CustomEvent<SheetDndDropDetail>).detail;
+      const sourceNode = normalized.byId[sourceId];
+      const targetNode = normalized.byId[targetId];
+      if (!sourceNode || !targetNode) return;
+
+      // Drop into section (combine)
+      if (operation === 'combine') {
+        if (targetNode.definition.fieldType !== 'section') return;
+        const children = targetNode.childIds.filter((cid) => cid !== sourceId);
+        form.getState().moveField(sourceId, children.length, targetId);
+        setSectionExpandSignal((prev) => ({
+          sectionId: targetId,
+          version: (prev?.version ?? 0) + 1,
+        }));
+        return;
+      }
+
+      // Reorder
+      const sourceParentId = sourceNode.parentId;
+      const targetParentId = targetNode.parentId;
+      const siblingIds = targetParentId
+        ? (normalized.byId[targetParentId]?.childIds ?? [])
+        : [...normalized.rootIds];
+
+      const startIndex = siblingIds.indexOf(sourceId);
+      const targetIndex = siblingIds.indexOf(targetId);
+      const isSameParent = sourceParentId === targetParentId;
+
+      if (isSameParent && startIndex !== -1 && targetIndex !== -1) {
+        const destinationIndex = getReorderDestinationIndex({
+          startIndex,
+          indexOfTarget: targetIndex,
+          closestEdgeOfTarget: edge,
+        });
+        form.getState().moveField(sourceId, destinationIndex, targetParentId);
+      } else {
+        const siblingsWithoutSource = siblingIds.filter((cid) => cid !== sourceId);
+        const overIdx = siblingsWithoutSource.indexOf(targetId);
+        const newIndex = overIdx === -1
+          ? siblingsWithoutSource.length
+          : edge === 'top' ? overIdx : overIdx + 1;
+        form.getState().moveField(sourceId, newIndex, targetParentId);
+      }
+
+      if (
+        targetParentId !== null &&
+        normalized.byId[targetParentId]?.definition.fieldType === 'section'
+      ) {
+        setSectionExpandSignal((prev) => ({
+          sectionId: targetParentId,
+          version: (prev?.version ?? 0) + 1,
+        }));
+      }
+    };
+
+    el.addEventListener('sheetdrop', handler);
+    return () => el.removeEventListener('sheetdrop', handler);
+  }, [dragEnabled, form, normalized]);
+
+  // Preview-only renderability map
+  const previewRenderableMap = React.useMemo(() => {
+    if (mode !== 'preview') return null;
+    const cache = new Map<string, boolean>();
+
+    const visit = (fieldId: string): boolean => {
+      const cached = cache.get(fieldId);
+      if (cached !== undefined) return cached;
+
+      const isVisible = form.getState().isVisible(fieldId);
+      if (!isVisible) {
+        cache.set(fieldId, false);
+        return false;
+      }
+
+      const node = normalized.byId[fieldId];
+      if (!node) {
+        cache.set(fieldId, false);
+        return false;
+      }
+
+      if (node.definition.fieldType !== 'section') {
+        cache.set(fieldId, true);
+        return true;
+      }
+
+      const hasRenderableChild = node.childIds.some((childId) =>
+        visit(childId)
+      );
+      cache.set(fieldId, hasRenderableChild);
+      return hasRenderableChild;
+    };
+
+    for (const id of Object.keys(normalized.byId)) {
+      visit(id);
+    }
+    return cache;
+  }, [form, mode, normalized, responses]);
+
+  const items = React.useMemo(() => {
+    if (mode !== 'preview' || !previewRenderableMap) return [...rootIds];
+    return rootIds.filter((id) => previewRenderableMap.get(id) === true);
+  }, [mode, previewRenderableMap, rootIds]);
 
   const getVisibleChildIds = React.useCallback(
     (parentId: string): readonly string[] => {
       const parent = normalized.byId[parentId];
       if (!parent || parent.childIds.length === 0) return [];
       if (mode !== 'preview') return parent.childIds;
-      return parent.childIds.filter((childId) => form.getState().isVisible(childId));
+      return parent.childIds.filter(
+        (childId) => previewRenderableMap?.get(childId) === true
+      );
     },
-    [form, mode, normalized]
+    [mode, normalized, previewRenderableMap]
   );
 
   const renderNestedChildren = React.useCallback(
@@ -202,74 +278,41 @@ export const Canvas = React.memo(function Canvas({
       return (
         <div className={containerClass} data-depth={depth}>
           {childIds.map((childId) => (
-            <React.Fragment key={childId}>
-              <PlainFieldItem
-                id={childId}
-                form={form}
-                ui={ui}
-                parentId={parentId}
-                isActiveChild={
-                  selectedFieldId === parentId &&
-                  selectedFieldChildId === childId
-                }
-                collapseWhileDragging={activeDragId !== null}
-              />
-              {renderNestedChildren(childId, depth + 1)}
-            </React.Fragment>
+            <DraggableFieldItem
+              key={childId}
+              id={childId}
+              form={form}
+              ui={ui}
+              parentId={parentId}
+              dragEnabled={dragEnabled}
+              isActiveChild={
+                selectedFieldId === parentId && selectedFieldChildId === childId
+              }
+              forceExpandVersion={
+                sectionExpandSignal?.sectionId === childId
+                  ? sectionExpandSignal.version
+                  : undefined
+              }
+              nestedChildren={renderNestedChildren(childId, depth + 1)}
+            />
           ))}
         </div>
       );
     },
-    [activeDragId, form, getVisibleChildIds, selectedFieldId, selectedFieldChildId, ui]
+    [
+      dragEnabled,
+      form,
+      getVisibleChildIds,
+      sectionExpandSignal,
+      selectedFieldChildId,
+      selectedFieldId,
+      ui,
+    ]
   );
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
-    }),
-    useSensor(TouchSensor, {
-      activationConstraint: { delay: 250, tolerance: 5 },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-  const handleDragStart = React.useCallback(
-    (event: DragStartEvent) => {
-      setActiveDragId(event.active.id as string);
-      // Select the field being dragged
-      ui.getState().selectField(event.active.id as string);
-    },
-    [ui]
-  );
-
-  const handleDragEnd = React.useCallback(
-    (event: DragEndEvent) => {
-      setActiveDragId(null);
-      const { active, over } = event;
-
-      if (over && active.id !== over.id) {
-        const oldIndex = items.indexOf(active.id as string);
-        const newIndex = items.indexOf(over.id as string);
-
-        if (oldIndex !== -1 && newIndex !== -1) {
-          // Move to root level at the new index
-          form.getState().moveField(active.id as string, newIndex, null);
-        }
-      }
-    },
-    [form, items]
-  );
-
-  const handleDragCancel = React.useCallback((_event: DragCancelEvent) => {
-    setActiveDragId(null);
-  }, []);
 
   // Clear selection when clicking canvas background
   const handleCanvasClick = React.useCallback(
     (e: React.MouseEvent) => {
-      // Only clear if clicking directly on the canvas, not on a field
       if (e.target === e.currentTarget) {
         ui.getState().selectField(null);
       }
@@ -277,7 +320,17 @@ export const Canvas = React.memo(function Canvas({
     [ui]
   );
 
-  // Handle empty state
+  // Clear selection on Escape key
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        ui.getState().selectField(null);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [ui]);
+
   if (items.length === 0) {
     return (
       <div
@@ -289,37 +342,27 @@ export const Canvas = React.memo(function Canvas({
     );
   }
 
-  const fieldList = (
-    <div className="canvas-fields ms:space-y-0" onClick={handleCanvasClick}>
+  return (
+    <div
+      ref={canvasRef}
+      className="canvas-fields ms:space-y-0"
+      onClick={handleCanvasClick}
+    >
       {items.map((id) => (
-        <SortableFieldItem
+        <DraggableFieldItem
           key={id}
           id={id}
           form={form}
           ui={ui}
-          collapseWhileDragging={activeDragId !== null}
+          dragEnabled={dragEnabled}
+          forceExpandVersion={
+            sectionExpandSignal?.sectionId === id
+              ? sectionExpandSignal.version
+              : undefined
+          }
           nestedChildren={renderNestedChildren(id)}
         />
       ))}
     </div>
-  );
-
-  if (!dragEnabled) {
-    return fieldList;
-  }
-
-  return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      modifiers={[restrictToVerticalAxis, restrictToParentElement]}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      onDragCancel={handleDragCancel}
-    >
-      <SortableContext items={items} strategy={verticalListSortingStrategy}>
-        {fieldList}
-      </SortableContext>
-    </DndContext>
   );
 });

@@ -22,7 +22,7 @@ export interface EditPanelProps {
 /**
  * EditPanel — right panel for editing the selected field's properties.
  *
- * Shows Edit tab (common + per-type editors) and Logic tab (placeholder for now).
+ * Shows Edit tab (common + per-type editors) and Logic tab.
  * Renders nothing meaningful when no field is selected.
  */
 export function EditPanel({ form, ui }: EditPanelProps) {
@@ -32,7 +32,11 @@ export function EditPanel({ form, ui }: EditPanelProps) {
     () => ui.getState().selectedFieldId,
     () => ui.getState().selectedFieldId,
   );
-
+  const selectedFieldChildId = useSyncExternalStore(
+    (cb) => ui.subscribe(cb),
+    () => ui.getState().selectedFieldChildId,
+    () => ui.getState().selectedFieldChildId,
+  );
   const editTab = useSyncExternalStore(
     (cb) => ui.subscribe(cb),
     () => ui.getState().editTab,
@@ -46,6 +50,26 @@ export function EditPanel({ form, ui }: EditPanelProps) {
     () => (selectedFieldId ? form.getState().getField(selectedFieldId) : undefined),
   );
 
+  // Logic tab target: when a section is selected, edit logic for the active child.
+  const logicField = useSyncExternalStore(
+    (cb) => form.subscribe(cb),
+    () => {
+      if (!selectedFieldId) return undefined;
+      const parent = form.getState().getField(selectedFieldId);
+      if (!parent) return undefined;
+
+      if (parent.definition.fieldType !== 'section' || !selectedFieldChildId) {
+        return parent;
+      }
+
+      return form.getState().getField(selectedFieldChildId) ?? parent;
+    },
+    () => {
+      if (!selectedFieldId) return undefined;
+      return form.getState().getField(selectedFieldId);
+    },
+  );
+
   // No selection
   if (!selectedFieldId || !field) {
     return (
@@ -57,7 +81,21 @@ export function EditPanel({ form, ui }: EditPanelProps) {
 
   const def = field.definition;
   const meta = getFieldTypeMeta(def.fieldType);
-
+  const logicTargetLabel = logicField
+    ? logicField.definition.fieldType === 'section'
+      ? logicField.definition.title || logicField.definition.id
+      : logicField.definition.question || logicField.definition.id
+    : '';
+  const logicTargetQuestion = logicField
+    ? logicField.definition.fieldType === 'section'
+      ? logicField.definition.title || ''
+      : logicField.definition.question || ''
+    : '';
+  const logicTargetQuestionShort = logicTargetQuestion
+    ? logicTargetQuestion.length > 18
+      ? `${logicTargetQuestion.slice(0, 18)}...`
+      : logicTargetQuestion
+    : logicTargetLabel;
   const handleUpdate = (patch: Partial<Omit<import('@msheet/core').FieldDefinition, 'fields'>>) => {
     form.getState().updateField(selectedFieldId, patch);
   };
@@ -117,11 +155,23 @@ export function EditPanel({ form, ui }: EditPanelProps) {
             onRenameId={handleRenameId}
           />
         ) : (
-          <LogicEditor
-            fieldId={selectedFieldId}
-            rules={def.rules ?? []}
-            form={form}
-          />
+          logicField ? (
+            <div className="ms:space-y-2">
+              <div className="ms:flex ms:flex-wrap ms:items-center ms:gap-1.5 ms:text-xs ms:text-mstextmuted ms:bg-msbackground ms:border ms:border-msborder ms:rounded ms:px-2.5 ms:py-1.5">
+                <span className="ms:inline-block ms:text-xs ms:font-medium ms:text-msprimary ms:bg-msprimary/10 ms:px-2 ms:py-0.5 ms:rounded ms:shrink-0">
+                  {logicField.definition.fieldType}
+                </span>
+                <span className="ms:px-1.5 ms:py-0.5 ms:rounded ms:bg-mssurface ms:border ms:border-msborder ms:text-mstext ms:font-medium">
+                  {logicTargetQuestionShort}
+                </span>
+              </div>
+              <LogicEditor
+                fieldId={logicField.definition.id}
+                rules={logicField.definition.rules ?? []}
+                form={form}
+              />
+            </div>
+          ) : null
         )}
       </div>
     </div>
@@ -236,6 +286,11 @@ function SectionEditContent({
     () => ui.getState().selectedFieldChildId,
     () => ui.getState().selectedFieldChildId,
   );
+  const editTab = useSyncExternalStore(
+    (cb) => ui.subscribe(cb),
+    () => ui.getState().editTab,
+    () => ui.getState().editTab,
+  );
 
   const childIds = normalized.byId[fieldId]?.childIds ?? [];
   const childFields = childIds
@@ -246,11 +301,10 @@ function SectionEditContent({
 
   const activeChildId =
     selectedFieldId === fieldId ? selectedFieldChildId : null;
-  const resolvedActiveChildId = childFields.some(
-    (node) => node.definition.id === activeChildId,
-  )
-    ? activeChildId
-    : childFields[0]?.definition.id ?? null;
+  const hasActiveChild =
+    activeChildId !== null &&
+    childFields.some((node) => node.definition.id === activeChildId);
+  const resolvedActiveChildId = hasActiveChild ? activeChildId : null;
   const activeChildNode = childFields.find(
     (node) => node.definition.id === resolvedActiveChildId,
   );
@@ -260,13 +314,21 @@ function SectionEditContent({
     : undefined;
 
   React.useEffect(() => {
-    if (resolvedActiveChildId !== activeChildId) {
+    // Only heal stale non-null child IDs (e.g. deleted child). Do not auto-pick
+    // a new child when none is selected so section-level selection can persist.
+    if (activeChildId !== null && resolvedActiveChildId !== activeChildId) {
       ui.getState().selectFieldChild(fieldId, resolvedActiveChildId);
+      if (editTab === 'logic') {
+        ui.getState().setEditTab('logic');
+      }
     }
-  }, [activeChildId, fieldId, resolvedActiveChildId, ui]);
+  }, [activeChildId, editTab, fieldId, resolvedActiveChildId, ui]);
 
   const handleSelectChild = (childId: string) => {
     ui.getState().selectFieldChild(fieldId, childId);
+    if (editTab === 'logic') {
+      ui.getState().setEditTab('logic');
+    }
   };
 
   const handleRenameChildId = (newId: string): boolean => {
@@ -347,6 +409,7 @@ function SectionEditContent({
             value={resolvedActiveChildId ?? ''}
             onChange={(e) => handleSelectChild(e.currentTarget.value)}
           >
+            <option value="">Select a child field…</option>
             {childFields.map((node) => {
               const childMeta = getFieldTypeMeta(node.definition.fieldType);
               const label =

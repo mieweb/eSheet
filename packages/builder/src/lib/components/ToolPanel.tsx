@@ -155,13 +155,24 @@ export const ToolPanel = React.memo(function ToolPanel({
         <div className="ms:flex ms:min-w-0 ms:items-center ms:gap-2">
           <span>Tools</span>
           {selectedSectionId ? (
-            <span
-              className="ms:inline-flex ms:max-w-[160px] ms:items-center ms:gap-1.5 ms:rounded-full ms:bg-msprimary/10 ms:px-2 ms:py-0.5 ms:text-[11px] ms:font-medium ms:text-msprimary"
-              title={`Adding into section: ${selectedSectionLabel ?? ''}`}
-            >
+            <div className="ms:inline-flex ms:max-w-[190px] ms:items-center ms:gap-1 ms:rounded-full ms:bg-msprimary/10 ms:px-2 ms:py-0.5 ms:text-[11px] ms:font-medium ms:text-msprimary">
               <span className="ms:inline-flex ms:h-1.5 ms:w-1.5 ms:rounded-full ms:bg-msprimary" />
-              <span className="ms:truncate">{selectedSectionLabel}</span>
-            </span>
+              <span
+                className="ms:truncate"
+                title={`Adding into section: ${selectedSectionLabel ?? ''}`}
+              >
+                {selectedSectionLabel}
+              </span>
+              <button
+                type="button"
+                onClick={() => ui.getState().selectField(null)}
+                className="ms:ml-0.5 ms:inline-flex ms:h-4 ms:w-4 ms:items-center ms:justify-center ms:rounded-full ms:bg-transparent ms:text-msprimary/80 ms:hover:bg-msprimary/15 ms:hover:text-msprimary ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer"
+                title="Clear selected section"
+                aria-label="Clear selected section"
+              >
+                ×
+              </button>
+            </div>
           ) : (
             <span className="ms:text-[11px] ms:font-normal ms:text-mstextmuted">
               root

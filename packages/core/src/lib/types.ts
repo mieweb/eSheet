@@ -163,6 +163,10 @@ export const CONDITION_OPERATORS = [
 export const conditionOperatorSchema = z.enum(CONDITION_OPERATORS);
 export type ConditionOperator = z.infer<typeof conditionOperatorSchema>;
 
+export const CONDITION_TYPES = ['field', 'expression'] as const;
+export const conditionTypeSchema = z.enum(CONDITION_TYPES);
+export type ConditionType = z.infer<typeof conditionTypeSchema>;
+
 /** What effect a conditional rule has on the field. */
 export const CONDITIONAL_EFFECTS = ['visible', 'enable', 'required'] as const;
 export const conditionalEffectSchema = z.enum(CONDITIONAL_EFFECTS);
@@ -170,12 +174,16 @@ export type ConditionalEffect = z.infer<typeof conditionalEffectSchema>;
 
 /** A single condition that evaluates a target field's response. */
 export const conditionSchema = z.object({
+  /** Condition source type. `field` uses target/operator/expected, `expression` uses expression text. */
+  conditionType: z.optional(conditionTypeSchema),
+  /** Optional expression string evaluated for expression conditions. */
+  expression: z.optional(z.string()),
   /** The field ID whose response is evaluated. */
-  targetId: z.string(),
+  targetId: z.optional(z.string()),
   /** Comparison operator. */
-  operator: conditionOperatorSchema,
+  operator: z.optional(conditionOperatorSchema),
   /** The expected value to compare against. */
-  expected: z.string(),
+  expected: z.optional(z.string()),
   /** Optional property accessor (e.g. 'length', 'count'). */
   propertyAccessor: z.optional(z.string()),
 });
