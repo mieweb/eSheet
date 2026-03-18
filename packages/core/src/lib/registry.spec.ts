@@ -82,7 +82,7 @@ describe('field type registry', () => {
 
     // Reset should restore the original built-in value
     resetFieldTypeRegistry();
-    expect(getFieldTypeMeta('text')!.label).toBe('Text Field');
+    expect(getFieldTypeMeta('text')!.label).toBe('Text');
   });
 
   it('should include defaultOptionCount for choice fields', () => {

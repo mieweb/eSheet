@@ -1,0 +1,220 @@
+{
+  "schemaType": "mieforms-v1.0",
+  "id": "rich-content-test-schema",
+  "title": "Rich Content Fields — Comprehensive Test",
+  "fields": [
+    {
+      "id": "intro-html",
+      "fieldType": "html",
+      "htmlContent": "<h2>Rich Content Fields Test</h2><p>This form exercises all five rich content field types:</p><ul><li><strong>HTML</strong> — arbitrary HTML rendered in a sandboxed iframe</li><li><strong>Image</strong> — upload / display an image with caption</li><li><strong>Diagram</strong> — freehand drawing pad with a background hint</li><li><strong>Signature</strong> — signature capture pad</li><li><strong>Display</strong> — computed read-only text with live field interpolation and markdown formatting</li></ul><p>Fill in the inputs below to observe the Display field update in real-time.</p>",
+      "iframeHeight": 230
+    },
+
+    {
+      "id": "section-inputs",
+      "fieldType": "section",
+      "title": "Inputs (drive the Display field)",
+      "fields": [
+        {
+          "id": "first-name",
+          "fieldType": "text",
+          "question": "First name",
+          "inputType": "string",
+          "required": true
+        },
+
+        {
+          "id": "last-name",
+          "fieldType": "text",
+          "question": "Last name",
+          "inputType": "string",
+          "required": true
+        },
+
+        {
+          "id": "weight-kg",
+          "fieldType": "text",
+          "question": "Weight (kg)",
+          "inputType": "number",
+          "required": true,
+          "unit": "kg"
+        },
+
+        {
+          "id": "height-cm",
+          "fieldType": "text",
+          "question": "Height (cm)",
+          "inputType": "number",
+          "required": true,
+          "unit": "cm"
+        },
+
+        {
+          "id": "score-a",
+          "fieldType": "slider",
+          "question": "Score A (1–10)",
+          "required": true,
+          "options": [
+            { "id": "sa-1", "value": "1", "text": "1" },
+            { "id": "sa-2", "value": "2", "text": "2" },
+            { "id": "sa-3", "value": "3", "text": "3" },
+            { "id": "sa-4", "value": "4", "text": "4" },
+            { "id": "sa-5", "value": "5", "text": "5" },
+            { "id": "sa-6", "value": "6", "text": "6" },
+            { "id": "sa-7", "value": "7", "text": "7" },
+            { "id": "sa-8", "value": "8", "text": "8" },
+            { "id": "sa-9", "value": "9", "text": "9" },
+            { "id": "sa-10", "value": "10", "text": "10" }
+          ]
+        },
+
+        {
+          "id": "score-b",
+          "fieldType": "slider",
+          "question": "Score B (1–10)",
+          "required": true,
+          "options": [
+            { "id": "sb-1", "value": "1", "text": "1" },
+            { "id": "sb-2", "value": "2", "text": "2" },
+            { "id": "sb-3", "value": "3", "text": "3" },
+            { "id": "sb-4", "value": "4", "text": "4" },
+            { "id": "sb-5", "value": "5", "text": "5" },
+            { "id": "sb-6", "value": "6", "text": "6" },
+            { "id": "sb-7", "value": "7", "text": "7" },
+            { "id": "sb-8", "value": "8", "text": "8" },
+            { "id": "sb-9", "value": "9", "text": "9" },
+            { "id": "sb-10", "value": "10", "text": "10" }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "section-display",
+      "fieldType": "section",
+      "title": "Display Field Tests",
+      "fields": [
+        {
+          "id": "display-simple-ref",
+          "fieldType": "display",
+          "question": "Simple field reference — {field-id}",
+          "content": "Hello, {first-name} {last-name}!\n\nYour first name is *{first-name}* and your last name is *{last-name}*."
+        },
+
+        {
+          "id": "display-arithmetic",
+          "fieldType": "display",
+          "question": "Arithmetic expressions — <expression>",
+          "content": "# Score Summary\n\n- Score A: {score-a}\n- Score B: {score-b}\n- Combined: <{score-a} + {score-b}>\n- Average: <({score-a} + {score-b}) / 2>\n- Product: <{score-a} * {score-b}>"
+        },
+
+        {
+          "id": "display-bmi",
+          "fieldType": "display",
+          "question": "Multi-step calculation — BMI",
+          "content": "## BMI Calculator\n\n- Weight: {weight-kg} kg\n- Height: {height-cm} cm\n- BMI: <{weight-kg} / (({height-cm} / 100) * ({height-cm} / 100))>"
+        },
+
+        {
+          "id": "display-markdown",
+          "fieldType": "display",
+          "question": "Markdown formatting — bold, italic, underline, strike, bullets, headings",
+          "content": "# Heading 1\n## Heading 2\n### Heading 3\n\n*bold text* and -italic text- and _underlined text_ and ~strikethrough text~\n\n- Bullet one\n- Bullet two\n- Bullet three: score is {score-a}"
+        },
+
+        {
+          "id": "display-conditional-shown",
+          "fieldType": "display",
+          "question": "Conditionally visible — appears when Score A > 7",
+          "content": "## High Score Alert\n\n*{first-name}* scored *{score-a}* on Score A — that's above the threshold of 7!\n\nCombined total: <{score-a} + {score-b}>",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                { "conditionType": "expression", "expression": "{score-a} > 7" }
+              ]
+            }
+          ]
+        },
+
+        {
+          "id": "display-conditional-hidden",
+          "fieldType": "display",
+          "question": "Conditionally visible — appears when Score A <= 7",
+          "content": "Score A is {score-a} — under the threshold. Try increasing it above 7 to swap these two display fields.",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{score-a} <= 7"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "section-html",
+      "fieldType": "section",
+      "title": "HTML Field Tests",
+      "fields": [
+        {
+          "id": "html-basic",
+          "fieldType": "html",
+          "htmlContent": "<h3>Basic HTML rendering</h3><p>This field renders arbitrary HTML in a <code>sandbox=\"\"</code> iframe.</p><p>Supported content: headings, paragraphs, lists, tables, images, links, inline styles.</p>",
+          "iframeHeight": 140
+        },
+
+        {
+          "id": "html-table",
+          "fieldType": "html",
+          "htmlContent": "<h3>Table example</h3><table style=\"border-collapse:collapse;width:100%\"><thead><tr style=\"background:#f3f4f6\"><th style=\"padding:8px 12px;border:1px solid #e5e7eb;text-align:left\">Item</th><th style=\"padding:8px 12px;border:1px solid #e5e7eb;text-align:left\">Value</th></tr></thead><tbody><tr><td style=\"padding:8px 12px;border:1px solid #e5e7eb\">Alpha</td><td style=\"padding:8px 12px;border:1px solid #e5e7eb\">100</td></tr><tr><td style=\"padding:8px 12px;border:1px solid #e5e7eb\">Beta</td><td style=\"padding:8px 12px;border:1px solid #e5e7eb\">200</td></tr><tr><td style=\"padding:8px 12px;border:1px solid #e5e7eb\">Gamma</td><td style=\"padding:8px 12px;border:1px solid #e5e7eb\">300</td></tr></tbody></table>",
+          "iframeHeight": 180
+        },
+
+        {
+          "id": "html-xss-probe",
+          "fieldType": "html",
+          "htmlContent": "<!-- XSS / injection test vectors — all must be inert inside sandbox=\"\" -->\n<script>document.title='XSS';</script>\n<img src=\"x\" onerror=\"document.title='XSS'\" />\n<a href=\"javascript:alert('XSS')\">Click me (href must be inert)</a>\n<iframe src=\"https://example.com\"></iframe>\n<p><strong>Expected:</strong> All vectors above are inert. Page title unchanged, no alert fires, no navigation.</p>",
+          "iframeHeight": 120
+        }
+      ]
+    },
+
+    {
+      "id": "section-drawing",
+      "fieldType": "section",
+      "title": "Drawing Fields (Image / Diagram / Signature)",
+      "fields": [
+        {
+          "id": "test-image",
+          "fieldType": "image",
+          "question": "Image field — upload a file or paste a URL",
+          "altText": "Test image upload",
+          "caption": "Supports PNG, JPG, GIF, WebP. Stored as a data URL in the response."
+        },
+
+        {
+          "id": "test-diagram",
+          "fieldType": "diagram",
+          "question": "Diagram field — freehand drawing pad",
+          "padPlaceholder": "Draw anything here — the pad records normalised strokes"
+        },
+
+        {
+          "id": "test-signature",
+          "fieldType": "signature",
+          "question": "Signature field — sign your name",
+          "padPlaceholder": "Sign here",
+          "required": true
+        }
+      ]
+    }
+  ]
+}

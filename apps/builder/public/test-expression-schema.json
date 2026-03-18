@@ -1,0 +1,496 @@
+{
+  "schemaType": "mieforms-v1.0",
+  "id": "expression-test-schema",
+  "title": "Expression Engine  -  Comprehensive Test",
+  "fields": [
+    {
+      "id": "input-a",
+      "fieldType": "slider",
+      "question": "Input A  -  set a value 1-10 (referenced as {input-a} in all expressions below)",
+      "required": true,
+      "options": [
+        { "id": "a-1", "value": "1", "text": "1" },
+        { "id": "a-2", "value": "2", "text": "2" },
+        { "id": "a-3", "value": "3", "text": "3" },
+        { "id": "a-4", "value": "4", "text": "4" },
+        { "id": "a-5", "value": "5", "text": "5" },
+        { "id": "a-6", "value": "6", "text": "6" },
+        { "id": "a-7", "value": "7", "text": "7" },
+        { "id": "a-8", "value": "8", "text": "8" },
+        { "id": "a-9", "value": "9", "text": "9" },
+        { "id": "a-10", "value": "10", "text": "10" }
+      ]
+    },
+
+    {
+      "id": "input-b",
+      "fieldType": "slider",
+      "question": "Input B  -  set a value 1-10 (referenced as {input-b} in arithmetic and logical expressions)",
+      "required": true,
+      "options": [
+        { "id": "b-1", "value": "1", "text": "1" },
+        { "id": "b-2", "value": "2", "text": "2" },
+        { "id": "b-3", "value": "3", "text": "3" },
+        { "id": "b-4", "value": "4", "text": "4" },
+        { "id": "b-5", "value": "5", "text": "5" },
+        { "id": "b-6", "value": "6", "text": "6" },
+        { "id": "b-7", "value": "7", "text": "7" },
+        { "id": "b-8", "value": "8", "text": "8" },
+        { "id": "b-9", "value": "9", "text": "9" },
+        { "id": "b-10", "value": "10", "text": "10" }
+      ]
+    },
+
+    {
+      "id": "tier",
+      "fieldType": "radio",
+      "question": "Tier  -  pick a level (numeric value 1-4, referenced as {tier} in tier expressions)",
+      "required": true,
+      "options": [
+        { "id": "tier-1", "value": "1", "text": "Bronze  -  value 1" },
+        { "id": "tier-2", "value": "2", "text": "Silver  -  value 2" },
+        { "id": "tier-3", "value": "3", "text": "Gold  -  value 3" },
+        { "id": "tier-4", "value": "4", "text": "Platinum  -  value 4" }
+      ]
+    },
+
+    {
+      "id": "text-input",
+      "fieldType": "text",
+      "question": "Text input  -  type something here (referenced as {text-input}.length in the member access section below)",
+      "inputType": "string"
+    },
+
+    {
+      "id": "section-comparisons",
+      "fieldType": "section",
+      "title": "Comparison Operators ( > < >= <= )",
+      "fields": [
+        {
+          "id": "cmp-gt",
+          "fieldType": "text",
+          "question": "Greater than >  -  visible when {input-a} > 5   (set Input A to 6 or higher to reveal this field)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                { "conditionType": "expression", "expression": "{input-a} > 5" }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "cmp-lt",
+          "fieldType": "text",
+          "question": "Less than <  -  visible when {input-a} < 5   (set Input A to 4 or lower to reveal this field)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                { "conditionType": "expression", "expression": "{input-a} < 5" }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "cmp-gte",
+          "fieldType": "text",
+          "question": "Greater or equal >=  -  visible when {input-a} >= 7   (set Input A to 7, 8, 9 or 10 to reveal this field)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{input-a} >= 7"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "cmp-lte",
+          "fieldType": "text",
+          "question": "Less or equal <=  -  visible when {input-a} <= 3   (set Input A to 1, 2 or 3 to reveal this field)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{input-a} <= 3"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "section-equality",
+      "fieldType": "section",
+      "title": "Equality Operators ( == != )",
+      "fields": [
+        {
+          "id": "eq-exact",
+          "fieldType": "text",
+          "question": "Equals ==  -  visible when {input-a} == 5   (set Input A to exactly 5; any other value hides this field)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{input-a} == 5"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "eq-not",
+          "fieldType": "text",
+          "question": "Not equal !=  -  visible when {input-a} != 5   (any value except 5 reveals this field  -  complement of the test above)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{input-a} != 5"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "section-arithmetic",
+      "fieldType": "section",
+      "title": "Arithmetic Operators ( + - x / % )",
+      "fields": [
+        {
+          "id": "arith-add",
+          "fieldType": "text",
+          "question": "Addition +  -  visible when {input-a} + {input-b} >= 12   (e.g. A=7, B=5 -> 12 OK  or  A=4, B=9 -> 13 OK)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{input-a} + {input-b} >= 12"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "arith-sub",
+          "fieldType": "text",
+          "question": "Subtraction -  -  visible when {input-a} - {input-b} > 3   (e.g. A=8, B=3 -> 5 OK  or  A=10, B=4 -> 6 OK)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{input-a} - {input-b} > 3"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "arith-mul",
+          "fieldType": "text",
+          "question": "Multiplication x  -  visible when {input-a} * {input-b} >= 24   (e.g. A=6, B=4 -> 24 OK  or  A=8, B=3 -> 24 OK)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{input-a} * {input-b} >= 24"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "arith-div",
+          "fieldType": "text",
+          "question": "Division /  -  visible when {input-a} / {input-b} >= 2   (e.g. A=8, B=4 -> 2.0 OK  or  A=9, B=3 -> 3.0 OK   -  slider min is 1 so no divide-by-zero risk)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{input-a} / {input-b} >= 2"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "arith-mod",
+          "fieldType": "text",
+          "question": "Modulo %  -  visible when {input-a} % {input-b} == 0   (A must be evenly divisible by B  -  e.g. A=6, B=3 -> 0 OK  or  A=8, B=4 -> 0 OK)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{input-a} % {input-b} == 0"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "section-logical",
+      "fieldType": "section",
+      "title": "Logical Operators ( && || ! )",
+      "fields": [
+        {
+          "id": "logic-and",
+          "fieldType": "text",
+          "question": "AND &&  -  visible when {input-a} > 3 && {input-b} > 3   (BOTH must exceed 3  -  e.g. A=5, B=6 OK  but  A=5, B=2 X)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{input-a} > 3 && {input-b} > 3"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "logic-or",
+          "fieldType": "text",
+          "question": "OR ||  -  visible when {input-a} > 7 || {input-b} > 7   (EITHER exceeding 7 is enough  -  e.g. A=9, B=1 OK  or  A=2, B=9 OK)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{input-a} > 7 || {input-b} > 7"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "logic-not",
+          "fieldType": "text",
+          "question": "NOT !  -  visible when !({input-a} > 7)   (negation: appears when Input A is 7 or lower  -  the inverse of the condition above)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "!({input-a} > 7)"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "section-member",
+      "fieldType": "section",
+      "title": "Member Access ( .length )",
+      "fields": [
+        {
+          "id": "member-length",
+          "fieldType": "text",
+          "question": "String length  -  visible when {text-input}.length >= 5   (type 5 or more characters into the Text Input field above to reveal this field)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{text-input}.length >= 5"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "section-effects",
+      "fieldType": "section",
+      "title": "Effect Types ( visible / enable / required )",
+      "fields": [
+        {
+          "id": "effect-visible",
+          "fieldType": "text",
+          "question": "Visible effect  -  appears when {tier} > 2   (select Gold or Platinum in the Tier field above to reveal this field)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                { "conditionType": "expression", "expression": "{tier} > 2" }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "effect-enable",
+          "fieldType": "text",
+          "question": "Enable effect  -  always visible but only editable when {tier} > 2   (Bronze/Silver -> field is locked; Gold/Platinum -> field becomes active)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "enable",
+              "logic": "AND",
+              "conditions": [
+                { "conditionType": "expression", "expression": "{tier} > 2" }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "effect-required",
+          "fieldType": "text",
+          "question": "Required effect  -  always visible, becomes required when {input-a} + {input-b} >= 15   (watch the required marker appear  -  try A=8, B=7 -> 15 OK)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "required",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{input-a} + {input-b} >= 15"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "section-complex",
+      "fieldType": "section",
+      "title": "Complex Multi-field Expressions",
+      "fields": [
+        {
+          "id": "complex-three",
+          "fieldType": "text",
+          "question": "Three-field sum  -  visible when {input-a} + {input-b} + {tier} >= 16   (e.g. A=7, B=6, Gold=3 -> 16 OK  or  A=10, B=5, Silver=2 -> 17 OK)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{input-a} + {input-b} + {tier} >= 16"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "complex-mul-tier",
+          "fieldType": "text",
+          "question": "Multiply with tier  -  visible when {input-a} * {tier} >= 20   (e.g. A=7, Gold=3 -> 21 OK  or  A=10, Silver=2 -> 20 OK)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{input-a} * {tier} >= 20"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "complex-both",
+          "fieldType": "text",
+          "question": "Visible + required staged  -  becomes visible at {input-a} * {input-b} >= 20, then becomes required at >= 30   (try A=5, B=4 -> 20 OK visible only; A=6, B=5 -> 30 OK visible + required)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{input-a} * {input-b} >= 20"
+                }
+              ]
+            },
+            {
+              "effect": "required",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{input-a} * {input-b} >= 30"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+@import 'tailwindcss/theme' prefix(ms);
+@import 'tailwindcss/utilities' prefix(ms);
+
+@source "../**/*.{ts,tsx}";
+
+/* ------------------------------------------------------------------ */
+/* Semantic color tokens (same as builder)                             */
+/* ------------------------------------------------------------------ */
+@theme {
+  --color-msprimary: #3b82f6;
+  --color-mssecondary: #6b7280;
+  --color-msaccent: #10b981;
+  --color-msdanger: #ef4444;
+  --color-mswarning: #f97316;
+  --color-mssurface: #ffffff;
+  --color-msborder: #e5e7eb;
+  --color-msborderinactive: #9ca3af;
+  --color-mstext: #111827;
+  --color-mstextsecondary: #f8fafc;
+  --color-mstextmuted: #6b7280;
+  --color-msbackground: #f9fafb;
+  --color-msbackgroundsecondary: #f3f4f6;
+  --color-msbackgroundhover: #eceef1;
+  --color-msoverlay: rgba(0, 0, 0, 0.5);
+}

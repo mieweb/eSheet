@@ -51,7 +51,7 @@ export function registerFieldElements(
 
 const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
   text: {
-    label: 'Text Field',
+    label: 'Text',
     category: 'text',
     answerType: 'text',
     hasOptions: false,
@@ -63,7 +63,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     },
   },
   longtext: {
-    label: 'Long Text Field',
+    label: 'Long Text',
     category: 'text',
     answerType: 'text',
     hasOptions: false,
@@ -75,7 +75,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     },
   },
   multitext: {
-    label: 'Multi Text Field',
+    label: 'Multi Text',
     category: 'text',
     answerType: 'multitext',
     hasOptions: true,
@@ -88,7 +88,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     defaultOptionCount: 3,
   },
   radio: {
-    label: 'Radio Field',
+    label: 'Radio',
     category: 'selection',
     answerType: 'selection',
     hasOptions: true,
@@ -101,7 +101,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     defaultOptionCount: 3,
   },
   check: {
-    label: 'Check Field',
+    label: 'Checkbox',
     category: 'selection',
     answerType: 'multiselection',
     hasOptions: true,
@@ -114,7 +114,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     defaultOptionCount: 3,
   },
   boolean: {
-    label: 'Boolean Field',
+    label: 'Boolean',
     category: 'selection',
     answerType: 'selection',
     hasOptions: true,
@@ -123,7 +123,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     placeholder: { question: 'Enter your question...' },
   },
   dropdown: {
-    label: 'Dropdown Field',
+    label: 'Dropdown',
     category: 'selection',
     answerType: 'selection',
     hasOptions: true,
@@ -149,7 +149,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     defaultOptionCount: 3,
   },
   rating: {
-    label: 'Rating Field',
+    label: 'Rating',
     category: 'rating',
     answerType: 'selection',
     hasOptions: true,
@@ -162,7 +162,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     defaultOptionCount: 5,
   },
   ranking: {
-    label: 'Ranking Field',
+    label: 'Ranking',
     category: 'rating',
     answerType: 'multiselection',
     hasOptions: true,
@@ -175,7 +175,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     defaultOptionCount: 3,
   },
   slider: {
-    label: 'Slider Field',
+    label: 'Slider',
     category: 'rating',
     answerType: 'selection',
     hasOptions: true,
@@ -188,7 +188,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     defaultOptionCount: 3,
   },
   singlematrix: {
-    label: 'Single Matrix Field',
+    label: 'Single Matrix',
     category: 'matrix',
     answerType: 'matrix',
     hasOptions: false,
@@ -202,7 +202,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     defaultOptionCount: 3,
   },
   multimatrix: {
-    label: 'Multi Matrix Field',
+    label: 'Multi Matrix',
     category: 'matrix',
     answerType: 'matrix',
     hasOptions: false,
@@ -216,7 +216,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     defaultOptionCount: 3,
   },
   image: {
-    label: 'Image Field',
+    label: 'Image',
     category: 'rich',
     answerType: 'display',
     hasOptions: false,
@@ -234,7 +234,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     placeholder: { htmlContent: '<p>Enter your HTML content here...</p>' },
   },
   signature: {
-    label: 'Signature Field',
+    label: 'Signature',
     category: 'rich',
     answerType: 'media',
     hasOptions: false,
@@ -243,7 +243,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     placeholder: { question: 'Enter your question...', pad: 'Sign here' },
   },
   diagram: {
-    label: 'Diagram Field',
+    label: 'Diagram',
     category: 'rich',
     answerType: 'media',
     hasOptions: false,
@@ -254,20 +254,20 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
       pad: 'Draw on the diagram',
     },
   },
-  expression: {
-    label: 'Expression Field',
+  display: {
+    label: 'Display',
     category: 'rich',
-    answerType: 'text',
+    answerType: 'display',
     hasOptions: false,
     hasMatrix: false,
-    defaultProps: { displayFormat: 'number', decimalPlaces: 2 },
+    defaultProps: {},
     placeholder: {
-      question: 'Expression Field',
-      expression: '{fieldId1} + {fieldId2}',
+      content:
+        'Your BMI is **{weight-kg} / (({height-cm}/100) * ({height-cm}/100))**',
     },
   },
   section: {
-    label: 'Section Field',
+    label: 'Section',
     category: 'organization',
     answerType: 'container',
     hasOptions: false,

@@ -111,6 +111,133 @@ If any box is unchecked, **simplify**.
 - **Respect module boundaries** — `@nx/enforce-module-boundaries` is enforced. Check tags before adding cross-package imports.
 - **Use `tslib`** — `importHelpers: true` is set in `tsconfig.base.json`. All packages depend on `tslib`.
 
+### React & UI Packages
+
+- **Logic Editor Expression Testing Rule**: For logic testing in builder/preview, use rule conditions with `conditionType: "expression"` on supported field types (e.g., text/radio/slider), and do **not** depend on `fieldType: "expression"` being present in the builder toolbox. Expression authoring is validated in the Logic Editor condition row, not by requiring an expression field component in test schemas.
+
+- **CRITICAL: `ms:` Prefix MUST Come Before Variant Modifiers**: This project uses Tailwind v4 with `prefix(ms)`. The `ms:` prefix must appear **before** any variant modifier (hover, focus, active, sm, md, lg, etc.). Getting this wrong silently breaks styles.
+
+  ```tsx
+  // ✅ CORRECT - ms: before variant
+  <div className="ms:hover:bg-msprimary ms:focus:outline-none ms:sm:grid-cols-2 ms:active:cursor-grabbing ms:group-hover:text-msdanger ms:placeholder:text-mstextmuted">
+
+  // ❌ WRONG - variant before ms: (WILL NOT WORK)
+  <div className="hover:ms:bg-msprimary focus:ms:outline-none sm:ms:grid-cols-2 active:ms:cursor-grabbing group-hover:ms:text-msdanger placeholder:ms:text-mstextmuted">
+
+  // ❌ WRONG - double prefix (WILL NOT WORK)
+  <div className="ms:hover:ms:bg-msprimary">
+  ```
+
+- **ALL Form Inputs Must Have `id` Attributes with `instanceId` Prefix**: Every `<input>`, `<select>`, and `<textarea>` element across **all** UI packages (`@msheet/builder`, `@msheet/renderer`, `@msheet/fields`, or any future package rendering form elements) must have an `id` attribute. Use the `useInstanceId()` hook to ensure IDs are unique when multiple component instances share the same page.
+
+  **ID pattern:** `${instanceId}-{purpose}-${fieldId}`
+
+  - Builder mode: `${instanceId}-editor-question-${def.id}`
+  - Preview/renderer mode: `${instanceId}-{fieldType}-answer-${def.id}`
+  - Any input: `${instanceId}-{context}-{purpose}-${def.id}`
+
+  ```tsx
+  // ❌ BAD - no id (breaks autofill), or static id (duplicates with 2 instances)
+  <input type="text" value={value} />
+  <input id="question-field" type="text" value={value} />
+
+  // ✅ GOOD - unique id with instanceId prefix
+  const instanceId = useInstanceId();
+  <input
+    id={`${instanceId}-editor-question-${def.id}`}
+    type="text"
+    value={value}
+  />
+  ```
+
+  **Why this matters:**
+
+  - Browser autofill requires `id` or `name` attributes to work
+  - Multiple instances on one page would have duplicate IDs without `instanceId`
+  - Accessibility tools use IDs to associate labels with inputs
+  - `React.useId()` powers this — guaranteed unique across the React tree and SSR-safe
+  - This applies to **all modes** (builder, preview, renderer) — not just the editor
+
+- **ALL Form Inputs Must Have an Associated Label**: Every `<input>`, `<select>`, and `<textarea>` must be associated with a label — either via a `<label htmlFor="...">` matching the input's `id`, or via `aria-label` on the input itself. **Never render a form input without one of these.**
+
+  **When to use which:**
+
+  - **`<label htmlFor>`** — when a visible text label exists (e.g., "Question", "Field ID", "Required")
+  - **`aria-label`** — when the input is in a compact list/row where a visible label would clutter the UI (e.g., option list items, matrix row/column inputs)
+
+  ```tsx
+  // ❌ BAD - input with no label association
+  <label className="...">Field ID</label>
+  <input id={`${instanceId}-editor-id-${fieldId}`} type="text" />
+
+  // ❌ BAD - label exists but no htmlFor, and no aria-label
+  <input id={`${instanceId}-editor-option-${fieldId}-${opt.id}`} type="text" />
+
+  // ✅ GOOD - visible label with htmlFor
+  <label htmlFor={`${instanceId}-editor-id-${fieldId}`} className="...">Field ID</label>
+  <input id={`${instanceId}-editor-id-${fieldId}`} type="text" />
+
+  // ✅ GOOD - aria-label for compact list items
+  <input
+    id={`${instanceId}-editor-option-${fieldId}-${opt.id}`}
+    aria-label={`Option ${idx + 1}`}
+    type="text"
+  />
+  ```
+
+- **No Duplicate IDs Between Panels**: When the same field data appears in multiple panels (e.g., Canvas + EditPanel), use **different purpose segments** in the ID pattern to avoid duplicates:
+
+  - Canvas inputs: `${instanceId}-canvas-{purpose}-${fieldId}`
+  - EditPanel inputs: `${instanceId}-editor-{purpose}-${fieldId}`
+
+  ```tsx
+  // ❌ BAD - both Canvas and EditPanel produce the same id
+  // FieldItem.tsx (Canvas)
+  <input id={`${instanceId}-editor-question-${def.id}`} />
+  // CommonEditor.tsx (EditPanel)
+  <input id={`${instanceId}-editor-question-${fieldId}`} />
+
+  // ✅ GOOD - different context prefix prevents collision
+  // FieldItem.tsx (Canvas)
+  <input id={`${instanceId}-canvas-question-${def.id}`} />
+  // CommonEditor.tsx (EditPanel)
+  <input id={`${instanceId}-editor-question-${fieldId}`} />
+  ```
+
+- **Flatten Redundant Wrapper Divs**: When preview mode sections have nested layout containers where the outer wrapper only contains an inner layout div (with no additional semantic meaning or styling constraints), merge them into a single element. This pattern is common in field preview sections.
+
+  **When to flatten:**
+
+  - Outer div: `className="*-field-preview ...basic utilities..."` (semantic class for styling/debugging)
+  - Inner div: `className="ms:grid ms:grid-cols-1 ..."` (pure layout utilities)
+  - The outer wrapper adds nothing but an extra nesting level
+
+  **Pattern (applies to field preview sections):**
+
+  ```tsx
+  // BEFORE - redundant nesting
+  <div className="text-field-preview">
+    <div className="ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
+      <div className="ms:font-light ms:text-mstext">Question</div>
+      <input />
+    </div>
+  </div>
+
+  // AFTER - flattened and cleaner
+  <div className="text-field-preview ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
+    <div className="ms:font-light ms:text-mstext">Question</div>
+    <input />
+  </div>
+  ```
+
+  **Rules:**
+
+  - Keep the semantic class name (e.g., `text-field-preview`, `rating-field-preview`) on the merged element
+  - Merge layout utilities from the inner div to the outer element
+  - Only flatten when the outer wrapper provides no semantic layout purpose (just a nesting container)
+  - Don't flatten wrapper divs that provide conditional rendering logic or have complex state management
+  - Don't flatten wrappers that provide animation/transition context (those serve a purpose)
+
 ---
 
 ## Anti-Patterns to Avoid
@@ -216,6 +343,18 @@ For feature planning and TODO tracking, use the local-only internal tickets dire
   - Capture implementation details, checklists, and considerations
   - Reference related files and existing code patterns
   - Include success criteria and testing requirements
+
+**Rewrite Roadmap** (`.github/INTERNAL-TICKETS/rewrite-roadmap.md`):
+
+- This is the master QB → mSheet migration tracker. **Update it whenever implementation work changes the status of a tracked feature** (e.g., a field component is completed, a phase moves from 🔴 to ✅).
+- After completing a task that corresponds to an item in the roadmap, mark it done and update the progress summary percentages.
+- Keep the "Feature Parity Tracker" table and per-package progress summary current so the roadmap always reflects reality.
+
+**@mieweb/ui Capability Audit** (`.github/INTERNAL-TICKETS/mieweb-ui-capability-audit.md`):
+
+- This is the source-of-truth snapshot for @mieweb/ui exports, `*Props` interfaces, and key variant names.
+- When using or refactoring @mieweb/ui components in mSheet, consult this ticket before choosing `variant`, `size`, or component-specific props.
+- If @mieweb/ui changes materially (new components, variant changes, prop changes), regenerate/update this audit ticket first, then implement mSheet changes.
 
 **Ticket Template:**
 

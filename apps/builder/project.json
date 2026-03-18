@@ -1,0 +1,17 @@
+{
+  "name": "builder-app",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "targets": {
+    "dev": {
+      "dependsOn": ["@msheet/builder:build:css"],
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "npx nx run builder-app:serve",
+          "npx nx run @msheet/builder:build:css:watch"
+        ],
+        "parallel": true
+      }
+    }
+  }
+}

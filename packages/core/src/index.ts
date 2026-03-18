@@ -2,7 +2,23 @@ export {
   // Constants
   SCHEMA_TYPE,
   FIELD_TYPES,
-  NUMERIC_EXPRESSION_FORMATS,
+  TEXT_INPUT_TYPES,
+  CONDITION_OPERATORS,
+  CONDITIONAL_EFFECTS,
+
+  // Zod schemas
+  fieldTypeSchema,
+  textInputTypeSchema,
+  fieldOptionSchema,
+  matrixRowSchema,
+  matrixColumnSchema,
+  conditionOperatorSchema,
+  conditionalEffectSchema,
+  conditionSchema,
+  conditionalRuleSchema,
+  fieldDefinitionSchema,
+  formDefinitionSchema,
+  formDefinitionJSONSchema,
 
   // Types
   type SchemaType,
@@ -10,7 +26,6 @@ export {
   type FieldCategory,
   type AnswerType,
   type TextInputType,
-  type ExpressionDisplayFormat,
   type FieldOption,
   type MatrixRow,
   type MatrixColumn,
@@ -55,7 +70,12 @@ export {
   type HydratedResponseItem,
 } from './lib/functions/hydrate-response.js';
 
-export { evaluateCondition, evaluateRule } from './lib/logic/conditions.js';
+export {
+  evaluateCondition,
+  evaluateRule,
+  isExpressionValid,
+  evaluateExpression,
+} from './lib/logic/conditions.js';
 
 export { resolveEffect } from './lib/logic/resolve.js';
 
@@ -66,8 +86,24 @@ export {
 } from './lib/logic/validate.js';
 
 export {
-  createFormEngine,
-  type FormEngineState,
-  type FormEngine,
+  createFormStore,
+  type FormState,
+  type FormStore,
   type AddFieldOptions,
-} from './lib/engine/store.js';
+} from './lib/stores/form-store.js';
+
+export {
+  createUIStore,
+  type UIState,
+  type UIStore,
+  type BuilderMode,
+  type EditTab,
+} from './lib/stores/ui-store.js';
+
+export { type FieldComponentProps } from './lib/field-component-props.js';
+
+export {
+  applySheetDnd,
+  type SheetDndDropDetail,
+  getReorderDestinationIndex,
+} from './lib/sheet-dnd.js';

@@ -5,12 +5,12 @@ export default [
   ...nx.configs['flat/typescript'],
   ...nx.configs['flat/javascript'],
   {
-      "ignores": [
-        "**/dist",
-        "**/build",
-        "**/vite.config.*.timestamp*",
-        "**/vitest.config.*.timestamp*"
-      ]
+    ignores: [
+      '**/dist',
+      '**/build',
+      '**/vite.config.*.timestamp*',
+      '**/vitest.config.*.timestamp*',
+    ],
   },
   {
     files: ['**/*.ts', '**/*.js'],
@@ -31,7 +31,15 @@ export default [
             },
             {
               sourceTag: 'scope:builder',
-              onlyDependOnLibsWithTags: ['scope:core', 'scope:builder'],
+              onlyDependOnLibsWithTags: [
+                'scope:core',
+                'scope:builder',
+                'scope:fields',
+              ],
+            },
+            {
+              sourceTag: 'scope:fields',
+              onlyDependOnLibsWithTags: ['scope:core'],
             },
           ],
         },

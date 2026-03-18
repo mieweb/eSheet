@@ -11,6 +11,12 @@
     },
     {
       "path": "./packages/builder"
+    },
+    {
+      "path": "./apps/builder"
+    },
+    {
+      "path": "./packages/fields"
     }
   ]
 }

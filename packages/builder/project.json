@@ -1,0 +1,21 @@
+{
+  "name": "@msheet/builder",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "targets": {
+    "build:css": {
+      "command": "npx @tailwindcss/cli -i packages/builder/src/index.css -o packages/builder/src/index.output.css",
+      "options": {
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "build:css:watch": {
+      "command": "npx @tailwindcss/cli -i packages/builder/src/index.css -o packages/builder/src/index.output.css --watch",
+      "options": {
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "build": {
+      "dependsOn": ["build:css", "^build"]
+    }
+  }
+}

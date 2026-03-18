@@ -7,14 +7,15 @@
     "tsBuildInfoFile": "dist/tsconfig.lib.tsbuildinfo",
     "emitDeclarationOnly": false,
     "forceConsistentCasingInFileNames": true,
-    "types": [
-      "node"
-    ]
+    "jsx": "react-jsx",
+    "lib": ["es2022", "dom", "dom.iterable"],
+    "types": ["node"]
   },
-  "include": [
-    "src/**/*.ts"
-  ],
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
   "references": [
+    {
+      "path": "../fields/tsconfig.lib.json"
+    },
     {
       "path": "../core/tsconfig.lib.json"
     }

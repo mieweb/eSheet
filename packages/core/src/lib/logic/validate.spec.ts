@@ -9,7 +9,7 @@ import { normalizeDefinition } from '../functions/normalize.js';
 
 function def(
   id: string,
-  fieldType: string = 'text',
+  fieldType = 'text',
   opts?: Partial<FieldDefinition>
 ): FieldDefinition {
   return { id, fieldType, ...opts } as FieldDefinition;

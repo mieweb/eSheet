@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// Engine Store — Zustand vanilla store for form state management
+// Form Store — Zustand vanilla store for form state management
 // ---------------------------------------------------------------------------
 
 import { createStore } from 'zustand/vanilla';
@@ -50,9 +50,11 @@ export interface AddFieldOptions {
   patch?: Partial<Omit<FieldDefinition, 'id' | 'fieldType' | 'fields'>>;
 }
 
-/** The full engine state — data + actions + selectors. */
-export interface FormEngineState {
+/** The full form state — data + actions + selectors. */
+export interface FormState {
   // --- Data ---
+  /** Unique instance ID — used to generate unique DOM IDs when multiple engines share a page. */
+  readonly instanceId: string;
   /** Flat-indexed map — the source of truth for field structure. */
   readonly normalized: NormalizedDefinition;
   /** Current responses keyed by field ID. */
@@ -124,8 +126,8 @@ export interface FormEngineState {
   hydrateResponse: () => HydratedResponseItem[];
 }
 
-/** The engine store handle returned by `createFormEngine`. */
-export type FormEngine = StoreApi<FormEngineState>;
+/** The store handle returned by `createFormStore`. */
+export type FormStore = StoreApi<FormState>;
 
 // ---------------------------------------------------------------------------
 // Empty normalized definition (used before any definition is loaded).
@@ -192,12 +194,46 @@ function collectDescendants(
   return result;
 }
 
+function getDefaultQuestion(
+  fieldType: FieldType,
+  label: string
+): string | undefined {
+  if (
+    fieldType === 'section' ||
+    fieldType === 'html' ||
+    fieldType === 'display'
+  ) {
+    return undefined;
+  }
+  if (fieldType === 'image') return 'Image Block';
+  return `${label} question`;
+}
+
+function getDefaultOptionValue(
+  fieldType: FieldType,
+  index: number,
+  total: number
+): string {
+  if (fieldType === 'boolean') {
+    return index === 0 ? 'Yes' : index === 1 ? 'No' : `Option ${index + 1}`;
+  }
+  if (fieldType === 'rating') return `${index + 1}`;
+  if (fieldType === 'slider') {
+    if (index === 0) return 'Low';
+    if (index === total - 1) return 'High';
+    if (total >= 3 && index === Math.floor(total / 2)) return 'Medium';
+  }
+  if (fieldType === 'multitext') return `Input ${index + 1}`;
+  if (fieldType === 'ranking') return `Item ${index + 1}`;
+  return `Option ${index + 1}`;
+}
+
 // ---------------------------------------------------------------------------
-// createFormEngine()
+// createFormStore()
 // ---------------------------------------------------------------------------
 
 /**
- * Create a new form engine store.
+ * Create a new form store.
  *
  * Returns a Zustand vanilla `StoreApi` — call `.getState()` to read,
  * `.setState()` to write, and `.subscribe()` to react to changes.
@@ -212,9 +248,12 @@ function collectDescendants(
  *
  * @param initial - Optional initial form definition to load immediately.
  */
-export function createFormEngine(initial?: FormDefinition): FormEngine {
-  return createStore<FormEngineState>()((set, get) => ({
+let nextInstanceId = 1;
+
+export function createFormStore(initial?: FormDefinition): FormStore {
+  return createStore<FormState>()((set, get) => ({
     // --- Data ---
+    instanceId: `ms-${nextInstanceId++}`,
     normalized: initial
       ? normalizeDefinition(initial.fields)
       : EMPTY_NORMALIZED,
@@ -234,7 +273,8 @@ export function createFormEngine(initial?: FormDefinition): FormEngine {
 
     clearResponse: (fieldId) =>
       set((state) => {
-        const { [fieldId]: _, ...rest } = state.responses;
+        const { [fieldId]: _discarded, ...rest } = state.responses;
+        void _discarded;
         return { responses: rest };
       }),
 
@@ -253,13 +293,21 @@ export function createFormEngine(initial?: FormDefinition): FormEngine {
       const id = generateFieldId(fieldType, existingIds, parentId ?? undefined);
 
       // Build definition from registry defaults + caller patch
-      const { fields: _nested, ...defaults } = meta.defaultProps;
+      const { fields: _nestedFields, ...defaults } = meta.defaultProps;
+      void _nestedFields;
       const definition = {
         ...defaults,
         ...options?.patch,
         id,
         fieldType,
       } as Omit<FieldDefinition, 'fields'>;
+
+      if (!definition.question) {
+        const defaultQuestion = getDefaultQuestion(fieldType, meta.label);
+        if (defaultQuestion) {
+          (definition as Record<string, unknown>).question = defaultQuestion;
+        }
+      }
 
       // Auto-generate starter options / rows / columns
       const count =
@@ -271,7 +319,10 @@ export function createFormEngine(initial?: FormDefinition): FormEngine {
         for (let i = 0; i < count; i++) {
           const oid = generateOptionId(oIds, id);
           oIds.add(oid);
-          opts.push({ id: oid, value: '' });
+          opts.push({
+            id: oid,
+            value: getDefaultOptionValue(fieldType, i, count),
+          });
         }
         (definition as Record<string, unknown>).options = opts;
       }
@@ -283,7 +334,7 @@ export function createFormEngine(initial?: FormDefinition): FormEngine {
           for (let i = 0; i < count; i++) {
             const rid = generateRowId(rIds, id);
             rIds.add(rid);
-            rows.push({ id: rid, value: '' });
+            rows.push({ id: rid, value: `Row ${i + 1}` });
           }
           (definition as Record<string, unknown>).rows = rows;
         }
@@ -293,7 +344,7 @@ export function createFormEngine(initial?: FormDefinition): FormEngine {
           for (let i = 0; i < count; i++) {
             const cid = generateColumnId(cIds, id);
             cIds.add(cid);
-            cols.push({ id: cid, value: '' });
+            cols.push({ id: cid, value: `Column ${i + 1}` });
           }
           (definition as Record<string, unknown>).columns = cols;
         }
@@ -331,7 +382,8 @@ export function createFormEngine(initial?: FormDefinition): FormEngine {
         if (normalized.byId[newId!]) return false;
 
         const newDef = { ...node.definition, ...patch };
-        const { [fieldId]: _, ...rest } = normalized.byId;
+        const { [fieldId]: _removed, ...rest } = normalized.byId;
+        void _removed;
         const byId: Record<string, FieldNode> = {
           ...rest,
           [newId!]: { ...node, definition: newDef },
