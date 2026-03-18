@@ -17,9 +17,12 @@ export const SignatureField = React.memo(function SignatureField({
 
   const handleChange = React.useCallback(
     (payload: { strokes: string; image: string }) => {
-      onResponse({ signatureData: payload.strokes, signatureImage: payload.image });
+      onResponse({
+        signatureData: payload.strokes,
+        signatureImage: payload.image,
+      });
     },
-    [onResponse],
+    [onResponse]
   );
 
   if (isPreview) {
@@ -89,7 +92,9 @@ export const SignatureField = React.memo(function SignatureField({
 
       {/* Static preview of the empty pad */}
       <div className="ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackground ms:p-3">
-        <p className="ms:text-xs ms:text-mstextmuted ms:mb-2">Signature pad preview</p>
+        <p className="ms:text-xs ms:text-mstextmuted ms:mb-2">
+          Signature pad preview
+        </p>
         <DrawingPad
           config={{
             baseWidth: 600,

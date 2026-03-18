@@ -44,7 +44,7 @@ function inlineCssBuilder(): import('vite').Plugin {
       try {
         const outDir = resolve(
           import.meta.dirname,
-          outputOptions?.dir || 'dist',
+          outputOptions?.dir || 'dist'
         );
         if (!fs.existsSync(outDir)) return;
         for (const f of fs.readdirSync(outDir)) {

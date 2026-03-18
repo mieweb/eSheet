@@ -36,4 +36,10 @@ export {
   ImageField,
   SignatureField,
 } from './fields/index.js';
-export type { DrawingData, DrawingPadConfig, DrawingPadPayload, NormalizedPoint, Stroke } from './fields/index.js';
+export type {
+  DrawingData,
+  DrawingPadConfig,
+  DrawingPadPayload,
+  NormalizedPoint,
+  Stroke,
+} from './fields/index.js';

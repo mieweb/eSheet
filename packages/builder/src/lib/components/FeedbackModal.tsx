@@ -50,7 +50,9 @@ export function FeedbackModal({
             i
           </div>
           <div className="ms:min-w-0">
-            <h3 className="ms:text-base ms:font-semibold ms:text-mstext">{title}</h3>
+            <h3 className="ms:text-base ms:font-semibold ms:text-mstext">
+              {title}
+            </h3>
             <p className="ms:text-sm ms:text-mstextmuted ms:mt-1 ms:whitespace-pre-wrap">
               {message}
             </p>

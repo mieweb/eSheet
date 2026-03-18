@@ -58,8 +58,18 @@ export function renderer(
         id,
         definition: node.definition,
         visible,
-        enabled: resolveEffect('enable', node.definition, normalized, responses),
-        required: resolveEffect('required', node.definition, normalized, responses),
+        enabled: resolveEffect(
+          'enable',
+          node.definition,
+          normalized,
+          responses
+        ),
+        required: resolveEffect(
+          'required',
+          node.definition,
+          normalized,
+          responses
+        ),
         children: build(node.childIds),
       });
     }

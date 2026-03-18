@@ -127,7 +127,9 @@ function RankingPreview({
     if (!el || !isEnabled) return;
 
     const handler = (e: Event) => {
-      const { sourceId, targetId, edge } = (e as CustomEvent<SheetDndDropDetail>).detail;
+      const { sourceId, targetId, edge } = (
+        e as CustomEvent<SheetDndDropDetail>
+      ).detail;
       const startIndex = ranking.indexOf(sourceId);
       const targetIndex = ranking.indexOf(targetId);
       if (startIndex === -1 || targetIndex === -1) return;
@@ -149,12 +151,13 @@ function RankingPreview({
   }, [isEnabled, ranking, setRanking]);
 
   return (
-    <div ref={containerRef} className="ranking-field-preview ms:text-mstext ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
+    <div
+      ref={containerRef}
+      className="ranking-field-preview ms:text-mstext ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4"
+    >
       <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
         {question || 'Question'}
-        {isRequired && (
-          <span className="ms:text-msdanger ms:ml-0.5">*</span>
-        )}
+        {isRequired && <span className="ms:text-msdanger ms:ml-0.5">*</span>}
       </div>
       <div className="ms:flex ms:flex-col ms:gap-2">
         {ranking.map((optId, index) => (

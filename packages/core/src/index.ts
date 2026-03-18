@@ -102,4 +102,8 @@ export {
 
 export { type FieldComponentProps } from './lib/field-component-props.js';
 
-export { applySheetDnd, type SheetDndDropDetail, getReorderDestinationIndex } from './lib/sheet-dnd.js';
+export {
+  applySheetDnd,
+  type SheetDndDropDetail,
+  getReorderDestinationIndex,
+} from './lib/sheet-dnd.js';

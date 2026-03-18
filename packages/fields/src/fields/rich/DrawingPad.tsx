@@ -159,7 +159,7 @@ export const DrawingPad = React.memo(function DrawingPad({
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       return ctx;
     },
-    [],
+    []
   );
 
   // ---- Background layer draw ----------------------------------------------
@@ -190,7 +190,7 @@ export const DrawingPad = React.memo(function DrawingPad({
       const y = padding + (ah - dh) / 2;
       ctx.drawImage(img, x, y, dw, dh);
     },
-    [backgroundColor],
+    [backgroundColor]
   );
 
   // ---- Composite display canvas -------------------------------------------
@@ -225,7 +225,7 @@ export const DrawingPad = React.memo(function DrawingPad({
       // DPR-scaled backing store maps correctly to logical coordinates.
       ctx.drawImage(drawing, 0, 0, drawing.width, drawing.height, 0, 0, w, h);
     },
-    [drawBackground, placeholder],
+    [drawBackground, placeholder]
   );
 
   // ---- Stroke redraw from normalized points --------------------------------
@@ -247,14 +247,25 @@ export const DrawingPad = React.memo(function DrawingPad({
         if (stroke.tool === 'eraser') {
           const half = eraserWidth / 2;
           for (const pt of stroke.points) {
-            ctx.clearRect(pt.x * w - half, pt.y * h - half, eraserWidth, eraserWidth);
+            ctx.clearRect(
+              pt.x * w - half,
+              pt.y * h - half,
+              eraserWidth,
+              eraserWidth
+            );
           }
         } else {
           if (stroke.points.length === 1) {
             const pt = stroke.points[0];
             ctx.fillStyle = stroke.color;
             ctx.beginPath();
-            ctx.arc(pt.x * w, pt.y * h, Math.max(1, stroke.size / 2), 0, Math.PI * 2);
+            ctx.arc(
+              pt.x * w,
+              pt.y * h,
+              Math.max(1, stroke.size / 2),
+              0,
+              Math.PI * 2
+            );
             ctx.fill();
             continue;
           }
@@ -273,7 +284,7 @@ export const DrawingPad = React.memo(function DrawingPad({
         }
       }
     },
-    [eraserWidth],
+    [eraserWidth]
   );
 
   // ---- Full repaint helper -------------------------------------------------
@@ -283,7 +294,7 @@ export const DrawingPad = React.memo(function DrawingPad({
       redrawStrokes(w, h);
       composite(w, h);
     },
-    [redrawStrokes, composite],
+    [redrawStrokes, composite]
   );
 
   // ---- Coordinate helpers -------------------------------------------------
@@ -308,7 +319,7 @@ export const DrawingPad = React.memo(function DrawingPad({
         y: Math.max(0, Math.min(1, (clientY - r.top) / r.height)),
       };
     },
-    [],
+    []
   );
 
   // ---- Drawing segment (incremental, called during pointer-move) ----------
@@ -327,7 +338,7 @@ export const DrawingPad = React.memo(function DrawingPad({
       y1: number,
       tool: 'pen' | 'eraser',
       color: string,
-      size: number,
+      size: number
     ) => {
       const drawing = drawingRef.current;
       const display = displayRef.current;
@@ -362,7 +373,7 @@ export const DrawingPad = React.memo(function DrawingPad({
       // Fast composite — cheaper than full repaint mid-stroke.
       composite(w, h);
     },
-    [eraserWidth, composite, displaySize],
+    [eraserWidth, composite, displaySize]
   );
 
   // ---- Change emission ----------------------------------------------------
@@ -414,10 +425,18 @@ export const DrawingPad = React.memo(function DrawingPad({
         norm.y * h,
         currentTool,
         currentColor,
-        currentSize,
+        currentSize
       );
     },
-    [disabled, toNorm, currentTool, currentColor, currentSize, displaySize, drawSegment],
+    [
+      disabled,
+      toNorm,
+      currentTool,
+      currentColor,
+      currentSize,
+      displaySize,
+      drawSegment,
+    ]
   );
 
   const handleMove = React.useCallback(
@@ -436,7 +455,7 @@ export const DrawingPad = React.memo(function DrawingPad({
         norm.y * h,
         currentTool,
         currentColor,
-        currentSize,
+        currentSize
       );
 
       // Append to current stroke's point list.
@@ -445,7 +464,7 @@ export const DrawingPad = React.memo(function DrawingPad({
 
       lastNormRef.current = norm;
     },
-    [toNorm, drawSegment, currentTool, currentColor, currentSize, displaySize],
+    [toNorm, drawSegment, currentTool, currentColor, currentSize, displaySize]
   );
 
   const handleUp = React.useCallback(() => {
@@ -586,7 +605,7 @@ export const DrawingPad = React.memo(function DrawingPad({
     setCanRedo(undoStackRef.current.length > 0);
     setHasStrokes(strokesRef.current.length > 0);
     repaint(w, h);
-    }, [displaySize, repaint]);
+  }, [displaySize, repaint]);
 
   const redo = React.useCallback(() => {
     const stroke = undoStackRef.current.pop();
@@ -596,7 +615,7 @@ export const DrawingPad = React.memo(function DrawingPad({
     setCanRedo(undoStackRef.current.length > 0);
     setHasStrokes(strokesRef.current.length > 0);
     repaint(w, h);
-    }, [displaySize, repaint]);
+  }, [displaySize, repaint]);
 
   const clear = React.useCallback(() => {
     strokesRef.current = [];
@@ -633,8 +652,8 @@ export const DrawingPad = React.memo(function DrawingPad({
             cursor: disabled
               ? 'default'
               : currentTool === 'eraser'
-                ? eraserCursor
-                : penCursor,
+              ? eraserCursor
+              : penCursor,
           }}
           onMouseDown={onMouseDown}
           onMouseMove={onMouseMove}
@@ -654,8 +673,18 @@ export const DrawingPad = React.memo(function DrawingPad({
               title="Undo"
               className="drawing-pad-undo ms:w-7 ms:h-7 ms:flex ms:items-center ms:justify-center ms:rounded ms:bg-mssurface ms:text-mstext ms:border ms:border-msborder ms:hover:bg-msbackground ms:disabled:opacity-40 ms:disabled:cursor-not-allowed ms:outline-none ms:focus:outline-none ms:cursor-pointer"
             >
-              <svg className="ms:w-3.5 ms:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+              <svg
+                className="ms:w-3.5 ms:h-3.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"
+                />
               </svg>
             </button>
             <button
@@ -665,8 +694,18 @@ export const DrawingPad = React.memo(function DrawingPad({
               title="Redo"
               className="drawing-pad-redo ms:w-7 ms:h-7 ms:flex ms:items-center ms:justify-center ms:rounded ms:bg-mssurface ms:text-mstext ms:border ms:border-msborder ms:hover:bg-msbackground ms:disabled:opacity-40 ms:disabled:cursor-not-allowed ms:outline-none ms:focus:outline-none ms:cursor-pointer"
             >
-              <svg className="ms:w-3.5 ms:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10H11a8 8 0 00-8 8v2m18-10l-6 6m6-6l-6-6" />
+              <svg
+                className="ms:w-3.5 ms:h-3.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 10H11a8 8 0 00-8 8v2m18-10l-6 6m6-6l-6-6"
+                />
               </svg>
             </button>
             <button
@@ -675,8 +714,18 @@ export const DrawingPad = React.memo(function DrawingPad({
               title="Clear"
               className="drawing-pad-clear ms:w-7 ms:h-7 ms:flex ms:items-center ms:justify-center ms:rounded ms:bg-msdanger/10 ms:text-msdanger ms:border ms:border-msdanger/20 ms:hover:bg-msdanger/20 ms:outline-none ms:focus:outline-none ms:cursor-pointer"
             >
-              <svg className="ms:w-3.5 ms:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="ms:w-3.5 ms:h-3.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
@@ -697,8 +746,18 @@ export const DrawingPad = React.memo(function DrawingPad({
                 : 'ms:bg-msbackground ms:text-mstext ms:border-msborder ms:hover:bg-msbackgroundsecondary'
             }`}
           >
-            <svg className="ms:w-3.5 ms:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 20h4L18.5 9.5a2.828 2.828 0 1 0-4-4L4 16v4m9.5-13.5 4 4" />
+            <svg
+              className="ms:w-3.5 ms:h-3.5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 20h4L18.5 9.5a2.828 2.828 0 1 0-4-4L4 16v4m9.5-13.5 4 4"
+              />
             </svg>
           </button>
 
@@ -714,8 +773,18 @@ export const DrawingPad = React.memo(function DrawingPad({
                   : 'ms:bg-msbackground ms:text-mstext ms:border-msborder ms:hover:bg-msbackgroundsecondary'
               }`}
             >
-              <svg className="ms:w-3.5 ms:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H8.5l-4.21-4.3a1 1 0 0 1 0-1.41l10-10a1 1 0 0 1 1.41 0l5 5a1 1 0 0 1 0 1.41L11.5 20m6.5-6.7-6.3-6.3" />
+              <svg
+                className="ms:w-3.5 ms:h-3.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 20H8.5l-4.21-4.3a1 1 0 0 1 0-1.41l10-10a1 1 0 0 1 1.41 0l5 5a1 1 0 0 1 0 1.41L11.5 20m6.5-6.7-6.3-6.3"
+                />
               </svg>
             </button>
           )}
@@ -758,7 +827,9 @@ export const DrawingPad = React.memo(function DrawingPad({
                 <input
                   type="color"
                   value={
-                    COLOR_PALETTE.includes(currentColor) ? '#808080' : currentColor
+                    COLOR_PALETTE.includes(currentColor)
+                      ? '#808080'
+                      : currentColor
                   }
                   onChange={(e) => setCurrentColor(e.target.value)}
                   className="ms:absolute ms:inset-0 ms:w-full ms:h-full ms:opacity-0 ms:cursor-pointer"
@@ -781,7 +852,11 @@ export const DrawingPad = React.memo(function DrawingPad({
                   }`}
                 >
                   <div
-                    className={`ms:rounded-full ${currentSize === s ? 'ms:bg-mstextsecondary' : 'ms:bg-mstext'}`}
+                    className={`ms:rounded-full ${
+                      currentSize === s
+                        ? 'ms:bg-mstextsecondary'
+                        : 'ms:bg-mstext'
+                    }`}
                     style={{ width: s * 3, height: s * 3 }}
                   />
                 </button>

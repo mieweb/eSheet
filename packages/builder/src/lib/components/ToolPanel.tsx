@@ -81,13 +81,19 @@ export const ToolPanel = React.memo(function ToolPanel({
   );
   const selectedField = React.useSyncExternalStore(
     (cb) => form.subscribe(cb),
-    () => (selectedFieldId ? form.getState().getField(selectedFieldId) : undefined),
-    () => (selectedFieldId ? form.getState().getField(selectedFieldId) : undefined)
+    () =>
+      selectedFieldId ? form.getState().getField(selectedFieldId) : undefined,
+    () =>
+      selectedFieldId ? form.getState().getField(selectedFieldId) : undefined
   );
   const selectedSectionId =
-    selectedField?.definition.fieldType === 'section' ? selectedFieldId : undefined;
+    selectedField?.definition.fieldType === 'section'
+      ? selectedFieldId
+      : undefined;
   const selectedSectionLabel = selectedSectionId
-    ? selectedField?.definition.title || selectedField?.definition.id || selectedSectionId
+    ? selectedField?.definition.title ||
+      selectedField?.definition.id ||
+      selectedSectionId
     : null;
 
   const categories = React.useMemo(buildCategories, []);
@@ -96,9 +102,7 @@ export const ToolPanel = React.memo(function ToolPanel({
     [categories]
   );
   const orderedCategoryNames = React.useMemo(() => {
-    const org = categoryNames.includes('Organization')
-      ? ['Organization']
-      : [];
+    const org = categoryNames.includes('Organization') ? ['Organization'] : [];
     const rest = categoryNames.filter((name) => name !== 'Organization');
     return [...org, ...rest];
   }, [categoryNames]);
@@ -132,10 +136,12 @@ export const ToolPanel = React.memo(function ToolPanel({
           ? selectedFieldId
           : undefined;
 
-      const newId = form.getState().addField(
-        type as FieldType,
-        sectionParentId ? { parentId: sectionParentId } : undefined
-      );
+      const newId = form
+        .getState()
+        .addField(
+          type as FieldType,
+          sectionParentId ? { parentId: sectionParentId } : undefined
+        );
       if (newId) {
         if (sectionParentId) {
           ui.getState().selectFieldChild(sectionParentId, newId);
@@ -166,7 +172,11 @@ export const ToolPanel = React.memo(function ToolPanel({
                 : 'Adding into root'
             }
           >
-            <span className={`ms:inline-flex ms:h-1.5 ms:w-1.5 ms:rounded-full ${selectedSectionId ? 'ms:bg-msprimary' : 'ms:bg-mstextmuted'}`} />
+            <span
+              className={`ms:inline-flex ms:h-1.5 ms:w-1.5 ms:rounded-full ${
+                selectedSectionId ? 'ms:bg-msprimary' : 'ms:bg-mstextmuted'
+              }`}
+            />
             <span className="ms:truncate">
               {selectedSectionId
                 ? `Adding into section: ${selectedSectionLabel}`

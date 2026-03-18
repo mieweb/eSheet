@@ -83,7 +83,9 @@ function MobileBottomDrawer({
       />
       <div className="ms:lg:hidden ms:fixed ms:left-0 ms:right-0 ms:bottom-0 ms:z-50 ms:h-[50dvh] ms:bg-mssurface ms:border-t ms:border-msborder ms:rounded-t-2xl ms:shadow-2xl ms:overflow-hidden">
         <div className="ms:flex ms:items-center ms:justify-between ms:px-4 ms:py-2 ms:border-b ms:border-msborder">
-          <span className="ms:text-sm ms:font-medium ms:text-mstext">{title}</span>
+          <span className="ms:text-sm ms:font-medium ms:text-mstext">
+            {title}
+          </span>
           <button
             type="button"
             onClick={onClose}
@@ -93,7 +95,9 @@ function MobileBottomDrawer({
             Close
           </button>
         </div>
-        <div className="ms:h-[calc(50dvh-45px)] ms:overflow-y-auto">{children}</div>
+        <div className="ms:h-[calc(50dvh-45px)] ms:overflow-y-auto">
+          {children}
+        </div>
       </div>
     </>
   );

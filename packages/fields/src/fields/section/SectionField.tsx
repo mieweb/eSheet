@@ -19,19 +19,20 @@ export const SectionField = React.memo(function SectionField({
   const def = field.definition;
   const title = def.title || 'Section';
   const hasChildren = field.childIds ? field.childIds.length > 0 : false;
-  const hasNestedContent = nestedChildren !== null && nestedChildren !== undefined;
+  const hasNestedContent =
+    nestedChildren !== null && nestedChildren !== undefined;
 
   if (isPreview) {
     return (
       <section className="section-field-preview ms:pb-0">
         <div className="ms:bg-msprimary ms:text-mstextsecondary ms:text-xl ms:px-4 ms:py-2 ms:rounded-t-lg ms:break-words ms:overflow-hidden">
           {title}
-          {isRequired && <span className="ms:text-mstextsecondary ms:ml-1">*</span>}
+          {isRequired && (
+            <span className="ms:text-mstextsecondary ms:ml-1">*</span>
+          )}
         </div>
         {nestedChildren && (
-          <div className="ms:bg-mssurface ms:space-y-3">
-            {nestedChildren}
-          </div>
+          <div className="ms:bg-mssurface ms:space-y-3">{nestedChildren}</div>
         )}
       </section>
     );
@@ -71,9 +72,7 @@ export const SectionField = React.memo(function SectionField({
       )}
 
       {!hasChildren && hasNestedContent && (
-        <div className="section-edit-empty-drop ms:mt-2">
-          {nestedChildren}
-        </div>
+        <div className="section-edit-empty-drop ms:mt-2">{nestedChildren}</div>
       )}
 
       {hasChildren && (

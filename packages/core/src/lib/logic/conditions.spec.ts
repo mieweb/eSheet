@@ -687,7 +687,8 @@ describe('evaluateRule', () => {
         conditions: [
           {
             conditionType: 'expression',
-            expression: '({expense-amount} * 2) > 1000 && {interests}.length >= 2',
+            expression:
+              '({expense-amount} * 2) > 1000 && {interests}.length >= 2',
             operator: 'equals',
             expected: 'true',
           },

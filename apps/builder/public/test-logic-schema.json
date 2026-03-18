@@ -9,8 +9,12 @@
       "question": "Are you a returning customer? (selecting Yes will show the loyalty section below)",
       "required": true,
       "options": [
-        { "id": "q1-yes", "value": "yes", "text": "Yes — I have ordered before" },
-        { "id": "q1-no",  "value": "no",  "text": "No — this is my first order" }
+        {
+          "id": "q1-yes",
+          "value": "yes",
+          "text": "Yes — I have ordered before"
+        },
+        { "id": "q1-no", "value": "no", "text": "No — this is my first order" }
       ]
     },
 
@@ -23,7 +27,12 @@
           "effect": "visible",
           "logic": "AND",
           "conditions": [
-            { "conditionType": "field", "targetId": "q1", "operator": "equals", "expected": "q1-yes" }
+            {
+              "conditionType": "field",
+              "targetId": "q1",
+              "operator": "equals",
+              "expected": "q1-yes"
+            }
           ]
         }
       ],
@@ -44,14 +53,24 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "field", "targetId": "q2", "operator": "equals", "expected": "GOLD" }
+                {
+                  "conditionType": "field",
+                  "targetId": "q2",
+                  "operator": "equals",
+                  "expected": "GOLD"
+                }
               ]
             },
             {
               "effect": "required",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "field", "targetId": "q2", "operator": "equals", "expected": "GOLD" }
+                {
+                  "conditionType": "field",
+                  "targetId": "q2",
+                  "operator": "equals",
+                  "expected": "GOLD"
+                }
               ]
             }
           ]
@@ -65,9 +84,9 @@
       "question": "What kind of product are you ordering? (changes which detail fields appear below)",
       "required": true,
       "options": [
-        { "id": "q3-hw", "value": "hardware",  "text": "Hardware" },
-        { "id": "q3-sw", "value": "software",  "text": "Software" },
-        { "id": "q3-svc","value": "service",   "text": "Professional Service" }
+        { "id": "q3-hw", "value": "hardware", "text": "Hardware" },
+        { "id": "q3-sw", "value": "software", "text": "Software" },
+        { "id": "q3-svc", "value": "service", "text": "Professional Service" }
       ]
     },
 
@@ -81,7 +100,12 @@
           "effect": "visible",
           "logic": "AND",
           "conditions": [
-            { "conditionType": "field", "targetId": "q3", "operator": "equals", "expected": "q3-hw" }
+            {
+              "conditionType": "field",
+              "targetId": "q3",
+              "operator": "equals",
+              "expected": "q3-hw"
+            }
           ]
         }
       ]
@@ -97,7 +121,12 @@
           "effect": "visible",
           "logic": "AND",
           "conditions": [
-            { "conditionType": "field", "targetId": "q3", "operator": "equals", "expected": "q3-sw" }
+            {
+              "conditionType": "field",
+              "targetId": "q3",
+              "operator": "equals",
+              "expected": "q3-sw"
+            }
           ]
         }
       ]
@@ -113,8 +142,18 @@
           "effect": "visible",
           "logic": "OR",
           "conditions": [
-            { "conditionType": "field", "targetId": "q3", "operator": "equals", "expected": "q3-sw" },
-            { "conditionType": "field", "targetId": "q3", "operator": "equals", "expected": "q3-svc" }
+            {
+              "conditionType": "field",
+              "targetId": "q3",
+              "operator": "equals",
+              "expected": "q3-sw"
+            },
+            {
+              "conditionType": "field",
+              "targetId": "q3",
+              "operator": "equals",
+              "expected": "q3-svc"
+            }
           ]
         }
       ]
@@ -155,14 +194,19 @@
       "question": "Would you like the bulk discount applied? (only shown when quantity ≥ 10)",
       "options": [
         { "id": "q8-yes", "value": "yes", "text": "Yes please" },
-        { "id": "q8-no",  "value": "no",  "text": "No thanks" }
+        { "id": "q8-no", "value": "no", "text": "No thanks" }
       ],
       "rules": [
         {
           "effect": "visible",
           "logic": "AND",
           "conditions": [
-            { "conditionType": "field", "targetId": "q7", "operator": "greaterThanOrEqual", "expected": "10" }
+            {
+              "conditionType": "field",
+              "targetId": "q7",
+              "operator": "greaterThanOrEqual",
+              "expected": "10"
+            }
           ]
         }
       ]
@@ -192,14 +236,24 @@
           "effect": "visible",
           "logic": "AND",
           "conditions": [
-            { "conditionType": "field", "targetId": "q9", "operator": "greaterThanOrEqual", "expected": "4" }
+            {
+              "conditionType": "field",
+              "targetId": "q9",
+              "operator": "greaterThanOrEqual",
+              "expected": "4"
+            }
           ]
         },
         {
           "effect": "required",
           "logic": "AND",
           "conditions": [
-            { "conditionType": "field", "targetId": "q9", "operator": "greaterThanOrEqual", "expected": "4" }
+            {
+              "conditionType": "field",
+              "targetId": "q9",
+              "operator": "greaterThanOrEqual",
+              "expected": "4"
+            }
           ]
         }
       ]
@@ -210,9 +264,21 @@
       "fieldType": "check",
       "question": "Which add-ons would you like? (selecting 'Extended Warranty' unlocks warranty years)",
       "options": [
-        { "id": "q11-war", "value": "Extended Warranty",  "text": "Extended Warranty" },
-        { "id": "q11-ins", "value": "Install & Configure","text": "Install & Configure" },
-        { "id": "q11-trn", "value": "Training Session",   "text": "Training Session" }
+        {
+          "id": "q11-war",
+          "value": "Extended Warranty",
+          "text": "Extended Warranty"
+        },
+        {
+          "id": "q11-ins",
+          "value": "Install & Configure",
+          "text": "Install & Configure"
+        },
+        {
+          "id": "q11-trn",
+          "value": "Training Session",
+          "text": "Training Session"
+        }
       ]
     },
 
@@ -221,7 +287,7 @@
       "fieldType": "radio",
       "question": "How many years of extended warranty? (only shown when warranty add-on is selected)",
       "options": [
-        { "id": "q12-1", "value": "1", "text": "1 year"  },
+        { "id": "q12-1", "value": "1", "text": "1 year" },
         { "id": "q12-2", "value": "2", "text": "2 years" },
         { "id": "q12-3", "value": "3", "text": "3 years" }
       ],
@@ -230,7 +296,12 @@
           "effect": "visible",
           "logic": "AND",
           "conditions": [
-            { "conditionType": "field", "targetId": "q11", "operator": "includes", "expected": "q11-war" }
+            {
+              "conditionType": "field",
+              "targetId": "q11",
+              "operator": "includes",
+              "expected": "q11-war"
+            }
           ]
         }
       ]
@@ -242,7 +313,11 @@
       "question": "Rank these priorities (tests ranking field behavior in preview)",
       "options": [
         { "id": "q13-cost", "value": "Cost", "text": "Cost" },
-        { "id": "q13-speed", "value": "Delivery Speed", "text": "Delivery Speed" },
+        {
+          "id": "q13-speed",
+          "value": "Delivery Speed",
+          "text": "Delivery Speed"
+        },
         { "id": "q13-quality", "value": "Quality", "text": "Quality" }
       ]
     },
@@ -257,8 +332,18 @@
           "effect": "enable",
           "logic": "OR",
           "conditions": [
-            { "conditionType": "field", "targetId": "q11", "operator": "includes", "expected": "q11-ins" },
-            { "conditionType": "field", "targetId": "q11", "operator": "includes", "expected": "q11-trn" }
+            {
+              "conditionType": "field",
+              "targetId": "q11",
+              "operator": "includes",
+              "expected": "q11-ins"
+            },
+            {
+              "conditionType": "field",
+              "targetId": "q11",
+              "operator": "includes",
+              "expected": "q11-trn"
+            }
           ]
         }
       ]
@@ -284,8 +369,18 @@
           "effect": "visible",
           "logic": "AND",
           "conditions": [
-            { "conditionType": "field", "targetId": "q15", "operator": "equals",  "expected": "true" },
-            { "conditionType": "field", "targetId": "q3",  "operator": "equals",  "expected": "q3-svc" }
+            {
+              "conditionType": "field",
+              "targetId": "q15",
+              "operator": "equals",
+              "expected": "true"
+            },
+            {
+              "conditionType": "field",
+              "targetId": "q3",
+              "operator": "equals",
+              "expected": "q3-svc"
+            }
           ]
         }
       ]
@@ -296,10 +391,26 @@
       "fieldType": "radio",
       "question": "Expression mode test — select a tier (expression condition will show the result field when tier score > 2)",
       "options": [
-        { "id": "q17-bronze", "value": "1", "text": "Bronze (score 1 — result field stays hidden)" },
-        { "id": "q17-silver", "value": "2", "text": "Silver (score 2 — result field stays hidden)" },
-        { "id": "q17-gold",   "value": "3", "text": "Gold   (score 3 — result field appears)" },
-        { "id": "q17-plat",  "value": "4", "text": "Platinum (score 4 — result field appears)" }
+        {
+          "id": "q17-bronze",
+          "value": "1",
+          "text": "Bronze (score 1 — result field stays hidden)"
+        },
+        {
+          "id": "q17-silver",
+          "value": "2",
+          "text": "Silver (score 2 — result field stays hidden)"
+        },
+        {
+          "id": "q17-gold",
+          "value": "3",
+          "text": "Gold   (score 3 — result field appears)"
+        },
+        {
+          "id": "q17-plat",
+          "value": "4",
+          "text": "Platinum (score 4 — result field appears)"
+        }
       ]
     },
 

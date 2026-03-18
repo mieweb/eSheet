@@ -75,7 +75,11 @@ function isYVisible(el: HTMLElement, viewportY: number): boolean {
   let node: Element | null = el.parentElement;
   while (node) {
     const { overflowY } = getComputedStyle(node);
-    if (overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'hidden') {
+    if (
+      overflowY === 'auto' ||
+      overflowY === 'scroll' ||
+      overflowY === 'hidden'
+    ) {
       const r = node.getBoundingClientRect();
       if (viewportY < r.top || viewportY > r.bottom) return false;
     }
@@ -155,7 +159,8 @@ function getOperation(
   const rect = el.getBoundingClientRect();
   const edgeZone = rect.height * 0.25;
   if (y < rect.top + edgeZone) return { operation: 'reorder', edge: 'top' };
-  if (y > rect.bottom - edgeZone) return { operation: 'reorder', edge: 'bottom' };
+  if (y > rect.bottom - edgeZone)
+    return { operation: 'reorder', edge: 'bottom' };
   return { operation: 'combine', edge: null };
 }
 

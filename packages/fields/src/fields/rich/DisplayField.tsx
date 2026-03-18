@@ -5,7 +5,9 @@ function formatComputedValue(value: unknown): string {
   if (value == null) return '';
   if (typeof value === 'number') {
     if (!Number.isFinite(value)) return '';
-    return Number.isInteger(value) ? String(value) : String(Math.round(value * 100) / 100);
+    return Number.isInteger(value)
+      ? String(value)
+      : String(Math.round(value * 100) / 100);
   }
   if (typeof value === 'boolean') return value ? 'true' : 'false';
   if (typeof value === 'string') return value;
@@ -24,16 +26,21 @@ function interpolateExpressions(
   if (!source) return '';
   // {field-id}   — simple field value lookup (consistent with schema convention)
   // <expression> — full expression, supports {ref} + arithmetic (e.g. <{a} * {b} + " pts">)
-  return source.replace(/\{([^{}]+)\}|<([^>]+)>/g, (_match, fieldId: string | undefined, expr: string | undefined) => {
-    if (fieldId !== undefined) {
-      const id = fieldId.trim();
-      if (!id) return '';
-      return formatComputedValue(evaluateExpression(`{${id}}`, normalized, responses));
+  return source.replace(
+    /\{([^{}]+)\}|<([^>]+)>/g,
+    (_match, fieldId: string | undefined, expr: string | undefined) => {
+      if (fieldId !== undefined) {
+        const id = fieldId.trim();
+        if (!id) return '';
+        return formatComputedValue(
+          evaluateExpression(`{${id}}`, normalized, responses)
+        );
+      }
+      const e = expr?.trim();
+      if (!e) return '';
+      return formatComputedValue(evaluateExpression(e, normalized, responses));
     }
-    const e = expr?.trim();
-    if (!e) return '';
-    return formatComputedValue(evaluateExpression(e, normalized, responses));
-  });
+  );
 }
 
 // Renders inline markdown with recursive nesting so formats can combine.
@@ -68,7 +75,9 @@ function renderInlineNode(text: string, key: string): React.ReactNode {
     return (
       <React.Fragment key={key}>
         {under[1] && renderInlineNode(under[1], `${key}a`)}
-        <span className="ms:underline">{renderInlineNode(under[2], `${key}b`)}</span>
+        <span className="ms:underline">
+          {renderInlineNode(under[2], `${key}b`)}
+        </span>
         {under[3] && renderInlineNode(under[3], `${key}c`)}
       </React.Fragment>
     );
@@ -79,7 +88,9 @@ function renderInlineNode(text: string, key: string): React.ReactNode {
     return (
       <React.Fragment key={key}>
         {strike[1] && renderInlineNode(strike[1], `${key}a`)}
-        <span className="ms:line-through">{renderInlineNode(strike[2], `${key}b`)}</span>
+        <span className="ms:line-through">
+          {renderInlineNode(strike[2], `${key}b`)}
+        </span>
         {strike[3] && renderInlineNode(strike[3], `${key}c`)}
       </React.Fragment>
     );
@@ -132,10 +143,10 @@ function renderContent(content: string): React.ReactNode {
         level === 1
           ? 'ms:text-2xl ms:font-semibold'
           : level === 2
-            ? 'ms:text-xl ms:font-semibold'
-            : level === 3
-              ? 'ms:text-lg ms:font-semibold'
-              : 'ms:text-base ms:font-semibold';
+          ? 'ms:text-xl ms:font-semibold'
+          : level === 3
+          ? 'ms:text-lg ms:font-semibold'
+          : 'ms:text-base ms:font-semibold';
       blocks.push(
         <div key={`h-${i}`} className={`ms:my-1 ${headingClass}`}>
           {renderInline(text)}
@@ -168,7 +179,9 @@ function wrapSelection(
   const end = el.selectionEnd;
   const value = el.value;
   const selected = value.slice(start, end) || 'text';
-  const next = `${value.slice(0, start)}${open}${selected}${close}${value.slice(end)}`;
+  const next = `${value.slice(0, start)}${open}${selected}${close}${value.slice(
+    end
+  )}`;
   onChange(next);
 }
 
@@ -292,13 +305,17 @@ export const DisplayField = React.memo(function DisplayField({
           onChange={(e) => setContent(e.target.value)}
           rows={8}
           spellCheck={false}
-          placeholder={'Hello {name}, your BMI is <{weight-kg} / (({height-cm}/100) * ({height-cm}/100))>\n- {field-id} = field value  |  <expr> = computed result'}
+          placeholder={
+            'Hello {name}, your BMI is <{weight-kg} / (({height-cm}/100) * ({height-cm}/100))>\n- {field-id} = field value  |  <expr> = computed result'
+          }
           className="display-field-textarea ms:px-3 ms:py-2 ms:w-full ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:rounded-lg ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary/30 ms:outline-none ms:transition-colors ms:font-mono ms:text-sm ms:resize-y"
         />
       </div>
 
       <div>
-        <div className="ms:text-sm ms:font-medium ms:text-mstextmuted ms:mb-1">Live Preview</div>
+        <div className="ms:text-sm ms:font-medium ms:text-mstextmuted ms:mb-1">
+          Live Preview
+        </div>
         <div className="display-field-live-preview ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:p-4 ms:text-mstext">
           {renderContent(rendered)}
         </div>

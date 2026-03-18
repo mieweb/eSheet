@@ -1,4 +1,11 @@
-import { render, cleanup, act, fireEvent, waitFor, screen } from '@testing-library/react';
+import {
+  render,
+  cleanup,
+  act,
+  fireEvent,
+  waitFor,
+  screen,
+} from '@testing-library/react';
 import { createFormStore, createUIStore } from '@msheet/core';
 import { MsheetBuilder, useFormStore, useUI } from './MsheetBuilder.js';
 import { BuilderHeader } from './components/BuilderHeader.js';
@@ -144,14 +151,18 @@ describe('BuilderHeader import feedback', () => {
     const input = screen.getByLabelText('Import form JSON') as HTMLInputElement;
     fireEvent.change(input, {
       target: {
-        files: [new File(['x'], 'invalid-schema.json', { type: 'application/json' })],
+        files: [
+          new File(['x'], 'invalid-schema.json', { type: 'application/json' }),
+        ],
       },
     });
 
     await waitFor(() => {
       expect(screen.getByText('Import Failed')).toBeTruthy();
       expect(
-        screen.getByText('The file is valid JSON but does not match the form schema.')
+        screen.getByText(
+          'The file is valid JSON but does not match the form schema.'
+        )
       ).toBeTruthy();
     });
 
@@ -185,7 +196,9 @@ describe('BuilderHeader import feedback', () => {
     const input = screen.getByLabelText('Import form JSON') as HTMLInputElement;
     fireEvent.change(input, {
       target: {
-        files: [new File(['x'], 'with-warnings.json', { type: 'application/json' })],
+        files: [
+          new File(['x'], 'with-warnings.json', { type: 'application/json' }),
+        ],
       },
     });
 

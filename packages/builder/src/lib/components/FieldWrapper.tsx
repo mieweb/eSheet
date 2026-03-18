@@ -113,7 +113,8 @@ export function FieldWrapper({
   const instanceId = form.getState().instanceId;
   const selectedFieldId = useSelectedFieldId(ui);
   const isPreview = mode === 'preview';
-  const isSelected = !isPreview && (isSelectedOverride ?? selectedFieldId === fieldId);
+  const isSelected =
+    !isPreview && (isSelectedOverride ?? selectedFieldId === fieldId);
 
   // Handlers
   const handleSelect = React.useCallback(
@@ -179,16 +180,28 @@ export function FieldWrapper({
   // --- Preview mode: minimal chrome, no builder controls ---
   if (isPreview) {
     const isSection = field.definition.fieldType === 'section';
-    const parentNode = field.parentId 
+    const parentNode = field.parentId
       ? form.getState().getField(field.parentId)
       : null;
     const isChildOfSection = parentNode?.definition.fieldType === 'section';
-    
+
     return (
       <div
-        className={`field-wrapper ms:bg-mssurface${isSection ? ' ms:mb-2 ms:border ms:border-msborder ms:rounded' : ''}${!isSection && !isChildOfSection ? ' ms:mb-2 ms:p-6 ms:border ms:border-msborder ms:rounded' : ''}${isChildOfSection ? ' ms:p-6 ms:border-b ms:border-msborder ms:last:border-b-0' : ''}${
-          !isEnabled ? ' ms:opacity-50 ms:pointer-events-none' : ''
-        }${isRequired && !isSection && !isChildOfSection ? ' ms:border-l-2 ms:border-l-msdanger' : ''}`}
+        className={`field-wrapper ms:bg-mssurface${
+          isSection ? ' ms:mb-2 ms:border ms:border-msborder ms:rounded' : ''
+        }${
+          !isSection && !isChildOfSection
+            ? ' ms:mb-2 ms:p-6 ms:border ms:border-msborder ms:rounded'
+            : ''
+        }${
+          isChildOfSection
+            ? ' ms:p-6 ms:border-b ms:border-msborder ms:last:border-b-0'
+            : ''
+        }${!isEnabled ? ' ms:opacity-50 ms:pointer-events-none' : ''}${
+          isRequired && !isSection && !isChildOfSection
+            ? ' ms:border-l-2 ms:border-l-msdanger'
+            : ''
+        }`}
         data-field-id={fieldId}
         data-field-type={field.definition.fieldType}
         aria-disabled={!isEnabled || undefined}

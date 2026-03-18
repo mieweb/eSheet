@@ -1,4 +1,8 @@
-import { SCHEMA_TYPE, type FormDefinition, type FormResponse } from '@msheet/core';
+import {
+  SCHEMA_TYPE,
+  type FormDefinition,
+  type FormResponse,
+} from '@msheet/core';
 import { renderer } from './renderer.js';
 
 describe('renderer', () => {

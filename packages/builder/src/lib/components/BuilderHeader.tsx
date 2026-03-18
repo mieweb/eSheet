@@ -15,10 +15,7 @@ import {
   UploadIcon,
   DownloadIcon,
 } from '../icons.js';
-import {
-  FeedbackModal,
-  type FeedbackModalVariant,
-} from './FeedbackModal.js';
+import { FeedbackModal, type FeedbackModalVariant } from './FeedbackModal.js';
 
 export interface BuilderHeaderProps {
   form: FormStore;
@@ -59,7 +56,11 @@ function flattenFields(
     const path = `${pathPrefix}[${i}]`;
     flat.push({ field, path });
 
-    if (field.fieldType === 'section' && field.fields && field.fields.length > 0) {
+    if (
+      field.fieldType === 'section' &&
+      field.fields &&
+      field.fields.length > 0
+    ) {
       flat.push(...flattenFields(field.fields, `${path}.fields`));
     }
   }
@@ -79,9 +80,7 @@ function extractExpressionFieldRefs(expression: string): string[] {
   return Array.from(refs);
 }
 
-function collectImportWarnings(
-  fields: FieldDefinition[]
-): string[] {
+function collectImportWarnings(fields: FieldDefinition[]): string[] {
   const warnings: string[] = [];
   const flat = flattenFields(fields);
   const allIds = new Set(flat.map((entry) => entry.field.id));
@@ -112,11 +111,16 @@ function collectImportWarnings(
 
     if (optionRequiredTypes.has(field.fieldType)) {
       if (!field.options || field.options.length === 0) {
-        warnings.push(`${field.id}: ${path} has no options for fieldType '${field.fieldType}'.`);
+        warnings.push(
+          `${field.id}: ${path} has no options for fieldType '${field.fieldType}'.`
+        );
       }
     }
 
-    if (field.fieldType === 'singlematrix' || field.fieldType === 'multimatrix') {
+    if (
+      field.fieldType === 'singlematrix' ||
+      field.fieldType === 'multimatrix'
+    ) {
       if (!field.rows || field.rows.length === 0) {
         warnings.push(`${field.id}: ${path} has no rows.`);
       }
@@ -145,14 +149,18 @@ function collectImportWarnings(
           }
 
           if (!isExpressionValid(expression)) {
-            warnings.push(`${field.id}: invalid expression at ${condPath} -> ${expression}`);
+            warnings.push(
+              `${field.id}: invalid expression at ${condPath} -> ${expression}`
+            );
             continue;
           }
 
           const refs = extractExpressionFieldRefs(expression);
           for (const ref of refs) {
             if (!allIds.has(ref)) {
-              warnings.push(`${field.id}: ${condPath} references missing field '{${ref}}'.`);
+              warnings.push(
+                `${field.id}: ${condPath} references missing field '{${ref}}'.`
+              );
             }
           }
           continue;
@@ -161,7 +169,9 @@ function collectImportWarnings(
         if (!cond.targetId) {
           warnings.push(`${field.id}: ${condPath} is missing targetId.`);
         } else if (!allIds.has(cond.targetId)) {
-          warnings.push(`${field.id}: ${condPath} targetId '${cond.targetId}' does not exist.`);
+          warnings.push(
+            `${field.id}: ${condPath} targetId '${cond.targetId}' does not exist.`
+          );
         }
 
         if (!cond.operator) {
@@ -201,7 +211,7 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
       variant: FeedbackModalVariant,
       title: string,
       message: string,
-      details?: string,
+      details?: string
     ) => {
       setFeedback({ open: true, variant, title, message, details });
     },
@@ -242,7 +252,8 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
         const validated = formDefinitionSchema.safeParse(parsed);
         if (!validated.success) {
           const issues = validated.error.issues.map((issue) => {
-            const path = issue.path.length > 0 ? issue.path.join('.') : '(root)';
+            const path =
+              issue.path.length > 0 ? issue.path.join('.') : '(root)';
             return `${path}: ${issue.message}`;
           });
           const details = formatIssueDetails(issues, 5);
@@ -269,7 +280,11 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
           return;
         }
 
-        showFeedback('success', 'Import Successful', `Loaded ${validated.data.fields.length} field(s).`);
+        showFeedback(
+          'success',
+          'Import Successful',
+          `Loaded ${validated.data.fields.length} field(s).`
+        );
       } catch {
         showFeedback('error', 'Import Failed', 'Invalid JSON file format.');
       }

@@ -24,9 +24,7 @@ export const DropdownField = React.memo(function DropdownField({
       <div className="dropdown-field-preview ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
         <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
           {def.question || 'Question'}
-          {isRequired && (
-            <span className="ms:text-msdanger ms:ml-0.5">*</span>
-          )}
+          {isRequired && <span className="ms:text-msdanger ms:ml-0.5">*</span>}
         </div>
         <CustomDropdown
           options={options}

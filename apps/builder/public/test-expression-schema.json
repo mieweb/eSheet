@@ -3,22 +3,21 @@
   "id": "expression-test-schema",
   "title": "Expression Engine  -  Comprehensive Test",
   "fields": [
-
     {
       "id": "input-a",
       "fieldType": "slider",
       "question": "Input A  -  set a value 1-10 (referenced as {input-a} in all expressions below)",
       "required": true,
       "options": [
-        { "id": "a-1",  "value": "1",  "text": "1"  },
-        { "id": "a-2",  "value": "2",  "text": "2"  },
-        { "id": "a-3",  "value": "3",  "text": "3"  },
-        { "id": "a-4",  "value": "4",  "text": "4"  },
-        { "id": "a-5",  "value": "5",  "text": "5"  },
-        { "id": "a-6",  "value": "6",  "text": "6"  },
-        { "id": "a-7",  "value": "7",  "text": "7"  },
-        { "id": "a-8",  "value": "8",  "text": "8"  },
-        { "id": "a-9",  "value": "9",  "text": "9"  },
+        { "id": "a-1", "value": "1", "text": "1" },
+        { "id": "a-2", "value": "2", "text": "2" },
+        { "id": "a-3", "value": "3", "text": "3" },
+        { "id": "a-4", "value": "4", "text": "4" },
+        { "id": "a-5", "value": "5", "text": "5" },
+        { "id": "a-6", "value": "6", "text": "6" },
+        { "id": "a-7", "value": "7", "text": "7" },
+        { "id": "a-8", "value": "8", "text": "8" },
+        { "id": "a-9", "value": "9", "text": "9" },
         { "id": "a-10", "value": "10", "text": "10" }
       ]
     },
@@ -29,15 +28,15 @@
       "question": "Input B  -  set a value 1-10 (referenced as {input-b} in arithmetic and logical expressions)",
       "required": true,
       "options": [
-        { "id": "b-1",  "value": "1",  "text": "1"  },
-        { "id": "b-2",  "value": "2",  "text": "2"  },
-        { "id": "b-3",  "value": "3",  "text": "3"  },
-        { "id": "b-4",  "value": "4",  "text": "4"  },
-        { "id": "b-5",  "value": "5",  "text": "5"  },
-        { "id": "b-6",  "value": "6",  "text": "6"  },
-        { "id": "b-7",  "value": "7",  "text": "7"  },
-        { "id": "b-8",  "value": "8",  "text": "8"  },
-        { "id": "b-9",  "value": "9",  "text": "9"  },
+        { "id": "b-1", "value": "1", "text": "1" },
+        { "id": "b-2", "value": "2", "text": "2" },
+        { "id": "b-3", "value": "3", "text": "3" },
+        { "id": "b-4", "value": "4", "text": "4" },
+        { "id": "b-5", "value": "5", "text": "5" },
+        { "id": "b-6", "value": "6", "text": "6" },
+        { "id": "b-7", "value": "7", "text": "7" },
+        { "id": "b-8", "value": "8", "text": "8" },
+        { "id": "b-9", "value": "9", "text": "9" },
         { "id": "b-10", "value": "10", "text": "10" }
       ]
     },
@@ -107,7 +106,10 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "expression", "expression": "{input-a} >= 7" }
+                {
+                  "conditionType": "expression",
+                  "expression": "{input-a} >= 7"
+                }
               ]
             }
           ]
@@ -122,7 +124,10 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "expression", "expression": "{input-a} <= 3" }
+                {
+                  "conditionType": "expression",
+                  "expression": "{input-a} <= 3"
+                }
               ]
             }
           ]
@@ -145,7 +150,10 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "expression", "expression": "{input-a} == 5" }
+                {
+                  "conditionType": "expression",
+                  "expression": "{input-a} == 5"
+                }
               ]
             }
           ]
@@ -160,7 +168,10 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "expression", "expression": "{input-a} != 5" }
+                {
+                  "conditionType": "expression",
+                  "expression": "{input-a} != 5"
+                }
               ]
             }
           ]
@@ -183,7 +194,10 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "expression", "expression": "{input-a} + {input-b} >= 12" }
+                {
+                  "conditionType": "expression",
+                  "expression": "{input-a} + {input-b} >= 12"
+                }
               ]
             }
           ]
@@ -198,7 +212,10 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "expression", "expression": "{input-a} - {input-b} > 3" }
+                {
+                  "conditionType": "expression",
+                  "expression": "{input-a} - {input-b} > 3"
+                }
               ]
             }
           ]
@@ -213,7 +230,10 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "expression", "expression": "{input-a} * {input-b} >= 24" }
+                {
+                  "conditionType": "expression",
+                  "expression": "{input-a} * {input-b} >= 24"
+                }
               ]
             }
           ]
@@ -228,7 +248,10 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "expression", "expression": "{input-a} / {input-b} >= 2" }
+                {
+                  "conditionType": "expression",
+                  "expression": "{input-a} / {input-b} >= 2"
+                }
               ]
             }
           ]
@@ -243,7 +266,10 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "expression", "expression": "{input-a} % {input-b} == 0" }
+                {
+                  "conditionType": "expression",
+                  "expression": "{input-a} % {input-b} == 0"
+                }
               ]
             }
           ]
@@ -266,7 +292,10 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "expression", "expression": "{input-a} > 3 && {input-b} > 3" }
+                {
+                  "conditionType": "expression",
+                  "expression": "{input-a} > 3 && {input-b} > 3"
+                }
               ]
             }
           ]
@@ -281,7 +310,10 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "expression", "expression": "{input-a} > 7 || {input-b} > 7" }
+                {
+                  "conditionType": "expression",
+                  "expression": "{input-a} > 7 || {input-b} > 7"
+                }
               ]
             }
           ]
@@ -296,7 +328,10 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "expression", "expression": "!({input-a} > 7)" }
+                {
+                  "conditionType": "expression",
+                  "expression": "!({input-a} > 7)"
+                }
               ]
             }
           ]
@@ -319,7 +354,10 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "expression", "expression": "{text-input}.length >= 5" }
+                {
+                  "conditionType": "expression",
+                  "expression": "{text-input}.length >= 5"
+                }
               ]
             }
           ]
@@ -372,7 +410,10 @@
               "effect": "required",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "expression", "expression": "{input-a} + {input-b} >= 15" }
+                {
+                  "conditionType": "expression",
+                  "expression": "{input-a} + {input-b} >= 15"
+                }
               ]
             }
           ]
@@ -395,7 +436,10 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "expression", "expression": "{input-a} + {input-b} + {tier} >= 16" }
+                {
+                  "conditionType": "expression",
+                  "expression": "{input-a} + {input-b} + {tier} >= 16"
+                }
               ]
             }
           ]
@@ -410,7 +454,10 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "expression", "expression": "{input-a} * {tier} >= 20" }
+                {
+                  "conditionType": "expression",
+                  "expression": "{input-a} * {tier} >= 20"
+                }
               ]
             }
           ]
@@ -425,21 +472,25 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "expression", "expression": "{input-a} * {input-b} >= 20" }
+                {
+                  "conditionType": "expression",
+                  "expression": "{input-a} * {input-b} >= 20"
+                }
               ]
             },
             {
               "effect": "required",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "expression", "expression": "{input-a} * {input-b} >= 30" }
+                {
+                  "conditionType": "expression",
+                  "expression": "{input-a} * {input-b} >= 30"
+                }
               ]
             }
           ]
         }
       ]
     }
-
   ]
 }
-

@@ -191,7 +191,8 @@ function evaluateExpressionCondition(
   if (operator === 'notEmpty') return !isEmpty(actual);
 
   if (NUMERIC_OPERATORS.has(operator)) {
-    const actualNum = typeof actual === 'number' ? actual : parseFloat(String(actual));
+    const actualNum =
+      typeof actual === 'number' ? actual : parseFloat(String(actual));
     const expectedNum = parseFloat(expected);
     if (isNaN(actualNum) || isNaN(expectedNum)) return false;
     return evaluateNumeric(actualNum, expectedNum, operator);
@@ -210,7 +211,9 @@ function evaluateExpressionCondition(
       const pattern =
         parts.length === 1
           ? new RegExp(`(?:^|\\s)${escapeRegex(parts[0])}(?:\\s|$)`)
-          : new RegExp(`(?:^|\\s)${parts.map(escapeRegex).join('\\s+')}(?:\\s|$)`);
+          : new RegExp(
+              `(?:^|\\s)${parts.map(escapeRegex).join('\\s+')}(?:\\s|$)`
+            );
       return pattern.test(hay);
     }
     case 'includes':
@@ -520,7 +523,8 @@ function parseExpression(tokens: ExprToken[]): ExprNode | null {
     if (!node) return null;
     while (true) {
       const t = peek();
-      if (!t || t.type !== 'op' || !['*', '/', '%'].includes(String(t.value))) break;
+      if (!t || t.type !== 'op' || !['*', '/', '%'].includes(String(t.value)))
+        break;
       consume();
       const right = parseUnary();
       if (!right) return null;
@@ -558,7 +562,12 @@ function parseExpression(tokens: ExprToken[]): ExprNode | null {
     if (!node) return null;
     while (true) {
       const t = peek();
-      if (!t || t.type !== 'op' || !['>', '>=', '<', '<='].includes(String(t.value))) break;
+      if (
+        !t ||
+        t.type !== 'op' ||
+        !['>', '>=', '<', '<='].includes(String(t.value))
+      )
+        break;
       consume();
       const right = parseAdditive();
       if (!right) return null;
@@ -639,7 +648,8 @@ function evaluateExpressionAst(
     const value = evaluateExpressionAst(node.object, data);
     if (Array.isArray(value)) return value.length;
     if (typeof value === 'string') return value.length;
-    if (value != null && typeof value === 'object') return Object.keys(value).length;
+    if (value != null && typeof value === 'object')
+      return Object.keys(value).length;
     return 0;
   }
 
@@ -712,8 +722,10 @@ function toNumber(value: unknown): number {
 
 function parseBoolean(value: string): boolean {
   const normalized = value.trim().toLowerCase();
-  if (normalized === 'true' || normalized === '1' || normalized === 'yes') return true;
-  if (normalized === 'false' || normalized === '0' || normalized === 'no') return false;
+  if (normalized === 'true' || normalized === '1' || normalized === 'yes')
+    return true;
+  if (normalized === 'false' || normalized === '0' || normalized === 'no')
+    return false;
   return Boolean(normalized);
 }
 
@@ -723,7 +735,10 @@ function buildExpressionData(
 ): Record<string, unknown> {
   const data: Record<string, unknown> = {};
   for (const [fieldId, node] of Object.entries(normalized.byId)) {
-    data[fieldId] = getExpressionFieldValue(node.definition, responses[fieldId]);
+    data[fieldId] = getExpressionFieldValue(
+      node.definition,
+      responses[fieldId]
+    );
   }
   return data;
 }
@@ -734,10 +749,7 @@ function getExpressionFieldValue(
 ): unknown {
   if (!response) return '';
 
-  if (
-    definition.fieldType === 'text' ||
-    definition.fieldType === 'longtext'
-  ) {
+  if (definition.fieldType === 'text' || definition.fieldType === 'longtext') {
     const raw = response.answer ?? '';
     const parsed = parseFloat(String(raw));
     return Number.isNaN(parsed) ? raw : parsed;

@@ -30,9 +30,7 @@ export const SliderField = React.memo(function SliderField({
       >
         <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
           {def.question || 'Question'}
-          {isRequired && (
-            <span className="ms:text-msdanger ms:ml-0.5">*</span>
-          )}
+          {isRequired && <span className="ms:text-msdanger ms:ml-0.5">*</span>}
         </div>
         {options.length > 0 ? (
           <div className="ms:relative ms:pt-1">

@@ -40,14 +40,14 @@ const INITIAL_DEF: FormDefinition = {
 };
 
 /* style={{ margin: '5rem', outline: '1px solid red', height: '90dvh' }}
-*/
+ */
 
 export function App() {
   const [def1, setDef1] = useState<FormDefinition>(INITIAL_DEF);
 
   return (
     <div>
-      <div >
+      <div>
         <MsheetBuilder definition={def1} onChange={setDef1} />
       </div>
     </div>

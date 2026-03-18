@@ -21,7 +21,7 @@ export const DiagramField = React.memo(function DiagramField({
     (payload: { strokes: string; image: string }) => {
       onResponse({ markupData: payload.strokes, markupImage: payload.image });
     },
-    [onResponse],
+    [onResponse]
   );
 
   // --- Image upload via file picker ---
@@ -57,7 +57,7 @@ export const DiagramField = React.memo(function DiagramField({
         }
       }
     },
-    [onUpdate],
+    [onUpdate]
   );
 
   React.useEffect(() => {
@@ -153,8 +153,18 @@ export const DiagramField = React.memo(function DiagramField({
               aria-label="Remove background image"
               className="ms:absolute ms:top-2 ms:right-2 ms:w-6 ms:h-6 ms:flex ms:items-center ms:justify-center ms:rounded ms:bg-msdanger/10 ms:text-msdanger ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:hover:bg-msdanger/20"
             >
-              <svg className="ms:w-3.5 ms:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="ms:w-3.5 ms:h-3.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
             <img
@@ -177,8 +187,18 @@ export const DiagramField = React.memo(function DiagramField({
               onClick={() => fileInputRef.current?.click()}
               className="diagram-upload-zone ms:w-full ms:flex ms:flex-col ms:items-center ms:justify-center ms:gap-1.5 ms:py-6 ms:border-2 ms:border-dashed ms:border-msborder ms:rounded-lg ms:bg-msbackground ms:hover:border-msprimary ms:hover:bg-msprimary/5 ms:transition-colors ms:cursor-pointer ms:outline-none ms:focus:outline-none"
             >
-              <svg className="ms:w-8 ms:h-8 ms:text-mstextmuted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              <svg
+                className="ms:w-8 ms:h-8 ms:text-mstextmuted"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
               </svg>
               <p className="ms:text-sm ms:font-medium ms:text-mstextmuted">
                 Upload or paste (Ctrl+V) a background image
@@ -193,7 +213,9 @@ export const DiagramField = React.memo(function DiagramField({
 
       {/* Static preview of the pad */}
       <div className="ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackground ms:p-3">
-        <p className="ms:text-xs ms:text-mstextmuted ms:mb-2">Diagram pad preview</p>
+        <p className="ms:text-xs ms:text-mstextmuted ms:mb-2">
+          Diagram pad preview
+        </p>
         <DrawingPad
           config={{
             baseWidth: 640,

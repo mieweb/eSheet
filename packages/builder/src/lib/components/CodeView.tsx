@@ -7,10 +7,7 @@ import {
   type FormStore,
   type UIStore,
 } from '@msheet/core';
-import {
-  FeedbackModal,
-  type FeedbackModalVariant,
-} from './FeedbackModal.js';
+import { FeedbackModal, type FeedbackModalVariant } from './FeedbackModal.js';
 
 const FORM_SCHEMA_URI = 'inmemory://msheet/form-definition.schema.json';
 
@@ -89,7 +86,7 @@ export function CodeView({ form, ui }: CodeViewProps) {
       variant: FeedbackModalVariant,
       title: string,
       message: string,
-      details?: string,
+      details?: string
     ) => {
       setFeedback({
         open: true,

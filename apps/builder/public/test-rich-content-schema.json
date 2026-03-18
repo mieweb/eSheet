@@ -3,7 +3,6 @@
   "id": "rich-content-test-schema",
   "title": "Rich Content Fields — Comprehensive Test",
   "fields": [
-
     {
       "id": "intro-html",
       "fieldType": "html",
@@ -16,7 +15,6 @@
       "fieldType": "section",
       "title": "Inputs (drive the Display field)",
       "fields": [
-
         {
           "id": "first-name",
           "fieldType": "text",
@@ -57,15 +55,15 @@
           "question": "Score A (1–10)",
           "required": true,
           "options": [
-            { "id": "sa-1",  "value": "1",  "text": "1"  },
-            { "id": "sa-2",  "value": "2",  "text": "2"  },
-            { "id": "sa-3",  "value": "3",  "text": "3"  },
-            { "id": "sa-4",  "value": "4",  "text": "4"  },
-            { "id": "sa-5",  "value": "5",  "text": "5"  },
-            { "id": "sa-6",  "value": "6",  "text": "6"  },
-            { "id": "sa-7",  "value": "7",  "text": "7"  },
-            { "id": "sa-8",  "value": "8",  "text": "8"  },
-            { "id": "sa-9",  "value": "9",  "text": "9"  },
+            { "id": "sa-1", "value": "1", "text": "1" },
+            { "id": "sa-2", "value": "2", "text": "2" },
+            { "id": "sa-3", "value": "3", "text": "3" },
+            { "id": "sa-4", "value": "4", "text": "4" },
+            { "id": "sa-5", "value": "5", "text": "5" },
+            { "id": "sa-6", "value": "6", "text": "6" },
+            { "id": "sa-7", "value": "7", "text": "7" },
+            { "id": "sa-8", "value": "8", "text": "8" },
+            { "id": "sa-9", "value": "9", "text": "9" },
             { "id": "sa-10", "value": "10", "text": "10" }
           ]
         },
@@ -76,19 +74,18 @@
           "question": "Score B (1–10)",
           "required": true,
           "options": [
-            { "id": "sb-1",  "value": "1",  "text": "1"  },
-            { "id": "sb-2",  "value": "2",  "text": "2"  },
-            { "id": "sb-3",  "value": "3",  "text": "3"  },
-            { "id": "sb-4",  "value": "4",  "text": "4"  },
-            { "id": "sb-5",  "value": "5",  "text": "5"  },
-            { "id": "sb-6",  "value": "6",  "text": "6"  },
-            { "id": "sb-7",  "value": "7",  "text": "7"  },
-            { "id": "sb-8",  "value": "8",  "text": "8"  },
-            { "id": "sb-9",  "value": "9",  "text": "9"  },
+            { "id": "sb-1", "value": "1", "text": "1" },
+            { "id": "sb-2", "value": "2", "text": "2" },
+            { "id": "sb-3", "value": "3", "text": "3" },
+            { "id": "sb-4", "value": "4", "text": "4" },
+            { "id": "sb-5", "value": "5", "text": "5" },
+            { "id": "sb-6", "value": "6", "text": "6" },
+            { "id": "sb-7", "value": "7", "text": "7" },
+            { "id": "sb-8", "value": "8", "text": "8" },
+            { "id": "sb-9", "value": "9", "text": "9" },
             { "id": "sb-10", "value": "10", "text": "10" }
           ]
         }
-
       ]
     },
 
@@ -97,7 +94,6 @@
       "fieldType": "section",
       "title": "Display Field Tests",
       "fields": [
-
         {
           "id": "display-simple-ref",
           "fieldType": "display",
@@ -152,12 +148,14 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "expression", "expression": "{score-a} <= 7" }
+                {
+                  "conditionType": "expression",
+                  "expression": "{score-a} <= 7"
+                }
               ]
             }
           ]
         }
-
       ]
     },
 
@@ -166,7 +164,6 @@
       "fieldType": "section",
       "title": "HTML Field Tests",
       "fields": [
-
         {
           "id": "html-basic",
           "fieldType": "html",
@@ -184,10 +181,9 @@
         {
           "id": "html-xss-probe",
           "fieldType": "html",
-          "htmlContent": "<!-- XSS / injection test vectors — all must be inert inside sandbox=\"\" -->\n<script>document.title='XSS';<\/script>\n<img src=\"x\" onerror=\"document.title='XSS'\" />\n<a href=\"javascript:alert('XSS')\">Click me (href must be inert)</a>\n<iframe src=\"https://example.com\"></iframe>\n<p><strong>Expected:</strong> All vectors above are inert. Page title unchanged, no alert fires, no navigation.</p>",
+          "htmlContent": "<!-- XSS / injection test vectors — all must be inert inside sandbox=\"\" -->\n<script>document.title='XSS';</script>\n<img src=\"x\" onerror=\"document.title='XSS'\" />\n<a href=\"javascript:alert('XSS')\">Click me (href must be inert)</a>\n<iframe src=\"https://example.com\"></iframe>\n<p><strong>Expected:</strong> All vectors above are inert. Page title unchanged, no alert fires, no navigation.</p>",
           "iframeHeight": 120
         }
-
       ]
     },
 
@@ -196,7 +192,6 @@
       "fieldType": "section",
       "title": "Drawing Fields (Image / Diagram / Signature)",
       "fields": [
-
         {
           "id": "test-image",
           "fieldType": "image",
@@ -219,9 +214,7 @@
           "padPlaceholder": "Sign here",
           "required": true
         }
-
       ]
     }
-
   ]
 }

@@ -131,6 +131,7 @@ If any box is unchecked, **simplify**.
 - **ALL Form Inputs Must Have `id` Attributes with `instanceId` Prefix**: Every `<input>`, `<select>`, and `<textarea>` element across **all** UI packages (`@msheet/builder`, `@msheet/renderer`, `@msheet/fields`, or any future package rendering form elements) must have an `id` attribute. Use the `useInstanceId()` hook to ensure IDs are unique when multiple component instances share the same page.
 
   **ID pattern:** `${instanceId}-{purpose}-${fieldId}`
+
   - Builder mode: `${instanceId}-editor-question-${def.id}`
   - Preview/renderer mode: `${instanceId}-{fieldType}-answer-${def.id}`
   - Any input: `${instanceId}-{context}-{purpose}-${def.id}`
@@ -150,6 +151,7 @@ If any box is unchecked, **simplify**.
   ```
 
   **Why this matters:**
+
   - Browser autofill requires `id` or `name` attributes to work
   - Multiple instances on one page would have duplicate IDs without `instanceId`
   - Accessibility tools use IDs to associate labels with inputs
@@ -159,6 +161,7 @@ If any box is unchecked, **simplify**.
 - **ALL Form Inputs Must Have an Associated Label**: Every `<input>`, `<select>`, and `<textarea>` must be associated with a label — either via a `<label htmlFor="...">` matching the input's `id`, or via `aria-label` on the input itself. **Never render a form input without one of these.**
 
   **When to use which:**
+
   - **`<label htmlFor>`** — when a visible text label exists (e.g., "Question", "Field ID", "Required")
   - **`aria-label`** — when the input is in a compact list/row where a visible label would clutter the UI (e.g., option list items, matrix row/column inputs)
 
@@ -183,6 +186,7 @@ If any box is unchecked, **simplify**.
   ```
 
 - **No Duplicate IDs Between Panels**: When the same field data appears in multiple panels (e.g., Canvas + EditPanel), use **different purpose segments** in the ID pattern to avoid duplicates:
+
   - Canvas inputs: `${instanceId}-canvas-{purpose}-${fieldId}`
   - EditPanel inputs: `${instanceId}-editor-{purpose}-${fieldId}`
 
@@ -203,11 +207,13 @@ If any box is unchecked, **simplify**.
 - **Flatten Redundant Wrapper Divs**: When preview mode sections have nested layout containers where the outer wrapper only contains an inner layout div (with no additional semantic meaning or styling constraints), merge them into a single element. This pattern is common in field preview sections.
 
   **When to flatten:**
+
   - Outer div: `className="*-field-preview ...basic utilities..."` (semantic class for styling/debugging)
   - Inner div: `className="ms:grid ms:grid-cols-1 ..."` (pure layout utilities)
   - The outer wrapper adds nothing but an extra nesting level
 
   **Pattern (applies to field preview sections):**
+
   ```tsx
   // BEFORE - redundant nesting
   <div className="text-field-preview">
@@ -225,6 +231,7 @@ If any box is unchecked, **simplify**.
   ```
 
   **Rules:**
+
   - Keep the semantic class name (e.g., `text-field-preview`, `rating-field-preview`) on the merged element
   - Merge layout utilities from the inner div to the outer element
   - Only flatten when the outer wrapper provides no semantic layout purpose (just a nesting container)
@@ -338,11 +345,13 @@ For feature planning and TODO tracking, use the local-only internal tickets dire
   - Include success criteria and testing requirements
 
 **Rewrite Roadmap** (`.github/INTERNAL-TICKETS/rewrite-roadmap.md`):
+
 - This is the master QB → mSheet migration tracker. **Update it whenever implementation work changes the status of a tracked feature** (e.g., a field component is completed, a phase moves from 🔴 to ✅).
 - After completing a task that corresponds to an item in the roadmap, mark it done and update the progress summary percentages.
 - Keep the "Feature Parity Tracker" table and per-package progress summary current so the roadmap always reflects reality.
 
 **@mieweb/ui Capability Audit** (`.github/INTERNAL-TICKETS/mieweb-ui-capability-audit.md`):
+
 - This is the source-of-truth snapshot for @mieweb/ui exports, `*Props` interfaces, and key variant names.
 - When using or refactoring @mieweb/ui components in mSheet, consult this ticket before choosing `variant`, `size`, or component-specific props.
 - If @mieweb/ui changes materially (new components, variant changes, prop changes), regenerate/update this audit ticket first, then implement mSheet changes.
@@ -397,4 +406,3 @@ Naming/structure preserved: yes
 No new deps/files: yes
 Tests/docs touched minimally: yes
 ```
-

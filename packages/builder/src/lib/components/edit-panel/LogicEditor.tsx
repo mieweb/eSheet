@@ -40,11 +40,11 @@ export function LogicEditor({ fieldId, rules, form }: LogicEditorProps) {
   const normalized = useSyncExternalStore(
     (cb) => form.subscribe(cb),
     () => form.getState().normalized,
-    () => form.getState().normalized,
+    () => form.getState().normalized
   );
   const otherFields = React.useMemo(
     () => buildOtherFields(normalized, fieldId),
-    [normalized, fieldId],
+    [normalized, fieldId]
   );
 
   const updateRules = (next: ConditionalRule[]) => {
@@ -74,23 +74,26 @@ export function LogicEditor({ fieldId, rules, form }: LogicEditorProps) {
     updateRules(rules.filter((_, i) => i !== ruleIdx));
   };
 
-  const handleUpdateRule = (ruleIdx: number, patch: Partial<ConditionalRule>) => {
+  const handleUpdateRule = (
+    ruleIdx: number,
+    patch: Partial<ConditionalRule>
+  ) => {
     updateRules(rules.map((r, i) => (i === ruleIdx ? { ...r, ...patch } : r)));
   };
 
   const handleUpdateCondition = (
     ruleIdx: number,
     condIdx: number,
-    patch: Partial<Condition>,
+    patch: Partial<Condition>
   ) => {
     updateRules(
       rules.map((r, i) => {
         if (i !== ruleIdx) return r;
         const conditions = r.conditions.map((c, j) =>
-          j === condIdx ? { ...c, ...patch } : c,
+          j === condIdx ? { ...c, ...patch } : c
         );
         return { ...r, conditions };
-      }),
+      })
     );
   };
 
@@ -111,7 +114,7 @@ export function LogicEditor({ fieldId, rules, form }: LogicEditorProps) {
             },
           ],
         };
-      }),
+      })
     );
   };
 
@@ -184,7 +187,11 @@ interface EffectSectionProps {
   onUpdateRule: (ruleIdx: number, patch: Partial<ConditionalRule>) => void;
   onAddCondition: (ruleIdx: number) => void;
   onRemoveCondition: (ruleIdx: number, condIdx: number) => void;
-  onUpdateCondition: (ruleIdx: number, condIdx: number, patch: Partial<Condition>) => void;
+  onUpdateCondition: (
+    ruleIdx: number,
+    condIdx: number,
+    patch: Partial<Condition>
+  ) => void;
 }
 
 const EFFECT_LABELS: Record<ConditionalEffect, string> = {
@@ -224,7 +231,9 @@ function EffectSection({
             {EFFECT_LABELS[effect]}
           </span>
           <span className="ms:text-xs ms:text-mstextmuted ms:ml-2">
-            {hasRules ? `${ruleEntries.length} rule${ruleEntries.length > 1 ? 's' : ''}` : 'Always'}
+            {hasRules
+              ? `${ruleEntries.length} rule${ruleEntries.length > 1 ? 's' : ''}`
+              : 'Always'}
           </span>
         </div>
         <button
@@ -256,8 +265,12 @@ function EffectSection({
             onRemove={() => onRemoveRule(globalIdx)}
             onUpdate={(patch) => onUpdateRule(globalIdx, patch)}
             onAddCondition={() => onAddCondition(globalIdx)}
-            onRemoveCondition={(condIdx) => onRemoveCondition(globalIdx, condIdx)}
-            onUpdateCondition={(condIdx, patch) => onUpdateCondition(globalIdx, condIdx, patch)}
+            onRemoveCondition={(condIdx) =>
+              onRemoveCondition(globalIdx, condIdx)
+            }
+            onUpdateCondition={(condIdx, patch) =>
+              onUpdateCondition(globalIdx, condIdx, patch)
+            }
           />
         </React.Fragment>
       ))}
@@ -370,7 +383,13 @@ interface LogicToggleProps {
   onChange: (value: LogicMode) => void;
 }
 
-function LogicToggle({ instanceId, fieldId, ruleIdx, value, onChange }: LogicToggleProps) {
+function LogicToggle({
+  instanceId,
+  fieldId,
+  ruleIdx,
+  value,
+  onChange,
+}: LogicToggleProps) {
   const id = `${instanceId}-logic-toggle-${fieldId}-${ruleIdx}`;
   return (
     <div className="logic-toggle ms:flex ms:rounded ms:border ms:border-msborder ms:overflow-hidden">
@@ -484,11 +503,16 @@ function ConditionRow({
   const [fieldPickerOpen, setFieldPickerOpen] = React.useState(false);
   const knownFieldIds = React.useMemo(
     () => new Set(otherFields.map((f) => f.id)),
-    [otherFields],
+    [otherFields]
   );
   const expressionErrors = React.useMemo(
-    () => validateExpressionLocally(condition.expression ?? '', knownFieldIds, otherFields),
-    [condition.expression, knownFieldIds, otherFields],
+    () =>
+      validateExpressionLocally(
+        condition.expression ?? '',
+        knownFieldIds,
+        otherFields
+      ),
+    [condition.expression, knownFieldIds, otherFields]
   );
 
   React.useEffect(() => {
@@ -515,11 +539,14 @@ function ConditionRow({
         el.focus();
       });
     },
-    [condition.expression, onUpdate],
+    [condition.expression, onUpdate]
   );
 
   // Determine available operators based on target type
-  const availableOperators = getAvailableOperators(target, condition.propertyAccessor);
+  const availableOperators = getAvailableOperators(
+    target,
+    condition.propertyAccessor
+  );
 
   // If target changed and operator is now invalid, reset it
   const resolvedOperator =
@@ -528,7 +555,9 @@ function ConditionRow({
       : availableOperators[0];
   if (conditionType === 'field' && resolvedOperator !== condition.operator) {
     // Schedule reset for next tick to avoid render-during-render
-    Promise.resolve().then(() => onUpdate({ operator: resolvedOperator, expected: '' }));
+    Promise.resolve().then(() =>
+      onUpdate({ operator: resolvedOperator, expected: '' })
+    );
   }
 
   return (
@@ -592,11 +621,15 @@ function ConditionRow({
           id={`${idPrefix}-target`}
           aria-label="Target field"
           value={condition.targetId ?? ''}
-          onChange={(e) => onUpdate({ targetId: e.currentTarget.value, expected: '' })}
+          onChange={(e) =>
+            onUpdate({ targetId: e.currentTarget.value, expected: '' })
+          }
           className="condition-target ms:w-full ms:min-w-0 ms:px-2 ms:py-1.5 ms:text-xs ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:cursor-pointer"
         >
           {!target && condition.targetId && (
-            <option value={condition.targetId}>⚠ {condition.targetId} (missing)</option>
+            <option value={condition.targetId}>
+              ⚠ {condition.targetId} (missing)
+            </option>
           )}
           {otherFields.map((f) => (
             <option key={f.id} value={f.id}>
@@ -629,7 +662,10 @@ function ConditionRow({
                 {'{ }'} Field
               </button>
               {fieldPickerOpen && (
-                <div className="condition-field-picker-dropdown ms:absolute ms:top-full ms:left-0 ms:mt-0.5 ms:z-50 ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:shadow-lg ms:min-w-max ms:max-h-48 ms:overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                <div
+                  className="condition-field-picker-dropdown ms:absolute ms:top-full ms:left-0 ms:mt-0.5 ms:z-50 ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:shadow-lg ms:min-w-max ms:max-h-48 ms:overflow-y-auto"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   {otherFields.map((f) => (
                     <button
                       key={f.id}
@@ -640,8 +676,12 @@ function ConditionRow({
                       }}
                       className="ms:flex ms:flex-col ms:w-full ms:px-2 ms:py-1.5 ms:text-left ms:bg-transparent ms:border-0 ms:text-mstext ms:hover:bg-msbackgroundhover ms:outline-none ms:focus:outline-none ms:cursor-pointer"
                     >
-                      <span className="ms:text-xs ms:font-medium">{f.label}</span>
-                      <span className="ms:text-xs ms:text-mstextmuted ms:font-mono">{'{' + f.id + '}'}</span>
+                      <span className="ms:text-xs ms:font-medium">
+                        {f.label}
+                      </span>
+                      <span className="ms:text-xs ms:text-mstextmuted ms:font-mono">
+                        {'{' + f.id + '}'}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -661,7 +701,9 @@ function ConditionRow({
           {expressionErrors.length > 0 && (
             <ul className="condition-expression-errors ms:list-none ms:p-0 ms:m-0 ms:space-y-0.5">
               {expressionErrors.map((err, i) => (
-                <li key={i} className="ms:text-xs ms:text-msdanger">{err}</li>
+                <li key={i} className="ms:text-xs ms:text-msdanger">
+                  {err}
+                </li>
               ))}
             </ul>
           )}
@@ -696,7 +738,10 @@ function ConditionRow({
               aria-label="Operator"
               value={resolvedOperator}
               onChange={(e) =>
-                onUpdate({ operator: e.currentTarget.value as ConditionOperator, expected: '' })
+                onUpdate({
+                  operator: e.currentTarget.value as ConditionOperator,
+                  expected: '',
+                })
               }
               className="condition-operator ms:flex-1 ms:min-w-0 ms:px-2 ms:py-1.5 ms:text-xs ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:cursor-pointer"
             >
@@ -733,14 +778,23 @@ interface ExpectedValueInputProps {
   onUpdate: (patch: Partial<Condition>) => void;
 }
 
-function ExpectedValueInput({ idPrefix, target, condition, onUpdate }: ExpectedValueInputProps) {
+function ExpectedValueInput({
+  idPrefix,
+  target,
+  condition,
+  onUpdate,
+}: ExpectedValueInputProps) {
   const operator = condition.operator ?? 'equals';
   const expected = condition.expected ?? '';
 
   // If target has options and we're using equals/notEquals/includes,
   // show a dropdown of option values
   if (target?.hasOptions && target.options && target.options.length > 0) {
-    if (operator === 'equals' || operator === 'notEquals' || operator === 'includes') {
+    if (
+      operator === 'equals' ||
+      operator === 'notEquals' ||
+      operator === 'includes'
+    ) {
       return (
         <select
           id={`${idPrefix}-expected`}
@@ -796,7 +850,7 @@ function ExpectedValueInput({ idPrefix, target, condition, onUpdate }: ExpectedV
 /** Resolve available operators based on target field type. */
 function getAvailableOperators(
   target: TargetField | undefined,
-  propertyAccessor?: string,
+  propertyAccessor?: string
 ): ConditionOperator[] {
   if (!target) return [...CONDITION_OPERATORS];
 
@@ -829,9 +883,19 @@ function getOperatorsForTarget(target: TargetField): ConditionOperator[] {
 
   // Single-value selection fields (radio/dropdown/boolean etc.).
   if (answerType === 'selection') {
-    const ops: ConditionOperator[] = ['equals', 'notEquals', 'empty', 'notEmpty'];
+    const ops: ConditionOperator[] = [
+      'equals',
+      'notEquals',
+      'empty',
+      'notEmpty',
+    ];
     if (target.supportsNumericCompare) {
-      ops.push('greaterThan', 'greaterThanOrEqual', 'lessThan', 'lessThanOrEqual');
+      ops.push(
+        'greaterThan',
+        'greaterThanOrEqual',
+        'lessThan',
+        'lessThanOrEqual'
+      );
     }
     return ops;
   }
@@ -846,7 +910,12 @@ function getOperatorsForTarget(target: TargetField): ConditionOperator[] {
       'notEmpty',
     ];
     if (target.supportsNumericCompare) {
-      ops.push('greaterThan', 'greaterThanOrEqual', 'lessThan', 'lessThanOrEqual');
+      ops.push(
+        'greaterThan',
+        'greaterThanOrEqual',
+        'lessThan',
+        'lessThanOrEqual'
+      );
     }
     return ops;
   }
@@ -856,7 +925,10 @@ function getOperatorsForTarget(target: TargetField): ConditionOperator[] {
 }
 
 /** Collect other fields from the normalized map (exclude self). */
-function buildOtherFields(normalized: NormalizedDefinition, selfId: string): TargetField[] {
+function buildOtherFields(
+  normalized: NormalizedDefinition,
+  selfId: string
+): TargetField[] {
   const result: TargetField[] = [];
   for (const [id, node] of Object.entries(normalized.byId)) {
     if (id === selfId) continue;
@@ -866,7 +938,8 @@ function buildOtherFields(normalized: NormalizedDefinition, selfId: string): Tar
     const supportsNumericCompare =
       node.definition.fieldType === 'rating' ||
       node.definition.fieldType === 'slider' ||
-      (node.definition.fieldType === 'text' && node.definition.inputType === 'number');
+      (node.definition.fieldType === 'text' &&
+        node.definition.inputType === 'number');
     result.push({
       id,
       label: node.definition.question || node.definition.id,
@@ -882,9 +955,12 @@ function buildOtherFields(normalized: NormalizedDefinition, selfId: string): Tar
 
 /** Group rules by effect, preserving original indices for update callbacks. */
 function groupByEffect(
-  rules: readonly ConditionalRule[],
+  rules: readonly ConditionalRule[]
 ): Record<ConditionalEffect, { rule: ConditionalRule; globalIdx: number }[]> {
-  const result: Record<ConditionalEffect, { rule: ConditionalRule; globalIdx: number }[]> = {
+  const result: Record<
+    ConditionalEffect,
+    { rule: ConditionalRule; globalIdx: number }[]
+  > = {
     visible: [],
     enable: [],
     required: [],
@@ -900,7 +976,7 @@ function groupByEffect(
 function validateExpressionLocally(
   expr: string,
   knownFieldIds: Set<string>,
-  otherFields: readonly TargetField[],
+  otherFields: readonly TargetField[]
 ): string[] {
   if (!expr.trim()) return [];
 
@@ -933,7 +1009,7 @@ function validateExpressionLocally(
     const after = stripped.slice(end, end + 4);
     if (/[<>]/.test(before) || /[<>]/.test(after)) {
       errors.push(
-        `{${id}} is a ${field.fieldType} field — numeric comparison (> < >= <=) may not produce meaningful results. Use == or !=.`,
+        `{${id}} is a ${field.fieldType} field — numeric comparison (> < >= <=) may not produce meaningful results. Use == or !=.`
       );
     }
   }

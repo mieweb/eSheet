@@ -30,24 +30,26 @@ export function EditPanel({ form, ui }: EditPanelProps) {
   const selectedFieldId = useSyncExternalStore(
     (cb) => ui.subscribe(cb),
     () => ui.getState().selectedFieldId,
-    () => ui.getState().selectedFieldId,
+    () => ui.getState().selectedFieldId
   );
   const selectedFieldChildId = useSyncExternalStore(
     (cb) => ui.subscribe(cb),
     () => ui.getState().selectedFieldChildId,
-    () => ui.getState().selectedFieldChildId,
+    () => ui.getState().selectedFieldChildId
   );
   const editTab = useSyncExternalStore(
     (cb) => ui.subscribe(cb),
     () => ui.getState().editTab,
-    () => ui.getState().editTab,
+    () => ui.getState().editTab
   );
 
   // Subscribe to form so we re-render when the field definition changes
   const field = useSyncExternalStore(
     (cb) => form.subscribe(cb),
-    () => (selectedFieldId ? form.getState().getField(selectedFieldId) : undefined),
-    () => (selectedFieldId ? form.getState().getField(selectedFieldId) : undefined),
+    () =>
+      selectedFieldId ? form.getState().getField(selectedFieldId) : undefined,
+    () =>
+      selectedFieldId ? form.getState().getField(selectedFieldId) : undefined
   );
 
   // Logic tab target: when a section is selected, edit logic for the active child.
@@ -67,7 +69,7 @@ export function EditPanel({ form, ui }: EditPanelProps) {
     () => {
       if (!selectedFieldId) return undefined;
       return form.getState().getField(selectedFieldId);
-    },
+    }
   );
 
   // No selection
@@ -96,7 +98,9 @@ export function EditPanel({ form, ui }: EditPanelProps) {
       ? `${logicTargetQuestion.slice(0, 18)}...`
       : logicTargetQuestion
     : logicTargetLabel;
-  const handleUpdate = (patch: Partial<Omit<import('@msheet/core').FieldDefinition, 'fields'>>) => {
+  const handleUpdate = (
+    patch: Partial<Omit<import('@msheet/core').FieldDefinition, 'fields'>>
+  ) => {
     form.getState().updateField(selectedFieldId, patch);
   };
 
@@ -154,25 +158,23 @@ export function EditPanel({ form, ui }: EditPanelProps) {
             onUpdate={handleUpdate}
             onRenameId={handleRenameId}
           />
-        ) : (
-          logicField ? (
-            <div className="ms:space-y-2">
-              <div className="ms:flex ms:flex-wrap ms:items-center ms:gap-1.5 ms:text-xs ms:text-mstextmuted ms:bg-msbackground ms:border ms:border-msborder ms:rounded ms:px-2.5 ms:py-1.5">
-                <span className="ms:inline-block ms:text-xs ms:font-medium ms:text-msprimary ms:bg-msprimary/10 ms:px-2 ms:py-0.5 ms:rounded ms:shrink-0">
-                  {logicField.definition.fieldType}
-                </span>
-                <span className="ms:px-1.5 ms:py-0.5 ms:rounded ms:bg-mssurface ms:border ms:border-msborder ms:text-mstext ms:font-medium">
-                  {logicTargetQuestionShort}
-                </span>
-              </div>
-              <LogicEditor
-                fieldId={logicField.definition.id}
-                rules={logicField.definition.rules ?? []}
-                form={form}
-              />
+        ) : logicField ? (
+          <div className="ms:space-y-2">
+            <div className="ms:flex ms:flex-wrap ms:items-center ms:gap-1.5 ms:text-xs ms:text-mstextmuted ms:bg-msbackground ms:border ms:border-msborder ms:rounded ms:px-2.5 ms:py-1.5">
+              <span className="ms:inline-block ms:text-xs ms:font-medium ms:text-msprimary ms:bg-msprimary/10 ms:px-2 ms:py-0.5 ms:rounded ms:shrink-0">
+                {logicField.definition.fieldType}
+              </span>
+              <span className="ms:px-1.5 ms:py-0.5 ms:rounded ms:bg-mssurface ms:border ms:border-msborder ms:text-mstext ms:font-medium">
+                {logicTargetQuestionShort}
+              </span>
             </div>
-          ) : null
-        )}
+            <LogicEditor
+              fieldId={logicField.definition.id}
+              rules={logicField.definition.rules ?? []}
+              form={form}
+            />
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -188,7 +190,9 @@ interface EditTabContentProps {
   meta: import('@msheet/core').FieldTypeMeta | undefined;
   form: FormStore;
   ui: UIStore;
-  onUpdate: (patch: Partial<Omit<import('@msheet/core').FieldDefinition, 'fields'>>) => void;
+  onUpdate: (
+    patch: Partial<Omit<import('@msheet/core').FieldDefinition, 'fields'>>
+  ) => void;
   onRenameId: (newId: string) => boolean;
 }
 
@@ -219,7 +223,12 @@ function EditTabContent({
   return (
     <div className="edit-tab ms:space-y-4">
       {/* Common: ID, Question, Required, InputType */}
-      <CommonEditor fieldId={fieldId} def={def} onUpdate={onUpdate} onRenameId={onRenameId} />
+      <CommonEditor
+        fieldId={fieldId}
+        def={def}
+        onUpdate={onUpdate}
+        onRenameId={onRenameId}
+      />
 
       {/* Divider */}
       {(meta?.hasOptions || meta?.hasMatrix) && (
@@ -258,7 +267,9 @@ interface SectionEditContentProps {
   def: Omit<import('@msheet/core').FieldDefinition, 'fields'>;
   form: FormStore;
   ui: UIStore;
-  onUpdate: (patch: Partial<Omit<import('@msheet/core').FieldDefinition, 'fields'>>) => void;
+  onUpdate: (
+    patch: Partial<Omit<import('@msheet/core').FieldDefinition, 'fields'>>
+  ) => void;
   onRenameId: (newId: string) => boolean;
 }
 
@@ -274,29 +285,29 @@ function SectionEditContent({
   const normalized = useSyncExternalStore(
     (cb) => form.subscribe(cb),
     () => form.getState().normalized,
-    () => form.getState().normalized,
+    () => form.getState().normalized
   );
   const selectedFieldId = useSyncExternalStore(
     (cb) => ui.subscribe(cb),
     () => ui.getState().selectedFieldId,
-    () => ui.getState().selectedFieldId,
+    () => ui.getState().selectedFieldId
   );
   const selectedFieldChildId = useSyncExternalStore(
     (cb) => ui.subscribe(cb),
     () => ui.getState().selectedFieldChildId,
-    () => ui.getState().selectedFieldChildId,
+    () => ui.getState().selectedFieldChildId
   );
   const editTab = useSyncExternalStore(
     (cb) => ui.subscribe(cb),
     () => ui.getState().editTab,
-    () => ui.getState().editTab,
+    () => ui.getState().editTab
   );
 
   const childIds = normalized.byId[fieldId]?.childIds ?? [];
   const childFields = childIds
     .map((id) => normalized.byId[id])
-    .filter((node): node is NonNullable<typeof normalized.byId[string]> =>
-      Boolean(node),
+    .filter((node): node is NonNullable<(typeof normalized.byId)[string]> =>
+      Boolean(node)
     );
 
   const activeChildId =
@@ -306,7 +317,7 @@ function SectionEditContent({
     childFields.some((node) => node.definition.id === activeChildId);
   const resolvedActiveChildId = hasActiveChild ? activeChildId : null;
   const activeChildNode = childFields.find(
-    (node) => node.definition.id === resolvedActiveChildId,
+    (node) => node.definition.id === resolvedActiveChildId
   );
   const activeChildDef = activeChildNode?.definition;
   const activeChildMeta = activeChildDef
@@ -333,7 +344,9 @@ function SectionEditContent({
 
   const handleRenameChildId = (newId: string): boolean => {
     if (!activeChildDef) return false;
-    const success = form.getState().updateField(activeChildDef.id, { id: newId });
+    const success = form
+      .getState()
+      .updateField(activeChildDef.id, { id: newId });
     if (success) {
       ui.getState().selectFieldChild(fieldId, newId);
     }
@@ -341,7 +354,7 @@ function SectionEditContent({
   };
 
   const handleUpdateChild = (
-    patch: Partial<Omit<FieldDefinition, 'fields'>>,
+    patch: Partial<Omit<FieldDefinition, 'fields'>>
   ) => {
     if (!activeChildDef) return;
     form.getState().updateField(activeChildDef.id, patch);
@@ -351,7 +364,7 @@ function SectionEditContent({
     if (!activeChildDef) return;
     form.getState().removeField(activeChildDef.id);
     const nextChildId = childFields.find(
-      (node) => node.definition.id !== activeChildDef.id,
+      (node) => node.definition.id !== activeChildDef.id
     )?.definition.id;
     ui.getState().selectFieldChild(fieldId, nextChildId ?? null);
   };
@@ -469,7 +482,9 @@ function SectionEditContent({
                   id={`${instanceId}-editor-active-section-title-${activeChildDef.id}`}
                   type="text"
                   value={activeChildDef.title ?? ''}
-                  onChange={(e) => handleUpdateChild({ title: e.currentTarget.value })}
+                  onChange={(e) =>
+                    handleUpdateChild({ title: e.currentTarget.value })
+                  }
                   placeholder="Enter section title..."
                   className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:placeholder:text-mstextmuted ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
                 />
@@ -510,5 +525,3 @@ function SectionEditContent({
     </div>
   );
 }
-
-

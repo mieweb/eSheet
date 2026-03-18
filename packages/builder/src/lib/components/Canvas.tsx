@@ -70,10 +70,7 @@ function DraggableFieldItem({
   );
 
   return (
-    <div
-      ref={ref}
-      className="field-canvas-wrapper ms:relative"
-    >
+    <div ref={ref} className="field-canvas-wrapper ms:relative">
       <FieldWrapper
         fieldId={id}
         form={form}
@@ -88,10 +85,9 @@ function DraggableFieldItem({
           const Component =
             getFieldComponent(props.field.definition.fieldType) ?? FieldItem;
           if (props.field.definition.fieldType === 'section') {
-            const SectionComponent =
-              Component as React.ComponentType<
-                FieldComponentProps & { nestedChildren?: React.ReactNode }
-              >;
+            const SectionComponent = Component as React.ComponentType<
+              FieldComponentProps & { nestedChildren?: React.ReactNode }
+            >;
             return (
               <SectionComponent {...props} nestedChildren={nestedChildren} />
             );
@@ -150,7 +146,9 @@ export const Canvas = React.memo(function Canvas({
     if (!el || !dragEnabled) return;
 
     const handler = (e: Event) => {
-      const { sourceId, targetId, edge, operation } = (e as CustomEvent<SheetDndDropDetail>).detail;
+      const { sourceId, targetId, edge, operation } = (
+        e as CustomEvent<SheetDndDropDetail>
+      ).detail;
       const sourceNode = normalized.byId[sourceId];
       const targetNode = normalized.byId[targetId];
       if (!sourceNode || !targetNode) return;
@@ -171,7 +169,7 @@ export const Canvas = React.memo(function Canvas({
       const sourceParentId = sourceNode.parentId;
       const targetParentId = targetNode.parentId;
       const siblingIds = targetParentId
-        ? (normalized.byId[targetParentId]?.childIds ?? [])
+        ? normalized.byId[targetParentId]?.childIds ?? []
         : [...normalized.rootIds];
 
       const startIndex = siblingIds.indexOf(sourceId);
@@ -186,11 +184,16 @@ export const Canvas = React.memo(function Canvas({
         });
         form.getState().moveField(sourceId, destinationIndex, targetParentId);
       } else {
-        const siblingsWithoutSource = siblingIds.filter((cid) => cid !== sourceId);
+        const siblingsWithoutSource = siblingIds.filter(
+          (cid) => cid !== sourceId
+        );
         const overIdx = siblingsWithoutSource.indexOf(targetId);
-        const newIndex = overIdx === -1
-          ? siblingsWithoutSource.length
-          : edge === 'top' ? overIdx : overIdx + 1;
+        const newIndex =
+          overIdx === -1
+            ? siblingsWithoutSource.length
+            : edge === 'top'
+            ? overIdx
+            : overIdx + 1;
         form.getState().moveField(sourceId, newIndex, targetParentId);
       }
 

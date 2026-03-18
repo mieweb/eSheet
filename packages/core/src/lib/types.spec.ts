@@ -1,7 +1,4 @@
-import {
-  SCHEMA_TYPE,
-  FIELD_TYPES,
-} from './types.js';
+import { SCHEMA_TYPE, FIELD_TYPES } from './types.js';
 import type {
   FieldDefinition,
   FieldResponse,

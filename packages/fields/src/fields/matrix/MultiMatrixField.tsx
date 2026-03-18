@@ -45,9 +45,7 @@ export const MultiMatrixField = React.memo(function MultiMatrixField({
       <div className="multimatrix-field-preview ms:text-mstext ms:pb-4">
         <div className="ms:font-light ms:mb-3 ms:text-mstext ms:break-words ms:overflow-hidden">
           {def.question || 'Question'}
-          {isRequired && (
-            <span className="ms:text-msdanger ms:ml-0.5">*</span>
-          )}
+          {isRequired && <span className="ms:text-msdanger ms:ml-0.5">*</span>}
         </div>
 
         {rows.length > 0 && columns.length > 0 ? (

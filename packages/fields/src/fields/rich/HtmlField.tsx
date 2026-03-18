@@ -114,8 +114,12 @@ export const HtmlField = React.memo(function HtmlField({
             step={10}
             value={localHeight}
             onChange={(e) => setLocalHeight(Number(e.target.value))}
-            onMouseUp={(e) => commitHeight(Number((e.target as HTMLInputElement).value))}
-            onTouchEnd={(e) => commitHeight(Number((e.target as HTMLInputElement).value))}
+            onMouseUp={(e) =>
+              commitHeight(Number((e.target as HTMLInputElement).value))
+            }
+            onTouchEnd={(e) =>
+              commitHeight(Number((e.target as HTMLInputElement).value))
+            }
             aria-label="Preview height slider"
             className="ms:flex-1 ms:accent-msprimary ms:cursor-pointer"
           />
@@ -136,7 +140,9 @@ export const HtmlField = React.memo(function HtmlField({
 
       {/* Inline preview */}
       <div>
-        <p className="ms:text-xs ms:font-medium ms:text-mstextmuted ms:mb-1">Preview</p>
+        <p className="ms:text-xs ms:font-medium ms:text-mstextmuted ms:mb-1">
+          Preview
+        </p>
         <div className="ms:rounded-lg ms:border ms:border-msborder ms:overflow-hidden">
           <iframe
             srcDoc={buildIframeDoc(def.htmlContent ?? '')}

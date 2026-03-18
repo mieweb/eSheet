@@ -262,7 +262,8 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     hasMatrix: false,
     defaultProps: {},
     placeholder: {
-      content: 'Your BMI is **{weight-kg} / (({height-cm}/100) * ({height-cm}/100))**',
+      content:
+        'Your BMI is **{weight-kg} / (({height-cm}/100) * ({height-cm}/100))**',
     },
   },
   section: {
