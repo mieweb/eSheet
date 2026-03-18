@@ -64,7 +64,7 @@ export function CommonEditor({
         <CustomCheckbox
           id={`${instanceId}-editor-required-${fieldId}`}
           checked={def.required ?? false}
-          onChange={(checked) => onUpdate({ required: checked })}
+          onChange={(checked: boolean) => onUpdate({ required: checked })}
           size="sm"
         />
         <label
