@@ -521,7 +521,7 @@ function parseExpression(tokens: ExprToken[]): ExprNode | null {
   const parseMultiplicative = (): ExprNode | null => {
     let node = parseUnary();
     if (!node) return null;
-    while (true) {
+    for (;;) {
       const t = peek();
       if (!t || t.type !== 'op' || !['*', '/', '%'].includes(String(t.value)))
         break;
@@ -541,7 +541,7 @@ function parseExpression(tokens: ExprToken[]): ExprNode | null {
   const parseAdditive = (): ExprNode | null => {
     let node = parseMultiplicative();
     if (!node) return null;
-    while (true) {
+    for (;;) {
       const t = peek();
       if (!t || t.type !== 'op' || !['+', '-'].includes(String(t.value))) break;
       consume();
@@ -560,7 +560,7 @@ function parseExpression(tokens: ExprToken[]): ExprNode | null {
   const parseRelational = (): ExprNode | null => {
     let node = parseAdditive();
     if (!node) return null;
-    while (true) {
+    for (;;) {
       const t = peek();
       if (
         !t ||
@@ -584,7 +584,7 @@ function parseExpression(tokens: ExprToken[]): ExprNode | null {
   const parseEquality = (): ExprNode | null => {
     let node = parseRelational();
     if (!node) return null;
-    while (true) {
+    for (;;) {
       const t = peek();
       if (
         !t ||
@@ -655,20 +655,20 @@ function evaluateExpressionAst(
 
   if (node.type === 'unary') {
     const right = evaluateExpressionAst(node.right, data);
-    if (node.operator === '!') return !Boolean(right);
+    if (node.operator === '!') return !right;
     if (node.operator === '-') return -toNumber(right);
     return null;
   }
 
   if (node.operator === '&&') {
     const left = evaluateExpressionAst(node.left, data);
-    if (!Boolean(left)) return left;
+    if (!left) return left;
     return evaluateExpressionAst(node.right, data);
   }
 
   if (node.operator === '||') {
     const left = evaluateExpressionAst(node.left, data);
-    if (Boolean(left)) return left;
+    if (left) return left;
     return evaluateExpressionAst(node.right, data);
   }
 

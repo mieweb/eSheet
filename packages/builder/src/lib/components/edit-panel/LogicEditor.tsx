@@ -148,7 +148,6 @@ export function LogicEditor({ fieldId, rules, form }: LogicEditorProps) {
           effect={effect}
           ruleEntries={grouped[effect]}
           otherFields={otherFields}
-          form={form}
           onAddRule={() => handleAddRule(effect)}
           onRemoveRule={handleRemoveRule}
           onUpdateRule={handleUpdateRule}
@@ -181,7 +180,6 @@ interface EffectSectionProps {
   effect: ConditionalEffect;
   ruleEntries: { rule: ConditionalRule; globalIdx: number }[];
   otherFields: readonly TargetField[];
-  form: FormStore;
   onAddRule: () => void;
   onRemoveRule: (ruleIdx: number) => void;
   onUpdateRule: (ruleIdx: number, patch: Partial<ConditionalRule>) => void;
@@ -212,7 +210,6 @@ function EffectSection({
   effect,
   ruleEntries,
   otherFields,
-  form,
   onAddRule,
   onRemoveRule,
   onUpdateRule,
@@ -261,7 +258,6 @@ function EffectSection({
             rule={rule}
             globalIdx={globalIdx}
             otherFields={otherFields}
-            form={form}
             onRemove={() => onRemoveRule(globalIdx)}
             onUpdate={(patch) => onUpdateRule(globalIdx, patch)}
             onAddCondition={() => onAddCondition(globalIdx)}
@@ -295,7 +291,6 @@ interface RuleCardProps {
   rule: ConditionalRule;
   globalIdx: number;
   otherFields: readonly TargetField[];
-  form: FormStore;
   onRemove: () => void;
   onUpdate: (patch: Partial<ConditionalRule>) => void;
   onAddCondition: () => void;
@@ -309,7 +304,6 @@ function RuleCard({
   rule,
   globalIdx,
   otherFields,
-  form,
   onRemove,
   onUpdate,
   onAddCondition,

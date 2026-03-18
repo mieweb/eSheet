@@ -64,7 +64,7 @@ export function CodeView({ form, ui }: CodeViewProps) {
     } catch {
       return '';
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const codeRef = React.useRef(initialCode);
   const formatRef = React.useRef<CodeFormat>('yaml');
@@ -109,7 +109,7 @@ export function CodeView({ form, ui }: CodeViewProps) {
   // Clear error flag on mount
   React.useEffect(() => {
     ui.getState().setCodeEditorHasError(false);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // --- Handlers ---
 
@@ -204,7 +204,7 @@ export function CodeView({ form, ui }: CodeViewProps) {
         // Error already shown in the editor header — don't push invalid data
       }
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="code-view-container ms:flex ms:flex-col ms:flex-1 ms:min-h-0 ms:bg-msbackground">

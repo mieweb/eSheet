@@ -199,7 +199,7 @@ function findSectionAncestor(
 
 export function applySheetDnd(
   handle: HTMLElement,
-  idAttr: string = 'data-field-id',
+  idAttr = 'data-field-id',
   onDragStart?: (sourceId: string) => void
 ): () => void {
   let active: ActiveDrag | null = null;

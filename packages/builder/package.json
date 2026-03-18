@@ -36,9 +36,7 @@
     "@msheet/fields": "^0.0.1",
     "js-yaml": "^4.1.1",
     "react": "^19.2.4",
-    "react-dom": "^19.2.4",
-    "tslib": "^2.3.0",
-    "zustand": "^5.0.11"
+    "tslib": "^2.3.0"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.2.1",
