@@ -122,4 +122,68 @@ describe('renderer', () => {
       'section-nested',
     ]);
   });
+
+  it('computes enabled and required from responses', () => {
+    const definition: FormDefinition = {
+      schemaType: SCHEMA_TYPE,
+      title: 'Renderer Effects Test',
+      fields: [
+        {
+          id: 'toggle',
+          fieldType: 'radio',
+          options: [
+            { id: 'yes', value: 'yes', text: 'Yes' },
+            { id: 'no', value: 'no', text: 'No' },
+          ],
+        },
+        {
+          id: 'target',
+          fieldType: 'text',
+          question: 'Target',
+          rules: [
+            {
+              effect: 'enable',
+              logic: 'AND',
+              conditions: [
+                {
+                  conditionType: 'field',
+                  targetId: 'toggle',
+                  operator: 'equals',
+                  expected: 'yes',
+                },
+              ],
+            },
+            {
+              effect: 'required',
+              logic: 'AND',
+              conditions: [
+                {
+                  conditionType: 'field',
+                  targetId: 'toggle',
+                  operator: 'equals',
+                  expected: 'yes',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    const treeWhenNo = renderer(definition, {
+      toggle: { selected: { id: 'no', value: 'no' } },
+    });
+    const targetWhenNo = treeWhenNo.find((n) => n.id === 'target');
+    expect(targetWhenNo).toBeDefined();
+    expect(targetWhenNo?.enabled).toBe(false);
+    expect(targetWhenNo?.required).toBe(false);
+
+    const treeWhenYes = renderer(definition, {
+      toggle: { selected: { id: 'yes', value: 'yes' } },
+    });
+    const targetWhenYes = treeWhenYes.find((n) => n.id === 'target');
+    expect(targetWhenYes).toBeDefined();
+    expect(targetWhenYes?.enabled).toBe(true);
+    expect(targetWhenYes?.required).toBe(true);
+  });
 });

@@ -344,11 +344,11 @@ For feature planning and TODO tracking, use the local-only internal tickets dire
   - Reference related files and existing code patterns
   - Include success criteria and testing requirements
 
-**Rewrite Roadmap** (`.github/INTERNAL-TICKETS/rewrite-roadmap.md`):
-
-- This is the master QB → mSheet migration tracker. **Update it whenever implementation work changes the status of a tracked feature** (e.g., a field component is completed, a phase moves from 🔴 to ✅).
-- After completing a task that corresponds to an item in the roadmap, mark it done and update the progress summary percentages.
-- Keep the "Feature Parity Tracker" table and per-package progress summary current so the roadmap always reflects reality.
+**Migration Roadmap** (`.github/INTERNAL-TICKETS/mSheet-RoadMap.md`):
+- This is the **single source of truth** for QB → mSheet migration status. **Update it whenever implementation work changes the status of a tracked feature** (e.g., a field component is completed, a gap is filled, completion percentages change).
+- After completing a task that corresponds to an item in the roadmap, mark it done immediately and update progress summaries.
+- Keep completion percentages, gap lists, and timeline estimates current so the roadmap always reflects reality.
+- When architectural decisions are made that eliminate "gaps" (e.g., feature implemented differently), update the roadmap to clarify what's a true gap vs architectural change.
 
 **@mieweb/ui Capability Audit** (`.github/INTERNAL-TICKETS/mieweb-ui-capability-audit.md`):
 

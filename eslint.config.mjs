@@ -27,7 +27,7 @@ export default [
             },
             {
               sourceTag: 'scope:renderer',
-              onlyDependOnLibsWithTags: ['scope:core', 'scope:renderer'],
+              onlyDependOnLibsWithTags: ['scope:core', 'scope:fields', 'scope:renderer'],
             },
             {
               sourceTag: 'scope:builder',

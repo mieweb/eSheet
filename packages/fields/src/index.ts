@@ -43,3 +43,15 @@ export type {
   NormalizedPoint,
   Stroke,
 } from './fields/index.js';
+
+// Shared React contexts and hooks
+export { FormStoreContext, UIContext, useFormStore, useUI } from './lib/context.js';
+
+// Field component registry
+export {
+  getFieldComponent,
+  getRegisteredComponentKeys,
+  registerFieldComponents,
+  registerCustomFieldTypes,
+  resetComponentRegistry,
+} from './lib/component-registry.js';

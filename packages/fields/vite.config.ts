@@ -1,9 +1,8 @@
 /// <reference types='vitest' />
 import { defineConfig, type LibraryFormats } from 'vite';
 import react from '@vitejs/plugin-react';
-import tailwindcss from '@tailwindcss/vite';
 import { resolve } from 'path';
-import fs from 'fs';
+import { readFileSync, writeFileSync, existsSync, unlinkSync } from 'fs';
 
 // ---------------------------------------------------------------------------
 // Inline-CSS plugin (production build only)
@@ -12,48 +11,26 @@ function inlineCssFields(): import('vite').Plugin {
   return {
     name: 'inline-css-fields',
     apply: 'build',
-    generateBundle(_options, bundle) {
-      const cssPath = resolve(import.meta.dirname, 'src/index.output.css');
-      if (!fs.existsSync(cssPath)) return;
-      const cssContent = fs.readFileSync(cssPath, 'utf-8');
-
-      for (const fileName of Object.keys(bundle)) {
-        const chunk = bundle[fileName];
-        if (fileName.endsWith('.js') && chunk.type === 'chunk') {
-          chunk.code =
-            `(function(){` +
-            `if(typeof document==='undefined')return;` +
-            `if(window.__MSHEET_FIELDS_CSS_INJECTED)return;` +
-            `if(!document.querySelector('#msheet-fields-styles')){` +
-            `var s=document.createElement('style');` +
-            `s.id='msheet-fields-styles';` +
-            `s.textContent=${JSON.stringify(cssContent)};` +
-            `document.head.appendChild(s);}` +
-            `window.__MSHEET_FIELDS_CSS_INJECTED=true;` +
-            `})();\n` +
-            chunk.code;
-        }
-      }
-    },
-    writeBundle(outputOptions) {
-      try {
-        const outDir = resolve(
-          import.meta.dirname,
-          outputOptions?.dir || 'dist'
-        );
-        if (!fs.existsSync(outDir)) return;
-        for (const f of fs.readdirSync(outDir)) {
-          if (f.endsWith('.css')) {
-            try {
-              fs.unlinkSync(resolve(outDir, f));
-            } catch {
-              /* non-fatal */
-            }
-          }
-        }
-      } catch {
-        /* non-fatal */
-      }
+    closeBundle() {
+      const dir = resolve(import.meta.dirname, 'dist');
+      const cssPath = resolve(dir, 'index.css');
+      const jsPath = resolve(dir, 'index.js');
+      if (!existsSync(cssPath) || !existsSync(jsPath)) return;
+      const cssContent = readFileSync(cssPath, 'utf-8');
+      const jsContent = readFileSync(jsPath, 'utf-8');
+      const iife =
+        `(function(){` +
+        `if(typeof document==='undefined')return;` +
+        `if(window.__MSHEET_FIELDS_CSS_INJECTED)return;` +
+        `if(!document.querySelector('#msheet-fields-styles')){` +
+        `var s=document.createElement('style');` +
+        `s.id='msheet-fields-styles';` +
+        `s.textContent=${JSON.stringify(cssContent)};` +
+        `document.head.appendChild(s);}` +
+        `window.__MSHEET_FIELDS_CSS_INJECTED=true;` +
+        `})();\n`;
+      writeFileSync(jsPath, iife + jsContent);
+      unlinkSync(cssPath);
     },
   };
 }
@@ -61,7 +38,7 @@ function inlineCssFields(): import('vite').Plugin {
 export default defineConfig(() => ({
   root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/packages/fields',
-  plugins: [react(), tailwindcss(), inlineCssFields()],
+  plugins: [react(), inlineCssFields()],
   build: {
     lib: {
       entry: resolve(import.meta.dirname, 'src/index.ts'),

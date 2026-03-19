@@ -7,6 +7,7 @@ import {
   type FormStore,
   type UIStore,
 } from '@msheet/core';
+import { FormStoreContext, UIContext } from '@msheet/fields';
 import { Canvas } from './components/Canvas.js';
 import { ToolPanel } from './components/ToolPanel.js';
 import { EditPanel } from './components/edit-panel/EditPanel.js';
@@ -18,23 +19,8 @@ import { PlusIcon } from './icons.js';
 // Contexts
 // ---------------------------------------------------------------------------
 
-export const FormStoreContext = React.createContext<FormStore | null>(null);
-export const UIContext = React.createContext<UIStore | null>(null);
+export { FormStoreContext, UIContext, useFormStore, useUI } from '@msheet/fields';
 export const InstanceIdContext = React.createContext<string>('');
-
-/** Hook to access the FormStore from context. */
-export function useFormStore(): FormStore {
-  const ctx = React.useContext(FormStoreContext);
-  if (!ctx) throw new Error('useFormStore must be used inside <MsheetBuilder>');
-  return ctx;
-}
-
-/** Hook to access the builder UIStore from context. */
-export function useUI(): UIStore {
-  const ctx = React.useContext(UIContext);
-  if (!ctx) throw new Error('useUI must be used inside <MsheetBuilder>');
-  return ctx;
-}
 
 /** Hook to access the per-instance ID for unique DOM element IDs. */
 export function useInstanceId(): string {

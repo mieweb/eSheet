@@ -39,6 +39,9 @@
       "path": "../../packages/builder/tsconfig.lib.json"
     },
     {
+      "path": "../../packages/renderer/tsconfig.lib.json"
+    },
+    {
       "path": "../../packages/fields/tsconfig.lib.json"
     }
   ]

@@ -9,6 +9,7 @@ import {
 import { createFormStore, createUIStore } from '@msheet/core';
 import { MsheetBuilder, useFormStore, useUI } from './MsheetBuilder.js';
 import { BuilderHeader } from './components/BuilderHeader.js';
+import './register-defaults.js';
 
 afterEach(cleanup);
 
@@ -123,7 +124,7 @@ describe('BuilderHeader import feedback', () => {
 
     render(<BuilderHeader form={form} ui={ui} />);
 
-    const input = screen.getByLabelText('Import form JSON') as HTMLInputElement;
+    const input = screen.getByLabelText('Import form (JSON or YAML)') as HTMLInputElement;
     fireEvent.change(input, {
       target: {
         files: [new File(['x'], 'bad.json', { type: 'application/json' })],
@@ -148,7 +149,7 @@ describe('BuilderHeader import feedback', () => {
 
     render(<BuilderHeader form={form} ui={ui} />);
 
-    const input = screen.getByLabelText('Import form JSON') as HTMLInputElement;
+    const input = screen.getByLabelText('Import form (JSON or YAML)') as HTMLInputElement;
     fireEvent.change(input, {
       target: {
         files: [
@@ -193,7 +194,7 @@ describe('BuilderHeader import feedback', () => {
 
     render(<BuilderHeader form={form} ui={ui} />);
 
-    const input = screen.getByLabelText('Import form JSON') as HTMLInputElement;
+    const input = screen.getByLabelText('Import form (JSON or YAML)') as HTMLInputElement;
     fireEvent.change(input, {
       target: {
         files: [
@@ -222,7 +223,7 @@ describe('BuilderHeader import feedback', () => {
 
     render(<BuilderHeader form={form} ui={ui} />);
 
-    const input = screen.getByLabelText('Import form JSON') as HTMLInputElement;
+    const input = screen.getByLabelText('Import form (JSON or YAML)') as HTMLInputElement;
     fireEvent.change(input, {
       target: {
         files: [new File(['x'], 'good.json', { type: 'application/json' })],

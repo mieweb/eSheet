@@ -29,12 +29,11 @@ export {
 } from './lib/components/FieldWrapper.js';
 
 export {
-  registerBuilderFieldTypes,
-  registerBuilderComponents,
+  registerCustomFieldTypes,
   getFieldComponent,
   getRegisteredComponentKeys,
   resetComponentRegistry,
-} from './lib/component-registry.js';
+} from '@msheet/fields';
 
 export {
   BuilderHeader,
