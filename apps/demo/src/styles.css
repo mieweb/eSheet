@@ -1,0 +1,18 @@
+@import 'tailwindcss';
+
+/* Tell Tailwind to scan demo app source files for utility classes */
+@source "./";
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+#root {
+  min-height: 100%;
+}
+
+body {
+  font-family: system-ui, sans-serif;
+}

@@ -1,0 +1,14 @@
+{
+  "name": "@msheet/demo",
+  "version": "0.0.1",
+  "private": true,
+  "nx": {
+    "name": "demo"
+  },
+  "dependencies": {
+    "@msheet/builder": "^0.0.1",
+    "@msheet/fields": "^0.0.1",
+    "@msheet/renderer": "^0.0.1",
+    "react-router-dom": "^7.11.0"
+  }
+}

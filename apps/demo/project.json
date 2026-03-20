@@ -1,16 +1,16 @@
 {
-  "name": "builder-app",
+  "name": "demo",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "targets": {
     "dev": {
       "dependsOn": [
-        { "projects": ["@msheet/builder"], "target": "build:css:watch" },
-        { "projects": ["@msheet/fields"], "target": "build:css:watch" },
-        { "projects": ["@msheet/renderer"], "target": "build:css:watch" }
+        { "projects": ["@msheet/builder"], "target": "build:css" },
+        { "projects": ["@msheet/fields"], "target": "build:css" },
+        { "projects": ["@msheet/renderer"], "target": "build:css" }
       ],
       "executor": "nx:run-commands",
       "options": {
-        "command": "npx nx run builder-app:serve"
+        "command": "npx nx run demo:serve"
       }
     },
     "serve": {

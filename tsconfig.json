@@ -13,10 +13,10 @@
       "path": "./packages/builder"
     },
     {
-      "path": "./apps/builder"
+      "path": "./packages/fields"
     },
     {
-      "path": "./packages/fields"
+      "path": "./apps/demo"
     }
   ]
 }
