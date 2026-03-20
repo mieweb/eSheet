@@ -1,0 +1,80 @@
+@import url('https://fonts.googleapis.com/css2?family=Titillium+Web:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700&display=swap');
+@import 'tailwindcss/theme' prefix(ms);
+@import 'tailwindcss/utilities' prefix(ms);
+
+@source "../**/*.{ts,tsx}";
+@source "../../fields/src/**/*.{ts,tsx}";
+
+/* ------------------------------------------------------------------ */
+/* Semantic color tokens (same as builder/fields)                      */
+/* ------------------------------------------------------------------ */
+@theme {
+  --color-msprimary: #3b82f6;
+  --color-mssecondary: #6b7280;
+  --color-msaccent: #10b981;
+  --color-msdanger: #ef4444;
+  --color-mswarning: #f97316;
+  --color-mssurface: #ffffff;
+  --color-msborder: #e5e7eb;
+  --color-msborderinactive: #9ca3af;
+  --color-mstext: #111827;
+  --color-mstextsecondary: #f8fafc;
+  --color-mstextmuted: #6b7280;
+  --color-msbackground: #f9fafb;
+  --color-msbackgroundsecondary: #f3f4f6;
+  --color-msbackgroundhover: #eceef1;
+  --color-msoverlay: rgba(0, 0, 0, 0.5);
+}
+
+/* ------------------------------------------------------------------ */
+/* Scoped resets (don't leak into consuming app)                        */
+/* ------------------------------------------------------------------ */
+@layer utilities {
+  .msheet-renderer-root {
+    font-family: 'Titillium Web', ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .msheet-renderer-root,
+  .msheet-renderer-root *,
+  .msheet-renderer-root *::before,
+  .msheet-renderer-root *::after {
+    box-sizing: border-box;
+    border-width: 0;
+    border-style: solid;
+    border-color: var(--ms-color-msborder, #e5e7eb);
+  }
+
+  .msheet-renderer-root button,
+  .msheet-renderer-root input,
+  .msheet-renderer-root select,
+  .msheet-renderer-root textarea {
+    font: inherit;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Dark mode variant — scoped to wrapper class                         */
+/* ------------------------------------------------------------------ */
+@custom-variant dark (&:where(.msheet-renderer-root.dark, .msheet-renderer-root.dark *));
+
+/* ------------------------------------------------------------------ */
+/* Dark mode theme overrides                                           */
+/* ------------------------------------------------------------------ */
+.msheet-renderer-root.dark {
+  --ms-color-msprimary: #6b7fa3; /* grayish-blue for dark mode */
+  --ms-color-mssecondary: #9ca3af; /* gray-400 */
+  --ms-color-msaccent: #34d399; /* green-400 */
+  --ms-color-msdanger: #f87171; /* red-400 */
+  --ms-color-mswarning: #fb923c; /* orange-400 */
+
+  --ms-color-mssurface: #252526; /* VS Code sidebar */
+  --ms-color-msborder: #3c3c3c; /* VS Code border */
+  --ms-color-msborderinactive: #5a5a5a; /* unchecked inputs */
+  --ms-color-mstext: #d4d4d4; /* VS Code foreground */
+  --ms-color-mstextsecondary: #1e1e1e; /* text on primary bg */
+  --ms-color-mstextmuted: #808080; /* VS Code muted text */
+  --ms-color-msbackground: #1e1e1e; /* VS Code editor background */
+  --ms-color-msbackgroundsecondary: #252526; /* VS Code sidebar */
+  --ms-color-msbackgroundhover: #2a2d2e; /* VS Code list hover */
+  --ms-color-msoverlay: rgba(0, 0, 0, 0.7); /* darker overlay for dark mode */
+}

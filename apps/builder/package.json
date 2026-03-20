@@ -6,6 +6,7 @@
     "name": "builder-app"
   },
   "dependencies": {
-    "@msheet/fields": "^0.0.1"
+    "@msheet/fields": "^0.0.1",
+    "@msheet/renderer": "^0.0.1"
   }
 }

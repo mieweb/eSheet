@@ -2,6 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./out-tsc/vitest",
+    "lib": ["es2022", "dom", "dom.iterable"],
+    "jsx": "react-jsx",
     "types": [
       "vitest/globals",
       "vitest/importMeta",

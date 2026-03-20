@@ -45,7 +45,7 @@ const CATEGORY_ICONS: Record<string, IconComponent> = {
   Organization: OrganizationIcon,
 };
 
-import { getFieldComponent } from '../component-registry.js';
+import { getFieldComponent } from '@msheet/fields';
 
 /** Build category → field type[] map from the registry. Only includes types with a registered React component. */
 function buildCategories(): Record<string, { type: string; label: string }[]> {

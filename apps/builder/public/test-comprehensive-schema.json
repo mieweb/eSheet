@@ -1,0 +1,1687 @@
+{
+  "schemaType": "mieforms-v1.0",
+  "id": "comprehensive-test-schema",
+  "title": "Comprehensive Field & Condition Test",
+  "fields": [
+    {
+      "id": "intro-html",
+      "fieldType": "html",
+      "htmlContent": "<h2 style='margin:0 0 8px'>Comprehensive Test Form</h2><p>This schema exercises <strong>every field type</strong> and <strong>every condition operator</strong>. Follow the instructions in each question to verify conditional logic.</p><hr/><p><em>Sections:</em> 1) Driver Inputs &rarr; 2) Field-condition tests &rarr; 3) Expression-condition tests &rarr; 4) Rich-content fields &rarr; 5) Matrix fields &rarr; 6) Multi-effect &amp; combined logic</p>",
+      "iframeHeight": 160
+    },
+
+    {
+      "id": "section-drivers",
+      "fieldType": "section",
+      "title": "1 · Driver Inputs (set these first — all other sections react to them)",
+      "fields": [
+        {
+          "id": "drv-radio",
+          "fieldType": "radio",
+          "question": "Driver Radio — pick an option (used by equals / notEquals / empty / notEmpty tests)",
+          "required": true,
+          "options": [
+            { "id": "drv-radio-a", "value": "alpha", "text": "Alpha" },
+            { "id": "drv-radio-b", "value": "bravo", "text": "Bravo" },
+            { "id": "drv-radio-c", "value": "charlie", "text": "Charlie" }
+          ]
+        },
+        {
+          "id": "drv-text",
+          "fieldType": "text",
+          "question": "Driver Text — type a word (used by equals / notEquals / contains / empty / notEmpty tests)",
+          "inputType": "string"
+        },
+        {
+          "id": "drv-number",
+          "fieldType": "text",
+          "question": "Driver Number — enter a number (used by greaterThan / lessThan / expression tests)",
+          "inputType": "number",
+          "unit": "#"
+        },
+        {
+          "id": "drv-check",
+          "fieldType": "check",
+          "question": "Driver Checkbox — tick one or more (used by includes / empty / notEmpty tests)",
+          "options": [
+            { "id": "drv-chk-x", "value": "x-ray", "text": "X-Ray" },
+            { "id": "drv-chk-y", "value": "yankee", "text": "Yankee" },
+            { "id": "drv-chk-z", "value": "zulu", "text": "Zulu" }
+          ]
+        },
+        {
+          "id": "drv-dropdown",
+          "fieldType": "dropdown",
+          "question": "Driver Dropdown — choose a size (used by equals / notEquals tests)",
+          "options": [
+            { "id": "drv-dd-s", "value": "small", "text": "Small" },
+            { "id": "drv-dd-m", "value": "medium", "text": "Medium" },
+            { "id": "drv-dd-l", "value": "large", "text": "Large" }
+          ]
+        },
+        {
+          "id": "drv-multiselect",
+          "fieldType": "multiselectdropdown",
+          "question": "Driver Multi-Select Dropdown — pick one or more (used by includes / empty / notEmpty tests)",
+          "options": [
+            { "id": "drv-ms-r", "value": "red", "text": "Red" },
+            { "id": "drv-ms-g", "value": "green", "text": "Green" },
+            { "id": "drv-ms-b", "value": "blue", "text": "Blue" }
+          ]
+        },
+        {
+          "id": "drv-boolean",
+          "fieldType": "boolean",
+          "question": "Driver Boolean — yes or no (used by equals test)",
+          "options": [
+            { "id": "drv-bool-y", "value": "yes", "text": "Yes" },
+            { "id": "drv-bool-n", "value": "no", "text": "No" }
+          ]
+        },
+        {
+          "id": "drv-slider",
+          "fieldType": "slider",
+          "question": "Driver Slider — pick 1-10 (used by numeric comparison & expression tests)",
+          "options": [
+            { "id": "drv-sl-1", "value": "1", "text": "1" },
+            { "id": "drv-sl-2", "value": "2", "text": "2" },
+            { "id": "drv-sl-3", "value": "3", "text": "3" },
+            { "id": "drv-sl-4", "value": "4", "text": "4" },
+            { "id": "drv-sl-5", "value": "5", "text": "5" },
+            { "id": "drv-sl-6", "value": "6", "text": "6" },
+            { "id": "drv-sl-7", "value": "7", "text": "7" },
+            { "id": "drv-sl-8", "value": "8", "text": "8" },
+            { "id": "drv-sl-9", "value": "9", "text": "9" },
+            { "id": "drv-sl-10", "value": "10", "text": "10" }
+          ]
+        },
+        {
+          "id": "drv-rating",
+          "fieldType": "rating",
+          "question": "Driver Rating — 1-5 stars (used by greaterThanOrEqual / lessThanOrEqual tests)",
+          "options": [
+            { "id": "drv-rt-1", "value": "1", "text": "1" },
+            { "id": "drv-rt-2", "value": "2", "text": "2" },
+            { "id": "drv-rt-3", "value": "3", "text": "3" },
+            { "id": "drv-rt-4", "value": "4", "text": "4" },
+            { "id": "drv-rt-5", "value": "5", "text": "5" }
+          ]
+        },
+        {
+          "id": "drv-ranking",
+          "fieldType": "ranking",
+          "question": "Driver Ranking — drag to rank (used by includes test)",
+          "options": [
+            { "id": "drv-rk-1", "value": "first", "text": "First" },
+            { "id": "drv-rk-2", "value": "second", "text": "Second" },
+            { "id": "drv-rk-3", "value": "third", "text": "Third" }
+          ]
+        },
+        {
+          "id": "drv-longtext",
+          "fieldType": "longtext",
+          "question": "Driver Long Text — write a paragraph (used by contains / empty tests)"
+        },
+        {
+          "id": "drv-multitext",
+          "fieldType": "multitext",
+          "question": "Driver Multitext — fill in the sub-fields",
+          "options": [
+            { "id": "drv-mt-a", "value": "Line A" },
+            { "id": "drv-mt-b", "value": "Line B" }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "section-field-conditions",
+      "fieldType": "section",
+      "title": "2 · Field-Based Conditions (conditionType: field)",
+      "fields": [
+        {
+          "id": "fc-equals-radio",
+          "fieldType": "text",
+          "question": "EQUALS — visible when Driver Radio = Alpha",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-radio",
+                  "operator": "equals",
+                  "expected": "drv-radio-a"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fc-notequals-radio",
+          "fieldType": "text",
+          "question": "NOT EQUALS — visible when Driver Radio ≠ Alpha",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-radio",
+                  "operator": "notEquals",
+                  "expected": "drv-radio-a"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fc-equals-text",
+          "fieldType": "text",
+          "question": "EQUALS (text) — visible when Driver Text = 'hello'",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-text",
+                  "operator": "equals",
+                  "expected": "hello"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fc-notequals-text",
+          "fieldType": "text",
+          "question": "NOT EQUALS (text) — visible when Driver Text ≠ 'hello'",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-text",
+                  "operator": "notEquals",
+                  "expected": "hello"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fc-contains-text",
+          "fieldType": "text",
+          "question": "CONTAINS — visible when Driver Text contains 'world'",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-text",
+                  "operator": "contains",
+                  "expected": "world"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fc-contains-longtext",
+          "fieldType": "text",
+          "question": "CONTAINS (longtext) — visible when Driver Long Text contains 'test'",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-longtext",
+                  "operator": "contains",
+                  "expected": "test"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fc-empty-text",
+          "fieldType": "text",
+          "question": "EMPTY — visible when Driver Text is empty (clear it to see this)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-text",
+                  "operator": "empty"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fc-notempty-text",
+          "fieldType": "text",
+          "question": "NOT EMPTY — visible when Driver Text is not empty (type anything)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-text",
+                  "operator": "notEmpty"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fc-empty-radio",
+          "fieldType": "text",
+          "question": "EMPTY (radio) — visible when Driver Radio has no selection",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-radio",
+                  "operator": "empty"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fc-notempty-radio",
+          "fieldType": "text",
+          "question": "NOT EMPTY (radio) — visible when Driver Radio has a selection",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-radio",
+                  "operator": "notEmpty"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fc-includes-check",
+          "fieldType": "text",
+          "question": "INCLUDES — visible when Driver Checkbox includes 'Yankee'",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-check",
+                  "operator": "includes",
+                  "expected": "drv-chk-y"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fc-includes-multiselect",
+          "fieldType": "text",
+          "question": "INCLUDES (multiselectdropdown) — visible when Driver Multi-Select includes 'Green'",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-multiselect",
+                  "operator": "includes",
+                  "expected": "drv-ms-g"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fc-includes-ranking",
+          "fieldType": "text",
+          "question": "INCLUDES (ranking) — visible when Driver Ranking includes 'Second'",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-ranking",
+                  "operator": "includes",
+                  "expected": "drv-rk-2"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fc-empty-check",
+          "fieldType": "text",
+          "question": "EMPTY (check) — visible when Driver Checkbox has nothing ticked",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-check",
+                  "operator": "empty"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fc-notempty-check",
+          "fieldType": "text",
+          "question": "NOT EMPTY (check) — visible when Driver Checkbox has at least one tick",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-check",
+                  "operator": "notEmpty"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fc-equals-dropdown",
+          "fieldType": "text",
+          "question": "EQUALS (dropdown) — visible when Driver Dropdown = Medium",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-dropdown",
+                  "operator": "equals",
+                  "expected": "drv-dd-m"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fc-notequals-dropdown",
+          "fieldType": "text",
+          "question": "NOT EQUALS (dropdown) — visible when Driver Dropdown ≠ Medium",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-dropdown",
+                  "operator": "notEquals",
+                  "expected": "drv-dd-m"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fc-equals-boolean",
+          "fieldType": "text",
+          "question": "EQUALS (boolean) — visible when Driver Boolean = Yes",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-boolean",
+                  "operator": "equals",
+                  "expected": "drv-bool-y"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fc-gt-slider",
+          "fieldType": "text",
+          "question": "GREATER THAN — visible when Driver Slider > 5",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-slider",
+                  "operator": "greaterThan",
+                  "expected": "5"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fc-gte-rating",
+          "fieldType": "text",
+          "question": "GREATER THAN OR EQUAL — visible when Driver Rating ≥ 3",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-rating",
+                  "operator": "greaterThanOrEqual",
+                  "expected": "3"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fc-lt-slider",
+          "fieldType": "text",
+          "question": "LESS THAN — visible when Driver Slider < 5",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-slider",
+                  "operator": "lessThan",
+                  "expected": "5"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fc-lte-rating",
+          "fieldType": "text",
+          "question": "LESS THAN OR EQUAL — visible when Driver Rating ≤ 2",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-rating",
+                  "operator": "lessThanOrEqual",
+                  "expected": "2"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fc-gt-number",
+          "fieldType": "text",
+          "question": "GREATER THAN (number input) — visible when Driver Number > 50",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-number",
+                  "operator": "greaterThan",
+                  "expected": "50"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fc-lt-number",
+          "fieldType": "text",
+          "question": "LESS THAN (number input) — visible when Driver Number < 50",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-number",
+                  "operator": "lessThan",
+                  "expected": "50"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "section-expr-conditions",
+      "fieldType": "section",
+      "title": "3 · Expression-Based Conditions (conditionType: expression)",
+      "fields": [
+        {
+          "id": "ec-gt",
+          "fieldType": "text",
+          "question": "EXPR > — visible when {drv-slider} > 7",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} > 7"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ec-lt",
+          "fieldType": "text",
+          "question": "EXPR < — visible when {drv-slider} < 3",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} < 3"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ec-gte",
+          "fieldType": "text",
+          "question": "EXPR >= — visible when {drv-rating} >= 4",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-rating} >= 4"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ec-lte",
+          "fieldType": "text",
+          "question": "EXPR <= — visible when {drv-rating} <= 2",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-rating} <= 2"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ec-eq",
+          "fieldType": "text",
+          "question": "EXPR == — visible when {drv-slider} == 5",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} == 5"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ec-neq",
+          "fieldType": "text",
+          "question": "EXPR != — visible when {drv-slider} != 5",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} != 5"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ec-arithmetic",
+          "fieldType": "display",
+          "question": "Arithmetic — computed sum",
+          "content": "## Slider + Rating\n\n- Slider value: {drv-slider}\n- Rating value: {drv-rating}\n- **Sum: <{drv-slider} + {drv-rating}>**\n- **Product: <{drv-slider} * {drv-rating}>**"
+        },
+        {
+          "id": "ec-and-logic",
+          "fieldType": "text",
+          "question": "EXPR && — visible when {drv-slider} > 3 AND {drv-rating} > 2   (both must be true)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} > 3 && {drv-rating} > 2"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ec-or-logic",
+          "fieldType": "text",
+          "question": "EXPR || — visible when {drv-slider} > 8 OR {drv-rating} > 4   (either is true)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} > 8 || {drv-rating} > 4"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ec-not-logic",
+          "fieldType": "text",
+          "question": "EXPR ! (negation) — visible when NOT ({drv-slider} > 5)   (slider must be ≤ 5)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "!({drv-slider} > 5)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ec-complex",
+          "fieldType": "text",
+          "question": "COMPLEX EXPR — visible when ({drv-slider} * {drv-rating}) > 20",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "({drv-slider} * {drv-rating}) > 20"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ec-member-length",
+          "fieldType": "text",
+          "question": "MEMBER ACCESS — visible when {drv-text}.length > 5   (type more than 5 characters in Driver Text)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-text}.length > 5"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ec-number-expr",
+          "fieldType": "text",
+          "question": "NUMBER EXPR — visible when {drv-number} > 100   (enter > 100 in Driver Number)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-number} > 100"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "section-effects",
+      "fieldType": "section",
+      "title": "4 · Conditional Effects (visible / enable / required)",
+      "fields": [
+        {
+          "id": "eff-visible",
+          "fieldType": "text",
+          "question": "VISIBLE effect — this field appears only when Driver Boolean = Yes",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-boolean",
+                  "operator": "equals",
+                  "expected": "drv-bool-y"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "eff-enable",
+          "fieldType": "text",
+          "question": "ENABLE effect — this field is disabled until Driver Boolean = Yes",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "enable",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-boolean",
+                  "operator": "equals",
+                  "expected": "drv-bool-y"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "eff-required",
+          "fieldType": "text",
+          "question": "REQUIRED effect — this field becomes required when Driver Boolean = Yes",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "required",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-boolean",
+                  "operator": "equals",
+                  "expected": "drv-bool-y"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "eff-multi-rule",
+          "fieldType": "text",
+          "question": "MULTIPLE EFFECTS — visible when Radio ≠ empty, required when Slider > 5 (two separate rules)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-radio",
+                  "operator": "notEmpty"
+                }
+              ]
+            },
+            {
+              "effect": "required",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} > 5"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "section-logic-modes",
+      "fieldType": "section",
+      "title": "5 · Logic Modes (AND / OR) & Mixed Conditions",
+      "fields": [
+        {
+          "id": "lm-and",
+          "fieldType": "text",
+          "question": "AND logic — visible when Driver Radio = Alpha AND Driver Dropdown = Large   (both required)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-radio",
+                  "operator": "equals",
+                  "expected": "drv-radio-a"
+                },
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-dropdown",
+                  "operator": "equals",
+                  "expected": "drv-dd-l"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "lm-or",
+          "fieldType": "text",
+          "question": "OR logic — visible when Driver Radio = Bravo OR Driver Dropdown = Small   (either works)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "OR",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-radio",
+                  "operator": "equals",
+                  "expected": "drv-radio-b"
+                },
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-dropdown",
+                  "operator": "equals",
+                  "expected": "drv-dd-s"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "lm-mixed-and",
+          "fieldType": "text",
+          "question": "MIXED AND — visible when Driver Boolean = Yes AND {drv-slider} > 5   (field + expression conditions together)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-boolean",
+                  "operator": "equals",
+                  "expected": "drv-bool-y"
+                },
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} > 5"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "lm-mixed-or",
+          "fieldType": "text",
+          "question": "MIXED OR — visible when Driver Text contains 'special' OR {drv-slider} == 10   (field + expression, either works)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "OR",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-text",
+                  "operator": "contains",
+                  "expected": "special"
+                },
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} == 10"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "section-conditional-section",
+      "fieldType": "section",
+      "title": "6 · Conditional Section (entire section hidden until Driver Radio = Charlie)",
+      "rules": [
+        {
+          "effect": "visible",
+          "logic": "AND",
+          "conditions": [
+            {
+              "conditionType": "field",
+              "targetId": "drv-radio",
+              "operator": "equals",
+              "expected": "drv-radio-c"
+            }
+          ]
+        }
+      ],
+      "fields": [
+        {
+          "id": "cs-inner-text",
+          "fieldType": "text",
+          "question": "You unlocked the hidden section! This entire section is only visible when Driver Radio = Charlie.",
+          "inputType": "string"
+        },
+        {
+          "id": "cs-inner-radio",
+          "fieldType": "radio",
+          "question": "Inner conditional — pick one (selecting 'Show nested' reveals a nested field below)",
+          "options": [
+            { "id": "cs-r-show", "value": "show", "text": "Show nested" },
+            { "id": "cs-r-hide", "value": "hide", "text": "Hide nested" }
+          ]
+        },
+        {
+          "id": "cs-nested",
+          "fieldType": "text",
+          "question": "Nested conditional — visible only when the inner radio = 'Show nested'   (condition inside a conditional section!)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "cs-inner-radio",
+                  "operator": "equals",
+                  "expected": "cs-r-show"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "section-rich-content",
+      "fieldType": "section",
+      "title": "7 · Rich Content Fields (html, image, display, signature, diagram)",
+      "fields": [
+        {
+          "id": "rc-html",
+          "fieldType": "html",
+          "htmlContent": "<div style='padding:12px;background:#f0f9ff;border-left:4px solid #0284c7;border-radius:4px'><h3 style='margin:0 0 4px'>HTML Field</h3><p style='margin:0'>This is a <strong>styled HTML block</strong> with a <a href='#'>link</a>, <em>emphasis</em>, and a list:</p><ol><li>Item one</li><li>Item two</li><li>Item three</li></ol></div>",
+          "iframeHeight": 180
+        },
+        {
+          "id": "rc-html-conditional",
+          "fieldType": "html",
+          "htmlContent": "<div style='padding:12px;background:#fef3c7;border-left:4px solid #f59e0b;border-radius:4px'><h3 style='margin:0 0 4px'>⚠ Conditional HTML</h3><p style='margin:0'>This HTML block only appears when Driver Slider > 5.</p></div>",
+          "iframeHeight": 80,
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} > 5"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "rc-image",
+          "fieldType": "image",
+          "question": "Image Field",
+          "imageUri": "https://placehold.co/400x200/0284c7/white?text=Test+Image",
+          "altText": "Placeholder test image",
+          "caption": "A 400×200 placeholder image for testing"
+        },
+        {
+          "id": "rc-display-simple",
+          "fieldType": "display",
+          "question": "Display — Simple References",
+          "content": "## Live Values\n\n- Driver Text: {drv-text}\n- Driver Number: {drv-number}\n- Driver Slider: {drv-slider}\n- Driver Rating: {drv-rating}"
+        },
+        {
+          "id": "rc-display-computed",
+          "fieldType": "display",
+          "question": "Display — Computed Expressions",
+          "content": "## Computed Results\n\n- Slider × Rating = **<{drv-slider} * {drv-rating}>**\n- Slider + Number = **<{drv-slider} + {drv-number}>**\n- (Slider - Rating) = **<{drv-slider} - {drv-rating}>**\n- Slider mod 3 = **<{drv-slider} % 3>**"
+        },
+        {
+          "id": "rc-display-conditional",
+          "fieldType": "display",
+          "question": "Display — Conditional (visible when Slider > 5 AND Rating > 3)",
+          "content": "## High Scores Detected!\n\n*Both Slider and Rating are above the threshold.*\n\n- Combined: **<{drv-slider} + {drv-rating}>** points",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} > 5 && {drv-rating} > 3"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "rc-signature",
+          "fieldType": "signature",
+          "question": "Signature Field — draw your signature below",
+          "padPlaceholder": "Sign here"
+        },
+        {
+          "id": "rc-diagram",
+          "fieldType": "diagram",
+          "question": "Diagram Field — sketch or annotate below",
+          "padPlaceholder": "Draw here"
+        }
+      ]
+    },
+
+    {
+      "id": "section-matrix",
+      "fieldType": "section",
+      "title": "8 · Matrix Fields",
+      "fields": [
+        {
+          "id": "mx-single",
+          "fieldType": "singlematrix",
+          "question": "Single Matrix — select one option per row",
+          "rows": [
+            { "id": "mx-s-r1", "value": "Speed" },
+            { "id": "mx-s-r2", "value": "Quality" },
+            { "id": "mx-s-r3", "value": "Support" }
+          ],
+          "columns": [
+            { "id": "mx-s-c1", "value": "Poor" },
+            { "id": "mx-s-c2", "value": "OK" },
+            { "id": "mx-s-c3", "value": "Good" },
+            { "id": "mx-s-c4", "value": "Excellent" }
+          ]
+        },
+        {
+          "id": "mx-multi",
+          "fieldType": "multimatrix",
+          "question": "Multi Matrix — select multiple options per row",
+          "rows": [
+            { "id": "mx-m-r1", "value": "Feature A" },
+            { "id": "mx-m-r2", "value": "Feature B" }
+          ],
+          "columns": [
+            { "id": "mx-m-c1", "value": "Important" },
+            { "id": "mx-m-c2", "value": "Easy" },
+            { "id": "mx-m-c3", "value": "Fast" }
+          ]
+        },
+        {
+          "id": "mx-conditional",
+          "fieldType": "singlematrix",
+          "question": "Conditional Matrix — visible only when Driver Boolean = Yes",
+          "rows": [
+            { "id": "mx-c-r1", "value": "Taste" },
+            { "id": "mx-c-r2", "value": "Texture" }
+          ],
+          "columns": [
+            { "id": "mx-c-c1", "value": "1" },
+            { "id": "mx-c-c2", "value": "2" },
+            { "id": "mx-c-c3", "value": "3" }
+          ],
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-boolean",
+                  "operator": "equals",
+                  "expected": "drv-bool-y"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "section-all-field-types-conditional",
+      "fieldType": "section",
+      "title": "9 · Every Field Type with a Condition (each hidden until Driver Slider ≥ 3)",
+      "fields": [
+        {
+          "id": "aft-text",
+          "fieldType": "text",
+          "question": "Text (string) — visible when Slider ≥ 3",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "aft-text-num",
+          "fieldType": "text",
+          "question": "Text (number) — visible when Slider ≥ 3",
+          "inputType": "number",
+          "unit": "kg",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "aft-text-email",
+          "fieldType": "text",
+          "question": "Text (email) — visible when Slider ≥ 3",
+          "inputType": "email",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "aft-text-date",
+          "fieldType": "text",
+          "question": "Text (date) — visible when Slider ≥ 3",
+          "inputType": "date",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "aft-text-tel",
+          "fieldType": "text",
+          "question": "Text (tel) — visible when Slider ≥ 3",
+          "inputType": "tel",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "aft-text-url",
+          "fieldType": "text",
+          "question": "Text (url) — visible when Slider ≥ 3",
+          "inputType": "url",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "aft-text-time",
+          "fieldType": "text",
+          "question": "Text (time) — visible when Slider ≥ 3",
+          "inputType": "time",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "aft-text-datetime",
+          "fieldType": "text",
+          "question": "Text (datetime-local) — visible when Slider ≥ 3",
+          "inputType": "datetime-local",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "aft-text-month",
+          "fieldType": "text",
+          "question": "Text (month) — visible when Slider ≥ 3",
+          "inputType": "month",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "aft-longtext",
+          "fieldType": "longtext",
+          "question": "Long Text — visible when Slider ≥ 3",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "aft-multitext",
+          "fieldType": "multitext",
+          "question": "Multitext — visible when Slider ≥ 3",
+          "options": [
+            { "id": "aft-mt-1", "value": "Sub-field 1" },
+            { "id": "aft-mt-2", "value": "Sub-field 2" }
+          ],
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "aft-radio",
+          "fieldType": "radio",
+          "question": "Radio — visible when Slider ≥ 3",
+          "options": [
+            { "id": "aft-r-1", "value": "opt1", "text": "Option 1" },
+            { "id": "aft-r-2", "value": "opt2", "text": "Option 2" }
+          ],
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "aft-check",
+          "fieldType": "check",
+          "question": "Checkbox — visible when Slider ≥ 3",
+          "options": [
+            { "id": "aft-c-1", "value": "chk1", "text": "Check 1" },
+            { "id": "aft-c-2", "value": "chk2", "text": "Check 2" }
+          ],
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "aft-boolean",
+          "fieldType": "boolean",
+          "question": "Boolean — visible when Slider ≥ 3",
+          "options": [
+            { "id": "aft-b-y", "value": "yes", "text": "Yes" },
+            { "id": "aft-b-n", "value": "no", "text": "No" }
+          ],
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "aft-dropdown",
+          "fieldType": "dropdown",
+          "question": "Dropdown — visible when Slider ≥ 3",
+          "options": [
+            { "id": "aft-d-1", "value": "d1", "text": "Drop 1" },
+            { "id": "aft-d-2", "value": "d2", "text": "Drop 2" }
+          ],
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "aft-multiselectdropdown",
+          "fieldType": "multiselectdropdown",
+          "question": "Multi-Select Dropdown — visible when Slider ≥ 3",
+          "options": [
+            { "id": "aft-msd-1", "value": "ms1", "text": "Multi 1" },
+            { "id": "aft-msd-2", "value": "ms2", "text": "Multi 2" }
+          ],
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "aft-rating",
+          "fieldType": "rating",
+          "question": "Rating — visible when Slider ≥ 3",
+          "options": [
+            { "id": "aft-rt-1", "value": "1", "text": "1" },
+            { "id": "aft-rt-2", "value": "2", "text": "2" },
+            { "id": "aft-rt-3", "value": "3", "text": "3" },
+            { "id": "aft-rt-4", "value": "4", "text": "4" },
+            { "id": "aft-rt-5", "value": "5", "text": "5" }
+          ],
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "aft-ranking",
+          "fieldType": "ranking",
+          "question": "Ranking — visible when Slider ≥ 3",
+          "options": [
+            { "id": "aft-rk-1", "value": "rank1", "text": "Rank A" },
+            { "id": "aft-rk-2", "value": "rank2", "text": "Rank B" },
+            { "id": "aft-rk-3", "value": "rank3", "text": "Rank C" }
+          ],
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "aft-slider",
+          "fieldType": "slider",
+          "question": "Slider — visible when Slider ≥ 3",
+          "options": [
+            { "id": "aft-sl-1", "value": "1", "text": "1" },
+            { "id": "aft-sl-2", "value": "2", "text": "2" },
+            { "id": "aft-sl-3", "value": "3", "text": "3" },
+            { "id": "aft-sl-4", "value": "4", "text": "4" },
+            { "id": "aft-sl-5", "value": "5", "text": "5" }
+          ],
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "aft-singlematrix",
+          "fieldType": "singlematrix",
+          "question": "Single Matrix — visible when Slider ≥ 3",
+          "rows": [{ "id": "aft-sm-r1", "value": "Row 1" }],
+          "columns": [
+            { "id": "aft-sm-c1", "value": "Col 1" },
+            { "id": "aft-sm-c2", "value": "Col 2" }
+          ],
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "aft-multimatrix",
+          "fieldType": "multimatrix",
+          "question": "Multi Matrix — visible when Slider ≥ 3",
+          "rows": [{ "id": "aft-mm-r1", "value": "Row 1" }],
+          "columns": [
+            { "id": "aft-mm-c1", "value": "Col 1" },
+            { "id": "aft-mm-c2", "value": "Col 2" }
+          ],
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -6,7 +6,7 @@
 // need to manually wire up every field.
 // ---------------------------------------------------------------------------
 
-import { registerBuilderComponents } from './component-registry.js';
+import { registerFieldComponents } from '@msheet/fields';
 import {
   TextField,
   LongTextField,
@@ -29,7 +29,7 @@ import {
   DisplayField,
 } from '@msheet/fields';
 
-registerBuilderComponents({
+registerFieldComponents({
   text: TextField,
   longtext: LongTextField,
   multitext: MultiTextField,

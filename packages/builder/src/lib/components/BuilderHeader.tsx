@@ -1,4 +1,5 @@
 import React, { useSyncExternalStore } from 'react';
+import YAML from 'js-yaml';
 import {
   formDefinitionSchema,
   type Condition,
@@ -245,10 +246,18 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.currentTarget.files?.[0];
     if (!file) return;
+
+    // Detect file format from extension
+    const fileName = file.name.toLowerCase();
+    const isYaml = fileName.endsWith('.yaml') || fileName.endsWith('.yml');
+    const format = isYaml ? 'YAML' : 'JSON';
+
     const reader = new FileReader();
     reader.onload = (ev) => {
       try {
-        const parsed = JSON.parse(ev.target?.result as string);
+        const content = ev.target?.result as string;
+        const parsed = isYaml ? YAML.load(content) : JSON.parse(content);
+
         const validated = formDefinitionSchema.safeParse(parsed);
         if (!validated.success) {
           const issues = validated.error.issues.map((issue) => {
@@ -261,7 +270,7 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
           showFeedback(
             'error',
             'Import Failed',
-            'The file is valid JSON but does not match the form schema.',
+            `The file is valid ${format} but does not match the form schema.`,
             details
           );
           return;
@@ -286,7 +295,11 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
           `Loaded ${validated.data.fields.length} field(s).`
         );
       } catch {
-        showFeedback('error', 'Import Failed', 'Invalid JSON file format.');
+        showFeedback(
+          'error',
+          'Import Failed',
+          `Invalid ${format} file format.`
+        );
       }
     };
     reader.readAsText(file);
@@ -343,9 +356,9 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".json,application/json"
+                accept=".json,.yaml,.yml,application/json,application/x-yaml,text/yaml"
                 onChange={handleImport}
-                aria-label="Import form JSON"
+                aria-label="Import form (JSON or YAML)"
                 className="ms:hidden"
               />
             </label>

@@ -1,0 +1,22 @@
+{
+  "name": "@msheet/fields",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "targets": {
+    "build:css": {
+      "command": "npx @tailwindcss/cli -i packages/fields/src/index.css -o packages/fields/src/index.output.css",
+      "options": {
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "build:css:watch": {
+      "command": "npx @tailwindcss/cli -i packages/fields/src/index.css -o packages/fields/src/index.output.css --watch",
+      "continuous": true,
+      "options": {
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "build": {
+      "dependsOn": ["build:css", "^build"]
+    }
+  }
+}

@@ -3,6 +3,7 @@
 @import 'tailwindcss/utilities' prefix(ms);
 
 @source "../**/*.{ts,tsx}";
+@source "../../fields/src/**/*.{ts,tsx}";
 
 /* ------------------------------------------------------------------ */
 /* Semantic color tokens                                               */
@@ -54,4 +55,26 @@
   .ms-builder-root textarea {
     font: inherit;
   }
+}
+
+/* ------------------------------------------------------------------ */
+/* Dark mode theme overrides                                           */
+/* ------------------------------------------------------------------ */
+.ms-builder-root.dark {
+  --ms-color-msprimary: #6b7fa3; /* grayish-blue for dark mode */
+  --ms-color-mssecondary: #9ca3af; /* gray-400 */
+  --ms-color-msaccent: #34d399; /* green-400 */
+  --ms-color-msdanger: #f87171; /* red-400 */
+  --ms-color-mswarning: #fb923c; /* orange-400 */
+
+  --ms-color-mssurface: #252526; /* VS Code sidebar */
+  --ms-color-msborder: #3c3c3c; /* VS Code border */
+  --ms-color-msborderinactive: #5a5a5a; /* unchecked inputs */
+  --ms-color-mstext: #d4d4d4; /* VS Code foreground */
+  --ms-color-mstextsecondary: #1e1e1e; /* text on primary bg */
+  --ms-color-mstextmuted: #808080; /* VS Code muted text */
+  --ms-color-msbackground: #1e1e1e; /* VS Code editor background */
+  --ms-color-msbackgroundsecondary: #252526; /* VS Code sidebar */
+  --ms-color-msbackgroundhover: #2a2d2e; /* VS Code list hover */
+  --ms-color-msoverlay: rgba(0, 0, 0, 0.7); /* darker overlay for dark mode */
 }

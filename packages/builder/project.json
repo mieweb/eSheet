@@ -10,6 +10,7 @@
     },
     "build:css:watch": {
       "command": "npx @tailwindcss/cli -i packages/builder/src/index.css -o packages/builder/src/index.output.css --watch",
+      "continuous": true,
       "options": {
         "cwd": "{workspaceRoot}"
       }

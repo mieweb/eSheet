@@ -7,8 +7,7 @@ import {
 } from '@msheet/core';
 import { useVisibleFields } from '../hooks/useVisibleFields.js';
 import { FieldWrapper } from './FieldWrapper.js';
-import { FieldItem } from './FieldItem.js';
-import { getFieldComponent } from '../component-registry.js';
+import { getFieldComponent } from '@msheet/fields';
 
 export interface CanvasProps {
   /** The form store */
@@ -82,8 +81,10 @@ function DraggableFieldItem({
         selectedVariant={parentId ? 'nested' : 'default'}
       >
         {(props) => {
-          const Component =
-            getFieldComponent(props.field.definition.fieldType) ?? FieldItem;
+          const Component = getFieldComponent(
+            props.field.definition.fieldType
+          )!;
+
           if (props.field.definition.fieldType === 'section') {
             const SectionComponent = Component as React.ComponentType<
               FieldComponentProps & { nestedChildren?: React.ReactNode }

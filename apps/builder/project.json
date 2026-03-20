@@ -3,15 +3,22 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "targets": {
     "dev": {
-      "dependsOn": ["@msheet/builder:build:css"],
+      "dependsOn": [
+        { "projects": ["@msheet/builder"], "target": "build:css:watch" },
+        { "projects": ["@msheet/fields"], "target": "build:css:watch" },
+        { "projects": ["@msheet/renderer"], "target": "build:css:watch" }
+      ],
       "executor": "nx:run-commands",
       "options": {
-        "commands": [
-          "npx nx run builder-app:serve",
-          "npx nx run @msheet/builder:build:css:watch"
-        ],
-        "parallel": true
+        "command": "npx nx run builder-app:serve"
       }
+    },
+    "serve": {
+      "dependsOn": [
+        { "projects": ["@msheet/builder"], "target": "build:css" },
+        { "projects": ["@msheet/fields"], "target": "build:css" },
+        { "projects": ["@msheet/renderer"], "target": "build:css" }
+      ]
     }
   }
 }
