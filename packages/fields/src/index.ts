@@ -45,7 +45,12 @@ export type {
 } from './fields/index.js';
 
 // Shared React contexts and hooks
-export { FormStoreContext, UIContext, useFormStore, useUI } from './lib/context.js';
+export {
+  FormStoreContext,
+  UIContext,
+  useFormStore,
+  useUI,
+} from './lib/context.js';
 
 // Field component registry
 export {

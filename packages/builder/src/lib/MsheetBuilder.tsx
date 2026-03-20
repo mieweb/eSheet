@@ -19,7 +19,12 @@ import { PlusIcon } from './icons.js';
 // Contexts
 // ---------------------------------------------------------------------------
 
-export { FormStoreContext, UIContext, useFormStore, useUI } from '@msheet/fields';
+export {
+  FormStoreContext,
+  UIContext,
+  useFormStore,
+  useUI,
+} from '@msheet/fields';
 export const InstanceIdContext = React.createContext<string>('');
 
 /** Hook to access the per-instance ID for unique DOM element IDs. */

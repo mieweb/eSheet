@@ -53,7 +53,7 @@ const initialForm: FormDefinition = {
   ],
 };
 
-<MsheetBuilder initialDefinition={initialForm} onChange={handleChange} />
+<MsheetBuilder initialDefinition={initialForm} onChange={handleChange} />;
 ```
 
 ### Dark Mode
@@ -72,11 +72,11 @@ Add the `dark` class to the builder's root or any ancestor — the builder scope
 
 **Props:**
 
-| Prop | Type | Description |
-|------|------|-------------|
-| `initialDefinition` | `FormDefinition` | Pre-load a form schema |
-| `onChange` | `(def: FormDefinition) => void` | Callback on any form change |
-| `className` | `string` | Additional CSS classes for root |
+| Prop                | Type                            | Description                     |
+| ------------------- | ------------------------------- | ------------------------------- |
+| `initialDefinition` | `FormDefinition`                | Pre-load a form schema          |
+| `onChange`          | `(def: FormDefinition) => void` | Callback on any form change     |
+| `className`         | `string`                        | Additional CSS classes for root |
 
 ## Custom Field Types
 
@@ -95,10 +95,15 @@ registerFieldType({
 
 // Register the component
 registerCustomFieldTypes({
-  nps: { component: NpsField, meta: { /* ... */ } },
+  nps: {
+    component: NpsField,
+    meta: {
+      /* ... */
+    },
+  },
 });
 
-<MsheetBuilder onChange={handleChange} />
+<MsheetBuilder onChange={handleChange} />;
 ```
 
 ## CSS Architecture

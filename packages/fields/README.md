@@ -6,15 +6,15 @@
 
 ## Field Types
 
-| Category | Components |
-|----------|-----------|
-| **Text** | `TextField`, `LongTextField`, `MultiTextField` |
-| **Choice** | `RadioField`, `CheckField`, `BooleanField` |
-| **Select** | `DropdownField`, `MultiSelectDropdownField` |
-| **Scale** | `RatingField`, `RankingField`, `SliderField` |
-| **Matrix** | `SingleMatrixField`, `MultiMatrixField` |
-| **Rich** | `DisplayField`, `HtmlField`, `ImageField`, `SignatureField`, `DiagramField` |
-| **Layout** | `SectionField` |
+| Category   | Components                                                                  |
+| ---------- | --------------------------------------------------------------------------- |
+| **Text**   | `TextField`, `LongTextField`, `MultiTextField`                              |
+| **Choice** | `RadioField`, `CheckField`, `BooleanField`                                  |
+| **Select** | `DropdownField`, `MultiSelectDropdownField`                                 |
+| **Scale**  | `RatingField`, `RankingField`, `SliderField`                                |
+| **Matrix** | `SingleMatrixField`, `MultiMatrixField`                                     |
+| **Rich**   | `DisplayField`, `HtmlField`, `ImageField`, `SignatureField`, `DiagramField` |
+| **Layout** | `SectionField`                                                              |
 
 ## Shared Components
 
@@ -36,7 +36,12 @@ const Component = getFieldComponent('text'); // → TextField
 registerCustomFieldTypes({
   'my-custom': {
     component: MyCustomField,
-    meta: { type: 'my-custom', label: 'Custom', category: 'basic', defaultProps: {} },
+    meta: {
+      type: 'my-custom',
+      label: 'Custom',
+      category: 'basic',
+      defaultProps: {},
+    },
   },
 });
 ```

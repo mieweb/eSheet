@@ -149,7 +149,12 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "field", "targetId": "drv-radio", "operator": "equals", "expected": "drv-radio-a" }
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-radio",
+                  "operator": "equals",
+                  "expected": "drv-radio-a"
+                }
               ]
             }
           ]
@@ -164,7 +169,12 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "field", "targetId": "drv-radio", "operator": "notEquals", "expected": "drv-radio-a" }
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-radio",
+                  "operator": "notEquals",
+                  "expected": "drv-radio-a"
+                }
               ]
             }
           ]
@@ -179,7 +189,12 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "field", "targetId": "drv-text", "operator": "equals", "expected": "hello" }
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-text",
+                  "operator": "equals",
+                  "expected": "hello"
+                }
               ]
             }
           ]
@@ -194,7 +209,12 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "field", "targetId": "drv-text", "operator": "notEquals", "expected": "hello" }
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-text",
+                  "operator": "notEquals",
+                  "expected": "hello"
+                }
               ]
             }
           ]
@@ -209,7 +229,12 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "field", "targetId": "drv-text", "operator": "contains", "expected": "world" }
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-text",
+                  "operator": "contains",
+                  "expected": "world"
+                }
               ]
             }
           ]
@@ -224,7 +249,12 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "field", "targetId": "drv-longtext", "operator": "contains", "expected": "test" }
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-longtext",
+                  "operator": "contains",
+                  "expected": "test"
+                }
               ]
             }
           ]
@@ -239,7 +269,11 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "field", "targetId": "drv-text", "operator": "empty" }
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-text",
+                  "operator": "empty"
+                }
               ]
             }
           ]
@@ -254,7 +288,11 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "field", "targetId": "drv-text", "operator": "notEmpty" }
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-text",
+                  "operator": "notEmpty"
+                }
               ]
             }
           ]
@@ -269,7 +307,11 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "field", "targetId": "drv-radio", "operator": "empty" }
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-radio",
+                  "operator": "empty"
+                }
               ]
             }
           ]
@@ -284,7 +326,11 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "field", "targetId": "drv-radio", "operator": "notEmpty" }
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-radio",
+                  "operator": "notEmpty"
+                }
               ]
             }
           ]
@@ -299,7 +345,12 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "field", "targetId": "drv-check", "operator": "includes", "expected": "drv-chk-y" }
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-check",
+                  "operator": "includes",
+                  "expected": "drv-chk-y"
+                }
               ]
             }
           ]
@@ -314,7 +365,12 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "field", "targetId": "drv-multiselect", "operator": "includes", "expected": "drv-ms-g" }
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-multiselect",
+                  "operator": "includes",
+                  "expected": "drv-ms-g"
+                }
               ]
             }
           ]
@@ -329,7 +385,12 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "field", "targetId": "drv-ranking", "operator": "includes", "expected": "drv-rk-2" }
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-ranking",
+                  "operator": "includes",
+                  "expected": "drv-rk-2"
+                }
               ]
             }
           ]
@@ -344,7 +405,11 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "field", "targetId": "drv-check", "operator": "empty" }
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-check",
+                  "operator": "empty"
+                }
               ]
             }
           ]
@@ -359,7 +424,11 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "field", "targetId": "drv-check", "operator": "notEmpty" }
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-check",
+                  "operator": "notEmpty"
+                }
               ]
             }
           ]
@@ -374,7 +443,12 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "field", "targetId": "drv-dropdown", "operator": "equals", "expected": "drv-dd-m" }
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-dropdown",
+                  "operator": "equals",
+                  "expected": "drv-dd-m"
+                }
               ]
             }
           ]
@@ -389,7 +463,12 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "field", "targetId": "drv-dropdown", "operator": "notEquals", "expected": "drv-dd-m" }
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-dropdown",
+                  "operator": "notEquals",
+                  "expected": "drv-dd-m"
+                }
               ]
             }
           ]
@@ -404,7 +483,12 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "field", "targetId": "drv-boolean", "operator": "equals", "expected": "drv-bool-y" }
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-boolean",
+                  "operator": "equals",
+                  "expected": "drv-bool-y"
+                }
               ]
             }
           ]
@@ -419,7 +503,12 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "field", "targetId": "drv-slider", "operator": "greaterThan", "expected": "5" }
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-slider",
+                  "operator": "greaterThan",
+                  "expected": "5"
+                }
               ]
             }
           ]
@@ -434,7 +523,12 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "field", "targetId": "drv-rating", "operator": "greaterThanOrEqual", "expected": "3" }
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-rating",
+                  "operator": "greaterThanOrEqual",
+                  "expected": "3"
+                }
               ]
             }
           ]
@@ -449,7 +543,12 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "field", "targetId": "drv-slider", "operator": "lessThan", "expected": "5" }
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-slider",
+                  "operator": "lessThan",
+                  "expected": "5"
+                }
               ]
             }
           ]
@@ -464,7 +563,12 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "field", "targetId": "drv-rating", "operator": "lessThanOrEqual", "expected": "2" }
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-rating",
+                  "operator": "lessThanOrEqual",
+                  "expected": "2"
+                }
               ]
             }
           ]
@@ -479,7 +583,12 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "field", "targetId": "drv-number", "operator": "greaterThan", "expected": "50" }
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-number",
+                  "operator": "greaterThan",
+                  "expected": "50"
+                }
               ]
             }
           ]
@@ -494,7 +603,12 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "field", "targetId": "drv-number", "operator": "lessThan", "expected": "50" }
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-number",
+                  "operator": "lessThan",
+                  "expected": "50"
+                }
               ]
             }
           ]
@@ -517,7 +631,10 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "expression", "expression": "{drv-slider} > 7" }
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} > 7"
+                }
               ]
             }
           ]
@@ -532,7 +649,10 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "expression", "expression": "{drv-slider} < 3" }
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} < 3"
+                }
               ]
             }
           ]
@@ -547,7 +667,10 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "expression", "expression": "{drv-rating} >= 4" }
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-rating} >= 4"
+                }
               ]
             }
           ]
@@ -562,7 +685,10 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "expression", "expression": "{drv-rating} <= 2" }
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-rating} <= 2"
+                }
               ]
             }
           ]
@@ -577,7 +703,10 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "expression", "expression": "{drv-slider} == 5" }
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} == 5"
+                }
               ]
             }
           ]
@@ -592,7 +721,10 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "expression", "expression": "{drv-slider} != 5" }
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} != 5"
+                }
               ]
             }
           ]
@@ -613,7 +745,10 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "expression", "expression": "{drv-slider} > 3 && {drv-rating} > 2" }
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} > 3 && {drv-rating} > 2"
+                }
               ]
             }
           ]
@@ -628,7 +763,10 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "expression", "expression": "{drv-slider} > 8 || {drv-rating} > 4" }
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} > 8 || {drv-rating} > 4"
+                }
               ]
             }
           ]
@@ -643,7 +781,10 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "expression", "expression": "!({drv-slider} > 5)" }
+                {
+                  "conditionType": "expression",
+                  "expression": "!({drv-slider} > 5)"
+                }
               ]
             }
           ]
@@ -658,7 +799,10 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "expression", "expression": "({drv-slider} * {drv-rating}) > 20" }
+                {
+                  "conditionType": "expression",
+                  "expression": "({drv-slider} * {drv-rating}) > 20"
+                }
               ]
             }
           ]
@@ -673,7 +817,10 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "expression", "expression": "{drv-text}.length > 5" }
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-text}.length > 5"
+                }
               ]
             }
           ]
@@ -688,7 +835,10 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "expression", "expression": "{drv-number} > 100" }
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-number} > 100"
+                }
               ]
             }
           ]
@@ -711,7 +861,12 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "field", "targetId": "drv-boolean", "operator": "equals", "expected": "drv-bool-y" }
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-boolean",
+                  "operator": "equals",
+                  "expected": "drv-bool-y"
+                }
               ]
             }
           ]
@@ -726,7 +881,12 @@
               "effect": "enable",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "field", "targetId": "drv-boolean", "operator": "equals", "expected": "drv-bool-y" }
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-boolean",
+                  "operator": "equals",
+                  "expected": "drv-bool-y"
+                }
               ]
             }
           ]
@@ -741,7 +901,12 @@
               "effect": "required",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "field", "targetId": "drv-boolean", "operator": "equals", "expected": "drv-bool-y" }
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-boolean",
+                  "operator": "equals",
+                  "expected": "drv-bool-y"
+                }
               ]
             }
           ]
@@ -756,14 +921,21 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "field", "targetId": "drv-radio", "operator": "notEmpty" }
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-radio",
+                  "operator": "notEmpty"
+                }
               ]
             },
             {
               "effect": "required",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "expression", "expression": "{drv-slider} > 5" }
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} > 5"
+                }
               ]
             }
           ]
@@ -786,8 +958,18 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "field", "targetId": "drv-radio", "operator": "equals", "expected": "drv-radio-a" },
-                { "conditionType": "field", "targetId": "drv-dropdown", "operator": "equals", "expected": "drv-dd-l" }
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-radio",
+                  "operator": "equals",
+                  "expected": "drv-radio-a"
+                },
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-dropdown",
+                  "operator": "equals",
+                  "expected": "drv-dd-l"
+                }
               ]
             }
           ]
@@ -802,8 +984,18 @@
               "effect": "visible",
               "logic": "OR",
               "conditions": [
-                { "conditionType": "field", "targetId": "drv-radio", "operator": "equals", "expected": "drv-radio-b" },
-                { "conditionType": "field", "targetId": "drv-dropdown", "operator": "equals", "expected": "drv-dd-s" }
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-radio",
+                  "operator": "equals",
+                  "expected": "drv-radio-b"
+                },
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-dropdown",
+                  "operator": "equals",
+                  "expected": "drv-dd-s"
+                }
               ]
             }
           ]
@@ -818,8 +1010,16 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "field", "targetId": "drv-boolean", "operator": "equals", "expected": "drv-bool-y" },
-                { "conditionType": "expression", "expression": "{drv-slider} > 5" }
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-boolean",
+                  "operator": "equals",
+                  "expected": "drv-bool-y"
+                },
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} > 5"
+                }
               ]
             }
           ]
@@ -834,8 +1034,16 @@
               "effect": "visible",
               "logic": "OR",
               "conditions": [
-                { "conditionType": "field", "targetId": "drv-text", "operator": "contains", "expected": "special" },
-                { "conditionType": "expression", "expression": "{drv-slider} == 10" }
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-text",
+                  "operator": "contains",
+                  "expected": "special"
+                },
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} == 10"
+                }
               ]
             }
           ]
@@ -852,7 +1060,12 @@
           "effect": "visible",
           "logic": "AND",
           "conditions": [
-            { "conditionType": "field", "targetId": "drv-radio", "operator": "equals", "expected": "drv-radio-c" }
+            {
+              "conditionType": "field",
+              "targetId": "drv-radio",
+              "operator": "equals",
+              "expected": "drv-radio-c"
+            }
           ]
         }
       ],
@@ -882,7 +1095,12 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "field", "targetId": "cs-inner-radio", "operator": "equals", "expected": "cs-r-show" }
+                {
+                  "conditionType": "field",
+                  "targetId": "cs-inner-radio",
+                  "operator": "equals",
+                  "expected": "cs-r-show"
+                }
               ]
             }
           ]
@@ -911,7 +1129,10 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "expression", "expression": "{drv-slider} > 5" }
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} > 5"
+                }
               ]
             }
           ]
@@ -946,7 +1167,10 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "expression", "expression": "{drv-slider} > 5 && {drv-rating} > 3" }
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} > 5 && {drv-rating} > 3"
+                }
               ]
             }
           ]
@@ -1019,7 +1243,12 @@
               "effect": "visible",
               "logic": "AND",
               "conditions": [
-                { "conditionType": "field", "targetId": "drv-boolean", "operator": "equals", "expected": "drv-bool-y" }
+                {
+                  "conditionType": "field",
+                  "targetId": "drv-boolean",
+                  "operator": "equals",
+                  "expected": "drv-bool-y"
+                }
               ]
             }
           ]
@@ -1037,7 +1266,18 @@
           "fieldType": "text",
           "question": "Text (string) — visible when Slider ≥ 3",
           "inputType": "string",
-          "rules": [{ "effect": "visible", "logic": "AND", "conditions": [{ "conditionType": "expression", "expression": "{drv-slider} >= 3" }] }]
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
         },
         {
           "id": "aft-text-num",
@@ -1045,62 +1285,161 @@
           "question": "Text (number) — visible when Slider ≥ 3",
           "inputType": "number",
           "unit": "kg",
-          "rules": [{ "effect": "visible", "logic": "AND", "conditions": [{ "conditionType": "expression", "expression": "{drv-slider} >= 3" }] }]
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
         },
         {
           "id": "aft-text-email",
           "fieldType": "text",
           "question": "Text (email) — visible when Slider ≥ 3",
           "inputType": "email",
-          "rules": [{ "effect": "visible", "logic": "AND", "conditions": [{ "conditionType": "expression", "expression": "{drv-slider} >= 3" }] }]
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
         },
         {
           "id": "aft-text-date",
           "fieldType": "text",
           "question": "Text (date) — visible when Slider ≥ 3",
           "inputType": "date",
-          "rules": [{ "effect": "visible", "logic": "AND", "conditions": [{ "conditionType": "expression", "expression": "{drv-slider} >= 3" }] }]
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
         },
         {
           "id": "aft-text-tel",
           "fieldType": "text",
           "question": "Text (tel) — visible when Slider ≥ 3",
           "inputType": "tel",
-          "rules": [{ "effect": "visible", "logic": "AND", "conditions": [{ "conditionType": "expression", "expression": "{drv-slider} >= 3" }] }]
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
         },
         {
           "id": "aft-text-url",
           "fieldType": "text",
           "question": "Text (url) — visible when Slider ≥ 3",
           "inputType": "url",
-          "rules": [{ "effect": "visible", "logic": "AND", "conditions": [{ "conditionType": "expression", "expression": "{drv-slider} >= 3" }] }]
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
         },
         {
           "id": "aft-text-time",
           "fieldType": "text",
           "question": "Text (time) — visible when Slider ≥ 3",
           "inputType": "time",
-          "rules": [{ "effect": "visible", "logic": "AND", "conditions": [{ "conditionType": "expression", "expression": "{drv-slider} >= 3" }] }]
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
         },
         {
           "id": "aft-text-datetime",
           "fieldType": "text",
           "question": "Text (datetime-local) — visible when Slider ≥ 3",
           "inputType": "datetime-local",
-          "rules": [{ "effect": "visible", "logic": "AND", "conditions": [{ "conditionType": "expression", "expression": "{drv-slider} >= 3" }] }]
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
         },
         {
           "id": "aft-text-month",
           "fieldType": "text",
           "question": "Text (month) — visible when Slider ≥ 3",
           "inputType": "month",
-          "rules": [{ "effect": "visible", "logic": "AND", "conditions": [{ "conditionType": "expression", "expression": "{drv-slider} >= 3" }] }]
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
         },
         {
           "id": "aft-longtext",
           "fieldType": "longtext",
           "question": "Long Text — visible when Slider ≥ 3",
-          "rules": [{ "effect": "visible", "logic": "AND", "conditions": [{ "conditionType": "expression", "expression": "{drv-slider} >= 3" }] }]
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
         },
         {
           "id": "aft-multitext",
@@ -1110,7 +1449,18 @@
             { "id": "aft-mt-1", "value": "Sub-field 1" },
             { "id": "aft-mt-2", "value": "Sub-field 2" }
           ],
-          "rules": [{ "effect": "visible", "logic": "AND", "conditions": [{ "conditionType": "expression", "expression": "{drv-slider} >= 3" }] }]
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
         },
         {
           "id": "aft-radio",
@@ -1120,7 +1470,18 @@
             { "id": "aft-r-1", "value": "opt1", "text": "Option 1" },
             { "id": "aft-r-2", "value": "opt2", "text": "Option 2" }
           ],
-          "rules": [{ "effect": "visible", "logic": "AND", "conditions": [{ "conditionType": "expression", "expression": "{drv-slider} >= 3" }] }]
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
         },
         {
           "id": "aft-check",
@@ -1130,7 +1491,18 @@
             { "id": "aft-c-1", "value": "chk1", "text": "Check 1" },
             { "id": "aft-c-2", "value": "chk2", "text": "Check 2" }
           ],
-          "rules": [{ "effect": "visible", "logic": "AND", "conditions": [{ "conditionType": "expression", "expression": "{drv-slider} >= 3" }] }]
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
         },
         {
           "id": "aft-boolean",
@@ -1140,7 +1512,18 @@
             { "id": "aft-b-y", "value": "yes", "text": "Yes" },
             { "id": "aft-b-n", "value": "no", "text": "No" }
           ],
-          "rules": [{ "effect": "visible", "logic": "AND", "conditions": [{ "conditionType": "expression", "expression": "{drv-slider} >= 3" }] }]
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
         },
         {
           "id": "aft-dropdown",
@@ -1150,7 +1533,18 @@
             { "id": "aft-d-1", "value": "d1", "text": "Drop 1" },
             { "id": "aft-d-2", "value": "d2", "text": "Drop 2" }
           ],
-          "rules": [{ "effect": "visible", "logic": "AND", "conditions": [{ "conditionType": "expression", "expression": "{drv-slider} >= 3" }] }]
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
         },
         {
           "id": "aft-multiselectdropdown",
@@ -1160,7 +1554,18 @@
             { "id": "aft-msd-1", "value": "ms1", "text": "Multi 1" },
             { "id": "aft-msd-2", "value": "ms2", "text": "Multi 2" }
           ],
-          "rules": [{ "effect": "visible", "logic": "AND", "conditions": [{ "conditionType": "expression", "expression": "{drv-slider} >= 3" }] }]
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
         },
         {
           "id": "aft-rating",
@@ -1173,7 +1578,18 @@
             { "id": "aft-rt-4", "value": "4", "text": "4" },
             { "id": "aft-rt-5", "value": "5", "text": "5" }
           ],
-          "rules": [{ "effect": "visible", "logic": "AND", "conditions": [{ "conditionType": "expression", "expression": "{drv-slider} >= 3" }] }]
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
         },
         {
           "id": "aft-ranking",
@@ -1184,7 +1600,18 @@
             { "id": "aft-rk-2", "value": "rank2", "text": "Rank B" },
             { "id": "aft-rk-3", "value": "rank3", "text": "Rank C" }
           ],
-          "rules": [{ "effect": "visible", "logic": "AND", "conditions": [{ "conditionType": "expression", "expression": "{drv-slider} >= 3" }] }]
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
         },
         {
           "id": "aft-slider",
@@ -1197,23 +1624,62 @@
             { "id": "aft-sl-4", "value": "4", "text": "4" },
             { "id": "aft-sl-5", "value": "5", "text": "5" }
           ],
-          "rules": [{ "effect": "visible", "logic": "AND", "conditions": [{ "conditionType": "expression", "expression": "{drv-slider} >= 3" }] }]
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
         },
         {
           "id": "aft-singlematrix",
           "fieldType": "singlematrix",
           "question": "Single Matrix — visible when Slider ≥ 3",
           "rows": [{ "id": "aft-sm-r1", "value": "Row 1" }],
-          "columns": [{ "id": "aft-sm-c1", "value": "Col 1" }, { "id": "aft-sm-c2", "value": "Col 2" }],
-          "rules": [{ "effect": "visible", "logic": "AND", "conditions": [{ "conditionType": "expression", "expression": "{drv-slider} >= 3" }] }]
+          "columns": [
+            { "id": "aft-sm-c1", "value": "Col 1" },
+            { "id": "aft-sm-c2", "value": "Col 2" }
+          ],
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
         },
         {
           "id": "aft-multimatrix",
           "fieldType": "multimatrix",
           "question": "Multi Matrix — visible when Slider ≥ 3",
           "rows": [{ "id": "aft-mm-r1", "value": "Row 1" }],
-          "columns": [{ "id": "aft-mm-c1", "value": "Col 1" }, { "id": "aft-mm-c2", "value": "Col 2" }],
-          "rules": [{ "effect": "visible", "logic": "AND", "conditions": [{ "conditionType": "expression", "expression": "{drv-slider} >= 3" }] }]
+          "columns": [
+            { "id": "aft-mm-c1", "value": "Col 1" },
+            { "id": "aft-mm-c2", "value": "Col 2" }
+          ],
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "expression",
+                  "expression": "{drv-slider} >= 3"
+                }
+              ]
+            }
+          ]
         }
       ]
     }

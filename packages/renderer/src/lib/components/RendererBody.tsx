@@ -54,7 +54,9 @@ export function RendererBody({ form, ui }: RendererBodyProps) {
       }
 
       // Sections are renderable only if they have at least one renderable child
-      const hasRenderableChild = node.childIds.some((childId) => isFieldRenderable(childId));
+      const hasRenderableChild = node.childIds.some((childId) =>
+        isFieldRenderable(childId)
+      );
       cache.set(fieldId, hasRenderableChild);
       return hasRenderableChild;
     };

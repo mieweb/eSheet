@@ -39,7 +39,10 @@ export function useRendererInit(
       // Validate schema
       const validated = formDefinitionSchema.safeParse(parsed);
       if (!validated.success) {
-        console.error('[MsheetRenderer] Invalid form definition:', validated.error.issues);
+        console.error(
+          '[MsheetRenderer] Invalid form definition:',
+          validated.error.issues
+        );
         // Load empty form instead of crashing
         form.getState().loadDefinition({
           schemaType: 'mieforms-v1.0',

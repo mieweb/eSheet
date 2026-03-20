@@ -70,10 +70,7 @@ function App() {
 
   return (
     <>
-      <MsheetRenderer
-        formData={myForm}
-        ref={rendererRef}
-      />
+      <MsheetRenderer formData={myForm} ref={rendererRef} />
       <button onClick={handleSubmit}>Submit</button>
     </>
   );
@@ -104,7 +101,7 @@ fields:
     question: Your name?
 `;
 
-<MsheetRenderer formData={yamlSchema} />
+<MsheetRenderer formData={yamlSchema} />;
 ```
 
 ## API
@@ -183,7 +180,7 @@ const conditionalForm: FormDefinition = {
 };
 
 // "allergyList" only shows when "hasAllergies" is checked
-<MsheetRenderer formData={conditionalForm} />
+<MsheetRenderer formData={conditionalForm} />;
 ```
 
 ## CSS Architecture

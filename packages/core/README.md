@@ -23,8 +23,12 @@ npm install @msheet/core
 
 ```ts
 import type {
-  FieldDefinition, FormDefinition, FormResponse,
-  FieldType, FieldOption, ConditionalRule,
+  FieldDefinition,
+  FormDefinition,
+  FormResponse,
+  FieldType,
+  FieldOption,
+  ConditionalRule,
 } from '@msheet/core';
 
 import { formDefinitionSchema, fieldDefinitionSchema } from '@msheet/core';

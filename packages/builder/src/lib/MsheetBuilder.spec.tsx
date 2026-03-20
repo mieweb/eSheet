@@ -124,7 +124,9 @@ describe('BuilderHeader import feedback', () => {
 
     render(<BuilderHeader form={form} ui={ui} />);
 
-    const input = screen.getByLabelText('Import form (JSON or YAML)') as HTMLInputElement;
+    const input = screen.getByLabelText(
+      'Import form (JSON or YAML)'
+    ) as HTMLInputElement;
     fireEvent.change(input, {
       target: {
         files: [new File(['x'], 'bad.json', { type: 'application/json' })],
@@ -149,7 +151,9 @@ describe('BuilderHeader import feedback', () => {
 
     render(<BuilderHeader form={form} ui={ui} />);
 
-    const input = screen.getByLabelText('Import form (JSON or YAML)') as HTMLInputElement;
+    const input = screen.getByLabelText(
+      'Import form (JSON or YAML)'
+    ) as HTMLInputElement;
     fireEvent.change(input, {
       target: {
         files: [
@@ -194,7 +198,9 @@ describe('BuilderHeader import feedback', () => {
 
     render(<BuilderHeader form={form} ui={ui} />);
 
-    const input = screen.getByLabelText('Import form (JSON or YAML)') as HTMLInputElement;
+    const input = screen.getByLabelText(
+      'Import form (JSON or YAML)'
+    ) as HTMLInputElement;
     fireEvent.change(input, {
       target: {
         files: [
@@ -223,7 +229,9 @@ describe('BuilderHeader import feedback', () => {
 
     render(<BuilderHeader form={form} ui={ui} />);
 
-    const input = screen.getByLabelText('Import form (JSON or YAML)') as HTMLInputElement;
+    const input = screen.getByLabelText(
+      'Import form (JSON or YAML)'
+    ) as HTMLInputElement;
     fireEvent.change(input, {
       target: {
         files: [new File(['x'], 'good.json', { type: 'application/json' })],

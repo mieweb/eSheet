@@ -53,7 +53,9 @@ const TEST_SCHEMAS = [
 export function App() {
   const [def1, setDef1] = useState<FormDefinition>(INITIAL_DEF);
   const [mode, setMode] = useState<ViewMode>('builder');
-  const [rendererDef, setRendererDef] = useState<FormDefinition | string>(INITIAL_DEF);
+  const [rendererDef, setRendererDef] = useState<FormDefinition | string>(
+    INITIAL_DEF
+  );
   const [selectedSchema, setSelectedSchema] = useState<string>('builder');
   const rendererRef = useRef<MsheetRendererHandle>(null);
 
@@ -94,14 +96,16 @@ export function App() {
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Tab Navigation */}
-      <div style={{ 
-        padding: '1rem', 
-        borderBottom: '2px solid #e5e7eb',
-        display: 'flex',
-        gap: '0.5rem',
-        alignItems: 'center',
-        background: '#f9fafb'
-      }}>
+      <div
+        style={{
+          padding: '1rem',
+          borderBottom: '2px solid #e5e7eb',
+          display: 'flex',
+          gap: '0.5rem',
+          alignItems: 'center',
+          background: '#f9fafb',
+        }}
+      >
         <button
           onClick={() => setMode('builder')}
           style={{
@@ -130,29 +134,42 @@ export function App() {
         >
           Renderer Test
         </button>
-        
+
         {mode === 'renderer' && (
           <>
             <select
               value={selectedSchema}
               onChange={(e) => handleSchemaChange(e.target.value)}
-              style={{ padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '0.375rem' }}
+              style={{
+                padding: '0.5rem',
+                border: '1px solid #d1d5db',
+                borderRadius: '0.375rem',
+              }}
             >
               {TEST_SCHEMAS.map((s) => (
-                <option key={s.value} value={s.value}>{s.label}</option>
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
               ))}
               {selectedSchema === '' && <option value="">Custom file</option>}
             </select>
-            <label style={{
-              padding: '0.5rem 1rem',
-              background: 'white',
-              border: '1px solid #d1d5db',
-              borderRadius: '0.375rem',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-            }}>
+            <label
+              style={{
+                padding: '0.5rem 1rem',
+                background: 'white',
+                border: '1px solid #d1d5db',
+                borderRadius: '0.375rem',
+                cursor: 'pointer',
+                fontSize: '0.875rem',
+              }}
+            >
               Import JSON
-              <input type="file" accept=".json" onChange={handleFileImport} style={{ display: 'none' }} />
+              <input
+                type="file"
+                accept=".json"
+                onChange={handleFileImport}
+                style={{ display: 'none' }}
+              />
             </label>
             <button
               onClick={handleGetResponses}
@@ -178,24 +195,24 @@ export function App() {
         {mode === 'builder' && (
           <MsheetBuilder definition={def1} onChange={handleBuilderChange} />
         )}
-        
+
         {mode === 'renderer' && (
           <div style={{ padding: '2rem' }}>
-            <div style={{ 
-              marginBottom: '1.5rem',
-              padding: '1rem',
-              background: '#fef3c7',
-              border: '1px solid #fbbf24',
-              borderRadius: '0.5rem',
-              color: '#92400e'
-            }}>
-              <strong>Renderer Test Mode:</strong> Fill out the form below. Click "Get Responses" to see collected data in console.
+            <div
+              style={{
+                marginBottom: '1.5rem',
+                padding: '1rem',
+                background: '#fef3c7',
+                border: '1px solid #fbbf24',
+                borderRadius: '0.5rem',
+                color: '#92400e',
+              }}
+            >
+              <strong>Renderer Test Mode:</strong> Fill out the form below.
+              Click "Get Responses" to see collected data in console.
             </div>
-            
-            <MsheetRenderer 
-              formData={rendererDef} 
-              ref={rendererRef}
-            />
+
+            <MsheetRenderer formData={rendererDef} ref={rendererRef} />
           </div>
         )}
       </div>

@@ -71,7 +71,9 @@ export const FieldNode = React.memo(function FieldNode({
         return true;
       }
 
-      const hasRenderableChild = childNode.childIds.some((cid) => isFieldRenderable(cid));
+      const hasRenderableChild = childNode.childIds.some((cid) =>
+        isFieldRenderable(cid)
+      );
       cache.set(fieldId, hasRenderableChild);
       return hasRenderableChild;
     };
@@ -81,7 +83,11 @@ export const FieldNode = React.memo(function FieldNode({
 
   // Render nested children for sections
   const nestedChildren = React.useMemo(() => {
-    if (!field || field.definition.fieldType !== 'section' || visibleChildIds.length === 0) {
+    if (
+      !field ||
+      field.definition.fieldType !== 'section' ||
+      visibleChildIds.length === 0
+    ) {
       return null;
     }
 
@@ -128,11 +134,14 @@ export const FieldNode = React.memo(function FieldNode({
     response,
     onRemove: () => undefined, // No-op in renderer
     onUpdate: () => undefined, // No-op in renderer
-    onResponse: (value) => form.getState().setResponse(field.definition.id, value),
+    onResponse: (value) =>
+      form.getState().setResponse(field.definition.id, value),
   };
 
   const isSection = field.definition.fieldType === 'section';
-  const parentNode = field.parentId ? form.getState().getField(field.parentId) : null;
+  const parentNode = field.parentId
+    ? form.getState().getField(field.parentId)
+    : null;
   const isChildOfSection = parentNode?.definition.fieldType === 'section';
 
   const wrapperClass = `field-wrapper ms:bg-mssurface${
@@ -163,7 +172,9 @@ export const FieldNode = React.memo(function FieldNode({
           const SectionComponent = Component as React.ComponentType<
             FieldComponentProps & { nestedChildren?: React.ReactNode }
           >;
-          return <SectionComponent {...props} nestedChildren={nestedChildren} />;
+          return (
+            <SectionComponent {...props} nestedChildren={nestedChildren} />
+          );
         })()
       ) : (
         <Component {...props} />

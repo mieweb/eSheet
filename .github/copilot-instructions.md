@@ -345,6 +345,7 @@ For feature planning and TODO tracking, use the local-only internal tickets dire
   - Include success criteria and testing requirements
 
 **Migration Roadmap** (`.github/INTERNAL-TICKETS/mSheet-RoadMap.md`):
+
 - This is the **single source of truth** for QB → mSheet migration status. **Update it whenever implementation work changes the status of a tracked feature** (e.g., a field component is completed, a gap is filled, completion percentages change).
 - After completing a task that corresponds to an item in the roadmap, mark it done immediately and update progress summaries.
 - Keep completion percentages, gap lists, and timeline estimates current so the roadmap always reflects reality.
