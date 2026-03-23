@@ -1,13 +1,13 @@
 import React from 'react';
-import type { FieldComponentProps, FormStore, UIStore } from '@msheet/core';
+import type { FieldComponentProps, FormStore, UIStore } from '@esheet/core';
 import {
   applySheetDnd,
   getReorderDestinationIndex,
   type SheetDndDropDetail,
-} from '@msheet/core';
+} from '@esheet/core';
 import { useVisibleFields } from '../hooks/useVisibleFields.js';
 import { FieldWrapper } from './FieldWrapper.js';
-import { getFieldComponent } from '@msheet/fields';
+import { getFieldComponent } from '@esheet/fields';
 
 export interface CanvasProps {
   /** The form store */

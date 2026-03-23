@@ -3,10 +3,10 @@ import './lib/register-defaults.js';
 
 // Main renderer component
 export {
-  MsheetRenderer,
-  type MsheetRendererProps,
-  type MsheetRendererHandle,
-} from './lib/MsheetRenderer.js';
+  EsheetRenderer,
+  type EsheetRendererProps,
+  type EsheetRendererHandle,
+} from './lib/EsheetRenderer.js';
 
 // Components (for advanced use cases)
 export { RendererBody, FieldNode } from './lib/components/index.js';

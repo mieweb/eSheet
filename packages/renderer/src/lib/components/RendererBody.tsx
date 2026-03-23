@@ -1,5 +1,5 @@
 import React from 'react';
-import type { FormStore, UIStore } from '@msheet/core';
+import type { FormStore, UIStore } from '@esheet/core';
 import { FieldNode } from './FieldNode.js';
 
 export interface RendererBodyProps {

@@ -21,13 +21,13 @@ function inlineCssFields(): import('vite').Plugin {
       const iife =
         `(function(){` +
         `if(typeof document==='undefined')return;` +
-        `if(window.__MSHEET_FIELDS_CSS_INJECTED)return;` +
-        `if(!document.querySelector('#msheet-fields-styles')){` +
+        `if(window.__ESHEET_FIELDS_CSS_INJECTED)return;` +
+        `if(!document.querySelector('#esheet-fields-styles')){` +
         `var s=document.createElement('style');` +
-        `s.id='msheet-fields-styles';` +
+        `s.id='esheet-fields-styles';` +
         `s.textContent=${JSON.stringify(cssContent)};` +
         `document.head.appendChild(s);}` +
-        `window.__MSHEET_FIELDS_CSS_INJECTED=true;` +
+        `window.__ESHEET_FIELDS_CSS_INJECTED=true;` +
         `})();\n`;
       writeFileSync(jsPath, iife + jsContent);
       unlinkSync(cssPath);
@@ -42,7 +42,7 @@ export default defineConfig(() => ({
   build: {
     lib: {
       entry: resolve(import.meta.dirname, 'src/index.ts'),
-      name: 'MsheetFields',
+      name: 'EsheetFields',
       fileName: 'index',
       formats: ['es'] as LibraryFormats[],
     },
@@ -51,7 +51,7 @@ export default defineConfig(() => ({
         'react',
         'react-dom',
         'react/jsx-runtime',
-        '@msheet/core',
+        '@esheet/core',
         'tslib',
       ],
     },
@@ -59,7 +59,7 @@ export default defineConfig(() => ({
     sourcemap: false,
   },
   test: {
-    name: '@msheet/fields',
+    name: '@esheet/fields',
     watch: false,
     passWithNoTests: true,
     globals: true,

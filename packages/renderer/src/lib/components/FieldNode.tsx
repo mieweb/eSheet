@@ -1,6 +1,6 @@
 import React from 'react';
-import type { FieldComponentProps, FormStore, UIStore } from '@msheet/core';
-import { getFieldComponent } from '@msheet/fields';
+import type { FieldComponentProps, FormStore, UIStore } from '@esheet/core';
+import { getFieldComponent } from '@esheet/fields';
 
 export interface FieldNodeProps {
   id: string;

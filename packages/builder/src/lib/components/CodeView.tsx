@@ -6,10 +6,10 @@ import {
   formDefinitionSchema,
   type FormStore,
   type UIStore,
-} from '@msheet/core';
+} from '@esheet/core';
 import { FeedbackModal, type FeedbackModalVariant } from './FeedbackModal.js';
 
-const FORM_SCHEMA_URI = 'inmemory://msheet/form-definition.schema.json';
+const FORM_SCHEMA_URI = 'inmemory://esheet/form-definition.schema.json';
 
 // ---------------------------------------------------------------------------
 // Types

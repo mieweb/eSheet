@@ -4,7 +4,7 @@ import {
   type FieldDefinition,
   type FormDefinition,
   type FormResponse,
-} from '@msheet/core';
+} from '@esheet/core';
 
 export interface RenderTreeOptions {
   /** Include fields that resolve to invisible (default: false). */

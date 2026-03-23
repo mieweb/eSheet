@@ -1,5 +1,5 @@
 {
-  "name": "@msheet/renderer",
+  "name": "@esheet/renderer",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "targets": {
     "build:css": {

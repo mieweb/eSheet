@@ -107,7 +107,7 @@ If any box is unchecked, **simplify**.
 
 - **Always run tasks through Nx** — use `npx nx run`, `npx nx run-many`, `npx nx affected` instead of running tools directly.
 - **Don't modify `project.json` directly** — targets are inferred by plugins (`@nx/js/typescript`, `@nx/vite`, `@nx/eslint`, `@nx/vitest`). Use `nx show project <name> --json` to see resolved config.
-- **Package exports use `@msheet/source` custom condition** — for dev-time TS source imports between packages.
+- **Package exports use `@esheet/source` custom condition** — for dev-time TS source imports between packages.
 - **Respect module boundaries** — `@nx/enforce-module-boundaries` is enforced. Check tags before adding cross-package imports.
 - **Use `tslib`** — `importHelpers: true` is set in `tsconfig.base.json`. All packages depend on `tslib`.
 
@@ -128,7 +128,7 @@ If any box is unchecked, **simplify**.
   <div className="ms:hover:ms:bg-msprimary">
   ```
 
-- **ALL Form Inputs Must Have `id` Attributes with `instanceId` Prefix**: Every `<input>`, `<select>`, and `<textarea>` element across **all** UI packages (`@msheet/builder`, `@msheet/renderer`, `@msheet/fields`, or any future package rendering form elements) must have an `id` attribute. Use the `useInstanceId()` hook to ensure IDs are unique when multiple component instances share the same page.
+- **ALL Form Inputs Must Have `id` Attributes with `instanceId` Prefix**: Every `<input>`, `<select>`, and `<textarea>` element across **all** UI packages (`@esheet/builder`, `@esheet/renderer`, `@esheet/fields`, or any future package rendering form elements) must have an `id` attribute. Use the `useInstanceId()` hook to ensure IDs are unique when multiple component instances share the same page.
 
   **ID pattern:** `${instanceId}-{purpose}-${fieldId}`
 
