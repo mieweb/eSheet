@@ -1,7 +1,7 @@
 import React from 'react';
-import type { FormStore, FieldOption } from '@msheet/core';
-import { TrashIcon } from '@msheet/fields';
-import { useInstanceId } from '../../MsheetBuilder.js';
+import type { FormStore, FieldOption } from '@esheet/core';
+import { TrashIcon } from '@esheet/fields';
+import { useInstanceId } from '../../EsheetBuilder.js';
 
 export interface OptionListEditorProps {
   fieldId: string;

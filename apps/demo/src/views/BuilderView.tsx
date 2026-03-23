@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { MsheetBuilder } from '@msheet/builder';
-import type { FormDefinition } from '@msheet/core';
+import { EsheetBuilder } from '@esheet/builder';
+import type { FormDefinition } from '@esheet/core';
 import { Navbar } from '../components/Navbar';
 
 const INITIAL_DEF: FormDefinition = {
@@ -34,7 +34,7 @@ export function BuilderView() {
       <Navbar />
       <div className="flex-1 overflow-y-auto bg-gray-100">
         <div className="w-full flex justify-center px-2 pt-5">
-          <MsheetBuilder definition={def} onChange={setDef} />
+          <EsheetBuilder definition={def} onChange={setDef} />
         </div>
       </div>
     </div>

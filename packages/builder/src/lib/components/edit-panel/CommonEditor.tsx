@@ -1,6 +1,6 @@
-import type { FieldDefinition, TextInputType } from '@msheet/core';
-import { CustomCheckbox } from '@msheet/fields';
-import { useInstanceId } from '../../MsheetBuilder.js';
+import type { FieldDefinition, TextInputType } from '@esheet/core';
+import { CustomCheckbox } from '@esheet/fields';
+import { useInstanceId } from '../../EsheetBuilder.js';
 import { DraftIdEditor } from './DraftIdEditor.js';
 import { InputTypeEditor } from './InputTypeEditor.js';
 

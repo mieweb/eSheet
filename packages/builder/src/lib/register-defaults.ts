@@ -6,7 +6,7 @@
 // need to manually wire up every field.
 // ---------------------------------------------------------------------------
 
-import { registerFieldComponents } from '@msheet/fields';
+import { registerFieldComponents } from '@esheet/fields';
 import {
   TextField,
   LongTextField,
@@ -27,7 +27,7 @@ import {
   ImageField,
   HtmlField,
   DisplayField,
-} from '@msheet/fields';
+} from '@esheet/fields';
 
 registerFieldComponents({
   text: TextField,

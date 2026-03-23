@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
-import { MsheetRenderer, type MsheetRendererHandle } from '@msheet/renderer';
-import type { FormDefinition } from '@msheet/core';
+import { EsheetRenderer, type EsheetRendererHandle } from '@esheet/renderer';
+import type { FormDefinition } from '@esheet/core';
 import { Navbar } from '../components/Navbar';
 
 const TEST_SCHEMAS = [
@@ -13,7 +13,7 @@ const TEST_SCHEMAS = [
 export function RendererView() {
   const [formData, setFormData] = useState<FormDefinition | null>(null);
   const [formKey, setFormKey] = useState(0);
-  const rendererRef = useRef<MsheetRendererHandle>(null);
+  const rendererRef = useRef<EsheetRendererHandle>(null);
 
   const resetFormKey = useCallback(() => {
     setFormKey((prev) => prev + 1);
@@ -104,7 +104,7 @@ export function RendererView() {
           </div>
         ) : (
           <div className="max-w-4xl mx-auto px-4">
-            <MsheetRenderer
+            <EsheetRenderer
               key={formKey}
               formData={formData}
               ref={rendererRef}

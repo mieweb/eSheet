@@ -21,13 +21,13 @@ function inlineCssRenderer(): import('vite').Plugin {
       const iife =
         `(function(){` +
         `if(typeof document==='undefined')return;` +
-        `if(window.__MSHEET_RENDERER_CSS_INJECTED)return;` +
-        `if(!document.querySelector('#msheet-renderer-styles')){` +
+        `if(window.__ESHEET_RENDERER_CSS_INJECTED)return;` +
+        `if(!document.querySelector('#esheet-renderer-styles')){` +
         `var s=document.createElement('style');` +
-        `s.id='msheet-renderer-styles';` +
+        `s.id='esheet-renderer-styles';` +
         `s.textContent=${JSON.stringify(cssContent)};` +
         `document.head.appendChild(s);}` +
-        `window.__MSHEET_RENDERER_CSS_INJECTED=true;` +
+        `window.__ESHEET_RENDERER_CSS_INJECTED=true;` +
         `})();\n`;
       writeFileSync(jsPath, iife + jsContent);
       unlinkSync(cssPath);
@@ -42,7 +42,7 @@ export default defineConfig(() => ({
   build: {
     lib: {
       entry: resolve(import.meta.dirname, 'src/index.ts'),
-      name: 'MsheetRenderer',
+      name: 'EsheetRenderer',
       fileName: 'index',
       formats: ['es'] as LibraryFormats[],
     },
@@ -51,7 +51,7 @@ export default defineConfig(() => ({
         'react',
         'react-dom',
         'react/jsx-runtime',
-        '@msheet/core',
+        '@esheet/core',
         'tslib',
       ],
     },
@@ -59,7 +59,7 @@ export default defineConfig(() => ({
     sourcemap: false,
   },
   test: {
-    name: '@msheet/renderer',
+    name: '@esheet/renderer',
     watch: false,
     globals: true,
     environment: 'jsdom',

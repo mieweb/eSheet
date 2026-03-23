@@ -6,8 +6,8 @@ import {
   type FormDefinition,
   type FormStore,
   type UIStore,
-} from '@msheet/core';
-import { FormStoreContext, UIContext } from '@msheet/fields';
+} from '@esheet/core';
+import { FormStoreContext, UIContext } from '@esheet/fields';
 import { Canvas } from './components/Canvas.js';
 import { ToolPanel } from './components/ToolPanel.js';
 import { EditPanel } from './components/edit-panel/EditPanel.js';
@@ -24,7 +24,7 @@ export {
   UIContext,
   useFormStore,
   useUI,
-} from '@msheet/fields';
+} from '@esheet/fields';
 export const InstanceIdContext = React.createContext<string>('');
 
 /** Hook to access the per-instance ID for unique DOM element IDs. */
@@ -36,7 +36,7 @@ export function useInstanceId(): string {
 // Props
 // ---------------------------------------------------------------------------
 
-export interface MsheetBuilderProps {
+export interface EsheetBuilderProps {
   /** Initial form definition to load. */
   definition?: FormDefinition;
   /** Callback fired when the form definition changes. */
@@ -98,13 +98,13 @@ function MobileBottomDrawer({
 // Component
 // ---------------------------------------------------------------------------
 
-export function MsheetBuilder({
+export function EsheetBuilder({
   definition,
   onChange,
   dragEnabled = true,
   className = '',
   children,
-}: MsheetBuilderProps) {
+}: EsheetBuilderProps) {
   const formRef = React.useRef<FormStore | null>(null);
   const uiRef = React.useRef<UIStore | null>(null);
 

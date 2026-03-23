@@ -6,7 +6,7 @@ export default defineConfig(() => ({
   cacheDir: '../../node_modules/.vite/packages/builder',
   plugins: [react()],
   test: {
-    name: '@msheet/builder',
+    name: '@esheet/builder',
     watch: false,
     globals: true,
     environment: 'jsdom',

@@ -1,5 +1,5 @@
 import React from 'react';
-import type { FieldComponentProps } from '@msheet/core';
+import type { FieldComponentProps } from '@esheet/core';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 
 export const MultiTextField = React.memo(function MultiTextField({

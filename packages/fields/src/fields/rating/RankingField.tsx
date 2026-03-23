@@ -1,10 +1,10 @@
 import React from 'react';
-import type { FieldComponentProps, SelectedOption } from '@msheet/core';
+import type { FieldComponentProps, SelectedOption } from '@esheet/core';
 import {
   applySheetDnd,
   getReorderDestinationIndex,
   type SheetDndDropDetail,
-} from '@msheet/core';
+} from '@esheet/core';
 import {
   TrashIcon,
   PlusIcon,

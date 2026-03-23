@@ -1,18 +1,18 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { render, act, cleanup } from '@testing-library/react';
-import { SCHEMA_TYPE } from '@msheet/core';
-import { MsheetRenderer, type MsheetRendererHandle } from './MsheetRenderer.js';
+import { SCHEMA_TYPE } from '@esheet/core';
+import { EsheetRenderer, type EsheetRendererHandle } from './EsheetRenderer.js';
 import './register-defaults.js';
 
 afterEach(cleanup);
 
-describe('MsheetRenderer', () => {
+describe('EsheetRenderer', () => {
   it('mounts and exposes ref handle', async () => {
-    const ref = React.createRef<MsheetRendererHandle>();
+    const ref = React.createRef<EsheetRendererHandle>();
     await act(async () => {
       render(
-        <MsheetRenderer
+        <EsheetRenderer
           ref={ref}
           formData={{
             schemaType: SCHEMA_TYPE,
@@ -30,10 +30,10 @@ describe('MsheetRenderer', () => {
   });
 
   it('getResponse() returns initialResponses after mount', async () => {
-    const ref = React.createRef<MsheetRendererHandle>();
+    const ref = React.createRef<EsheetRendererHandle>();
     await act(async () => {
       render(
-        <MsheetRenderer
+        <EsheetRenderer
           ref={ref}
           formData={{
             schemaType: SCHEMA_TYPE,
@@ -50,10 +50,10 @@ describe('MsheetRenderer', () => {
   });
 
   it('getFormStore() has the loaded definition', async () => {
-    const ref = React.createRef<MsheetRendererHandle>();
+    const ref = React.createRef<EsheetRendererHandle>();
     await act(async () => {
       render(
-        <MsheetRenderer
+        <EsheetRenderer
           ref={ref}
           formData={{
             schemaType: SCHEMA_TYPE,
@@ -69,10 +69,10 @@ describe('MsheetRenderer', () => {
   });
 
   it('getUIStore() is in preview mode after mount', async () => {
-    const ref = React.createRef<MsheetRendererHandle>();
+    const ref = React.createRef<EsheetRendererHandle>();
     await act(async () => {
       render(
-        <MsheetRenderer
+        <EsheetRenderer
           ref={ref}
           formData={{
             schemaType: SCHEMA_TYPE,

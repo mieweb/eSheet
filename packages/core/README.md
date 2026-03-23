@@ -1,6 +1,6 @@
-# @msheet/core
+# @esheet/core
 
-Pure TypeScript foundation for mSheet — types, state management, validation, and conditional logic. **React-free** by design; framework wrappers live in consumer packages.
+Pure TypeScript foundation for eSheet — types, state management, validation, and conditional logic. **React-free** by design; framework wrappers live in consumer packages.
 
 ## Features
 
@@ -14,7 +14,7 @@ Pure TypeScript foundation for mSheet — types, state management, validation, a
 ## Installation
 
 ```bash
-npm install @msheet/core
+npm install @esheet/core
 ```
 
 ## Key Exports
@@ -29,15 +29,15 @@ import type {
   FieldType,
   FieldOption,
   ConditionalRule,
-} from '@msheet/core';
+} from '@esheet/core';
 
-import { formDefinitionSchema, fieldDefinitionSchema } from '@msheet/core';
+import { formDefinitionSchema, fieldDefinitionSchema } from '@esheet/core';
 ```
 
 ### State Management
 
 ```ts
-import { createFormStore, createUIStore } from '@msheet/core';
+import { createFormStore, createUIStore } from '@esheet/core';
 
 const form = createFormStore();
 form.getState().loadDefinition(mySchema);
@@ -68,7 +68,7 @@ form.getState().moveField('fieldId', 2, 'newParentId');
 ### Field Registry
 
 ```ts
-import { registerFieldType, getFieldTypeMeta } from '@msheet/core';
+import { registerFieldType, getFieldTypeMeta } from '@esheet/core';
 
 registerFieldType({
   type: 'custom',
@@ -81,7 +81,7 @@ registerFieldType({
 ## Architecture
 
 ```
-@msheet/core
+@esheet/core
 ├── types/       # FieldDefinition, FormDefinition, etc.
 ├── schemas/     # Zod validation schemas
 ├── stores/      # FormStore (data + actions), UIStore (builder UI state)
@@ -92,8 +92,8 @@ registerFieldType({
 
 ## Building
 
-Run `nx build @msheet/core` to build the library.
+Run `nx build @esheet/core` to build the library.
 
 ## Running unit tests
 
-Run `nx test @msheet/core` to execute the unit tests via [Vitest](https://vitest.dev/).
+Run `nx test @esheet/core` to execute the unit tests via [Vitest](https://vitest.dev/).

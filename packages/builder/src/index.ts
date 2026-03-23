@@ -9,18 +9,18 @@ export {
   type BuilderMode,
   type EditTab,
   type FieldComponentProps,
-} from '@msheet/core';
+} from '@esheet/core';
 
 export {
-  MsheetBuilder,
+  EsheetBuilder,
   FormStoreContext,
   UIContext,
   InstanceIdContext,
   useFormStore,
   useUI,
   useInstanceId,
-  type MsheetBuilderProps,
-} from './lib/MsheetBuilder.js';
+  type EsheetBuilderProps,
+} from './lib/EsheetBuilder.js';
 
 export {
   FieldWrapper,
@@ -33,7 +33,7 @@ export {
   getFieldComponent,
   getRegisteredComponentKeys,
   resetComponentRegistry,
-} from '@msheet/fields';
+} from '@esheet/fields';
 
 export {
   BuilderHeader,

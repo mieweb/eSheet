@@ -5,8 +5,8 @@ import {
   type FormStore,
   type UIStore,
   type EditTab,
-} from '@msheet/core';
-import { useInstanceId } from '../../MsheetBuilder.js';
+} from '@esheet/core';
+import { useInstanceId } from '../../EsheetBuilder.js';
 import { EditIcon, LogicIcon } from '../../icons.js';
 import { DraftIdEditor } from './DraftIdEditor.js';
 import { CommonEditor } from './CommonEditor.js';
@@ -99,7 +99,7 @@ export function EditPanel({ form, ui }: EditPanelProps) {
       : logicTargetQuestion
     : logicTargetLabel;
   const handleUpdate = (
-    patch: Partial<Omit<import('@msheet/core').FieldDefinition, 'fields'>>
+    patch: Partial<Omit<import('@esheet/core').FieldDefinition, 'fields'>>
   ) => {
     form.getState().updateField(selectedFieldId, patch);
   };
@@ -186,12 +186,12 @@ export function EditPanel({ form, ui }: EditPanelProps) {
 
 interface EditTabContentProps {
   fieldId: string;
-  def: Omit<import('@msheet/core').FieldDefinition, 'fields'>;
-  meta: import('@msheet/core').FieldTypeMeta | undefined;
+  def: Omit<import('@esheet/core').FieldDefinition, 'fields'>;
+  meta: import('@esheet/core').FieldTypeMeta | undefined;
   form: FormStore;
   ui: UIStore;
   onUpdate: (
-    patch: Partial<Omit<import('@msheet/core').FieldDefinition, 'fields'>>
+    patch: Partial<Omit<import('@esheet/core').FieldDefinition, 'fields'>>
   ) => void;
   onRenameId: (newId: string) => boolean;
 }
@@ -264,11 +264,11 @@ function EditTabContent({
 
 interface SectionEditContentProps {
   fieldId: string;
-  def: Omit<import('@msheet/core').FieldDefinition, 'fields'>;
+  def: Omit<import('@esheet/core').FieldDefinition, 'fields'>;
   form: FormStore;
   ui: UIStore;
   onUpdate: (
-    patch: Partial<Omit<import('@msheet/core').FieldDefinition, 'fields'>>
+    patch: Partial<Omit<import('@esheet/core').FieldDefinition, 'fields'>>
   ) => void;
   onRenameId: (newId: string) => boolean;
 }
