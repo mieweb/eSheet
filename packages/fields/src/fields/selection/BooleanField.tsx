@@ -1,5 +1,5 @@
 import React from 'react';
-import type { FieldComponentProps, SelectedOption } from '@msheet/core';
+import type { FieldComponentProps, SelectedOption } from '@esheet/core';
 import { CustomRadio } from '../../controls/CustomRadio.js';
 
 export const BooleanField = React.memo(function BooleanField({
@@ -26,12 +26,12 @@ export const BooleanField = React.memo(function BooleanField({
 
   if (isPreview) {
     return (
-      <div className="boolean-field-preview ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
-        <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
+      <div className="boolean-field-preview es:grid es:grid-cols-1 es:gap-2 es:sm:grid-cols-2 es:pb-4">
+        <div className="es:font-light es:text-estext es:break-words es:overflow-hidden">
           {def.question || 'Question'}
-          {isRequired && <span className="ms:text-msdanger ms:ml-0.5">*</span>}
+          {isRequired && <span className="es:text-esdanger es:ml-0.5">*</span>}
         </div>
-        <div className="ms:flex ms:gap-2">
+        <div className="es:flex es:gap-2">
           {options.map((option) => {
             const inputId = `${instanceId}-boolean-answer-${def.id}-${option.id}`;
             const isSelected = selectedId === option.id;
@@ -40,10 +40,10 @@ export const BooleanField = React.memo(function BooleanField({
               <label
                 key={option.id}
                 htmlFor={inputId}
-                className={`ms:flex-1 ms:flex ms:items-center ms:justify-center ms:px-4 ms:py-2 ms:h-10 ms:border-2 ms:rounded-lg ms:cursor-pointer ms:transition-all ${
+                className={`es:flex-1 es:flex es:items-center es:justify-center es:px-4 es:py-2 es:h-10 es:border-2 es:rounded-lg es:cursor-pointer es:transition-all ${
                   isSelected
-                    ? 'ms:bg-msprimary ms:text-mstextsecondary ms:border-msprimary'
-                    : 'ms:border-msborder ms:bg-mssurface ms:hover:bg-msprimary/10 ms:hover:border-msprimary/50'
+                    ? 'es:bg-esprimary es:text-estextsecondary es:border-esprimary'
+                    : 'es:border-esborder es:bg-essurface es:hover:bg-esprimary/10 es:hover:border-esprimary/50'
                 }`}
               >
                 <CustomRadio
@@ -62,7 +62,7 @@ export const BooleanField = React.memo(function BooleanField({
                 />
                 <span
                   className={
-                    isSelected ? 'ms:text-mstextsecondary' : 'ms:text-mstext'
+                    isSelected ? 'es:text-estextsecondary' : 'es:text-estext'
                   }
                 >
                   {option.value}
@@ -76,18 +76,18 @@ export const BooleanField = React.memo(function BooleanField({
   }
 
   return (
-    <div className="boolean-field-edit ms:space-y-2">
+    <div className="boolean-field-edit es:space-y-2">
       <div>
         <label
           htmlFor={`${instanceId}-canvas-question-${def.id}`}
-          className="ms:block ms:text-sm ms:font-medium ms:text-mstextmuted ms:mb-1"
+          className="es:block es:text-sm es:font-medium es:text-estextmuted es:mb-1"
         >
           Question
         </label>
         <input
           id={`${instanceId}-canvas-question-${def.id}`}
           aria-label="Question"
-          className="ms:px-3 ms:py-2 ms:h-10 ms:w-full ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:rounded-lg ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary/30 ms:outline-none"
+          className="es:px-3 es:py-2 es:h-10 es:w-full es:border es:border-esborder es:bg-essurface es:text-estext es:rounded-lg es:focus:border-esprimary es:focus:ring-1 es:focus:ring-esprimary/30 es:outline-none"
           type="text"
           value={def.question || ''}
           onChange={(e) => onUpdate({ question: e.target.value })}
@@ -95,13 +95,13 @@ export const BooleanField = React.memo(function BooleanField({
         />
       </div>
 
-      <div className="ms:space-y-2">
+      <div className="es:space-y-2">
         {options.map((opt) => (
           <div
             key={opt.id}
-            className="ms:flex ms:items-center ms:gap-2 ms:px-3 ms:py-2 ms:border ms:border-msborder ms:bg-mssurface ms:rounded-lg ms:shadow-sm ms:hover:border-mstextmuted ms:transition-colors"
+            className="es:flex es:items-center es:gap-2 es:px-3 es:py-2 es:border es:border-esborder es:bg-essurface es:rounded-lg es:shadow-sm es:hover:border-estextmuted es:transition-colors"
           >
-            <span className="ms:shrink-0 ms:w-4 ms:h-4 ms:rounded-full ms:border ms:border-msborder ms:bg-mssurface" />
+            <span className="es:shrink-0 es:w-4 es:h-4 es:rounded-full es:border es:border-esborder es:bg-essurface" />
             <input
               id={`${instanceId}-canvas-option-${def.id}-${opt.id}`}
               aria-label={`Option ${opt.id}`}
@@ -111,7 +111,7 @@ export const BooleanField = React.memo(function BooleanField({
                 form.getState().updateOption(def.id, opt.id, e.target.value)
               }
               placeholder={`Option ${opt.id}`}
-              className="ms:flex-1 ms:min-w-0 ms:outline-none ms:bg-transparent ms:text-mstext"
+              className="es:flex-1 es:min-w-0 es:outline-none es:bg-transparent es:text-estext"
             />
           </div>
         ))}

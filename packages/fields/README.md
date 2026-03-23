@@ -1,8 +1,8 @@
-# @msheet/fields
+# @esheet/fields
 
-**Internal** field component library for mSheet. Provides the 19 built-in field type React components used by `@msheet/builder` and `@msheet/renderer`.
+**Internal** field component library for eSheet. Provides the 19 built-in field type React components used by `@esheet/builder` and `@esheet/renderer`.
 
-> **⚠️ Not intended for standalone use.** These components expect to run inside a host root (`@msheet/builder` or `@msheet/renderer`) that provides CSS resets, theme tokens, and dark mode support. Without a host, components will render unstyled.
+> **⚠️ Not intended for standalone use.** These components expect to run inside a host root (`@esheet/builder` or `@esheet/renderer`) that provides CSS resets, theme tokens, and dark mode support. Without a host, components will render unstyled.
 
 ## Field Types
 
@@ -27,7 +27,7 @@
 ## Component Registry
 
 ```ts
-import { getFieldComponent, registerCustomFieldTypes } from '@msheet/fields';
+import { getFieldComponent, registerCustomFieldTypes } from '@esheet/fields';
 
 // Look up a component by field type
 const Component = getFieldComponent('text'); // → TextField
@@ -48,7 +48,7 @@ registerCustomFieldTypes({
 
 ## CSS Architecture
 
-Fields use Tailwind CSS v4 with `ms:` prefix (e.g., `ms:bg-mssurface`, `ms:text-mstext`). Colors reference CSS custom properties (`--ms-color-*`) defined by the host root:
+Fields use Tailwind CSS v4 with `es:` prefix (e.g., `es:bg-essurface`, `es:text-estext`). Colors reference CSS custom properties (`--es-color-*`) defined by the host root:
 
 - **Light mode**: Defined in the host's `@theme` block
 - **Dark mode**: Overridden when the host root has `.dark` class
@@ -57,8 +57,8 @@ Fields do **not** ship their own CSS resets or dark theme — they inherit from 
 
 ## Building
 
-Run `nx build @msheet/fields` to build the library.
+Run `nx build @esheet/fields` to build the library.
 
 ## Running unit tests
 
-Run `nx test @msheet/fields` to execute the unit tests via [Vitest](https://vitest.dev/).
+Run `nx test @esheet/fields` to execute the unit tests via [Vitest](https://vitest.dev/).

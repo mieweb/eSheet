@@ -45,7 +45,7 @@ export function LandingPage() {
       <div className="demo-landing-wrapper max-w-5xl mx-auto px-6 py-24">
         <div className="demo-landing-hero text-center mb-16">
           <h1 className="m-0 mb-4 text-5xl font-bold text-slate-900">
-            mSheet Playground
+            eSheet Playground
           </h1>
           <p className="mx-auto max-w-2xl text-lg text-slate-600 leading-relaxed">
             Explore the form builder and renderer in action. Build

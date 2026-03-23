@@ -78,7 +78,7 @@ export const CustomRadio = React.memo(function CustomRadio({
         disabled={disabled}
         onClick={handleClick}
         onChange={noop}
-        className={`ms:hidden ${className}`}
+        className={`es:hidden ${className}`}
       />
     );
   }
@@ -91,7 +91,7 @@ export const CustomRadio = React.memo(function CustomRadio({
         e.stopPropagation();
         handleClick();
       }}
-      className={`custom-radio-wrapper ms:inline-flex ms:items-center ms:justify-center ms:cursor-pointer ${className}`}
+      className={`custom-radio-wrapper es:inline-flex es:items-center es:justify-center es:cursor-pointer ${className}`}
     >
       <input
         id={id}
@@ -101,20 +101,20 @@ export const CustomRadio = React.memo(function CustomRadio({
         checked={checked}
         disabled={disabled}
         onChange={noop}
-        className="ms:hidden"
+        className="es:hidden"
       />
       <span
-        className={`custom-radio-display ms:inline-flex ms:items-center ms:justify-center ms:rounded-full ms:border-2 ms:transition-all ms:pointer-events-none ms:shrink-0 ${
+        className={`custom-radio-display es:inline-flex es:items-center es:justify-center es:rounded-full es:border-2 es:transition-all es:pointer-events-none es:shrink-0 ${
           checked
-            ? 'ms:border-msprimary ms:bg-msprimary'
-            : 'ms:border-msborderinactive ms:bg-mssurface'
-        } ${disabled ? 'ms:opacity-50' : ''}`}
+            ? 'es:border-esprimary es:bg-esprimary'
+            : 'es:border-esborderinactive es:bg-essurface'
+        } ${disabled ? 'es:opacity-50' : ''}`}
         style={{ width: s.outer, height: s.outer }}
         aria-hidden="true"
       >
         {checked && (
           <span
-            className="custom-radio-dot ms:rounded-full ms:bg-mssurface"
+            className="custom-radio-dot es:rounded-full es:bg-essurface"
             style={{ width: s.inner, height: s.inner }}
           />
         )}

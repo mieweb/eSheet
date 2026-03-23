@@ -1,5 +1,5 @@
 import React from 'react';
-import type { FieldComponentProps } from '@msheet/core';
+import type { FieldComponentProps } from '@esheet/core';
 import { DrawingPad } from './DrawingPad.js';
 
 export const DiagramField = React.memo(function DiagramField({
@@ -69,10 +69,10 @@ export const DiagramField = React.memo(function DiagramField({
 
   if (isPreview) {
     return (
-      <div className="diagram-field-preview ms:space-y-2 ms:pb-4">
-        <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
+      <div className="diagram-field-preview es:space-y-2 es:pb-4">
+        <div className="es:font-light es:text-estext es:break-words es:overflow-hidden">
           {def.question || 'Diagram'}
-          {isRequired && <span className="ms:text-msdanger ms:ml-0.5">*</span>}
+          {isRequired && <span className="es:text-esdanger es:ml-0.5">*</span>}
         </div>
         <DrawingPad
           config={{
@@ -98,13 +98,13 @@ export const DiagramField = React.memo(function DiagramField({
     <div
       ref={containerRef}
       tabIndex={-1}
-      className="diagram-field-edit ms:space-y-3"
+      className="diagram-field-edit es:space-y-3"
     >
       {/* Question */}
       <div>
         <label
           htmlFor={`${instanceId}-canvas-question-${def.id}`}
-          className="ms:block ms:text-sm ms:font-medium ms:text-mstextmuted ms:mb-1"
+          className="es:block es:text-sm es:font-medium es:text-estextmuted es:mb-1"
         >
           Question
         </label>
@@ -115,7 +115,7 @@ export const DiagramField = React.memo(function DiagramField({
           value={def.question ?? ''}
           onChange={(e) => onUpdate({ question: e.target.value })}
           placeholder="Enter question"
-          className="ms:px-3 ms:py-2 ms:h-10 ms:w-full ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:rounded-lg ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary/30 ms:outline-none ms:transition-colors"
+          className="es:px-3 es:py-2 es:h-10 es:w-full es:border es:border-esborder es:bg-essurface es:text-estext es:rounded-lg es:focus:border-esprimary es:focus:ring-1 es:focus:ring-esprimary/30 es:outline-none es:transition-colors"
         />
       </div>
 
@@ -123,7 +123,7 @@ export const DiagramField = React.memo(function DiagramField({
       <div>
         <label
           htmlFor={`${instanceId}-canvas-pad-placeholder-${def.id}`}
-          className="ms:block ms:text-sm ms:font-medium ms:text-mstextmuted ms:mb-1"
+          className="es:block es:text-sm es:font-medium es:text-estextmuted es:mb-1"
         >
           Canvas Placeholder
         </label>
@@ -134,27 +134,27 @@ export const DiagramField = React.memo(function DiagramField({
           value={def.padPlaceholder ?? ''}
           onChange={(e) => onUpdate({ padPlaceholder: e.target.value })}
           placeholder="Draw on the diagram"
-          className="ms:px-3 ms:py-2 ms:h-10 ms:w-full ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:rounded-lg ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary/30 ms:outline-none ms:transition-colors"
+          className="es:px-3 es:py-2 es:h-10 es:w-full es:border es:border-esborder es:bg-essurface es:text-estext es:rounded-lg es:focus:border-esprimary es:focus:ring-1 es:focus:ring-esprimary/30 es:outline-none es:transition-colors"
         />
       </div>
 
       {/* Background image */}
       <div>
-        <p className="ms:text-sm ms:font-medium ms:text-mstextmuted ms:mb-2">
+        <p className="es:text-sm es:font-medium es:text-estextmuted es:mb-2">
           Background Image
         </p>
 
         {def.imageUri ? (
-          <div className="ms:relative ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackground ms:p-3">
+          <div className="es:relative es:rounded-lg es:border es:border-esborder es:bg-esbackground es:p-3">
             <button
               type="button"
               onClick={() => onUpdate({ imageUri: '' })}
               title="Remove image"
               aria-label="Remove background image"
-              className="ms:absolute ms:top-2 ms:right-2 ms:w-6 ms:h-6 ms:flex ms:items-center ms:justify-center ms:rounded ms:bg-msdanger/10 ms:text-msdanger ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:hover:bg-msdanger/20"
+              className="es:absolute es:top-2 es:right-2 es:w-6 es:h-6 es:flex es:items-center es:justify-center es:rounded es:bg-esdanger/10 es:text-esdanger es:border-0 es:outline-none es:focus:outline-none es:cursor-pointer es:hover:bg-esdanger/20"
             >
               <svg
-                className="ms:w-3.5 ms:h-3.5"
+                className="es:w-3.5 es:h-3.5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -170,7 +170,7 @@ export const DiagramField = React.memo(function DiagramField({
             <img
               src={def.imageUri}
               alt="Diagram background"
-              className="ms:w-full ms:h-auto ms:max-h-48 ms:object-contain"
+              className="es:w-full es:h-auto es:max-h-48 es:object-contain"
             />
           </div>
         ) : (
@@ -180,15 +180,15 @@ export const DiagramField = React.memo(function DiagramField({
               type="file"
               accept="image/*"
               onChange={handleFileUpload}
-              className="ms:hidden"
+              className="es:hidden"
             />
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="diagram-upload-zone ms:w-full ms:flex ms:flex-col ms:items-center ms:justify-center ms:gap-1.5 ms:py-6 ms:border-2 ms:border-dashed ms:border-msborder ms:rounded-lg ms:bg-msbackground ms:hover:border-msprimary ms:hover:bg-msprimary/5 ms:transition-colors ms:cursor-pointer ms:outline-none ms:focus:outline-none"
+              className="diagram-upload-zone es:w-full es:flex es:flex-col es:items-center es:justify-center es:gap-1.5 es:py-6 es:border-2 es:border-dashed es:border-esborder es:rounded-lg es:bg-esbackground es:hover:border-esprimary es:hover:bg-esprimary/5 es:transition-colors es:cursor-pointer es:outline-none es:focus:outline-none"
             >
               <svg
-                className="ms:w-8 ms:h-8 ms:text-mstextmuted"
+                className="es:w-8 es:h-8 es:text-estextmuted"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -200,10 +200,10 @@ export const DiagramField = React.memo(function DiagramField({
                   d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                 />
               </svg>
-              <p className="ms:text-sm ms:font-medium ms:text-mstextmuted">
+              <p className="es:text-sm es:font-medium es:text-estextmuted">
                 Upload or paste (Ctrl+V) a background image
               </p>
-              <p className="ms:text-xs ms:text-mstextmuted ms:opacity-70">
+              <p className="es:text-xs es:text-estextmuted es:opacity-70">
                 Optional — leave blank to draw on a plain canvas
               </p>
             </button>
@@ -212,8 +212,8 @@ export const DiagramField = React.memo(function DiagramField({
       </div>
 
       {/* Static preview of the pad */}
-      <div className="ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackground ms:p-3">
-        <p className="ms:text-xs ms:text-mstextmuted ms:mb-2">
+      <div className="es:rounded-lg es:border es:border-esborder es:bg-esbackground es:p-3">
+        <p className="es:text-xs es:text-estextmuted es:mb-2">
           Diagram pad preview
         </p>
         <DrawingPad

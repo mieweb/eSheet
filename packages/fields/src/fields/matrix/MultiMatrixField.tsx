@@ -1,5 +1,5 @@
 import React from 'react';
-import type { FieldComponentProps, SelectedOption } from '@msheet/core';
+import type { FieldComponentProps, SelectedOption } from '@esheet/core';
 import { CustomCheckbox } from '../../controls/CustomCheckbox.js';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 
@@ -42,27 +42,27 @@ export const MultiMatrixField = React.memo(function MultiMatrixField({
 
   if (isPreview) {
     return (
-      <div className="multimatrix-field-preview ms:text-mstext ms:pb-4">
-        <div className="ms:font-light ms:mb-3 ms:text-mstext ms:break-words ms:overflow-hidden">
+      <div className="multimatrix-field-preview es:text-estext es:pb-4">
+        <div className="es:font-light es:mb-3 es:text-estext es:break-words es:overflow-hidden">
           {def.question || 'Question'}
-          {isRequired && <span className="ms:text-msdanger ms:ml-0.5">*</span>}
+          {isRequired && <span className="es:text-esdanger es:ml-0.5">*</span>}
         </div>
 
         {rows.length > 0 && columns.length > 0 ? (
           <div
-            className="multimatrix-field-grid ms:border-t ms:border-msborder ms:pt-3"
+            className="multimatrix-field-grid es:border-t es:border-esborder es:pt-3"
             style={{
               display: 'grid',
               gridTemplateColumns: `auto repeat(${columns.length}, 1fr)`,
               gap: '0.5rem 1rem',
-              alignItems: 'center',
+              alignItees: 'center',
             }}
           >
             <div />
             {columns.map((col) => (
               <div
                 key={col.id}
-                className="ms:text-center ms:font-normal ms:text-mstext ms:py-1"
+                className="es:text-center es:font-normal es:text-estext es:py-1"
               >
                 {col.value}
               </div>
@@ -73,7 +73,7 @@ export const MultiMatrixField = React.memo(function MultiMatrixField({
 
               return (
                 <React.Fragment key={row.id}>
-                  <div className="ms:font-normal ms:text-mstext ms:py-2">
+                  <div className="es:font-normal es:text-estext es:py-2">
                     {row.value}
                   </div>
                   {columns.map((col, colIndex) => {
@@ -85,7 +85,7 @@ export const MultiMatrixField = React.memo(function MultiMatrixField({
                     return (
                       <div
                         key={col.id}
-                        className="ms:flex ms:justify-center ms:py-2"
+                        className="es:flex es:justify-center es:py-2"
                       >
                         <CustomCheckbox
                           id={inputId}
@@ -104,7 +104,7 @@ export const MultiMatrixField = React.memo(function MultiMatrixField({
             })}
           </div>
         ) : (
-          <div className="ms:text-mstextmuted ms:text-sm">
+          <div className="es:text-estextmuted es:text-sm">
             Configure rows and columns in edit mode
           </div>
         )}
@@ -113,18 +113,18 @@ export const MultiMatrixField = React.memo(function MultiMatrixField({
   }
 
   return (
-    <div className="multimatrix-field-edit ms:space-y-3">
+    <div className="multimatrix-field-edit es:space-y-3">
       <div>
         <label
           htmlFor={`${instanceId}-canvas-question-${def.id}`}
-          className="ms:block ms:text-sm ms:font-medium ms:text-mstextmuted ms:mb-1"
+          className="es:block es:text-sm es:font-medium es:text-estextmuted es:mb-1"
         >
           Question
         </label>
         <input
           id={`${instanceId}-canvas-question-${def.id}`}
           aria-label="Question"
-          className="ms:px-3 ms:py-2 ms:h-10 ms:w-full ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:rounded-lg ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary ms:outline-none"
+          className="es:px-3 es:py-2 es:h-10 es:w-full es:border es:border-esborder es:bg-essurface es:text-estext es:rounded-lg es:focus:border-esprimary es:focus:ring-1 es:focus:ring-esprimary es:outline-none"
           type="text"
           value={def.question || ''}
           onChange={(e) => onUpdate({ question: e.target.value })}
@@ -134,14 +134,14 @@ export const MultiMatrixField = React.memo(function MultiMatrixField({
 
       {/* Rows */}
       <div>
-        <span className="ms:block ms:text-sm ms:font-medium ms:text-mstextmuted ms:mb-2">
+        <span className="es:block es:text-sm es:font-medium es:text-estextmuted es:mb-2">
           Rows
         </span>
-        <div className="ms:space-y-2">
+        <div className="es:space-y-2">
           {rows.map((row) => (
             <div
               key={row.id}
-              className="ms:flex ms:items-center ms:gap-2 ms:px-3 ms:py-2 ms:border ms:border-msborder ms:bg-mssurface ms:rounded-lg ms:shadow-sm ms:hover:border-mstextmuted ms:transition-colors"
+              className="es:flex es:items-center es:gap-2 es:px-3 es:py-2 es:border es:border-esborder es:bg-essurface es:rounded-lg es:shadow-sm es:hover:border-estextmuted es:transition-colors"
             >
               <input
                 id={`${instanceId}-canvas-row-${def.id}-${row.id}`}
@@ -152,20 +152,20 @@ export const MultiMatrixField = React.memo(function MultiMatrixField({
                   form.getState().updateRow(def.id, row.id, e.target.value)
                 }
                 placeholder="Row text"
-                className="ms:flex-1 ms:min-w-0 ms:outline-none ms:bg-transparent ms:text-mstext"
+                className="es:flex-1 es:min-w-0 es:outline-none es:bg-transparent es:text-estext"
               />
               <button
                 onClick={() => form.getState().removeRow(def.id, row.id)}
-                className="ms:shrink-0 ms:text-mstextmuted ms:hover:text-msdanger ms:transition-colors ms:bg-transparent ms:border-0 ms:outline-none ms:focus:outline-none"
+                className="es:shrink-0 es:text-estextmuted es:hover:text-esdanger es:transition-colors es:bg-transparent es:border-0 es:outline-none es:focus:outline-none"
                 title="Remove row"
               >
-                <TrashIcon className="ms:w-5 ms:h-5" />
+                <TrashIcon className="es:w-5 es:h-5" />
               </button>
             </div>
           ))}
         </div>
         {rows.length >= 10 ? (
-          <div className="ms:mt-2 ms:text-mstextmuted ms:text-sm">
+          <div className="es:mt-2 es:text-estextmuted es:text-sm">
             Max rows reached
           </div>
         ) : (
@@ -173,23 +173,23 @@ export const MultiMatrixField = React.memo(function MultiMatrixField({
             onClick={() =>
               form.getState().addRow(def.id, `Row ${rows.length + 1}`)
             }
-            className="ms:mt-2 ms:w-full ms:px-3 ms:py-2 ms:text-sm ms:font-medium ms:text-msprimary ms:border ms:border-msprimary/50 ms:rounded-lg ms:bg-mssurface ms:hover:bg-msprimary/10 ms:transition-colors ms:flex ms:items-center ms:justify-center ms:gap-2"
+            className="es:mt-2 es:w-full es:px-3 es:py-2 es:text-sm es:font-medium es:text-esprimary es:border es:border-esprimary/50 es:rounded-lg es:bg-essurface es:hover:bg-esprimary/10 es:transition-colors es:flex es:items-center es:justify-center es:gap-2"
           >
-            <PlusIcon className="ms:w-5 ms:h-5" /> Add Row
+            <PlusIcon className="es:w-5 es:h-5" /> Add Row
           </button>
         )}
       </div>
 
       {/* Columns */}
       <div>
-        <span className="ms:block ms:text-sm ms:font-medium ms:text-mstextmuted ms:mb-2">
+        <span className="es:block es:text-sm es:font-medium es:text-estextmuted es:mb-2">
           Columns
         </span>
-        <div className="ms:space-y-2">
+        <div className="es:space-y-2">
           {columns.map((col) => (
             <div
               key={col.id}
-              className="ms:flex ms:items-center ms:gap-2 ms:px-3 ms:py-2 ms:border ms:border-msborder ms:bg-mssurface ms:rounded-lg ms:shadow-sm ms:hover:border-mstextmuted ms:transition-colors"
+              className="es:flex es:items-center es:gap-2 es:px-3 es:py-2 es:border es:border-esborder es:bg-essurface es:rounded-lg es:shadow-sm es:hover:border-estextmuted es:transition-colors"
             >
               <input
                 id={`${instanceId}-canvas-col-${def.id}-${col.id}`}
@@ -200,20 +200,20 @@ export const MultiMatrixField = React.memo(function MultiMatrixField({
                   form.getState().updateColumn(def.id, col.id, e.target.value)
                 }
                 placeholder="Column text"
-                className="ms:flex-1 ms:min-w-0 ms:outline-none ms:bg-transparent ms:text-mstext"
+                className="es:flex-1 es:min-w-0 es:outline-none es:bg-transparent es:text-estext"
               />
               <button
                 onClick={() => form.getState().removeColumn(def.id, col.id)}
-                className="ms:shrink-0 ms:text-mstextmuted ms:hover:text-msdanger ms:transition-colors ms:bg-transparent ms:border-0 ms:outline-none ms:focus:outline-none"
+                className="es:shrink-0 es:text-estextmuted es:hover:text-esdanger es:transition-colors es:bg-transparent es:border-0 es:outline-none es:focus:outline-none"
                 title="Remove column"
               >
-                <TrashIcon className="ms:w-5 ms:h-5" />
+                <TrashIcon className="es:w-5 es:h-5" />
               </button>
             </div>
           ))}
         </div>
         {columns.length >= 10 ? (
-          <div className="ms:mt-2 ms:text-mstextmuted ms:text-sm">
+          <div className="es:mt-2 es:text-estextmuted es:text-sm">
             Max columns reached
           </div>
         ) : (
@@ -221,9 +221,9 @@ export const MultiMatrixField = React.memo(function MultiMatrixField({
             onClick={() =>
               form.getState().addColumn(def.id, `Column ${columns.length + 1}`)
             }
-            className="ms:mt-2 ms:w-full ms:px-3 ms:py-2 ms:text-sm ms:font-medium ms:text-msprimary ms:border ms:border-msprimary/50 ms:rounded-lg ms:bg-mssurface ms:hover:bg-msprimary/10 ms:transition-colors ms:flex ms:items-center ms:justify-center ms:gap-2"
+            className="es:mt-2 es:w-full es:px-3 es:py-2 es:text-sm es:font-medium es:text-esprimary es:border es:border-esprimary/50 es:rounded-lg es:bg-essurface es:hover:bg-esprimary/10 es:transition-colors es:flex es:items-center es:justify-center es:gap-2"
           >
-            <PlusIcon className="ms:w-5 ms:h-5" /> Add Column
+            <PlusIcon className="es:w-5 es:h-5" /> Add Column
           </button>
         )}
       </div>

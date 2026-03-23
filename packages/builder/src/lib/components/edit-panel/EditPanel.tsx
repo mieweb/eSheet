@@ -5,8 +5,8 @@ import {
   type FormStore,
   type UIStore,
   type EditTab,
-} from '@msheet/core';
-import { useInstanceId } from '../../MsheetBuilder.js';
+} from '@esheet/core';
+import { useInstanceId } from '../../EsheetBuilder.js';
 import { EditIcon, LogicIcon } from '../../icons.js';
 import { DraftIdEditor } from './DraftIdEditor.js';
 import { CommonEditor } from './CommonEditor.js';
@@ -75,7 +75,7 @@ export function EditPanel({ form, ui }: EditPanelProps) {
   // No selection
   if (!selectedFieldId || !field) {
     return (
-      <div className="edit-panel-empty ms:flex ms:flex-1 ms:min-h-0 ms:items-center ms:justify-center ms:text-mstextmuted ms:text-sm ms:p-4 ms:text-center">
+      <div className="edit-panel-empty es:flex es:flex-1 es:min-h-0 es:items-center es:justify-center es:text-estextmuted es:text-sm es:p-4 es:text-center">
         Select a field to edit its properties
       </div>
     );
@@ -99,7 +99,7 @@ export function EditPanel({ form, ui }: EditPanelProps) {
       : logicTargetQuestion
     : logicTargetLabel;
   const handleUpdate = (
-    patch: Partial<Omit<import('@msheet/core').FieldDefinition, 'fields'>>
+    patch: Partial<Omit<import('@esheet/core').FieldDefinition, 'fields'>>
   ) => {
     form.getState().updateField(selectedFieldId, patch);
   };
@@ -115,39 +115,39 @@ export function EditPanel({ form, ui }: EditPanelProps) {
   const setTab = (tab: EditTab) => ui.getState().setEditTab(tab);
 
   return (
-    <div className="edit-panel ms:flex ms:flex-1 ms:flex-col ms:min-h-0">
+    <div className="edit-panel es:flex es:flex-1 es:flex-col es:min-h-0">
       {/* Tab Bar — pill segment style */}
-      <div className="edit-panel-tabs ms:sticky ms:top-0 ms:z-10 ms:bg-mssurface ms:border-b ms:border-msborder ms:px-3 ms:pt-3 ms:pb-2 ms:shrink-0">
-        <div className="ms:flex ms:gap-1 ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackground ms:p-1">
+      <div className="edit-panel-tabs es:sticky es:top-0 es:z-10 es:bg-essurface es:border-b es:border-esborder es:px-3 es:pt-3 es:pb-2 es:shrink-0">
+        <div className="es:flex es:gap-1 es:rounded-lg es:border es:border-esborder es:bg-esbackground es:p-1">
           <button
             type="button"
             onClick={() => setTab('edit')}
-            className={`edit-tab-btn ms:flex-1 ms:flex ms:items-center ms:justify-center ms:gap-1.5 ms:px-3 ms:py-1.5 ms:rounded-md ms:text-xs ms:font-medium ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ${
+            className={`edit-tab-btn es:flex-1 es:flex es:items-center es:justify-center es:gap-1.5 es:px-3 es:py-1.5 es:rounded-md es:text-xs es:font-medium es:transition-colors es:border-0 es:outline-none es:focus:outline-none es:cursor-pointer ${
               editTab === 'edit'
-                ? 'ms:bg-msprimary ms:text-mstextsecondary ms:shadow-sm'
-                : 'ms:bg-transparent ms:text-mstextmuted ms:hover:text-mstext ms:hover:bg-mssurface'
+                ? 'es:bg-esprimary es:text-estextsecondary es:shadow-sm'
+                : 'es:bg-transparent es:text-estextmuted es:hover:text-estext es:hover:bg-essurface'
             }`}
           >
-            <EditIcon className="ms:w-3.5 ms:h-3.5" />
+            <EditIcon className="es:w-3.5 es:h-3.5" />
             <span>Edit</span>
           </button>
           <button
             type="button"
             onClick={() => setTab('logic')}
-            className={`logic-tab-btn ms:flex-1 ms:flex ms:items-center ms:justify-center ms:gap-1.5 ms:px-3 ms:py-1.5 ms:rounded-md ms:text-xs ms:font-medium ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ${
+            className={`logic-tab-btn es:flex-1 es:flex es:items-center es:justify-center es:gap-1.5 es:px-3 es:py-1.5 es:rounded-md es:text-xs es:font-medium es:transition-colors es:border-0 es:outline-none es:focus:outline-none es:cursor-pointer ${
               editTab === 'logic'
-                ? 'ms:bg-msprimary ms:text-mstextsecondary ms:shadow-sm'
-                : 'ms:bg-transparent ms:text-mstextmuted ms:hover:text-mstext ms:hover:bg-mssurface'
+                ? 'es:bg-esprimary es:text-estextsecondary es:shadow-sm'
+                : 'es:bg-transparent es:text-estextmuted es:hover:text-estext es:hover:bg-essurface'
             }`}
           >
-            <LogicIcon className="ms:w-3.5 ms:h-3.5" />
+            <LogicIcon className="es:w-3.5 es:h-3.5" />
             <span>Logic</span>
           </button>
         </div>
       </div>
 
       {/* Tab Content */}
-      <div className="edit-panel-content ms:flex-1 ms:min-h-0 ms:p-4">
+      <div className="edit-panel-content es:flex-1 es:min-h-0 es:p-4">
         {editTab === 'edit' ? (
           <EditTabContent
             fieldId={selectedFieldId}
@@ -159,12 +159,12 @@ export function EditPanel({ form, ui }: EditPanelProps) {
             onRenameId={handleRenameId}
           />
         ) : logicField ? (
-          <div className="ms:space-y-2">
-            <div className="ms:flex ms:flex-wrap ms:items-center ms:gap-1.5 ms:text-xs ms:text-mstextmuted ms:bg-msbackground ms:border ms:border-msborder ms:rounded ms:px-2.5 ms:py-1.5">
-              <span className="ms:inline-block ms:text-xs ms:font-medium ms:text-msprimary ms:bg-msprimary/10 ms:px-2 ms:py-0.5 ms:rounded ms:shrink-0">
+          <div className="es:space-y-2">
+            <div className="es:flex es:flex-wrap es:items-center es:gap-1.5 es:text-xs es:text-estextmuted es:bg-esbackground es:border es:border-esborder es:rounded es:px-2.5 es:py-1.5">
+              <span className="es:inline-block es:text-xs es:font-medium es:text-esprimary es:bg-esprimary/10 es:px-2 es:py-0.5 es:rounded es:shrink-0">
                 {logicField.definition.fieldType}
               </span>
-              <span className="ms:px-1.5 ms:py-0.5 ms:rounded ms:bg-mssurface ms:border ms:border-msborder ms:text-mstext ms:font-medium">
+              <span className="es:px-1.5 es:py-0.5 es:rounded es:bg-essurface es:border es:border-esborder es:text-estext es:font-medium">
                 {logicTargetQuestionShort}
               </span>
             </div>
@@ -186,12 +186,12 @@ export function EditPanel({ form, ui }: EditPanelProps) {
 
 interface EditTabContentProps {
   fieldId: string;
-  def: Omit<import('@msheet/core').FieldDefinition, 'fields'>;
-  meta: import('@msheet/core').FieldTypeMeta | undefined;
+  def: Omit<import('@esheet/core').FieldDefinition, 'fields'>;
+  meta: import('@esheet/core').FieldTypeMeta | undefined;
   form: FormStore;
   ui: UIStore;
   onUpdate: (
-    patch: Partial<Omit<import('@msheet/core').FieldDefinition, 'fields'>>
+    patch: Partial<Omit<import('@esheet/core').FieldDefinition, 'fields'>>
   ) => void;
   onRenameId: (newId: string) => boolean;
 }
@@ -221,7 +221,7 @@ function EditTabContent({
   }
 
   return (
-    <div className="edit-tab ms:space-y-4">
+    <div className="edit-tab es:space-y-4">
       {/* Common: ID, Question, Required, InputType */}
       <CommonEditor
         fieldId={fieldId}
@@ -232,7 +232,7 @@ function EditTabContent({
 
       {/* Divider */}
       {(meta?.hasOptions || meta?.hasMatrix) && (
-        <hr className="ms:border-msborder" />
+        <hr className="es:border-esborder" />
       )}
 
       {/* Options (radio, check, dropdown, multitext, rating, ranking, slider, boolean) */}
@@ -264,11 +264,11 @@ function EditTabContent({
 
 interface SectionEditContentProps {
   fieldId: string;
-  def: Omit<import('@msheet/core').FieldDefinition, 'fields'>;
+  def: Omit<import('@esheet/core').FieldDefinition, 'fields'>;
   form: FormStore;
   ui: UIStore;
   onUpdate: (
-    patch: Partial<Omit<import('@msheet/core').FieldDefinition, 'fields'>>
+    patch: Partial<Omit<import('@esheet/core').FieldDefinition, 'fields'>>
   ) => void;
   onRenameId: (newId: string) => boolean;
 }
@@ -370,12 +370,12 @@ function SectionEditContent({
   };
 
   return (
-    <div className="section-editor ms:space-y-3">
+    <div className="section-editor es:space-y-3">
       {/* Section ID */}
       <div>
         <label
           htmlFor={`${instanceId}-editor-id-${fieldId}`}
-          className="edit-label ms:block ms:text-sm ms:font-medium ms:text-mstext ms:mb-1"
+          className="edit-label es:block es:text-sm es:font-medium es:text-estext es:mb-1"
         >
           Section ID
         </label>
@@ -386,7 +386,7 @@ function SectionEditContent({
       <div>
         <label
           htmlFor={`${instanceId}-editor-title-${fieldId}`}
-          className="edit-label ms:block ms:text-sm ms:text-mstext ms:mb-1"
+          className="edit-label es:block es:text-sm es:text-estext es:mb-1"
         >
           Section Title
         </label>
@@ -396,29 +396,29 @@ function SectionEditContent({
           value={def.title ?? ''}
           onChange={(e) => onUpdate({ title: e.currentTarget.value })}
           placeholder="Enter section title..."
-          className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:placeholder:text-mstextmuted ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
+          className="es:w-full es:min-w-0 es:px-3 es:py-2 es:text-sm es:bg-essurface es:border es:border-esborder es:rounded es:text-estext es:placeholder:text-estextmuted es:focus:outline-none es:focus:ring-1 es:focus:ring-esprimary es:focus:border-esprimary es:transition-colors"
         />
       </div>
 
-      <div className="ms:space-y-2">
-        <div className="ms:flex ms:items-center ms:justify-between ms:gap-2">
-          <span className="ms:text-sm ms:font-medium ms:text-mstext">
+      <div className="es:space-y-2">
+        <div className="es:flex es:items-center es:justify-between es:gap-2">
+          <span className="es:text-sm es:font-medium es:text-estext">
             Section Fields
           </span>
-          <span className="ms:text-xs ms:text-mstextmuted">
+          <span className="es:text-xs es:text-estextmuted">
             {childFields.length} item{childFields.length === 1 ? '' : 's'}
           </span>
         </div>
 
         {childFields.length === 0 ? (
-          <div className="ms:text-sm ms:text-mstextmuted ms:px-3 ms:py-2 ms:bg-msbackground ms:border ms:border-msborder ms:rounded">
+          <div className="es:text-sm es:text-estextmuted es:px-3 es:py-2 es:bg-esbackground es:border es:border-esborder es:rounded">
             No fields in this section yet.
           </div>
         ) : (
           <select
             id={`${instanceId}-editor-section-child-${fieldId}`}
             aria-label="Section child field selector"
-            className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:cursor-pointer"
+            className="es:w-full es:min-w-0 es:px-3 es:py-2 es:text-sm es:bg-essurface es:border es:border-esborder es:rounded es:text-estext es:focus:outline-none es:focus:ring-1 es:focus:ring-esprimary es:focus:border-esprimary es:cursor-pointer"
             value={resolvedActiveChildId ?? ''}
             onChange={(e) => handleSelectChild(e.currentTarget.value)}
           >
@@ -440,28 +440,28 @@ function SectionEditContent({
       </div>
 
       {activeChildDef && (
-        <div className="ms:space-y-4 ms:p-4 ms:bg-msbackground ms:border ms:border-msborder ms:rounded-lg">
-          <div className="ms:flex ms:items-center ms:justify-between ms:gap-2">
-            <span className="ms:inline-flex ms:items-center ms:px-2.5 ms:py-0.5 ms:rounded-full ms:text-xs ms:font-medium ms:bg-msprimary/10 ms:text-msprimary">
+        <div className="es:space-y-4 es:p-4 es:bg-esbackground es:border es:border-esborder es:rounded-lg">
+          <div className="es:flex es:items-center es:justify-between es:gap-2">
+            <span className="es:inline-flex es:items-center es:px-2.5 es:py-0.5 es:rounded-full es:text-xs es:font-medium es:bg-esprimary/10 es:text-esprimary">
               {activeChildMeta?.label || activeChildDef.fieldType}
             </span>
             <button
               type="button"
               onClick={handleDeleteChild}
-              className="ms:flex ms:items-center ms:gap-1.5 ms:px-3 ms:py-1.5 ms:text-xs ms:font-medium ms:bg-mssurface ms:text-msdanger ms:hover:text-msdanger ms:hover:bg-msdanger/10 ms:border ms:border-msdanger/50 ms:rounded ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer"
+              className="es:flex es:items-center es:gap-1.5 es:px-3 es:py-1.5 es:text-xs es:font-medium es:bg-essurface es:text-esdanger es:hover:text-esdanger es:hover:bg-esdanger/10 es:border es:border-esdanger/50 es:rounded es:transition-colors es:border-0 es:outline-none es:focus:outline-none es:cursor-pointer"
               title="Delete this field"
             >
-              <span className="ms:font-bold">×</span>
+              <span className="es:font-bold">×</span>
               Delete
             </button>
           </div>
 
           {activeChildDef.fieldType === 'section' ? (
-            <div className="ms:space-y-3">
+            <div className="es:space-y-3">
               <div>
                 <label
                   htmlFor={`${instanceId}-editor-active-section-id-${activeChildDef.id}`}
-                  className="edit-label ms:block ms:text-sm ms:font-medium ms:text-mstext ms:mb-1"
+                  className="edit-label es:block es:text-sm es:font-medium es:text-estext es:mb-1"
                 >
                   Section ID
                 </label>
@@ -474,7 +474,7 @@ function SectionEditContent({
               <div>
                 <label
                   htmlFor={`${instanceId}-editor-active-section-title-${activeChildDef.id}`}
-                  className="edit-label ms:block ms:text-sm ms:text-mstext ms:mb-1"
+                  className="edit-label es:block es:text-sm es:text-estext es:mb-1"
                 >
                   Section Title
                 </label>
@@ -486,7 +486,7 @@ function SectionEditContent({
                     handleUpdateChild({ title: e.currentTarget.value })
                   }
                   placeholder="Enter section title..."
-                  className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:placeholder:text-mstextmuted ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
+                  className="es:w-full es:min-w-0 es:px-3 es:py-2 es:text-sm es:bg-essurface es:border es:border-esborder es:rounded es:text-estext es:placeholder:text-estextmuted es:focus:outline-none es:focus:ring-1 es:focus:ring-esprimary es:focus:border-esprimary es:transition-colors"
                 />
               </div>
             </div>
@@ -500,7 +500,7 @@ function SectionEditContent({
           )}
 
           {(activeChildMeta?.hasOptions || activeChildMeta?.hasMatrix) && (
-            <hr className="ms:border-msborder" />
+            <hr className="es:border-esborder" />
           )}
 
           {activeChildMeta?.hasOptions && activeChildDef.options && (

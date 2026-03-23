@@ -1,13 +1,13 @@
 import React from 'react';
-import type { FieldComponentProps, FormStore, UIStore } from '@msheet/core';
+import type { FieldComponentProps, FormStore, UIStore } from '@esheet/core';
 import {
   applySheetDnd,
   getReorderDestinationIndex,
   type SheetDndDropDetail,
-} from '@msheet/core';
+} from '@esheet/core';
 import { useVisibleFields } from '../hooks/useVisibleFields.js';
 import { FieldWrapper } from './FieldWrapper.js';
-import { getFieldComponent } from '@msheet/fields';
+import { getFieldComponent } from '@esheet/fields';
 
 export interface CanvasProps {
   /** The form store */
@@ -69,7 +69,7 @@ function DraggableFieldItem({
   );
 
   return (
-    <div ref={ref} className="field-canvas-wrapper ms:relative">
+    <div ref={ref} className="field-canvas-wrapper es:relative">
       <FieldWrapper
         fieldId={id}
         form={form}
@@ -276,8 +276,8 @@ export const Canvas = React.memo(function Canvas({
 
       const containerClass =
         depth === 1
-          ? 'section-children ms:space-y-2'
-          : 'section-children ms:space-y-2 ms:border-l ms:border-msborder ms:pl-3';
+          ? 'section-children es:space-y-2'
+          : 'section-children es:space-y-2 es:border-l es:border-esborder es:pl-3';
 
       return (
         <div className={containerClass} data-depth={depth}>
@@ -338,7 +338,7 @@ export const Canvas = React.memo(function Canvas({
   if (items.length === 0) {
     return (
       <div
-        className="canvas-empty ms:flex ms:items-center ms:justify-center ms:min-h-[200px] ms:text-mstextmuted ms:text-sm"
+        className="canvas-empty es:flex es:items-center es:justify-center es:min-h-[200px] es:text-estextmuted es:text-sm"
         onClick={handleCanvasClick}
       >
         No fields yet. Add a field from the Tool Panel to get started.
@@ -349,7 +349,7 @@ export const Canvas = React.memo(function Canvas({
   return (
     <div
       ref={canvasRef}
-      className="canvas-fields ms:space-y-0"
+      className="canvas-fields es:space-y-0"
       onClick={handleCanvasClick}
     >
       {items.map((id) => (

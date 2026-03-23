@@ -8,7 +8,7 @@ import {
   type FormStore,
   type UIStore,
   type BuilderMode,
-} from '@msheet/core';
+} from '@esheet/core';
 import {
   VEditorIcon,
   CodeIcon,
@@ -308,7 +308,7 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
   };
 
   return (
-    <header className="builder-header ms:w-full ms:bg-mssurface ms:border ms:border-msborder ms:rounded-lg ms:shadow-sm ms:shrink-0">
+    <header className="builder-header es:w-full es:bg-essurface es:border es:border-esborder es:rounded-lg es:shadow-sm es:shrink-0">
       <FeedbackModal
         open={feedback.open}
         title={feedback.title}
@@ -322,55 +322,55 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
           }))
         }
       />
-      <div className="ms:px-4 ms:py-4">
-        <div className="ms:flex ms:flex-wrap ms:items-center ms:justify-between ms:gap-3">
+      <div className="es:px-4 es:py-4">
+        <div className="es:flex es:flex-wrap es:items-center es:justify-between es:gap-3">
           {/* Left — mode toggle */}
-          <div className="mode-toggle ms:flex ms:gap-1 ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackground ms:p-1 ms:w-fit">
+          <div className="mode-toggle es:flex es:gap-1 es:rounded-lg es:border es:border-esborder es:bg-esbackground es:p-1 es:w-fit">
             {MODES.map(({ value, label, Icon }) => (
               <button
                 key={value}
                 type="button"
                 onClick={() => ui.getState().setMode(value)}
                 disabled={codeHasError && value !== 'code'}
-                className={`mode-btn ms:flex ms:items-center ms:justify-center ms:gap-2 ms:px-2 ms:lg:px-4 ms:py-2 ms:rounded-lg ms:text-xs ms:lg:text-sm ms:font-medium ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none ${
+                className={`mode-btn es:flex es:items-center es:justify-center es:gap-2 es:px-2 es:lg:px-4 es:py-2 es:rounded-lg es:text-xs es:lg:text-sm es:font-medium es:transition-colors es:border-0 es:outline-none es:focus:outline-none ${
                   codeHasError && value !== 'code'
-                    ? 'ms:bg-transparent ms:text-mstextmuted/50 ms:cursor-not-allowed'
-                    : 'ms:cursor-pointer'
+                    ? 'es:bg-transparent es:text-estextmuted/50 es:cursor-not-allowed'
+                    : 'es:cursor-pointer'
                 } ${
                   mode === value
-                    ? 'ms:bg-msprimary ms:text-mstextsecondary ms:shadow-sm'
-                    : 'ms:bg-transparent ms:text-mstextmuted ms:hover:text-mstext ms:hover:bg-mssurface'
+                    ? 'es:bg-esprimary es:text-estextsecondary es:shadow-sm'
+                    : 'es:bg-transparent es:text-estextmuted es:hover:text-estext es:hover:bg-essurface'
                 }`}
               >
-                <Icon className="ms:w-5 ms:h-5" />
+                <Icon className="es:w-5 es:h-5" />
                 <span>{label}</span>
               </button>
             ))}
           </div>
 
           {/* Right — Import / Export */}
-          <div className="header-actions ms:flex ms:gap-1 ms:items-center">
-            <label className="header-import-label ms:group ms:px-2 ms:py-2 ms:lg:px-3 ms:lg:py-2 ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:hover:bg-msprimary ms:hover:text-mstextsecondary ms:hover:border-msprimary ms:cursor-pointer ms:text-xs ms:lg:text-sm ms:font-medium ms:transition-colors ms:flex ms:items-center ms:lg:gap-2 ms:gap-0 ms:text-mstext">
-              <UploadIcon className="ms:w-4 ms:h-4 ms:text-mstext ms:group-hover:text-mstextsecondary ms:transition-colors" />
-              <span className="ms:hidden ms:sm:inline">Import</span>
+          <div className="header-actions es:flex es:gap-1 es:items-center">
+            <label className="header-import-label es:group es:px-2 es:py-2 es:lg:px-3 es:lg:py-2 es:rounded-lg es:border es:border-esborder es:bg-essurface es:hover:bg-esprimary es:hover:text-estextsecondary es:hover:border-esprimary es:cursor-pointer es:text-xs es:lg:text-sm es:font-medium es:transition-colors es:flex es:items-center es:lg:gap-2 es:gap-0 es:text-estext">
+              <UploadIcon className="es:w-4 es:h-4 es:text-estext es:group-hover:text-estextsecondary es:transition-colors" />
+              <span className="es:hidden es:sm:inline">Import</span>
               <input
                 ref={fileInputRef}
                 type="file"
                 accept=".json,.yaml,.yml,application/json,application/x-yaml,text/yaml"
                 onChange={handleImport}
                 aria-label="Import form (JSON or YAML)"
-                className="ms:hidden"
+                className="es:hidden"
               />
             </label>
 
             <button
               type="button"
               onClick={handleExport}
-              className="export-btn ms:group ms:px-2 ms:py-2 ms:lg:px-3 ms:lg:py-2 ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:hover:bg-msprimary ms:hover:text-mstextsecondary ms:hover:border-msprimary ms:text-xs ms:lg:text-sm ms:font-medium ms:transition-colors ms:flex ms:items-center ms:lg:gap-2 ms:gap-0 ms:outline-none ms:focus:outline-none ms:text-mstext ms:cursor-pointer"
+              className="export-btn es:group es:px-2 es:py-2 es:lg:px-3 es:lg:py-2 es:rounded-lg es:border es:border-esborder es:bg-essurface es:hover:bg-esprimary es:hover:text-estextsecondary es:hover:border-esprimary es:text-xs es:lg:text-sm es:font-medium es:transition-colors es:flex es:items-center es:lg:gap-2 es:gap-0 es:outline-none es:focus:outline-none es:text-estext es:cursor-pointer"
               title="Export"
             >
-              <DownloadIcon className="ms:w-4 ms:h-4 ms:text-mstext ms:group-hover:text-mstextsecondary ms:transition-colors" />
-              <span className="ms:hidden ms:sm:inline">Export</span>
+              <DownloadIcon className="es:w-4 es:h-4 es:text-estext es:group-hover:text-estextsecondary es:transition-colors" />
+              <span className="es:hidden es:sm:inline">Export</span>
             </button>
           </div>
         </div>

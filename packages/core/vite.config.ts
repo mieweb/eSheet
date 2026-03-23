@@ -10,7 +10,7 @@ export default defineConfig(() => ({
   //  plugins: [],
   // },
   test: {
-    name: '@msheet/core',
+    name: '@esheet/core',
     watch: false,
     globals: true,
     environment: 'node',

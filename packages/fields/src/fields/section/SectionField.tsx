@@ -1,5 +1,5 @@
 import React from 'react';
-import type { FieldComponentProps } from '@msheet/core';
+import type { FieldComponentProps } from '@esheet/core';
 
 type SectionFieldProps = FieldComponentProps & {
   nestedChildren?: React.ReactNode;
@@ -24,34 +24,34 @@ export const SectionField = React.memo(function SectionField({
 
   if (isPreview) {
     return (
-      <section className="section-field-preview ms:pb-0">
-        <div className="ms:bg-msprimary ms:text-mstextsecondary ms:text-xl ms:px-4 ms:py-2 ms:rounded-t-lg ms:break-words ms:overflow-hidden">
+      <section className="section-field-preview es:pb-0">
+        <div className="es:bg-esprimary es:text-estextsecondary es:text-xl es:px-4 es:py-2 es:rounded-t-lg es:break-words es:overflow-hidden">
           {title}
           {isRequired && (
-            <span className="ms:text-mstextsecondary ms:ml-1">*</span>
+            <span className="es:text-estextsecondary es:ml-1">*</span>
           )}
         </div>
         {nestedChildren && (
-          <div className="ms:bg-mssurface ms:space-y-3">{nestedChildren}</div>
+          <div className="es:bg-essurface es:space-y-3">{nestedChildren}</div>
         )}
       </section>
     );
   }
 
   return (
-    <div className="section-field-edit ms:space-y-3">
-      <div className="section-field-header ms:flex ms:justify-between ms:items-center ms:gap-2">
-        <div className="ms:flex-1">
+    <div className="section-field-edit es:space-y-3">
+      <div className="section-field-header es:flex es:justify-between es:items-center es:gap-2">
+        <div className="es:flex-1">
           <label
             htmlFor={`field-title-${def.id}`}
-            className="ms:block ms:text-sm ms:font-medium ms:text-mstextmuted ms:mb-1"
+            className="es:block es:text-sm es:font-medium es:text-estextmuted es:mb-1"
           >
             Section Title
           </label>
           <input
             id={`field-title-${def.id}`}
             aria-label="Section Title"
-            className="ms:px-3 ms:py-2 ms:h-10 ms:w-full ms:min-w-0 ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:rounded-lg ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary/30 ms:outline-none"
+            className="es:px-3 es:py-2 es:h-10 es:w-full es:min-w-0 es:border es:border-esborder es:bg-essurface es:text-estext es:rounded-lg es:focus:border-esprimary es:focus:ring-1 es:focus:ring-esprimary/30 es:outline-none"
             type="text"
             value={def.title || ''}
             onChange={(e) => onUpdate({ title: e.target.value })}
@@ -61,22 +61,22 @@ export const SectionField = React.memo(function SectionField({
       </div>
 
       {!hasChildren && !hasNestedContent && (
-        <div className="ms:flex ms:flex-col ms:items-center ms:justify-center ms:p-8 ms:bg-gradient-to-br ms:from-msbackground ms:to-msbackgroundsecondary ms:border-2 ms:border-dashed ms:border-msprimary/30 ms:rounded-lg ms:shadow-sm ms:text-center">
-          <p className="ms:text-sm ms:font-semibold ms:text-mstext ms:mb-2">
+        <div className="es:flex es:flex-col es:items-center es:justify-center es:p-8 es:bg-gradient-to-br es:from-esbackground es:to-esbackgroundsecondary es:border-2 es:border-dashed es:border-esprimary/30 es:rounded-lg es:shadow-sm es:text-center">
+          <p className="es:text-sm es:font-semibold es:text-estext es:mb-2">
             No fields in this section
           </p>
-          <p className="ms:text-xs ms:text-mstextmuted ms:leading-relaxed">
+          <p className="es:text-xs es:text-estextmuted es:leading-relaxed">
             Use the Tool Panel on the left to add fields.
           </p>
         </div>
       )}
 
       {!hasChildren && hasNestedContent && (
-        <div className="section-edit-empty-drop ms:mt-2">{nestedChildren}</div>
+        <div className="section-edit-empty-drop es:mt-2">{nestedChildren}</div>
       )}
 
       {hasChildren && (
-        <div className="section-edit-children ms:mt-2 ms:space-y-2">
+        <div className="section-edit-children es:mt-2 es:space-y-2">
           {nestedChildren}
         </div>
       )}

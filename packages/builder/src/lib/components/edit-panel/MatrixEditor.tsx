@@ -1,7 +1,7 @@
 import React from 'react';
-import type { FormStore, MatrixRow, MatrixColumn } from '@msheet/core';
-import { TrashIcon } from '@msheet/fields';
-import { useInstanceId } from '../../MsheetBuilder.js';
+import type { FormStore, MatrixRow, MatrixColumn } from '@esheet/core';
+import { TrashIcon } from '@esheet/fields';
+import { useInstanceId } from '../../EsheetBuilder.js';
 
 const MAX_ROWS = 10;
 const MAX_COLUMNS = 10;
@@ -44,24 +44,24 @@ export function MatrixEditor({
   };
 
   return (
-    <div className="matrix-editor ms:space-y-4">
+    <div className="matrix-editor es:space-y-4">
       {/* Rows */}
-      <div className="matrix-rows ms:space-y-2">
-        <span className="edit-label ms:block ms:text-sm ms:font-medium ms:text-mstext">
+      <div className="matrix-rows es:space-y-2">
+        <span className="edit-label es:block es:text-sm es:font-medium es:text-estext">
           Rows
         </span>
         {rows.length >= MAX_ROWS && (
-          <div className="ms:text-xs ms:text-mstextmuted ms:italic">
+          <div className="es:text-xs es:text-estextmuted es:italic">
             Maximum {MAX_ROWS} rows
           </div>
         )}
-        <div ref={rowsRef} className="row-list ms:space-y-2">
+        <div ref={rowsRef} className="row-list es:space-y-2">
           {rows.map((row, idx) => (
             <div
               key={row.id}
-              className="row-item ms:flex ms:items-center ms:gap-2 ms:px-3 ms:py-2 ms:border ms:border-msborder ms:rounded-lg ms:shadow-sm ms:hover:border-msprimary/50 ms:transition-colors"
+              className="row-item es:flex es:items-center es:gap-2 es:px-3 es:py-2 es:border es:border-esborder es:rounded-lg es:shadow-sm es:hover:border-esprimary/50 es:transition-colors"
             >
-              <span className="ms:text-xs ms:text-mstextmuted ms:w-5 ms:text-right ms:shrink-0">
+              <span className="es:text-xs es:text-estextmuted es:w-5 es:text-right es:shrink-0">
                 {idx + 1}.
               </span>
               <input
@@ -75,15 +75,15 @@ export function MatrixEditor({
                     .updateRow(fieldId, row.id, e.currentTarget.value)
                 }
                 placeholder={`Row ${idx + 1}`}
-                className="ms:flex-1 ms:min-w-0 ms:outline-none ms:bg-transparent ms:text-mstext ms:placeholder:text-mstextmuted ms:border-0 ms:text-sm"
+                className="es:flex-1 es:min-w-0 es:outline-none es:bg-transparent es:text-estext es:placeholder:text-estextmuted es:border-0 es:text-sm"
               />
               <button
                 type="button"
                 onClick={() => form.getState().removeRow(fieldId, row.id)}
                 aria-label={`Remove row ${idx + 1}`}
-                className="remove-row-btn ms:shrink-0 ms:p-0.5 ms:rounded ms:bg-transparent ms:text-mstextmuted ms:hover:text-msdanger ms:border-0 ms:outline-none ms:focus:outline-none ms:transition-colors ms:cursor-pointer"
+                className="remove-row-btn es:shrink-0 es:p-0.5 es:rounded es:bg-transparent es:text-estextmuted es:hover:text-esdanger es:border-0 es:outline-none es:focus:outline-none es:transition-colors es:cursor-pointer"
               >
-                <TrashIcon className="ms:w-4 ms:h-4" />
+                <TrashIcon className="es:w-4 es:h-4" />
               </button>
             </div>
           ))}
@@ -92,7 +92,7 @@ export function MatrixEditor({
           <button
             type="button"
             onClick={handleAddRow}
-            className="add-row-btn ms:w-full ms:px-3 ms:py-2 ms:text-sm ms:font-medium ms:bg-mssurface ms:text-msprimary ms:border ms:border-msprimary/50 ms:rounded-lg ms:hover:bg-msprimary/10 ms:transition-colors ms:outline-none ms:focus:outline-none ms:cursor-pointer"
+            className="add-row-btn es:w-full es:px-3 es:py-2 es:text-sm es:font-medium es:bg-essurface es:text-esprimary es:border es:border-esprimary/50 es:rounded-lg es:hover:bg-esprimary/10 es:transition-colors es:outline-none es:focus:outline-none es:cursor-pointer"
           >
             + Add Row
           </button>
@@ -100,22 +100,22 @@ export function MatrixEditor({
       </div>
 
       {/* Columns */}
-      <div className="matrix-columns ms:space-y-2">
-        <span className="edit-label ms:block ms:text-sm ms:font-medium ms:text-mstext">
+      <div className="matrix-columns es:space-y-2">
+        <span className="edit-label es:block es:text-sm es:font-medium es:text-estext">
           Columns
         </span>
         {columns.length >= MAX_COLUMNS && (
-          <div className="ms:text-xs ms:text-mstextmuted ms:italic">
+          <div className="es:text-xs es:text-estextmuted es:italic">
             Maximum {MAX_COLUMNS} columns
           </div>
         )}
-        <div ref={colsRef} className="column-list ms:space-y-2">
+        <div ref={colsRef} className="column-list es:space-y-2">
           {columns.map((col, idx) => (
             <div
               key={col.id}
-              className="column-item ms:flex ms:items-center ms:gap-2 ms:px-3 ms:py-2 ms:border ms:border-msborder ms:rounded-lg ms:shadow-sm ms:hover:border-msprimary/50 ms:transition-colors"
+              className="column-item es:flex es:items-center es:gap-2 es:px-3 es:py-2 es:border es:border-esborder es:rounded-lg es:shadow-sm es:hover:border-esprimary/50 es:transition-colors"
             >
-              <span className="ms:text-xs ms:text-mstextmuted ms:w-5 ms:text-right ms:shrink-0">
+              <span className="es:text-xs es:text-estextmuted es:w-5 es:text-right es:shrink-0">
                 {idx + 1}.
               </span>
               <input
@@ -129,15 +129,15 @@ export function MatrixEditor({
                     .updateColumn(fieldId, col.id, e.currentTarget.value)
                 }
                 placeholder={`Column ${idx + 1}`}
-                className="ms:flex-1 ms:min-w-0 ms:outline-none ms:bg-transparent ms:text-mstext ms:placeholder:text-mstextmuted ms:border-0 ms:text-sm"
+                className="es:flex-1 es:min-w-0 es:outline-none es:bg-transparent es:text-estext es:placeholder:text-estextmuted es:border-0 es:text-sm"
               />
               <button
                 type="button"
                 onClick={() => form.getState().removeColumn(fieldId, col.id)}
                 aria-label={`Remove column ${idx + 1}`}
-                className="remove-col-btn ms:shrink-0 ms:p-0.5 ms:rounded ms:bg-transparent ms:text-mstextmuted ms:hover:text-msdanger ms:border-0 ms:outline-none ms:focus:outline-none ms:transition-colors ms:cursor-pointer"
+                className="remove-col-btn es:shrink-0 es:p-0.5 es:rounded es:bg-transparent es:text-estextmuted es:hover:text-esdanger es:border-0 es:outline-none es:focus:outline-none es:transition-colors es:cursor-pointer"
               >
-                <TrashIcon className="ms:w-4 ms:h-4" />
+                <TrashIcon className="es:w-4 es:h-4" />
               </button>
             </div>
           ))}
@@ -146,7 +146,7 @@ export function MatrixEditor({
           <button
             type="button"
             onClick={handleAddColumn}
-            className="add-col-btn ms:w-full ms:px-3 ms:py-2 ms:text-sm ms:font-medium ms:bg-mssurface ms:text-msprimary ms:border ms:border-msprimary/50 ms:rounded-lg ms:hover:bg-msprimary/10 ms:transition-colors ms:outline-none ms:focus:outline-none ms:cursor-pointer"
+            className="add-col-btn es:w-full es:px-3 es:py-2 es:text-sm es:font-medium es:bg-essurface es:text-esprimary es:border es:border-esprimary/50 es:rounded-lg es:hover:bg-esprimary/10 es:transition-colors es:outline-none es:focus:outline-none es:cursor-pointer"
           >
             + Add Column
           </button>

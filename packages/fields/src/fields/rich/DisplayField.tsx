@@ -1,5 +1,5 @@
 import React from 'react';
-import { evaluateExpression, type FieldComponentProps } from '@msheet/core';
+import { evaluateExpression, type FieldComponentProps } from '@esheet/core';
 
 function formatComputedValue(value: unknown): string {
   if (value == null) return '';
@@ -75,7 +75,7 @@ function renderInlineNode(text: string, key: string): React.ReactNode {
     return (
       <React.Fragment key={key}>
         {under[1] && renderInlineNode(under[1], `${key}a`)}
-        <span className="ms:underline">
+        <span className="es:underline">
           {renderInlineNode(under[2], `${key}b`)}
         </span>
         {under[3] && renderInlineNode(under[3], `${key}c`)}
@@ -88,7 +88,7 @@ function renderInlineNode(text: string, key: string): React.ReactNode {
     return (
       <React.Fragment key={key}>
         {strike[1] && renderInlineNode(strike[1], `${key}a`)}
-        <span className="ms:line-through">
+        <span className="es:line-through">
           {renderInlineNode(strike[2], `${key}b`)}
         </span>
         {strike[3] && renderInlineNode(strike[3], `${key}c`)}
@@ -112,23 +112,23 @@ function renderContent(content: string): React.ReactNode {
     const line = lines[i];
 
     if (!line.trim()) {
-      blocks.push(<div key={`sp-${i}`} className="ms:h-3" />);
+      blocks.push(<div key={`sp-${i}`} className="es:h-3" />);
       i += 1;
       continue;
     }
 
     if (/^-\s+/.test(line)) {
-      const items: React.ReactNode[] = [];
+      const itees: React.ReactNode[] = [];
       while (i < lines.length && /^-\s+/.test(lines[i])) {
         items.push(
-          <li key={`li-${i}`} className="ms:ml-4 ms:list-disc">
+          <li key={`li-${i}`} className="es:ml-4 es:list-disc">
             {renderInline(lines[i].replace(/^-\s+/, ''))}
           </li>
         );
         i += 1;
       }
       blocks.push(
-        <ul key={`ul-${i}`} className="ms:my-2">
+        <ul key={`ul-${i}`} className="es:my-2">
           {items}
         </ul>
       );
@@ -141,14 +141,14 @@ function renderContent(content: string): React.ReactNode {
       const text = heading[2];
       const headingClass =
         level === 1
-          ? 'ms:text-2xl ms:font-semibold'
+          ? 'es:text-2xl es:font-semibold'
           : level === 2
-          ? 'ms:text-xl ms:font-semibold'
+          ? 'es:text-xl es:font-semibold'
           : level === 3
-          ? 'ms:text-lg ms:font-semibold'
-          : 'ms:text-base ms:font-semibold';
+          ? 'es:text-lg es:font-semibold'
+          : 'es:text-base es:font-semibold';
       blocks.push(
-        <div key={`h-${i}`} className={`ms:my-1 ${headingClass}`}>
+        <div key={`h-${i}`} className={`es:my-1 ${headingClass}`}>
           {renderInline(text)}
         </div>
       );
@@ -157,7 +157,7 @@ function renderContent(content: string): React.ReactNode {
     }
 
     blocks.push(
-      <p key={`p-${i}`} className="ms:my-1 ms:leading-relaxed">
+      <p key={`p-${i}`} className="es:my-1 es:leading-relaxed">
         {renderInline(line)}
       </p>
     );
@@ -228,7 +228,7 @@ export const DisplayField = React.memo(function DisplayField({
 
   if (isPreview) {
     return (
-      <div className="display-field-preview ms:text-mstext">
+      <div className="display-field-preview es:text-estext">
         {renderContent(rendered)}
       </div>
     );
@@ -237,53 +237,53 @@ export const DisplayField = React.memo(function DisplayField({
   const setContent = (next: string) => onUpdate({ content: next });
 
   return (
-    <div className="display-field-edit ms:space-y-3">
-      <div className="display-field-toolbar ms:flex ms:flex-wrap ms:gap-2">
+    <div className="display-field-edit es:space-y-3">
+      <div className="display-field-toolbar es:flex es:flex-wrap es:gap-2">
         <button
           type="button"
-          className="ms:px-2 ms:py-1 ms:rounded ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:text-sm"
+          className="es:px-2 es:py-1 es:rounded es:border es:border-esborder es:bg-essurface es:text-estext es:text-sm"
           onClick={() => wrapSelection(textareaRef, setContent, '*', '*')}
         >
           Bold
         </button>
         <button
           type="button"
-          className="ms:px-2 ms:py-1 ms:rounded ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:text-sm"
+          className="es:px-2 es:py-1 es:rounded es:border es:border-esborder es:bg-essurface es:text-estext es:text-sm"
           onClick={() => wrapSelection(textareaRef, setContent, '-', '-')}
         >
           Italic
         </button>
         <button
           type="button"
-          className="ms:px-2 ms:py-1 ms:rounded ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:text-sm"
+          className="es:px-2 es:py-1 es:rounded es:border es:border-esborder es:bg-essurface es:text-estext es:text-sm"
           onClick={() => wrapSelection(textareaRef, setContent, '_', '_')}
         >
           Underline
         </button>
         <button
           type="button"
-          className="ms:px-2 ms:py-1 ms:rounded ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:text-sm"
+          className="es:px-2 es:py-1 es:rounded es:border es:border-esborder es:bg-essurface es:text-estext es:text-sm"
           onClick={() => wrapSelection(textareaRef, setContent, '~', '~')}
         >
           Strike
         </button>
         <button
           type="button"
-          className="ms:px-2 ms:py-1 ms:rounded ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:text-sm"
+          className="es:px-2 es:py-1 es:rounded es:border es:border-esborder es:bg-essurface es:text-estext es:text-sm"
           onClick={() => prefixSelectionLines(textareaRef, setContent, '- ')}
         >
           Bullet
         </button>
         <button
           type="button"
-          className="ms:px-2 ms:py-1 ms:rounded ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:text-sm"
+          className="es:px-2 es:py-1 es:rounded es:border es:border-esborder es:bg-essurface es:text-estext es:text-sm"
           onClick={() => prefixSelectionLines(textareaRef, setContent, '# ')}
         >
           Heading
         </button>
         <button
           type="button"
-          className="ms:px-2 ms:py-1 ms:rounded ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:text-sm"
+          className="es:px-2 es:py-1 es:rounded es:border es:border-esborder es:bg-essurface es:text-estext es:text-sm"
           onClick={() => wrapSelection(textareaRef, setContent, '<', '>')}
         >
           Expr
@@ -293,7 +293,7 @@ export const DisplayField = React.memo(function DisplayField({
       <div>
         <label
           htmlFor={`${instanceId}-canvas-display-content-${def.id}`}
-          className="ms:block ms:text-sm ms:font-medium ms:text-mstextmuted ms:mb-1"
+          className="es:block es:text-sm es:font-medium es:text-estextmuted es:mb-1"
         >
           Display Content
         </label>
@@ -308,15 +308,15 @@ export const DisplayField = React.memo(function DisplayField({
           placeholder={
             'Hello {name}, your BMI is <{weight-kg} / (({height-cm}/100) * ({height-cm}/100))>\n- {field-id} = field value  |  <expr> = computed result'
           }
-          className="display-field-textarea ms:px-3 ms:py-2 ms:w-full ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:rounded-lg ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary/30 ms:outline-none ms:transition-colors ms:font-mono ms:text-sm ms:resize-y"
+          className="display-field-textarea es:px-3 es:py-2 es:w-full es:border es:border-esborder es:bg-essurface es:text-estext es:rounded-lg es:focus:border-esprimary es:focus:ring-1 es:focus:ring-esprimary/30 es:outline-none es:transition-colors es:font-mono es:text-sm es:resize-y"
         />
       </div>
 
       <div>
-        <div className="ms:text-sm ms:font-medium ms:text-mstextmuted ms:mb-1">
+        <div className="es:text-sm es:font-medium es:text-estextmuted es:mb-1">
           Live Preview
         </div>
-        <div className="display-field-live-preview ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:p-4 ms:text-mstext">
+        <div className="display-field-live-preview es:rounded-lg es:border es:border-esborder es:bg-essurface es:p-4 es:text-estext">
           {renderContent(rendered)}
         </div>
       </div>

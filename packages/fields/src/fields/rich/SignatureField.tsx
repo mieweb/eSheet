@@ -1,5 +1,5 @@
 import React from 'react';
-import type { FieldComponentProps } from '@msheet/core';
+import type { FieldComponentProps } from '@esheet/core';
 import { DrawingPad } from './DrawingPad.js';
 
 export const SignatureField = React.memo(function SignatureField({
@@ -27,10 +27,10 @@ export const SignatureField = React.memo(function SignatureField({
 
   if (isPreview) {
     return (
-      <div className="signature-field-preview ms:space-y-2 ms:pb-4">
-        <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
+      <div className="signature-field-preview es:space-y-2 es:pb-4">
+        <div className="es:font-light es:text-estext es:break-words es:overflow-hidden">
           {def.question || 'Signature'}
-          {isRequired && <span className="ms:text-msdanger ms:ml-0.5">*</span>}
+          {isRequired && <span className="es:text-esdanger es:ml-0.5">*</span>}
         </div>
         <DrawingPad
           config={{
@@ -51,12 +51,12 @@ export const SignatureField = React.memo(function SignatureField({
   }
 
   return (
-    <div className="signature-field-edit ms:space-y-3">
+    <div className="signature-field-edit es:space-y-3">
       {/* Question */}
       <div>
         <label
           htmlFor={`${instanceId}-canvas-question-${def.id}`}
-          className="ms:block ms:text-sm ms:font-medium ms:text-mstextmuted ms:mb-1"
+          className="es:block es:text-sm es:font-medium es:text-estextmuted es:mb-1"
         >
           Question
         </label>
@@ -67,7 +67,7 @@ export const SignatureField = React.memo(function SignatureField({
           value={def.question ?? ''}
           onChange={(e) => onUpdate({ question: e.target.value })}
           placeholder="Enter question"
-          className="ms:px-3 ms:py-2 ms:h-10 ms:w-full ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:rounded-lg ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary/30 ms:outline-none ms:transition-colors"
+          className="es:px-3 es:py-2 es:h-10 es:w-full es:border es:border-esborder es:bg-essurface es:text-estext es:rounded-lg es:focus:border-esprimary es:focus:ring-1 es:focus:ring-esprimary/30 es:outline-none es:transition-colors"
         />
       </div>
 
@@ -75,7 +75,7 @@ export const SignatureField = React.memo(function SignatureField({
       <div>
         <label
           htmlFor={`${instanceId}-canvas-pad-placeholder-${def.id}`}
-          className="ms:block ms:text-sm ms:font-medium ms:text-mstextmuted ms:mb-1"
+          className="es:block es:text-sm es:font-medium es:text-estextmuted es:mb-1"
         >
           Canvas Placeholder
         </label>
@@ -86,13 +86,13 @@ export const SignatureField = React.memo(function SignatureField({
           value={def.padPlaceholder ?? ''}
           onChange={(e) => onUpdate({ padPlaceholder: e.target.value })}
           placeholder="Sign here"
-          className="ms:px-3 ms:py-2 ms:h-10 ms:w-full ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:rounded-lg ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary/30 ms:outline-none ms:transition-colors"
+          className="es:px-3 es:py-2 es:h-10 es:w-full es:border es:border-esborder es:bg-essurface es:text-estext es:rounded-lg es:focus:border-esprimary es:focus:ring-1 es:focus:ring-esprimary/30 es:outline-none es:transition-colors"
         />
       </div>
 
       {/* Static preview of the empty pad */}
-      <div className="ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackground ms:p-3">
-        <p className="ms:text-xs ms:text-mstextmuted ms:mb-2">
+      <div className="es:rounded-lg es:border es:border-esborder es:bg-esbackground es:p-3">
+        <p className="es:text-xs es:text-estextmuted es:mb-2">
           Signature pad preview
         </p>
         <DrawingPad

@@ -1,5 +1,5 @@
-import type { TextInputType } from '@msheet/core';
-import { useInstanceId } from '../../MsheetBuilder.js';
+import type { TextInputType } from '@esheet/core';
+import { useInstanceId } from '../../EsheetBuilder.js';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -50,12 +50,12 @@ export function InputTypeEditor({
   const showUnit = inputType === 'number';
 
   return (
-    <div className="input-type-editor ms:space-y-2">
+    <div className="input-type-editor es:space-y-2">
       {/* Input Type */}
       <div>
         <label
           htmlFor={`${instanceId}-editor-inputtype-${fieldId}`}
-          className="edit-label ms:block ms:text-xs ms:font-medium ms:text-mstextmuted ms:mb-1"
+          className="edit-label es:block es:text-xs es:font-medium es:text-estextmuted es:mb-1"
         >
           Input Type
         </label>
@@ -65,7 +65,7 @@ export function InputTypeEditor({
           onChange={(e) =>
             onChange({ inputType: e.currentTarget.value as TextInputType })
           }
-          className="ms:w-full ms:min-w-0 ms:px-2 ms:py-1 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-2 ms:focus:ring-msprimary ms:focus:border-msprimary"
+          className="es:w-full es:min-w-0 es:px-2 es:py-1 es:text-sm es:bg-essurface es:border es:border-esborder es:rounded es:text-estext es:focus:outline-none es:focus:ring-2 es:focus:ring-esprimary es:focus:border-esprimary"
         >
           {INPUT_TYPES.map((t) => (
             <option key={t.value} value={t.value}>
@@ -80,7 +80,7 @@ export function InputTypeEditor({
         <div>
           <label
             htmlFor={`${instanceId}-editor-unit-${fieldId}`}
-            className="edit-label ms:block ms:text-xs ms:font-medium ms:text-mstextmuted ms:mb-1"
+            className="edit-label es:block es:text-xs es:font-medium es:text-estextmuted es:mb-1"
           >
             Unit
           </label>
@@ -90,7 +90,7 @@ export function InputTypeEditor({
             onChange={(e) =>
               onChange({ unit: e.currentTarget.value || undefined })
             }
-            className="ms:w-full ms:min-w-0 ms:px-2 ms:py-1 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-2 ms:focus:ring-msprimary ms:focus:border-msprimary"
+            className="es:w-full es:min-w-0 es:px-2 es:py-1 es:text-sm es:bg-essurface es:border es:border-esborder es:rounded es:text-estext es:focus:outline-none es:focus:ring-2 es:focus:ring-esprimary es:focus:border-esprimary"
           >
             <option value="">None</option>
             {Object.entries(UNITS).map(([group, units]) => (

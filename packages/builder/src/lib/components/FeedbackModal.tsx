@@ -11,10 +11,10 @@ export interface FeedbackModalProps {
 }
 
 const VARIANT_STYLES: Record<FeedbackModalVariant, string> = {
-  info: 'ms:text-msprimary ms:bg-msprimary/10',
-  success: 'ms:text-msaccent ms:bg-msaccent/10',
-  warning: 'ms:text-mswarning ms:bg-mswarning/10',
-  error: 'ms:text-msdanger ms:bg-msdanger/10',
+  info: 'es:text-esprimary es:bg-esprimary/10',
+  success: 'es:text-esaccent es:bg-esaccent/10',
+  warning: 'es:text-eswarning es:bg-eswarning/10',
+  error: 'es:text-esdanger es:bg-esdanger/10',
 };
 
 /**
@@ -33,43 +33,43 @@ export function FeedbackModal({
 
   return (
     <div
-      className="feedback-modal-overlay ms:fixed ms:inset-0 ms:z-50 ms:flex ms:items-center ms:justify-center ms:bg-msoverlay ms:p-4"
+      className="feedback-modal-overlay es:fixed es:inset-0 es:z-50 es:flex es:items-center es:justify-center es:bg-esoverlay es:p-4"
       role="dialog"
       aria-modal="true"
       aria-label={title}
       onClick={onClose}
     >
       <div
-        className="feedback-modal-content ms:w-full ms:max-w-lg ms:rounded-xl ms:bg-mssurface ms:border ms:border-msborder ms:shadow-2xl ms:p-5"
+        className="feedback-modal-content es:w-full es:max-w-lg es:rounded-xl es:bg-essurface es:border es:border-esborder es:shadow-2xl es:p-5"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="ms:flex ms:items-start ms:gap-3 ms:mb-3">
+        <div className="es:flex es:items-start es:gap-3 es:mb-3">
           <div
-            className={`ms:inline-flex ms:h-7 ms:min-w-7 ms:items-center ms:justify-center ms:rounded-full ms:text-xs ms:font-semibold ${VARIANT_STYLES[variant]}`}
+            className={`es:inline-flex es:h-7 es:min-w-7 es:items-center es:justify-center es:rounded-full es:text-xs es:font-semibold ${VARIANT_STYLES[variant]}`}
           >
             i
           </div>
-          <div className="ms:min-w-0">
-            <h3 className="ms:text-base ms:font-semibold ms:text-mstext">
+          <div className="es:min-w-0">
+            <h3 className="es:text-base es:font-semibold es:text-estext">
               {title}
             </h3>
-            <p className="ms:text-sm ms:text-mstextmuted ms:mt-1 ms:whitespace-pre-wrap">
+            <p className="es:text-sm es:text-estextmuted es:mt-1 es:whitespace-pre-wrap">
               {message}
             </p>
           </div>
         </div>
 
         {details && (
-          <pre className="ms:text-xs ms:text-mstext ms:bg-msbackground ms:border ms:border-msborder ms:rounded ms:p-2 ms:whitespace-pre-wrap ms:break-words ms:max-h-44 ms:overflow-auto">
+          <pre className="es:text-xs es:text-estext es:bg-esbackground es:border es:border-esborder es:rounded es:p-2 es:whitespace-pre-wrap es:break-words es:max-h-44 es:overflow-auto">
             {details}
           </pre>
         )}
 
-        <div className="ms:mt-4 ms:flex ms:justify-end">
+        <div className="es:mt-4 es:flex es:justify-end">
           <button
             type="button"
             onClick={onClose}
-            className="ms:px-4 ms:py-2 ms:rounded-lg ms:bg-msprimary ms:text-mstextsecondary ms:text-sm ms:font-medium ms:hover:bg-msprimary/90 ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer"
+            className="es:px-4 es:py-2 es:rounded-lg es:bg-esprimary es:text-estextsecondary es:text-sm es:font-medium es:hover:bg-esprimary/90 es:transition-colors es:border-0 es:outline-none es:focus:outline-none es:cursor-pointer"
           >
             {confirmLabel}
           </button>

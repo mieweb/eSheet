@@ -1,5 +1,5 @@
 import React from 'react';
-import type { FieldComponentProps, SelectedOption } from '@msheet/core';
+import type { FieldComponentProps, SelectedOption } from '@esheet/core';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 
 export const SliderField = React.memo(function SliderField({
@@ -22,18 +22,18 @@ export const SliderField = React.memo(function SliderField({
   if (isPreview) {
     return (
       <div
-        className={`slider-field-preview ms:text-mstext ms:grid ms:gap-2 ms:pb-4 ${
+        className={`slider-field-preview es:text-estext es:grid es:gap-2 es:pb-4 ${
           options.length > 5
-            ? 'ms:grid-cols-1'
-            : 'ms:grid-cols-1 ms:sm:grid-cols-2'
+            ? 'es:grid-cols-1'
+            : 'es:grid-cols-1 es:sm:grid-cols-2'
         }`}
       >
-        <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
+        <div className="es:font-light es:text-estext es:break-words es:overflow-hidden">
           {def.question || 'Question'}
-          {isRequired && <span className="ms:text-msdanger ms:ml-0.5">*</span>}
+          {isRequired && <span className="es:text-esdanger es:ml-0.5">*</span>}
         </div>
         {options.length > 0 ? (
-          <div className="ms:relative ms:pt-1">
+          <div className="es:relative es:pt-1">
             <input
               id={`${instanceId}-slider-answer-${def.id}`}
               aria-label={def.question || 'Question'}
@@ -49,11 +49,11 @@ export const SliderField = React.memo(function SliderField({
                 if (opt)
                   onResponse({ selected: { id: opt.id, value: opt.value } });
               }}
-              className="ms:w-full ms:h-1 ms:bg-msborder ms:rounded-lg ms:appearance-none ms:cursor-pointer slider-thumb"
+              className="es:w-full es:h-1 es:bg-esborder es:rounded-lg es:appearance-none es:cursor-pointer slider-thumb"
             />
 
-            <div className="ms:relative ms:mt-2 ms:px-2">
-              <div className="ms:relative ms:h-4 ms:text-mstextmuted ms:text-center">
+            <div className="es:relative es:mt-2 es:px-2">
+              <div className="es:relative es:h-4 es:text-estextmuted es:text-center">
                 {options.map((option, index) => {
                   const position =
                     options.length > 1
@@ -62,7 +62,7 @@ export const SliderField = React.memo(function SliderField({
                   return (
                     <span
                       key={option.id}
-                      className="ms:absolute"
+                      className="es:absolute"
                       style={{
                         left: `${position}%`,
                         transform: 'translateX(-50%)',
@@ -73,7 +73,7 @@ export const SliderField = React.memo(function SliderField({
                   );
                 })}
               </div>
-              <div className="ms:relative ms:mt-1">
+              <div className="es:relative es:mt-1">
                 {options.map((option, index) => {
                   const position =
                     options.length > 1
@@ -82,7 +82,7 @@ export const SliderField = React.memo(function SliderField({
                   return (
                     <div
                       key={option.id}
-                      className="ms:absolute"
+                      className="es:absolute"
                       style={{
                         left: `${position}%`,
                         transform: 'translateX(-50%)',
@@ -95,13 +95,13 @@ export const SliderField = React.memo(function SliderField({
                             selected: { id: option.id, value: option.value },
                           })
                         }
-                        className="ms:cursor-pointer ms:bg-transparent ms:border-0 ms:outline-none ms:focus:outline-none ms:whitespace-nowrap"
+                        className="es:cursor-pointer es:bg-transparent es:border-0 es:outline-none es:focus:outline-none es:whitespace-nowrap"
                       >
                         <span
-                          className={`ms:text-sm ${
+                          className={`es:text-sm ${
                             selectedIndex === index
-                              ? 'ms:text-msprimary ms:font-semibold'
-                              : 'ms:text-mstextmuted ms:hover:text-msprimary'
+                              ? 'es:text-esprimary es:font-semibold'
+                              : 'es:text-estextmuted es:hover:text-esprimary'
                           }`}
                         >
                           {option.value}
@@ -114,7 +114,7 @@ export const SliderField = React.memo(function SliderField({
             </div>
           </div>
         ) : (
-          <div className="ms:text-sm ms:text-mstextmuted ms:italic">
+          <div className="es:text-sm es:text-estextmuted es:italic">
             No options available
           </div>
         )}
@@ -123,18 +123,18 @@ export const SliderField = React.memo(function SliderField({
   }
 
   return (
-    <div className="slider-field-edit ms:space-y-3">
+    <div className="slider-field-edit es:space-y-3">
       <div>
         <label
           htmlFor={`${instanceId}-canvas-question-${def.id}`}
-          className="ms:block ms:text-sm ms:font-medium ms:text-mstextmuted ms:mb-1"
+          className="es:block es:text-sm es:font-medium es:text-estextmuted es:mb-1"
         >
           Question
         </label>
         <input
           id={`${instanceId}-canvas-question-${def.id}`}
           aria-label="Question"
-          className="ms:px-3 ms:py-2 ms:h-10 ms:w-full ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:rounded-lg ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary ms:outline-none"
+          className="es:px-3 es:py-2 es:h-10 es:w-full es:border es:border-esborder es:bg-essurface es:text-estext es:rounded-lg es:focus:border-esprimary es:focus:ring-1 es:focus:ring-esprimary es:outline-none"
           type="text"
           value={def.question || ''}
           onChange={(e) => onUpdate({ question: e.target.value })}
@@ -143,16 +143,16 @@ export const SliderField = React.memo(function SliderField({
       </div>
 
       <div>
-        <span className="ms:block ms:text-sm ms:font-medium ms:text-mstextmuted ms:mb-2">
+        <span className="es:block es:text-sm es:font-medium es:text-estextmuted es:mb-2">
           Options
         </span>
-        <div className="ms:space-y-2">
+        <div className="es:space-y-2">
           {options.map((option) => (
             <div
               key={option.id}
-              className="ms:flex ms:items-center ms:gap-2 ms:px-3 ms:py-2 ms:border ms:border-msborder ms:bg-mssurface ms:rounded-lg ms:shadow-sm ms:hover:border-mstextmuted ms:transition-colors"
+              className="es:flex es:items-center es:gap-2 es:px-3 es:py-2 es:border es:border-esborder es:bg-essurface es:rounded-lg es:shadow-sm es:hover:border-estextmuted es:transition-colors"
             >
-              <div className="ms:w-3 ms:h-3 ms:rounded-full ms:bg-msprimary ms:shrink-0" />
+              <div className="es:w-3 es:h-3 es:rounded-full es:bg-esprimary es:shrink-0" />
               <input
                 id={`${instanceId}-canvas-option-${def.id}-${option.id}`}
                 aria-label={`Option ${option.id}`}
@@ -164,14 +164,14 @@ export const SliderField = React.memo(function SliderField({
                     .updateOption(def.id, option.id, e.target.value)
                 }
                 placeholder="Option label"
-                className="ms:flex-1 ms:min-w-0 ms:outline-none ms:bg-transparent ms:text-mstext"
+                className="es:flex-1 es:min-w-0 es:outline-none es:bg-transparent es:text-estext"
               />
               <button
                 onClick={() => form.getState().removeOption(def.id, option.id)}
-                className="ms:shrink-0 ms:text-mstextmuted ms:hover:text-msdanger ms:transition-colors ms:bg-transparent ms:border-0 ms:outline-none ms:focus:outline-none"
+                className="es:shrink-0 es:text-estextmuted es:hover:text-esdanger es:transition-colors es:bg-transparent es:border-0 es:outline-none es:focus:outline-none"
                 title="Remove option"
               >
-                <TrashIcon className="ms:w-5 ms:h-5" />
+                <TrashIcon className="es:w-5 es:h-5" />
               </button>
             </div>
           ))}
@@ -180,9 +180,9 @@ export const SliderField = React.memo(function SliderField({
 
       <button
         onClick={() => form.getState().addOption(def.id)}
-        className="ms:w-full ms:px-3 ms:py-2 ms:text-sm ms:font-medium ms:text-msprimary ms:border ms:border-msprimary/50 ms:rounded-lg ms:bg-mssurface ms:hover:bg-msprimary/10 ms:transition-colors ms:flex ms:items-center ms:justify-center ms:gap-2"
+        className="es:w-full es:px-3 es:py-2 es:text-sm es:font-medium es:text-esprimary es:border es:border-esprimary/50 es:rounded-lg es:bg-essurface es:hover:bg-esprimary/10 es:transition-colors es:flex es:items-center es:justify-center es:gap-2"
       >
-        <PlusIcon className="ms:w-5 ms:h-5" /> Add Option
+        <PlusIcon className="es:w-5 es:h-5" /> Add Option
       </button>
     </div>
   );

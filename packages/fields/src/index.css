@@ -1,5 +1,5 @@
-@import 'tailwindcss/theme' prefix(ms);
-@import 'tailwindcss/utilities' prefix(ms);
+@import 'tailwindcss/theme' prefix(es);
+@import 'tailwindcss/utilities' prefix(es);
 
 @source "../**/*.{ts,tsx}";
 
@@ -7,19 +7,19 @@
 /* Semantic color tokens (same as builder)                             */
 /* ------------------------------------------------------------------ */
 @theme {
-  --color-msprimary: #3b82f6;
-  --color-mssecondary: #6b7280;
-  --color-msaccent: #10b981;
-  --color-msdanger: #ef4444;
-  --color-mswarning: #f97316;
-  --color-mssurface: #ffffff;
-  --color-msborder: #e5e7eb;
-  --color-msborderinactive: #9ca3af;
-  --color-mstext: #111827;
-  --color-mstextsecondary: #f8fafc;
-  --color-mstextmuted: #6b7280;
-  --color-msbackground: #f9fafb;
-  --color-msbackgroundsecondary: #f3f4f6;
-  --color-msbackgroundhover: #eceef1;
-  --color-msoverlay: rgba(0, 0, 0, 0.5);
+  --color-esprimary: #3b82f6;
+  --color-essecondary: #6b7280;
+  --color-esaccent: #10b981;
+  --color-esdanger: #ef4444;
+  --color-eswarning: #f97316;
+  --color-essurface: #ffffff;
+  --color-esborder: #e5e7eb;
+  --color-esborderinactive: #9ca3af;
+  --color-estext: #111827;
+  --color-estextsecondary: #f8fafc;
+  --color-estextmuted: #6b7280;
+  --color-esbackground: #f9fafb;
+  --color-esbackgroundsecondary: #f3f4f6;
+  --color-esbackgroundhover: #eceef1;
+  --color-esoverlay: rgba(0, 0, 0, 0.5);
 }

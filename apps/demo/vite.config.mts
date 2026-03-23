@@ -7,7 +7,7 @@ export default defineConfig(() => ({
   root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/apps/demo',
   resolve: {
-    conditions: ['@msheet/source'],
+    conditions: ['@esheet/source'],
   },
   server: {
     port: 4200,

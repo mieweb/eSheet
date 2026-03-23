@@ -1,10 +1,10 @@
 import React from 'react';
-import type { FieldComponentProps, SelectedOption } from '@msheet/core';
+import type { FieldComponentProps, SelectedOption } from '@esheet/core';
 import {
   applySheetDnd,
   getReorderDestinationIndex,
   type SheetDndDropDetail,
-} from '@msheet/core';
+} from '@esheet/core';
 import {
   TrashIcon,
   PlusIcon,
@@ -53,43 +53,43 @@ function DraggableRankItem({
     <div
       ref={ref}
       data-opt-id={optId}
-      className="ranking-field-item ms:relative ms:flex ms:items-center ms:px-3 ms:py-2 ms:bg-mssurface ms:border ms:border-msborder ms:rounded-lg ms:shadow-sm ms:hover:border-msprimary/50 ms:hover:bg-msprimary/10 ms:transition-colors"
+      className="ranking-field-item es:relative es:flex es:items-center es:px-3 es:py-2 es:bg-essurface es:border es:border-esborder es:rounded-lg es:shadow-sm es:hover:border-esprimary/50 es:hover:bg-esprimary/10 es:transition-colors"
     >
       <div
         ref={handleRef}
-        className="rank-drag-handle ms:flex ms:items-center ms:mr-2 ms:text-mstextmuted ms:cursor-grab ms:active:cursor-grabbing"
+        className="rank-drag-handle es:flex es:items-center es:mr-2 es:text-estextmuted es:cursor-grab es:active:cursor-grabbing"
         style={{ touchAction: 'none' }}
         aria-label="Drag to reorder"
       >
-        <DragHandleIcon className="ms:w-5 ms:h-5" />
+        <DragHandleIcon className="es:w-5 es:h-5" />
       </div>
-      <div className="ms:flex ms:items-center ms:flex-1">
-        <span className="ms:text-mstext">{label}</span>
+      <div className="es:flex es:items-center es:flex-1">
+        <span className="es:text-estext">{label}</span>
       </div>
-      <div className="ms:flex ms:items-center ms:gap-1 ms:ml-2">
+      <div className="es:flex es:items-center es:gap-1 es:ml-2">
         <button
           onClick={() => onMove(optId, 'up')}
           disabled={!canMoveUp || !isEnabled}
-          className={`ms:p-1 ms:bg-transparent ms:border-0 ms:outline-none ms:focus:outline-none ${
+          className={`es:p-1 es:bg-transparent es:border-0 es:outline-none es:focus:outline-none ${
             canMoveUp
-              ? 'ms:text-mstext ms:hover:text-msprimary'
-              : 'ms:text-msborder ms:cursor-not-allowed'
+              ? 'es:text-estext es:hover:text-esprimary'
+              : 'es:text-esborder es:cursor-not-allowed'
           }`}
           aria-label="Move up"
         >
-          <ArrowUpIcon className="ms:h-6 ms:w-6" />
+          <ArrowUpIcon className="es:h-6 es:w-6" />
         </button>
         <button
           onClick={() => onMove(optId, 'down')}
           disabled={!canMoveDown || !isEnabled}
-          className={`ms:p-1 ms:bg-transparent ms:border-0 ms:outline-none ms:focus:outline-none ${
+          className={`es:p-1 es:bg-transparent es:border-0 es:outline-none es:focus:outline-none ${
             canMoveDown
-              ? 'ms:text-mstext ms:hover:text-msprimary'
-              : 'ms:text-msborder ms:cursor-not-allowed'
+              ? 'es:text-estext es:hover:text-esprimary'
+              : 'es:text-esborder es:cursor-not-allowed'
           }`}
           aria-label="Move down"
         >
-          <ArrowDownIcon className="ms:h-6 ms:w-6" />
+          <ArrowDownIcon className="es:h-6 es:w-6" />
         </button>
       </div>
     </div>
@@ -153,13 +153,13 @@ function RankingPreview({
   return (
     <div
       ref={containerRef}
-      className="ranking-field-preview ms:text-mstext ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4"
+      className="ranking-field-preview es:text-estext es:grid es:grid-cols-1 es:gap-2 es:sm:grid-cols-2 es:pb-4"
     >
-      <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
+      <div className="es:font-light es:text-estext es:break-words es:overflow-hidden">
         {question || 'Question'}
-        {isRequired && <span className="ms:text-msdanger ms:ml-0.5">*</span>}
+        {isRequired && <span className="es:text-esdanger es:ml-0.5">*</span>}
       </div>
-      <div className="ms:flex ms:flex-col ms:gap-2">
+      <div className="es:flex es:flex-col es:gap-2">
         {ranking.map((optId, index) => (
           <DraggableRankItem
             key={optId}
@@ -248,18 +248,18 @@ export const RankingField = React.memo(function RankingField({
   }
 
   return (
-    <div className="ranking-field-edit ms:space-y-3">
+    <div className="ranking-field-edit es:space-y-3">
       <div>
         <label
           htmlFor={`${instanceId}-canvas-question-${def.id}`}
-          className="ms:block ms:text-sm ms:font-medium ms:text-mstextmuted ms:mb-1"
+          className="es:block es:text-sm es:font-medium es:text-estextmuted es:mb-1"
         >
           Question
         </label>
         <input
           id={`${instanceId}-canvas-question-${def.id}`}
           aria-label="Question"
-          className="ms:px-3 ms:py-2 ms:h-10 ms:w-full ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:rounded-lg ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary ms:outline-none"
+          className="es:px-3 es:py-2 es:h-10 es:w-full es:border es:border-esborder es:bg-essurface es:text-estext es:rounded-lg es:focus:border-esprimary es:focus:ring-1 es:focus:ring-esprimary es:outline-none"
           type="text"
           value={def.question || ''}
           onChange={(e) => onUpdate({ question: e.target.value })}
@@ -268,16 +268,16 @@ export const RankingField = React.memo(function RankingField({
       </div>
 
       <div>
-        <span className="ms:block ms:text-sm ms:font-medium ms:text-mstextmuted ms:mb-2">
+        <span className="es:block es:text-sm es:font-medium es:text-estextmuted es:mb-2">
           Items
         </span>
-        <div className="ms:space-y-2">
+        <div className="es:space-y-2">
           {options.map((option) => (
             <div
               key={option.id}
-              className="ms:flex ms:items-center ms:gap-2 ms:px-3 ms:py-2 ms:border ms:border-msborder ms:bg-mssurface ms:rounded-lg ms:shadow-sm ms:hover:border-mstextmuted ms:transition-colors"
+              className="es:flex es:items-center es:gap-2 es:px-3 es:py-2 es:border es:border-esborder es:bg-essurface es:rounded-lg es:shadow-sm es:hover:border-estextmuted es:transition-colors"
             >
-              <UpDownArrowIcon className="ms:text-mstextmuted ms:w-5 ms:h-5 ms:shrink-0" />
+              <UpDownArrowIcon className="es:text-estextmuted es:w-5 es:h-5 es:shrink-0" />
               <input
                 id={`${instanceId}-canvas-option-${def.id}-${option.id}`}
                 aria-label={`Option ${option.id}`}
@@ -289,14 +289,14 @@ export const RankingField = React.memo(function RankingField({
                     .updateOption(def.id, option.id, e.target.value)
                 }
                 placeholder="Option text"
-                className="ms:flex-1 ms:min-w-0 ms:outline-none ms:bg-transparent ms:text-mstext"
+                className="es:flex-1 es:min-w-0 es:outline-none es:bg-transparent es:text-estext"
               />
               <button
                 onClick={() => form.getState().removeOption(def.id, option.id)}
-                className="ms:shrink-0 ms:text-mstextmuted ms:hover:text-msdanger ms:transition-colors ms:bg-transparent ms:border-0 ms:outline-none ms:focus:outline-none"
+                className="es:shrink-0 es:text-estextmuted es:hover:text-esdanger es:transition-colors es:bg-transparent es:border-0 es:outline-none es:focus:outline-none"
                 title="Remove option"
               >
-                <TrashIcon className="ms:w-5 ms:h-5" />
+                <TrashIcon className="es:w-5 es:h-5" />
               </button>
             </div>
           ))}
@@ -305,9 +305,9 @@ export const RankingField = React.memo(function RankingField({
 
       <button
         onClick={() => form.getState().addOption(def.id)}
-        className="ms:w-full ms:px-3 ms:py-2 ms:text-sm ms:font-medium ms:text-msprimary ms:border ms:border-msprimary/50 ms:rounded-lg ms:bg-mssurface ms:hover:bg-msprimary/10 ms:transition-colors ms:flex ms:items-center ms:justify-center ms:gap-2 ms:outline-none ms:focus:outline-none"
+        className="es:w-full es:px-3 es:py-2 es:text-sm es:font-medium es:text-esprimary es:border es:border-esprimary/50 es:rounded-lg es:bg-essurface es:hover:bg-esprimary/10 es:transition-colors es:flex es:items-center es:justify-center es:gap-2 es:outline-none es:focus:outline-none"
       >
-        <PlusIcon className="ms:w-5 ms:h-5" /> Add Option
+        <PlusIcon className="es:w-5 es:h-5" /> Add Option
       </button>
     </div>
   );

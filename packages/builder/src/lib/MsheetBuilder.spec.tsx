@@ -6,17 +6,17 @@ import {
   waitFor,
   screen,
 } from '@testing-library/react';
-import { createFormStore, createUIStore } from '@msheet/core';
-import { MsheetBuilder, useFormStore, useUI } from './MsheetBuilder.js';
+import { createFormStore, createUIStore } from '@esheet/core';
+import { EsheetBuilder, useFormStore, useUI } from './EsheetBuilder.js';
 import { BuilderHeader } from './components/BuilderHeader.js';
 import './register-defaults.js';
 
 afterEach(cleanup);
 
-describe('MsheetBuilder', () => {
+describe('EsheetBuilder', () => {
   it('should render the 3-panel layout', () => {
-    const { container } = render(<MsheetBuilder />);
-    expect(container.querySelector('.ms-builder-root')).not.toBeNull();
+    const { container } = render(<EsheetBuilder />);
+    expect(container.querySelector('.es-builder-root')).not.toBeNull();
     expect(container.querySelector('.panel-tools')).not.toBeNull();
     expect(container.querySelector('.panel-canvas')).not.toBeNull();
     expect(container.querySelector('.panel-editor')).not.toBeNull();
@@ -32,14 +32,14 @@ describe('MsheetBuilder', () => {
     }
 
     render(
-      <MsheetBuilder
+      <EsheetBuilder
         definition={{
           schemaType: 'mieforms-v1.0',
           fields: [{ id: 'q1', fieldType: 'text', question: 'Name?' }],
         }}
       >
         <Inspector />
-      </MsheetBuilder>
+      </EsheetBuilder>
     );
 
     // Wait — definition is loaded synchronously in ref init.
@@ -56,9 +56,9 @@ describe('MsheetBuilder', () => {
     }
 
     render(
-      <MsheetBuilder onChange={(def) => changes.push(def)}>
+      <EsheetBuilder onChange={(def) => changes.push(def)}>
         <Capture />
-      </MsheetBuilder>
+      </EsheetBuilder>
     );
 
     act(() => {
@@ -84,9 +84,9 @@ describe('MsheetBuilder', () => {
     }
 
     render(
-      <MsheetBuilder>
+      <EsheetBuilder>
         <Inspector />
-      </MsheetBuilder>
+      </EsheetBuilder>
     );
 
     expect(hasForm).toBe(true);

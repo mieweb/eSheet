@@ -6,8 +6,8 @@ import {
   type FormDefinition,
   type FormStore,
   type UIStore,
-} from '@msheet/core';
-import { FormStoreContext, UIContext } from '@msheet/fields';
+} from '@esheet/core';
+import { FormStoreContext, UIContext } from '@esheet/fields';
 import { Canvas } from './components/Canvas.js';
 import { ToolPanel } from './components/ToolPanel.js';
 import { EditPanel } from './components/edit-panel/EditPanel.js';
@@ -24,7 +24,7 @@ export {
   UIContext,
   useFormStore,
   useUI,
-} from '@msheet/fields';
+} from '@esheet/fields';
 export const InstanceIdContext = React.createContext<string>('');
 
 /** Hook to access the per-instance ID for unique DOM element IDs. */
@@ -36,7 +36,7 @@ export function useInstanceId(): string {
 // Props
 // ---------------------------------------------------------------------------
 
-export interface MsheetBuilderProps {
+export interface EsheetBuilderProps {
   /** Initial form definition to load. */
   definition?: FormDefinition;
   /** Callback fired when the form definition changes. */
@@ -68,25 +68,25 @@ function MobileBottomDrawer({
     <>
       <button
         type="button"
-        className="ms:lg:hidden ms:fixed ms:inset-0 ms:z-40 ms:bg-msoverlay ms:border-0"
+        className="es:lg:hidden es:fixed es:inset-0 es:z-40 es:bg-esoverlay es:border-0"
         onClick={onClose}
         aria-label={`Close ${title} drawer`}
       />
-      <div className="ms:lg:hidden ms:fixed ms:left-0 ms:right-0 ms:bottom-0 ms:z-50 ms:h-[50dvh] ms:bg-mssurface ms:border-t ms:border-msborder ms:rounded-t-2xl ms:shadow-2xl ms:overflow-hidden">
-        <div className="ms:flex ms:items-center ms:justify-between ms:px-4 ms:py-2 ms:border-b ms:border-msborder">
-          <span className="ms:text-sm ms:font-medium ms:text-mstext">
+      <div className="es:lg:hidden es:fixed es:left-0 es:right-0 es:bottom-0 es:z-50 es:h-[50dvh] es:bg-essurface es:border-t es:border-esborder es:rounded-t-2xl es:shadow-2xl es:overflow-hidden">
+        <div className="es:flex es:items-center es:justify-between es:px-4 es:py-2 es:border-b es:border-esborder">
+          <span className="es:text-sm es:font-medium es:text-estext">
             {title}
           </span>
           <button
             type="button"
             onClick={onClose}
-            className="ms:px-2 ms:py-1 ms:bg-transparent ms:text-mstextmuted ms:border-0 ms:outline-none ms:focus:outline-none"
+            className="es:px-2 es:py-1 es:bg-transparent es:text-estextmuted es:border-0 es:outline-none es:focus:outline-none"
             aria-label={`Close ${title} drawer`}
           >
             Close
           </button>
         </div>
-        <div className="ms:h-[calc(50dvh-45px)] ms:overflow-y-auto">
+        <div className="es:h-[calc(50dvh-45px)] es:overflow-y-auto">
           {children}
         </div>
       </div>
@@ -98,13 +98,13 @@ function MobileBottomDrawer({
 // Component
 // ---------------------------------------------------------------------------
 
-export function MsheetBuilder({
+export function EsheetBuilder({
   definition,
   onChange,
   dragEnabled = true,
   className = '',
   children,
-}: MsheetBuilderProps) {
+}: EsheetBuilderProps) {
   const formRef = React.useRef<FormStore | null>(null);
   const uiRef = React.useRef<UIStore | null>(null);
 
@@ -165,33 +165,33 @@ export function MsheetBuilder({
       <UIContext.Provider value={ui}>
         <InstanceIdContext.Provider value={instanceId}>
           <div
-            className={`ms-builder-root ms:flex ms:h-full ms:flex-1 ms:min-h-0 ms:max-h-full ms:w-full ms:min-w-0 ms:max-w-full ms:flex-col ms:gap-2 
-                        ms:overflow-x-hidden ms:bg-msbackground ms:text-mstext ${className}`.trim()}
+            className={`es-builder-root es:flex es:h-full es:flex-1 es:min-h-0 es:max-h-full es:w-full es:min-w-0 es:max-w-full es:flex-col es:gap-2 
+                        es:overflow-x-hidden es:bg-esbackground es:text-estext ${className}`.trim()}
           >
-            <div className="ms:sticky ms:top-0 ms:z-50 ms:bg-msbackground">
+            <div className="es:sticky es:top-0 es:z-50 es:bg-esbackground">
               <BuilderHeader form={form} ui={ui} />
             </div>
             {children}
             {mode === 'build' && (
-              <div className="builder-layout ms:grid ms:flex-1 ms:min-h-0 ms:min-w-0 ms:grid-cols-1 ms:lg:grid-cols-[18rem_minmax(0,1fr)_340px] ms:gap-3 ms:overflow-hidden">
-                <aside className="panel-tools-wrap panel-tools ms:hidden ms:lg:flex ms:self-start ms:min-h-0 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto ms:flex-col ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
+              <div className="builder-layout es:grid es:flex-1 es:min-h-0 es:min-w-0 es:grid-cols-1 es:lg:grid-cols-[18rem_minmax(0,1fr)_340px] es:gap-3 es:overflow-hidden">
+                <aside className="panel-tools-wrap panel-tools es:hidden es:lg:flex es:self-start es:min-h-0 es:max-h-[calc(100dvh-12.5rem)] es:overflow-y-auto es:flex-col es:rounded-lg es:border es:border-esborder es:bg-essurface">
                   <ToolPanel form={form} ui={ui} />
                 </aside>
-                <main className="panel-canvas ms:self-start ms:min-w-0 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:p-4">
+                <main className="panel-canvas es:self-start es:min-w-0 es:max-h-[calc(100dvh-12.5rem)] es:overflow-y-auto es:rounded-lg es:border es:border-esborder es:bg-essurface es:p-4">
                   <Canvas form={form} ui={ui} dragEnabled={dragEnabled} />
-                  <div className="ms:lg:hidden ms:sticky ms:bottom-0 ms:z-20 ms:pt-2 ms:pb-3 ms:flex ms:justify-center ms:pointer-events-none">
+                  <div className="es:lg:hidden es:sticky es:bottom-0 es:z-20 es:pt-2 es:pb-3 es:flex es:justify-center es:pointer-events-none">
                     <button
                       type="button"
                       onClick={() => setToolsModalOpen(true)}
-                      className="ms:pointer-events-auto ms:inline-flex ms:items-center ms:gap-1.5 ms:px-3.5 ms:py-2 ms:rounded-full ms:bg-mssurface/95 ms:backdrop-blur-sm ms:text-mstext ms:text-sm ms:font-semibold ms:border ms:border-msprimary/35 ms:shadow-lg ms:shadow-msprimary/10 ms:outline-none ms:focus:outline-none ms:hover:bg-mssurface ms:hover:border-msprimary/50 ms:hover:shadow-xl ms:hover:shadow-msprimary/15 ms:transition-all"
+                      className="es:pointer-events-auto es:inline-flex es:items-center es:gap-1.5 es:px-3.5 es:py-2 es:rounded-full es:bg-essurface/95 es:backdrop-blur-sm es:text-estext es:text-sm es:font-semibold es:border es:border-esprimary/35 es:shadow-lg es:shadow-esprimary/10 es:outline-none es:focus:outline-none es:hover:bg-essurface es:hover:border-esprimary/50 es:hover:shadow-xl es:hover:shadow-esprimary/15 es:transition-all"
                       aria-label="Open add field tools"
                     >
-                      <PlusIcon className="ms:w-3.5 ms:h-3.5 ms:text-msprimary" />
+                      <PlusIcon className="es:w-3.5 es:h-3.5 es:text-esprimary" />
                       <span>Add field</span>
                     </button>
                   </div>
                 </main>
-                <aside className="panel-editor-wrap panel-editor ms:hidden ms:lg:flex ms:self-start ms:min-h-0 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto ms:flex-col ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
+                <aside className="panel-editor-wrap panel-editor es:hidden es:lg:flex es:self-start es:min-h-0 es:max-h-[calc(100dvh-12.5rem)] es:overflow-y-auto es:flex-col es:rounded-lg es:border es:border-esborder es:bg-essurface">
                   <EditPanel form={form} ui={ui} />
                 </aside>
 
@@ -213,12 +213,12 @@ export function MsheetBuilder({
               </div>
             )}
             {mode === 'code' && (
-              <div className="code-layout ms:flex ms:h-[calc(100dvh-12.5rem)] ms:min-h-0 ms:min-w-0 ms:overflow-hidden ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
+              <div className="code-layout es:flex es:h-[calc(100dvh-12.5rem)] es:min-h-0 es:min-w-0 es:overflow-hidden es:rounded-lg es:border es:border-esborder es:bg-essurface">
                 <CodeView form={form} ui={ui} />
               </div>
             )}
             {mode === 'preview' && (
-              <div className="preview-layout ms:flex-1 ms:min-h-0 ms:min-w-0 ms:w-full ms:max-w-2xl ms:mx-auto ms:p-4 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto">
+              <div className="preview-layout es:flex-1 es:min-h-0 es:min-w-0 es:w-full es:max-w-2xl es:mx-auto es:p-4 es:max-h-[calc(100dvh-12.5rem)] es:overflow-y-auto">
                 <Canvas form={form} ui={ui} dragEnabled={false} />
               </div>
             )}

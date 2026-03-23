@@ -4,7 +4,7 @@ export default defineConfig(() => ({
   root: __dirname,
   cacheDir: '../../node_modules/.vite/packages/renderer',
   test: {
-    name: '@msheet/renderer',
+    name: '@esheet/renderer',
     watch: false,
     globals: true,
     environment: 'node',

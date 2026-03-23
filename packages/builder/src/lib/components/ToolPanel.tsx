@@ -5,7 +5,7 @@ import {
   type FormStore,
   type UIStore,
   type FieldType,
-} from '@msheet/core';
+} from '@esheet/core';
 import {
   TextFieldsIcon,
   SelectionFieldsIcon,
@@ -45,7 +45,7 @@ const CATEGORY_ICONS: Record<string, IconComponent> = {
   Organization: OrganizationIcon,
 };
 
-import { getFieldComponent } from '@msheet/fields';
+import { getFieldComponent } from '@esheet/fields';
 
 /** Build category → field type[] map from the registry. Only includes types with a registered React component. */
 function buildCategories(): Record<string, { type: string; label: string }[]> {
@@ -156,15 +156,15 @@ export const ToolPanel = React.memo(function ToolPanel({
   const allCollapsed = collapsed.size === categoryNames.length;
 
   return (
-    <div className="tool-panel ms:flex ms:flex-1 ms:flex-col ms:min-h-0">
-      <h3 className="tool-panel-title ms:sticky ms:top-0 ms:z-10 ms:bg-mssurface ms:text-sm ms:font-semibold ms:text-mstext ms:py-2 ms:px-4 ms:border-b ms:border-msborder ms:flex ms:items-center ms:justify-between">
-        <div className="ms:flex ms:min-w-0 ms:items-center ms:gap-2">
+    <div className="tool-panel es:flex es:flex-1 es:flex-col es:min-h-0">
+      <h3 className="tool-panel-title es:sticky es:top-0 es:z-10 es:bg-essurface es:text-sm es:font-semibold es:text-estext es:py-2 es:px-4 es:border-b es:border-esborder es:flex es:items-center es:justify-between">
+        <div className="es:flex es:min-w-0 es:items-center es:gap-2">
           <span>Tools</span>
           <span
-            className={`ms:inline-flex ms:max-w-[200px] ms:items-center ms:gap-1 ms:rounded-full ms:px-2.5 ms:py-1 ms:text-[11px] ms:font-medium ${
+            className={`es:inline-flex es:max-w-[200px] es:items-center es:gap-1 es:rounded-full es:px-2.5 es:py-1 es:text-[11px] es:font-medium ${
               selectedSectionId
-                ? 'ms:bg-msprimary/10 ms:text-msprimary'
-                : 'ms:bg-msbackgroundsecondary ms:text-mstextmuted'
+                ? 'es:bg-esprimary/10 es:text-esprimary'
+                : 'es:bg-esbackgroundsecondary es:text-estextmuted'
             }`}
             title={
               selectedSectionId
@@ -173,11 +173,11 @@ export const ToolPanel = React.memo(function ToolPanel({
             }
           >
             <span
-              className={`ms:inline-flex ms:h-1.5 ms:w-1.5 ms:rounded-full ${
-                selectedSectionId ? 'ms:bg-msprimary' : 'ms:bg-mstextmuted'
+              className={`es:inline-flex es:h-1.5 es:w-1.5 es:rounded-full ${
+                selectedSectionId ? 'es:bg-esprimary' : 'es:bg-estextmuted'
               }`}
             />
-            <span className="ms:truncate">
+            <span className="es:truncate">
               {selectedSectionId
                 ? `Adding into section: ${selectedSectionLabel}`
                 : 'Adding into root'}
@@ -187,7 +187,7 @@ export const ToolPanel = React.memo(function ToolPanel({
             <button
               type="button"
               onClick={() => ui.getState().selectField(null)}
-              className="ms:inline-flex ms:h-7 ms:w-7 ms:items-center ms:justify-center ms:rounded-full ms:bg-msbackgroundsecondary ms:text-mstextmuted ms:hover:bg-msbackgroundhover ms:hover:text-mstext ms:border ms:border-msborder ms:outline-none ms:focus:outline-none ms:cursor-pointer"
+              className="es:inline-flex es:h-7 es:w-7 es:items-center es:justify-center es:rounded-full es:bg-esbackgroundsecondary es:text-estextmuted es:hover:bg-esbackgroundhover es:hover:text-estext es:border es:border-esborder es:outline-none es:focus:outline-none es:cursor-pointer"
               title="Switch to adding into root"
               aria-label="Switch to adding into root"
             >
@@ -198,14 +198,14 @@ export const ToolPanel = React.memo(function ToolPanel({
         <button
           type="button"
           onClick={toggleAll}
-          className="toggle-all-btn ms:text-xs ms:font-normal ms:text-mstextmuted ms:hover:text-mstext ms:bg-transparent ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:transition-colors"
+          className="toggle-all-btn es:text-xs es:font-normal es:text-estextmuted es:hover:text-estext es:bg-transparent es:border-0 es:outline-none es:focus:outline-none es:cursor-pointer es:transition-colors"
           title={allCollapsed ? 'Expand all' : 'Collapse all'}
         >
           {allCollapsed ? 'Expand all' : 'Collapse all'}
         </button>
       </h3>
 
-      <div className="tool-panel-body ms:flex-1 ms:min-h-0 ms:overflow-y-auto">
+      <div className="tool-panel-body es:flex-1 es:min-h-0 es:overflow-y-auto">
         {orderedCategoryNames.map((categoryName) => {
           const items = categories[categoryName] ?? [];
           const isCollapsed = collapsed.has(categoryName);
@@ -214,31 +214,31 @@ export const ToolPanel = React.memo(function ToolPanel({
               <button
                 type="button"
                 onClick={() => toggleCategory(categoryName)}
-                className="tool-category-title ms:w-full ms:sticky ms:top-0 ms:z-[5] ms:bg-mssurface ms:text-xs ms:font-semibold ms:text-mstextmuted ms:px-4 ms:py-2.5 ms:border-b ms:border-msborder ms:border-0 ms:uppercase ms:tracking-wide ms:flex ms:items-center ms:gap-1.5 ms:cursor-pointer ms:hover:bg-msbackgroundhover ms:transition-colors ms:outline-none ms:focus:outline-none"
+                className="tool-category-title es:w-full es:sticky es:top-0 es:z-[5] es:bg-essurface es:text-xs es:font-semibold es:text-estextmuted es:px-4 es:py-2.5 es:border-b es:border-esborder es:border-0 es:uppercase es:tracking-wide es:flex es:items-center es:gap-1.5 es:cursor-pointer es:hover:bg-esbackgroundhover es:transition-colors es:outline-none es:focus:outline-none"
                 aria-expanded={!isCollapsed}
               >
                 <ChevronIcon
-                  className={`ms:w-3.5 ms:h-3.5 ms:shrink-0 ms:transition-transform ${
-                    isCollapsed ? 'ms:-rotate-90' : ''
+                  className={`es:w-3.5 es:h-3.5 es:shrink-0 es:transition-transform ${
+                    isCollapsed ? 'es:-rotate-90' : ''
                   }`}
                 />
                 {CATEGORY_ICONS[categoryName] &&
                   React.createElement(CATEGORY_ICONS[categoryName], {
-                    className: 'ms:w-3.5 ms:h-3.5 ms:shrink-0',
+                    className: 'es:w-3.5 es:h-3.5 es:shrink-0',
                   })}
-                <span className="ms:flex-1 ms:text-left">{categoryName}</span>
+                <span className="es:flex-1 es:text-left">{categoryName}</span>
               </button>
               {!isCollapsed && (
-                <div className="tool-items ms:grid ms:grid-cols-1 ms:gap-1.5 ms:px-3 ms:py-2">
+                <div className="tool-items es:grid es:grid-cols-1 es:gap-1.5 es:px-3 es:py-2">
                   {items.map(({ type, label }) => (
                     <button
                       key={type}
                       type="button"
-                      className="tool-btn ms:flex ms:items-center ms:gap-2 ms:px-3 ms:py-2 ms:text-sm ms:text-left ms:rounded-md ms:bg-msbackground ms:text-mstext ms:border ms:border-transparent ms:transition-colors ms:hover:bg-msprimary/10 ms:hover:border-msprimary/40 ms:hover:text-msprimary ms:cursor-pointer ms:outline-none ms:focus:outline-none ms:focus-visible:ring-2 ms:focus-visible:ring-msprimary"
+                      className="tool-btn es:flex es:items-center es:gap-2 es:px-3 es:py-2 es:text-sm es:text-left es:rounded-md es:bg-esbackground es:text-estext es:border es:border-transparent es:transition-colors es:hover:bg-esprimary/10 es:hover:border-esprimary/40 es:hover:text-esprimary es:cursor-pointer es:outline-none es:focus:outline-none es:focus-visible:ring-2 es:focus-visible:ring-esprimary"
                       onClick={() => handleAdd(type)}
                       title={`Add ${label}`}
                     >
-                      <span className="tool-btn-plus ms:flex ms:items-center ms:justify-center ms:w-5 ms:h-5 ms:rounded ms:bg-msbackgroundsecondary ms:text-mstextmuted ms:text-xs ms:font-bold ms:shrink-0">
+                      <span className="tool-btn-plus es:flex es:items-center es:justify-center es:w-5 es:h-5 es:rounded es:bg-esbackgroundsecondary es:text-estextmuted es:text-xs es:font-bold es:shrink-0">
                         +
                       </span>
                       {label}

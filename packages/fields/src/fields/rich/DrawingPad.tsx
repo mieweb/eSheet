@@ -639,9 +639,9 @@ export const DrawingPad = React.memo(function DrawingPad({
   // ---- Render -------------------------------------------------------------
 
   return (
-    <div ref={containerRef} className="drawing-pad ms:w-full">
+    <div ref={containerRef} className="drawing-pad es:w-full">
       {/* Display canvas + overlaid action buttons */}
-      <div className="drawing-pad-canvas-wrapper ms:relative ms:rounded ms:overflow-hidden ms:border ms:border-msborder">
+      <div className="drawing-pad-canvas-wrapper es:relative es:rounded es:overflow-hidden es:border es:border-esborder">
         <canvas
           ref={displayRef}
           style={{
@@ -665,16 +665,16 @@ export const DrawingPad = React.memo(function DrawingPad({
 
         {/* Undo / redo / clear overlay */}
         {!disabled && (hasStrokes || canUndo || canRedo) && (
-          <div className="drawing-pad-actions ms:absolute ms:top-2 ms:right-2 ms:flex ms:gap-1">
+          <div className="drawing-pad-actions es:absolute es:top-2 es:right-2 es:flex es:gap-1">
             <button
               type="button"
               onClick={undo}
               disabled={!canUndo}
               title="Undo"
-              className="drawing-pad-undo ms:w-7 ms:h-7 ms:flex ms:items-center ms:justify-center ms:rounded ms:bg-mssurface ms:text-mstext ms:border ms:border-msborder ms:hover:bg-msbackground ms:disabled:opacity-40 ms:disabled:cursor-not-allowed ms:outline-none ms:focus:outline-none ms:cursor-pointer"
+              className="drawing-pad-undo es:w-7 es:h-7 es:flex es:items-center es:justify-center es:rounded es:bg-essurface es:text-estext es:border es:border-esborder es:hover:bg-esbackground es:disabled:opacity-40 es:disabled:cursor-not-allowed es:outline-none es:focus:outline-none es:cursor-pointer"
             >
               <svg
-                className="ms:w-3.5 ms:h-3.5"
+                className="es:w-3.5 es:h-3.5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -692,10 +692,10 @@ export const DrawingPad = React.memo(function DrawingPad({
               onClick={redo}
               disabled={!canRedo}
               title="Redo"
-              className="drawing-pad-redo ms:w-7 ms:h-7 ms:flex ms:items-center ms:justify-center ms:rounded ms:bg-mssurface ms:text-mstext ms:border ms:border-msborder ms:hover:bg-msbackground ms:disabled:opacity-40 ms:disabled:cursor-not-allowed ms:outline-none ms:focus:outline-none ms:cursor-pointer"
+              className="drawing-pad-redo es:w-7 es:h-7 es:flex es:items-center es:justify-center es:rounded es:bg-essurface es:text-estext es:border es:border-esborder es:hover:bg-esbackground es:disabled:opacity-40 es:disabled:cursor-not-allowed es:outline-none es:focus:outline-none es:cursor-pointer"
             >
               <svg
-                className="ms:w-3.5 ms:h-3.5"
+                className="es:w-3.5 es:h-3.5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -712,10 +712,10 @@ export const DrawingPad = React.memo(function DrawingPad({
               type="button"
               onClick={clear}
               title="Clear"
-              className="drawing-pad-clear ms:w-7 ms:h-7 ms:flex ms:items-center ms:justify-center ms:rounded ms:bg-msdanger/10 ms:text-msdanger ms:border ms:border-msdanger/20 ms:hover:bg-msdanger/20 ms:outline-none ms:focus:outline-none ms:cursor-pointer"
+              className="drawing-pad-clear es:w-7 es:h-7 es:flex es:items-center es:justify-center es:rounded es:bg-esdanger/10 es:text-esdanger es:border es:border-esdanger/20 es:hover:bg-esdanger/20 es:outline-none es:focus:outline-none es:cursor-pointer"
             >
               <svg
-                className="ms:w-3.5 ms:h-3.5"
+                className="es:w-3.5 es:h-3.5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -734,20 +734,20 @@ export const DrawingPad = React.memo(function DrawingPad({
 
       {/* Toolbar */}
       {!disabled && (
-        <div className="drawing-pad-toolbar ms:flex ms:gap-1.5 ms:mt-1.5 ms:items-center">
+        <div className="drawing-pad-toolbar es:flex es:gap-1.5 es:mt-1.5 es:items-center">
           {/* Pen */}
           <button
             type="button"
             onClick={() => setCurrentTool('pen')}
             title="Pen"
-            className={`drawing-pad-pen-btn ms:w-7 ms:h-7 ms:flex ms:items-center ms:justify-center ms:rounded ms:border ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:transition-colors ${
+            className={`drawing-pad-pen-btn es:w-7 es:h-7 es:flex es:items-center es:justify-center es:rounded es:border es:outline-none es:focus:outline-none es:cursor-pointer es:transition-colors ${
               currentTool === 'pen'
-                ? 'ms:bg-msprimary ms:text-mstextsecondary ms:border-msprimary'
-                : 'ms:bg-msbackground ms:text-mstext ms:border-msborder ms:hover:bg-msbackgroundsecondary'
+                ? 'es:bg-esprimary es:text-estextsecondary es:border-esprimary'
+                : 'es:bg-esbackground es:text-estext es:border-esborder es:hover:bg-esbackgroundsecondary'
             }`}
           >
             <svg
-              className="ms:w-3.5 ms:h-3.5"
+              className="es:w-3.5 es:h-3.5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -767,14 +767,14 @@ export const DrawingPad = React.memo(function DrawingPad({
               type="button"
               onClick={() => setCurrentTool('eraser')}
               title="Eraser"
-              className={`drawing-pad-eraser-btn ms:w-7 ms:h-7 ms:flex ms:items-center ms:justify-center ms:rounded ms:border ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:transition-colors ${
+              className={`drawing-pad-eraser-btn es:w-7 es:h-7 es:flex es:items-center es:justify-center es:rounded es:border es:outline-none es:focus:outline-none es:cursor-pointer es:transition-colors ${
                 currentTool === 'eraser'
-                  ? 'ms:bg-msprimary ms:text-mstextsecondary ms:border-msprimary'
-                  : 'ms:bg-msbackground ms:text-mstext ms:border-msborder ms:hover:bg-msbackgroundsecondary'
+                  ? 'es:bg-esprimary es:text-estextsecondary es:border-esprimary'
+                  : 'es:bg-esbackground es:text-estext es:border-esborder es:hover:bg-esbackgroundsecondary'
               }`}
             >
               <svg
-                className="ms:w-3.5 ms:h-3.5"
+                className="es:w-3.5 es:h-3.5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -792,7 +792,7 @@ export const DrawingPad = React.memo(function DrawingPad({
           {/* Only show colour + size pickers when drawing with pen */}
           {currentTool === 'pen' && (
             <>
-              <div className="ms:w-px ms:h-5 ms:bg-msborder ms:shrink-0" />
+              <div className="es:w-px es:h-5 es:bg-esborder es:shrink-0" />
 
               {/* Colour swatches */}
               {COLOR_PALETTE.map((c) => (
@@ -802,10 +802,10 @@ export const DrawingPad = React.memo(function DrawingPad({
                   onClick={() => setCurrentColor(c)}
                   title={c}
                   style={{ backgroundColor: c }}
-                  className={`drawing-pad-color-btn ms:w-5 ms:h-5 ms:rounded-full ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:transition-all ms:shrink-0 ${
+                  className={`drawing-pad-color-btn es:w-5 es:h-5 es:rounded-full es:border-0 es:outline-none es:focus:outline-none es:cursor-pointer es:transition-all es:shrink-0 ${
                     currentColor === c
-                      ? 'ms:ring-2 ms:ring-msprimary ms:ring-offset-1'
-                      : 'ms:hover:scale-110'
+                      ? 'es:ring-2 es:ring-esprimary es:ring-offset-1'
+                      : 'es:hover:scale-110'
                   }`}
                 />
               ))}
@@ -813,10 +813,10 @@ export const DrawingPad = React.memo(function DrawingPad({
               {/* Custom colour picker */}
               <div
                 title="Custom colour"
-                className={`drawing-pad-custom-color ms:relative ms:w-5 ms:h-5 ms:rounded-full ms:overflow-hidden ms:cursor-pointer ms:shrink-0 ms:transition-all ${
+                className={`drawing-pad-custom-color es:relative es:w-5 es:h-5 es:rounded-full es:overflow-hidden es:cursor-pointer es:shrink-0 es:transition-all ${
                   !COLOR_PALETTE.includes(currentColor)
-                    ? 'ms:ring-2 ms:ring-msprimary ms:ring-offset-1'
-                    : 'ms:hover:scale-110'
+                    ? 'es:ring-2 es:ring-esprimary es:ring-offset-1'
+                    : 'es:hover:scale-110'
                 }`}
                 style={{
                   backgroundColor: COLOR_PALETTE.includes(currentColor)
@@ -832,11 +832,11 @@ export const DrawingPad = React.memo(function DrawingPad({
                       : currentColor
                   }
                   onChange={(e) => setCurrentColor(e.target.value)}
-                  className="ms:absolute ms:inset-0 ms:w-full ms:h-full ms:opacity-0 ms:cursor-pointer"
+                  className="es:absolute es:inset-0 es:w-full es:h-full es:opacity-0 es:cursor-pointer"
                 />
               </div>
 
-              <div className="ms:w-px ms:h-5 ms:bg-msborder ms:shrink-0" />
+              <div className="es:w-px es:h-5 es:bg-esborder es:shrink-0" />
 
               {/* Size buttons */}
               {([1, 2, 3] as const).map((s) => (
@@ -845,17 +845,17 @@ export const DrawingPad = React.memo(function DrawingPad({
                   type="button"
                   onClick={() => setCurrentSize(s)}
                   title={`${s}px`}
-                  className={`drawing-pad-size-btn ms:w-7 ms:h-7 ms:flex ms:items-center ms:justify-center ms:rounded ms:border ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:transition-all ${
+                  className={`drawing-pad-size-btn es:w-7 es:h-7 es:flex es:items-center es:justify-center es:rounded es:border es:outline-none es:focus:outline-none es:cursor-pointer es:transition-all ${
                     currentSize === s
-                      ? 'ms:bg-msprimary ms:border-msprimary'
-                      : 'ms:bg-msbackground ms:border-msborder ms:hover:bg-msbackgroundsecondary'
+                      ? 'es:bg-esprimary es:border-esprimary'
+                      : 'es:bg-esbackground es:border-esborder es:hover:bg-esbackgroundsecondary'
                   }`}
                 >
                   <div
-                    className={`ms:rounded-full ${
+                    className={`es:rounded-full ${
                       currentSize === s
-                        ? 'ms:bg-mstextsecondary'
-                        : 'ms:bg-mstext'
+                        ? 'es:bg-estextsecondary'
+                        : 'es:bg-estext'
                     }`}
                     style={{ width: s * 3, height: s * 3 }}
                   />

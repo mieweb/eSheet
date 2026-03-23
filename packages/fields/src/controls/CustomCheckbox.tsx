@@ -52,7 +52,7 @@ export const CustomCheckbox = React.memo(function CustomCheckbox({
         checked={checked}
         disabled={disabled}
         onChange={() => onChange?.(!checked)}
-        className={`ms:hidden ${className}`}
+        className={`es:hidden ${className}`}
       />
     );
   }
@@ -61,7 +61,7 @@ export const CustomCheckbox = React.memo(function CustomCheckbox({
     <label
       htmlFor={id}
       onClick={(e) => e.stopPropagation()}
-      className={`custom-checkbox-wrapper ms:inline-flex ms:items-center ms:justify-center ms:cursor-pointer ${className}`}
+      className={`custom-checkbox-wrapper es:inline-flex es:items-center es:justify-center es:cursor-pointer ${className}`}
     >
       <input
         id={id}
@@ -70,14 +70,14 @@ export const CustomCheckbox = React.memo(function CustomCheckbox({
         checked={checked}
         disabled={disabled}
         onChange={() => onChange?.(!checked)}
-        className="ms:hidden"
+        className="es:hidden"
       />
       <span
-        className={`custom-checkbox-display ms:inline-flex ms:items-center ms:justify-center ms:rounded ms:border-2 ms:transition-all ms:pointer-events-none ms:shrink-0 ${
+        className={`custom-checkbox-display es:inline-flex es:items-center es:justify-center es:rounded es:border-2 es:transition-all es:pointer-events-none es:shrink-0 ${
           checked
-            ? 'ms:border-msprimary ms:bg-msprimary'
-            : 'ms:border-msborderinactive ms:bg-mssurface'
-        } ${disabled ? 'ms:opacity-50' : ''}`}
+            ? 'es:border-esprimary es:bg-esprimary'
+            : 'es:border-esborderinactive es:bg-essurface'
+        } ${disabled ? 'es:opacity-50' : ''}`}
         style={{
           width: s.outer,
           height: s.outer,
@@ -87,7 +87,7 @@ export const CustomCheckbox = React.memo(function CustomCheckbox({
         aria-hidden="true"
       >
         <svg
-          className="custom-checkbox-checkmark ms:text-mssurface"
+          className="custom-checkbox-checkmark es:text-essurface"
           style={{ width: s.inner, height: s.inner, opacity: checked ? 1 : 0 }}
           fill="none"
           stroke="currentColor"

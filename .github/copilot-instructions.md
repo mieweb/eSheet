@@ -107,7 +107,7 @@ If any box is unchecked, **simplify**.
 
 - **Always run tasks through Nx** — use `npx nx run`, `npx nx run-many`, `npx nx affected` instead of running tools directly.
 - **Don't modify `project.json` directly** — targets are inferred by plugins (`@nx/js/typescript`, `@nx/vite`, `@nx/eslint`, `@nx/vitest`). Use `nx show project <name> --json` to see resolved config.
-- **Package exports use `@msheet/source` custom condition** — for dev-time TS source imports between packages.
+- **Package exports use `@esheet/source` custom condition** — for dev-time TS source imports between packages.
 - **Respect module boundaries** — `@nx/enforce-module-boundaries` is enforced. Check tags before adding cross-package imports.
 - **Use `tslib`** — `importHelpers: true` is set in `tsconfig.base.json`. All packages depend on `tslib`.
 
@@ -115,20 +115,20 @@ If any box is unchecked, **simplify**.
 
 - **Logic Editor Expression Testing Rule**: For logic testing in builder/preview, use rule conditions with `conditionType: "expression"` on supported field types (e.g., text/radio/slider), and do **not** depend on `fieldType: "expression"` being present in the builder toolbox. Expression authoring is validated in the Logic Editor condition row, not by requiring an expression field component in test schemas.
 
-- **CRITICAL: `ms:` Prefix MUST Come Before Variant Modifiers**: This project uses Tailwind v4 with `prefix(ms)`. The `ms:` prefix must appear **before** any variant modifier (hover, focus, active, sm, md, lg, etc.). Getting this wrong silently breaks styles.
+- **CRITICAL: `es:` Prefix MUST Come Before Variant Modifiers**: This project uses Tailwind v4 with `prefix(es)`. The `es:` prefix must appear **before** any variant modifier (hover, focus, active, sm, md, lg, etc.). Getting this wrong silently breaks styles.
 
   ```tsx
-  // ✅ CORRECT - ms: before variant
-  <div className="ms:hover:bg-msprimary ms:focus:outline-none ms:sm:grid-cols-2 ms:active:cursor-grabbing ms:group-hover:text-msdanger ms:placeholder:text-mstextmuted">
+  // ✅ CORRECT - es: before variant
+  <div className="es:hover:bg-esprimary es:focus:outline-none es:sm:grid-cols-2 es:active:cursor-grabbing es:group-hover:text-esdanger es:placeholder:text-estextmuted">
 
-  // ❌ WRONG - variant before ms: (WILL NOT WORK)
-  <div className="hover:ms:bg-msprimary focus:ms:outline-none sm:ms:grid-cols-2 active:ms:cursor-grabbing group-hover:ms:text-msdanger placeholder:ms:text-mstextmuted">
+  // ❌ WRONG - variant before es: (WILL NOT WORK)
+  <div className="hover:es:bg-esprimary focus:es:outline-none sm:es:grid-cols-2 active:es:cursor-grabbing group-hover:es:text-esdanger placeholder:es:text-estextmuted">
 
   // ❌ WRONG - double prefix (WILL NOT WORK)
-  <div className="ms:hover:ms:bg-msprimary">
+  <div className="es:hover:es:bg-esprimary">
   ```
 
-- **ALL Form Inputs Must Have `id` Attributes with `instanceId` Prefix**: Every `<input>`, `<select>`, and `<textarea>` element across **all** UI packages (`@msheet/builder`, `@msheet/renderer`, `@msheet/fields`, or any future package rendering form elements) must have an `id` attribute. Use the `useInstanceId()` hook to ensure IDs are unique when multiple component instances share the same page.
+- **ALL Form Inputs Must Have `id` Attributes with `instanceId` Prefix**: Every `<input>`, `<select>`, and `<textarea>` element across **all** UI packages (`@esheet/builder`, `@esheet/renderer`, `@esheet/fields`, or any future package rendering form elements) must have an `id` attribute. Use the `useInstanceId()` hook to ensure IDs are unique when multiple component instances share the same page.
 
   **ID pattern:** `${instanceId}-{purpose}-${fieldId}`
 
@@ -209,7 +209,7 @@ If any box is unchecked, **simplify**.
   **When to flatten:**
 
   - Outer div: `className="*-field-preview ...basic utilities..."` (semantic class for styling/debugging)
-  - Inner div: `className="ms:grid ms:grid-cols-1 ..."` (pure layout utilities)
+  - Inner div: `className="es:grid es:grid-cols-1 ..."` (pure layout utilities)
   - The outer wrapper adds nothing but an extra nesting level
 
   **Pattern (applies to field preview sections):**
@@ -217,15 +217,15 @@ If any box is unchecked, **simplify**.
   ```tsx
   // BEFORE - redundant nesting
   <div className="text-field-preview">
-    <div className="ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
-      <div className="ms:font-light ms:text-mstext">Question</div>
+    <div className="es:grid es:grid-cols-1 es:gap-2 es:sm:grid-cols-2 es:pb-4">
+      <div className="es:font-light es:text-estext">Question</div>
       <input />
     </div>
   </div>
 
   // AFTER - flattened and cleaner
-  <div className="text-field-preview ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
-    <div className="ms:font-light ms:text-mstext">Question</div>
+  <div className="text-field-preview es:grid es:grid-cols-1 es:gap-2 es:sm:grid-cols-2 es:pb-4">
+    <div className="es:font-light es:text-estext">Question</div>
     <input />
   </div>
   ```
@@ -344,9 +344,9 @@ For feature planning and TODO tracking, use the local-only internal tickets dire
   - Reference related files and existing code patterns
   - Include success criteria and testing requirements
 
-**Migration Roadmap** (`.github/INTERNAL-TICKETS/mSheet-RoadMap.md`):
+**Migration Roadmap** (`.github/INTERNAL-TICKETS/eSheet-RoadMap.md`):
 
-- This is the **single source of truth** for QB → mSheet migration status. **Update it whenever implementation work changes the status of a tracked feature** (e.g., a field component is completed, a gap is filled, completion percentages change).
+- This is the **single source of truth** for QB → eSheet migration status. **Update it whenever implementation work changes the status of a tracked feature** (e.g., a field component is completed, a gap is filled, completion percentages change).
 - After completing a task that corresponds to an item in the roadmap, mark it done immediately and update progress summaries.
 - Keep completion percentages, gap lists, and timeline estimates current so the roadmap always reflects reality.
 - When architectural decisions are made that eliminate "gaps" (e.g., feature implemented differently), update the roadmap to clarify what's a true gap vs architectural change.
@@ -354,8 +354,8 @@ For feature planning and TODO tracking, use the local-only internal tickets dire
 **@mieweb/ui Capability Audit** (`.github/INTERNAL-TICKETS/mieweb-ui-capability-audit.md`):
 
 - This is the source-of-truth snapshot for @mieweb/ui exports, `*Props` interfaces, and key variant names.
-- When using or refactoring @mieweb/ui components in mSheet, consult this ticket before choosing `variant`, `size`, or component-specific props.
-- If @mieweb/ui changes materially (new components, variant changes, prop changes), regenerate/update this audit ticket first, then implement mSheet changes.
+- When using or refactoring @mieweb/ui components in eSheet, consult this ticket before choosing `variant`, `size`, or component-specific props.
+- If @mieweb/ui changes materially (new components, variant changes, prop changes), regenerate/update this audit ticket first, then implement eSheet changes.
 
 **Ticket Template:**
 

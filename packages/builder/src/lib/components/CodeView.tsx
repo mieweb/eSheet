@@ -6,7 +6,7 @@ import {
   formDefinitionSchema,
   type FormStore,
   type UIStore,
-} from '@msheet/core';
+} from '@esheet/core';
 import { FeedbackModal, type FeedbackModalVariant } from './FeedbackModal.js';
 
 const FORM_SCHEMA_URI = 'inmemory://msheet/form-definition.schema.json';
@@ -207,7 +207,7 @@ export function CodeView({ form, ui }: CodeViewProps) {
   }, []);
 
   return (
-    <div className="code-view-container ms:flex ms:flex-col ms:flex-1 ms:min-h-0 ms:bg-msbackground">
+    <div className="code-view-container es:flex es:flex-col es:flex-1 es:min-h-0 es:bg-esbackground">
       <FeedbackModal
         open={feedback.open}
         title={feedback.title}
@@ -223,17 +223,17 @@ export function CodeView({ form, ui }: CodeViewProps) {
       />
 
       {/* Header — format toggle + status */}
-      <div className="code-view-header ms:flex ms:items-center ms:justify-between ms:gap-3 ms:p-3 ms:bg-mssurface ms:border-b ms:border-msborder">
-        <div className="format-toggle ms:flex ms:gap-1 ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackground ms:p-1">
+      <div className="code-view-header es:flex es:items-center es:justify-between es:gap-3 es:p-3 es:bg-essurface es:border-b es:border-esborder">
+        <div className="format-toggle es:flex es:gap-1 es:rounded-lg es:border es:border-esborder es:bg-esbackground es:p-1">
           {(['yaml', 'json'] as const).map((fmt) => (
             <button
               key={fmt}
               type="button"
               onClick={() => handleFormatChange(fmt)}
-              className={`format-btn ms:px-3 ms:py-1 ms:rounded-md ms:text-sm ms:font-medium ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ${
+              className={`format-btn es:px-3 es:py-1 es:rounded-md es:text-sm es:font-medium es:transition-colors es:border-0 es:outline-none es:focus:outline-none es:cursor-pointer ${
                 format === fmt
-                  ? 'ms:bg-msprimary ms:text-mstextsecondary ms:shadow-sm'
-                  : 'ms:bg-transparent ms:text-mstextmuted ms:hover:text-mstext ms:hover:bg-mssurface'
+                  ? 'es:bg-esprimary es:text-estextsecondary es:shadow-sm'
+                  : 'es:bg-transparent es:text-estextmuted es:hover:text-estext es:hover:bg-essurface'
               }`}
             >
               {fmt.toUpperCase()}
@@ -241,12 +241,12 @@ export function CodeView({ form, ui }: CodeViewProps) {
           ))}
         </div>
 
-        <div className="code-view-status ms:flex ms:items-center ms:gap-2">
-          <span className="ms:text-xs ms:text-mstextmuted">
+        <div className="code-view-status es:flex es:items-center es:gap-2">
+          <span className="es:text-xs es:text-estextmuted">
             Auto-saves when switching tabs
           </span>
           {error && (
-            <span className="ms:text-xs ms:text-msdanger ms:bg-msdanger/10 ms:px-3 ms:py-1 ms:rounded-lg">
+            <span className="es:text-xs es:text-esdanger es:bg-esdanger/10 es:px-3 es:py-1 es:rounded-lg">
               {error}
             </span>
           )}
@@ -254,7 +254,7 @@ export function CodeView({ form, ui }: CodeViewProps) {
       </div>
 
       {/* Monaco Editor */}
-      <div className="code-view-editor ms:flex-1 ms:overflow-hidden">
+      <div className="code-view-editor es:flex-1 es:overflow-hidden">
         <Editor
           height="100%"
           language={format === 'yaml' ? 'yaml' : 'json'}

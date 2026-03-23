@@ -1,6 +1,6 @@
 import React from 'react';
-import type { FieldComponentProps, FormStore, UIStore } from '@msheet/core';
-import { getFieldComponent } from '@msheet/fields';
+import type { FieldComponentProps, FormStore, UIStore } from '@esheet/core';
+import { getFieldComponent } from '@esheet/fields';
 
 export interface FieldNodeProps {
   id: string;
@@ -93,8 +93,8 @@ export const FieldNode = React.memo(function FieldNode({
 
     const containerClass =
       depth === 1
-        ? 'section-children ms:space-y-2'
-        : 'section-children ms:space-y-2 ms:border-l ms:border-msborder ms:pl-3';
+        ? 'section-children es:space-y-2'
+        : 'section-children es:space-y-2 es:border-l es:border-esborder es:pl-3';
 
     return (
       <div className={containerClass} data-depth={depth}>
@@ -144,19 +144,19 @@ export const FieldNode = React.memo(function FieldNode({
     : null;
   const isChildOfSection = parentNode?.definition.fieldType === 'section';
 
-  const wrapperClass = `field-wrapper ms:bg-mssurface${
-    isSection ? ' ms:mb-2 ms:border ms:border-msborder ms:rounded' : ''
+  const wrapperClass = `field-wrapper es:bg-essurface${
+    isSection ? ' es:mb-2 es:border es:border-esborder es:rounded' : ''
   }${
     !isSection && !isChildOfSection
-      ? ' ms:mb-2 ms:p-6 ms:border ms:border-msborder ms:rounded'
+      ? ' es:mb-2 es:p-6 es:border es:border-esborder es:rounded'
       : ''
   }${
     isChildOfSection
-      ? ' ms:p-6 ms:border-b ms:border-msborder ms:last:border-b-0'
+      ? ' es:p-6 es:border-b es:border-esborder es:last:border-b-0'
       : ''
-  }${!isEnabled ? ' ms:opacity-50 ms:pointer-events-none' : ''}${
+  }${!isEnabled ? ' es:opacity-50 es:pointer-events-none' : ''}${
     isRequired && !isSection && !isChildOfSection
-      ? ' ms:border-l-2 ms:border-l-msdanger'
+      ? ' es:border-l-2 es:border-l-esdanger'
       : ''
   }`;
 

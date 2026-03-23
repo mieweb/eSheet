@@ -253,7 +253,7 @@ let nextInstanceId = 1;
 export function createFormStore(initial?: FormDefinition): FormStore {
   return createStore<FormState>()((set, get) => ({
     // --- Data ---
-    instanceId: `ms-${nextInstanceId++}`,
+    instanceId: `es-${nextInstanceId++}`,
     normalized: initial
       ? normalizeDefinition(initial.fields)
       : EMPTY_NORMALIZED,

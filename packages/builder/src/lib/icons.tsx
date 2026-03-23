@@ -2,7 +2,7 @@
  * Builder icon components — ported from questionnaire-builder (old QB).
  *
  * All icons accept a `className` prop and render inline SVGs using `currentColor`.
- * Usage: <TrashIcon className="ms:w-5 ms:h-5 ms:text-mstextmuted" />
+ * Usage: <TrashIcon className="es:w-5 es:h-5 es:text-estextmuted" />
  */
 
 import React from 'react';
@@ -12,7 +12,7 @@ type IconProps = { className?: string };
 const eq = (a: IconProps, b: IconProps) => a.className === b.className;
 
 // ---------------------------------------------------------------------------
-// Shared icons — re-exported from @msheet/fields
+// Shared icons — re-exported from @esheet/fields
 // ---------------------------------------------------------------------------
 
 export {
@@ -21,7 +21,7 @@ export {
   ArrowUpIcon,
   ArrowDownIcon,
   UpDownArrowIcon,
-} from '@msheet/fields';
+} from '@esheet/fields';
 
 // ---------------------------------------------------------------------------
 // Field Wrapper actions

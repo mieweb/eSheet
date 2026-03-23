@@ -1,5 +1,5 @@
 import React from 'react';
-import type { FieldComponentProps } from '@msheet/core';
+import type { FieldComponentProps } from '@esheet/core';
 
 function formatPhoneNumber(value: string): string {
   if (!value) return value;
@@ -53,12 +53,12 @@ export const TextField = React.memo(function TextField({
 
   if (isPreview) {
     return (
-      <div className="text-field-preview ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
-        <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
+      <div className="text-field-preview es:grid es:grid-cols-1 es:gap-2 es:sm:grid-cols-2 es:pb-4">
+        <div className="es:font-light es:text-estext es:break-words es:overflow-hidden">
           {def.question || 'Question'}
-          {isRequired && <span className="ms:text-msdanger ms:ml-0.5">*</span>}
+          {isRequired && <span className="es:text-esdanger es:ml-0.5">*</span>}
         </div>
-        <div className="ms:relative">
+        <div className="es:relative">
           <input
             id={`${instanceId}-text-answer-${def.id}`}
             aria-label={def.question || 'Question'}
@@ -73,12 +73,12 @@ export const TextField = React.memo(function TextField({
               onResponse({ answer: val });
             }}
             placeholder={placeholder}
-            className={`ms:px-4 ms:py-2 ms:h-10 ms:w-full ms:min-w-0 ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:shadow-sm ms:rounded-lg ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary/30 ms:outline-none ms:transition-colors ${
-              unit ? 'ms:pr-16' : ''
+            className={`es:px-4 es:py-2 es:h-10 es:w-full es:min-w-0 es:border es:border-esborder es:bg-essurface es:text-estext es:shadow-sm es:rounded-lg es:focus:border-esprimary es:focus:ring-1 es:focus:ring-esprimary/30 es:outline-none es:transition-colors ${
+              unit ? 'es:pr-16' : ''
             }`}
           />
           {unit && (
-            <span className="ms:absolute ms:right-3 ms:top-1/2 ms:-translate-y-1/2 ms:text-sm ms:text-mstextmuted ms:pointer-events-none">
+            <span className="es:absolute es:right-3 es:top-1/2 es:-translate-y-1/2 es:text-sm es:text-estextmuted es:pointer-events-none">
               {unit}
             </span>
           )}
@@ -88,11 +88,11 @@ export const TextField = React.memo(function TextField({
   }
 
   return (
-    <div className="text-field-edit ms:space-y-2">
+    <div className="text-field-edit es:space-y-2">
       <div>
         <label
           htmlFor={`${instanceId}-canvas-question-${def.id}`}
-          className="ms:block ms:text-sm ms:font-medium ms:text-mstextmuted ms:mb-1"
+          className="es:block es:text-sm es:font-medium es:text-estextmuted es:mb-1"
         >
           Question
         </label>
@@ -103,23 +103,23 @@ export const TextField = React.memo(function TextField({
           value={def.question || ''}
           onChange={(e) => onUpdate({ question: e.target.value })}
           placeholder="Enter question"
-          className="ms:px-3 ms:py-2 ms:h-10 ms:w-full ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:rounded-lg ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary/30 ms:outline-none ms:transition-colors"
+          className="es:px-3 es:py-2 es:h-10 es:w-full es:border es:border-esborder es:bg-essurface es:text-estext es:rounded-lg es:focus:border-esprimary es:focus:ring-1 es:focus:ring-esprimary/30 es:outline-none es:transition-colors"
         />
       </div>
-      <div className="ms:relative">
+      <div className="es:relative">
         <input
           id={`${instanceId}-canvas-preview-${def.id}`}
           aria-label="Answer preview"
           type={inputType}
           value=""
           placeholder={placeholder}
-          className={`ms:px-4 ms:py-2 ms:w-full ms:border ms:border-msborder ms:shadow-sm ms:rounded-lg ms:bg-msbackground ms:text-mstextmuted ${
-            unit ? 'ms:pr-16' : ''
+          className={`es:px-4 es:py-2 es:w-full es:border es:border-esborder es:shadow-sm es:rounded-lg es:bg-esbackground es:text-estextmuted ${
+            unit ? 'es:pr-16' : ''
           }`}
           disabled
         />
         {unit && (
-          <span className="ms:absolute ms:right-3 ms:top-1/2 ms:-translate-y-1/2 ms:text-sm ms:text-mstextmuted">
+          <span className="es:absolute es:right-3 es:top-1/2 es:-translate-y-1/2 es:text-sm es:text-estextmuted">
             {unit}
           </span>
         )}

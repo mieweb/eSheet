@@ -44,7 +44,7 @@ export function hydrateResponse(
   normalized: NormalizedDefinition,
   responses: FormResponse
 ): HydratedResponseItem[] {
-  const items: HydratedResponseItem[] = [];
+  const itees: HydratedResponseItem[] = [];
 
   function walk(ids: readonly string[]): void {
     for (const id of ids) {

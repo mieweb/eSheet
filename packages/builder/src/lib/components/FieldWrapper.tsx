@@ -5,7 +5,7 @@ import type {
   FieldComponentProps,
   FormStore,
   UIStore,
-} from '@msheet/core';
+} from '@esheet/core';
 import { useSelectedFieldId } from '../hooks/useSelectedFieldId.js';
 import {
   TrashIcon,
@@ -187,19 +187,19 @@ export function FieldWrapper({
 
     return (
       <div
-        className={`field-wrapper ms:bg-mssurface${
-          isSection ? ' ms:mb-2 ms:border ms:border-msborder ms:rounded' : ''
+        className={`field-wrapper es:bg-essurface${
+          isSection ? ' es:mb-2 es:border es:border-esborder es:rounded' : ''
         }${
           !isSection && !isChildOfSection
-            ? ' ms:mb-2 ms:p-6 ms:border ms:border-msborder ms:rounded'
+            ? ' es:mb-2 es:p-6 es:border es:border-esborder es:rounded'
             : ''
         }${
           isChildOfSection
-            ? ' ms:p-6 ms:border-b ms:border-msborder ms:last:border-b-0'
+            ? ' es:p-6 es:border-b es:border-esborder es:last:border-b-0'
             : ''
-        }${!isEnabled ? ' ms:opacity-50 ms:pointer-events-none' : ''}${
+        }${!isEnabled ? ' es:opacity-50 es:pointer-events-none' : ''}${
           isRequired && !isSection && !isChildOfSection
-            ? ' ms:border-l-2 ms:border-l-msdanger'
+            ? ' es:border-l-2 es:border-l-esdanger'
             : ''
         }`}
         data-field-id={fieldId}
@@ -240,20 +240,20 @@ export function FieldWrapper({
   // Base wrapper classes
   let wrapperClass = isSelected
     ? selectedVariant === 'nested'
-      ? 'field-wrapper ms:group ms:relative ms:mb-2 ms:bg-mssurface ms:border-2 ms:border-dashed ms:border-msprimary ms:rounded-lg ms:transition-all ms:outline-none'
-      : 'field-wrapper ms:group ms:relative ms:mb-2 ms:bg-mssurface ms:border-2 ms:border-msprimary ms:rounded-lg ms:transition-all ms:outline-none'
-    : 'field-wrapper ms:group ms:relative ms:mb-2 ms:bg-mssurface ms:border ms:border-msborder ms:rounded-lg ms:transition-all ms:hover:border-msprimary/30 ms:outline-none';
+      ? 'field-wrapper es:group es:relative es:mb-2 es:bg-essurface es:border-2 es:border-dashed es:border-esprimary es:rounded-lg es:transition-all es:outline-none'
+      : 'field-wrapper es:group es:relative es:mb-2 es:bg-essurface es:border-2 es:border-esprimary es:rounded-lg es:transition-all es:outline-none'
+    : 'field-wrapper es:group es:relative es:mb-2 es:bg-essurface es:border es:border-esborder es:rounded-lg es:transition-all es:hover:border-esprimary/30 es:outline-none';
 
   if (!effectiveExpanded) {
-    wrapperClass += ' ms:p-0';
+    wrapperClass += ' es:p-0';
   } else {
-    wrapperClass += ' ms:p-6';
+    wrapperClass += ' es:p-6';
   }
 
   // Header padding/margin adjustments
   const headerClass = effectiveExpanded
-    ? 'field-wrapper-edit-header ms:flex ms:justify-between ms:items-center ms:gap-3 ms:px-3 ms:py-2.5 ms:-mx-6 ms:-mt-6 ms:mb-4 ms:bg-msbackgroundsecondary ms:border-b ms:border-msborder ms:rounded-t-lg'
-    : 'field-wrapper-edit-header ms:flex ms:justify-between ms:items-center ms:gap-3 ms:px-3 ms:py-2.5 ms:m-0 ms:bg-msbackgroundsecondary ms:border-b ms:border-msborder ms:rounded-lg';
+    ? 'field-wrapper-edit-header es:flex es:justify-between es:items-center es:gap-3 es:px-3 es:py-2.5 es:-mx-6 es:-mt-6 es:mb-4 es:bg-esbackgroundsecondary es:border-b es:border-esborder es:rounded-t-lg'
+    : 'field-wrapper-edit-header es:flex es:justify-between es:items-center es:gap-3 es:px-3 es:py-2.5 es:m-0 es:bg-esbackgroundsecondary es:border-b es:border-esborder es:rounded-lg';
 
   return (
     <div
@@ -271,30 +271,30 @@ export function FieldWrapper({
         {dragHandleRef !== undefined && (
           <div
             ref={dragHandleRef}
-            className="drag-handle ms:flex ms:items-center ms:p-1 ms:text-mstextmuted ms:cursor-grab ms:active:cursor-grabbing ms:shrink-0"
+            className="drag-handle es:flex es:items-center es:p-1 es:text-estextmuted es:cursor-grab es:active:cursor-grabbing es:shrink-0"
             style={{ touchAction: 'none' }}
             aria-label="Drag to reorder"
           >
-            <DragHandleIcon className="ms:w-4 ms:h-4" />
+            <DragHandleIcon className="es:w-4 es:h-4" />
           </div>
         )}
-        <div className="ms:flex-1 ms:flex ms:items-center ms:gap-1.5 ms:min-w-0 ms:select-none">
+        <div className="es:flex-1 es:flex es:items-center es:gap-1.5 es:min-w-0 es:select-none">
           {/* Type chip — tinted primary bg, same as before */}
-          <span className="fieldtype-chip ms:inline-block ms:shrink-0 ms:text-xs ms:font-medium ms:text-msprimary ms:bg-msprimary/10 ms:px-2 ms:py-0.5 ms:rounded">
+          <span className="fieldtype-chip es:inline-block es:shrink-0 es:text-xs es:font-medium es:text-esprimary es:bg-esprimary/10 es:px-2 es:py-0.5 es:rounded">
             {field.definition.fieldType}
           </span>
           {/* ID chip — explicit label for quick scanning */}
-          <span className="id-chip ms:inline-flex ms:items-center ms:gap-1 ms:shrink-0 ms:text-xs ms:font-mono ms:text-mssecondary ms:bg-mssecondary/10 ms:px-2 ms:py-0.5 ms:rounded">
-            <span className="ms:opacity-70">id:</span>
-            <span className="ms:font-semibold">{field.definition.id}</span>
+          <span className="id-chip es:inline-flex es:items-center es:gap-1 es:shrink-0 es:text-xs es:font-mono es:text-essecondary es:bg-essecondary/10 es:px-2 es:py-0.5 es:rounded">
+            <span className="es:opacity-70">id:</span>
+            <span className="es:font-semibold">{field.definition.id}</span>
           </span>
           {/* Question — plain muted text */}
-          <span className="question-label ms:text-xs ms:text-mstextmuted ms:truncate ms:min-w-0">
+          <span className="question-label es:text-xs es:text-estextmuted es:truncate es:min-w-0">
             {questionPreview}
           </span>
           {field.definition.required && (
             <span
-              className="required-indicator ms:text-msdanger ms:text-xs ms:font-bold ms:shrink-0"
+              className="required-indicator es:text-esdanger es:text-xs es:font-bold es:shrink-0"
               aria-label="Required"
             >
               *
@@ -303,7 +303,7 @@ export function FieldWrapper({
         </div>
 
         {/* Actions: Edit (mobile), Toggle (expand/collapse), Delete */}
-        <div className="field-wrapper-actions ms:flex ms:items-center ms:gap-1 ms:shrink-0">
+        <div className="field-wrapper-actions es:flex es:items-center es:gap-1 es:shrink-0">
           {/* Edit button (mobile only) */}
           <button
             type="button"
@@ -316,11 +316,11 @@ export function FieldWrapper({
               }
               ui.getState().setEditModalOpen(true);
             }}
-            className="field-edit-btn ms:block ms:lg:hidden ms:p-1.5 ms:bg-transparent ms:text-mstextmuted ms:hover:bg-msbackgroundhover ms:rounded ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none"
+            className="field-edit-btn es:block es:lg:hidden es:p-1.5 es:bg-transparent es:text-estextmuted es:hover:bg-esbackgroundhover es:rounded es:transition-colors es:border-0 es:outline-none es:focus:outline-none"
             title="Edit"
             aria-label="Edit field"
           >
-            <EditIcon className="ms:h-5 ms:w-5 ms:text-mstextmuted" />
+            <EditIcon className="es:h-5 es:w-5 es:text-estextmuted" />
           </button>
 
           {/* Toggle expand/collapse */}
@@ -331,12 +331,12 @@ export function FieldWrapper({
             aria-controls={`${instanceId}-fw-body-${fieldId}`}
             title={effectiveExpanded ? 'Collapse' : 'Expand'}
             aria-label={effectiveExpanded ? 'Collapse field' : 'Expand field'}
-            className="field-collapse-btn ms:p-1.5 ms:bg-transparent ms:text-mstextmuted ms:hover:bg-msbackgroundhover ms:rounded ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none"
+            className="field-collapse-btn es:p-1.5 es:bg-transparent es:text-estextmuted es:hover:bg-esbackgroundhover es:rounded es:transition-colors es:border-0 es:outline-none es:focus:outline-none"
           >
             {effectiveExpanded ? (
-              <ViewSmallIcon className="ms:collapse-icon ms:h-5 ms:w-5 ms:text-mstextmuted" />
+              <ViewSmallIcon className="es:collapse-icon es:h-5 es:w-5 es:text-estextmuted" />
             ) : (
-              <ViewBigIcon className="ms:collapse-icon ms:h-5 ms:w-5 ms:text-mstextmuted" />
+              <ViewBigIcon className="es:collapse-icon es:h-5 es:w-5 es:text-estextmuted" />
             )}
           </button>
 
@@ -347,11 +347,11 @@ export function FieldWrapper({
               e.stopPropagation();
               handleRemove();
             }}
-            className="field-delete-btn ms:p-1.5 ms:bg-transparent ms:text-mstextmuted ms:hover:bg-msdanger/10 ms:hover:text-msdanger ms:rounded ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none"
+            className="field-delete-btn es:p-1.5 es:bg-transparent es:text-estextmuted es:hover:bg-esdanger/10 es:hover:text-esdanger es:rounded es:transition-colors es:border-0 es:outline-none es:focus:outline-none"
             title="Delete"
             aria-label="Delete field"
           >
-            <TrashIcon className="ms:h-5 ms:w-5" />
+            <TrashIcon className="es:h-5 es:w-5" />
           </button>
         </div>
       </div>

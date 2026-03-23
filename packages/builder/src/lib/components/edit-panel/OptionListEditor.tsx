@@ -1,7 +1,7 @@
 import React from 'react';
-import type { FormStore, FieldOption } from '@msheet/core';
-import { TrashIcon } from '@msheet/fields';
-import { useInstanceId } from '../../MsheetBuilder.js';
+import type { FormStore, FieldOption } from '@esheet/core';
+import { TrashIcon } from '@esheet/fields';
+import { useInstanceId } from '../../EsheetBuilder.js';
 
 export interface OptionListEditorProps {
   fieldId: string;
@@ -38,16 +38,16 @@ export function OptionListEditor({
   };
 
   return (
-    <div className="option-list-editor ms:space-y-2">
-      <span className="edit-label ms:block ms:text-sm ms:font-medium ms:text-mstext">
+    <div className="option-list-editor es:space-y-2">
+      <span className="edit-label es:block es:text-sm es:font-medium es:text-estext">
         {label}
       </span>
 
-      <div ref={listRef} className="option-list ms:space-y-2">
+      <div ref={listRef} className="option-list es:space-y-2">
         {options.map((opt, idx) => (
           <div
             key={opt.id}
-            className="option-row ms:flex ms:items-center ms:gap-2 ms:px-3 ms:py-2 ms:border ms:border-msborder ms:rounded-lg ms:shadow-sm ms:hover:border-msprimary/50 ms:transition-colors"
+            className="option-row es:flex es:items-center es:gap-2 es:px-3 es:py-2 es:border es:border-esborder es:rounded-lg es:shadow-sm es:hover:border-esprimary/50 es:transition-colors"
           >
             <input
               id={`${instanceId}-editor-option-${fieldId}-${opt.id}`}
@@ -60,16 +60,16 @@ export function OptionListEditor({
                   .updateOption(fieldId, opt.id, e.currentTarget.value)
               }
               placeholder={`Option ${idx + 1}`}
-              className="ms:flex-1 ms:min-w-0 ms:outline-none ms:bg-transparent ms:text-mstext ms:placeholder:text-mstextmuted ms:border-0 ms:text-sm"
+              className="es:flex-1 es:min-w-0 es:outline-none es:bg-transparent es:text-estext es:placeholder:text-estextmuted es:border-0 es:text-sm"
             />
             {!isBoolean && (
               <button
                 type="button"
                 onClick={() => form.getState().removeOption(fieldId, opt.id)}
                 aria-label={`Remove option ${idx + 1}`}
-                className="remove-option-btn ms:shrink-0 ms:p-0.5 ms:rounded ms:bg-transparent ms:text-mstextmuted ms:hover:text-msdanger ms:border-0 ms:outline-none ms:focus:outline-none ms:transition-colors ms:cursor-pointer"
+                className="remove-option-btn es:shrink-0 es:p-0.5 es:rounded es:bg-transparent es:text-estextmuted es:hover:text-esdanger es:border-0 es:outline-none es:focus:outline-none es:transition-colors es:cursor-pointer"
               >
-                <TrashIcon className="ms:w-4 ms:h-4" />
+                <TrashIcon className="es:w-4 es:h-4" />
               </button>
             )}
           </div>
@@ -80,7 +80,7 @@ export function OptionListEditor({
         <button
           type="button"
           onClick={handleAdd}
-          className="add-option-btn ms:w-full ms:px-3 ms:py-2 ms:text-sm ms:font-medium ms:bg-mssurface ms:text-msprimary ms:border ms:border-msprimary/50 ms:rounded-lg ms:hover:bg-msprimary/10 ms:transition-colors ms:outline-none ms:focus:outline-none ms:cursor-pointer"
+          className="add-option-btn es:w-full es:px-3 es:py-2 es:text-sm es:font-medium es:bg-essurface es:text-esprimary es:border es:border-esprimary/50 es:rounded-lg es:hover:bg-esprimary/10 es:transition-colors es:outline-none es:focus:outline-none es:cursor-pointer"
         >
           + Add {fieldType === 'multitext' ? 'Input' : 'Option'}
         </button>

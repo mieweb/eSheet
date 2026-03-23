@@ -1,5 +1,5 @@
 import React from 'react';
-import type { FieldComponentProps } from '@msheet/core';
+import type { FieldComponentProps } from '@esheet/core';
 
 const clamp = (v: number, lo: number, hi: number) =>
   Math.max(lo, Math.min(hi, v));
@@ -77,12 +77,12 @@ export const HtmlField = React.memo(function HtmlField({
 
   // --- Edit (canvas) mode ---
   return (
-    <div className="html-field-edit ms:space-y-3">
+    <div className="html-field-edit es:space-y-3">
       {/* HTML content textarea */}
       <div>
         <label
           htmlFor={`${instanceId}-canvas-html-${def.id}`}
-          className="ms:block ms:text-sm ms:font-medium ms:text-mstextmuted ms:mb-1"
+          className="es:block es:text-sm es:font-medium es:text-estextmuted es:mb-1"
         >
           HTML Content
         </label>
@@ -94,7 +94,7 @@ export const HtmlField = React.memo(function HtmlField({
           placeholder="<p>Enter your HTML here...</p>"
           rows={8}
           spellCheck={false}
-          className="html-field-textarea ms:px-3 ms:py-2 ms:w-full ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:rounded-lg ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary/30 ms:outline-none ms:transition-colors ms:font-mono ms:text-sm ms:resize-y"
+          className="html-field-textarea es:px-3 es:py-2 es:w-full es:border es:border-esborder es:bg-essurface es:text-estext es:rounded-lg es:focus:border-esprimary es:focus:ring-1 es:focus:ring-esprimary/30 es:outline-none es:transition-colors es:font-mono es:text-sm es:resize-y"
         />
       </div>
 
@@ -102,11 +102,11 @@ export const HtmlField = React.memo(function HtmlField({
       <div>
         <label
           htmlFor={`${instanceId}-canvas-iframe-height-${def.id}`}
-          className="ms:block ms:text-sm ms:font-medium ms:text-mstextmuted ms:mb-1"
+          className="es:block es:text-sm es:font-medium es:text-estextmuted es:mb-1"
         >
           Preview Height (px)
         </label>
-        <div className="ms:flex ms:items-center ms:gap-2">
+        <div className="es:flex es:items-center es:gap-2">
           <input
             type="range"
             min={50}
@@ -121,7 +121,7 @@ export const HtmlField = React.memo(function HtmlField({
               commitHeight(Number((e.target as HTMLInputElement).value))
             }
             aria-label="Preview height slider"
-            className="ms:flex-1 ms:accent-msprimary ms:cursor-pointer"
+            className="es:flex-1 es:accent-esprimary es:cursor-pointer"
           />
           <input
             id={`${instanceId}-canvas-iframe-height-${def.id}`}
@@ -132,18 +132,18 @@ export const HtmlField = React.memo(function HtmlField({
             value={localHeight}
             onChange={(e) => commitHeight(Number(e.target.value))}
             aria-label="Preview height in pixels"
-            className="ms:w-20 ms:px-2 ms:py-1 ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:rounded ms:text-sm ms:text-center ms:outline-none ms:focus:border-msprimary"
+            className="es:w-20 es:px-2 es:py-1 es:border es:border-esborder es:bg-essurface es:text-estext es:rounded es:text-sm es:text-center es:outline-none es:focus:border-esprimary"
           />
-          <span className="ms:text-sm ms:text-mstextmuted ms:shrink-0">px</span>
+          <span className="es:text-sm es:text-estextmuted es:shrink-0">px</span>
         </div>
       </div>
 
       {/* Inline preview */}
       <div>
-        <p className="ms:text-xs ms:font-medium ms:text-mstextmuted ms:mb-1">
+        <p className="es:text-xs es:font-medium es:text-estextmuted es:mb-1">
           Preview
         </p>
-        <div className="ms:rounded-lg ms:border ms:border-msborder ms:overflow-hidden">
+        <div className="es:rounded-lg es:border es:border-esborder es:overflow-hidden">
           <iframe
             srcDoc={buildIframeDoc(def.htmlContent ?? '')}
             sandbox=""

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useInstanceId } from '../../MsheetBuilder.js';
+import { useInstanceId } from '../../EsheetBuilder.js';
 
 export interface DraftIdEditorProps {
   /** Current persisted ID. */
@@ -48,7 +48,7 @@ export function DraftIdEditor({ id, fieldId, onCommit }: DraftIdEditorProps) {
       onChange={(e) => setDraft(e.currentTarget.value)}
       onBlur={commit}
       onKeyDown={handleKeyDown}
-      className="ms:w-full ms:min-w-0 ms:px-2 ms:py-1 ms:text-sm ms:bg-transparent ms:border ms:border-msborder ms:rounded ms:text-mstext ms:font-mono ms:placeholder:text-mstextmuted ms:focus:outline-none ms:focus:ring-2 ms:focus:ring-msprimary ms:focus:border-msprimary"
+      className="es:w-full es:min-w-0 es:px-2 es:py-1 es:text-sm es:bg-transparent es:border es:border-esborder es:rounded es:text-estext es:font-mono es:placeholder:text-estextmuted es:focus:outline-none es:focus:ring-2 es:focus:ring-esprimary es:focus:border-esprimary"
     />
   );
 }

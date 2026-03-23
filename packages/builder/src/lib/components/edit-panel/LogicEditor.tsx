@@ -11,9 +11,9 @@ import {
   type FormStore,
   type LogicMode,
   type NormalizedDefinition,
-} from '@msheet/core';
+} from '@esheet/core';
 import { TrashIcon, PlusIcon } from '../../icons.js';
-import { useInstanceId } from '../../MsheetBuilder.js';
+import { useInstanceId } from '../../EsheetBuilder.js';
 
 // ---------------------------------------------------------------------------
 // Public component
@@ -132,14 +132,14 @@ export function LogicEditor({ fieldId, rules, form }: LogicEditorProps) {
 
   if (otherFields.length === 0) {
     return (
-      <div className="logic-editor-empty ms:text-sm ms:text-mstextmuted ms:text-center ms:py-6">
+      <div className="logic-editor-empty es:text-sm es:text-estextmuted es:text-center es:py-6">
         Add more fields to the form to create logic rules.
       </div>
     );
   }
 
   return (
-    <div className="logic-editor ms:space-y-5">
+    <div className="logic-editor es:space-y-5">
       {CONDITIONAL_EFFECTS.map((effect) => (
         <EffectSection
           key={effect}
@@ -220,14 +220,14 @@ function EffectSection({
   const hasRules = ruleEntries.length > 0;
 
   return (
-    <div className="effect-section ms:space-y-2">
+    <div className="effect-section es:space-y-2">
       {/* Header */}
-      <div className="effect-header ms:flex ms:items-center ms:justify-between">
+      <div className="effect-header es:flex es:items-center es:justify-between">
         <div>
-          <span className="ms:text-sm ms:font-medium ms:text-mstext">
+          <span className="es:text-sm es:font-medium es:text-estext">
             {EFFECT_LABELS[effect]}
           </span>
-          <span className="ms:text-xs ms:text-mstextmuted ms:ml-2">
+          <span className="es:text-xs es:text-estextmuted es:ml-2">
             {hasRules
               ? `${ruleEntries.length} rule${ruleEntries.length > 1 ? 's' : ''}`
               : 'Always'}
@@ -237,9 +237,9 @@ function EffectSection({
           type="button"
           onClick={onAddRule}
           aria-label={`Add ${effect} rule`}
-          className="add-rule-btn ms:flex ms:items-center ms:gap-1 ms:px-2 ms:py-1 ms:text-xs ms:font-medium ms:bg-transparent ms:text-msprimary ms:border ms:border-msprimary/40 ms:rounded ms:hover:bg-msprimary/10 ms:transition-colors ms:outline-none ms:focus:outline-none ms:cursor-pointer"
+          className="add-rule-btn es:flex es:items-center es:gap-1 es:px-2 es:py-1 es:text-xs es:font-medium es:bg-transparent es:text-esprimary es:border es:border-esprimary/40 es:rounded es:hover:bg-esprimary/10 es:transition-colors es:outline-none es:focus:outline-none es:cursor-pointer"
         >
-          <PlusIcon className="ms:w-3 ms:h-3" />
+          <PlusIcon className="es:w-3 es:h-3" />
           <span>Rule</span>
         </button>
       </div>
@@ -248,7 +248,7 @@ function EffectSection({
       {ruleEntries.map(({ rule, globalIdx }, localIdx) => (
         <React.Fragment key={globalIdx}>
           {localIdx > 0 && (
-            <div className="or-divider ms:text-xs ms:text-mstextmuted ms:text-center ms:py-0.5">
+            <div className="or-divider es:text-xs es:text-estextmuted es:text-center es:py-0.5">
               — OR —
             </div>
           )}
@@ -273,7 +273,7 @@ function EffectSection({
 
       {/* Hint when no rules */}
       {!hasRules && (
-        <div className="ms:text-xs ms:text-mstextmuted ms:italic">
+        <div className="es:text-xs es:text-estextmuted es:italic">
           {EFFECT_DESCRIPTIONS[effect]}
         </div>
       )}
@@ -311,11 +311,11 @@ function RuleCard({
   onUpdateCondition,
 }: RuleCardProps) {
   return (
-    <div className="rule-card ms:border ms:border-msborder ms:rounded-lg ms:bg-mssurface ms:shadow-sm">
+    <div className="rule-card es:border es:border-esborder es:rounded-lg es:bg-essurface es:shadow-sm">
       {/* Rule header — logic toggle + delete */}
-      <div className="rule-header ms:flex ms:items-center ms:justify-between ms:px-3 ms:py-2 ms:border-b ms:border-msborder ms:bg-msbackground ms:rounded-t-lg">
-        <div className="ms:flex ms:items-center ms:gap-2">
-          <span className="ms:text-xs ms:text-mstextmuted">Match</span>
+      <div className="rule-header es:flex es:items-center es:justify-between es:px-3 es:py-2 es:border-b es:border-esborder es:bg-esbackground es:rounded-t-lg">
+        <div className="es:flex es:items-center es:gap-2">
+          <span className="es:text-xs es:text-estextmuted">Match</span>
           <LogicToggle
             instanceId={instanceId}
             fieldId={fieldId}
@@ -323,7 +323,7 @@ function RuleCard({
             value={rule.logic}
             onChange={(logic) => onUpdate({ logic })}
           />
-          <span className="ms:text-xs ms:text-mstextmuted">
+          <span className="es:text-xs es:text-estextmuted">
             {rule.logic === 'AND' ? 'all conditions' : 'any condition'}
           </span>
         </div>
@@ -331,14 +331,14 @@ function RuleCard({
           type="button"
           onClick={onRemove}
           aria-label="Remove rule"
-          className="remove-rule-btn ms:p-1 ms:rounded ms:bg-transparent ms:text-mstextmuted ms:hover:text-msdanger ms:border-0 ms:outline-none ms:focus:outline-none ms:transition-colors ms:cursor-pointer"
+          className="remove-rule-btn es:p-1 es:rounded es:bg-transparent es:text-estextmuted es:hover:text-esdanger es:border-0 es:outline-none es:focus:outline-none es:transition-colors es:cursor-pointer"
         >
-          <TrashIcon className="ms:w-3.5 ms:h-3.5" />
+          <TrashIcon className="es:w-3.5 es:h-3.5" />
         </button>
       </div>
 
       {/* Conditions list */}
-      <div className="rule-conditions ms:p-3 ms:space-y-3">
+      <div className="rule-conditions es:p-3 es:space-y-3">
         {rule.conditions.map((cond, condIdx) => (
           <ConditionRow
             key={condIdx}
@@ -356,7 +356,7 @@ function RuleCard({
         <button
           type="button"
           onClick={onAddCondition}
-          className="add-condition-btn ms:w-full ms:px-2 ms:py-1.5 ms:text-xs ms:font-medium ms:bg-transparent ms:text-msprimary ms:border ms:border-dashed ms:border-msprimary/40 ms:rounded ms:hover:bg-msprimary/10 ms:transition-colors ms:outline-none ms:focus:outline-none ms:cursor-pointer"
+          className="add-condition-btn es:w-full es:px-2 es:py-1.5 es:text-xs es:font-medium es:bg-transparent es:text-esprimary es:border es:border-dashed es:border-esprimary/40 es:rounded es:hover:bg-esprimary/10 es:transition-colors es:outline-none es:focus:outline-none es:cursor-pointer"
         >
           + Add Condition
         </button>
@@ -386,16 +386,16 @@ function LogicToggle({
 }: LogicToggleProps) {
   const id = `${instanceId}-logic-toggle-${fieldId}-${ruleIdx}`;
   return (
-    <div className="logic-toggle ms:flex ms:rounded ms:border ms:border-msborder ms:overflow-hidden">
+    <div className="logic-toggle es:flex es:rounded es:border es:border-esborder es:overflow-hidden">
       <button
         type="button"
         id={`${id}-and`}
         aria-label="Match all conditions (AND)"
         onClick={() => onChange('AND')}
-        className={`ms:px-2 ms:py-0.5 ms:text-xs ms:font-medium ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:transition-colors ${
+        className={`es:px-2 es:py-0.5 es:text-xs es:font-medium es:border-0 es:outline-none es:focus:outline-none es:cursor-pointer es:transition-colors ${
           value === 'AND'
-            ? 'ms:bg-msprimary ms:text-mstextsecondary'
-            : 'ms:bg-transparent ms:text-mstextmuted ms:hover:bg-msbackgroundhover'
+            ? 'es:bg-esprimary es:text-estextsecondary'
+            : 'es:bg-transparent es:text-estextmuted es:hover:bg-esbackgroundhover'
         }`}
       >
         AND
@@ -405,10 +405,10 @@ function LogicToggle({
         id={`${id}-or`}
         aria-label="Match any condition (OR)"
         onClick={() => onChange('OR')}
-        className={`ms:px-2 ms:py-0.5 ms:text-xs ms:font-medium ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:transition-colors ${
+        className={`es:px-2 es:py-0.5 es:text-xs es:font-medium es:border-0 es:outline-none es:focus:outline-none es:cursor-pointer es:transition-colors ${
           value === 'OR'
-            ? 'ms:bg-msprimary ms:text-mstextsecondary'
-            : 'ms:bg-transparent ms:text-mstextmuted ms:hover:bg-msbackgroundhover'
+            ? 'es:bg-esprimary es:text-estextsecondary'
+            : 'es:bg-transparent es:text-estextmuted es:hover:bg-esbackgroundhover'
         }`}
       >
         OR
@@ -555,9 +555,9 @@ function ConditionRow({
   }
 
   return (
-    <div className="condition-row ms:flex ms:flex-col ms:gap-1.5 ms:p-2.5 ms:border ms:border-msborder ms:rounded-md ms:bg-msbackground">
-      <div className="ms:flex ms:items-center ms:justify-between ms:gap-1.5">
-        <div className="ms:inline-flex ms:rounded ms:border ms:border-msborder ms:overflow-hidden">
+    <div className="condition-row es:flex es:flex-col es:gap-1.5 es:p-2.5 es:border es:border-esborder es:rounded-md es:bg-esbackground">
+      <div className="es:flex es:items-center es:justify-between es:gap-1.5">
+        <div className="es:inline-flex es:rounded es:border es:border-esborder es:overflow-hidden">
           <button
             type="button"
             onClick={() =>
@@ -569,10 +569,10 @@ function ConditionRow({
                 expected: '',
               })
             }
-            className={`ms:px-2 ms:py-0.5 ms:text-xs ms:font-medium ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:transition-colors ${
+            className={`es:px-2 es:py-0.5 es:text-xs es:font-medium es:border-0 es:outline-none es:focus:outline-none es:cursor-pointer es:transition-colors ${
               conditionType === 'field'
-                ? 'ms:bg-msprimary ms:text-mstextsecondary'
-                : 'ms:bg-transparent ms:text-mstextmuted ms:hover:bg-msbackgroundhover'
+                ? 'es:bg-esprimary es:text-estextsecondary'
+                : 'es:bg-transparent es:text-estextmuted es:hover:bg-esbackgroundhover'
             }`}
           >
             Field
@@ -589,10 +589,10 @@ function ConditionRow({
                 expected: undefined,
               })
             }
-            className={`ms:px-2 ms:py-0.5 ms:text-xs ms:font-medium ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:transition-colors ${
+            className={`es:px-2 es:py-0.5 es:text-xs es:font-medium es:border-0 es:outline-none es:focus:outline-none es:cursor-pointer es:transition-colors ${
               conditionType === 'expression'
-                ? 'ms:bg-msprimary ms:text-mstextsecondary'
-                : 'ms:bg-transparent ms:text-mstextmuted ms:hover:bg-msbackgroundhover'
+                ? 'es:bg-esprimary es:text-estextsecondary'
+                : 'es:bg-transparent es:text-estextmuted es:hover:bg-esbackgroundhover'
             }`}
           >
             Expression
@@ -603,9 +603,9 @@ function ConditionRow({
             type="button"
             onClick={onRemove}
             aria-label={`Remove condition ${condIdx + 1}`}
-            className="remove-condition-btn ms:shrink-0 ms:p-1.5 ms:rounded ms:bg-transparent ms:text-mstextmuted ms:hover:text-msdanger ms:border-0 ms:outline-none ms:focus:outline-none ms:transition-colors ms:cursor-pointer"
+            className="remove-condition-btn es:shrink-0 es:p-1.5 es:rounded es:bg-transparent es:text-estextmuted es:hover:text-esdanger es:border-0 es:outline-none es:focus:outline-none es:transition-colors es:cursor-pointer"
           >
-            <TrashIcon className="ms:w-3.5 ms:h-3.5" />
+            <TrashIcon className="es:w-3.5 es:h-3.5" />
           </button>
         )}
       </div>
@@ -618,7 +618,7 @@ function ConditionRow({
           onChange={(e) =>
             onUpdate({ targetId: e.currentTarget.value, expected: '' })
           }
-          className="condition-target ms:w-full ms:min-w-0 ms:px-2 ms:py-1.5 ms:text-xs ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:cursor-pointer"
+          className="condition-target es:w-full es:min-w-0 es:px-2 es:py-1.5 es:text-xs es:bg-essurface es:border es:border-esborder es:rounded es:text-estext es:focus:outline-none es:focus:ring-1 es:focus:ring-esprimary es:cursor-pointer"
         >
           {!target && condition.targetId && (
             <option value={condition.targetId}>
@@ -632,7 +632,7 @@ function ConditionRow({
           ))}
         </select>
       ) : (
-        <div className="ms:flex ms:flex-col ms:gap-1.5">
+        <div className="es:flex es:flex-col es:gap-1.5">
           <input
             ref={inputRef}
             id={`${idPrefix}-expression`}
@@ -641,23 +641,23 @@ function ConditionRow({
             value={condition.expression ?? ''}
             onChange={(e) => onUpdate({ expression: e.currentTarget.value })}
             placeholder="{fieldId} > 0"
-            className="condition-expression-input ms:w-full ms:min-w-0 ms:px-2 ms:py-1.5 ms:text-xs ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:font-mono ms:placeholder:text-mstextmuted ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary"
+            className="condition-expression-input es:w-full es:min-w-0 es:px-2 es:py-1.5 es:text-xs es:bg-essurface es:border es:border-esborder es:rounded es:text-estext es:font-mono es:placeholder:text-estextmuted es:focus:outline-none es:focus:ring-1 es:focus:ring-esprimary"
           />
-          <div className="condition-expression-toolbar ms:flex ms:flex-wrap ms:items-center ms:gap-1">
-            <div className="ms:relative">
+          <div className="condition-expression-toolbar es:flex es:flex-wrap es:items-center es:gap-1">
+            <div className="es:relative">
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   setFieldPickerOpen((v) => !v);
                 }}
-                className="condition-field-picker-btn ms:px-1.5 ms:py-0.5 ms:text-xs ms:font-medium ms:bg-transparent ms:text-msprimary ms:border ms:border-msprimary/40 ms:rounded ms:hover:bg-msprimary/10 ms:transition-colors ms:outline-none ms:focus:outline-none ms:cursor-pointer"
+                className="condition-field-picker-btn es:px-1.5 es:py-0.5 es:text-xs es:font-medium es:bg-transparent es:text-esprimary es:border es:border-esprimary/40 es:rounded es:hover:bg-esprimary/10 es:transition-colors es:outline-none es:focus:outline-none es:cursor-pointer"
               >
                 {'{ }'} Field
               </button>
               {fieldPickerOpen && (
                 <div
-                  className="condition-field-picker-dropdown ms:absolute ms:top-full ms:left-0 ms:mt-0.5 ms:z-50 ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:shadow-lg ms:min-w-max ms:max-h-48 ms:overflow-y-auto"
+                  className="condition-field-picker-dropdown es:absolute es:top-full es:left-0 es:mt-0.5 es:z-50 es:bg-essurface es:border es:border-esborder es:rounded es:shadow-lg es:min-w-max es:max-h-48 es:overflow-y-auto"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {otherFields.map((f) => (
@@ -668,12 +668,12 @@ function ConditionRow({
                         insertAtCursor(`{${f.id}}`);
                         setFieldPickerOpen(false);
                       }}
-                      className="ms:flex ms:flex-col ms:w-full ms:px-2 ms:py-1.5 ms:text-left ms:bg-transparent ms:border-0 ms:text-mstext ms:hover:bg-msbackgroundhover ms:outline-none ms:focus:outline-none ms:cursor-pointer"
+                      className="es:flex es:flex-col es:w-full es:px-2 es:py-1.5 es:text-left es:bg-transparent es:border-0 es:text-estext es:hover:bg-esbackgroundhover es:outline-none es:focus:outline-none es:cursor-pointer"
                     >
-                      <span className="ms:text-xs ms:font-medium">
+                      <span className="es:text-xs es:font-medium">
                         {f.label}
                       </span>
-                      <span className="ms:text-xs ms:text-mstextmuted ms:font-mono">
+                      <span className="es:text-xs es:text-estextmuted es:font-mono">
                         {'{' + f.id + '}'}
                       </span>
                     </button>
@@ -686,16 +686,16 @@ function ConditionRow({
                 key={op}
                 type="button"
                 onClick={() => insertAtCursor(` ${op} `)}
-                className="operator-chip ms:px-1.5 ms:py-0.5 ms:text-xs ms:font-mono ms:bg-transparent ms:text-mstextmuted ms:border ms:border-msborder ms:rounded ms:hover:bg-msbackgroundhover ms:hover:text-mstext ms:transition-colors ms:outline-none ms:focus:outline-none ms:cursor-pointer"
+                className="operator-chip es:px-1.5 es:py-0.5 es:text-xs es:font-mono es:bg-transparent es:text-estextmuted es:border es:border-esborder es:rounded es:hover:bg-esbackgroundhover es:hover:text-estext es:transition-colors es:outline-none es:focus:outline-none es:cursor-pointer"
               >
                 {op}
               </button>
             ))}
           </div>
           {expressionErrors.length > 0 && (
-            <ul className="condition-expression-errors ms:list-none ms:p-0 ms:m-0 ms:space-y-0.5">
+            <ul className="condition-expression-errors es:list-none es:p-0 es:m-0 es:space-y-0.5">
               {expressionErrors.map((err, i) => (
-                <li key={i} className="ms:text-xs ms:text-msdanger">
+                <li key={i} className="es:text-xs es:text-esdanger">
                   {err}
                 </li>
               ))}
@@ -707,7 +707,7 @@ function ConditionRow({
       {/* Row 2+3: Operator, accessor, expected — only in field mode */}
       {conditionType === 'field' && (
         <>
-          <div className="ms:flex ms:gap-1.5">
+          <div className="es:flex es:gap-1.5">
             {/* Property accessor (optional) */}
             <select
               id={`${idPrefix}-accessor`}
@@ -719,7 +719,7 @@ function ConditionRow({
                   expected: '',
                 })
               }
-              className="condition-accessor ms:min-w-0 ms:px-2 ms:py-1.5 ms:text-xs ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:cursor-pointer"
+              className="condition-accessor es:min-w-0 es:px-2 es:py-1.5 es:text-xs es:bg-essurface es:border es:border-esborder es:rounded es:text-estext es:focus:outline-none es:focus:ring-1 es:focus:ring-esprimary es:cursor-pointer"
             >
               <option value="">value</option>
               <option value="length">length</option>
@@ -737,7 +737,7 @@ function ConditionRow({
                   expected: '',
                 })
               }
-              className="condition-operator ms:flex-1 ms:min-w-0 ms:px-2 ms:py-1.5 ms:text-xs ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:cursor-pointer"
+              className="condition-operator es:flex-1 es:min-w-0 es:px-2 es:py-1.5 es:text-xs es:bg-essurface es:border es:border-esborder es:rounded es:text-estext es:focus:outline-none es:focus:ring-1 es:focus:ring-esprimary es:cursor-pointer"
             >
               {availableOperators.map((op) => (
                 <option key={op} value={op}>
@@ -795,7 +795,7 @@ function ExpectedValueInput({
           aria-label="Expected value"
           value={expected}
           onChange={(e) => onUpdate({ expected: e.currentTarget.value })}
-          className="condition-expected ms:w-full ms:min-w-0 ms:px-2 ms:py-1.5 ms:text-xs ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:cursor-pointer"
+          className="condition-expected es:w-full es:min-w-0 es:px-2 es:py-1.5 es:text-xs es:bg-essurface es:border es:border-esborder es:rounded es:text-estext es:focus:outline-none es:focus:ring-1 es:focus:ring-esprimary es:cursor-pointer"
         >
           <option value="">Select a value…</option>
           {target.options.map((opt) => (
@@ -818,7 +818,7 @@ function ExpectedValueInput({
         value={expected}
         onChange={(e) => onUpdate({ expected: e.currentTarget.value })}
         placeholder="Enter a number"
-        className="condition-expected ms:w-full ms:min-w-0 ms:px-2 ms:py-1.5 ms:text-xs ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:placeholder:text-mstextmuted ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary"
+        className="condition-expected es:w-full es:min-w-0 es:px-2 es:py-1.5 es:text-xs es:bg-essurface es:border es:border-esborder es:rounded es:text-estext es:placeholder:text-estextmuted es:focus:outline-none es:focus:ring-1 es:focus:ring-esprimary"
       />
     );
   }
@@ -832,7 +832,7 @@ function ExpectedValueInput({
       value={expected}
       onChange={(e) => onUpdate({ expected: e.currentTarget.value })}
       placeholder="Enter expected value"
-      className="condition-expected ms:w-full ms:min-w-0 ms:px-2 ms:py-1.5 ms:text-xs ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:placeholder:text-mstextmuted ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary"
+      className="condition-expected es:w-full es:min-w-0 es:px-2 es:py-1.5 es:text-xs es:bg-essurface es:border es:border-esborder es:rounded es:text-estext es:placeholder:text-estextmuted es:focus:outline-none es:focus:ring-1 es:focus:ring-esprimary"
     />
   );
 }

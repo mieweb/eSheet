@@ -1,5 +1,5 @@
 import React from 'react';
-import type { FormStore, UIStore } from '@msheet/core';
+import type { FormStore, UIStore } from '@esheet/core';
 import { FieldNode } from './FieldNode.js';
 
 export interface RendererBodyProps {
@@ -65,7 +65,7 @@ export function RendererBody({ form, ui }: RendererBodyProps) {
   }, [form, normalized, responses]);
 
   return (
-    <div className="canvas-fields renderer-body ms:space-y-0">
+    <div className="canvas-fields renderer-body es:space-y-0">
       {visibleRootIds.map((id) => (
         <FieldNode key={id} id={id} form={form} ui={ui} />
       ))}

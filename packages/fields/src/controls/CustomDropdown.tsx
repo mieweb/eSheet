@@ -69,7 +69,7 @@ export function CustomDropdown(props: CustomDropdownProps) {
     options = [],
     placeholder = 'Select an option',
     showClearOption = true,
-    maxHeight = 'ms:max-h-60',
+    maxHeight = 'es:max-h-60',
     isMulti = false,
     disabled = false,
   } = props;
@@ -117,23 +117,23 @@ export function CustomDropdown(props: CustomDropdownProps) {
     return (
       <div
         ref={dropdownRef}
-        className="custom-dropdown custom-dropdown-multi ms:relative ms:w-full ms:overflow-visible"
+        className="custom-dropdown custom-dropdown-multi es:relative es:w-full es:overflow-visible"
       >
         <div
-          className={`custom-dropdown-trigger ms:w-full ms:min-h-10 ms:px-3 ms:py-2 ms:shadow ms:border ms:border-msborder ms:rounded-lg ms:cursor-pointer ms:bg-mssurface ms:flex ms:flex-wrap ms:gap-2 ms:items-center ms:hover:border-msprimary/50 ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary ms:transition-colors ${
+          className={`custom-dropdown-trigger es:w-full es:min-h-10 es:px-3 es:py-2 es:shadow es:border es:border-esborder es:rounded-lg es:cursor-pointer es:bg-essurface es:flex es:flex-wrap es:gap-2 es:items-center es:hover:border-esprimary/50 es:focus:border-esprimary es:focus:ring-1 es:focus:ring-esprimary es:transition-colors ${
             disabled
-              ? 'ms:opacity-50 ms:cursor-not-allowed ms:bg-msbackground ms:border-msborder'
+              ? 'es:opacity-50 es:cursor-not-allowed es:bg-esbackground es:border-esborder'
               : ''
           }`}
           onClick={() => !disabled && setIsOpen(!isOpen)}
         >
           {selectedOptions.length === 0 ? (
-            <span className="ms:text-mstextmuted">{placeholder}</span>
+            <span className="es:text-estextmuted">{placeholder}</span>
           ) : (
             selectedOptions.map((option) => (
               <span
                 key={option.id}
-                className="custom-dropdown-selected-pill ms:inline-flex ms:items-center ms:gap-1 ms:px-3 ms:py-1 ms:bg-msprimary ms:text-mstextsecondary ms:rounded ms:text-sm"
+                className="custom-dropdown-selected-pill es:inline-flex es:items-center es:gap-1 es:px-3 es:py-1 es:bg-esprimary es:text-estextsecondary es:rounded es:text-sm"
               >
                 {option.value}
                 <button
@@ -142,29 +142,29 @@ export function CustomDropdown(props: CustomDropdownProps) {
                     e.stopPropagation();
                     handleRemove(option.id);
                   }}
-                  className="custom-dropdown-remove-btn ms:flex ms:items-center ms:justify-center ms:bg-transparent ms:text-mstextsecondary ms:hover:bg-msprimary/80 ms:rounded ms:border-0 ms:outline-none ms:focus:outline-none"
+                  className="custom-dropdown-remove-btn es:flex es:items-center es:justify-center es:bg-transparent es:text-estextsecondary es:hover:bg-esprimary/80 es:rounded es:border-0 es:outline-none es:focus:outline-none"
                   aria-label={`Remove ${option.value}`}
                 >
-                  <CloseIcon className="ms:w-4 ms:h-4" />
+                  <CloseIcon className="es:w-4 es:h-4" />
                 </button>
               </span>
             ))
           )}
           <ChevronIcon
-            className={`ms:w-5 ms:h-5 ms:ml-auto ms:transition-transform ms:shrink-0 ms:text-mstextmuted ${
-              isOpen ? 'ms:rotate-180' : ''
+            className={`es:w-5 es:h-5 es:ml-auto es:transition-transform es:shrink-0 es:text-estextmuted ${
+              isOpen ? 'es:rotate-180' : ''
             }`}
           />
         </div>
 
         {isOpen && availableOptions.length > 0 && (
           <div
-            className={`custom-dropdown-menu ms:absolute ms:z-50 ms:w-full ms:mt-1 ms:bg-mssurface ms:border ms:border-msborder ms:rounded-lg ms:shadow-lg ${maxHeight} ms:overflow-y-auto`}
+            className={`custom-dropdown-menu es:absolute es:z-50 es:w-full es:mt-1 es:bg-essurface es:border es:border-esborder es:rounded-lg es:shadow-lg ${maxHeight} es:overflow-y-auto`}
           >
             {availableOptions.map((option) => (
               <div
                 key={option.id}
-                className="custom-dropdown-option ms:px-4 ms:py-2 ms:text-mstext ms:hover:bg-msprimary/10 ms:cursor-pointer ms:transition-colors"
+                className="custom-dropdown-option es:px-4 es:py-2 es:text-estext es:hover:bg-esprimary/10 es:cursor-pointer es:transition-colors"
                 onClick={() => handleSelect(option.id)}
               >
                 {option.value}
@@ -189,37 +189,37 @@ export function CustomDropdown(props: CustomDropdownProps) {
   return (
     <div
       ref={dropdownRef}
-      className="custom-dropdown custom-dropdown-single ms:relative ms:w-full ms:overflow-visible"
+      className="custom-dropdown custom-dropdown-single es:relative es:w-full es:overflow-visible"
     >
       <div
-        className={`custom-dropdown-trigger ms:w-full ms:px-4 ms:py-2 ms:h-10 ms:shadow ms:border ms:border-msborder ms:rounded-lg ms:cursor-pointer ms:bg-mssurface ms:flex ms:items-center ms:justify-between ms:hover:border-msprimary/50 ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary ms:transition-colors ${
+        className={`custom-dropdown-trigger es:w-full es:px-4 es:py-2 es:h-10 es:shadow es:border es:border-esborder es:rounded-lg es:cursor-pointer es:bg-essurface es:flex es:items-center es:justify-between es:hover:border-esprimary/50 es:focus:border-esprimary es:focus:ring-1 es:focus:ring-esprimary es:transition-colors ${
           disabled
-            ? 'ms:opacity-50 ms:cursor-not-allowed ms:bg-msbackground ms:border-msborder'
+            ? 'es:opacity-50 es:cursor-not-allowed es:bg-esbackground es:border-esborder'
             : ''
         }`}
         onClick={() => !disabled && setIsOpen(!isOpen)}
       >
         <span
-          className={`custom-dropdown-value-text ms:truncate ms:min-w-0 ${
-            selectedOption ? 'ms:text-mstext' : 'ms:text-mstextmuted'
+          className={`custom-dropdown-value-text es:truncate es:min-w-0 ${
+            selectedOption ? 'es:text-estext' : 'es:text-estextmuted'
           }`}
         >
           {selectedOption ? selectedOption.value : placeholder}
         </span>
         <ChevronIcon
-          className={`custom-dropdown-arrow ms:w-5 ms:h-5 ms:transition-transform ms:shrink-0 ms:text-mstextmuted ${
-            isOpen ? 'ms:rotate-180' : ''
+          className={`custom-dropdown-arrow es:w-5 es:h-5 es:transition-transform es:shrink-0 es:text-estextmuted ${
+            isOpen ? 'es:rotate-180' : ''
           }`}
         />
       </div>
 
       {isOpen && options.length > 0 && (
         <div
-          className={`custom-dropdown-menu ms:absolute ms:z-50 ms:w-full ms:mt-1 ms:bg-mssurface ms:border ms:border-msborder ms:rounded-lg ms:shadow-lg ${maxHeight} ms:overflow-y-auto`}
+          className={`custom-dropdown-menu es:absolute es:z-50 es:w-full es:mt-1 es:bg-essurface es:border es:border-esborder es:rounded-lg es:shadow-lg ${maxHeight} es:overflow-y-auto`}
         >
           {showClearOption && (
             <div
-              className="custom-dropdown-clear-option ms:px-4 ms:py-2 ms:text-mstext ms:hover:bg-msprimary/10 ms:cursor-pointer ms:transition-colors"
+              className="custom-dropdown-clear-option es:px-4 es:py-2 es:text-estext es:hover:bg-esprimary/10 es:cursor-pointer es:transition-colors"
               onClick={() => {
                 onChange(null);
                 setIsOpen(false);
@@ -231,10 +231,10 @@ export function CustomDropdown(props: CustomDropdownProps) {
           {options.map((option) => (
             <div
               key={option.id}
-              className={`custom-dropdown-option ms:px-4 ms:py-2 ms:hover:bg-msprimary/10 ms:cursor-pointer ms:transition-colors ${
+              className={`custom-dropdown-option es:px-4 es:py-2 es:hover:bg-esprimary/10 es:cursor-pointer es:transition-colors ${
                 value === option.id
-                  ? 'ms:bg-msprimary/20 ms:text-msprimary'
-                  : 'ms:text-mstext'
+                  ? 'es:bg-esprimary/20 es:text-esprimary'
+                  : 'es:text-estext'
               }`}
               onClick={() => handleSelect(option.id)}
             >

@@ -1,5 +1,5 @@
 import { useRef, useSyncExternalStore } from 'react';
-import type { FormStore, UIStore } from '@msheet/core';
+import type { FormStore, UIStore } from '@esheet/core';
 
 /**
  * Hook that subscribes to the root field IDs from the FormStore.

@@ -1,6 +1,6 @@
-import type { FieldDefinition, TextInputType } from '@msheet/core';
-import { CustomCheckbox } from '@msheet/fields';
-import { useInstanceId } from '../../MsheetBuilder.js';
+import type { FieldDefinition, TextInputType } from '@esheet/core';
+import { CustomCheckbox } from '@esheet/fields';
+import { useInstanceId } from '../../EsheetBuilder.js';
 import { DraftIdEditor } from './DraftIdEditor.js';
 import { InputTypeEditor } from './InputTypeEditor.js';
 
@@ -29,12 +29,12 @@ export function CommonEditor({
     def.fieldType === 'text' || def.fieldType === 'longtext';
 
   return (
-    <div className="common-editor ms:space-y-3">
+    <div className="common-editor es:space-y-3">
       {/* Field ID */}
       <div>
         <label
           htmlFor={`${instanceId}-editor-id-${fieldId}`}
-          className="edit-label ms:block ms:text-sm ms:font-medium ms:text-mstext ms:mb-1"
+          className="edit-label es:block es:text-sm es:font-medium es:text-estext es:mb-1"
         >
           Field ID
         </label>
@@ -45,7 +45,7 @@ export function CommonEditor({
       <div>
         <label
           htmlFor={`${instanceId}-editor-question-${fieldId}`}
-          className="edit-label ms:block ms:text-sm ms:text-mstext ms:mb-1"
+          className="edit-label es:block es:text-sm es:text-estext es:mb-1"
         >
           Label / Question
         </label>
@@ -55,12 +55,12 @@ export function CommonEditor({
           value={def.question ?? ''}
           onChange={(e) => onUpdate({ question: e.currentTarget.value })}
           placeholder="Enter question text"
-          className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:placeholder:text-mstextmuted ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
+          className="es:w-full es:min-w-0 es:px-3 es:py-2 es:text-sm es:bg-essurface es:border es:border-esborder es:rounded es:text-estext es:placeholder:text-estextmuted es:focus:outline-none es:focus:ring-1 es:focus:ring-esprimary es:focus:border-esprimary es:transition-colors"
         />
       </div>
 
       {/* Required */}
-      <div className="required-toggle ms:flex ms:items-center ms:gap-2 ms:text-sm ms:text-mstext">
+      <div className="required-toggle es:flex es:items-center es:gap-2 es:text-sm es:text-estext">
         <CustomCheckbox
           id={`${instanceId}-editor-required-${fieldId}`}
           checked={def.required ?? false}
@@ -69,7 +69,7 @@ export function CommonEditor({
         />
         <label
           htmlFor={`${instanceId}-editor-required-${fieldId}`}
-          className="ms:cursor-pointer ms:select-none"
+          className="es:cursor-pointer es:select-none"
         >
           Required
         </label>
