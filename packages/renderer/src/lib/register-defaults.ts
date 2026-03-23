@@ -2,10 +2,10 @@
 // Built-in field component registration for the renderer
 // ---------------------------------------------------------------------------
 // Imported as a side-effect in the package entry point so consumers using
-// only @msheet/renderer get all built-in field components automatically.
+// only @esheet/renderer get all built-in field components automatically.
 // ---------------------------------------------------------------------------
 
-import { registerFieldComponents } from '@msheet/fields';
+import { registerFieldComponents } from '@esheet/fields';
 import {
   TextField,
   LongTextField,
@@ -26,7 +26,7 @@ import {
   ImageField,
   HtmlField,
   DisplayField,
-} from '@msheet/fields';
+} from '@esheet/fields';
 
 registerFieldComponents({
   text: TextField,

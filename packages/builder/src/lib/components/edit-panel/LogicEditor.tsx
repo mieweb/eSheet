@@ -11,9 +11,9 @@ import {
   type FormStore,
   type LogicMode,
   type NormalizedDefinition,
-} from '@msheet/core';
+} from '@esheet/core';
 import { TrashIcon, PlusIcon } from '../../icons.js';
-import { useInstanceId } from '../../MsheetBuilder.js';
+import { useInstanceId } from '../../EsheetBuilder.js';
 
 // ---------------------------------------------------------------------------
 // Public component

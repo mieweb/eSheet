@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import type { UIStore } from '@msheet/core';
+import type { UIStore } from '@esheet/core';
 
 /**
  * Hook that subscribes to the selected field ID from the UIStore.

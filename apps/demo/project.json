@@ -4,9 +4,9 @@
   "targets": {
     "dev": {
       "dependsOn": [
-        { "projects": ["@msheet/builder"], "target": "build:css" },
-        { "projects": ["@msheet/fields"], "target": "build:css" },
-        { "projects": ["@msheet/renderer"], "target": "build:css" }
+        { "projects": ["@esheet/builder"], "target": "build:css" },
+        { "projects": ["@esheet/fields"], "target": "build:css" },
+        { "projects": ["@esheet/renderer"], "target": "build:css" }
       ],
       "executor": "nx:run-commands",
       "options": {
@@ -15,9 +15,9 @@
     },
     "serve": {
       "dependsOn": [
-        { "projects": ["@msheet/builder"], "target": "build:css" },
-        { "projects": ["@msheet/fields"], "target": "build:css" },
-        { "projects": ["@msheet/renderer"], "target": "build:css" }
+        { "projects": ["@esheet/builder"], "target": "build:css" },
+        { "projects": ["@esheet/fields"], "target": "build:css" },
+        { "projects": ["@esheet/renderer"], "target": "build:css" }
       ]
     }
   }

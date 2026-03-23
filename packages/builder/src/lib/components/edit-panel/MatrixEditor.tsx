@@ -1,7 +1,7 @@
 import React from 'react';
-import type { FormStore, MatrixRow, MatrixColumn } from '@msheet/core';
-import { TrashIcon } from '@msheet/fields';
-import { useInstanceId } from '../../MsheetBuilder.js';
+import type { FormStore, MatrixRow, MatrixColumn } from '@esheet/core';
+import { TrashIcon } from '@esheet/fields';
+import { useInstanceId } from '../../EsheetBuilder.js';
 
 const MAX_ROWS = 10;
 const MAX_COLUMNS = 10;

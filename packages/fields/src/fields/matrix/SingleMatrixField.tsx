@@ -1,5 +1,5 @@
 import React from 'react';
-import type { FieldComponentProps, SelectedOption } from '@msheet/core';
+import type { FieldComponentProps, SelectedOption } from '@esheet/core';
 import { CustomRadio } from '../../controls/CustomRadio.js';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 

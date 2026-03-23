@@ -56,7 +56,7 @@
     }
   ],
   "release": {
-    "projects": ["*", "!utils", "!@msheet/source"],
+    "projects": ["*", "!utils", "!@esheet/source"],
     "version": {
       "preVersionCommand": "npx nx run-many -t build"
     }

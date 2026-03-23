@@ -1,5 +1,5 @@
 import React from 'react';
-import type { FieldComponentProps } from '@msheet/core';
+import type { FieldComponentProps } from '@esheet/core';
 
 function formatPhoneNumber(value: string): string {
   if (!value) return value;
