@@ -6,7 +6,7 @@ import {
   type FormResponse,
   type FormStore,
   type UIStore,
-} from '@msheet/core';
+} from '@esheet/core';
 
 /**
  * Initialize renderer with form definition
@@ -40,7 +40,7 @@ export function useRendererInit(
       const validated = formDefinitionSchema.safeParse(parsed);
       if (!validated.success) {
         console.error(
-          '[MsheetRenderer] Invalid form definition:',
+          '[EsheetRenderer] Invalid form definition:',
           validated.error.issues
         );
         // Load empty form instead of crashing
@@ -66,7 +66,7 @@ export function useRendererInit(
       // Set preview mode
       ui.getState().setMode('preview');
     } catch (error) {
-      console.error('[MsheetRenderer] Failed to initialize:', error);
+      console.error('[EsheetRenderer] Failed to initialize:', error);
       // Load empty form as fallback
       form.getState().loadDefinition({
         schemaType: 'mieforms-v1.0',

@@ -8,7 +8,7 @@ import {
   type FormStore,
   type UIStore,
   type BuilderMode,
-} from '@msheet/core';
+} from '@esheet/core';
 import {
   VEditorIcon,
   CodeIcon,

@@ -1,5 +1,5 @@
 import React from 'react';
-import type { FormStore, UIStore } from '@msheet/core';
+import type { FormStore, UIStore } from '@esheet/core';
 
 export const FormStoreContext = React.createContext<FormStore | null>(null);
 export const UIContext = React.createContext<UIStore | null>(null);

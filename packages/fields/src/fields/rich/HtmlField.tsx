@@ -1,5 +1,5 @@
 import React from 'react';
-import type { FieldComponentProps } from '@msheet/core';
+import type { FieldComponentProps } from '@esheet/core';
 
 const clamp = (v: number, lo: number, hi: number) =>
   Math.max(lo, Math.min(hi, v));

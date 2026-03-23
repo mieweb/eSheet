@@ -5,7 +5,7 @@ import type {
   FieldComponentProps,
   FormStore,
   UIStore,
-} from '@msheet/core';
+} from '@esheet/core';
 import { useSelectedFieldId } from '../hooks/useSelectedFieldId.js';
 import {
   TrashIcon,

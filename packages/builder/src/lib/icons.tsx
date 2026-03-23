@@ -12,7 +12,7 @@ type IconProps = { className?: string };
 const eq = (a: IconProps, b: IconProps) => a.className === b.className;
 
 // ---------------------------------------------------------------------------
-// Shared icons — re-exported from @msheet/fields
+// Shared icons — re-exported from @esheet/fields
 // ---------------------------------------------------------------------------
 
 export {
@@ -21,7 +21,7 @@ export {
   ArrowUpIcon,
   ArrowDownIcon,
   UpDownArrowIcon,
-} from '@msheet/fields';
+} from '@esheet/fields';
 
 // ---------------------------------------------------------------------------
 // Field Wrapper actions

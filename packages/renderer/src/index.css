@@ -30,24 +30,24 @@
 /* Scoped resets (don't leak into consuming app)                        */
 /* ------------------------------------------------------------------ */
 @layer utilities {
-  .msheet-renderer-root {
+  .esheet-renderer-root {
     font-family: 'Titillium Web', ui-sans-serif, system-ui, sans-serif;
   }
 
-  .msheet-renderer-root,
-  .msheet-renderer-root *,
-  .msheet-renderer-root *::before,
-  .msheet-renderer-root *::after {
+  .esheet-renderer-root,
+  .esheet-renderer-root *,
+  .esheet-renderer-root *::before,
+  .esheet-renderer-root *::after {
     box-sizing: border-box;
     border-width: 0;
     border-style: solid;
     border-color: var(--ms-color-msborder, #e5e7eb);
   }
 
-  .msheet-renderer-root button,
-  .msheet-renderer-root input,
-  .msheet-renderer-root select,
-  .msheet-renderer-root textarea {
+  .esheet-renderer-root button,
+  .esheet-renderer-root input,
+  .esheet-renderer-root select,
+  .esheet-renderer-root textarea {
     font: inherit;
   }
 }
@@ -55,12 +55,12 @@
 /* ------------------------------------------------------------------ */
 /* Dark mode variant — scoped to wrapper class                         */
 /* ------------------------------------------------------------------ */
-@custom-variant dark (&:where(.msheet-renderer-root.dark, .msheet-renderer-root.dark *));
+@custom-variant dark (&:where(.esheet-renderer-root.dark, .esheet-renderer-root.dark *));
 
 /* ------------------------------------------------------------------ */
 /* Dark mode theme overrides                                           */
 /* ------------------------------------------------------------------ */
-.msheet-renderer-root.dark {
+.esheet-renderer-root.dark {
   --ms-color-msprimary: #6b7fa3; /* grayish-blue for dark mode */
   --ms-color-mssecondary: #9ca3af; /* gray-400 */
   --ms-color-msaccent: #34d399; /* green-400 */

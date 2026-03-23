@@ -2,7 +2,7 @@ import {
   SCHEMA_TYPE,
   type FormDefinition,
   type FormResponse,
-} from '@msheet/core';
+} from '@esheet/core';
 import { renderer } from './renderer.js';
 
 describe('renderer', () => {

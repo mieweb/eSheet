@@ -1,5 +1,5 @@
 import React from 'react';
-import { evaluateExpression, type FieldComponentProps } from '@msheet/core';
+import { evaluateExpression, type FieldComponentProps } from '@esheet/core';
 
 function formatComputedValue(value: unknown): string {
   if (value == null) return '';

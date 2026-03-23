@@ -3,13 +3,13 @@ import {
   registerFieldType,
   type FieldTypeMeta,
   type FieldComponentProps,
-} from '@msheet/core';
+} from '@esheet/core';
 
 // ---------------------------------------------------------------------------
 // Field Component Registry
 // ---------------------------------------------------------------------------
 // Maps field type keys → React components for rendering fields.
-// Shared between @msheet/builder (canvas) and @msheet/renderer (fill-out mode).
+// Shared between @esheet/builder (canvas) and @esheet/renderer (fill-out mode).
 // ---------------------------------------------------------------------------
 
 type FieldComponent = React.ComponentType<FieldComponentProps>;
@@ -43,11 +43,11 @@ export function resetComponentRegistry(): void {
 /**
  * Register one or more custom field types with both core metadata AND a React component.
  *
- * Works with both @msheet/builder (canvas) and @msheet/renderer (fill-out mode).
+ * Works with both @esheet/builder (canvas) and @esheet/renderer (fill-out mode).
  *
  * @example
  * ```tsx
- * import { registerCustomFieldTypes } from '@msheet/fields';
+ * import { registerCustomFieldTypes } from '@esheet/fields';
  *
  * registerCustomFieldTypes({
  *   vitals: { label: 'Vitals', category: 'rich', answerType: 'object', hasOptions: false, hasMatrix: false, defaultProps: {}, component: VitalsField },

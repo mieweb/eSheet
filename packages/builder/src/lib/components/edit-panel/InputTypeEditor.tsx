@@ -1,5 +1,5 @@
-import type { TextInputType } from '@msheet/core';
-import { useInstanceId } from '../../MsheetBuilder.js';
+import type { TextInputType } from '@esheet/core';
+import { useInstanceId } from '../../EsheetBuilder.js';
 
 // ---------------------------------------------------------------------------
 // Constants

@@ -6,12 +6,12 @@ import {
   type FormResponse,
   type FormStore,
   type UIStore,
-} from '@msheet/core';
-import { FormStoreContext, UIContext } from '@msheet/fields';
+} from '@esheet/core';
+import { FormStoreContext, UIContext } from '@esheet/fields';
 import { useRendererInit } from './hooks/useRendererInit.js';
 import { RendererBody } from './components/RendererBody.js';
 
-export interface MsheetRendererProps {
+export interface EsheetRendererProps {
   /** Form definition (JSON object, JSON string, or YAML string) */
   formData: FormDefinition | string;
   /** Additional CSS classes for root container */
@@ -20,7 +20,7 @@ export interface MsheetRendererProps {
   initialResponses?: FormResponse;
 }
 
-export interface MsheetRendererHandle {
+export interface EsheetRendererHandle {
   /** Get current form responses */
   getResponse: () => FormResponse;
   /** Get form store instance */
@@ -30,16 +30,16 @@ export interface MsheetRendererHandle {
 }
 
 /**
- * MsheetRenderer - Read-only questionnaire form renderer
+ * EsheetRenderer - Read-only questionnaire form renderer
  *
  * Renders a form in fill-out mode with conditional visibility logic.
- * Reuses all field components from @msheet/fields.
+ * Reuses all field components from @esheet/fields.
  *
  * @example
  * ```tsx
- * const rendererRef = useRef<MsheetRendererHandle>(null);
+ * const rendererRef = useRef<EsheetRendererHandle>(null);
  *
- * <MsheetRenderer
+ * <EsheetRenderer
  *   formData={myFormDefinition}
  *   initialResponses={{ field1: 'answer' }}
  *   ref={rendererRef}
@@ -49,17 +49,17 @@ export interface MsheetRendererHandle {
  * const responses = rendererRef.current?.getResponse();
  * ```
  */
-export const MsheetRenderer = React.forwardRef<
-  MsheetRendererHandle,
-  MsheetRendererProps
->(function MsheetRenderer(props, ref) {
+export const EsheetRenderer = React.forwardRef<
+  EsheetRendererHandle,
+  EsheetRendererProps
+>(function EsheetRenderer(props, ref) {
   const formStore = React.useMemo(() => createFormStore(), []);
   const uiStore = React.useMemo(() => createUIStore(), []);
 
   return (
     <FormStoreContext.Provider value={formStore}>
       <UIContext.Provider value={uiStore}>
-        <MsheetRendererInner
+        <EsheetRendererInner
           {...props}
           formStore={formStore}
           uiStore={uiStore}
@@ -70,15 +70,15 @@ export const MsheetRenderer = React.forwardRef<
   );
 });
 
-interface MsheetRendererInnerProps extends MsheetRendererProps {
+interface EsheetRendererInnerProps extends EsheetRendererProps {
   formStore: FormStore;
   uiStore: UIStore;
 }
 
-const MsheetRendererInner = React.forwardRef<
-  MsheetRendererHandle,
-  MsheetRendererInnerProps
->(function MsheetRendererInner(
+const EsheetRendererInner = React.forwardRef<
+  EsheetRendererHandle,
+  EsheetRendererInnerProps
+>(function EsheetRendererInner(
   { formData, className = '', initialResponses, formStore, uiStore },
   ref
 ) {
@@ -97,7 +97,7 @@ const MsheetRendererInner = React.forwardRef<
   );
 
   const rootClasses = [
-    'msheet-renderer-root',
+    'esheet-renderer-root',
     'ms:w-full ms:max-w-2xl ms:mx-auto ms:p-4 ms:bg-msbackground ms:text-mstext',
     className,
   ]

@@ -26,7 +26,7 @@ export function Navbar({ children }: { children?: ReactNode }) {
             />
           </svg>
         )}
-        mSheet
+        eSheet
       </Link>
       {children && (
         <div className="demo-navbar-actions flex flex-1 items-center gap-3">

@@ -1,10 +1,10 @@
-# @msheet/renderer
+# @esheet/renderer
 
-Read-only questionnaire form renderer for mSheet. Renders forms in fill-out mode with conditional visibility logic.
+Read-only questionnaire form renderer for eSheet. Renders forms in fill-out mode with conditional visibility logic.
 
 ## Features
 
-- ✅ Renders all 19 mSheet field types (reuses `@msheet/fields` components)
+- ✅ Renders all 19 eSheet field types (reuses `@esheet/fields` components)
 - ✅ Conditional visibility enforcement (fields/sections hide based on logic rules)
 - ✅ Section nesting with recursive rendering
 - ✅ Initial response pre-fill support
@@ -15,7 +15,7 @@ Read-only questionnaire form renderer for mSheet. Renders forms in fill-out mode
 ## Installation
 
 ```bash
-npm install @msheet/renderer @msheet/fields @msheet/core
+npm install @esheet/renderer @esheet/fields @esheet/core
 ```
 
 ## Usage
@@ -23,8 +23,8 @@ npm install @msheet/renderer @msheet/fields @msheet/core
 ### Basic Example
 
 ```tsx
-import { MsheetRenderer } from '@msheet/renderer';
-import type { FormDefinition } from '@msheet/core';
+import { EsheetRenderer } from '@esheet/renderer';
+import type { FormDefinition } from '@esheet/core';
 
 const myForm: FormDefinition = {
   schemaType: 'mieforms-v1.0',
@@ -47,7 +47,7 @@ const myForm: FormDefinition = {
 function App() {
   return (
     <div className="app-container">
-      <MsheetRenderer formData={myForm} />
+      <EsheetRenderer formData={myForm} />
     </div>
   );
 }
@@ -57,10 +57,10 @@ function App() {
 
 ```tsx
 import { useRef } from 'react';
-import { MsheetRenderer, type MsheetRendererHandle } from '@msheet/renderer';
+import { EsheetRenderer, type EsheetRendererHandle } from '@esheet/renderer';
 
 function App() {
-  const rendererRef = useRef<MsheetRendererHandle>(null);
+  const rendererRef = useRef<EsheetRendererHandle>(null);
 
   const handleSubmit = () => {
     const responses = rendererRef.current?.getResponse();
@@ -70,7 +70,7 @@ function App() {
 
   return (
     <>
-      <MsheetRenderer formData={myForm} ref={rendererRef} />
+      <EsheetRenderer formData={myForm} ref={rendererRef} />
       <button onClick={handleSubmit}>Submit</button>
     </>
   );
@@ -80,7 +80,7 @@ function App() {
 ### With Pre-filled Data
 
 ```tsx
-<MsheetRenderer
+<EsheetRenderer
   formData={myForm}
   initialResponses={{
     name: 'John Doe',
@@ -101,24 +101,24 @@ fields:
     question: Your name?
 `;
 
-<MsheetRenderer formData={yamlSchema} />;
+<EsheetRenderer formData={yamlSchema} />;
 ```
 
 ## API
 
-### `<MsheetRenderer>`
+### `<EsheetRenderer>`
 
 **Props:**
 
 - `formData: FormDefinition | string` - Form schema (object, JSON string, or YAML string)
 - `initialResponses?: FormResponse` - Pre-fill form with initial data
 - `className?: string` - Additional CSS classes for root container
-- `ref?: Ref<MsheetRendererHandle>` - Access ref API for collecting responses
+- `ref?: Ref<EsheetRendererHandle>` - Access ref API for collecting responses
 
 **Ref API:**
 
 ```tsx
-interface MsheetRendererHandle {
+interface EsheetRendererHandle {
   getResponse: () => FormResponse;
   getFormStore: () => FormStore;
   getUIStore: () => UIStore;
@@ -127,14 +127,14 @@ interface MsheetRendererHandle {
 
 ## Architecture
 
-MsheetRenderer is a thin wrapper that:
+EsheetRenderer is a thin wrapper that:
 
 1. Creates form and UI stores (vanilla Zustand)
 2. Parses and validates input (YAML/JSON → Zod schema check)
 3. Loads definition into store
 4. Sets preview mode (read-only, no editing UI)
 5. Iterates over visible fields via `RendererBody`
-6. Renders each field via `FieldNode` (uses `@msheet/fields` components)
+6. Renders each field via `FieldNode` (uses `@esheet/fields` components)
 
 **Conditional Logic:**
 
@@ -180,12 +180,12 @@ const conditionalForm: FormDefinition = {
 };
 
 // "allergyList" only shows when "hasAllergies" is checked
-<MsheetRenderer formData={conditionalForm} />;
+<EsheetRenderer formData={conditionalForm} />;
 ```
 
 ## CSS Architecture
 
-The renderer uses Tailwind CSS v4 with `ms:` prefix. CSS is compiled via `@tailwindcss/cli` and embedded into the JS bundle at build time — consumers never need to import a stylesheet. A scoped reset on `.msheet-renderer-root` prevents style leakage in either direction. Dark mode is supported via `.dark` class on the root.
+The renderer uses Tailwind CSS v4 with `ms:` prefix. CSS is compiled via `@tailwindcss/cli` and embedded into the JS bundle at build time — consumers never need to import a stylesheet. A scoped reset on `.esheet-renderer-root` prevents style leakage in either direction. Dark mode is supported via `.dark` class on the root.
 
 ## License
 
@@ -193,8 +193,8 @@ MIT
 
 ## Building
 
-Run `nx build @msheet/renderer` to build the library.
+Run `nx build @esheet/renderer` to build the library.
 
 ## Running unit tests
 
-Run `nx test @msheet/renderer` to execute the unit tests via [Vitest](https://vitest.dev/).
+Run `nx test @esheet/renderer` to execute the unit tests via [Vitest](https://vitest.dev/).

@@ -1,11 +1,11 @@
-# @msheet/builder
+# @esheet/builder
 
-Drag-and-drop questionnaire builder for mSheet. Provides a full editing UI for creating and modifying form schemas.
+Drag-and-drop questionnaire builder for eSheet. Provides a full editing UI for creating and modifying form schemas.
 
 ## Features
 
 - ✅ Visual form builder with drag & drop (custom pointer-based engine)
-- ✅ 19 built-in field types via `@msheet/fields`
+- ✅ 19 built-in field types via `@esheet/fields`
 - ✅ Section nesting with drag-into-section support
 - ✅ Field editors (question text, options, matrix rows/columns, conditional logic)
 - ✅ Code view with Monaco editor (JSON/YAML toggle)
@@ -19,7 +19,7 @@ Drag-and-drop questionnaire builder for mSheet. Provides a full editing UI for c
 ## Installation
 
 ```bash
-npm install @msheet/builder @msheet/fields @msheet/core
+npm install @esheet/builder @esheet/fields @esheet/core
 ```
 
 ## Usage
@@ -27,22 +27,22 @@ npm install @msheet/builder @msheet/fields @msheet/core
 ### Basic Example
 
 ```tsx
-import { MsheetBuilder } from '@msheet/builder';
-import type { FormDefinition } from '@msheet/core';
+import { EsheetBuilder } from '@esheet/builder';
+import type { FormDefinition } from '@esheet/core';
 
 function App() {
   const handleChange = (definition: FormDefinition) => {
     console.log('Form updated:', definition);
   };
 
-  return <MsheetBuilder onChange={handleChange} />;
+  return <EsheetBuilder onChange={handleChange} />;
 }
 ```
 
 ### With Initial Schema
 
 ```tsx
-import { MsheetBuilder } from '@msheet/builder';
+import { EsheetBuilder } from '@esheet/builder';
 
 const initialForm: FormDefinition = {
   schemaType: 'mieforms-v1.0',
@@ -53,14 +53,14 @@ const initialForm: FormDefinition = {
   ],
 };
 
-<MsheetBuilder initialDefinition={initialForm} onChange={handleChange} />;
+<EsheetBuilder initialDefinition={initialForm} onChange={handleChange} />;
 ```
 
 ### Dark Mode
 
 ```tsx
 <div className="dark">
-  <MsheetBuilder onChange={handleChange} />
+  <EsheetBuilder onChange={handleChange} />
 </div>
 ```
 
@@ -68,7 +68,7 @@ Add the `dark` class to the builder's root or any ancestor — the builder scope
 
 ## API
 
-### `<MsheetBuilder>`
+### `<EsheetBuilder>`
 
 **Props:**
 
@@ -81,9 +81,9 @@ Add the `dark` class to the builder's root or any ancestor — the builder scope
 ## Custom Field Types
 
 ```tsx
-import { MsheetBuilder } from '@msheet/builder';
-import { registerCustomFieldTypes } from '@msheet/fields';
-import { registerFieldType } from '@msheet/core';
+import { EsheetBuilder } from '@esheet/builder';
+import { registerCustomFieldTypes } from '@esheet/fields';
+import { registerFieldType } from '@esheet/core';
 
 // Register the metadata
 registerFieldType({
@@ -103,7 +103,7 @@ registerCustomFieldTypes({
   },
 });
 
-<MsheetBuilder onChange={handleChange} />;
+<EsheetBuilder onChange={handleChange} />;
 ```
 
 ## CSS Architecture
@@ -112,8 +112,8 @@ The builder uses Tailwind CSS v4 with `ms:` prefix. CSS is compiled via `@tailwi
 
 ## Building
 
-Run `nx build @msheet/builder` to build the library.
+Run `nx build @esheet/builder` to build the library.
 
 ## Running unit tests
 
-Run `nx test @msheet/builder` to execute the unit tests via [Vitest](https://vitest.dev/).
+Run `nx test @esheet/builder` to execute the unit tests via [Vitest](https://vitest.dev/).

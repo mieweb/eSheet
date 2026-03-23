@@ -1,5 +1,5 @@
 import React from 'react';
-import { useInstanceId } from '../../MsheetBuilder.js';
+import { useInstanceId } from '../../EsheetBuilder.js';
 
 export interface DraftIdEditorProps {
   /** Current persisted ID. */

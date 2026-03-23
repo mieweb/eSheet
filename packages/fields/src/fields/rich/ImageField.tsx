@@ -1,5 +1,5 @@
 import React from 'react';
-import type { FieldComponentProps } from '@msheet/core';
+import type { FieldComponentProps } from '@esheet/core';
 
 export const ImageField = React.memo(function ImageField({
   field,

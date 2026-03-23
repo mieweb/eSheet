@@ -5,7 +5,7 @@ import {
   type FormStore,
   type UIStore,
   type FieldType,
-} from '@msheet/core';
+} from '@esheet/core';
 import {
   TextFieldsIcon,
   SelectionFieldsIcon,
@@ -45,7 +45,7 @@ const CATEGORY_ICONS: Record<string, IconComponent> = {
   Organization: OrganizationIcon,
 };
 
-import { getFieldComponent } from '@msheet/fields';
+import { getFieldComponent } from '@esheet/fields';
 
 /** Build category → field type[] map from the registry. Only includes types with a registered React component. */
 function buildCategories(): Record<string, { type: string; label: string }[]> {
