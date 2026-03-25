@@ -60,6 +60,7 @@
     "projectsRelationship": "fixed",
     "version": {
       "conventionalCommits": true,
+      "adjustSemverBumpsForZeroMajorVersion": true,
       "preVersionCommand": "npx nx run-many -t build"
     },
     "changelog": {

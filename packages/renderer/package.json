@@ -1,6 +1,6 @@
 {
   "name": "@esheet/renderer",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "publishConfig": {
     "access": "public"
   },
@@ -34,8 +34,8 @@
     ]
   },
   "dependencies": {
-    "@esheet/core": "*",
-    "@esheet/fields": "*",
+    "@esheet/core": "0.0.0 || ^0.0.1-0",
+    "@esheet/fields": "0.0.0 || ^0.0.1-0",
     "js-yaml": "^4.1.0",
     "react": "^19.0.0"
   },
