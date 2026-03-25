@@ -112,13 +112,13 @@ npx nx affected -t lint test build
 
 All tasks should be run through Nx:
 
-| Command | Description |
-|---|---|
-| `npx nx serve demo` | Start demo app dev server |
-| `npx nx serve docs` | Start docs dev server |
-| `npx nx run-many -t build` | Build all packages |
-| `npx nx run-many -t test` | Run all tests |
-| `npx nx run-many -t lint` | Lint all packages |
-| `npx nx affected -t build test lint` | Run affected targets |
-| `npx nx show project <name> --json` | Show project configuration |
-| `npx nx graph` | Visualize dependency graph |
+| Command                              | Description                |
+| ------------------------------------ | -------------------------- |
+| `npx nx serve demo`                  | Start demo app dev server  |
+| `npx nx serve docs`                  | Start docs dev server      |
+| `npx nx run-many -t build`           | Build all packages         |
+| `npx nx run-many -t test`            | Run all tests              |
+| `npx nx run-many -t lint`            | Lint all packages          |
+| `npx nx affected -t build test lint` | Run affected targets       |
+| `npx nx show project <name> --json`  | Show project configuration |
+| `npx nx graph`                       | Visualize dependency graph |

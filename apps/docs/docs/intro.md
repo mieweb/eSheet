@@ -66,7 +66,7 @@ Choose your starting point based on your needs:
 ✅ **Type-safe** — full TypeScript support with Zod validation  
 ✅ **Extensible** — register custom field types with your own React components  
 ✅ **Responsive** — mobile-friendly layouts with bottom-sheet editing on small screens  
-✅ **Accessible** — all inputs have IDs, labels, and ARIA attributes  
+✅ **Accessible** — all inputs have IDs, labels, and ARIA attributes
 
 ## 📥 Installation
 

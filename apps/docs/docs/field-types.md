@@ -8,14 +8,14 @@ eSheet includes 19 built-in field types organized into six categories. Each fiel
 
 ## Overview
 
-| Category | Field Types |
-|---|---|
-| **Text** | `text`, `longtext`, `multitext` |
-| **Selection** | `radio`, `check`, `boolean`, `dropdown`, `multiselectdropdown` |
-| **Rating & Ranking** | `rating`, `ranking`, `slider` |
-| **Matrix** | `singlematrix`, `multimatrix` |
-| **Organization** | `section` |
-| **Rich Media** | `display`, `html`, `image`, `signature`, `diagram` |
+| Category             | Field Types                                                    |
+| -------------------- | -------------------------------------------------------------- |
+| **Text**             | `text`, `longtext`, `multitext`                                |
+| **Selection**        | `radio`, `check`, `boolean`, `dropdown`, `multiselectdropdown` |
+| **Rating & Ranking** | `rating`, `ranking`, `slider`                                  |
+| **Matrix**           | `singlematrix`, `multimatrix`                                  |
+| **Organization**     | `section`                                                      |
+| **Rich Media**       | `display`, `html`, `image`, `signature`, `diagram`             |
 
 ---
 
@@ -26,6 +26,7 @@ eSheet includes 19 built-in field types organized into six categories. Each fiel
 Single-line text input with 9 input type variants.
 
 **Properties:**
+
 - `inputType` -- Input variant (default: `'string'`)
 - `unit` -- Unit suffix displayed after the input (e.g. "kg", "lbs")
 
@@ -45,6 +46,7 @@ Single-line text input with 9 input type variants.
 ```
 
 Special behaviors:
+
 - `tel` -- Automatically formats US phone numbers as `(XXX) XXX-XXXX`
 - `date`, `time`, `month`, `datetime-local` -- Renders native browser date/time pickers
 - `email`, `url` -- Browser-level input validation
@@ -68,6 +70,7 @@ Multi-line textarea for longer responses.
 Multiple text inputs -- one per option. Useful when you need several labeled text responses under one question.
 
 **Properties:**
+
 - `options` -- Array of `FieldOption` (each becomes a text input with the option value as label)
 
 **Answer format:** `{ multitextAnswers: Record<optionId, string> }`
@@ -86,6 +89,7 @@ Multiple text inputs -- one per option. Useful when you need several labeled tex
 ```
 
 **Response example:**
+
 ```json
 {
   "vitals": {
@@ -107,6 +111,7 @@ Multiple text inputs -- one per option. Useful when you need several labeled tex
 Single-select radio buttons. Supports deselection (clicking the selected option again clears it).
 
 **Properties:**
+
 - `options` -- Array of `FieldOption`
 
 **Answer format:** `{ selected: SelectedOption }` where `SelectedOption = { id, value }`
@@ -129,6 +134,7 @@ Single-select radio buttons. Supports deselection (clicking the selected option 
 Multi-select checkboxes. Users can select any combination of options.
 
 **Properties:**
+
 - `options` -- Array of `FieldOption`
 
 **Answer format:** `{ selected: SelectedOption[] }`
@@ -170,6 +176,7 @@ Boolean fields don't need `options` -- the Yes/No options are built-in.
 Single-select dropdown menu.
 
 **Properties:**
+
 - `options` -- Array of `FieldOption`
 
 **Answer format:** `{ selected: SelectedOption }`
@@ -192,6 +199,7 @@ Single-select dropdown menu.
 Multi-select dropdown with tag-style selected items.
 
 **Properties:**
+
 - `options` -- Array of `FieldOption`
 
 **Answer format:** `{ selected: SelectedOption[] }`
@@ -219,6 +227,7 @@ Multi-select dropdown with tag-style selected items.
 Numeric scale displayed as selectable pills (e.g. 1-5 or 1-10).
 
 **Properties:**
+
 - `options` -- Array of `FieldOption` representing scale values
 
 **Answer format:** `{ selected: SelectedOption }`
@@ -248,6 +257,7 @@ Numeric scale displayed as selectable pills (e.g. 1-5 or 1-10).
 Drag-to-order items. Users arrange options in their preferred order.
 
 **Properties:**
+
 - `options` -- Array of `FieldOption`
 
 **Answer format:** `{ selected: SelectedOption[] }` -- ordered by user's ranking (first = highest)
@@ -271,6 +281,7 @@ Drag-to-order items. Users arrange options in their preferred order.
 Range slider with numeric selection.
 
 **Properties:**
+
 - `options` -- Array of `FieldOption` defining the range (first = min, last = max)
 
 **Answer format:** `{ selected: SelectedOption }`
@@ -299,6 +310,7 @@ Range slider with numeric selection.
 Grid where each row allows exactly one column selection (radio-per-row).
 
 **Properties:**
+
 - `rows` -- Array of `MatrixRow`
 - `columns` -- Array of `MatrixColumn`
 
@@ -324,6 +336,7 @@ Grid where each row allows exactly one column selection (radio-per-row).
 ```
 
 **Response example:**
+
 ```json
 {
   "symptom_severity": {
@@ -341,6 +354,7 @@ Grid where each row allows exactly one column selection (radio-per-row).
 Grid where each row allows multiple column selections (checkboxes-per-row).
 
 **Properties:**
+
 - `rows` -- Array of `MatrixRow`
 - `columns` -- Array of `MatrixColumn`
 
@@ -373,6 +387,7 @@ Grid where each row allows multiple column selections (checkboxes-per-row).
 Container field that groups other fields. Sections can be nested recursively.
 
 **Properties:**
+
 - `title` -- Section heading
 - `fields` -- Array of nested `FieldDefinition` (recursive)
 
@@ -413,17 +428,20 @@ Sections are useful for grouping related fields visually and for applying condit
 Markdown-like content field with expression interpolation. Great for calculated summaries, instructions, or dynamic messages that reference other field values.
 
 **Properties:**
+
 - `content` -- Markdown string with inline expressions
 
 **Markdown syntax:**
+
 - `*bold*` -- **bold**
-- `-italic-` -- *italic*
+- `-italic-` -- _italic_
 - `_underline_` -- underline
 - `~strikethrough~` -- ~~strikethrough~~
 - `- item` -- bullet list
 - `# Heading` -- heading
 
 **Expression interpolation:**
+
 - `{fieldId}` -- Inserts the field's current answer value
 - `<{fieldA} + {fieldB}>` -- Evaluates an arithmetic expression and inserts the result
 
@@ -442,6 +460,7 @@ Markdown-like content field with expression interpolation. Great for calculated 
 Raw HTML embed. Renders the provided HTML content directly.
 
 **Properties:**
+
 - `htmlContent` -- Raw HTML string
 
 **Answer format:** None (display only)
@@ -459,6 +478,7 @@ Raw HTML embed. Renders the provided HTML content directly.
 Displays an image with optional alt text and caption.
 
 **Properties:**
+
 - `imageUri` -- Image URL
 - `altText` -- Accessible alt text
 - `caption` -- Caption below the image
@@ -480,9 +500,11 @@ Displays an image with optional alt text and caption.
 Drawing pad for capturing signatures. Stores both the stroke data (for re-rendering) and a base64 PNG image.
 
 **Properties:**
+
 - `padPlaceholder` -- Placeholder text on the canvas (e.g. "Sign here")
 
 **Answer format:**
+
 ```typescript
 {
   signatureData?: string;  // JSON stroke data (normalized coordinates)
@@ -491,6 +513,7 @@ Drawing pad for capturing signatures. Stores both the stroke data (for re-render
 ```
 
 **Drawing pad features:**
+
 - Pen and eraser tools
 - Undo/redo support
 - Responsive (maintains aspect ratio across viewports)
@@ -511,9 +534,11 @@ Drawing pad for capturing signatures. Stores both the stroke data (for re-render
 Drawing pad for markup and annotations. Identical to signature but uses separate response properties.
 
 **Properties:**
+
 - `padPlaceholder` -- Placeholder text on the canvas
 
 **Answer format:**
+
 ```typescript
 {
   markupData?: string;  // JSON stroke data

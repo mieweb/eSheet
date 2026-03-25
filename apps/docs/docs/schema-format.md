@@ -107,43 +107,43 @@ interface FieldDefinition {
 
 The 19 built-in field types:
 
-| Field Type | Category | Answer Type | Has Options | Has Matrix | Description |
-|---|---|---|---|---|---|
-| `text` | text | `text` | No | No | Single-line text input with variants |
-| `longtext` | text | `text` | No | No | Multi-line textarea |
-| `multitext` | text | `multitext` | Yes | No | One text input per option |
-| `radio` | selection | `selection` | Yes | No | Single-select radio buttons |
-| `check` | selection | `multiselection` | Yes | No | Multi-select checkboxes |
-| `boolean` | selection | `selection` | No | No | Yes/No toggle |
-| `dropdown` | selection | `selection` | Yes | No | Single-select dropdown |
-| `multiselectdropdown` | selection | `multiselection` | Yes | No | Multi-select dropdown |
-| `rating` | rating | `selection` | Yes | No | Numeric scale (1-5, 1-10) |
-| `ranking` | rating | `multiselection` | Yes | No | Drag-to-order items |
-| `slider` | rating | `selection` | Yes | No | Range slider |
-| `singlematrix` | matrix | `matrix` | No | Yes | One selection per row |
-| `multimatrix` | matrix | `matrix` | No | Yes | Multiple selections per row |
-| `image` | rich | `display` | No | No | Image display |
-| `html` | rich | `display` | No | No | Raw HTML embed |
-| `signature` | rich | `media` | No | No | Drawing pad for signatures |
-| `diagram` | rich | `media` | No | No | Drawing pad for markup |
-| `display` | rich | `display` | No | No | Markdown + expression content |
-| `section` | organization | `container` | No | No | Container for nested fields |
+| Field Type            | Category     | Answer Type      | Has Options | Has Matrix | Description                          |
+| --------------------- | ------------ | ---------------- | ----------- | ---------- | ------------------------------------ |
+| `text`                | text         | `text`           | No          | No         | Single-line text input with variants |
+| `longtext`            | text         | `text`           | No          | No         | Multi-line textarea                  |
+| `multitext`           | text         | `multitext`      | Yes         | No         | One text input per option            |
+| `radio`               | selection    | `selection`      | Yes         | No         | Single-select radio buttons          |
+| `check`               | selection    | `multiselection` | Yes         | No         | Multi-select checkboxes              |
+| `boolean`             | selection    | `selection`      | No          | No         | Yes/No toggle                        |
+| `dropdown`            | selection    | `selection`      | Yes         | No         | Single-select dropdown               |
+| `multiselectdropdown` | selection    | `multiselection` | Yes         | No         | Multi-select dropdown                |
+| `rating`              | rating       | `selection`      | Yes         | No         | Numeric scale (1-5, 1-10)            |
+| `ranking`             | rating       | `multiselection` | Yes         | No         | Drag-to-order items                  |
+| `slider`              | rating       | `selection`      | Yes         | No         | Range slider                         |
+| `singlematrix`        | matrix       | `matrix`         | No          | Yes        | One selection per row                |
+| `multimatrix`         | matrix       | `matrix`         | No          | Yes        | Multiple selections per row          |
+| `image`               | rich         | `display`        | No          | No         | Image display                        |
+| `html`                | rich         | `display`        | No          | No         | Raw HTML embed                       |
+| `signature`           | rich         | `media`          | No          | No         | Drawing pad for signatures           |
+| `diagram`             | rich         | `media`          | No          | No         | Drawing pad for markup               |
+| `display`             | rich         | `display`        | No          | No         | Markdown + expression content        |
+| `section`             | organization | `container`      | No          | No         | Container for nested fields          |
 
 ## Text Input Types
 
 The `text` field supports these input type variants via the `inputType` property:
 
-| Input Type | HTML Type | Description |
-|---|---|---|
-| `string` | `text` | Plain text (default) |
-| `number` | `number` | Numeric input |
-| `email` | `email` | Email address |
-| `tel` | `tel` | Phone number (auto-formatted) |
-| `date` | `date` | Date picker |
-| `datetime-local` | `datetime-local` | Date and time picker |
-| `month` | `month` | Month picker |
-| `time` | `time` | Time picker |
-| `url` | `url` | URL input |
+| Input Type       | HTML Type        | Description                   |
+| ---------------- | ---------------- | ----------------------------- |
+| `string`         | `text`           | Plain text (default)          |
+| `number`         | `number`         | Numeric input                 |
+| `email`          | `email`          | Email address                 |
+| `tel`            | `tel`            | Phone number (auto-formatted) |
+| `date`           | `date`           | Date picker                   |
+| `datetime-local` | `datetime-local` | Date and time picker          |
+| `month`          | `month`          | Month picker                  |
+| `time`           | `time`           | Time picker                   |
+| `url`            | `url`            | URL input                     |
 
 ## Options
 
@@ -167,12 +167,12 @@ Matrix fields use rows and columns:
 ```typescript
 interface MatrixRow {
   id: string;
-  value: string;  // Row label
+  value: string; // Row label
 }
 
 interface MatrixColumn {
   id: string;
-  value: string;  // Column header
+  value: string; // Column header
 }
 ```
 
@@ -191,7 +191,7 @@ interface FieldResponse {
    * Selected option(s):
    * - SelectedOption for single-select (radio, dropdown, boolean, rating, slider)
    * - SelectedOption[] for multi-select (check, multiselectdropdown, ranking)
-  * - Record<string, SelectedOption | SelectedOption[]> for matrix (rowId -> column)
+   * - Record<string, SelectedOption | SelectedOption[]> for matrix (rowId -> column)
    */
   selected?:
     | SelectedOption

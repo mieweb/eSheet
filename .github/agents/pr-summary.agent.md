@@ -20,21 +20,27 @@ You are a PR documentation helper subagent. Produce a PR description by inspecti
 
 ```markdown
 ## PR Name
+
 `{branch-name}` — {one-line title inferred from commits/changes}
 
 ## High Level Summary
+
 {2–3 sentences: WHAT changed and WHY, written for a reviewer who hasn't seen the code.}
 
 ## Changes
+
 {Bullet list grouped by package/app. Be specific, e.g. "Added `SliderField` preview in `packages/fields`".}
 
 ## Breaking Changes
+
 {"None." or bullet list of API/prop/export/schema changes that could break callers.}
 
 ## How to Test
+
 {Step-by-step reviewer instructions. Include Nx commands, e.g. `pnpm nx run builder:test`.}
 
 ## Related Issues
+
 {"None." or ticket/issue refs from commit messages or branch name.}
 ```
 

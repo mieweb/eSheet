@@ -12,7 +12,7 @@ All eSheet components use Tailwind utility classes prefixed with `ms:`. For exam
 
 ```html
 <!-- eSheet internal markup -->
-<div class="ms:flex ms:gap-2 ms:p-4 ms:bg-mssurface ms:text-mstext">
+<div class="ms:flex ms:gap-2 ms:p-4 ms:bg-mssurface ms:text-mstext"></div>
 ```
 
 This means eSheet styles are **fully isolated** from your app's styles. You don't need to configure Tailwind in your own project to use eSheet.
@@ -21,23 +21,23 @@ This means eSheet styles are **fully isolated** from your app's styles. You don'
 
 eSheet uses semantic color tokens instead of hardcoded color values. These tokens are defined as CSS custom properties and can be overridden:
 
-| Token | Default | Usage |
-|---|---|---|
-| `msprimary` | Blue (#2563eb) | Primary actions, selected states, active elements |
-| `mssecondary` | Gray | Secondary elements |
-| `msaccent` | Green | Success states |
-| `msdanger` | Red (#ef4444) | Destructive actions, errors, validation |
-| `mswarning` | Orange | Warning indicators |
-| `mssurface` | White | Card/panel backgrounds |
-| `msborder` | Gray-200 | Border colors |
-| `msborderinactive` | Gray-400 | Unchecked input borders |
-| `mstext` | Gray-900 | Primary text |
-| `mstextsecondary` | Slate-50 | Text on primary backgrounds |
-| `mstextmuted` | Gray-500 | Secondary/muted text |
-| `msbackground` | Gray-50 | Page/section backgrounds |
-| `msbackgroundsecondary` | Gray-100 | Section backgrounds |
-| `msbackgroundhover` | Gray-150 | Hover states |
-| `msoverlay` | Black/50 | Modal backdrop overlay |
+| Token                   | Default        | Usage                                             |
+| ----------------------- | -------------- | ------------------------------------------------- |
+| `msprimary`             | Blue (#2563eb) | Primary actions, selected states, active elements |
+| `mssecondary`           | Gray           | Secondary elements                                |
+| `msaccent`              | Green          | Success states                                    |
+| `msdanger`              | Red (#ef4444)  | Destructive actions, errors, validation           |
+| `mswarning`             | Orange         | Warning indicators                                |
+| `mssurface`             | White          | Card/panel backgrounds                            |
+| `msborder`              | Gray-200       | Border colors                                     |
+| `msborderinactive`      | Gray-400       | Unchecked input borders                           |
+| `mstext`                | Gray-900       | Primary text                                      |
+| `mstextsecondary`       | Slate-50       | Text on primary backgrounds                       |
+| `mstextmuted`           | Gray-500       | Secondary/muted text                              |
+| `msbackground`          | Gray-50        | Page/section backgrounds                          |
+| `msbackgroundsecondary` | Gray-100       | Section backgrounds                               |
+| `msbackgroundhover`     | Gray-150       | Hover states                                      |
+| `msoverlay`             | Black/50       | Modal backdrop overlay                            |
 
 ## Customizing Colors
 

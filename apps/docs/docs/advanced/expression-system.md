@@ -17,6 +17,7 @@ Reference any field's current answer value using curly braces:
 ```
 
 This resolves to:
+
 - **Text fields** -> the `answer` string
 - **Selection fields** -> the selected option's `value` string
 - **Multi-select fields** -> the array of selected options
@@ -31,6 +32,7 @@ Wrap arithmetic or logical expressions in angle brackets:
 ```
 
 Supports standard JavaScript-like operators:
+
 - **Arithmetic:** `+`, `-`, `*`, `/`, `%`
 - **Comparison:** `>`, `>=`, `<`, `<=`, `==`, `!=`, `===`, `!==`
 - **Logical:** `&&`, `||`, `!`
@@ -53,40 +55,47 @@ Display fields support inline expression interpolation in their `content` proper
 
 Display fields combine a Markdown-like syntax with expression interpolation:
 
-| Syntax | Renders as |
-|---|---|
-| `*text*` | **bold** |
-| `-text-` | *italic* |
-| `_text_` | underline |
-| `~text~` | ~~strikethrough~~ |
-| `- item` | bullet list |
-| `# Heading` | heading |
-| `{fieldId}` | field value |
-| `<expression>` | computed result |
+| Syntax         | Renders as        |
+| -------------- | ----------------- |
+| `*text*`       | **bold**          |
+| `-text-`       | _italic_          |
+| `_text_`       | underline         |
+| `~text~`       | ~~strikethrough~~ |
+| `- item`       | bullet list       |
+| `# Heading`    | heading           |
+| `{fieldId}`    | field value       |
+| `<expression>` | computed result   |
 
 ### Examples
 
 **Simple value display:**
+
 ```
 Your name is: *{name}*
 ```
 
 **Arithmetic:**
+
 ```
 Total: *<{price} * {quantity}>*
 ```
 
 **Conditional text (expression in condition rule, not in display):**
+
 ```json
 {
-  "rules": [{
-    "effect": "visible",
-    "logic": "AND",
-    "conditions": [{
-      "conditionType": "expression",
-      "expression": "{age} >= 18"
-    }]
-  }]
+  "rules": [
+    {
+      "effect": "visible",
+      "logic": "AND",
+      "conditions": [
+        {
+          "conditionType": "expression",
+          "expression": "{age} >= 18"
+        }
+      ]
+    }
+  ]
 }
 ```
 
@@ -103,12 +112,12 @@ Expression conditions in rules allow complex logic beyond simple field compariso
 
 ### Expression Condition Examples
 
-| Expression | Description |
-|---|---|
-| `{age} >= 18` | Age is 18 or older |
-| `{weight} > 0 && {height} > 0` | Both weight and height are filled |
-| `{score} >= 80` | Score is 80 or above |
-| `{symptoms}.length >= 3` | At least 3 symptoms selected |
+| Expression                               | Description                           |
+| ---------------------------------------- | ------------------------------------- |
+| `{age} >= 18`                            | Age is 18 or older                    |
+| `{weight} > 0 && {height} > 0`           | Both weight and height are filled     |
+| `{score} >= 80`                          | Score is 80 or above                  |
+| `{symptoms}.length >= 3`                 | At least 3 symptoms selected          |
 | `{systolic} > 140 \|\| {diastolic} > 90` | Either blood pressure reading is high |
 
 ## Validation
@@ -118,8 +127,8 @@ Use `isExpressionValid()` from `@esheet/core` to validate expression syntax:
 ```tsx
 import { isExpressionValid } from '@esheet/core';
 
-isExpressionValid('{age} >= 18');           // true
-isExpressionValid('{weight} / {height}');   // true
+isExpressionValid('{age} >= 18'); // true
+isExpressionValid('{weight} / {height}'); // true
 isExpressionValid('{incomplete expression'); // false
 ```
 

@@ -49,15 +49,15 @@ if (fieldErrors && fieldErrors.length > 0) {
 
 When a field has `required: true` (or is made required by a conditional rule), it must have a non-empty response:
 
-| Field Type | "Empty" definition |
-|---|---|
-| `text`, `longtext` | `answer` is undefined, null, or empty string |
-| `radio`, `dropdown`, `boolean`, `rating`, `slider` | `selected` is undefined |
-| `check`, `multiselectdropdown`, `ranking` | `selected` is undefined or empty array |
-| `multitext` | All values in `multitextAnswers` are empty |
-| `singlematrix`, `multimatrix` | Not all rows have selections |
-| `signature` | `signatureData` is undefined or empty |
-| `diagram` | `markupData` is undefined or empty |
+| Field Type                                         | "Empty" definition                           |
+| -------------------------------------------------- | -------------------------------------------- |
+| `text`, `longtext`                                 | `answer` is undefined, null, or empty string |
+| `radio`, `dropdown`, `boolean`, `rating`, `slider` | `selected` is undefined                      |
+| `check`, `multiselectdropdown`, `ranking`          | `selected` is undefined or empty array       |
+| `multitext`                                        | All values in `multitextAnswers` are empty   |
+| `singlematrix`, `multimatrix`                      | Not all rows have selections                 |
+| `signature`                                        | `signatureData` is undefined or empty        |
+| `diagram`                                          | `markupData` is undefined or empty           |
 
 ### Conditional Awareness
 
@@ -122,7 +122,9 @@ function ValidatedForm({ formData }) {
           <p>Please fix the following errors:</p>
           <ul>
             {errors.map((err) => (
-              <li key={err.fieldId}>{err.message} ({err.fieldId})</li>
+              <li key={err.fieldId}>
+                {err.message} ({err.fieldId})
+              </li>
             ))}
           </ul>
         </div>

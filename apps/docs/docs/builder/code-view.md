@@ -9,6 +9,7 @@ The Code View mode provides a full-featured JSON/YAML text editor powered by Mon
 ## Accessing Code View
 
 Click the **Code** tab in the builder header to switch to Code View. The entire form definition is displayed as editable text.\n\n## Features\n\n- **Syntax highlighting** for JSON
+
 - **Schema validation** -- Monaco validates against the `FormDefinition` JSON schema (auto-generated from Zod schemas in `@esheet/core`)
 - **Auto-completion** -- IntelliSense suggestions for field types, properties, and schema structure
 - **Error indicators** -- Red squiggly underlines for invalid JSON or schema violations
@@ -51,8 +52,10 @@ If the JSON is invalid (syntax error or schema violation):
 ## Switching Between Modes
 
 When switching **from Code View** to Build/Preview:
+
 - The JSON is parsed and the FormStore is updated with the new definition
 - If parsing fails, you'll see an error and remain in Code View
 
 When switching **to Code View** from Build/Preview:
+
 - The current FormStore state is serialized to JSON and loaded into the editor

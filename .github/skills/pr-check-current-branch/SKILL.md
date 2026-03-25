@@ -8,6 +8,7 @@ description: Run a local PR check for the current branch using the CI workflow c
 Use this skill to validate the current branch with a local workflow that mirrors `.github/workflows/ci.yml`.
 
 ## Default Flow
+
 1. Confirm branch: `git branch --show-current`
 2. Refresh CI base ref: `git fetch origin main`
 3. Install deps exactly like CI: `npm ci`
@@ -19,18 +20,22 @@ Use this skill to validate the current branch with a local workflow that mirrors
 
 ```markdown
 ## Branch PR Check
+
 Branch: {branch}
 Status: PASS | FAIL
 
 Checks:
+
 - npx nx format:check --base="remotes/origin/main" => PASS|FAIL
 - npx nx run-many -t lint test build typecheck => PASS|FAIL
 
 Failure summary:
+
 - {None | first failure and key error lines}
 ```
 
 ## Optional Fast Mode (non-authoritative)
+
 Use only if user asks for a quick pre-check:
 
 ```bash
@@ -40,6 +45,7 @@ npx nx affected -t lint test build typecheck --base=remotes/origin/main --head=H
 Then clearly label output as pre-check, not full CI-equivalent validation.
 
 ## Guardrails
+
 - CI-equivalent mode is the default and authoritative.
 - Do not substitute direct tool commands for Nx tasks.
 - Do not skip `npm ci` unless user explicitly asks to skip install.

@@ -21,16 +21,17 @@ Each field on the canvas shows:
 
 Fields are added from the **ToolPanel** (left sidebar on desktop, bottom drawer on mobile). The ToolPanel groups field types by category:
 
-| Category | Field Types |
-|---|---|
-| **Text** | Text, Long Text, Multi Text |
-| **Selection** | Radio, Checkbox, Boolean, Dropdown, Multi-Select Dropdown |
-| **Rating** | Rating, Ranking, Slider |
-| **Matrix** | Single Matrix, Multi Matrix |
-| **Rich** | Display, HTML, Image, Signature, Diagram |
-| **Organization** | Section |
+| Category         | Field Types                                               |
+| ---------------- | --------------------------------------------------------- |
+| **Text**         | Text, Long Text, Multi Text                               |
+| **Selection**    | Radio, Checkbox, Boolean, Dropdown, Multi-Select Dropdown |
+| **Rating**       | Rating, Ranking, Slider                                   |
+| **Matrix**       | Single Matrix, Multi Matrix                               |
+| **Rich**         | Display, HTML, Image, Signature, Diagram                  |
+| **Organization** | Section                                                   |
 
 Clicking a field type button adds a new field of that type to:
+
 - The **end of the form** if no section is selected
 - The **end of the selected section** if a section is currently selected
 
@@ -43,6 +44,7 @@ When `dragEnabled={true}` (default), fields can be reordered by dragging:
 3. Drop to place the field in its new position
 
 The DnD system supports:
+
 - **Root-level reordering** -- move fields within the main form
 - **Section nesting** -- drag fields into or out of sections
 - **Touch + mouse** -- works on both desktop and mobile devices

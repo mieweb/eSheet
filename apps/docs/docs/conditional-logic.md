@@ -24,18 +24,18 @@ interface ConditionalRule {
 
 ### Effects
 
-| Effect | Behavior when rule is `true` | Default (no rules) |
-|---|---|---|
-| `visible` | Field is shown | Visible |
-| `enable` | Field is interactive (not grayed out) | Enabled |
-| `required` | Field must be answered | Based on `required` prop |
+| Effect     | Behavior when rule is `true`          | Default (no rules)       |
+| ---------- | ------------------------------------- | ------------------------ |
+| `visible`  | Field is shown                        | Visible                  |
+| `enable`   | Field is interactive (not grayed out) | Enabled                  |
+| `required` | Field must be answered                | Based on `required` prop |
 
 ### Logic Modes
 
-| Mode | Behavior |
-|---|---|
-| `AND` | **All** conditions must be true |
-| `OR` | **Any** condition being true is sufficient |
+| Mode  | Behavior                                   |
+| ----- | ------------------------------------------ |
+| `AND` | **All** conditions must be true            |
+| `OR`  | **Any** condition being true is sufficient |
 
 ### Multiple Rules
 
@@ -50,9 +50,9 @@ Compare a target field's response against an expected value:
 ```typescript
 interface Condition {
   conditionType: 'field';
-  targetId: string;          // Field ID to evaluate
+  targetId: string; // Field ID to evaluate
   operator: ConditionOperator;
-  expected?: string;         // Value to compare against
+  expected?: string; // Value to compare against
   propertyAccessor?: string; // Optional: 'length', 'count'
 }
 ```
@@ -70,27 +70,27 @@ interface Condition {
 
 ## Operators
 
-| Operator | Description | Works with |
-|---|---|---|
-| `equals` | Exact match | Text, selection value |
-| `notEquals` | Not equal | Text, selection value |
-| `contains` | Text contains substring | Text answers |
-| `includes` | Array includes value | Multi-select (check, ranking) |
-| `empty` | Field has no answer | All field types |
-| `notEmpty` | Field has an answer | All field types |
-| `greaterThan` | Numeric greater than | Numeric text, rating values |
-| `greaterThanOrEqual` | Numeric >= | Numeric text, rating values |
-| `lessThan` | Numeric less than | Numeric text, rating values |
-| `lessThanOrEqual` | Numeric &lt;= | Numeric text, rating values |
+| Operator             | Description             | Works with                    |
+| -------------------- | ----------------------- | ----------------------------- |
+| `equals`             | Exact match             | Text, selection value         |
+| `notEquals`          | Not equal               | Text, selection value         |
+| `contains`           | Text contains substring | Text answers                  |
+| `includes`           | Array includes value    | Multi-select (check, ranking) |
+| `empty`              | Field has no answer     | All field types               |
+| `notEmpty`           | Field has an answer     | All field types               |
+| `greaterThan`        | Numeric greater than    | Numeric text, rating values   |
+| `greaterThanOrEqual` | Numeric >=              | Numeric text, rating values   |
+| `lessThan`           | Numeric less than       | Numeric text, rating values   |
+| `lessThanOrEqual`    | Numeric &lt;=           | Numeric text, rating values   |
 
 ## Property Accessors
 
 Access a specific property of the target field's response before comparing:
 
-| Accessor | Description | Example use |
-|---|---|---|
+| Accessor | Description                    | Example use                               |
+| -------- | ------------------------------ | ----------------------------------------- |
 | `length` | Length of text answer or array | Check if multi-select has >= 3 selections |
-| `count` | Number of selected items | Same as length for arrays |
+| `count`  | Number of selected items       | Same as length for arrays                 |
 
 ```json
 {

@@ -17,12 +17,7 @@ function FormEditor() {
     console.log(JSON.stringify(definition, null, 2));
   };
 
-  return (
-    <EsheetBuilder
-      definition={initialDef}
-      onChange={handleChange}
-    />
-  );
+  return <EsheetBuilder definition={initialDef} onChange={handleChange} />;
 }
 ```
 
@@ -50,6 +45,7 @@ The exported `FormDefinition` contains only structural data:
 ```
 
 **What's included:**
+
 - Schema version
 - Form title and description
 - All field definitions with their properties
@@ -57,6 +53,7 @@ The exported `FormDefinition` contains only structural data:
 - Section hierarchy (nested `fields`)
 
 **What's NOT included:**
+
 - User responses / answers
 - Internal normalized state
 - UI selection or mode state
@@ -76,21 +73,17 @@ import { useMemo } from 'react';
 
 function FormEditor() {
   const debouncedSave = useMemo(
-    () => debounce((def: FormDefinition) => {
-      fetch('/api/forms', {
-        method: 'PUT',
-        body: JSON.stringify(def),
-      });
-    }, 500),
+    () =>
+      debounce((def: FormDefinition) => {
+        fetch('/api/forms', {
+          method: 'PUT',
+          body: JSON.stringify(def),
+        });
+      }, 500),
     []
   );
 
-  return (
-    <EsheetBuilder
-      definition={initialDef}
-      onChange={debouncedSave}
-    />
-  );
+  return <EsheetBuilder definition={initialDef} onChange={debouncedSave} />;
 }
 ```
 
