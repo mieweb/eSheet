@@ -53,6 +53,11 @@ Thumbs.db
 
 # Internal tickets (local only)
 .github/INTERNAL-TICKETS/
+/docs/SubAgent docs/
+
+# Docusaurus generated artifacts
+apps/docs/build/
+apps/docs/.docusaurus/
 
 vite.config.*.timestamp*
 vitest.config.*.timestamp*
