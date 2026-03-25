@@ -42,12 +42,14 @@ runSubagent(
 **NEVER include `agentName`** — always use default subagent (has full read/write capability).
 
 **If you get errors:**
+
 - "disabled by user" → You may have included `agentName`. Remove it.
 - "missing required property" → Include BOTH `description` and `prompt`
 
 ### Subagent Prompt Templates
 
 **Research Subagent:**
+
 ```
 Research [topic]. Analyze relevant files in the codebase.
 Create a spec/analysis doc at: docs/SubAgent docs/[NAME].md
@@ -55,6 +57,7 @@ Return: summary of findings and the spec file path.
 ```
 
 **Implementation Subagent:**
+
 ```
 Read the spec at: docs/SubAgent docs/[NAME].md
 Implement according to the spec.
@@ -66,7 +69,7 @@ Return: summary of changes made.
 ✅ Receive user requests  
 ✅ Spawn subagents with clear prompts  
 ✅ Pass spec paths between subagents  
-✅ Run terminal commands  
+✅ Run terminal commands
 
 ### What YOU DON'T Do
 
@@ -140,6 +143,7 @@ When proposing code, **adhere to all of the following**:
    - Keep behavior backward-compatible unless the task explicitly requests otherwise.
 
 5. **Only Change When Explicitly Told**
+
    - Do NOT make changes unless explicitly asked, given clear permission, or strongly hinted.
    - Do NOT assume what should be changed or refactored.
    - Ask for clarification if instructions are ambiguous.
@@ -148,9 +152,9 @@ When proposing code, **adhere to all of the following**:
 
 6. **Edit Method: Direct Patches Only**
 
-  - Make file changes using direct file patch/edit tools (for example, `apply_patch` / editor patch tools).
-  - Do NOT edit files by running shell/terminal write commands (for example PowerShell replacement scripts, `sed`, or inline command-based rewrites).
-  - Terminal commands are allowed for read-only inspection and for running Nx/git verification tasks.
+- Make file changes using direct file patch/edit tools (for example, `apply_patch` / editor patch tools).
+- Do NOT edit files by running shell/terminal write commands (for example PowerShell replacement scripts, `sed`, or inline command-based rewrites).
+- Terminal commands are allowed for read-only inspection and for running Nx/git verification tasks.
 
 ---
 

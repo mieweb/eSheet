@@ -39,17 +39,17 @@ function MyForm() {
 
 ### Response Shape by Field Type
 
-| Field Type | Response Property | Shape |
-|---|---|---|
-| `text`, `longtext` | `answer` | `string` |
-| `radio`, `dropdown`, `boolean`, `rating`, `slider` | `selected` | `SelectedOption` (`{ id, value }`) |
-| `check`, `multiselectdropdown`, `ranking` | `selected` | `SelectedOption[]` |
-| `multitext` | `multitextAnswers` | `Record<optionId, string>` |
-| `singlematrix` | `selected` | `Record<rowId, SelectedOption>` |
-| `multimatrix` | `selected` | `Record<rowId, SelectedOption[]>` |
-| `signature` | `signatureData`, `signatureImage` | Stroke JSON, base64 PNG |
-| `diagram` | `markupData`, `markupImage` | Stroke JSON, base64 PNG |
-| `display`, `html`, `image`, `section` | -- | No response (presentational) |
+| Field Type                                         | Response Property                 | Shape                              |
+| -------------------------------------------------- | --------------------------------- | ---------------------------------- |
+| `text`, `longtext`                                 | `answer`                          | `string`                           |
+| `radio`, `dropdown`, `boolean`, `rating`, `slider` | `selected`                        | `SelectedOption` (`{ id, value }`) |
+| `check`, `multiselectdropdown`, `ranking`          | `selected`                        | `SelectedOption[]`                 |
+| `multitext`                                        | `multitextAnswers`                | `Record<optionId, string>`         |
+| `singlematrix`                                     | `selected`                        | `Record<rowId, SelectedOption>`    |
+| `multimatrix`                                      | `selected`                        | `Record<rowId, SelectedOption[]>`  |
+| `signature`                                        | `signatureData`, `signatureImage` | Stroke JSON, base64 PNG            |
+| `diagram`                                          | `markupData`, `markupImage`       | Stroke JSON, base64 PNG            |
+| `display`, `html`, `image`, `section`              | --                                | No response (presentational)       |
 
 ## Full Example Response
 
@@ -100,10 +100,11 @@ const existingResponses = {
   ref={ref}
   formData={myForm}
   initialResponses={existingResponses}
-/>
+/>;
 ```
 
 This is useful for:
+
 - **Editing previously submitted forms**
 - **Resuming partially completed forms**
 - **Displaying read-only form data** (combine with disabled styling)

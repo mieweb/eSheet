@@ -35,11 +35,11 @@ Single-column with bottom-sheet drawers:
 
 The builder header provides mode switching:
 
-| Mode | Description |
-|---|---|
-| **Build** | Visual editor -- drag-and-drop canvas with ToolPanel and EditPanel |
-| **Code** | JSON/YAML editor (Monaco) -- edit the form definition as text |
-| **Preview** | Read-only preview -- same rendering as the Renderer component |
+| Mode        | Description                                                        |
+| ----------- | ------------------------------------------------------------------ |
+| **Build**   | Visual editor -- drag-and-drop canvas with ToolPanel and EditPanel |
+| **Code**    | JSON/YAML editor (Monaco) -- edit the form definition as text      |
+| **Preview** | Read-only preview -- same rendering as the Renderer component      |
 
 ## Component API
 
@@ -47,34 +47,34 @@ The builder header provides mode switching:
 import { EsheetBuilder } from '@esheet/builder';
 
 <EsheetBuilder
-  definition={myFormDef}       // Initial FormDefinition
+  definition={myFormDef} // Initial FormDefinition
   onChange={(def) => save(def)} // Called on every change
-  dragEnabled={true}           // Drag-and-drop (default: true)
-  className="my-builder"       // Additional CSS class
+  dragEnabled={true} // Drag-and-drop (default: true)
+  className="my-builder" // Additional CSS class
 >
   {/* Optional children below the header */}
-</EsheetBuilder>
+</EsheetBuilder>;
 ```
 
 ### Props Reference
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `definition` | `FormDefinition` | `undefined` | Initial form definition to load |
-| `onChange` | `(def: FormDefinition) => void` | -- | Called when the form definition changes (any edit, reorder, add, remove) |
-| `dragEnabled` | `boolean` | `true` | Whether drag-and-drop is enabled. Disable for better performance on slow devices |
-| `className` | `string` | `''` | Additional CSS class for the root container |
-| `children` | `ReactNode` | -- | Content rendered between the header and the editor layout |
+| Prop          | Type                            | Default     | Description                                                                      |
+| ------------- | ------------------------------- | ----------- | -------------------------------------------------------------------------------- |
+| `definition`  | `FormDefinition`                | `undefined` | Initial form definition to load                                                  |
+| `onChange`    | `(def: FormDefinition) => void` | --          | Called when the form definition changes (any edit, reorder, add, remove)         |
+| `dragEnabled` | `boolean`                       | `true`      | Whether drag-and-drop is enabled. Disable for better performance on slow devices |
+| `className`   | `string`                        | `''`        | Additional CSS class for the root container                                      |
+| `children`    | `ReactNode`                     | --          | Content rendered between the header and the editor layout                        |
 
 ## Exported Hooks & Contexts
 
 The builder re-exports these from `@esheet/fields` for advanced use:
 
-| Export | Type | Description |
-|---|---|---|
-| `useFormStore()` | Hook | Access the FormStore from React context |
-| `useUI()` | Hook | Access the UIStore from React context |
-| `useInstanceId()` | Hook | Get the unique per-instance ID for DOM elements |
-| `FormStoreContext` | Context | React context providing the FormStore |
-| `UIContext` | Context | React context providing the UIStore |
-| `InstanceIdContext` | Context | React context providing the instance ID string |
+| Export              | Type    | Description                                     |
+| ------------------- | ------- | ----------------------------------------------- |
+| `useFormStore()`    | Hook    | Access the FormStore from React context         |
+| `useUI()`           | Hook    | Access the UIStore from React context           |
+| `useInstanceId()`   | Hook    | Get the unique per-instance ID for DOM elements |
+| `FormStoreContext`  | Context | React context providing the FormStore           |
+| `UIContext`         | Context | React context providing the UIStore             |
+| `InstanceIdContext` | Context | React context providing the instance ID string  |

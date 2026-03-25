@@ -84,16 +84,16 @@ Responses are typed as `FormResponse = Record<string, FieldResponse>`, where eac
 
 ```typescript
 interface FieldResponse {
-  answer?: string;                    // text, longtext
-  selected?:                          // radio, dropdown, boolean, rating, slider,
-    | SelectedOption                  //   check, multiselectdropdown, ranking
-    | SelectedOption[]                //   (SelectedOption = { id, value })
+  answer?: string; // text, longtext
+  selected?: // radio, dropdown, boolean, rating, slider,
+  | SelectedOption //   check, multiselectdropdown, ranking
+    | SelectedOption[] //   (SelectedOption = { id, value })
     | Record<string, SelectedOption | SelectedOption[]>; // matrix
   multitextAnswers?: Record<string, string>; // multitext
-  signatureData?: string;             // signature (stroke data)
-  signatureImage?: string;            // signature (base64 PNG)
-  markupData?: string;                // diagram (stroke data)
-  markupImage?: string;               // diagram (base64 PNG)
+  signatureData?: string; // signature (stroke data)
+  signatureImage?: string; // signature (base64 PNG)
+  markupData?: string; // diagram (stroke data)
+  markupImage?: string; // diagram (base64 PNG)
 }
 ```
 
@@ -126,20 +126,20 @@ The renderer accepts form definitions as objects, JSON strings, or YAML strings:
 
 ## Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `formData` | `FormDefinition \| string` | *required* | Form definition (object, JSON, or YAML) |
-| `className` | `string` | `''` | Additional CSS class for the root |
-| `initialResponses` | `FormResponse` | -- | Pre-fill response data |
-| `ref` | `Ref<EsheetRendererHandle>` | -- | Imperative handle for response collection |
+| Prop               | Type                        | Default    | Description                               |
+| ------------------ | --------------------------- | ---------- | ----------------------------------------- |
+| `formData`         | `FormDefinition \| string`  | _required_ | Form definition (object, JSON, or YAML)   |
+| `className`        | `string`                    | `''`       | Additional CSS class for the root         |
+| `initialResponses` | `FormResponse`              | --         | Pre-fill response data                    |
+| `ref`              | `Ref<EsheetRendererHandle>` | --         | Imperative handle for response collection |
 
 ## Ref API (`EsheetRendererHandle`)
 
-| Method | Returns | Description |
-|---|---|---|
-| `getResponse()` | `FormResponse` | Current response values for all fields |
-| `getFormStore()` | `FormStore` | The underlying form state store |
-| `getUIStore()` | `UIStore` | The underlying UI state store |
+| Method           | Returns        | Description                            |
+| ---------------- | -------------- | -------------------------------------- |
+| `getResponse()`  | `FormResponse` | Current response values for all fields |
+| `getFormStore()` | `FormStore`    | The underlying form state store        |
+| `getUIStore()`   | `UIStore`      | The underlying UI state store          |
 
 ## What's Next
 

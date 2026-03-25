@@ -9,6 +9,7 @@ The `EsheetRenderer` component provides a read-only form fill-out experience. It
 ## When to Use
 
 Use the Renderer when you need:
+
 - **Form fill-out** -- end users answering questions
 - **Response collection** -- gathering data via forms
 - **Pre-filled forms** -- displaying forms with existing answers
@@ -40,26 +41,27 @@ function SurveyPage() {
 
 ## Props Reference
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `formData` | `FormDefinition \| string` | *required* | Form definition as a JavaScript object, JSON string, or YAML string |
-| `className` | `string` | `''` | Additional CSS class for the root container |
-| `initialResponses` | `FormResponse` | -- | Pre-fill the form with existing response data |
-| `ref` | `Ref<EsheetRendererHandle>` | -- | Imperative handle for accessing responses and stores |
+| Prop               | Type                        | Default    | Description                                                         |
+| ------------------ | --------------------------- | ---------- | ------------------------------------------------------------------- |
+| `formData`         | `FormDefinition \| string`  | _required_ | Form definition as a JavaScript object, JSON string, or YAML string |
+| `className`        | `string`                    | `''`       | Additional CSS class for the root container                         |
+| `initialResponses` | `FormResponse`              | --         | Pre-fill the form with existing response data                       |
+| `ref`              | `Ref<EsheetRendererHandle>` | --         | Imperative handle for accessing responses and stores                |
 
 ## Ref API (`EsheetRendererHandle`)
 
-| Method | Returns | Description |
-|---|---|---|
-| `getResponse()` | `FormResponse` | Get current response values for all fields |
-| `getFormStore()` | `FormStore` | Get the underlying form state store (advanced) |
-| `getUIStore()` | `UIStore` | Get the underlying UI state store (advanced) |
+| Method           | Returns        | Description                                    |
+| ---------------- | -------------- | ---------------------------------------------- |
+| `getResponse()`  | `FormResponse` | Get current response values for all fields     |
+| `getFormStore()` | `FormStore`    | Get the underlying form state store (advanced) |
+| `getUIStore()`   | `UIStore`      | Get the underlying UI state store (advanced)   |
 
 ## Features
 
 ## Conditional Logic
 
 The renderer evaluates conditional rules in real-time as users answer questions:
+
 - **Visibility rules** -- fields appear/disappear based on other answers
 - **Enable rules** -- fields become interactive/disabled
 - **Required rules** -- fields become required dynamically
@@ -84,6 +86,7 @@ The renderer auto-detects the format and parses accordingly.
 ## Responsive Layout
 
 The renderer renders as a single-column layout:
+
 - Maximum width of `42rem` (`max-w-2xl`)
 - Horizontally centered
 - Padding on all sides

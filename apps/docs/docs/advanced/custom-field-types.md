@@ -36,16 +36,16 @@ registerCustomFieldTypes({
 
 ### Metadata Properties
 
-| Property | Type | Description |
-|---|---|---|
-| `label` | `string` | Human-readable label shown in the builder's ToolPanel |
-| `category` | `FieldCategory` | Grouping in the ToolPanel (`'text'`, `'selection'`, `'rating'`, `'matrix'`, `'rich'`, `'organization'`) |
-| `answerType` | `AnswerType` | How the field stores its answer (`'text'`, `'selection'`, `'multiselection'`, `'multitext'`, `'matrix'`, `'media'`, `'display'`, `'container'`, `'none'`) |
-| `hasOptions` | `boolean` | Whether the field uses an options array |
-| `hasMatrix` | `boolean` | Whether the field uses rows/columns |
-| `defaultProps` | `Partial<FieldDefinition>` | Default property values for new fields |
-| `placeholder` | `Record<string, string>` | Optional placeholder strings |
-| `defaultOptionCount` | `number` | Number of starter options (if `hasOptions` is true) |
+| Property             | Type                       | Description                                                                                                                                               |
+| -------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `label`              | `string`                   | Human-readable label shown in the builder's ToolPanel                                                                                                     |
+| `category`           | `FieldCategory`            | Grouping in the ToolPanel (`'text'`, `'selection'`, `'rating'`, `'matrix'`, `'rich'`, `'organization'`)                                                   |
+| `answerType`         | `AnswerType`               | How the field stores its answer (`'text'`, `'selection'`, `'multiselection'`, `'multitext'`, `'matrix'`, `'media'`, `'display'`, `'container'`, `'none'`) |
+| `hasOptions`         | `boolean`                  | Whether the field uses an options array                                                                                                                   |
+| `hasMatrix`          | `boolean`                  | Whether the field uses rows/columns                                                                                                                       |
+| `defaultProps`       | `Partial<FieldDefinition>` | Default property values for new fields                                                                                                                    |
+| `placeholder`        | `Record<string, string>`   | Optional placeholder strings                                                                                                                              |
+| `defaultOptionCount` | `number`                   | Number of starter options (if `hasOptions` is true)                                                                                                       |
 
 ## FieldComponentProps
 
@@ -130,10 +130,10 @@ The custom field will now appear in the builder's ToolPanel under the "Text" cat
 
 ## Registry Functions
 
-| Function | Description |
-|---|---|
-| `registerCustomFieldTypes(types)` | Register one or more custom field types |
-| `getFieldComponent(fieldType)` | Get the React component for a field type |
-| `registerFieldType(key, meta)` | Register metadata for a field type (core) |
-| `getFieldTypeMeta(key)` | Get metadata for a registered field type |
-| `getRegisteredFieldTypes()` | Get all registered field type keys |
+| Function                          | Description                               |
+| --------------------------------- | ----------------------------------------- |
+| `registerCustomFieldTypes(types)` | Register one or more custom field types   |
+| `getFieldComponent(fieldType)`    | Get the React component for a field type  |
+| `registerFieldType(key, meta)`    | Register metadata for a field type (core) |
+| `getFieldTypeMeta(key)`           | Get metadata for a registered field type  |
+| `getRegisteredFieldTypes()`       | Get all registered field type keys        |

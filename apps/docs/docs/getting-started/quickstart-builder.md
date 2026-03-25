@@ -84,13 +84,13 @@ function App() {
 
 ## Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `definition` | `FormDefinition` | `undefined` | Initial form definition to load |
-| `onChange` | `(def: FormDefinition) => void` | -- | Called when the form changes |
-| `dragEnabled` | `boolean` | `true` | Enable drag-and-drop reordering |
-| `className` | `string` | `''` | Additional CSS class |
-| `children` | `ReactNode` | -- | Content rendered below the header |
+| Prop          | Type                            | Default     | Description                       |
+| ------------- | ------------------------------- | ----------- | --------------------------------- |
+| `definition`  | `FormDefinition`                | `undefined` | Initial form definition to load   |
+| `onChange`    | `(def: FormDefinition) => void` | --          | Called when the form changes      |
+| `dragEnabled` | `boolean`                       | `true`      | Enable drag-and-drop reordering   |
+| `className`   | `string`                        | `''`        | Additional CSS class              |
+| `children`    | `ReactNode`                     | --          | Content rendered below the header |
 
 ## Builder Modes
 

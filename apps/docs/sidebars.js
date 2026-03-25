@@ -31,11 +31,7 @@ const sidebars = {
     {
       type: 'category',
       label: 'Renderer',
-      items: [
-        'renderer/overview',
-        'renderer/responses',
-        'renderer/validation',
-      ],
+      items: ['renderer/overview', 'renderer/responses', 'renderer/validation'],
     },
     {
       type: 'category',
