@@ -1,6 +1,10 @@
 # path to a directory with all packages
 storage: ../tmp/local-registry/storage
 
+# Bind to all interfaces so other machines on the LAN can reach it.
+# Remove this line (or set to localhost:4873) to restrict to this machine only.
+listen: 0.0.0.0:4873
+
 # a list of other known repositories we can talk to
 uplinks:
   npmjs:

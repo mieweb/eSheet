@@ -57,8 +57,65 @@
   ],
   "release": {
     "projects": ["packages/*"],
+    "projectsRelationship": "fixed",
     "version": {
+      "conventionalCommits": true,
       "preVersionCommand": "npx nx run-many -t build"
+    },
+    "changelog": {
+      "workspaceChangelog": {
+        "createRelease": "github",
+        "renderOptions": {
+          "authors": false,
+          "commitReferences": true,
+          "versionTitleDate": true
+        }
+      },
+      "automaticFromRef": true
+    },
+    "conventionalCommits": {
+      "types": {
+        "feat": {
+          "semverBump": "minor",
+          "changelog": { "title": "🚀 Features", "hidden": false }
+        },
+        "fix": {
+          "semverBump": "patch",
+          "changelog": { "title": "🐛 Bug Fixes", "hidden": false }
+        },
+        "perf": {
+          "semverBump": "patch",
+          "changelog": { "title": "⚡ Performance", "hidden": false }
+        },
+        "refactor": {
+          "semverBump": "none",
+          "changelog": { "title": "♻️ Refactoring", "hidden": false }
+        },
+        "docs": {
+          "semverBump": "none",
+          "changelog": { "title": "📚 Documentation", "hidden": false }
+        },
+        "test": {
+          "semverBump": "none",
+          "changelog": { "hidden": true }
+        },
+        "chore": {
+          "semverBump": "none",
+          "changelog": { "hidden": true }
+        },
+        "ci": {
+          "semverBump": "none",
+          "changelog": { "hidden": true }
+        },
+        "build": {
+          "semverBump": "none",
+          "changelog": { "hidden": true }
+        }
+      }
+    },
+    "git": {
+      "commitMessage": "chore(release): publish {version}",
+      "tagTemplate": "v{version}"
     }
   },
   "targetDefaults": {

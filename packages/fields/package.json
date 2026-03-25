@@ -1,6 +1,9 @@
 {
   "name": "@esheet/fields",
   "version": "0.0.1",
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -31,7 +34,7 @@
     ]
   },
   "dependencies": {
-    "@esheet/core": "^0.0.1",
+    "@esheet/core": "*",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "tslib": "^2.3.0"

@@ -1,6 +1,9 @@
 {
   "name": "@esheet/renderer",
   "version": "0.0.1",
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -31,8 +34,8 @@
     ]
   },
   "dependencies": {
-    "@esheet/core": "^0.0.1",
-    "@esheet/fields": "^0.0.1",
+    "@esheet/core": "*",
+    "@esheet/fields": "*",
     "js-yaml": "^4.1.0",
     "react": "^19.0.0"
   },

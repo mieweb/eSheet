@@ -1,6 +1,9 @@
 {
   "name": "@esheet/builder",
   "version": "0.0.1",
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -32,8 +35,8 @@
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
-    "@esheet/core": "^0.0.1",
-    "@esheet/fields": "^0.0.1",
+    "@esheet/core": "*",
+    "@esheet/fields": "*",
     "js-yaml": "^4.1.1",
     "react": "^19.2.4",
     "tslib": "^2.3.0"
