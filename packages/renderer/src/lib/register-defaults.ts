@@ -1,8 +1,8 @@
 // ---------------------------------------------------------------------------
 // Built-in field component registration for the renderer
 // ---------------------------------------------------------------------------
-// Imported as a side-effect in the package entry point so consumers using
-// only @esheet/renderer get all built-in field components automatically.
+// Called from EsheetRenderer runtime path so consumers get built-in defaults
+// without relying on package entry side-effect imports.
 // ---------------------------------------------------------------------------
 
 import { registerFieldComponents } from '@esheet/fields';
@@ -28,24 +28,34 @@ import {
   DisplayField,
 } from '@esheet/fields';
 
-registerFieldComponents({
-  text: TextField,
-  longtext: LongTextField,
-  multitext: MultiTextField,
-  radio: RadioField,
-  check: CheckField,
-  boolean: BooleanField,
-  dropdown: DropdownField,
-  multiselectdropdown: MultiSelectDropdownField,
-  rating: RatingField,
-  ranking: RankingField,
-  slider: SliderField,
-  singlematrix: SingleMatrixField,
-  multimatrix: MultiMatrixField,
-  section: SectionField,
-  signature: SignatureField,
-  diagram: DiagramField,
-  image: ImageField,
-  html: HtmlField,
-  display: DisplayField,
-});
+let defaultsRegistered = false;
+
+export function ensureDefaultFieldComponentsRegistered(): void {
+  if (defaultsRegistered) {
+    return;
+  }
+
+  registerFieldComponents({
+    text: TextField,
+    longtext: LongTextField,
+    multitext: MultiTextField,
+    radio: RadioField,
+    check: CheckField,
+    boolean: BooleanField,
+    dropdown: DropdownField,
+    multiselectdropdown: MultiSelectDropdownField,
+    rating: RatingField,
+    ranking: RankingField,
+    slider: SliderField,
+    singlematrix: SingleMatrixField,
+    multimatrix: MultiMatrixField,
+    section: SectionField,
+    signature: SignatureField,
+    diagram: DiagramField,
+    image: ImageField,
+    html: HtmlField,
+    display: DisplayField,
+  });
+
+  defaultsRegistered = true;
+}

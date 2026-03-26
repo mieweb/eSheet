@@ -18,7 +18,9 @@
     }
   },
   "sideEffects": [
-    "**/*.css"
+    "**/*.css",
+    "**/component-registry.ts",
+    "**/component-registry.js"
   ],
   "scripts": {
     "build:css": "cd ../.. && npx @tailwindcss/cli -i packages/fields/src/index.css -o packages/fields/src/index.output.css",
