@@ -10,6 +10,12 @@
       "path": "./packages/renderer"
     },
     {
+      "path": "./packages/renderer-standalone"
+    },
+    {
+      "path": "./packages/renderer-blaze"
+    },
+    {
       "path": "./packages/builder"
     },
     {

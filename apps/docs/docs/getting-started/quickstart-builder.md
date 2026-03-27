@@ -6,6 +6,10 @@ sidebar_position: 2
 
 Add a visual form editor to your React application in minutes.
 
+This quick start covers React integration. For non-React mounting or Blaze, see the [Installation guide](./installation).
+
+> The example below imports `FormDefinition` from `@esheet/core`. If your app uses core types directly, add `@esheet/core` as an explicit dependency.
+
 ## Basic Example
 
 ```tsx

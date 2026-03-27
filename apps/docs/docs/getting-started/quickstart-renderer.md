@@ -6,6 +6,16 @@ sidebar_position: 3
 
 Render a form and collect user responses in your React application.
 
+## Choose Your Integration
+
+| Use case | Package |
+| --- | --- |
+| React app | `@esheet/renderer` (this page) |
+| Non-React / plain JS | [`@esheet/renderer-standalone`](./quickstart-standalone) |
+| Meteor Blaze | [`@esheet/renderer-blaze`](./quickstart-blaze) |
+
+> The example below imports `FormDefinition` from `@esheet/core`. Add `@esheet/core` as an explicit dependency only if your app imports core types or APIs directly. You can also pass plain objects, JSON strings, or YAML strings as `formData` without any core import.
+
 ## Basic Example
 
 ```tsx
@@ -146,3 +156,5 @@ The renderer accepts form definitions as objects, JSON strings, or YAML strings:
 - [Response Collection](../renderer/responses) -- Detailed guide on working with responses
 - [Validation](../renderer/validation) -- Validate form responses programmatically
 - [Field Types](../field-types) -- See all available field types
+- [Quick Start: Standalone](./quickstart-standalone) -- Mount renderer in non-React apps
+- [Quick Start: Blaze](./quickstart-blaze) -- Register renderer in Meteor Blaze

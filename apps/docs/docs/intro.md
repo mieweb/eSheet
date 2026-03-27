@@ -5,11 +5,11 @@ slug: /intro
 
 # Welcome to eSheet
 
-**eSheet** is a modular, extensible form builder and renderer for React applications. It provides a complete solution for creating, editing, and filling out questionnaire-style forms - from simple contact forms to complex conditional surveys.
+**eSheet** is a modular, extensible form builder and renderer toolkit. It provides a complete solution for creating, editing, and filling out questionnaire-style forms - from simple contact forms to complex conditional surveys.
 
 ## 📦 Package Overview
 
-eSheet is organized as four focused, composable packages:
+eSheet is organized as six focused, composable packages:
 
 ### ⚙️ @esheet/core
 
@@ -49,12 +49,30 @@ Lightweight form renderer for end-users. Perfect for surveys, questionnaires, an
 - Response collection via API
 - Pre-fill support for partial responses
 
+### 🧩 @esheet/renderer-standalone
+
+Renderer mount API for non-React hosts:
+
+- Mounts `@esheet/renderer` into a DOM node
+- Returns a handle with `getResponse`, `getValidResponse`, and `unmount`
+- Good fit for plain JavaScript apps or progressive enhancement
+
+### 🔥 @esheet/renderer-blaze
+
+Meteor Blaze integration layer:
+
+- Registers a Blaze template around the same renderer core
+- Exposes response helpers on the Blaze template instance
+- Supports default and custom template names
+
 ## 🚀 Quick Start
 
 Choose your starting point based on your needs:
 
-- [Rendering forms](./getting-started/quickstart-renderer) — Start here if you want to display forms to users
-- [Building form editors](./getting-started/quickstart-builder) — Start here if you want to create tools for building forms
+- [Render a form](./getting-started/quickstart-renderer) — Display forms and collect responses
+- [Build a form editor](./getting-started/quickstart-builder) — Create a visual form authoring UI
+- [Standalone renderer](./getting-started/quickstart-standalone) — Mount renderer in non-React apps
+- [Blaze renderer](./getting-started/quickstart-blaze) — Use renderer in Meteor Blaze
 
 ## ✨ Key Features
 
@@ -70,33 +88,26 @@ Choose your starting point based on your needs:
 
 ## 📥 Installation
 
-Choose the packages you need:
+Choose the scenario that matches your app:
 
-### For rendering forms
+| Scenario | Minimal install command | Add these only if needed |
+| --- | --- | --- |
+| React renderer | `npm install @esheet/renderer react react-dom` | `@esheet/core` for direct core imports/types; `@esheet/fields` for custom field component registry work |
+| React builder + renderer | `npm install @esheet/builder @esheet/renderer react react-dom` | `@esheet/core` only for direct core APIs/types |
+| Standalone renderer | `npm install @esheet/renderer-standalone` | `@esheet/core` only if importing core types/APIs directly in host app code |
+| Blaze renderer | `npm install @esheet/renderer-blaze` | `@esheet/core` only if importing core types/APIs directly in host app code |
 
-```bash
-npm install @esheet/core @esheet/fields @esheet/renderer
-```
+`@esheet/renderer` and `@esheet/builder` include `@esheet/core` and `@esheet/fields` transitively — no need to install them separately for normal usage. Install them directly only when your app imports them directly.
 
-### For building form editors
-
-```bash
-npm install @esheet/core @esheet/fields @esheet/builder
-```
-
-### For full control with custom components
-
-```bash
-npm install @esheet/core @esheet/fields
-```
-
-**Note:** React 18+ is required for `@esheet/fields`, `@esheet/builder`, and `@esheet/renderer`.
+`@esheet/core` is framework-agnostic. `@esheet/renderer-standalone` and `@esheet/renderer-blaze` include React transitively.
 
 ## 🔗 Next Steps
 
 - 📚 [Installation Guide](./getting-started/installation)
 - 🚀 [Renderer Quick Start](./getting-started/quickstart-renderer)
 - ✏️ [Builder Quick Start](./getting-started/quickstart-builder)
+- 🧩 [Standalone Quick Start](./getting-started/quickstart-standalone)
+- 🔥 [Blaze Quick Start](./getting-started/quickstart-blaze)
 - 📋 [Schema Format](./schema-format)
 - 🧩 [Field Types](./field-types)
 - 🔀 [Conditional Logic](./conditional-logic)

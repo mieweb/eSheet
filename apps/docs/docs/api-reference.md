@@ -214,3 +214,31 @@ All 19 field components: `TextField`, `LongTextField`, `MultiTextField`, `RadioF
 | ---------------------- | ------------------------------------------------------------- |
 | `EsheetRendererProps`  | Renderer component props                                      |
 | `EsheetRendererHandle` | Ref handle type (`getResponse`, `getFormStore`, `getUIStore`) |
+
+---
+
+## @esheet/renderer-standalone
+
+### Functions
+
+| Export                            | Description |
+| --------------------------------- | ----------- |
+| `mountStandaloneRenderer(container, props)` | Mount `EsheetRenderer` into a DOM node and return a control handle |
+
+### Types
+
+| Export                          | Description |
+| ------------------------------- | ----------- |
+| `EsheetRendererStandaloneHandle` | Handle with `unmount()`, `getResponse()`, and `getValidResponse()` |
+
+---
+
+## @esheet/renderer-blaze
+
+### Functions
+
+| Export                           | Description |
+| -------------------------------- | ----------- |
+| `registerBlazeTemplate(templateName?)` | Register a Blaze template wrapper for the renderer. Returns `false` when required Blaze globals are not available, otherwise `true`. |
+
+`registerBlazeTemplate` uses `esheetRenderer` as the default template name when no argument is provided.

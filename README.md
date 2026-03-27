@@ -4,7 +4,7 @@
 
 **Modular form builder & renderer for React.**
 
-eSheet is a TypeScript-first Nx monorepo providing four composable packages for embedding a visual form builder and renderer into any React application — no lock-in, no required backend.
+eSheet is a TypeScript-first Nx monorepo providing composable packages for embedding a visual form builder and renderer into any React application — no lock-in, no required backend.
 
 - **[Live Demo](https://esheet-demo.os.mieweb.org/)** — builder + renderer playground
 - **[Documentation](https://esheet-docs.os.mieweb.org)** — full API & usage docs
@@ -18,9 +18,11 @@ eSheet is a TypeScript-first Nx monorepo providing four composable packages for 
 | [`@esheet/core`](packages/core) | Zod schemas, Zustand stores, conditional logic engine — no React |
 | [`@esheet/fields`](packages/fields) | 19 built-in field components (text, choice, scale, matrix, rich, layout) |
 | [`@esheet/builder`](packages/builder) | Drag-and-drop visual form builder (`<EsheetBuilder />`) |
-| [`@esheet/renderer`](packages/renderer) | Read-only form renderer (`<EsheetRenderer />`) |
+| [`@esheet/renderer`](packages/renderer) | Read-only React form renderer (`<EsheetRenderer />`) |
+| [`@esheet/renderer-standalone`](packages/renderer-standalone) | Standalone mount API and global registration |
+| [`@esheet/renderer-blaze`](packages/renderer-blaze) | Meteor Blaze template integration |
 
-All four packages are versioned together and published to npm under the `@esheet` scope.
+All packages are versioned together and published to npm under the `@esheet` scope.
 
 ---
 
@@ -32,6 +34,10 @@ npm install @esheet/builder
 
 # Renderer only
 npm install @esheet/renderer
+
+# Optional integrations
+npm install @esheet/renderer-standalone
+npm install @esheet/renderer-blaze
 ```
 
 ```tsx
@@ -70,7 +76,9 @@ mSheet/
 │   ├── core/        # @esheet/core     — types, stores, logic (no React)
 │   ├── fields/      # @esheet/fields   — 19 field components
 │   ├── builder/     # @esheet/builder  — visual builder UI
-│   └── renderer/    # @esheet/renderer — form renderer
+│   ├── renderer/    # @esheet/renderer — form renderer
+│   ├── renderer-standalone/ # @esheet/renderer-standalone — standalone integration
+│   └── renderer-blaze/ # @esheet/renderer-blaze — blaze integration
 └── apps/
     ├── demo/        # Vite playground (builder + renderer routes)
     └── docs/        # Docusaurus documentation site
@@ -82,8 +90,10 @@ mSheet/
 @esheet/core
     ↑
 @esheet/fields
-    ↑           ↑
+  ↑           ↑
 @esheet/builder  @esheet/renderer
+         ↑                 ↑
+   @esheet/renderer-standalone   @esheet/renderer-blaze
 ```
 
 ---

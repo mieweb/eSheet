@@ -36,8 +36,15 @@
   "dependencies": {
     "@esheet/core": "0.0.0 || ^0.0.1-0",
     "@esheet/fields": "0.0.0 || ^0.0.1-0",
-    "js-yaml": "^4.1.0",
-    "react": "^19.0.0"
+    "js-yaml": "^4.1.0"
+  },
+  "peerDependencies": {
+    "react": ">=19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.2.1",

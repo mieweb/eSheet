@@ -7,38 +7,28 @@ sidebar_position: 1
 ## Requirements
 
 - **Node.js** 20 or later
-- **React** 19 or later
 - **TypeScript** 5.5+ (recommended)
 
 ## Install Packages
 
-Install the packages you need. Most applications will use either the **builder** (for form authoring) or the **renderer** (for form fill-out), or both.
+Choose the scenario that matches your app:
 
-### Editor (form builder)
-
-```bash
-npm install @esheet/builder @esheet/fields @esheet/core
-```
-
-### Renderer (form fill-out)
-
-```bash
-npm install @esheet/renderer @esheet/fields @esheet/core
-```
-
-### Both
-
-```bash
-npm install @esheet/builder @esheet/renderer @esheet/fields @esheet/core
-```
+| Scenario | Minimal install command | Add these only if needed |
+| --- | --- | --- |
+| React renderer | `npm install @esheet/renderer react react-dom` | `@esheet/core` for direct core imports/types; `@esheet/fields` for custom field component registry work |
+| React builder + renderer | `npm install @esheet/builder @esheet/renderer react react-dom` | `@esheet/core` only for direct core APIs/types |
+| Standalone renderer | `npm install @esheet/renderer-standalone` | `@esheet/core` only if importing core types/APIs directly in host app code |
+| Blaze renderer | `npm install @esheet/renderer-blaze` | `@esheet/core` only if importing core types/APIs directly in host app code |
 
 :::info
-`@esheet/builder` and `@esheet/renderer` depend on `@esheet/core` and `@esheet/fields`. Installing all related packages together is still recommended for version alignment.
+`@esheet/renderer` and `@esheet/builder` include `@esheet/core` and `@esheet/fields` transitively — no need to install them separately unless your app imports them directly.
+
+`@esheet/renderer-standalone` and `@esheet/renderer-blaze` are separate packages that include React transitively.
 :::
 
 ## React Dependency
 
-All packages require React 19+:
+React runtime dependencies are required for React-component usage (`@esheet/renderer`, `@esheet/builder`, `@esheet/fields`):
 
 ```json
 {
@@ -49,18 +39,46 @@ All packages require React 19+:
 }
 ```
 
+- `@esheet/core` is framework-agnostic — no React required.
+- `@esheet/renderer-standalone` and `@esheet/renderer-blaze` bundle React transitively, so your host app does not need React installed.
+
 ## Verify Installation
+
+### React renderer
+
+```tsx
+import { EsheetRenderer } from '@esheet/renderer';
+
+console.log(EsheetRenderer);
+```
+
+### React builder
 
 ```tsx
 import { EsheetBuilder } from '@esheet/builder';
-import { EsheetRenderer } from '@esheet/renderer';
-import type { FormDefinition } from '@esheet/core';
 
-// If these imports resolve without errors, you're good to go!
-console.log('eSheet installed successfully');
+console.log(EsheetBuilder);
+```
+
+### Standalone renderer
+
+```ts
+import { mountStandaloneRenderer } from '@esheet/renderer-standalone';
+
+console.log(mountStandaloneRenderer);
+```
+
+### Blaze renderer
+
+```ts
+import { registerBlazeTemplate } from '@esheet/renderer-blaze';
+
+console.log(registerBlazeTemplate);
 ```
 
 ## Next Steps
 
-- [Quick Start: Builder](./quickstart-builder) -- Create your first form editor
-- [Quick Start: Renderer](./quickstart-renderer) -- Render a form and collect responses
+- [Quick Start: Renderer](./quickstart-renderer) — Render a form and collect responses
+- [Quick Start: Builder](./quickstart-builder) — Create a visual form editor
+- [Quick Start: Standalone](./quickstart-standalone) — Mount the renderer without React in your app
+- [Quick Start: Blaze](./quickstart-blaze) — Use the renderer in Meteor Blaze
