@@ -2,12 +2,15 @@ import React from 'react';
 import {
   createFormStore,
   createUIStore,
+  validateForm,
   type FormDefinition,
   type FormResponse,
   type FormStore,
   type UIStore,
+  type ValidationError,
 } from '@esheet/core';
 import { FormStoreContext, UIContext } from '@esheet/fields';
+import { ensureDefaultFieldComponentsRegistered } from './register-defaults.js';
 import { useRendererInit } from './hooks/useRendererInit.js';
 import { RendererBody } from './components/RendererBody.js';
 
@@ -27,6 +30,11 @@ export interface EsheetRendererHandle {
   getFormStore: () => FormStore;
   /** Get UI store instance */
   getUIStore: () => UIStore;
+  /** Get validated form responses (returns null if invalid) */
+  getValidResponse: () => {
+    response: FormResponse | null;
+    errors: ValidationError[];
+  };
 }
 
 /**
@@ -53,6 +61,8 @@ export const EsheetRenderer = React.forwardRef<
   EsheetRendererHandle,
   EsheetRendererProps
 >(function EsheetRenderer(props, ref) {
+  ensureDefaultFieldComponentsRegistered();
+
   const formStore = React.useMemo(() => createFormStore(), []);
   const uiStore = React.useMemo(() => createUIStore(), []);
 
@@ -92,6 +102,14 @@ const EsheetRendererInner = React.forwardRef<
       getResponse: () => formStore.getState().responses,
       getFormStore: () => formStore,
       getUIStore: () => uiStore,
+      getValidResponse: () => {
+        const state = formStore.getState();
+        const errors = validateForm(state.normalized, state.responses);
+        return {
+          response: errors.length === 0 ? state.responses : null,
+          errors,
+        };
+      },
     }),
     [formStore, uiStore]
   );

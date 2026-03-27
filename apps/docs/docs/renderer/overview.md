@@ -6,6 +6,11 @@ sidebar_position: 1
 
 The `EsheetRenderer` component provides a read-only form fill-out experience. It renders a form definition, evaluates conditional logic in real-time, and collects user responses.
 
+Standalone and Blaze integrations wrap this same renderer core:
+
+- `@esheet/renderer-standalone`: [Quick Start: Standalone](../getting-started/quickstart-standalone)
+- `@esheet/renderer-blaze`: [Quick Start: Blaze](../getting-started/quickstart-blaze)
+
 ## When to Use
 
 Use the Renderer when you need:

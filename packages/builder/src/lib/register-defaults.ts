@@ -2,8 +2,9 @@
 // Built-in field component registration
 // ---------------------------------------------------------------------------
 // Registers built-in field components for basic field types.
-// Imported as a side-effect in the package entry point so consumers don't
-// need to manually wire up every field.
+// Explicitly invoked from EsheetBuilder at runtime via
+// ensureDefaultFieldComponentsRegistered().
+// Safe to call multiple times; registration is idempotent.
 // ---------------------------------------------------------------------------
 
 import { registerFieldComponents } from '@esheet/fields';
@@ -29,24 +30,32 @@ import {
   DisplayField,
 } from '@esheet/fields';
 
-registerFieldComponents({
-  text: TextField,
-  longtext: LongTextField,
-  multitext: MultiTextField,
-  radio: RadioField,
-  check: CheckField,
-  boolean: BooleanField,
-  dropdown: DropdownField,
-  multiselectdropdown: MultiSelectDropdownField,
-  rating: RatingField,
-  ranking: RankingField,
-  slider: SliderField,
-  singlematrix: SingleMatrixField,
-  multimatrix: MultiMatrixField,
-  section: SectionField,
-  signature: SignatureField,
-  diagram: DiagramField,
-  image: ImageField,
-  html: HtmlField,
-  display: DisplayField,
-});
+let defaultFieldComponentsRegistered = false;
+
+export function ensureDefaultFieldComponentsRegistered(): void {
+  if (defaultFieldComponentsRegistered) return;
+
+  registerFieldComponents({
+    text: TextField,
+    longtext: LongTextField,
+    multitext: MultiTextField,
+    radio: RadioField,
+    check: CheckField,
+    boolean: BooleanField,
+    dropdown: DropdownField,
+    multiselectdropdown: MultiSelectDropdownField,
+    rating: RatingField,
+    ranking: RankingField,
+    slider: SliderField,
+    singlematrix: SingleMatrixField,
+    multimatrix: MultiMatrixField,
+    section: SectionField,
+    signature: SignatureField,
+    diagram: DiagramField,
+    image: ImageField,
+    html: HtmlField,
+    display: DisplayField,
+  });
+
+  defaultFieldComponentsRegistered = true;
+}

@@ -1,6 +1,7 @@
 /// <reference types='vitest' />
 import { defineConfig, type LibraryFormats } from 'vite';
 import react from '@vitejs/plugin-react';
+import dts from 'vite-plugin-dts';
 import { resolve } from 'path';
 import { readFileSync, writeFileSync, existsSync, unlinkSync } from 'fs';
 
@@ -38,7 +39,11 @@ function inlineCssFields(): import('vite').Plugin {
 export default defineConfig(() => ({
   root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/packages/fields',
-  plugins: [react(), inlineCssFields()],
+  plugins: [
+    react(),
+    dts({ tsconfigPath: './tsconfig.lib.json', rollupTypes: true }),
+    inlineCssFields(),
+  ],
   build: {
     lib: {
       entry: resolve(import.meta.dirname, 'src/index.ts'),

@@ -1,5 +1,4 @@
 import './index.output.css';
-import './lib/register-defaults.js';
 
 // Main renderer component
 export {
@@ -7,6 +6,9 @@ export {
   type EsheetRendererProps,
   type EsheetRendererHandle,
 } from './lib/EsheetRenderer.js';
+
+// Core types
+export type { ValidationError } from '@esheet/core';
 
 // Components (for advanced use cases)
 export { RendererBody, FieldNode } from './lib/components/index.js';

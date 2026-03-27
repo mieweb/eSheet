@@ -9,7 +9,6 @@ import {
 import { createFormStore, createUIStore } from '@esheet/core';
 import { EsheetBuilder, useFormStore, useUI } from './EsheetBuilder.js';
 import { BuilderHeader } from './components/BuilderHeader.js';
-import './register-defaults.js';
 
 afterEach(cleanup);
 
