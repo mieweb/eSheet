@@ -14,6 +14,7 @@ import { EditPanel } from './components/edit-panel/EditPanel.js';
 import { BuilderHeader } from './components/BuilderHeader.js';
 import { CodeView } from './components/CodeView.js';
 import { PlusIcon } from './icons.js';
+import { ensureDefaultFieldComponentsRegistered } from './register-defaults.js';
 
 // ---------------------------------------------------------------------------
 // Contexts
@@ -105,6 +106,8 @@ export function EsheetBuilder({
   className = '',
   children,
 }: EsheetBuilderProps) {
+  ensureDefaultFieldComponentsRegistered();
+
   const formRef = React.useRef<FormStore | null>(null);
   const uiRef = React.useRef<UIStore | null>(null);
 

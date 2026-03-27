@@ -45,6 +45,9 @@ Thumbs.db
 .env
 .env.*
 
+# Local registry (Verdaccio)
+.verdaccio/htpasswd
+
 # TypeScript build info
 *.tsbuildinfo
 

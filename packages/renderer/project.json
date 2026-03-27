@@ -16,6 +16,10 @@
       }
     },
     "build": {
+      "command": "vite build",
+      "options": {
+        "cwd": "packages/renderer"
+      },
       "dependsOn": ["build:css", "^build"]
     }
   }

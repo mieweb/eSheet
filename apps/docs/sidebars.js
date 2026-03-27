@@ -11,6 +11,8 @@ const sidebars = {
         'getting-started/installation',
         'getting-started/quickstart-builder',
         'getting-started/quickstart-renderer',
+        'getting-started/quickstart-standalone',
+        'getting-started/quickstart-blaze',
         'getting-started/theming',
       ],
     },

@@ -1,20 +1,20 @@
 {
-  "name": "@esheet/core",
+  "name": "@esheet/renderer-blaze",
   "version": "0.0.0",
   "publishConfig": {
     "access": "public"
   },
   "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
+  "main": "./dist/blaze.js",
+  "module": "./dist/blaze.js",
   "types": "./dist/index.d.ts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "@esheet/source": "./src/index.ts",
+      "@esheet/source": "./src/index.tsx",
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "default": "./dist/index.js"
+      "import": "./dist/blaze.js",
+      "default": "./dist/blaze.js"
     }
   },
   "files": [
@@ -23,12 +23,13 @@
   ],
   "nx": {
     "tags": [
-      "scope:core"
+      "scope:renderer"
     ]
   },
   "dependencies": {
-    "tslib": "^2.3.0",
-    "zod": "^4.3.6",
-    "zustand": "^5.0.11"
+    "@esheet/renderer": "0.0.0 || ^0.0.1-0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tslib": "^2.3.0"
   }
 }

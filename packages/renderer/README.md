@@ -18,6 +18,18 @@ Read-only questionnaire form renderer for eSheet. Renders forms in fill-out mode
 npm install @esheet/renderer @esheet/fields @esheet/core
 ```
 
+Standalone and Blaze integrations now ship as separate packages:
+
+```bash
+npm install @esheet/renderer-standalone
+npm install @esheet/renderer-blaze
+```
+
+Migration for old subpath imports:
+
+- `@esheet/renderer/standalone` -> `@esheet/renderer-standalone`
+- `@esheet/renderer/blaze` -> `@esheet/renderer-blaze`
+
 ## Usage
 
 ### Basic Example

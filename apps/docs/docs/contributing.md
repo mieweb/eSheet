@@ -17,7 +17,9 @@ mSheet/
 |  |- core/          # @esheet/core - types, stores, logic (vanilla TS)
 |  |- fields/        # @esheet/fields - 19 field components (React)
 |  |- builder/       # @esheet/builder - visual form editor (React)
-|  `- renderer/      # @esheet/renderer - form fill-out (React)
+|  |- renderer/      # @esheet/renderer - form fill-out (React)
+|  |- renderer-standalone/ # @esheet/renderer-standalone - non-React mount API
+|  `- renderer-blaze/ # @esheet/renderer-blaze - Meteor Blaze integration
 |- nx.json
 |- tsconfig.base.json
 `- package.json
@@ -32,6 +34,9 @@ mSheet/
     ^
 @esheet/builder  (depends on core + fields)
 @esheet/renderer  (depends on core + fields)
+    ^
+@esheet/renderer-standalone  (depends on renderer)
+@esheet/renderer-blaze  (depends on renderer)
 ```
 
 ## 🚀 Development Workflow

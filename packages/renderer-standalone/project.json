@@ -1,0 +1,13 @@
+{
+  "name": "@esheet/renderer-standalone",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "targets": {
+    "build": {
+      "command": "vite build",
+      "options": {
+        "cwd": "packages/renderer-standalone"
+      },
+      "dependsOn": ["^build"]
+    }
+  }
+}

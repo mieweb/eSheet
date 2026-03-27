@@ -3,7 +3,6 @@ import React from 'react';
 import { render, act, cleanup } from '@testing-library/react';
 import { SCHEMA_TYPE } from '@esheet/core';
 import { EsheetRenderer, type EsheetRendererHandle } from './EsheetRenderer.js';
-import './register-defaults.js';
 
 afterEach(cleanup);
 
