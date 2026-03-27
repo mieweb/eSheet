@@ -9,7 +9,9 @@ import {
 export interface EsheetRendererStandaloneHandle {
   unmount: () => void;
   getResponse: () => ReturnType<EsheetRendererHandle['getResponse']> | null;
-  getValidResponse: () => ReturnType<EsheetRendererHandle['getValidResponse']> | null;
+  getValidResponse: () => ReturnType<
+    EsheetRendererHandle['getValidResponse']
+  > | null;
 }
 
 export function mountStandaloneRenderer(
@@ -19,7 +21,9 @@ export function mountStandaloneRenderer(
   const root: Root = createRoot(container);
   const rendererRef = React.createRef<EsheetRendererHandle>();
 
-  root.render(React.createElement(EsheetRenderer, { ...props, ref: rendererRef }));
+  root.render(
+    React.createElement(EsheetRenderer, { ...props, ref: rendererRef })
+  );
 
   return {
     unmount: () => root.unmount(),

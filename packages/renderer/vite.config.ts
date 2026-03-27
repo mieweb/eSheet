@@ -39,7 +39,11 @@ function inlineCssRenderer(): import('vite').Plugin {
 export default defineConfig(() => ({
   root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/packages/renderer',
-  plugins: [react(), dts({ tsconfigPath: './tsconfig.lib.json', rollupTypes: true }), inlineCssRenderer()],
+  plugins: [
+    react(),
+    dts({ tsconfigPath: './tsconfig.lib.json', rollupTypes: true }),
+    inlineCssRenderer(),
+  ],
   build: {
     lib: {
       entry: resolve(import.meta.dirname, 'src/index.ts'),

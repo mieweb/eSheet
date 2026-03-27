@@ -13,12 +13,12 @@ sidebar_position: 1
 
 Choose the scenario that matches your app:
 
-| Scenario | Minimal install command | Add these only if needed |
-| --- | --- | --- |
-| React renderer | `npm install @esheet/renderer react react-dom` | `@esheet/core` for direct core imports/types; `@esheet/fields` for custom field component registry work |
-| React builder + renderer | `npm install @esheet/builder @esheet/renderer react react-dom` | `@esheet/core` only for direct core APIs/types |
-| Standalone renderer | `npm install @esheet/renderer-standalone` | `@esheet/core` only if importing core types/APIs directly in host app code |
-| Blaze renderer | `npm install @esheet/renderer-blaze` | `@esheet/core` only if importing core types/APIs directly in host app code |
+| Scenario                 | Minimal install command                                        | Add these only if needed                                                                                |
+| ------------------------ | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| React renderer           | `npm install @esheet/renderer react react-dom`                 | `@esheet/core` for direct core imports/types; `@esheet/fields` for custom field component registry work |
+| React builder + renderer | `npm install @esheet/builder @esheet/renderer react react-dom` | `@esheet/core` only for direct core APIs/types                                                          |
+| Standalone renderer      | `npm install @esheet/renderer-standalone`                      | `@esheet/core` only if importing core types/APIs directly in host app code                              |
+| Blaze renderer           | `npm install @esheet/renderer-blaze`                           | `@esheet/core` only if importing core types/APIs directly in host app code                              |
 
 :::info
 `@esheet/renderer` and `@esheet/builder` include `@esheet/core` and `@esheet/fields` transitively — no need to install them separately unless your app imports them directly.

@@ -27,7 +27,8 @@ function toRendererProps(data: unknown): EsheetRendererProps {
     return fallback;
   }
 
-  const className = typeof data.className === 'string' ? data.className : undefined;
+  const className =
+    typeof data.className === 'string' ? data.className : undefined;
   const initialResponses = isRecord(data.initialResponses)
     ? (data.initialResponses as EsheetRendererProps['initialResponses'])
     : undefined;
@@ -39,7 +40,9 @@ function toRendererProps(data: unknown): EsheetRendererProps {
   };
 }
 
-export function registerBlazeTemplate(templateName = 'esheetRenderer'): boolean {
+export function registerBlazeTemplate(
+  templateName = 'esheetRenderer'
+): boolean {
   const globals = globalThis as UnknownRecord;
   const templateApi = globals.Template;
   const blazeApi = globals.Blaze;
@@ -56,9 +59,8 @@ export function registerBlazeTemplate(templateName = 'esheetRenderer'): boolean 
     return false;
   }
 
-  const template = createTemplate(
-    `Template.${templateName}`,
-    () => createDiv({ class: 'esheet-renderer-mount' })
+  const template = createTemplate(`Template.${templateName}`, () =>
+    createDiv({ class: 'esheet-renderer-mount' })
   );
 
   templateApi[templateName] = template;
@@ -85,13 +87,16 @@ export function registerBlazeTemplate(templateName = 'esheetRenderer'): boolean 
     const rendererRef = React.createRef<EsheetRendererHandle>();
 
     this.getResponse = () => rendererRef.current?.getResponse() ?? null;
-    this.getValidResponse = () => rendererRef.current?.getValidResponse() ?? null;
+    this.getValidResponse = () =>
+      rendererRef.current?.getValidResponse() ?? null;
 
     const currentData = templateApi.currentData;
     const render = () => {
       const data = isFunction(currentData) ? currentData() : undefined;
       const props = toRendererProps(data);
-      root.render(React.createElement(EsheetRenderer, { ...props, ref: rendererRef }));
+      root.render(
+        React.createElement(EsheetRenderer, { ...props, ref: rendererRef })
+      );
     };
 
     const autorun = this.autorun;

@@ -13,14 +13,14 @@ eSheet is a TypeScript-first Nx monorepo providing composable packages for embed
 
 ## Packages
 
-| Package | Description |
-|---|---|
-| [`@esheet/core`](packages/core) | Zod schemas, Zustand stores, conditional logic engine — no React |
-| [`@esheet/fields`](packages/fields) | 19 built-in field components (text, choice, scale, matrix, rich, layout) |
-| [`@esheet/builder`](packages/builder) | Drag-and-drop visual form builder (`<EsheetBuilder />`) |
-| [`@esheet/renderer`](packages/renderer) | Read-only React form renderer (`<EsheetRenderer />`) |
-| [`@esheet/renderer-standalone`](packages/renderer-standalone) | Standalone mount API and global registration |
-| [`@esheet/renderer-blaze`](packages/renderer-blaze) | Meteor Blaze template integration |
+| Package                                                       | Description                                                              |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| [`@esheet/core`](packages/core)                               | Zod schemas, Zustand stores, conditional logic engine — no React         |
+| [`@esheet/fields`](packages/fields)                           | 19 built-in field components (text, choice, scale, matrix, rich, layout) |
+| [`@esheet/builder`](packages/builder)                         | Drag-and-drop visual form builder (`<EsheetBuilder />`)                  |
+| [`@esheet/renderer`](packages/renderer)                       | Read-only React form renderer (`<EsheetRenderer />`)                     |
+| [`@esheet/renderer-standalone`](packages/renderer-standalone) | Standalone mount API and global registration                             |
+| [`@esheet/renderer-blaze`](packages/renderer-blaze)           | Meteor Blaze template integration                                        |
 
 All packages are versioned together and published to npm under the `@esheet` scope.
 
@@ -162,11 +162,11 @@ npx nx serve docs
 
 Packages are versioned together using [`nx release`](https://nx.dev/features/manage-releases) with [conventional commits](https://www.conventionalcommits.org/).
 
-| Commit prefix | Version bump |
-|---|---|
-| `fix:` | patch |
-| `feat:` | minor |
-| `feat!:` or `BREAKING CHANGE:` | major |
+| Commit prefix                  | Version bump |
+| ------------------------------ | ------------ |
+| `fix:`                         | patch        |
+| `feat:`                        | minor        |
+| `feat!:` or `BREAKING CHANGE:` | major        |
 
 ```bash
 # Preview what would change (no files written)

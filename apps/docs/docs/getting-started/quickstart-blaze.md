@@ -22,7 +22,9 @@ import { registerBlazeTemplate } from '@esheet/renderer-blaze';
 const registered = registerBlazeTemplate();
 
 if (!registered) {
-  throw new Error('Failed to register Blaze template: required globals are missing.');
+  throw new Error(
+    'Failed to register Blaze template: required globals are missing.'
+  );
 }
 ```
 
@@ -71,10 +73,10 @@ Template.esheetRenderer.onRendered(function () {
 
 `registerBlazeTemplate()` returns `false` when the required Blaze globals are not present at call time:
 
-| Missing global | Meaning |
-| --- | --- |
-| `Template` | Blaze not loaded yet |
-| `Blaze` | Blaze not loaded yet |
-| `HTML` | Blaze not loaded yet |
+| Missing global | Meaning              |
+| -------------- | -------------------- |
+| `Template`     | Blaze not loaded yet |
+| `Blaze`        | Blaze not loaded yet |
+| `HTML`         | Blaze not loaded yet |
 
 Call `registerBlazeTemplate()` after Blaze has fully initialized (e.g. in a Meteor startup callback).

@@ -8,11 +8,11 @@ Render a form and collect user responses in your React application.
 
 ## Choose Your Integration
 
-| Use case | Package |
-| --- | --- |
-| React app | `@esheet/renderer` (this page) |
+| Use case             | Package                                                  |
+| -------------------- | -------------------------------------------------------- |
+| React app            | `@esheet/renderer` (this page)                           |
 | Non-React / plain JS | [`@esheet/renderer-standalone`](./quickstart-standalone) |
-| Meteor Blaze | [`@esheet/renderer-blaze`](./quickstart-blaze) |
+| Meteor Blaze         | [`@esheet/renderer-blaze`](./quickstart-blaze)           |
 
 > The example below imports `FormDefinition` from `@esheet/core`. Add `@esheet/core` as an explicit dependency only if your app imports core types or APIs directly. You can also pass plain objects, JSON strings, or YAML strings as `formData` without any core import.
 

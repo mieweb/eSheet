@@ -31,7 +31,10 @@ export interface EsheetRendererHandle {
   /** Get UI store instance */
   getUIStore: () => UIStore;
   /** Get validated form responses (returns null if invalid) */
-  getValidResponse: () => { response: FormResponse | null; errors: ValidationError[] };
+  getValidResponse: () => {
+    response: FormResponse | null;
+    errors: ValidationError[];
+  };
 }
 
 /**

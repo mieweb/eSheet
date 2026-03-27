@@ -36,7 +36,9 @@ const demoForm: FormDefinition = {
 const mountElement = document.getElementById('renderer-mount');
 
 if (mountElement) {
-  const standalone = mountStandaloneRenderer(mountElement, { formData: demoForm });
+  const standalone = mountStandaloneRenderer(mountElement, {
+    formData: demoForm,
+  });
 
   console.log('Current response:', standalone.getResponse());
 }
@@ -69,7 +71,9 @@ if (submitButton instanceof HTMLButtonElement) {
       return;
     }
 
-    alert(`Form is valid!\nResponses: ${JSON.stringify(result.response, null, 2)}`);
+    alert(
+      `Form is valid!\nResponses: ${JSON.stringify(result.response, null, 2)}`
+    );
   });
 }
 ```
@@ -78,11 +82,11 @@ if (submitButton instanceof HTMLButtonElement) {
 
 `mountStandaloneRenderer` returns an `EsheetRendererStandaloneHandle` with three methods:
 
-| Method | Returns | Description |
-| --- | --- | --- |
-| `getResponse()` | response payload or `null` | Current field responses. `null` before the renderer is ready. |
-| `getValidResponse()` | `{ response, errors }` or `null` | Validates before returning. `null` before renderer is ready. |
-| `unmount()` | `void` | Tears down the React root and cleans up resources. |
+| Method               | Returns                          | Description                                                   |
+| -------------------- | -------------------------------- | ------------------------------------------------------------- |
+| `getResponse()`      | response payload or `null`       | Current field responses. `null` before the renderer is ready. |
+| `getValidResponse()` | `{ response, errors }` or `null` | Validates before returning. `null` before renderer is ready.  |
+| `unmount()`          | `void`                           | Tears down the React root and cleans up resources.            |
 
 ## Cleanup
 
