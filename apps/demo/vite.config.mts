@@ -10,11 +10,11 @@ export default defineConfig(() => ({
     conditions: ['@esheet/source'],
   },
   server: {
-    port: 4200,
+    port: 3001,
     host: 'localhost',
   },
   preview: {
-    port: 4200,
+    port: 3001,
     host: 'localhost',
   },
   plugins: [react(), tailwindcss()],
