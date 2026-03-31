@@ -156,6 +156,21 @@ npx nx serve docs
 # → http://localhost:3000
 ```
 
+### Production Static Deploy (Nginx)
+
+```bash
+chmod +x deploy/scripts/setup-nginx.sh
+./deploy/scripts/setup-nginx.sh
+
+chmod +x deploy/scripts/deploy-static.sh
+./deploy/scripts/deploy-static.sh
+```
+
+- Nginx config in repo: `deploy/nginx/default.conf`
+- Deploy script in repo: `deploy/scripts/deploy-static.sh`
+- Setup helper in repo: `deploy/scripts/setup-nginx.sh`
+- Runbook in repo: `deploy/RUNBOOK-nginx-atomic.md`
+
 ---
 
 ## Releasing

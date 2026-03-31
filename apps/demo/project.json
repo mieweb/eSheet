@@ -2,6 +2,13 @@
   "name": "demo",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "targets": {
+    "build": {
+      "dependsOn": [
+        { "projects": ["@esheet/builder"], "target": "build" },
+        { "projects": ["@esheet/fields"], "target": "build" },
+        { "projects": ["@esheet/renderer"], "target": "build" }
+      ]
+    },
     "dev": {
       "dependsOn": [
         { "projects": ["@esheet/builder"], "target": "build:css" },

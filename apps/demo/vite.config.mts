@@ -8,9 +8,13 @@ export default defineConfig(({ command }) => ({
   cacheDir: '../../node_modules/.vite/apps/demo',
   // Keep local dev at / while producing /demo/ assets for canonical host routing.
   base: command === 'serve' ? '/' : '/demo/',
-  resolve: {
-    conditions: ['@esheet/source'],
-  },
+  ...(command === 'serve'
+    ? {
+        resolve: {
+          conditions: ['@esheet/source'],
+        },
+      }
+    : {}),
   server: {
     port: 3001,
     host: 'localhost',
