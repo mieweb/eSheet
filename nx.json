@@ -80,6 +80,10 @@
           "semverBump": "minor",
           "changelog": { "title": "🚀 Features", "hidden": false }
         },
+        "enhance": {
+          "semverBump": "patch",
+          "changelog": { "title": "✨ Enhancements", "hidden": false }
+        },
         "fix": {
           "semverBump": "patch",
           "changelog": { "title": "🐛 Bug Fixes", "hidden": false }
@@ -109,6 +113,10 @@
           "changelog": { "hidden": true }
         },
         "build": {
+          "semverBump": "none",
+          "changelog": { "hidden": true }
+        },
+        "repo": {
           "semverBump": "none",
           "changelog": { "hidden": true }
         }

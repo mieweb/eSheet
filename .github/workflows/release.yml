@@ -1,0 +1,47 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Run nx release in dry-run mode only
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      # Automation (push) always dry-runs; manual dispatch uses the input (default: false)
+      DRY_RUN: ${{ github.event_name == 'push' || inputs['dry-run'] == true }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - run: npm ci
+
+      - run: npx nx format:check --base="remotes/origin/main"
+      - run: npx nx run-many -t lint test build typecheck
+
+      - name: Nx release (dry-run)
+        if: ${{ env.DRY_RUN == 'true' }}
+        run: npx nx release --dry-run --yes
+
+      - name: Nx release
+        if: ${{ env.DRY_RUN == 'false' }}
+        run: npx nx release --yes
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
