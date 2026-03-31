@@ -2,6 +2,12 @@
   "name": "docs",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx nx run docs:serve"
+      }
+    },
     "serve": {
       "executor": "nx:run-commands",
       "options": {

@@ -17,6 +17,7 @@ jobs:
         with:
           types: |
             feat
+            enhance
             fix
             perf
             refactor
@@ -25,13 +26,33 @@ jobs:
             chore
             ci
             build
-          requireScope: false
+            repo
+          scopes: |
+            repo
+            docs
+            demo
+            core
+            fields
+            builder
+            renderer
+            renderer-standalone
+            renderer-blaze
+          requireScope: true
           subjectPattern: ^.+$
           subjectPatternError: |
             PR title must follow conventional commits format:
-              feat: description
-              fix: description
-              perf: description
-              refactor: description
-              docs: description
-              chore: description
+              feat(scope): description
+              enhance(scope): description
+              fix(scope): description
+              perf(scope): description
+              refactor(scope): description
+              docs(scope): description
+              chore(scope): description
+              repo(scope): description
+
+            Examples:
+              repo(repo): update CI workflow
+              chore(repo): update ci workflow
+              docs(docs): add quickstart links
+              enhance(renderer): improve empty state
+              fix(renderer): handle empty schema
