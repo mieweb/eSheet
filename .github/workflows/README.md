@@ -2,12 +2,12 @@
 
 The workflow YAML files in this directory are the source of truth. This page is a maintainer-oriented map of what each workflow does, when it runs, what inputs or secrets it depends on, and where to find deeper release or deployment documentation.
 
-| Workflow file | Purpose | Trigger | Notes |
-| --- | --- | --- | --- |
-| [ci.yml](./ci.yml) | Validate formatting, linting, tests, builds, and type checks for code changes. | Push to `main`; every pull request. | Authoritative GitHub-side code validation workflow. |
-| [pr-title-check.yml](./pr-title-check.yml) | Enforce semantic pull request titles. | Pull request metadata changes: `opened`, `edited`, `synchronize`, `reopened`. | Validates PR metadata only, not code quality. |
-| [release.yml](./release.yml) | Run a manual release with an optional dry run. | Manual `workflow_dispatch`. | Re-runs CI-equivalent checks before `npx nx release`. |
-| [deploy-static.yml](./deploy-static.yml) | Build and deploy the docs site and demo to production. | Push to `main`; manual `workflow_dispatch`. | Uses SSH-based remote deployment and existing deploy runbooks/scripts. |
+| Workflow file                              | Purpose                                                                        | Trigger                                                                       | Notes                                                                  |
+| ------------------------------------------ | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| [ci.yml](./ci.yml)                         | Validate formatting, linting, tests, builds, and type checks for code changes. | Push to `main`; every pull request.                                           | Authoritative GitHub-side code validation workflow.                    |
+| [pr-title-check.yml](./pr-title-check.yml) | Enforce semantic pull request titles.                                          | Pull request metadata changes: `opened`, `edited`, `synchronize`, `reopened`. | Validates PR metadata only, not code quality.                          |
+| [release.yml](./release.yml)               | Run a manual release with an optional dry run.                                 | Manual `workflow_dispatch`.                                                   | Re-runs CI-equivalent checks before `npx nx release`.                  |
+| [deploy-static.yml](./deploy-static.yml)   | Build and deploy the docs site and demo to production.                         | Push to `main`; manual `workflow_dispatch`.                                   | Uses SSH-based remote deployment and existing deploy runbooks/scripts. |
 
 ## CI
 

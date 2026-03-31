@@ -43,7 +43,7 @@ jobs:
           fetch-depth: 0
           ref: ${{ env.DEPLOY_REF }}
 
-      - name: "Guardrail: deploy refs from main history only"
+      - name: 'Guardrail: deploy refs from main history only'
         run: |
           git fetch origin main
           if ! git merge-base --is-ancestor HEAD origin/main; then
@@ -56,10 +56,10 @@ jobs:
           node-version: 22
           cache: 'npm'
 
-      - name: "Preflight: install"
+      - name: 'Preflight: install'
         run: npm ci
 
-      - name: "Preflight: build"
+      - name: 'Preflight: build'
         run: npx nx run-many -t build -p docs,demo --outputStyle=static
 
       - name: Configure SSH key
