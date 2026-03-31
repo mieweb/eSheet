@@ -17,6 +17,7 @@ jobs:
         with:
           types: |
             feat
+            enhance
             fix
             perf
             refactor
@@ -41,6 +42,7 @@ jobs:
           subjectPatternError: |
             PR title must follow conventional commits format:
               feat(scope): description
+              enhance(scope): description
               fix(scope): description
               perf(scope): description
               refactor(scope): description
@@ -52,4 +54,5 @@ jobs:
               repo(repo): update CI workflow
               chore(repo): update ci workflow
               docs(docs): add quickstart links
+              enhance(renderer): improve empty state
               fix(renderer): handle empty schema
