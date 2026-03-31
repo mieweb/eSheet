@@ -27,7 +27,7 @@ jobs:
     environment: production
     env:
       DEPLOY_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.sha }}
-      DEPLOY_PORT: '22'
+      DEPLOY_PORT: '2046'
 
     steps:
       - name: Validate manual confirmation
