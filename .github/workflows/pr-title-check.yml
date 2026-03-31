@@ -25,6 +25,7 @@ jobs:
             chore
             ci
             build
+            repo
           scopes: |
             repo
             docs
@@ -45,8 +46,10 @@ jobs:
               refactor(scope): description
               docs(scope): description
               chore(scope): description
+              repo(scope): description
 
             Examples:
+              repo(repo): update CI workflow
               chore(repo): update ci workflow
               docs(docs): add quickstart links
               fix(renderer): handle empty schema

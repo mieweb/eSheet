@@ -111,6 +111,10 @@
         "build": {
           "semverBump": "none",
           "changelog": { "hidden": true }
+        },
+        "repo": {
+          "semverBump": "none",
+          "changelog": { "hidden": true }
         }
       }
     },
