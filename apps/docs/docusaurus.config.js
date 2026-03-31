@@ -1,28 +1,30 @@
 // @ts-check
 import { themes as prismThemes } from 'prism-react-renderer';
 
-const isDev = process.env.NODE_ENV === 'development';
-const demoUrl = isDev
-  ? 'http://localhost:4200'
-  : 'https://esheet-demo.os.mieweb.org/';
+const isDev = process.env.NODE_ENV !== 'production';
+const siteOrigin =
+  process.env.ESHEET_SITE_ORIGIN ?? 'https://esheet.os.mieweb.org';
+const baseUrl = '/';
+const demoUrl = isDev ? 'http://localhost:3001/' : `${siteOrigin}/demo/`;
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'eSheet Documentation',
   tagline: 'Modular form builder & renderer for React',
   favicon: 'img/favicon.ico',
+  clientModules: ['./src/demo-url-runtime.js'],
 
   future: {
     v4: true,
   },
 
-  url: 'https://esheet-docs.os.mieweb.org',
-  baseUrl: '/',
+  url: siteOrigin,
+  baseUrl,
 
   organizationName: 'mieweb',
   projectName: 'mSheet',
 
-  onBrokenLinks: 'throw',
+  onBrokenLinks: isDev ? 'throw' : 'warn',
 
   customFields: {
     demoUrl,
@@ -69,10 +71,11 @@ const config = {
           },
           {
             href: demoUrl,
-            label: 'Live Demo',
-            position: 'left',
-            target: '_blank',
+            prependBaseUrlToHref: false,
+            target: '_self',
             className: 'header-live-demo-link',
+            label: 'Demo',
+            position: 'left',
           },
           {
             href: 'https://github.com/mieweb/mSheet',
