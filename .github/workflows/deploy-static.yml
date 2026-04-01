@@ -91,6 +91,8 @@ jobs:
           git fetch --prune origin
           git checkout --force "$DEPLOY_REF"
 
+          command -v rsync >/dev/null 2>&1 || sudo apt-get install -y rsync
+
           npm ci
           bash deploy/scripts/deploy-static.sh
           EOF
