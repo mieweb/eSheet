@@ -294,8 +294,8 @@ gh act push -W .github/workflows/atomic-deploy.yml --secret-file .secrets.local 
    - Fetches current branch on container's repo
    - Runs `npm ci` on container
    - Executes `deploy/scripts/workflow/atomic-deploy.sh` on container
-   - Rsyncs build artifacts to `/home/deploy/esheet/release/`
-   - Updates symlinks and reloads Nginx
+   - Rsyncs build artifacts to `/home/llatt/sites/esheet/releases/<sha>/`
+   - Updates `/home/llatt/sites/esheet/current` symlink and reloads Nginx
 
 **Expected result:**
 
@@ -303,13 +303,13 @@ gh act push -W .github/workflows/atomic-deploy.yml --secret-file .secrets.local 
 - SSH connectivity step shows ✅
 - Remote script execution shows ✅ (with rsync and symlink output)
 - Final line is `Job succeeded`
-- Nginx `/var/www/html` symlink now points to the deployed build
+- Nginx serves from `/home/llatt/sites/esheet/current` via `deploy/nginx/local.conf`
 
 **Verify deployment succeeded:**
 
 ```bash
 # Check that current symlink points to the latest build
-ssh -i .keys-local/deploy_test_rsa -p 2046 deploy@localhost "ls -la /var/www/html"
+ssh -i .keys-local/deploy_test_rsa -p 2046 deploy@localhost "ls -la /home/llatt/sites/esheet && ls -la /home/llatt/sites/esheet/current"
 
 # Fetch a page from the deployed docs/demo
 curl -s http://localhost:8080 | head -20

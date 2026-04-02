@@ -3,11 +3,21 @@ function resolveDemoUrl(fallbackUrl) {
     return fallbackUrl;
   }
 
-  const { hostname } = window.location;
+  const { hostname, port } = window.location;
   const isLocalHost =
     hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
+  // Only use the demo dev server when docs itself is running on port 3000.
+  const isLocalDev = isLocalHost && port === '3000';
 
-  return isLocalHost ? 'http://localhost:3001/' : fallbackUrl;
+  if (isLocalDev) {
+    return 'http://localhost:3001/';
+  }
+
+  if (isLocalHost) {
+    return '/demo/';
+  }
+
+  return fallbackUrl;
 }
 
 function updateNavbarDemoLink() {

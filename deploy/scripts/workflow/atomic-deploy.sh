@@ -10,7 +10,7 @@ REL_DIR="$RELEASES_DIR/$SHA"
 
 cd "$REPO_ROOT"
 
-CI=1 NX_INTERACTIVE=false npx nx build docs --outputStyle=static
+CI=1 ESHEET_DEMO_URL=/demo/ NX_INTERACTIVE=false npx nx build docs --outputStyle=static
 CI=1 NX_INTERACTIVE=false npx nx build demo --outputStyle=static
 
 sudo mkdir -p "$REL_DIR/demo"

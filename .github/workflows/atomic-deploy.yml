@@ -45,6 +45,11 @@ jobs:
 
       - name: 'Guardrail: deploy refs from main history only'
         run: |
+          if [ "${ACT:-}" = "true" ]; then
+            echo "Local act run detected; skipping main-history guard."
+            exit 0
+          fi
+
           git fetch origin main
           if ! git merge-base --is-ancestor HEAD origin/main; then
             echo "Ref is not on origin/main history; refusing deploy."

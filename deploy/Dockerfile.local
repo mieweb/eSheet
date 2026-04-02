@@ -36,6 +36,9 @@ RUN echo "PermitRootLogin no" >> /etc/ssh/sshd_config \
     && echo "PubkeyAuthentication yes" >> /etc/ssh/sshd_config \
     && ssh-keygen -A
 
+# Use the local Nginx routing config so Docker testing behavior is isolated from prod.
+COPY deploy/nginx/local.conf /etc/nginx/sites-available/default
+
 # Provide a tiny systemctl shim for containers without systemd.
 RUN printf '%s\n' '#!/bin/sh' \
     'if [ "$1" = "reload" ] && [ "$2" = "nginx" ]; then' \
