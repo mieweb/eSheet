@@ -11,12 +11,12 @@ This guide explains how to test all GitHub Actions workflows locally using `gh a
 
 ## Quick Reference
 
-| Workflow | Command | Notes |
-|----------|---------|-------|
-| **CI** (lint, test, build, typecheck) | `gh act push -W .github/workflows/ci.yml --pull=false` | No secrets needed; validates code quality |
-| **Release** (with dry-run) | `gh act push -W .github/workflows/release.yml --pull=false` | Tests release workflow without publishing; requires git history |
-| **PR Title Check** | `gh act pull_request -e /tmp/pr-event.json -W .github/workflows/pr-title-check.yml --pull=false` | Uses synthetic PR event; see [Testing PR Title Check](#testing-pr-title-check) |
-| **Atomic Deploy** | `gh act push -W .github/workflows/atomic-deploy.yml --secret-file .secrets.local ...` | Requires Docker container + SSH setup; see [Local Deploy Testing](#local-deploy-testing) |
+| Workflow                              | Command                                                                                          | Notes                                                                                    |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| **CI** (lint, test, build, typecheck) | `gh act push -W .github/workflows/ci.yml --pull=false`                                           | No secrets needed; validates code quality                                                |
+| **Release** (with dry-run)            | `gh act push -W .github/workflows/release.yml --pull=false`                                      | Tests release workflow without publishing; requires git history                          |
+| **PR Title Check**                    | `gh act pull_request -e /tmp/pr-event.json -W .github/workflows/pr-title-check.yml --pull=false` | Uses synthetic PR event; see [Testing PR Title Check](#testing-pr-title-check)           |
+| **Atomic Deploy**                     | `gh act push -W .github/workflows/atomic-deploy.yml --secret-file .secrets.local ...`            | Requires Docker container + SSH setup; see [Local Deploy Testing](#local-deploy-testing) |
 
 **Note on `--pull=false`:** This flag skips pulling the Docker runner image and uses a cached local copy. Use it on subsequent runs to avoid Docker Hub rate-limiting and auth issues. On the **first run (ever)**, omit `--pull=false` to pull and cache the runner image (~1 min), then use it for all subsequent runs.
 
@@ -137,6 +137,7 @@ gh act pull_request -e /tmp/pr-event.json -W .github/workflows/pr-title-check.ym
 ```
 
 What this does:
+
 - `printf ... > /tmp/pr-event.json` creates a temporary JSON file that simulates a real GitHub PR event
 - `-e /tmp/pr-event.json` tells `gh act` to use this synthetic event instead of a real PR
 - The workflow reads `${{ github.event.pull_request.title }}` from the JSON and validates it against the conventional commits format
@@ -225,6 +226,7 @@ ssh -i .keys-local/deploy_test_rsa -p 2046 deploy@localhost "whoami && pwd && ls
 ```
 
 Should output:
+
 ```
 deploy
 /home/deploy
@@ -238,6 +240,7 @@ curl -I http://localhost:8080
 ```
 
 Should return:
+
 ```
 HTTP/1.1 200 OK
 Server: nginx/1.18.0
@@ -257,16 +260,19 @@ Server: nginx/1.18.0
 **Quick workflow for testing your branch:**
 
 1. Push your branch (or commit and squash to main locally):
+
    ```bash
    git push origin my-feature-branch
    ```
 
 2. Then test against that ref:
+
    ```bash
    gh act push -W .github/workflows/atomic-deploy.yml --secret-file .secrets.local -s DEPLOY_SSH_KEY="$(cat .keys-local/deploy_test_rsa)" --pull=false
    ```
-   
+
    Or test against a specific branch:
+
    ```bash
    gh act workflow_dispatch -i ref=my-feature-branch -i confirm=deploy -W .github/workflows/atomic-deploy.yml --secret-file .secrets.local -s DEPLOY_SSH_KEY="$(cat .keys-local/deploy_test_rsa)" --pull=false
    ```
@@ -393,7 +399,6 @@ gh act push -W .github/workflows/atomic-deploy.yml --secret-file .secrets.local 
 1. **First-run vs. subsequent runs:**
    - **First time ever using `gh act`:** Run without `--pull=false` to pull the runner image (one-time, ~1 min)
    - **Subsequent runs:** Always use `--pull=false` to skip Docker Hub pulls and avoid rate-limiting
-   
 2. **Test locally before pushing** to main — run CI, release dry-run, and deploy workflows locally to catch issues early
 
 3. **Keep `.secrets.local` in `.gitignore`** — it contains deploy credentials and should never be committed
