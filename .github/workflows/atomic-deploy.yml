@@ -1,4 +1,4 @@
-name: Deploy Static Site
+name: Atomic Deploy
 
 on:
   push:
@@ -18,7 +18,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: deploy-static-production
+  group: atomic-deploy-production
   cancel-in-progress: false
 
 jobs:
@@ -78,7 +78,7 @@ jobs:
           fi
           chmod 600 ~/.ssh/known_hosts
 
-      - name: Run remote deploy script
+      - name: Run remote atomic deploy script
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -94,5 +94,5 @@ jobs:
           command -v rsync >/dev/null 2>&1 || sudo apt-get install -y rsync
 
           npm ci
-          bash deploy/scripts/deploy-static.sh
+          bash deploy/scripts/workflow/atomic-deploy.sh
           EOF

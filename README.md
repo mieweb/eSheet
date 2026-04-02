@@ -138,9 +138,30 @@ npx nx affected -t lint,test,build
 ### Build a single package
 
 ```bash
+# Build a single package
 npx nx build @esheet/core
 npx nx build @esheet/builder
 ```
+
+### Test your changes against GitHub Actions workflows locally
+
+Before committing, test your changes locally using `gh act`. This validates formatting, linting, tests, and (optionally) deployment.
+
+Quick commands:
+
+```bash
+# Test CI workflow (lint, test, build, typecheck)
+gh act push -W .github/workflows/ci.yml --pull=false
+
+# Test release workflow (all checks + dry-run release — does not publish)
+gh act push -W .github/workflows/release.yml --pull=false
+
+# Test PR title validation
+printf '{"pull_request":{"title":"fix(core): my change","number":1}}\n' > /tmp/pr-event.json
+gh act pull_request -e /tmp/pr-event.json -W .github/workflows/pr-title-check.yml --pull=false
+```
+
+For full setup instructions, deploy testing against a local Docker container, and troubleshooting, see [.github/workflows/TESTING-LOCALLY.md](.github/workflows/TESTING-LOCALLY.md).
 
 ### Run the demo app
 
@@ -159,16 +180,16 @@ npx nx serve docs
 ### Production Static Deploy (Nginx)
 
 ```bash
-chmod +x deploy/scripts/setup-nginx.sh
-./deploy/scripts/setup-nginx.sh
+chmod +x deploy/scripts/manual/setup-nginx.sh
+./deploy/scripts/manual/setup-nginx.sh
 
-chmod +x deploy/scripts/deploy-static.sh
-./deploy/scripts/deploy-static.sh
+chmod +x deploy/scripts/workflow/atomic-deploy.sh
+./deploy/scripts/workflow/atomic-deploy.sh
 ```
 
 - Nginx config in repo: `deploy/nginx/default.conf`
-- Deploy script in repo: `deploy/scripts/deploy-static.sh`
-- Setup helper in repo: `deploy/scripts/setup-nginx.sh`
+- Deploy script in repo: `deploy/scripts/workflow/atomic-deploy.sh`
+- Setup helper in repo: `deploy/scripts/manual/setup-nginx.sh`
 - Runbook in repo: `deploy/RUNBOOK-nginx-atomic.md`
 
 ---

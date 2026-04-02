@@ -7,7 +7,7 @@ The workflow YAML files in this directory are the source of truth. This page is 
 | [ci.yml](./ci.yml)                         | Validate formatting, linting, tests, builds, and type checks for code changes. | Push to `main`; every pull request.                                           | Authoritative GitHub-side code validation workflow.                    |
 | [pr-title-check.yml](./pr-title-check.yml) | Enforce semantic pull request titles.                                          | Pull request metadata changes: `opened`, `edited`, `synchronize`, `reopened`. | Validates PR metadata only, not code quality.                          |
 | [release.yml](./release.yml)               | Run a manual release with an optional dry run.                                 | Manual `workflow_dispatch`.                                                   | Re-runs CI-equivalent checks before `npx nx release`.                  |
-| [deploy-static.yml](./deploy-static.yml)   | Build and deploy the docs site and demo to production.                         | Push to `main`; manual `workflow_dispatch`.                                   | Uses SSH-based remote deployment and existing deploy runbooks/scripts. |
+| [atomic-deploy.yml](./atomic-deploy.yml)   | Build and atomically deploy the docs site and demo to production.              | Push to `main`; manual `workflow_dispatch`.                                   | Uses SSH-based remote deployment and existing deploy runbooks/scripts. |
 
 ## CI
 
@@ -22,17 +22,32 @@ npx nx format:check --base="remotes/origin/main"
 npx nx run-many -t lint test build typecheck
 ```
 
-Other workflows build on this baseline: [release.yml](./release.yml) re-runs the same validation gates before publishing, and [deploy-static.yml](./deploy-static.yml) runs a narrower preflight build for deployable apps only.
+Other workflows build on this baseline: [release.yml](./release.yml) re-runs the same validation gates before publishing, and [atomic-deploy.yml](./atomic-deploy.yml) runs a narrower preflight build for deployable apps only.
 
 ## Validate PR Title
 
 Source: [pr-title-check.yml](./pr-title-check.yml)
 
-This workflow runs when pull request metadata changes: `opened`, `edited`, `synchronize`, and `reopened`. It uses `amannn/action-semantic-pull-request` with the repository `GITHUB_TOKEN` to enforce conventional PR titles.
+This workflow runs when pull request metadata changes: `opened`, `edited`, `synchronize`, and `reopened`. It validates the PR title with an inline bash regex to enforce conventional commit format.
 
-Scope is required. Allowed types are `feat`, `enhance`, `fix`, `perf`, `refactor`, `docs`, `test`, `chore`, `ci`, `build`, and `repo`. Allowed scopes are `repo`, `docs`, `demo`, `core`, `fields`, `builder`, `renderer`, `renderer-standalone`, and `renderer-blaze`.
+**Required format:**
 
-This workflow validates PR metadata, not the code itself. Its purpose is to keep history consistent and make release semantics easier to reason about alongside conventional commits.
+```
+<type>(<scope>): <description>
+```
+
+- **Type:** `feat`, `enhance`, `fix`, `perf`, `refactor`, `docs`, `test`, `chore`, `ci`, `build`, `repo`
+- **Scope:** `repo`, `docs`, `demo`, `core`, `fields`, `builder`, `renderer`, `renderer-standalone`, `renderer-blaze`
+- **Description:** non-empty text
+
+**Valid examples:**
+
+- `feat(builder): add inline field validation`
+- `fix(core): resolve circular dependency`
+- `docs(repo): update deployment runbook`
+- `chore(renderer): upgrade React`
+
+This workflow validates PR metadata only, not code quality. Its purpose is to keep commit history consistent and enable semantic versioning via `nx release`.
 
 ## Release
 
@@ -46,9 +61,9 @@ Before release, it performs the same preflight gates as [ci.yml](./ci.yml): full
 
 The workflow requires `contents: write` permission because it performs repository-writing release operations. For the broader release model and local release commands, see [README.md](../../README.md#releasing).
 
-## Deploy Static Site
+## Atomic Deploy
 
-Source: [deploy-static.yml](./deploy-static.yml)
+Source: [atomic-deploy.yml](./atomic-deploy.yml)
 
 This workflow deploys the production static outputs for the docs site and demo. It runs automatically on pushes to `main`, and it can also be started manually with `workflow_dispatch`.
 
@@ -69,7 +84,7 @@ Remote deployment shape:
 - Check out the requested ref with full git history.
 - Configure SSH access.
 - SSH to the deployment host.
-- In the remote repo, fetch, check out the requested ref, run `npm ci`, and execute [deploy/scripts/deploy-static.sh](../../deploy/scripts/deploy-static.sh).
+- In the remote repo, fetch, check out the requested ref, run `npm ci`, and execute [deploy/scripts/workflow/atomic-deploy.sh](../../deploy/scripts/workflow/atomic-deploy.sh).
 
 Required secrets:
 
@@ -82,7 +97,20 @@ Optional secret:
 
 - `DEPLOY_KNOWN_HOSTS` if you want to pin host keys explicitly instead of relying on `ssh-keyscan` during the workflow.
 
-For operational details, server setup, rollback steps, and the deployed Nginx configuration, see [deploy/RUNBOOK-nginx-atomic.md](../../deploy/RUNBOOK-nginx-atomic.md), [deploy/scripts/deploy-static.sh](../../deploy/scripts/deploy-static.sh), and [deploy/nginx/default.conf](../../deploy/nginx/default.conf).
+For operational details, server setup, rollback steps, and the deployed Nginx configuration, see [deploy/RUNBOOK-nginx-atomic.md](../../deploy/RUNBOOK-nginx-atomic.md), [deploy/scripts/workflow/atomic-deploy.sh](../../deploy/scripts/workflow/atomic-deploy.sh), and [deploy/nginx/default.conf](../../deploy/nginx/default.conf).
+
+## Local Testing with gh act
+
+To test workflows locally using `gh act`, see [TESTING-LOCALLY.md](./TESTING-LOCALLY.md). It covers:
+
+- **Quick reference table** for all workflows (CI, Release, PR Title Check, Atomic Deploy)
+- **General setup** for any workflow testing
+- **Testing individual workflows:** CI validation, Release dry-run, PR Title Check with synthetic events
+- **Local deploy testing:** Docker container setup, SSH configuration, and atomic-deploy testing against the deployment target
+- **Troubleshooting** SSH, rsync, and script sync issues
+- **Best practices:** Using `--pull=false`, testing before pushing, credential handling
+
+All examples use `gh act` with practical commands you can run immediately.
 
 ## Maintenance
 
