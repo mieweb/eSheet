@@ -12,7 +12,6 @@ const config = {
   title: 'eSheet Documentation',
   tagline: 'Modular form builder & renderer for React',
   favicon: 'img/favicon.ico',
-  clientModules: ['./src/demo-url-runtime.js'],
 
   future: {
     v4: true,

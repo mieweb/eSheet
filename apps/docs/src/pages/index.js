@@ -127,25 +127,7 @@ function isExternalLink(href) {
 }
 
 function resolveDemoUrl(siteConfig) {
-  const configuredDemoUrl = siteConfig.customFields?.demoUrl;
-  if (typeof window === 'undefined') {
-    return '/demo/';
-  }
-
-  const { hostname, port } = window.location;
-  const isLocalHost =
-    hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
-  const isLocalDev = isLocalHost && port === '3000';
-
-  if (isLocalDev) {
-    return 'http://localhost:3001/';
-  }
-
-  if (isLocalHost) {
-    return '/demo/';
-  }
-
-  return configuredDemoUrl;
+  return siteConfig.customFields?.demoUrl || '/demo/';
 }
 
 function HomepageHeader() {
