@@ -5,7 +5,7 @@ const isDev = process.env.NODE_ENV !== 'production';
 const siteOrigin =
   process.env.ESHEET_SITE_ORIGIN ?? 'https://esheet.os.mieweb.org';
 const baseUrl = '/';
-const demoUrl = isDev ? 'http://localhost:3001/' : '/demo/';
+const demoUrl = isDev ? 'http://localhost:3001/' : `${siteOrigin}/demo/`;
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
