@@ -4,6 +4,8 @@
 
 This document captures production static hosting for eSheet with atomic deployments.
 
+`<deploy-root>` is the deployment root chosen by the operator, for example `/srv/esheet` or `/var/www/esheet`.
+
 ## Current Architecture
 
 - Build docs and demo with Nx.
@@ -15,14 +17,14 @@ This document captures production static hosting for eSheet with atomic deployme
 ## Repository Files
 
 - Nginx config: deploy/nginx/default.conf
-- Deploy script: deploy/scripts/deploy-static.sh
-- Host setup helper: deploy/scripts/setup-nginx.sh
+- Deploy script: deploy/scripts/workflow/atomic-deploy.sh
+- Host setup helper: deploy/scripts/manual/setup-nginx.sh
 
 ## Nginx Config
 
 Nginx serves from this symlink target root:
 
-- /home/llatt/sites/esheet/current
+- `<deploy-root>/current`
 
 Routing:
 
@@ -35,17 +37,17 @@ Routing:
 1. Install and configure Nginx from repo.
 
 ```bash
-chmod +x deploy/scripts/setup-nginx.sh
-./deploy/scripts/setup-nginx.sh
+chmod +x deploy/scripts/manual/setup-nginx.sh
+./deploy/scripts/manual/setup-nginx.sh
 ```
 
 2. Ensure Nginx can traverse release paths.
 
 ```bash
-sudo chmod o+x /home
-sudo chmod o+x /home/llatt
-sudo mkdir -p /home/llatt/sites/esheet/releases
-sudo chown -R "$(id -un):$(id -gn)" /home/llatt/sites/esheet
+DEPLOY_ROOT=<deploy-root>
+sudo mkdir -p "$DEPLOY_ROOT/releases"
+sudo chown -R "$(id -un):$(id -gn)" "$DEPLOY_ROOT"
+# If DEPLOY_ROOT is under restricted parent directories, grant execute on each parent as needed.
 ```
 
 ## Deployment
@@ -53,15 +55,15 @@ sudo chown -R "$(id -un):$(id -gn)" /home/llatt/sites/esheet
 Run the production deploy script.
 
 ```bash
-chmod +x deploy/scripts/deploy-static.sh
-./deploy/scripts/deploy-static.sh
+chmod +x deploy/scripts/workflow/atomic-deploy.sh
+./deploy/scripts/workflow/atomic-deploy.sh
 ```
 
 What this does:
 
 1. Builds docs and demo.
-2. Copies to /home/llatt/sites/esheet/releases/<SHA>/ and /home/llatt/sites/esheet/releases/<SHA>/demo/.
-3. Switches /home/llatt/sites/esheet/current -> new SHA release.
+2. Copies to `<deploy-root>/releases/<SHA>/` and `<deploy-root>/releases/<SHA>/demo/`.
+3. Switches `<deploy-root>/current` -> new SHA release.
 4. Prunes old releases, keeping latest 5.
 5. Validates and reloads Nginx.
 
@@ -70,7 +72,7 @@ What this does:
 ```bash
 sudo nginx -t
 sudo systemctl status nginx
-ls -la /home/llatt/sites/esheet/current
+ls -la <deploy-root>/current
 curl -I http://127.0.0.1/
 curl -I http://127.0.0.1/demo/
 ```
@@ -80,7 +82,7 @@ curl -I http://127.0.0.1/demo/
 Point current back to a known-good SHA and reload Nginx.
 
 ```bash
-sudo ln -sfn /home/llatt/sites/esheet/releases/<GOOD_SHA> /home/llatt/sites/esheet/current
+sudo ln -sfn <deploy-root>/releases/<GOOD_SHA> <deploy-root>/current
 sudo nginx -s reload
 ```
 

@@ -1,0 +1,20 @@
+# Normalize all text files to LF on commit, checkout as LF everywhere.
+# This prevents Windows CRLF from causing false positives in nx format:check.
+* text=auto eol=lf
+
+# Binaries — no line-ending conversion.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.otf binary
+*.pdf binary
+*.zip binary
+*.gz binary
+*.tar binary

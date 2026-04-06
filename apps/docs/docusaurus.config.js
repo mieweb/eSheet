@@ -3,7 +3,7 @@ import { themes as prismThemes } from 'prism-react-renderer';
 
 const isDev = process.env.NODE_ENV !== 'production';
 const siteOrigin =
-  process.env.ESHEET_SITE_ORIGIN ?? 'https://esheet.os.mieweb.org';
+  process.env.ESHEET_SITE_ORIGIN || 'https://esheet.os.mieweb.org';
 const baseUrl = '/';
 const demoUrl = isDev ? 'http://localhost:3001/' : `${siteOrigin}/demo/`;
 
@@ -12,7 +12,6 @@ const config = {
   title: 'eSheet Documentation',
   tagline: 'Modular form builder & renderer for React',
   favicon: 'img/favicon.ico',
-  clientModules: ['./src/demo-url-runtime.js'],
 
   future: {
     v4: true,
