@@ -251,33 +251,9 @@ Server: nginx/1.18.0
 
 **Precondition:** Complete the [One-time Setup](#one-time-setup) above, and ensure the container is running.
 
-**Important:** The atomic-deploy workflow clones from GitHub, so **the container must be able to fetch your branch from the real repository**. This means:
+**Important:** The atomic-deploy workflow clones from GitHub, so the commit under test must already exist on the remote repository. Unpushed local changes will not work.
 
-- ✅ Testing against `main` — always works (already on GitHub)
-- ✅ Testing against a pushed feature branch — works (just push to GitHub first)
-- ❌ Testing against unpushed local changes — **will not work** (remote git fetch fails)
-
-**Quick workflow for testing your branch:**
-
-1. Push your branch (or commit and squash to main locally):
-
-   ```bash
-   git push origin my-feature-branch
-   ```
-
-2. Then test against that ref:
-
-   ```bash
-   gh act push -W .github/workflows/atomic-deploy.yml --secret-file .secrets.local -s DEPLOY_SSH_KEY="$(cat .keys-local/deploy_test_rsa)" --pull=false
-   ```
-
-   Or test against a specific branch:
-
-   ```bash
-   gh act workflow_dispatch -i ref=my-feature-branch -i confirm=deploy -W .github/workflows/atomic-deploy.yml --secret-file .secrets.local -s DEPLOY_SSH_KEY="$(cat .keys-local/deploy_test_rsa)" --pull=false
-   ```
-
-**Default test (against current branch or main):**
+**Default test:**
 
 ```bash
 gh act push -W .github/workflows/atomic-deploy.yml --secret-file .secrets.local -s DEPLOY_SSH_KEY="$(cat .keys-local/deploy_test_rsa)" --pull=false
@@ -288,10 +264,10 @@ gh act push -W .github/workflows/atomic-deploy.yml --secret-file .secrets.local 
 1. Loads secrets from `.secrets.local` file
 2. Injects the private SSH key as `DEPLOY_SSH_KEY`
 3. Runs the `atomic-deploy.yml` workflow locally:
-   - Checks out current branch
+   - Checks out the current commit for the local run
    - Builds docs and demo apps
    - SSHes to `localhost:2046` (the container)
-   - Fetches current branch on container's repo
+   - Fetches the commit under test on the container repo
    - Runs `npm ci` on container
    - Executes `deploy/scripts/workflow/atomic-deploy.sh` on container
    - Rsyncs build artifacts to `/home/llatt/sites/esheet/releases/<sha>/`
@@ -405,7 +381,7 @@ gh act push -W .github/workflows/atomic-deploy.yml --secret-file .secrets.local 
 
 4. **Refresh SSH keys if container is recreated:** The container's host key changes, and you may need to remove old entries from `~/.ssh/known_hosts` (see [refresh-local-ssh-key.sh](./scripts/manual/refresh-local-ssh-key.sh))
 
-5. **Commit before testing deploy** — the container clones from GitHub; test against a pushed branch or local commits that are squash-committed to main
+5. **Commit and push before testing deploy** — the container clones from GitHub, so unpushed local changes cannot be tested
 
 6. **Inspect failed steps** — act shows full step output; scroll up in Terminal to find error details before re-running
 
