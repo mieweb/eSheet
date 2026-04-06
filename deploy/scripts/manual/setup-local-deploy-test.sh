@@ -44,6 +44,7 @@ DEPLOY_SSH_KEY=$KEY_ESCAPED
 DEPLOY_HOST=host.docker.internal
 DEPLOY_USER=deploy
 DEPLOY_REPO_PATH=/home/deploy/esheet
+ESHEET_SITE_ORIGIN=http://localhost:8080
 SECRETS_EOF
 
 chmod 600 "$SECRETS_FILE"
