@@ -28,6 +28,7 @@ jobs:
     env:
       DEPLOY_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.sha }}
       DEPLOY_PORT: '2046'
+      ESHEET_SITE_ORIGIN: ${{ secrets.ESHEET_SITE_ORIGIN || 'https://esheet.os.mieweb.org' }}
 
     steps:
       - name: Validate manual confirmation
@@ -89,7 +90,7 @@ jobs:
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_REPO_PATH: ${{ secrets.DEPLOY_REPO_PATH }}
         run: |
-          ssh -o BatchMode=yes -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" "DEPLOY_REF='$DEPLOY_REF' DEPLOY_REPO_PATH='$DEPLOY_REPO_PATH' bash -s" <<'EOF'
+          ssh -o BatchMode=yes -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" "ESHEET_SITE_ORIGIN='${ESHEET_SITE_ORIGIN:-https://esheet.os.mieweb.org}' DEPLOY_REF='$DEPLOY_REF' DEPLOY_REPO_PATH='$DEPLOY_REPO_PATH' bash -s" <<'EOF'
           set -euo pipefail
 
           cd "$DEPLOY_REPO_PATH"
