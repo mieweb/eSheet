@@ -1,4 +1,4 @@
-name: Deploy Static Site
+name: Atomic Deploy
 
 on:
   push:
@@ -18,7 +18,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: deploy-static-production
+  group: atomic-deploy-production
   cancel-in-progress: false
 
 jobs:
@@ -28,6 +28,7 @@ jobs:
     env:
       DEPLOY_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.sha }}
       DEPLOY_PORT: '2046'
+      ESHEET_SITE_ORIGIN: ${{ secrets.ESHEET_SITE_ORIGIN || 'https://esheet.os.mieweb.org' }}
 
     steps:
       - name: Validate manual confirmation
@@ -45,6 +46,11 @@ jobs:
 
       - name: 'Guardrail: deploy refs from main history only'
         run: |
+          if [ "${ACT:-}" = "true" ]; then
+            echo "Local act run detected; skipping main-history guard."
+            exit 0
+          fi
+
           git fetch origin main
           if ! git merge-base --is-ancestor HEAD origin/main; then
             echo "Ref is not on origin/main history; refusing deploy."
@@ -78,13 +84,13 @@ jobs:
           fi
           chmod 600 ~/.ssh/known_hosts
 
-      - name: Run remote deploy script
+      - name: Run remote atomic deploy script
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_REPO_PATH: ${{ secrets.DEPLOY_REPO_PATH }}
         run: |
-          ssh -o BatchMode=yes -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" "DEPLOY_REF='$DEPLOY_REF' DEPLOY_REPO_PATH='$DEPLOY_REPO_PATH' bash -s" <<'EOF'
+          ssh -o BatchMode=yes -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" "ESHEET_SITE_ORIGIN='${ESHEET_SITE_ORIGIN:-https://esheet.os.mieweb.org}' DEPLOY_REF='$DEPLOY_REF' DEPLOY_REPO_PATH='$DEPLOY_REPO_PATH' bash -s" <<'EOF'
           set -euo pipefail
 
           cd "$DEPLOY_REPO_PATH"
@@ -94,5 +100,5 @@ jobs:
           command -v rsync >/dev/null 2>&1 || sudo apt-get install -y rsync
 
           npm ci
-          bash deploy/scripts/deploy-static.sh
+          bash deploy/scripts/workflow/atomic-deploy.sh
           EOF

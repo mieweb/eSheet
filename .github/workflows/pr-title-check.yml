@@ -11,48 +11,41 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: amannn/action-semantic-pull-request@v5
+      - name: Validate PR title format
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          types: |
-            feat
-            enhance
-            fix
-            perf
-            refactor
-            docs
-            test
-            chore
-            ci
-            build
-            repo
-          scopes: |
-            repo
-            docs
-            demo
-            core
-            fields
-            builder
-            renderer
-            renderer-standalone
-            renderer-blaze
-          requireScope: true
-          subjectPattern: ^.+$
-          subjectPatternError: |
-            PR title must follow conventional commits format:
-              feat(scope): description
-              enhance(scope): description
-              fix(scope): description
-              perf(scope): description
-              refactor(scope): description
-              docs(scope): description
-              chore(scope): description
-              repo(scope): description
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -euo pipefail
 
-            Examples:
-              repo(repo): update CI workflow
-              chore(repo): update ci workflow
-              docs(docs): add quickstart links
-              enhance(renderer): improve empty state
-              fix(renderer): handle empty schema
+          if [ -z "${PR_TITLE:-}" ]; then
+            echo "PR title is missing from event payload"
+            exit 1
+          fi
+
+          REGEX='^(feat|enhance|fix|perf|refactor|docs|test|chore|ci|build|repo)\((repo|docs|demo|core|fields|builder|renderer|renderer-standalone|renderer-blaze)\): .+$'
+
+          if [[ "$PR_TITLE" =~ $REGEX ]]; then
+            echo "PR title is valid: $PR_TITLE"
+            exit 0
+          fi
+
+          cat <<'EOF'
+          PR title must follow conventional commits format:
+            feat(scope): description
+            enhance(scope): description
+            fix(scope): description
+            perf(scope): description
+            refactor(scope): description
+            docs(scope): description
+            chore(scope): description
+            repo(scope): description
+
+          Examples:
+            repo(repo): update CI workflow
+            chore(repo): update ci workflow
+            docs(docs): add quickstart links
+            enhance(renderer): improve empty state
+            fix(renderer): handle empty schema
+          EOF
+
+          exit 1

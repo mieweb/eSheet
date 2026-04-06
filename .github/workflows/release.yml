@@ -25,6 +25,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Resolve Nx base ref
+        run: |
+          git fetch origin main --depth=1
+          echo "NX_BASE=$(git rev-parse origin/main)" >> "$GITHUB_ENV"
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -33,7 +38,7 @@ jobs:
 
       - run: npm ci
 
-      - run: npx nx format:check --base="remotes/origin/main"
+      - run: npx nx format:check --base="$NX_BASE"
       - run: npx nx run-many -t lint test build typecheck
 
       - name: Nx release (dry-run)

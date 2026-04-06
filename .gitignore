@@ -45,8 +45,18 @@ Thumbs.db
 .env
 .env.*
 
+# Local deployment testing (machine-specific, auto-generated)
+.keys-local/
+.secrets.local
+deploy/authorized_keys.local
+
 # Local registry (Verdaccio)
 .verdaccio/htpasswd
+
+# Local deploy test artifacts (not for commit)
+.keys-local/
+.secrets.local
+.actrc.local
 
 # TypeScript build info
 *.tsbuildinfo
