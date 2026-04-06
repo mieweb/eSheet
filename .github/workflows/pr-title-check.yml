@@ -37,8 +37,17 @@ jobs:
             perf(scope): description
             refactor(scope): description
             docs(scope): description
+            test(scope): description
             chore(scope): description
+            ci(scope): description
+            build(scope): description
             repo(scope): description
+
+          Allowed tags:
+            feat, enhance, fix, perf, refactor, docs, test, chore, ci, build, repo
+
+          Allowed scopes:
+            repo, docs, demo, core, fields, builder, renderer, renderer-standalone, renderer-blaze
 
           Examples:
             repo(repo): update CI workflow
