@@ -1,5 +1,5 @@
 {
-  "name": "demo",
+  "name": "app-demo",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "targets": {
     "build": {
@@ -17,7 +17,7 @@
       ],
       "executor": "nx:run-commands",
       "options": {
-        "command": "npx nx run demo:serve"
+        "command": "npx nx run app-demo:serve"
       }
     },
     "serve": {

@@ -57,7 +57,7 @@ function DraggableRankItem({
     >
       <div
         ref={handleRef}
-        className="rank-drag-handle ms:flex ms:items-center ms:mr-2 ms:text-mstextmuted ms:cursor-grab ms:active:cursor-grabbing"
+        className="rank-drag-handle ms:flex ms:items-center ms:mr-2 ms:text-mstextmuted ms:cursor-grab ms:active:cursor-grabbing ms:user-select-none"
         style={{ touchAction: 'none' }}
         aria-label="Drag to reorder"
       >

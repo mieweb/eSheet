@@ -50,13 +50,19 @@ function DraggableFieldItem({
 
     const dragHandleEl = handleRef.current ?? el;
 
-    return applySheetDnd(dragHandleEl as HTMLElement, undefined, (sourceId) => {
-      if (parentId) {
-        ui.getState().selectFieldChild(parentId, sourceId);
-      } else {
-        ui.getState().selectField(sourceId);
-      }
-    });
+    return applySheetDnd(
+      dragHandleEl as HTMLElement,
+      undefined,
+      (sourceId) => {
+        // Immediate press feedback: highlight field on hold-down
+        if (parentId) {
+          ui.getState().selectFieldChild(parentId, sourceId);
+        } else {
+          ui.getState().selectField(sourceId);
+        }
+      },
+      undefined
+    );
   }, [dragEnabled, id, parentId]);
 
   const handleSelectOverride = React.useCallback(

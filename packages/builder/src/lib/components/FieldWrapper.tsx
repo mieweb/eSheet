@@ -271,7 +271,7 @@ export function FieldWrapper({
         {dragHandleRef !== undefined && (
           <div
             ref={dragHandleRef}
-            className="drag-handle ms:flex ms:items-center ms:p-1 ms:text-mstextmuted ms:cursor-grab ms:active:cursor-grabbing ms:shrink-0"
+            className="drag-handle ms:flex ms:items-center ms:p-1 ms:text-mstextmuted ms:cursor-grab ms:active:cursor-grabbing ms:shrink-0 ms:user-select-none"
             style={{ touchAction: 'none' }}
             aria-label="Drag to reorder"
           >

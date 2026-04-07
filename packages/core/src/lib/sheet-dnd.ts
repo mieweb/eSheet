@@ -38,9 +38,13 @@ interface ActiveDrag {
   highlightedSection: HTMLElement | null;
   scrollContainer: Element | null;
   scrollRafId: number;
+  prevBodyUserSelect: string;
+  prevBodyWebkitUserSelect: string;
+  selectStartHandler?: (e: Event) => void;
 }
 
 const DRAG_THRESHOLD = 8;
+const PRESSED_OPACITY = '0.4';
 /** Distance (px) from viewport edge to start auto-scrolling. */
 const SCROLL_ZONE = 60;
 /** Max scroll speed (px per frame). */
@@ -137,6 +141,11 @@ function findDropTarget(
   return (el as HTMLElement).closest?.(`[${idAttr}]`) ?? null;
 }
 
+function isPointerOverElement(el: HTMLElement, x: number, y: number): boolean {
+  const target = document.elementFromPoint(x, y);
+  return target instanceof HTMLElement && el.contains(target);
+}
+
 function getEdge(el: HTMLElement, y: number): 'top' | 'bottom' {
   const rect = el.getBoundingClientRect();
   return y < rect.top + rect.height / 2 ? 'top' : 'bottom';
@@ -200,9 +209,30 @@ function findSectionAncestor(
 export function applySheetDnd(
   handle: HTMLElement,
   idAttr = 'data-field-id',
+  onPressStart?: (sourceId: string) => void,
   onDragStart?: (sourceId: string) => void
 ): () => void {
   let active: ActiveDrag | null = null;
+
+  function clearDropState(current: ActiveDrag) {
+    if (current.currentTarget && current.currentOperation === 'combine') {
+      clearCombineHighlight(current.currentTarget);
+    }
+    if (current.highlightedSection) {
+      clearCombineHighlight(current.highlightedSection);
+      current.highlightedSection = null;
+    }
+    current.currentTarget = null;
+    current.currentEdge = null;
+    current.currentOperation = null;
+    hideIndicator();
+  }
+
+  function preventSelectStart(e: Event) {
+    if (active) {
+      e.preventDefault();
+    }
+  }
 
   function findSource(el: HTMLElement): HTMLElement | null {
     return el.closest<HTMLElement>(`[${idAttr}]`);
@@ -289,7 +319,26 @@ export function applySheetDnd(
       highlightedSection: null,
       scrollContainer: findScrollParent(source),
       scrollRafId: 0,
+      prevBodyUserSelect: document.body.style.getPropertyValue('user-select'),
+      prevBodyWebkitUserSelect: document.body.style.getPropertyValue(
+        '-webkit-user-select'
+      ),
     };
+
+    document.body.style.setProperty('user-select', 'none');
+    document.body.style.setProperty('-webkit-user-select', 'none');
+    document.addEventListener('selectstart', preventSelectStart, true);
+
+    // Fire press-start callback immediately for field selection feedback
+    onPressStart?.(sourceId);
+
+    // Prevent text selection at the handle level
+    const preventTextSelect = (e: Event) => e.preventDefault();
+    handle.addEventListener('selectstart', preventTextSelect, true);
+    active.selectStartHandler = preventTextSelect;
+
+    // Provide immediate press/hold feedback before drag threshold is crossed.
+    source.style.opacity = PRESSED_OPACITY;
 
     handle.setPointerCapture(e.pointerId);
     e.preventDefault();
@@ -314,6 +363,11 @@ export function applySheetDnd(
       startScroll();
     }
 
+    if (isPointerOverElement(active.source, active.x, active.y)) {
+      clearDropState(active);
+      return;
+    }
+
     // Find drop target (hide source from elementFromPoint)
     const prev = active.source.style.pointerEvents;
     active.source.style.pointerEvents = 'none';
@@ -327,11 +381,15 @@ export function applySheetDnd(
 
       // Determine if we should highlight a section ancestor
       const sectionAncestor =
-        operation === 'reorder' ? findSectionAncestor(target, idAttr) : null;
+        operation === 'combine'
+          ? findSectionAncestor(target, idAttr)
+          : null;
       // Only highlight section if source isn't already a child of it
       const shouldHighlightSection =
         sectionAncestor !== null &&
-        findSectionAncestor(active.source, idAttr) !== sectionAncestor;
+        findSectionAncestor(active.source, idAttr) !== sectionAncestor &&
+        sectionAncestor !== active.source &&
+        target !== findSectionAncestor(active.source, idAttr);
 
       if (
         target !== active.currentTarget ||
@@ -371,19 +429,7 @@ export function applySheetDnd(
         }
       }
     } else {
-      if (active.currentTarget) {
-        if (active.currentOperation === 'combine') {
-          clearCombineHighlight(active.currentTarget);
-        }
-        active.currentTarget = null;
-        active.currentEdge = null;
-        active.currentOperation = null;
-        hideIndicator();
-      }
-      if (active.highlightedSection) {
-        clearCombineHighlight(active.highlightedSection);
-        active.highlightedSection = null;
-      }
+      clearDropState(active);
     }
   }
 
@@ -408,6 +454,26 @@ export function applySheetDnd(
     } else {
       source.removeAttribute('draggable');
     }
+
+    // Remove the selectstart handler we added to the handle
+    if (active.selectStartHandler) {
+      handle.removeEventListener('selectstart', active.selectStartHandler, true);
+    }
+
+    document.removeEventListener('selectstart', preventSelectStart, true);
+    if (active.prevBodyUserSelect) {
+      document.body.style.setProperty('user-select', active.prevBodyUserSelect);
+    } else {
+      document.body.style.removeProperty('user-select');
+    }
+    if (active.prevBodyWebkitUserSelect) {
+      document.body.style.setProperty(
+        '-webkit-user-select',
+        active.prevBodyWebkitUserSelect
+      );
+    } else {
+      document.body.style.removeProperty('-webkit-user-select');
+    }
   }
 
   function onPointerUp(e: PointerEvent) {
@@ -421,6 +487,11 @@ export function applySheetDnd(
     cleanup();
 
     if (!started) {
+      active = null;
+      return;
+    }
+
+    if (isPointerOverElement(source, x, y)) {
       active = null;
       return;
     }
