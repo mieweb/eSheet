@@ -168,7 +168,7 @@ export function EsheetBuilder({
       <UIContext.Provider value={ui}>
         <InstanceIdContext.Provider value={instanceId}>
           <div
-            className={`ms-builder-root ms:flex ms:h-full ms:flex-1 ms:min-h-0 ms:max-h-full ms:w-full ms:min-w-0 ms:max-w-full ms:flex-col ms:gap-2 
+            className={`ms-builder-root ms:flex ms:h-full ms:flex-1 ms:min-h-0 ms:max-h-full ms:w-full ms:min-w-0 ms:max-w-[1440px] ms:mx-auto ms:flex-col ms:gap-2 
                         ms:overflow-x-hidden ms:bg-msbackground ms:text-mstext ${className}`.trim()}
           >
             <div className="ms:sticky ms:top-0 ms:z-50 ms:bg-msbackground">
@@ -221,7 +221,7 @@ export function EsheetBuilder({
               </div>
             )}
             {mode === 'preview' && (
-              <div className="preview-layout ms:flex-1 ms:min-h-0 ms:min-w-0 ms:w-full ms:max-w-2xl ms:mx-auto ms:p-4 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto">
+              <div className="preview-layout ms:flex-1 ms:min-h-0 ms:min-w-0 ms:w-full ms:p-4 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto">
                 <Canvas form={form} ui={ui} dragEnabled={false} />
               </div>
             )}

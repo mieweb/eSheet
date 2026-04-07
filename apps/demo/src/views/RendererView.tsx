@@ -57,7 +57,7 @@ export function RendererView() {
           onChange={(e) => {
             if (e.target.value) handleLoadSchema(e.target.value);
           }}
-          className="w-full sm:w-auto px-3 py-1.5 text-sm border border-slate-300 rounded-lg bg-white"
+          className="px-3 py-1.5 text-sm border border-slate-300 rounded-lg bg-white whitespace-nowrap"
         >
           <option value="" disabled>
             Load example…
@@ -69,7 +69,7 @@ export function RendererView() {
           ))}
         </select>
 
-        <label className="inline-flex w-full sm:w-auto items-center justify-center sm:justify-start gap-2 px-3 py-1.5 text-sm border border-slate-300 rounded-lg bg-white cursor-pointer hover:bg-slate-50">
+        <label className="inline-flex items-center justify-center sm:justify-start gap-2 px-3 py-1.5 text-sm border border-slate-300 rounded-lg bg-white cursor-pointer hover:bg-slate-50 whitespace-nowrap">
           Import JSON
           <input
             type="file"
@@ -82,7 +82,7 @@ export function RendererView() {
         {formData && (
           <button
             onClick={handleGetResponses}
-            className="w-full sm:w-auto sm:ml-auto px-4 py-1.5 text-sm font-medium bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors"
+            className="px-4 py-1.5 text-sm font-medium bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors whitespace-nowrap"
           >
             Get Responses
           </button>

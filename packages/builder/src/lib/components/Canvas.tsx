@@ -338,7 +338,7 @@ export const Canvas = React.memo(function Canvas({
   if (items.length === 0) {
     return (
       <div
-        className="canvas-empty ms:flex ms:items-center ms:justify-center ms:min-h-[200px] ms:text-mstextmuted ms:text-sm"
+        className="canvas-empty ms:w-full ms:max-w-2xl ms:mx-auto ms:flex ms:items-center ms:justify-center ms:min-h-[200px] ms:text-mstextmuted ms:text-sm"
         onClick={handleCanvasClick}
       >
         No fields yet. Add a field from the Tool Panel to get started.
@@ -349,7 +349,7 @@ export const Canvas = React.memo(function Canvas({
   return (
     <div
       ref={canvasRef}
-      className="canvas-fields ms:space-y-0"
+      className="canvas-fields ms:space-y-0 ms:w-full ms:max-w-2xl ms:mx-auto"
       onClick={handleCanvasClick}
     >
       {items.map((id) => (

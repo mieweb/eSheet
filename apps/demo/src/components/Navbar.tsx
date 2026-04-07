@@ -29,7 +29,7 @@ export function Navbar({ children }: { children?: ReactNode }) {
         </a>
       </div>
       {children && (
-        <div className="demo-navbar-actions flex flex-1 flex-wrap min-w-0 w-full sm:w-auto items-center gap-3">
+        <div className="demo-navbar-actions order-last basis-full w-full flex flex-wrap items-center gap-2 min-w-0 sm:order-none sm:basis-auto sm:w-auto sm:flex-1">
           {children}
         </div>
       )}
