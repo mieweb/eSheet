@@ -205,7 +205,10 @@ function findSectionAncestor(
   return null;
 }
 
-function isSourceInsideSection(source: HTMLElement, section: HTMLElement): boolean {
+function isSourceInsideSection(
+  source: HTMLElement,
+  section: HTMLElement
+): boolean {
   return section.contains(source);
 }
 
@@ -468,7 +471,11 @@ export function applySheetDnd(
 
     // Remove the selectstart handler we added to the handle
     if (active.selectStartHandler) {
-      handle.removeEventListener('selectstart', active.selectStartHandler, true);
+      handle.removeEventListener(
+        'selectstart',
+        active.selectStartHandler,
+        true
+      );
     }
 
     document.removeEventListener('selectstart', preventSelectStart, true);
