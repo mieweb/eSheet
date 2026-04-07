@@ -5,7 +5,7 @@
  * Works on both mouse and touch. Provides:
  *   - Source dimming while dragging
  *   - A visible drop-indicator line at the insertion edge
- *   - Combine (drop into section) with outline highlight
+ *   - Combine (drop into section) with blue hover highlight
  *   - Auto-scroll of the nearest scrollable ancestor near viewport edges
  *   - A custom `sheetdrop` event dispatched on drop
  *
@@ -111,16 +111,19 @@ function showIndicator(target: HTMLElement, edge: 'top' | 'bottom') {
   el.style.display = 'block';
 }
 
-function showCombineHighlight(target: HTMLElement) {
-  target.style.outline = '2px solid var(--ms-primary, #3b82f6)';
-  target.style.outlineOffset = '2px';
+function showCombineHighlight(target: HTMLElement, suppressIfSelected = true) {
+  const isSelected = target.getAttribute('data-selected') === 'true';
   target.style.borderRadius = '0.5rem';
+  if (suppressIfSelected && isSelected) {
+    target.style.removeProperty('box-shadow');
+    return;
+  }
+  target.style.boxShadow = '0 0 0 2px var(--ms-primary, #3b82f6)';
 }
 
 function clearCombineHighlight(target: HTMLElement) {
-  target.style.removeProperty('outline');
-  target.style.removeProperty('outline-offset');
   target.style.removeProperty('border-radius');
+  target.style.removeProperty('box-shadow');
 }
 
 function hideIndicator() {
@@ -166,7 +169,7 @@ function getOperation(
   }
 
   const rect = el.getBoundingClientRect();
-  const edgeZone = rect.height * 0.25;
+  const edgeZone = Math.min(rect.height * 0.25, 24);
   if (y < rect.top + edgeZone) return { operation: 'reorder', edge: 'top' };
   if (y > rect.bottom - edgeZone)
     return { operation: 'reorder', edge: 'bottom' };
@@ -200,6 +203,10 @@ function findSectionAncestor(
     node = node.parentElement;
   }
   return null;
+}
+
+function isSourceInsideSection(source: HTMLElement, section: HTMLElement): boolean {
+  return section.contains(source);
 }
 
 // ---------------------------------------------------------------------------
@@ -268,13 +275,16 @@ export function applySheetDnd(
     // Reposition indicator after scroll shifted the target in the viewport
     if (active.currentTarget) {
       if (active.currentOperation === 'combine') {
-        showCombineHighlight(active.currentTarget);
+        const suppressIfSelected =
+          active.currentTarget.getAttribute('data-field-type') === 'section' &&
+          isSourceInsideSection(active.source, active.currentTarget);
+        showCombineHighlight(active.currentTarget, suppressIfSelected);
       } else if (active.currentEdge) {
         showIndicator(active.currentTarget, active.currentEdge);
       }
     }
     if (active.highlightedSection) {
-      showCombineHighlight(active.highlightedSection);
+      showCombineHighlight(active.highlightedSection, false);
     }
 
     active.scrollRafId = requestAnimationFrame(tickScroll);
@@ -380,16 +390,14 @@ export function applySheetDnd(
       const { operation, edge } = getOperation(target, active.y);
 
       // Determine if we should highlight a section ancestor
-      const sectionAncestor =
-        operation === 'combine'
-          ? findSectionAncestor(target, idAttr)
-          : null;
+      const sectionAncestor = findSectionAncestor(target, idAttr);
+      const sourceSectionAncestor = findSectionAncestor(active.source, idAttr);
       // Only highlight section if source isn't already a child of it
       const shouldHighlightSection =
         sectionAncestor !== null &&
-        findSectionAncestor(active.source, idAttr) !== sectionAncestor &&
+        sourceSectionAncestor !== sectionAncestor &&
         sectionAncestor !== active.source &&
-        target !== findSectionAncestor(active.source, idAttr);
+        target !== sourceSectionAncestor;
 
       if (
         target !== active.currentTarget ||
@@ -411,7 +419,10 @@ export function applySheetDnd(
         active.currentOperation = operation;
 
         if (operation === 'combine') {
-          showCombineHighlight(target);
+          const suppressIfSelected =
+            target.getAttribute('data-field-type') === 'section' &&
+            isSourceInsideSection(active.source, target);
+          showCombineHighlight(target, suppressIfSelected);
         } else if (edge) {
           showIndicator(target, edge);
         }
@@ -425,7 +436,7 @@ export function applySheetDnd(
         }
         active.highlightedSection = newSection;
         if (newSection) {
-          showCombineHighlight(newSection);
+          showCombineHighlight(newSection, false);
         }
       }
     } else {

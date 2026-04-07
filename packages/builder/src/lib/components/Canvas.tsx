@@ -341,38 +341,36 @@ export const Canvas = React.memo(function Canvas({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [ui]);
 
-  if (items.length === 0) {
-    return (
-      <div
-        className="canvas-empty ms:w-full ms:max-w-2xl ms:mx-auto ms:flex ms:items-center ms:justify-center ms:min-h-[200px] ms:text-mstextmuted ms:text-sm"
-        onClick={handleCanvasClick}
-      >
-        No fields yet. Add a field from the Tool Panel to get started.
-      </div>
-    );
-  }
+  const canvasWrapperClass =
+    mode === 'preview'
+      ? 'ms:w-full ms:max-w-2xl ms:mx-auto ms:p-4'
+      : 'ms:w-full ms:max-w-2xl ms:mx-auto';
 
   return (
-    <div
-      ref={canvasRef}
-      className="canvas-fields ms:space-y-0 ms:w-full ms:max-w-2xl ms:mx-auto"
-      onClick={handleCanvasClick}
-    >
-      {items.map((id) => (
-        <DraggableFieldItem
-          key={id}
-          id={id}
-          form={form}
-          ui={ui}
-          dragEnabled={dragEnabled}
-          forceExpandVersion={
-            sectionExpandSignal?.sectionId === id
-              ? sectionExpandSignal.version
-              : undefined
-          }
-          nestedChildren={renderNestedChildren(id)}
-        />
-      ))}
+    <div className={canvasWrapperClass} onClick={handleCanvasClick}>
+      {items.length === 0 ? (
+        <div className="canvas-empty ms:flex ms:items-center ms:justify-center ms:min-h-[200px] ms:text-mstextmuted ms:text-sm">
+          No fields yet. Add a field from the Tool Panel to get started.
+        </div>
+      ) : (
+        <div ref={canvasRef} className="canvas-fields ms:space-y-0">
+          {items.map((id) => (
+            <DraggableFieldItem
+              key={id}
+              id={id}
+              form={form}
+              ui={ui}
+              dragEnabled={dragEnabled}
+              forceExpandVersion={
+                sectionExpandSignal?.sectionId === id
+                  ? sectionExpandSignal.version
+                  : undefined
+              }
+              nestedChildren={renderNestedChildren(id)}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 });
