@@ -161,7 +161,7 @@ export const ToolPanel = React.memo(function ToolPanel({
         <div className="ms:flex ms:min-w-0 ms:items-center ms:gap-2">
           <span>Tools</span>
           <span
-            className={`ms:inline-flex ms:max-w-[200px] ms:items-center ms:gap-1 ms:rounded-full ms:px-2.5 ms:py-1 ms:text-[11px] ms:font-medium ${
+            className={`ms:inline-flex ms:min-w-0 ms:max-w-[120px] ms:flex-shrink ms:items-center ms:gap-1 ms:rounded-full ms:px-2.5 ms:py-1 ms:text-[11px] ms:font-medium ${
               selectedSectionId
                 ? 'ms:bg-msprimary/10 ms:text-msprimary'
                 : 'ms:bg-msbackgroundsecondary ms:text-mstextmuted'
@@ -172,33 +172,46 @@ export const ToolPanel = React.memo(function ToolPanel({
                 : 'Adding into root'
             }
           >
-            <span
-              className={`ms:inline-flex ms:h-1.5 ms:w-1.5 ms:rounded-full ${
-                selectedSectionId ? 'ms:bg-msprimary' : 'ms:bg-mstextmuted'
-              }`}
-            />
-            <span className="ms:truncate">
-              {selectedSectionId
-                ? `Adding into section: ${selectedSectionLabel}`
-                : 'Adding into root'}
-            </span>
+            {selectedSectionId ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => ui.getState().selectField(null)}
+                  className="ms:flex ms:min-w-0 ms:flex-1 ms:items-center ms:gap-1 ms:bg-transparent ms:p-0 ms:text-left ms:text-msprimary ms:outline-none ms:focus:outline-none ms:cursor-pointer"
+                  title="Switch to adding into root"
+                  aria-label="Switch to adding into root"
+                >
+                  <span className="ms:inline-flex ms:h-1.5 ms:w-1.5 ms:rounded-full ms:bg-msprimary" />
+                  <span className="ms:min-w-0 ms:flex-shrink ms:truncate">
+                    {(selectedSectionLabel ?? '').length > 12
+                      ? `${(selectedSectionLabel ?? '').slice(0, 12)}…`
+                      : selectedSectionLabel}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => ui.getState().selectField(null)}
+                  className="ms:inline-flex ms:h-4 ms:w-4 ms:flex-shrink-0 ms:items-center ms:justify-center ms:rounded-full ms:bg-transparent ms:text-msprimary ms:hover:bg-msprimary/15 ms:outline-none ms:focus:outline-none ms:cursor-pointer"
+                  title="Switch to adding into root"
+                  aria-label="Switch to adding into root"
+                >
+                  ×
+                </button>
+              </>
+            ) : (
+              <>
+                <span className="ms:inline-flex ms:h-1.5 ms:w-1.5 ms:rounded-full ms:bg-mstextmuted" />
+                <span className="ms:min-w-0 ms:flex-shrink ms:truncate">
+                  Adding into root
+                </span>
+              </>
+            )}
           </span>
-          {selectedSectionId && (
-            <button
-              type="button"
-              onClick={() => ui.getState().selectField(null)}
-              className="ms:inline-flex ms:h-7 ms:w-7 ms:items-center ms:justify-center ms:rounded-full ms:bg-msbackgroundsecondary ms:text-mstextmuted ms:hover:bg-msbackgroundhover ms:hover:text-mstext ms:border ms:border-msborder ms:outline-none ms:focus:outline-none ms:cursor-pointer"
-              title="Switch to adding into root"
-              aria-label="Switch to adding into root"
-            >
-              ×
-            </button>
-          )}
         </div>
         <button
           type="button"
           onClick={toggleAll}
-          className="toggle-all-btn ms:text-xs ms:font-normal ms:text-mstextmuted ms:hover:text-mstext ms:bg-transparent ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:transition-colors"
+          className="toggle-all-btn ms:flex-shrink-0 ms:text-xs ms:font-normal ms:text-mstextmuted ms:hover:text-mstext ms:bg-transparent ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:transition-colors"
           title={allCollapsed ? 'Expand all' : 'Collapse all'}
         >
           {allCollapsed ? 'Expand all' : 'Collapse all'}

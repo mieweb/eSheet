@@ -78,3 +78,4 @@ Status: PASS | FAIL | BLOCKED
 - Limit file-changing retries to formatting and lint autofix only when the workflow output clearly points to those issues.
 - Treat release testing as dry-run validation only.
 - Treat deploy testing as limited by the documented local environment setup and GitHub-visible ref requirements.
+- **NEVER run `npm ci` locally.** It wipes and reinstalls `node_modules`, which breaks locked native binaries (e.g. `esbuild.exe`, `@tailwindcss/oxide`) on Windows when VS Code or dev servers hold file locks, leaving the workspace in a partially corrupted state. If dependency installation is needed, use `npm install` instead.

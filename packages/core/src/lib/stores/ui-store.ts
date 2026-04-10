@@ -25,6 +25,14 @@ export interface UIState {
   editModalOpen: boolean;
   /** True when the code editor has a parse/validation error — blocks mode switch. */
   codeEditorHasError: boolean;
+  /** Field being dragged (source opacity feedback). */
+  dragSourceId: string | null;
+  /** Source drag state for opacity feedback. */
+  dragSourceState: 'pressed' | 'dragging' | null;
+  /** Field highlighted as combine/drop target. */
+  dragTargetId: string | null;
+  /** Section ancestor highlighted when dragging over a child. */
+  dragHighlightedSectionId: string | null;
 
   // --- Actions ---
   selectField: (fieldId: string | null) => void;
@@ -33,6 +41,10 @@ export interface UIState {
   setEditTab: (tab: EditTab) => void;
   setEditModalOpen: (open: boolean) => void;
   setCodeEditorHasError: (hasError: boolean) => void;
+  setDragSource: (sourceId: string, state: 'pressed' | 'dragging') => void;
+  setDragTarget: (targetId: string | null) => void;
+  setDragHighlightedSection: (sectionId: string | null) => void;
+  clearDragState: () => void;
 }
 
 /** Store handle returned by `createUIStore`. */
@@ -50,6 +62,10 @@ export function createUIStore() {
     editTab: 'edit',
     editModalOpen: false,
     codeEditorHasError: false,
+    dragSourceId: null,
+    dragSourceState: null,
+    dragTargetId: null,
+    dragHighlightedSectionId: null,
 
     selectField: (fieldId) =>
       set((state) => ({
@@ -72,5 +88,21 @@ export function createUIStore() {
     setEditModalOpen: (open) => set({ editModalOpen: open }),
 
     setCodeEditorHasError: (hasError) => set({ codeEditorHasError: hasError }),
+
+    setDragSource: (sourceId, state) =>
+      set({ dragSourceId: sourceId, dragSourceState: state }),
+
+    setDragTarget: (targetId) => set({ dragTargetId: targetId }),
+
+    setDragHighlightedSection: (sectionId) =>
+      set({ dragHighlightedSectionId: sectionId }),
+
+    clearDragState: () =>
+      set({
+        dragSourceId: null,
+        dragSourceState: null,
+        dragTargetId: null,
+        dragHighlightedSectionId: null,
+      }),
   }));
 }
