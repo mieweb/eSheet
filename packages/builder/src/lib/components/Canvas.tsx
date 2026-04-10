@@ -161,7 +161,7 @@ export const Canvas = React.memo(function Canvas({
     const resolveScrollContainer = (
       fromEl: HTMLElement
     ): HTMLElement | null => {
-      let node: HTMLElement | null = fromEl.parentElement;
+      let node: HTMLElement | null = fromEl;
       while (node) {
         const style = window.getComputedStyle(node);
         const canScrollY =
