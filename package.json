@@ -26,6 +26,7 @@
     "@types/node": "20.19.9",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@types/sortablejs": "^1.15.9",
     "@vitejs/plugin-react": "^4.2.0",
     "@vitest/coverage-v8": "4.0.9",
     "@vitest/ui": "4.0.9",

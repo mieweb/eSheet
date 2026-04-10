@@ -31,7 +31,7 @@ jobs:
 
           cat <<'EOF'
           PR title must follow conventional commits format:
-            feat(scope): description
+            feat(scope): descriptionP
             enhance(scope): description
             fix(scope): description
             perf(scope): description

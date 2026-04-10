@@ -31,7 +31,7 @@ export function Navbar({ children }: { children?: ReactNode }) {
       >
         eSheet
       </a>
-      <div className="demo-navbar-links flex items-center gap-4 ml-2">
+      <div className="demo-navbar-links flex items-center gap-4 ml-0 sm:ml-2">
         <a
           href={docsUrl}
           className="text-sm text-muted-foreground hover:text-primary-600 no-underline transition-colors"
@@ -46,7 +46,7 @@ export function Navbar({ children }: { children?: ReactNode }) {
         </a>
       </div>
       {children && (
-        <div className="demo-navbar-actions flex flex-1 items-center gap-3">
+        <div className="demo-navbar-actions order-last basis-full w-full flex flex-wrap items-center gap-2 min-w-0 sm:order-none sm:basis-auto sm:w-auto sm:flex-1">
           {children}
         </div>
       )}
