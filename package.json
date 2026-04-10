@@ -71,9 +71,6 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
-  "optionalDependencies": {
-    "lightningcss-darwin-arm64": "^1.32.0"
-  },
   "overrides": {
     "axios": "1.13.5"
   }
