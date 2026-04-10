@@ -180,7 +180,7 @@ export function EsheetBuilder({
                 <aside className="panel-tools-wrap panel-tools ms:hidden ms:lg:flex ms:self-start ms:min-h-0 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto ms:flex-col ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
                   <ToolPanel form={form} ui={ui} />
                 </aside>
-                <main className="panel-canvas ms:self-start ms:min-w-0 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:p-4">
+                <main className="panel-canvas ms:min-w-0 ms:min-h-0 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-hidden ms:flex ms:flex-col ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:px-4 ms:pb-4">
                   <Canvas form={form} ui={ui} dragEnabled={dragEnabled} />
                   <div className="ms:lg:hidden ms:sticky ms:bottom-0 ms:z-20 ms:pt-2 ms:pb-3 ms:flex ms:justify-center ms:pointer-events-none">
                     <button

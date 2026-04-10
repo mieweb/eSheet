@@ -18,9 +18,6 @@ export const SectionField = React.memo(function SectionField({
 }: SectionFieldProps) {
   const def = field.definition;
   const title = def.title || 'Section';
-  const hasChildren = field.childIds ? field.childIds.length > 0 : false;
-  const hasNestedContent =
-    nestedChildren !== null && nestedChildren !== undefined;
 
   if (isPreview) {
     return (
@@ -39,7 +36,7 @@ export const SectionField = React.memo(function SectionField({
   }
 
   return (
-    <div className="section-field-edit ms:space-y-3">
+    <div className="section-field-edit ms:flex ms:flex-col ms:gap-3">
       <div className="section-field-header ms:flex ms:justify-between ms:items-center ms:gap-2">
         <div className="ms:flex-1">
           <label
@@ -60,26 +57,7 @@ export const SectionField = React.memo(function SectionField({
         </div>
       </div>
 
-      {!hasChildren && !hasNestedContent && (
-        <div className="ms:flex ms:flex-col ms:items-center ms:justify-center ms:p-8 ms:bg-gradient-to-br ms:from-msbackground ms:to-msbackgroundsecondary ms:border-2 ms:border-dashed ms:border-msprimary/30 ms:rounded-lg ms:shadow-sm ms:text-center">
-          <p className="ms:text-sm ms:font-semibold ms:text-mstext ms:mb-2">
-            No fields in this section
-          </p>
-          <p className="ms:text-xs ms:text-mstextmuted ms:leading-relaxed">
-            Use the Tool Panel on the left to add fields.
-          </p>
-        </div>
-      )}
-
-      {!hasChildren && hasNestedContent && (
-        <div className="section-edit-empty-drop ms:mt-2">{nestedChildren}</div>
-      )}
-
-      {hasChildren && (
-        <div className="section-edit-children ms:mt-2 ms:space-y-2">
-          {nestedChildren}
-        </div>
-      )}
+      <div className="section-edit-children ms:flex-1">{nestedChildren}</div>
     </div>
   );
 });

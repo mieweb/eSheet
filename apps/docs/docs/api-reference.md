@@ -10,32 +10,31 @@ Quick reference of all public exports from each eSheet package.
 
 ### Types
 
-| Export                       | Kind       | Description                                                                           |
-| ---------------------------- | ---------- | ------------------------------------------------------------------------------------- |
-| `FormDefinition`             | Interface  | Top-level form structure                                                              |
-| `FieldDefinition`            | Interface  | Single field structure                                                                |
-| `FieldResponse`              | Interface  | Response values for a field                                                           |
-| `FormResponse`               | Type alias | `Record<string, FieldResponse>`                                                       |
-| `SelectedOption`             | Interface  | `{ id, value }` for selected options                                                  |
-| `FieldType`                  | Type       | Union of 19 field type strings                                                        |
-| `TextInputType`              | Type       | Union of 9 text input variants                                                        |
-| `FieldOption`                | Interface  | Option in a choice field                                                              |
-| `MatrixRow` / `MatrixColumn` | Interface  | Matrix dimensions                                                                     |
-| `ConditionalRule`            | Interface  | Conditional rule structure                                                            |
-| `Condition`                  | Interface  | Single condition                                                                      |
-| `ConditionOperator`          | Type       | Union of 10 operators                                                                 |
-| `ConditionalEffect`          | Type       | `'visible' \| 'enable' \| 'required'`                                                 |
-| `LogicMode`                  | Type       | `'AND' \| 'OR'`                                                                       |
-| `FieldCategory`              | Type       | Field grouping category                                                               |
-| `AnswerType`                 | Type       | How a field stores its answer                                                         |
-| `FieldTypeMeta`              | Interface  | Field type metadata                                                                   |
-| `FieldTypeRegistry`          | Type       | Registry map                                                                          |
-| `FieldComponentProps`        | Interface  | Props contract for field components                                                   |
-| `HydratedResponseItem`       | Interface  | `{ id, text, answer }` — one per answerable field, returned by `hydrateResponse`      |
-| `FieldNode`                  | Interface  | Node in normalized definition tree                                                    |
-| `NormalizedDefinition`       | Interface  | Flat normalized representation of a form                                              |
-| `SheetDndDropDetail`         | Interface  | Custom event detail for `sheetdrop` events: `{ sourceId, targetId, edge, operation }` |
-| `AddFieldOptions`            | Interface  | Options for `FormStore.addField()`                                                    |
+| Export                       | Kind       | Description                                                                      |
+| ---------------------------- | ---------- | -------------------------------------------------------------------------------- |
+| `FormDefinition`             | Interface  | Top-level form structure                                                         |
+| `FieldDefinition`            | Interface  | Single field structure                                                           |
+| `FieldResponse`              | Interface  | Response values for a field                                                      |
+| `FormResponse`               | Type alias | `Record<string, FieldResponse>`                                                  |
+| `SelectedOption`             | Interface  | `{ id, value }` for selected options                                             |
+| `FieldType`                  | Type       | Union of 19 field type strings                                                   |
+| `TextInputType`              | Type       | Union of 9 text input variants                                                   |
+| `FieldOption`                | Interface  | Option in a choice field                                                         |
+| `MatrixRow` / `MatrixColumn` | Interface  | Matrix dimensions                                                                |
+| `ConditionalRule`            | Interface  | Conditional rule structure                                                       |
+| `Condition`                  | Interface  | Single condition                                                                 |
+| `ConditionOperator`          | Type       | Union of 10 operators                                                            |
+| `ConditionalEffect`          | Type       | `'visible' \| 'enable' \| 'required'`                                            |
+| `LogicMode`                  | Type       | `'AND' \| 'OR'`                                                                  |
+| `FieldCategory`              | Type       | Field grouping category                                                          |
+| `AnswerType`                 | Type       | How a field stores its answer                                                    |
+| `FieldTypeMeta`              | Interface  | Field type metadata                                                              |
+| `FieldTypeRegistry`          | Type       | Registry map                                                                     |
+| `FieldComponentProps`        | Interface  | Props contract for field components                                              |
+| `HydratedResponseItem`       | Interface  | `{ id, text, answer }` — one per answerable field, returned by `hydrateResponse` |
+| `FieldNode`                  | Interface  | Node in normalized definition tree                                               |
+| `NormalizedDefinition`       | Interface  | Flat normalized representation of a form                                         |
+| `AddFieldOptions`            | Interface  | Options for `FormStore.addField()`                                               |
 
 ### Constants
 
@@ -79,17 +78,15 @@ Quick reference of all public exports from each eSheet package.
 
 ### Utilities
 
-| Export                                                    | Description                                                                          |
-| --------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `normalizeDefinition(def)`                                | Convert tree → flat normalized state                                                 |
-| `hydrateDefinition(normalized)`                           | Convert flat → nested tree                                                           |
-| `hydrateResponse(normalized, responses)`                  | Walk normalized definition and return `HydratedResponseItem[]` for export/submission |
-| `generateFieldId(fieldType)`                              | Generate a unique field ID                                                           |
-| `generateOptionId()`                                      | Generate a unique option ID                                                          |
-| `generateRowId()`                                         | Generate a unique matrix row ID                                                      |
-| `generateColumnId()`                                      | Generate a unique matrix column ID                                                   |
-| `applySheetDnd(handle)`                                   | Attach pointer-event drag-and-drop to a drag handle element                          |
-| `getReorderDestinationIndex(source, target, edge, items)` | Calculate the destination index after a reorder drop                                 |
+| Export                                   | Description                                                                          |
+| ---------------------------------------- | ------------------------------------------------------------------------------------ |
+| `normalizeDefinition(def)`               | Convert tree → flat normalized state                                                 |
+| `hydrateDefinition(normalized)`          | Convert flat → nested tree                                                           |
+| `hydrateResponse(normalized, responses)` | Walk normalized definition and return `HydratedResponseItem[]` for export/submission |
+| `generateFieldId(fieldType)`             | Generate a unique field ID                                                           |
+| `generateOptionId()`                     | Generate a unique option ID                                                          |
+| `generateRowId()`                        | Generate a unique matrix row ID                                                      |
+| `generateColumnId()`                     | Generate a unique matrix column ID                                                   |
 
 ### Registry
 

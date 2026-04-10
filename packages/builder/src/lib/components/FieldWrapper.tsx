@@ -39,6 +39,8 @@ export interface FieldWrapperProps {
   selectedVariant?: 'default' | 'nested';
   /** Optional signal used to force expand a field wrapper (used for section drop UX). */
   forceExpandVersion?: number;
+  /** Optional signal used to force collapse a field wrapper. */
+  forceCollapseVersion?: number;
   /** Render function that receives field data and tools */
   children: (props: FieldWrapperRenderProps) => React.ReactNode;
 }
@@ -73,10 +75,14 @@ export function FieldWrapper({
   onSelectOverride,
   selectedVariant = 'default',
   forceExpandVersion,
+  forceCollapseVersion,
   children,
 }: FieldWrapperProps) {
   const [isExpanded, setIsExpanded] = React.useState(true);
   const lastForceExpandVersionRef = React.useRef<number | undefined>(undefined);
+  const lastForceCollapseVersionRef = React.useRef<number | undefined>(
+    undefined
+  );
 
   const field = useSyncExternalStore(
     (cb) => form.subscribe(cb),
@@ -159,14 +165,18 @@ export function FieldWrapper({
   );
 
   React.useEffect(() => {
-    if (!field) return;
-    if (field.definition.fieldType !== 'section') return;
     if (forceExpandVersion === undefined) return;
     if (lastForceExpandVersionRef.current === forceExpandVersion) return;
-
     lastForceExpandVersionRef.current = forceExpandVersion;
-    setIsExpanded((prev) => (prev ? prev : true));
-  }, [field?.definition.fieldType, forceExpandVersion]);
+    setIsExpanded(true);
+  }, [forceExpandVersion]);
+
+  React.useEffect(() => {
+    if (forceCollapseVersion === undefined) return;
+    if (lastForceCollapseVersionRef.current === forceCollapseVersion) return;
+    lastForceCollapseVersionRef.current = forceCollapseVersion;
+    setIsExpanded(false);
+  }, [forceCollapseVersion]);
 
   if (!field) {
     return null;
@@ -202,8 +212,6 @@ export function FieldWrapper({
             ? ' ms:border-l-2 ms:border-l-msdanger'
             : ''
         }`}
-        data-field-id={fieldId}
-        data-field-type={field.definition.fieldType}
         aria-disabled={!isEnabled || undefined}
       >
         {children({
@@ -239,10 +247,8 @@ export function FieldWrapper({
 
   // Base wrapper classes
   let wrapperClass = isSelected
-    ? selectedVariant === 'nested'
-      ? 'field-wrapper ms:group ms:relative ms:mb-2 ms:bg-mssurface ms:border-2 ms:border-dashed ms:border-msprimary ms:rounded-lg ms:transition-all ms:outline-none'
-      : 'field-wrapper ms:group ms:relative ms:mb-2 ms:bg-mssurface ms:border-2 ms:border-msprimary ms:rounded-lg ms:transition-all ms:outline-none'
-    : 'field-wrapper ms:group ms:relative ms:mb-2 ms:bg-mssurface ms:border ms:border-msborder ms:rounded-lg ms:transition-all ms:hover:border-msprimary/30 ms:outline-none';
+    ? 'field-wrapper ms:group ms:relative ms:bg-mssurface ms:border-2 ms:border-msprimary ms:rounded-lg ms:transition-all ms:outline-none'
+    : 'field-wrapper ms:group ms:relative ms:bg-mssurface ms:border ms:border-msborder ms:rounded-lg ms:transition-all ms:hover:border-msprimary/30 ms:outline-none';
 
   if (!effectiveExpanded) {
     wrapperClass += ' ms:p-0';
@@ -259,9 +265,6 @@ export function FieldWrapper({
     <div
       className={wrapperClass}
       onClick={handleSelect}
-      data-field-id={fieldId}
-      data-field-type={field.definition.fieldType}
-      data-selected={isSelected ? 'true' : 'false'}
       aria-selected={isSelected || undefined}
       tabIndex={-1}
     >
@@ -356,27 +359,28 @@ export function FieldWrapper({
         </div>
       </div>
 
-      {/* Field Body (collapsible) */}
-      {effectiveExpanded && (
-        <div
-          id={`${instanceId}-fw-body-${fieldId}`}
-          className="field-wrapper-body"
-        >
-          {children({
-            field,
-            form,
-            ui,
-            isSelected,
-            isPreview: false,
-            isEnabled,
-            isRequired,
-            response,
-            onRemove: handleRemove,
-            onUpdate: handleUpdate,
-            onResponse: handleResponse,
-          })}
-        </div>
-      )}
+      {/* Field Body (collapsible) — always in DOM so [data-sortable-list] nodes
+          inside sections are always findable by SortableJS querySelectorAll,
+          even when the section is collapsed. */}
+      <div
+        id={`${instanceId}-fw-body-${fieldId}`}
+        className="field-wrapper-body"
+        hidden={!effectiveExpanded || undefined}
+      >
+        {children({
+          field,
+          form,
+          ui,
+          isSelected,
+          isPreview: false,
+          isEnabled,
+          isRequired,
+          response,
+          onRemove: handleRemove,
+          onUpdate: handleUpdate,
+          onResponse: handleResponse,
+        })}
+      </div>
     </div>
   );
 }

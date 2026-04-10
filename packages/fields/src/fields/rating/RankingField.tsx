@@ -1,10 +1,6 @@
 import React from 'react';
 import type { FieldComponentProps, SelectedOption } from '@esheet/core';
-import {
-  applySheetDnd,
-  getReorderDestinationIndex,
-  type SheetDndDropDetail,
-} from '@esheet/core';
+import Sortable from 'sortablejs';
 import {
   TrashIcon,
   PlusIcon,
@@ -35,28 +31,15 @@ function DraggableRankItem({
   isEnabled: boolean;
   onMove: (optId: string, direction: 'up' | 'down') => void;
 }) {
-  const ref = React.useRef<HTMLDivElement | null>(null);
-  const handleRef = React.useRef<HTMLDivElement | null>(null);
-
   const canMoveUp = index > 0;
   const canMoveDown = index < total - 1;
 
-  React.useEffect(() => {
-    const el = ref.current;
-    if (!el || !isEnabled) return;
-
-    const dragHandleEl = handleRef.current ?? el;
-    return applySheetDnd(dragHandleEl as HTMLElement, 'data-opt-id');
-  }, [isEnabled, optId, fieldId, index]);
-
   return (
     <div
-      ref={ref}
       data-opt-id={optId}
       className="ranking-field-item ms:relative ms:flex ms:items-center ms:px-3 ms:py-2 ms:bg-mssurface ms:border ms:border-msborder ms:rounded-lg ms:shadow-sm ms:hover:border-msprimary/50 ms:hover:bg-msprimary/10 ms:transition-colors"
     >
       <div
-        ref={handleRef}
         className="rank-drag-handle ms:flex ms:items-center ms:mr-2 ms:text-mstextmuted ms:cursor-grab ms:active:cursor-grabbing ms:user-select-none"
         style={{ touchAction: 'none' }}
         aria-label="Drag to reorder"
@@ -97,7 +80,7 @@ function DraggableRankItem({
 }
 
 // ---------------------------------------------------------------------------
-// Preview wrapper — owns the sheetdrop handler for drag-to-reorder
+// Preview wrapper — owns Sortable drag-to-reorder wiring
 // ---------------------------------------------------------------------------
 
 function RankingPreview({
@@ -119,47 +102,50 @@ function RankingPreview({
   moveItem: (optId: string, direction: 'up' | 'down') => void;
   setRanking: (newOrder: string[]) => void;
 }) {
-  const containerRef = React.useRef<HTMLDivElement | null>(null);
+  const listRef = React.useRef<HTMLDivElement | null>(null);
 
-  // Sheet DnD handler for ranking reorder
+  // Preview wrapper — owns Sortable drag-to-reorder state wiring
   React.useEffect(() => {
-    const el = containerRef.current;
+    const el = listRef.current;
     if (!el || !isEnabled) return;
 
-    const handler = (e: Event) => {
-      const { sourceId, targetId, edge } = (
-        e as CustomEvent<SheetDndDropDetail>
-      ).detail;
-      const startIndex = ranking.indexOf(sourceId);
-      const targetIndex = ranking.indexOf(targetId);
-      if (startIndex === -1 || targetIndex === -1) return;
+    const sortable = Sortable.create(el, {
+      handle: '.rank-drag-handle',
+      draggable: '.ranking-field-item',
+      dataIdAttr: 'data-opt-id',
+      animation: 150,
+      scroll: true,
+      bubbleScroll: true,
+      forceAutoScrollFallback: true,
+      scrollSensitivity: 120,
+      scrollSpeed: 18,
+      onEnd: (evt) => {
+        if (
+          typeof evt.oldIndex !== 'number' ||
+          typeof evt.newIndex !== 'number' ||
+          evt.oldIndex === evt.newIndex
+        ) {
+          return;
+        }
 
-      const destinationIndex = getReorderDestinationIndex({
-        startIndex,
-        indexOfTarget: targetIndex,
-        closestEdgeOfTarget: edge,
-      });
+        const next = [...ranking];
+        const [moved] = next.splice(evt.oldIndex, 1);
+        if (!moved) return;
+        next.splice(evt.newIndex, 0, moved);
+        setRanking(next);
+      },
+    });
 
-      const next = [...ranking];
-      const [moved] = next.splice(startIndex, 1);
-      next.splice(destinationIndex, 0, moved);
-      setRanking(next);
-    };
-
-    el.addEventListener('sheetdrop', handler);
-    return () => el.removeEventListener('sheetdrop', handler);
+    return () => sortable.destroy();
   }, [isEnabled, ranking, setRanking]);
 
   return (
-    <div
-      ref={containerRef}
-      className="ranking-field-preview ms:text-mstext ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4"
-    >
+    <div className="ranking-field-preview ms:text-mstext ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
       <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
         {question || 'Question'}
         {isRequired && <span className="ms:text-msdanger ms:ml-0.5">*</span>}
       </div>
-      <div className="ms:flex ms:flex-col ms:gap-2">
+      <div ref={listRef} className="ms:flex ms:flex-col ms:gap-2">
         {ranking.map((optId, index) => (
           <DraggableRankItem
             key={optId}
