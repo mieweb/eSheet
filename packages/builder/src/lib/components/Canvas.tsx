@@ -1,13 +1,10 @@
 import React from 'react';
 import type { FieldComponentProps, FormStore, UIStore } from '@esheet/core';
-import {
-  applySheetDnd,
-  getReorderDestinationIndex,
-  type SheetDndDropDetail,
-} from '@esheet/core';
+import Sortable from 'sortablejs';
 import { useVisibleFields } from '../hooks/useVisibleFields.js';
 import { FieldWrapper } from './FieldWrapper.js';
 import { getFieldComponent } from '@esheet/fields';
+import { ViewBigIcon, ViewSmallIcon } from '../icons.js';
 
 export interface CanvasProps {
   /** The form store */
@@ -28,8 +25,10 @@ function DraggableFieldItem({
   ui,
   parentId,
   dragEnabled,
+  isSelected = false,
   isActiveChild = false,
   forceExpandVersion,
+  forceCollapseVersion,
   nestedChildren,
 }: {
   id: string;
@@ -37,27 +36,16 @@ function DraggableFieldItem({
   ui: UIStore;
   parentId?: string;
   dragEnabled: boolean;
+  isSelected?: boolean;
   isActiveChild?: boolean;
   forceExpandVersion?: number;
+  forceCollapseVersion?: number;
   nestedChildren?: React.ReactNode;
 }) {
-  const ref = React.useRef<HTMLDivElement | null>(null);
   const handleRef = React.useRef<HTMLDivElement | null>(null);
+  const field = form.getState().getField(id);
 
-  React.useEffect(() => {
-    const el = ref.current;
-    if (!el || !dragEnabled) return;
-
-    const dragHandleEl = handleRef.current ?? el;
-
-    return applySheetDnd(dragHandleEl as HTMLElement, undefined, (sourceId) => {
-      if (parentId) {
-        ui.getState().selectFieldChild(parentId, sourceId);
-      } else {
-        ui.getState().selectField(sourceId);
-      }
-    });
-  }, [dragEnabled, id, parentId]);
+  if (!field) return null;
 
   const handleSelectOverride = React.useCallback(
     (e: React.MouseEvent) => {
@@ -69,13 +57,19 @@ function DraggableFieldItem({
   );
 
   return (
-    <div ref={ref} className="field-canvas-wrapper ms:relative">
+    <div
+      className="field-canvas-wrapper ms:relative ms:pb-2 ms:last:pb-0"
+      data-field-id={id}
+      data-field-type={field.definition.fieldType}
+      data-selected={isSelected ? 'true' : 'false'}
+    >
       <FieldWrapper
         fieldId={id}
         form={form}
         ui={ui}
         dragHandleRef={handleRef}
         forceExpandVersion={forceExpandVersion}
+        forceCollapseVersion={forceCollapseVersion}
         isSelectedOverride={parentId ? isActiveChild : undefined}
         onSelectOverride={parentId ? handleSelectOverride : undefined}
         selectedVariant={parentId ? 'nested' : 'default'}
@@ -140,78 +134,184 @@ export const Canvas = React.memo(function Canvas({
     sectionId: string;
     version: number;
   } | null>(null);
+  const [expandAllVersion, setExpandAllVersion] = React.useState<
+    number | undefined
+  >(undefined);
+  const [collapseAllVersion, setCollapseAllVersion] = React.useState<
+    number | undefined
+  >(undefined);
+  const normalizedRef = React.useRef(normalized);
 
-  // Sheet DnD drop handler — unified for mouse and touch
+  React.useEffect(() => {
+    normalizedRef.current = normalized;
+  }, [normalized]);
+
+  // Clear drag state when mode changes or modal closes
+  React.useEffect(() => {
+    ui.getState().clearDragState();
+  }, [dragEnabled, ui]);
+
+  // SortableJS setup for root and section child lists.
+  // Re-runs whenever `normalized` changes so newly added section child
+  // containers always get their own Sortable instance.
   React.useEffect(() => {
     const el = canvasRef.current;
     if (!el || !dragEnabled) return;
 
-    const handler = (e: Event) => {
-      const { sourceId, targetId, edge, operation } = (
-        e as CustomEvent<SheetDndDropDetail>
-      ).detail;
-      const sourceNode = normalized.byId[sourceId];
-      const targetNode = normalized.byId[targetId];
-      if (!sourceNode || !targetNode) return;
-
-      // Drop into section (combine)
-      if (operation === 'combine') {
-        if (targetNode.definition.fieldType !== 'section') return;
-        const children = targetNode.childIds.filter((cid) => cid !== sourceId);
-        form.getState().moveField(sourceId, children.length, targetId);
-        setSectionExpandSignal((prev) => ({
-          sectionId: targetId,
-          version: (prev?.version ?? 0) + 1,
-        }));
-        return;
+    const resolveScrollContainer = (
+      fromEl: HTMLElement
+    ): HTMLElement | null => {
+      let node: HTMLElement | null = fromEl;
+      while (node) {
+        const style = window.getComputedStyle(node);
+        const canScrollY =
+          style.overflowY === 'auto' ||
+          style.overflowY === 'scroll' ||
+          style.overflowY === 'overlay';
+        if (canScrollY && node.scrollHeight > node.clientHeight) return node;
+        node = node.parentElement;
       }
-
-      // Reorder
-      const sourceParentId = sourceNode.parentId;
-      const targetParentId = targetNode.parentId;
-      const siblingIds = targetParentId
-        ? normalized.byId[targetParentId]?.childIds ?? []
-        : [...normalized.rootIds];
-
-      const startIndex = siblingIds.indexOf(sourceId);
-      const targetIndex = siblingIds.indexOf(targetId);
-      const isSameParent = sourceParentId === targetParentId;
-
-      if (isSameParent && startIndex !== -1 && targetIndex !== -1) {
-        const destinationIndex = getReorderDestinationIndex({
-          startIndex,
-          indexOfTarget: targetIndex,
-          closestEdgeOfTarget: edge,
-        });
-        form.getState().moveField(sourceId, destinationIndex, targetParentId);
-      } else {
-        const siblingsWithoutSource = siblingIds.filter(
-          (cid) => cid !== sourceId
-        );
-        const overIdx = siblingsWithoutSource.indexOf(targetId);
-        const newIndex =
-          overIdx === -1
-            ? siblingsWithoutSource.length
-            : edge === 'top'
-            ? overIdx
-            : overIdx + 1;
-        form.getState().moveField(sourceId, newIndex, targetParentId);
-      }
-
-      if (
-        targetParentId !== null &&
-        normalized.byId[targetParentId]?.definition.fieldType === 'section'
-      ) {
-        setSectionExpandSignal((prev) => ({
-          sectionId: targetParentId,
-          version: (prev?.version ?? 0) + 1,
-        }));
-      }
+      return document.scrollingElement instanceof HTMLElement
+        ? document.scrollingElement
+        : null;
     };
 
-    el.addEventListener('sheetdrop', handler);
-    return () => el.removeEventListener('sheetdrop', handler);
-  }, [dragEnabled, form, normalized]);
+    const getParentId = (listEl: HTMLElement): string | null => {
+      const attr = listEl.getAttribute('data-parent-id');
+      return attr && attr.length > 0 ? attr : null;
+    };
+
+    const restoreDomToSource = (evt: Sortable.SortableEvent) => {
+      if (typeof evt.oldIndex !== 'number') return;
+      const { item, from: sourceList, to: targetList } = evt;
+      if (sourceList !== targetList && item.parentElement === targetList) {
+        targetList.removeChild(item);
+      }
+      const clamped = Math.max(
+        0,
+        Math.min(evt.oldIndex, sourceList.children.length)
+      );
+      const ref = sourceList.children.item(clamped);
+      if (ref) sourceList.insertBefore(item, ref);
+      else sourceList.appendChild(item);
+    };
+
+    const listEls = [
+      el,
+      ...Array.from(
+        el.querySelectorAll<HTMLElement>('[data-sortable-list="true"]')
+      ),
+    ];
+
+    const instances = listEls.map((listEl) => {
+      const scrollContainer = resolveScrollContainer(listEl);
+
+      return Sortable.create(listEl, {
+        group: 'builder-fields',
+        handle: '.drag-handle',
+        draggable: '.field-canvas-wrapper',
+        dataIdAttr: 'data-field-id',
+        animation: 150,
+        forceFallback: true,
+        fallbackOnBody: true,
+        fallbackTolerance: 3,
+        scroll: scrollContainer ?? true,
+        bubbleScroll: scrollContainer === null,
+        forceAutoScrollFallback: true,
+        scrollSensitivity: 220,
+        scrollSpeed: 13,
+        invertSwap: true,
+        swapThreshold: getParentId(listEl) !== null ? 0.21 : 0.5,
+        invertedSwapThreshold: getParentId(listEl) !== null ? 0.21 : 0.5,
+        emptyInsertThreshold: getParentId(listEl) !== null ? 40 : 18,
+        onChoose: (evt) => {
+          const sourceId = evt.item.getAttribute('data-field-id');
+          if (!sourceId) return;
+          const sourceNode = normalizedRef.current.byId[sourceId];
+          if (sourceNode?.parentId) {
+            ui.getState().selectFieldChild(sourceNode.parentId, sourceId);
+          } else {
+            ui.getState().selectField(sourceId);
+          }
+        },
+        onMove: (evt) => {
+          // Toggle placeholder visibility without triggering a React re-render.
+          // A re-render here would shift DOM indices and break restoreDomToSource.
+
+          // Reset ALL placeholders first so any section we just left is restored.
+          el.querySelectorAll<HTMLElement>(
+            '.section-empty-placeholder'
+          ).forEach((ph) => {
+            ph.style.display = '';
+          });
+
+          // Hide placeholder in the list currently being dragged into.
+          if (getParentId(evt.to) !== null) {
+            const ph = evt.to.querySelector<HTMLElement>(
+              '.section-empty-placeholder'
+            );
+            if (ph) ph.style.display = 'none';
+          }
+
+          // Show placeholder when dragging the last child out of a section.
+          if (
+            evt.from !== evt.to &&
+            getParentId(evt.from) !== null &&
+            evt.from.querySelectorAll('.field-canvas-wrapper').length <= 1
+          ) {
+            const ph = evt.from.querySelector<HTMLElement>(
+              '.section-empty-placeholder'
+            );
+            if (ph) ph.style.display = '';
+          }
+
+          return true;
+        },
+        onEnd: (evt) => {
+          // Clear any inline display overrides set during drag.
+          el.querySelectorAll<HTMLElement>(
+            '.section-empty-placeholder'
+          ).forEach((ph) => {
+            ph.style.display = '';
+          });
+          const sourceId = evt.item.getAttribute('data-field-id');
+          if (!sourceId) return;
+
+          const newIndex = evt.newDraggableIndex ?? evt.newIndex;
+          const oldIndex = evt.oldDraggableIndex ?? evt.oldIndex;
+          if (typeof newIndex !== 'number') return;
+
+          const fromParentId = getParentId(evt.from);
+          const toParentId = getParentId(evt.to);
+
+          // No-op: dropped back in the same position
+          if (fromParentId === toParentId && oldIndex === newIndex) return;
+
+          // Undo Sortable's DOM move so React can own the placement
+          restoreDomToSource(evt);
+
+          form.getState().moveField(sourceId, newIndex, toParentId);
+
+          // Update selection to follow the moved field to its new location.
+          if (toParentId !== null) {
+            setSectionExpandSignal((prev) => ({
+              sectionId: toParentId,
+              version: (prev?.version ?? 0) + 1,
+            }));
+            ui.getState().selectFieldChild(toParentId, sourceId);
+          } else {
+            ui.getState().selectField(sourceId);
+          }
+
+          ui.getState().clearDragState();
+        },
+      });
+    });
+
+    return () => {
+      for (const instance of instances) instance.destroy();
+    };
+  }, [dragEnabled, form, normalized, ui]);
 
   // Preview-only renderability map
   const previewRenderableMap = React.useMemo(() => {
@@ -271,16 +371,38 @@ export const Canvas = React.memo(function Canvas({
 
   const renderNestedChildren = React.useCallback(
     (parentId: string, depth = 1): React.ReactNode => {
-      const childIds = getVisibleChildIds(parentId);
-      if (childIds.length === 0) return null;
+      const parent = normalized.byId[parentId];
+      if (!parent || parent.definition.fieldType !== 'section') return null;
 
+      const childIds = getVisibleChildIds(parentId);
+      if (mode === 'preview' && childIds.length === 0) return null;
+
+      const isEmpty = mode !== 'preview' && childIds.length === 0;
       const containerClass =
         depth === 1
-          ? 'section-children ms:space-y-2'
-          : 'section-children ms:space-y-2 ms:border-l ms:border-msborder ms:pl-3';
+          ? 'section-children'
+          : 'section-children ms:border-l ms:border-msborder ms:pl-3';
+      const emptyClass = isEmpty
+        ? ' ms:rounded-lg ms:border-2 ms:border-dashed ms:border-msprimary/30 ms:bg-gradient-to-br ms:from-msbackground ms:to-msbackgroundsecondary'
+        : ' ms:min-h-[2rem]';
 
       return (
-        <div className={containerClass} data-depth={depth}>
+        <div
+          className={`${containerClass}${emptyClass}`}
+          data-depth={depth}
+          data-sortable-list={dragEnabled ? 'true' : undefined}
+          data-parent-id={parentId}
+        >
+          {isEmpty && (
+            <div className="section-empty-placeholder ms:flex ms:flex-col ms:items-center ms:justify-center ms:p-8 ms:text-center ms:pointer-events-none ms:select-none">
+              <p className="ms:text-sm ms:font-semibold ms:text-mstext ms:mb-2">
+                No fields in this section
+              </p>
+              <p className="ms:text-xs ms:text-mstextmuted ms:leading-relaxed">
+                Use the Tool Panel on the left to add fields.
+              </p>
+            </div>
+          )}
           {childIds.map((childId) => (
             <DraggableFieldItem
               key={childId}
@@ -289,14 +411,18 @@ export const Canvas = React.memo(function Canvas({
               ui={ui}
               parentId={parentId}
               dragEnabled={dragEnabled}
+              isSelected={
+                selectedFieldId === parentId && selectedFieldChildId === childId
+              }
               isActiveChild={
                 selectedFieldId === parentId && selectedFieldChildId === childId
               }
               forceExpandVersion={
                 sectionExpandSignal?.sectionId === childId
                   ? sectionExpandSignal.version
-                  : undefined
+                  : expandAllVersion
               }
+              forceCollapseVersion={collapseAllVersion}
               nestedChildren={renderNestedChildren(childId, depth + 1)}
             />
           ))}
@@ -304,7 +430,9 @@ export const Canvas = React.memo(function Canvas({
       );
     },
     [
+      collapseAllVersion,
       dragEnabled,
+      expandAllVersion,
       form,
       getVisibleChildIds,
       sectionExpandSignal,
@@ -314,59 +442,85 @@ export const Canvas = React.memo(function Canvas({
     ]
   );
 
-  // Clear selection when clicking canvas background
-  const handleCanvasClick = React.useCallback(
-    (e: React.MouseEvent) => {
-      if (e.target === e.currentTarget) {
-        ui.getState().selectField(null);
-      }
-    },
-    [ui]
-  );
-
   // Clear selection on Escape key
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         ui.getState().selectField(null);
+        ui.getState().clearDragState();
       }
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [ui]);
 
-  if (items.length === 0) {
-    return (
-      <div
-        className="canvas-empty ms:flex ms:items-center ms:justify-center ms:min-h-[200px] ms:text-mstextmuted ms:text-sm"
-        onClick={handleCanvasClick}
-      >
-        No fields yet. Add a field from the Tool Panel to get started.
-      </div>
-    );
-  }
-
   return (
-    <div
-      ref={canvasRef}
-      className="canvas-fields ms:space-y-0"
-      onClick={handleCanvasClick}
-    >
-      {items.map((id) => (
-        <DraggableFieldItem
-          key={id}
-          id={id}
-          form={form}
-          ui={ui}
-          dragEnabled={dragEnabled}
-          forceExpandVersion={
-            sectionExpandSignal?.sectionId === id
-              ? sectionExpandSignal.version
-              : undefined
-          }
-          nestedChildren={renderNestedChildren(id)}
-        />
-      ))}
+    <div className="ms:flex ms:flex-col ms:flex-1 ms:min-h-0">
+      <div className="ms:bg-msbackground ms:border-b ms:border-msborder ms:px-3 ms:py-1.5 ms:flex ms:items-center ms:justify-between ms:gap-2 ms:py-2 ms:mb-2">
+        <span className="ms:text-xs ms:font-medium ms:text-mstextmuted ms:uppercase ms:tracking-wide ms:select-none">
+          Fields
+        </span>
+        {items.length > 0 && (
+          <div className="ms:flex ms:items-center ms:gap-1">
+            <button
+              type="button"
+              title="Expand all"
+              className="ms:flex ms:items-center ms:gap-1 ms:px-2 ms:py-1 ms:text-xs ms:text-mstextmuted ms:hover:text-mstext ms:rounded ms:hover:bg-msbackgroundhover ms:transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                setExpandAllVersion((v) => (v ?? 0) + 1);
+              }}
+            >
+              <ViewBigIcon className="ms:w-3.5 ms:h-3.5" />
+              Expand all
+            </button>
+            <button
+              type="button"
+              title="Collapse all"
+              className="ms:flex ms:items-center ms:gap-1 ms:px-2 ms:py-1 ms:text-xs ms:text-mstextmuted ms:hover:text-mstext ms:rounded ms:hover:bg-msbackgroundhover ms:transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                setCollapseAllVersion((v) => (v ?? 0) + 1);
+              }}
+            >
+              <ViewSmallIcon className="ms:w-3.5 ms:h-3.5" />
+              Collapse all
+            </button>
+          </div>
+        )}
+      </div>
+      {items.length === 0 ? (
+        <div className="canvas-empty ms:flex ms:flex-1 ms:items-center ms:justify-center ms:min-h-[200px] ms:text-mstextmuted ms:text-sm">
+          No fields yet. Add a field from the Tool Panel to get started.
+        </div>
+      ) : (
+        <div
+          ref={canvasRef}
+          className="canvas-fields ms:space-y-0 ms:flex-1 ms:min-h-0 ms:overflow-y-auto"
+          data-sortable-list={dragEnabled ? 'true' : undefined}
+          data-parent-id=""
+        >
+          {items.map((id) => (
+            <DraggableFieldItem
+              key={id}
+              id={id}
+              form={form}
+              ui={ui}
+              dragEnabled={dragEnabled}
+              isSelected={
+                selectedFieldId === id && selectedFieldChildId === null
+              }
+              forceExpandVersion={
+                sectionExpandSignal?.sectionId === id
+                  ? sectionExpandSignal.version
+                  : expandAllVersion
+              }
+              forceCollapseVersion={collapseAllVersion}
+              nestedChildren={renderNestedChildren(id)}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 });

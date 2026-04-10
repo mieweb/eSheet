@@ -130,19 +130,28 @@ When proposing code, **adhere to all of the following**:
    - Mirror existing naming, file layout, import style, and error handling patterns.
    - Keep public API shapes and function signatures stable unless a bug requires change.
 
-3. **No New Files by Default**
+3. **Always Emit Code That Passes `npx nx format:check`**
+
+   - `npx nx format` uses Prettier under the hood. The project config is `.prettierrc`: `singleQuote: true`, all other options are Prettier defaults.
+   - Apply correct indentation, trailing commas, bracket spacing, and line length so that running `npx nx format:check` produces zero diffs.
+
+- When the user asks for a format check, always run `npx nx format:check` first; if it fails, run `npx nx format --base="remotes/origin/main"`, then rerun `npx nx format:check` and report the final status.
+- This applies to every file type handled in this repo: `.ts`, `.tsx`, `.js`, `.jsx`, `.json`, `.md`, `.css`.
+- Do **not** rely on a post-write format step — emit correctly formatted code the first time.
+
+4. **No New Files by Default**
 
    - Do not create new modules unless duplication or complexity becomes worse without them.
    - Never create standalone markdown documentation files (e.g., PR tickets, feature docs, summaries).
    - Embed all information directly into code comments or verbally respond to user.
    - **Exception:** Internal tickets can be created in `.github/INTERNAL-TICKETS/` for feature planning (gitignored, local only).
 
-4. **Zero Surprises**
+5. **Zero Surprises**
 
    - Avoid side effects, global state changes, or cross-cutting refactors.
    - Keep behavior backward-compatible unless the task explicitly requests otherwise.
 
-5. **Only Change When Explicitly Told**
+6. **Only Change When Explicitly Told**
 
    - Do NOT make changes unless explicitly asked, given clear permission, or strongly hinted.
    - Do NOT assume what should be changed or refactored.
@@ -150,7 +159,7 @@ When proposing code, **adhere to all of the following**:
    - Respect the current state of the code unless directed otherwise.
    - Do NOT "improve" or refactor code without being told to do so.
 
-6. **Edit Method: Direct Patches Only**
+7. **Edit Method: Direct Patches Only**
 
 - Make file changes using direct file patch/edit tools (for example, `apply_patch` / editor patch tools).
 - Do NOT edit files by running shell/terminal write commands (for example PowerShell replacement scripts, `sed`, or inline command-based rewrites).
@@ -414,6 +423,7 @@ function getTotal(items) {
 - Add new dependencies/config.
 - Create new architectural layers.
 - Use `any` — use `unknown` and narrow.
+- Run `npm ci` locally — it wipes and reinstalls `node_modules`, which breaks locked native binaries (e.g. `esbuild.exe`) on Windows when VS Code or dev servers hold file locks. Use `npm install` to repair dependencies in place.
 
 ---
 
