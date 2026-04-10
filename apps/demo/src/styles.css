@@ -183,8 +183,8 @@ body {
 /* Matrix grids: collapse @mieweb/ui wrapper elements so Radio and     */
 /* Checkbox children participate directly in the CSS grid layout.      */
 /* ------------------------------------------------------------------ */
-.singlematrix-field-grid [role="radiogroup"],
-.singlematrix-field-grid [role="radiogroup"] > div {
+.singlematrix-field-grid [role='radiogroup'],
+.singlematrix-field-grid [role='radiogroup'] > div {
   display: contents;
 }
 

@@ -30,8 +30,7 @@ export const RadioField = React.memo(function RadioField({
           value={selectedId || ''}
           onValueChange={(val) => {
             const opt = options.find((o) => o.id === val);
-            if (opt)
-              onResponse({ selected: { id: opt.id, value: opt.value } });
+            if (opt) onResponse({ selected: { id: opt.id, value: opt.value } });
           }}
           disabled={!isEnabled}
           orientation="vertical"

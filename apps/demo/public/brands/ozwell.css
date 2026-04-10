@@ -78,12 +78,12 @@
   --mieweb-radius-full: 9999px;
 
   /* Shadows */
-  --mieweb-shadow-card:
-    0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --mieweb-shadow-dropdown:
-    0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --mieweb-shadow-modal:
-    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --mieweb-shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1),
+    0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --mieweb-shadow-dropdown: 0 4px 6px -1px rgb(0 0 0 / 0.1),
+    0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --mieweb-shadow-modal: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 
 /* Dark Mode */
@@ -139,9 +139,7 @@ kbd {
 *,
 *::before,
 *::after {
-  transition:
-    background-color 0.2s ease-in-out,
-    border-color 0.2s ease-in-out;
+  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
 }
 
 /* Disable transitions on page load */

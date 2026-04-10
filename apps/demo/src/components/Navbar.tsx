@@ -85,7 +85,11 @@ export function Navbar({ children }: { children?: ReactNode }) {
           />
         </ModalBody>
         <ModalFooter>
-          <Button variant="outline" size="sm" onClick={() => setSettingsOpen(false)}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSettingsOpen(false)}
+          >
             Close
           </Button>
         </ModalFooter>

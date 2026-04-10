@@ -24,8 +24,8 @@ export interface CodeViewProps {
 
 /** Detect dark mode from the document root and re-render on changes. */
 function useIsDark(): boolean {
-  const [isDark, setIsDark] = React.useState(
-    () => document.documentElement.classList.contains('dark'),
+  const [isDark, setIsDark] = React.useState(() =>
+    document.documentElement.classList.contains('dark')
   );
 
   React.useEffect(() => {

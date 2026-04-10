@@ -104,11 +104,11 @@
   --mieweb-radius-full: 9999px;
 
   /* Shadows - Enterprise Health uses subtle, layered shadows */
-  --mieweb-shadow-card:
-    0 16px 32px 0 rgba(34, 35, 38, 0.05), 0 8px 16px 0 rgba(34, 35, 38, 0.05);
+  --mieweb-shadow-card: 0 16px 32px 0 rgba(34, 35, 38, 0.05),
+    0 8px 16px 0 rgba(34, 35, 38, 0.05);
   --mieweb-shadow-dropdown: 0 8px 16px 0 rgba(34, 35, 38, 0.08);
-  --mieweb-shadow-modal:
-    0 24px 48px 0 rgba(34, 35, 38, 0.12), 0 12px 24px 0 rgba(34, 35, 38, 0.08);
+  --mieweb-shadow-modal: 0 24px 48px 0 rgba(34, 35, 38, 0.12),
+    0 12px 24px 0 rgba(34, 35, 38, 0.08);
 
   /* Glass morphism effect (used in CTA sections) */
   --mieweb-glass-background: rgba(255, 255, 255, 0.1);

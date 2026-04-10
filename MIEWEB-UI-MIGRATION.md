@@ -5,15 +5,15 @@
 
 ## Project Profile
 
-| Attribute | Value |
-|-----------|-------|
-| Framework | Vite 7 + React 19 |
-| React | ^19.0.0 |
-| CSS | Tailwind CSS 4.2.2 (`@tailwindcss/vite` + `@tailwindcss/cli`) |
-| Previous UI library | None — 100% raw HTML + Tailwind utility classes |
-| Component library | @mieweb/ui v0.2.4 (469 exports) |
-| Package manager | npm (workspaces) |
-| Monorepo | Nx 22.5.x |
+| Attribute           | Value                                                         |
+| ------------------- | ------------------------------------------------------------- |
+| Framework           | Vite 7 + React 19                                             |
+| React               | ^19.0.0                                                       |
+| CSS                 | Tailwind CSS 4.2.2 (`@tailwindcss/vite` + `@tailwindcss/cli`) |
+| Previous UI library | None — 100% raw HTML + Tailwind utility classes               |
+| Component library   | @mieweb/ui v0.2.4 (469 exports)                               |
+| Package manager     | npm (workspaces)                                              |
+| Monorepo            | Nx 22.5.x                                                     |
 
 ### Architecture Notes
 
@@ -21,35 +21,35 @@ This is an Nx monorepo with library packages that use `prefix(ms)` on all Tailwi
 
 ## @mieweb/ui Export Availability
 
-| Component | Available | Notes |
-|-----------|-----------|-------|
-| Button | ✅ | Variants: primary, danger, ghost, outline, secondary, link |
-| Input | ✅ | Text input |
-| Textarea | ✅ | Multi-line text input |
-| Select | ✅ | Props-based (options array) |
-| Checkbox | ✅ | |
-| Radio | ✅ | |
-| Switch | ✅ | |
-| Slider | ✅ | |
-| Modal | ✅ | Replaces custom FeedbackModal |
-| Card | ✅ | Replaces DemoCard raw divs |
-| Badge | ✅ | |
-| Alert | ✅ | |
-| Tooltip | ✅ | |
-| Tabs | ✅ | |
-| Spinner | ✅ | |
-| Dropdown | ✅ | |
-| Avatar | ✅ | |
-| Toast | ✅ | |
+| Component | Available | Notes                                                      |
+| --------- | --------- | ---------------------------------------------------------- |
+| Button    | ✅        | Variants: primary, danger, ghost, outline, secondary, link |
+| Input     | ✅        | Text input                                                 |
+| Textarea  | ✅        | Multi-line text input                                      |
+| Select    | ✅        | Props-based (options array)                                |
+| Checkbox  | ✅        |                                                            |
+| Radio     | ✅        |                                                            |
+| Switch    | ✅        |                                                            |
+| Slider    | ✅        |                                                            |
+| Modal     | ✅        | Replaces custom FeedbackModal                              |
+| Card      | ✅        | Replaces DemoCard raw divs                                 |
+| Badge     | ✅        |                                                            |
+| Alert     | ✅        |                                                            |
+| Tooltip   | ✅        |                                                            |
+| Tabs      | ✅        |                                                            |
+| Spinner   | ✅        |                                                            |
+| Dropdown  | ✅        |                                                            |
+| Avatar    | ✅        |                                                            |
+| Toast     | ✅        |                                                            |
 
 ## Wrapper File Audit
 
-| # | File | @mieweb/ui Replacement | App Imports? | Status |
-|---|------|------------------------|-------------|--------|
-| 1 | `fields/src/controls/CustomCheckbox.tsx` | Checkbox | Yes | 🔲 Pending |
-| 2 | `fields/src/controls/CustomRadio.tsx` | Radio | Yes | 🔲 Pending |
-| 3 | `fields/src/controls/CustomDropdown.tsx` | Select | Yes | 🔲 Pending |
-| 4 | `builder/src/lib/components/FeedbackModal.tsx` | Modal + Alert | Yes | 🔲 Pending |
+| #   | File                                           | @mieweb/ui Replacement | App Imports? | Status     |
+| --- | ---------------------------------------------- | ---------------------- | ------------ | ---------- |
+| 1   | `fields/src/controls/CustomCheckbox.tsx`       | Checkbox               | Yes          | 🔲 Pending |
+| 2   | `fields/src/controls/CustomRadio.tsx`          | Radio                  | Yes          | 🔲 Pending |
+| 3   | `fields/src/controls/CustomDropdown.tsx`       | Select                 | Yes          | 🔲 Pending |
+| 4   | `builder/src/lib/components/FeedbackModal.tsx` | Modal + Alert          | Yes          | 🔲 Pending |
 
 **Summary:** 4 wrapper files audited. 0 deleted. 0 kept.
 
@@ -57,32 +57,32 @@ This is an Nx monorepo with library packages that use `prefix(ms)` on all Tailwi
 
 ### Raw HTML Elements — Baseline
 
-| Element | Total instances | Files | Status |
-|---------|----------------|-------|--------|
-| `<button>` | 82 | 26 | 🔲 Pending |
-| `<input>` | 61 | 30 | 🔲 Pending |
-| `<select>` | 8 | 4 | 🔲 Pending |
-| `<textarea>` | 4 | 3 | 🔲 Pending |
+| Element      | Total instances | Files | Status     |
+| ------------ | --------------- | ----- | ---------- |
+| `<button>`   | 82              | 26    | 🔲 Pending |
+| `<input>`    | 61              | 30    | 🔲 Pending |
+| `<select>`   | 8               | 4     | 🔲 Pending |
+| `<textarea>` | 4               | 3     | 🔲 Pending |
 
 ### Badge/Pill Patterns (Styled Spans)
 
-| # | File | Description | Replacement | Status |
-|---|------|-------------|-------------|--------|
-| — | — | None found | — | — |
+| #   | File | Description | Replacement | Status |
+| --- | ---- | ----------- | ----------- | ------ |
+| —   | —    | None found  | —           | —      |
 
 ### Card Patterns (Styled Divs)
 
-| # | File | Description | Replacement | Status |
-|---|------|-------------|-------------|--------|
-| 1 | `apps/demo/src/views/LandingPage.tsx` | DemoCard (rounded border + shadow + hover) | Card | 🔲 Pending |
+| #   | File                                  | Description                                | Replacement | Status     |
+| --- | ------------------------------------- | ------------------------------------------ | ----------- | ---------- |
+| 1   | `apps/demo/src/views/LandingPage.tsx` | DemoCard (rounded border + shadow + hover) | Card        | 🔲 Pending |
 
 ### Custom Systems (Toast, Sidebar, etc.)
 
-| System | Original Implementation | New Implementation | Status |
-|--------|------------------------|-------------------|--------|
-| Modal | Custom FeedbackModal (fixed overlay + card, 4 variants) | @mieweb/ui Modal | 🔲 Pending |
-| Dark Mode | CSS-ready but no JS toggle | @mieweb/ui ThemeProvider | 🔲 Pending |
-| Icons | 25 custom inline SVGs (6 fields + 19 builder) | lucide-react | 🔲 Pending |
+| System    | Original Implementation                                 | New Implementation       | Status     |
+| --------- | ------------------------------------------------------- | ------------------------ | ---------- |
+| Modal     | Custom FeedbackModal (fixed overlay + card, 4 variants) | @mieweb/ui Modal         | 🔲 Pending |
+| Dark Mode | CSS-ready but no JS toggle                              | @mieweb/ui ThemeProvider | 🔲 Pending |
+| Icons     | 25 custom inline SVGs (6 fields + 19 builder)           | lucide-react             | 🔲 Pending |
 
 ## Steps Completed
 
@@ -106,61 +106,61 @@ This is an Nx monorepo with library packages that use `prefix(ms)` on all Tailwi
 
 ## Post-Migration Import Map
 
-| Feature File | Imports from @mieweb/ui | Imports from local | Notes |
-|-------------|------------------------|-------------------|-------|
-| apps/demo/src/views/RendererView.tsx | Button, Select | — | Replaced raw button and select |
-| apps/demo/src/views/LandingPage.tsx | Card, CardContent | ChevronRight (lucide-react) | Replaced DemoCard div and inline SVG |
-| apps/demo/src/components/BrandInitializer.tsx | — | — | New file: brand persistence |
-| apps/demo/src/hooks/useBrand.ts | — | — | New file: brand switching |
-| apps/demo/src/hooks/useTheme.ts | — | — | New file: dark mode toggle |
+| Feature File                                  | Imports from @mieweb/ui | Imports from local          | Notes                                |
+| --------------------------------------------- | ----------------------- | --------------------------- | ------------------------------------ |
+| apps/demo/src/views/RendererView.tsx          | Button, Select          | —                           | Replaced raw button and select       |
+| apps/demo/src/views/LandingPage.tsx           | Card, CardContent       | ChevronRight (lucide-react) | Replaced DemoCard div and inline SVG |
+| apps/demo/src/components/BrandInitializer.tsx | —                       | —                           | New file: brand persistence          |
+| apps/demo/src/hooks/useBrand.ts               | —                       | —                           | New file: brand switching            |
+| apps/demo/src/hooks/useTheme.ts               | —                       | —                           | New file: dark mode toggle           |
 
 ## Files Modified
 
-| File | Change Summary |
-|------|---------------|
-| package.json | Added @mieweb/ui as dependency |
-| apps/demo/src/styles.css | Added @mieweb/ui CSS foundation: brand import, @source, @custom-variant dark, @theme block with variable mappings and fallbacks |
-| apps/demo/src/main.tsx | Added BrandInitializer import and component in App root |
-| apps/demo/src/views/RendererView.tsx | Replaced raw `<button>`, `<select>`, file-import `<label>` with @mieweb/ui `Button` and `Select` |
-| apps/demo/src/views/LandingPage.tsx | Replaced DemoCard raw `<div>` with @mieweb/ui `Card`/`CardContent`, updated color classes to use @mieweb/ui tokens |
+| File                                 | Change Summary                                                                                                                  |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| package.json                         | Added @mieweb/ui as dependency                                                                                                  |
+| apps/demo/src/styles.css             | Added @mieweb/ui CSS foundation: brand import, @source, @custom-variant dark, @theme block with variable mappings and fallbacks |
+| apps/demo/src/main.tsx               | Added BrandInitializer import and component in App root                                                                         |
+| apps/demo/src/views/RendererView.tsx | Replaced raw `<button>`, `<select>`, file-import `<label>` with @mieweb/ui `Button` and `Select`                                |
+| apps/demo/src/views/LandingPage.tsx  | Replaced DemoCard raw `<div>` with @mieweb/ui `Card`/`CardContent`, updated color classes to use @mieweb/ui tokens              |
 
 ## Files Created
 
-| File | Purpose |
-|------|---------|
-| `MIEWEB-UI-MIGRATION.md` | Migration tracking report |
-| `apps/demo/src/hooks/useBrand.ts` | Brand switching hook with localStorage persistence |
-| `apps/demo/src/hooks/useTheme.ts` | Dark mode toggle hook (sets both .dark class and data-theme attribute) |
-| `apps/demo/src/components/BrandInitializer.tsx` | Root-level component to restore saved brand on mount |
-| `apps/demo/public/brands/*.css` | 6 brand CSS files (bluehive, mieweb, ozwell, webchart, enterprise-health, waggleline) |
+| File                                            | Purpose                                                                               |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `MIEWEB-UI-MIGRATION.md`                        | Migration tracking report                                                             |
+| `apps/demo/src/hooks/useBrand.ts`               | Brand switching hook with localStorage persistence                                    |
+| `apps/demo/src/hooks/useTheme.ts`               | Dark mode toggle hook (sets both .dark class and data-theme attribute)                |
+| `apps/demo/src/components/BrandInitializer.tsx` | Root-level component to restore saved brand on mount                                  |
+| `apps/demo/public/brands/*.css`                 | 6 brand CSS files (bluehive, mieweb, ozwell, webchart, enterprise-health, waggleline) |
 
 ## Files Deleted
 
-| File | Reason |
-|------|--------|
-| — | No deletions yet |
+| File | Reason           |
+| ---- | ---------------- |
+| —    | No deletions yet |
 
 ## Compliance Summary
 
-| Metric | Before | After |
-|--------|--------|-------|
-| Raw `<button>` elements | 82 | 81 (1 replaced in demo app) |
-| Raw `<input>` elements | 61 | 61 (file input kept as hidden, wrapped in Button) |
-| Raw `<select>` elements | 8 | 7 (1 replaced in demo app) |
-| Raw `<textarea>` elements | 4 | 4 (all in library packages) |
-| Raw `<table>` elements | 0 | 0 |
-| Local wrapper files | 4 | 4 (all in library packages — prefix constraint) |
-| `@mieweb/ui` import lines | 0 | 3 (RendererView, LandingPage, plus lucide-react) |
-| Custom SVG icons | 25 | 24 (1 replaced with lucide-react in demo app) |
-| Total UI dependencies | 0 | 2 (@mieweb/ui, lucide-react transitive) |
+| Metric                    | Before | After                                             |
+| ------------------------- | ------ | ------------------------------------------------- |
+| Raw `<button>` elements   | 82     | 81 (1 replaced in demo app)                       |
+| Raw `<input>` elements    | 61     | 61 (file input kept as hidden, wrapped in Button) |
+| Raw `<select>` elements   | 8      | 7 (1 replaced in demo app)                        |
+| Raw `<textarea>` elements | 4      | 4 (all in library packages)                       |
+| Raw `<table>` elements    | 0      | 0                                                 |
+| Local wrapper files       | 4      | 4 (all in library packages — prefix constraint)   |
+| `@mieweb/ui` import lines | 0      | 3 (RendererView, LandingPage, plus lucide-react)  |
+| Custom SVG icons          | 25     | 24 (1 replaced with lucide-react in demo app)     |
+| Total UI dependencies     | 0      | 2 (@mieweb/ui, lucide-react transitive)           |
 
 ## Known Gaps
 
-| Component | Reason Kept | File(s) |
-|-----------|-------------|---------|
-| Library package components | `prefix(ms)` Tailwind scoping prevents @mieweb/ui component use — @mieweb/ui classes are unprefixed and won't be generated | packages/builder/, packages/fields/, packages/renderer/ |
-| FeedbackModal | In builder package (prefix constraint) | packages/builder/src/lib/components/FeedbackModal.tsx |
-| CustomCheckbox/Radio/Dropdown | In fields package (prefix constraint) | packages/fields/src/controls/ |
+| Component                     | Reason Kept                                                                                                                | File(s)                                                 |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| Library package components    | `prefix(ms)` Tailwind scoping prevents @mieweb/ui component use — @mieweb/ui classes are unprefixed and won't be generated | packages/builder/, packages/fields/, packages/renderer/ |
+| FeedbackModal                 | In builder package (prefix constraint)                                                                                     | packages/builder/src/lib/components/FeedbackModal.tsx   |
+| CustomCheckbox/Radio/Dropdown | In fields package (prefix constraint)                                                                                      | packages/fields/src/controls/                           |
 
 ## Notes
 

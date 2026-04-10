@@ -66,17 +66,22 @@ export function RendererView() {
           className="w-48"
         />
 
-        <Button variant="outline" size="sm" asChild>
-          <label className="cursor-pointer">
-            Import JSON
-            <input
-              type="file"
-              accept=".json"
-              onChange={handleFileImport}
-              className="hidden"
-            />
-          </label>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() =>
+            document.getElementById('renderer-file-import')?.click()
+          }
+        >
+          Import JSON
         </Button>
+        <input
+          id="renderer-file-import"
+          type="file"
+          accept=".json"
+          onChange={handleFileImport}
+          className="hidden"
+        />
 
         {formData && (
           <Button
