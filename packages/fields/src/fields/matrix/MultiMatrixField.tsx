@@ -1,6 +1,6 @@
 import React from 'react';
 import type { FieldComponentProps, SelectedOption } from '@esheet/core';
-import { CustomCheckbox } from '../../controls/CustomCheckbox.js';
+import { Checkbox } from '@mieweb/ui';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 
 export const MultiMatrixField = React.memo(function MultiMatrixField({
@@ -87,14 +87,13 @@ export const MultiMatrixField = React.memo(function MultiMatrixField({
                         key={col.id}
                         className="ms:flex ms:justify-center ms:py-2"
                       >
-                        <CustomCheckbox
+                        <Checkbox
                           id={inputId}
                           checked={isChecked}
                           onChange={() =>
                             toggleSelection(row.id, col.id, col.value)
                           }
                           disabled={!isEnabled}
-                          size="lg"
                         />
                       </div>
                     );

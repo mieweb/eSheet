@@ -2,6 +2,7 @@ import { useState, useCallback, useRef } from 'react';
 import { EsheetRenderer, type EsheetRendererHandle } from '@esheet/renderer';
 import type { FormDefinition } from '@esheet/core';
 import { Navbar } from '../components/Navbar';
+import { Button, Select } from '@mieweb/ui';
 
 const TEST_SCHEMAS = [
   { label: 'Comprehensive test', value: '/test-comprehensive-schema.json' },
@@ -52,51 +53,51 @@ export function RendererView() {
   return (
     <>
       <Navbar>
-        <select
-          defaultValue=""
-          onChange={(e) => {
-            if (e.target.value) handleLoadSchema(e.target.value);
+        <Select
+          value=""
+          onValueChange={(val) => {
+            if (val) handleLoadSchema(val);
           }}
-          className="px-3 py-1.5 text-sm border border-slate-300 rounded-lg bg-white"
-        >
-          <option value="" disabled>
-            Load example…
-          </option>
-          {TEST_SCHEMAS.map((s) => (
-            <option key={s.value} value={s.value}>
-              {s.label}
-            </option>
-          ))}
-        </select>
+          options={TEST_SCHEMAS.map((s) => ({
+            value: s.value,
+            label: s.label,
+          }))}
+          placeholder="Load example…"
+          className="w-48"
+        />
 
-        <label className="inline-flex items-center gap-2 px-3 py-1.5 text-sm border border-slate-300 rounded-lg bg-white cursor-pointer hover:bg-slate-50">
-          Import JSON
-          <input
-            type="file"
-            accept=".json"
-            onChange={handleFileImport}
-            className="hidden"
-          />
-        </label>
+        <Button variant="outline" size="sm" asChild>
+          <label className="cursor-pointer">
+            Import JSON
+            <input
+              type="file"
+              accept=".json"
+              onChange={handleFileImport}
+              className="hidden"
+            />
+          </label>
+        </Button>
 
         {formData && (
-          <button
+          <Button
             onClick={handleGetResponses}
-            className="ml-auto px-4 py-1.5 text-sm font-medium bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors"
+            variant="primary"
+            size="sm"
+            className="ml-auto"
           >
             Get Responses
-          </button>
+          </Button>
         )}
       </Navbar>
 
-      <div className="demo-renderer-content bg-gray-100 pt-6 pb-20 min-h-[calc(100vh-3.5rem)]">
+      <div className="demo-renderer-content bg-muted pt-6 pb-20 min-h-[calc(100vh-3.5rem)]">
         {!formData ? (
           <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] gap-6">
             <div className="text-center max-w-md">
-              <h2 className="text-2xl font-semibold text-slate-900 mb-3">
+              <h2 className="text-2xl font-semibold text-foreground mb-3">
                 No Form Loaded
               </h2>
-              <p className="text-slate-600 mb-6">
+              <p className="text-muted-foreground mb-6">
                 Select an example from the dropdown above, or import your own
                 JSON form definition.
               </p>

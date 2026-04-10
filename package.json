@@ -67,6 +67,8 @@
     }
   },
   "dependencies": {
+    "@mieweb/ui": "^0.2.4",
+    "lightningcss-darwin-arm64": "^1.32.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

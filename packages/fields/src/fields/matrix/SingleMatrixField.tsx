@@ -1,6 +1,6 @@
 import React from 'react';
 import type { FieldComponentProps, SelectedOption } from '@esheet/core';
-import { CustomRadio } from '../../controls/CustomRadio.js';
+import { RadioGroup, Radio } from '@mieweb/ui';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 
 export const SingleMatrixField = React.memo(function SingleMatrixField({
@@ -50,12 +50,28 @@ export const SingleMatrixField = React.memo(function SingleMatrixField({
             ))}
 
             {rows.map((row, rowIndex) => (
-              <React.Fragment key={row.id}>
+              <RadioGroup
+                key={row.id}
+                value={selected[row.id]?.id || ''}
+                onValueChange={(val) => {
+                  const updated: Record<string, SelectedOption> = {};
+                  for (const r of rows) {
+                    if (r.id === row.id) {
+                      const col = columns.find((c) => c.id === val);
+                      if (col) updated[r.id] = { id: col.id, value: col.value };
+                    } else if (selected[r.id]) {
+                      updated[r.id] = selected[r.id];
+                    }
+                  }
+                  onResponse({ selected: updated });
+                }}
+                disabled={!isEnabled}
+                orientation="horizontal"
+              >
                 <div className="ms:font-normal ms:text-mstext ms:py-2">
                   {row.value}
                 </div>
                 {columns.map((col, colIndex) => {
-                  const isSelected = selected[row.id]?.id === col.id;
                   const inputId = `${instanceId}-singlematrix-answer-${def.id}-${rowIndex}-${colIndex}`;
 
                   return (
@@ -63,38 +79,25 @@ export const SingleMatrixField = React.memo(function SingleMatrixField({
                       key={col.id}
                       className="ms:flex ms:justify-center ms:py-2"
                     >
-                      <CustomRadio
+                      <Radio
                         id={inputId}
-                        name={`matrix-${def.id}-${row.id}`}
                         value={col.id}
-                        checked={isSelected}
-                        disabled={!isEnabled}
-                        size="lg"
-                        onSelect={() => {
-                          const updated: Record<string, SelectedOption> = {};
-                          for (const r of rows) {
-                            if (r.id === row.id) {
-                              updated[r.id] = { id: col.id, value: col.value };
-                            } else if (selected[r.id]) {
-                              updated[r.id] = selected[r.id];
+                        onClick={() => {
+                          if (selected[row.id]?.id === col.id) {
+                            const updated: Record<string, SelectedOption> = {};
+                            for (const r of rows) {
+                              if (r.id !== row.id && selected[r.id]) {
+                                updated[r.id] = selected[r.id];
+                              }
                             }
+                            onResponse({ selected: updated });
                           }
-                          onResponse({ selected: updated });
-                        }}
-                        onUnselect={() => {
-                          const updated: Record<string, SelectedOption> = {};
-                          for (const r of rows) {
-                            if (r.id !== row.id && selected[r.id]) {
-                              updated[r.id] = selected[r.id];
-                            }
-                          }
-                          onResponse({ selected: updated });
                         }}
                       />
                     </div>
                   );
                 })}
-              </React.Fragment>
+              </RadioGroup>
             ))}
           </div>
         ) : (

@@ -32,7 +32,7 @@ export function BuilderView() {
   return (
     <div className="demo-builder-view w-full h-screen flex flex-col">
       <Navbar />
-      <div className="flex-1 overflow-y-auto bg-gray-100">
+      <div className="flex-1 overflow-y-auto bg-muted">
         <div className="w-full flex justify-center px-2 pt-5">
           <EsheetBuilder definition={def} onChange={setDef} />
         </div>

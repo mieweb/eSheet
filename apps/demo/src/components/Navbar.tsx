@@ -1,4 +1,17 @@
-import type { ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
+import {
+  Button,
+  Modal,
+  ModalHeader,
+  ModalTitle,
+  ModalBody,
+  ModalFooter,
+  ModalClose,
+  Select,
+} from '@mieweb/ui';
+import { Settings } from 'lucide-react';
+import { useTheme } from '../hooks/useTheme';
+import { useBrand } from '../hooks/useBrand';
 
 const isDev = import.meta.env.DEV;
 const landingUrl = isDev ? 'http://localhost:3000/' : '/';
@@ -6,24 +19,28 @@ const docsUrl = isDev ? 'http://localhost:3000/docs/intro' : '/docs/intro';
 const demoUrl = isDev ? 'http://localhost:3001/' : '/demo/';
 
 export function Navbar({ children }: { children?: ReactNode }) {
+  const { theme, setTheme } = useTheme();
+  const { brand, setBrand, brands } = useBrand();
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
   return (
-    <nav className="demo-navbar h-14 px-6 flex items-center gap-5 bg-white border-b border-slate-200 sticky top-0 z-50">
+    <nav className="demo-navbar h-14 px-6 flex items-center gap-5 bg-card border-b border-border sticky top-0 z-50">
       <a
         href={landingUrl}
-        className="inline-flex items-center gap-2 text-slate-700 hover:text-blue-600 text-base font-bold no-underline transition-colors shrink-0"
+        className="inline-flex items-center gap-2 text-foreground hover:text-primary-600 text-base font-bold no-underline transition-colors shrink-0"
       >
         eSheet
       </a>
       <div className="demo-navbar-links flex items-center gap-4 ml-2">
         <a
           href={docsUrl}
-          className="text-sm text-slate-600 hover:text-blue-600 no-underline transition-colors"
+          className="text-sm text-muted-foreground hover:text-primary-600 no-underline transition-colors"
         >
           Documentation
         </a>
         <a
           href={demoUrl}
-          className="text-sm text-slate-600 hover:text-blue-600 no-underline transition-colors ml-2"
+          className="text-sm text-muted-foreground hover:text-primary-600 no-underline transition-colors ml-2"
         >
           Demo
         </a>
@@ -33,6 +50,46 @@ export function Navbar({ children }: { children?: ReactNode }) {
           {children}
         </div>
       )}
+      <div className="demo-navbar-settings flex items-center ml-auto">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setSettingsOpen(true)}
+          aria-label="Settings"
+        >
+          <Settings size={16} />
+          Settings
+        </Button>
+      </div>
+
+      <Modal open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <ModalHeader>
+          <ModalTitle>Settings</ModalTitle>
+          <ModalClose />
+        </ModalHeader>
+        <ModalBody className="flex flex-col gap-4">
+          <Select
+            label="Theme"
+            value={theme}
+            onValueChange={(val) => setTheme(val as 'light' | 'dark')}
+            options={[
+              { value: 'light', label: 'Light' },
+              { value: 'dark', label: 'Dark' },
+            ]}
+          />
+          <Select
+            label="Brand"
+            value={brand}
+            onValueChange={(val) => setBrand(val as typeof brand)}
+            options={brands.map((b) => ({ value: b.value, label: b.label }))}
+          />
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="outline" size="sm" onClick={() => setSettingsOpen(false)}>
+            Close
+          </Button>
+        </ModalFooter>
+      </Modal>
     </nav>
   );
 }

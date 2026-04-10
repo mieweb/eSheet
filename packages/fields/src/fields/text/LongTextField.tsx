@@ -1,5 +1,6 @@
 import React from 'react';
 import type { FieldComponentProps } from '@esheet/core';
+import { Textarea } from '@mieweb/ui';
 
 export const LongTextField = React.memo(function LongTextField({
   field,
@@ -21,7 +22,7 @@ export const LongTextField = React.memo(function LongTextField({
           {def.question || 'Question'}
           {isRequired && <span className="ms:text-msdanger ms:ml-0.5">*</span>}
         </div>
-        <textarea
+        <Textarea
           id={`${instanceId}-longtext-answer-${def.id}`}
           aria-label={def.question || 'Question'}
           disabled={!isEnabled}
@@ -29,7 +30,6 @@ export const LongTextField = React.memo(function LongTextField({
           value={response?.answer || ''}
           onChange={(e) => onResponse({ answer: e.target.value })}
           placeholder="Type your answer"
-          className="ms:px-3 ms:py-2 ms:h-24 ms:w-full ms:min-w-0 ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:shadow-sm ms:rounded-lg ms:max-h-60 ms:resize-y ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary/30 ms:outline-none ms:transition-colors"
           rows={4}
         />
       </div>

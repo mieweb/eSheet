@@ -1,6 +1,6 @@
 import React from 'react';
 import type { FieldComponentProps, SelectedOption } from '@esheet/core';
-import { CustomRadio } from '../../controls/CustomRadio.js';
+import { Button } from '@mieweb/ui';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 
 export const RatingField = React.memo(function RatingField({
@@ -36,36 +36,28 @@ export const RatingField = React.memo(function RatingField({
         {options.length > 0 ? (
           <div className="ms:flex ms:flex-wrap ms:justify-evenly ms:gap-2">
             {options.map((option, index) => {
-              const inputId = `${instanceId}-rating-answer-${def.id}-${option.id}`;
               const isSelected = selectedIndex === index;
-              const labelClasses = isSelected
-                ? 'ms:flex ms:items-center ms:justify-center ms:min-w-11 ms:h-11 ms:px-3 ms:rounded-full ms:border-2 ms:transition-all ms:cursor-pointer ms:bg-msprimary ms:text-mstextsecondary ms:border-msprimary ms:scale-105'
-                : 'ms:flex ms:items-center ms:justify-center ms:min-w-11 ms:h-11 ms:px-3 ms:rounded-full ms:border-2 ms:transition-all ms:cursor-pointer ms:bg-mssurface ms:text-mstext ms:border-msborder ms:hover:border-msprimary/50 ms:hover:bg-msprimary/10 ms:hover:scale-105';
 
               return (
-                <label
+                <Button
                   key={option.id}
-                  htmlFor={inputId}
-                  className={labelClasses}
-                >
-                  <CustomRadio
-                    id={inputId}
-                    name={`rating-${def.id}`}
-                    value={option.id}
-                    checked={isSelected}
-                    disabled={!isEnabled}
-                    onSelect={() =>
+                  id={`${instanceId}-rating-answer-${def.id}-${option.id}`}
+                  variant={isSelected ? 'primary' : 'outline'}
+                  size="sm"
+                  disabled={!isEnabled}
+                  className="rounded-full min-w-11 h-11 px-3"
+                  onClick={() => {
+                    if (isSelected) {
+                      onResponse({ selected: undefined });
+                    } else {
                       onResponse({
                         selected: { id: option.id, value: option.value },
-                      })
+                      });
                     }
-                    onUnselect={() => onResponse({ selected: undefined })}
-                    hidden
-                  />
-                  <span className="ms:text-sm ms:font-medium ms:whitespace-nowrap">
-                    {option.text || option.value}
-                  </span>
-                </label>
+                  }}
+                >
+                  {option.text || option.value}
+                </Button>
               );
             })}
           </div>

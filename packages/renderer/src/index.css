@@ -28,8 +28,9 @@
 
 /* ------------------------------------------------------------------ */
 /* Scoped resets (don't leak into consuming app)                        */
+/* Use @layer base so utility classes (e.g. border-2) override these.  */
 /* ------------------------------------------------------------------ */
-@layer utilities {
+@layer base {
   .esheet-renderer-root {
     font-family: 'Titillium Web', ui-sans-serif, system-ui, sans-serif;
   }

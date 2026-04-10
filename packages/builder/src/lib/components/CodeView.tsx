@@ -22,6 +22,26 @@ export interface CodeViewProps {
   ui: UIStore;
 }
 
+/** Detect dark mode from the document root and re-render on changes. */
+function useIsDark(): boolean {
+  const [isDark, setIsDark] = React.useState(
+    () => document.documentElement.classList.contains('dark'),
+  );
+
+  React.useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+    return () => observer.disconnect();
+  }, []);
+
+  return isDark;
+}
+
 interface FeedbackState {
   open: boolean;
   title: string;
@@ -56,6 +76,7 @@ function parse(text: string, format: CodeFormat): unknown {
 export function CodeView({ form, ui }: CodeViewProps) {
   // Track whether user actually edited (avoids spurious saves from StrictMode double-mount)
   const dirtyRef = React.useRef(false);
+  const isDark = useIsDark();
 
   const [format, setFormat] = React.useState<CodeFormat>('yaml');
   const initialCode = React.useMemo(() => {
@@ -261,7 +282,7 @@ export function CodeView({ form, ui }: CodeViewProps) {
           value={code}
           onChange={handleCodeChange}
           beforeMount={handleBeforeMount}
-          theme="light"
+          theme={isDark ? 'vs-dark' : 'light'}
           options={{
             minimap: { enabled: false },
             fontSize: 13,
