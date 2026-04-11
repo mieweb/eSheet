@@ -9,20 +9,20 @@
 /* Semantic color tokens                                               */
 /* ------------------------------------------------------------------ */
 @theme {
-  --color-msprimary: #3b82f6;
-  --color-mssecondary: #6b7280;
-  --color-msaccent: #10b981;
-  --color-msdanger: #ef4444;
-  --color-mswarning: #f97316;
-  --color-mssurface: #ffffff;
-  --color-msborder: #e5e7eb;
-  --color-msborderinactive: #9ca3af;
-  --color-mstext: #111827;
-  --color-mstextsecondary: #f8fafc;
-  --color-mstextmuted: #6b7280;
-  --color-msbackground: #f9fafb;
-  --color-msbackgroundsecondary: #f3f4f6;
-  --color-msbackgroundhover: #eceef1;
+  --color-msprimary: var(--color-primary, #3b82f6);
+  --color-mssecondary: var(--color-muted-foreground, #6b7280);
+  --color-msaccent: var(--color-success, #10b981);
+  --color-msdanger: var(--color-destructive, #ef4444);
+  --color-mswarning: var(--color-warning, #f97316);
+  --color-mssurface: var(--color-card, #ffffff);
+  --color-msborder: var(--color-border, #e5e7eb);
+  --color-msborderinactive: var(--color-muted-foreground, #9ca3af);
+  --color-mstext: var(--color-foreground, #111827);
+  --color-mstextsecondary: var(--color-primary-foreground, #f8fafc);
+  --color-mstextmuted: var(--color-muted-foreground, #6b7280);
+  --color-msbackground: var(--color-muted, #f9fafb);
+  --color-msbackgroundsecondary: var(--color-muted, #f3f4f6);
+  --color-msbackgroundhover: var(--color-muted, #eceef1);
   --color-msoverlay: rgba(0, 0, 0, 0.5);
 }
 

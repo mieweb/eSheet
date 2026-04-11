@@ -71,10 +71,13 @@ export function Navbar({ children }: { children?: ReactNode }) {
           <Select
             label="Theme"
             value={theme}
-            onValueChange={(val) => setTheme(val as 'light' | 'dark')}
+            onValueChange={(val) =>
+              setTheme(val as 'light' | 'dark' | 'system')
+            }
             options={[
               { value: 'light', label: 'Light' },
               { value: 'dark', label: 'Dark' },
+              { value: 'system', label: 'System' },
             ]}
           />
           <Select
