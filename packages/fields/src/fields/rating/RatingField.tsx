@@ -1,6 +1,5 @@
 import React from 'react';
 import type { FieldComponentProps, SelectedOption } from '@esheet/core';
-import { Button } from '@mieweb/ui';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 
 export const RatingField = React.memo(function RatingField({
@@ -34,18 +33,21 @@ export const RatingField = React.memo(function RatingField({
           {isRequired && <span className="ms:text-msdanger ms:ml-0.5">*</span>}
         </div>
         {options.length > 0 ? (
-          <div className="ms:flex ms:flex-wrap ms:justify-evenly ms:gap-2">
+          <div className="ms:inline-flex ms:w-fit ms:border ms:border-msborder ms:rounded ms:overflow-hidden">
             {options.map((option, index) => {
               const isSelected = selectedIndex === index;
 
               return (
-                <Button
+                <button
                   key={option.id}
                   id={`${instanceId}-rating-answer-${def.id}-${option.id}`}
-                  variant={isSelected ? 'primary' : 'outline'}
-                  size="sm"
+                  type="button"
                   disabled={!isEnabled}
-                  className="rounded-full min-w-11 h-11 px-3"
+                  className={`ms:min-w-10 ms:h-10 ms:px-3 ms:text-sm ms:font-medium ms:border-0 ms:cursor-pointer ms:transition-colors ms:outline-none ms:focus:ring-2 ms:focus:ring-msprimary ms:focus:ring-inset ${
+                    isSelected
+                      ? 'ms:bg-msprimary ms:text-mstextsecondary'
+                      : 'ms:bg-mssurface ms:text-mstext ms:hover:bg-msbackgroundhover'
+                  } ${index > 0 ? 'ms:border-l ms:border-l-msborder' : ''}`}
                   onClick={() => {
                     if (isSelected) {
                       onResponse({ selected: undefined });
@@ -57,7 +59,7 @@ export const RatingField = React.memo(function RatingField({
                   }}
                 >
                   {option.text || option.value}
-                </Button>
+                </button>
               );
             })}
           </div>
