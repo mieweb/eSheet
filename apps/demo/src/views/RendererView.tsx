@@ -4,10 +4,22 @@ import type { FormDefinition } from '@esheet/core';
 import { Navbar } from '../components/Navbar';
 
 const TEST_SCHEMAS = [
-  { label: 'Comprehensive test', value: '/test-comprehensive-schema.json' },
-  { label: 'Expression schema', value: '/test-expression-schema.json' },
-  { label: 'Logic schema', value: '/test-logic-schema.json' },
-  { label: 'Rich content schema', value: '/test-rich-content-schema.json' },
+  {
+    label: 'Comprehensive test',
+    value: `${import.meta.env.BASE_URL}test-comprehensive-schema.json`,
+  },
+  {
+    label: 'Expression schema',
+    value: `${import.meta.env.BASE_URL}test-expression-schema.json`,
+  },
+  {
+    label: 'Logic schema',
+    value: `${import.meta.env.BASE_URL}test-logic-schema.json`,
+  },
+  {
+    label: 'Rich content schema',
+    value: `${import.meta.env.BASE_URL}test-rich-content-schema.json`,
+  },
 ];
 
 export function RendererView() {
