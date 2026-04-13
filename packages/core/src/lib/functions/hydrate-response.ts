@@ -5,6 +5,7 @@
 import type { FieldResponse, FormResponse } from '../types.js';
 import type { NormalizedDefinition } from './normalize.js';
 import { getFieldTypeMeta } from '../registry.js';
+import { isFieldEffectivelyActive } from '../logic/resolve.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -54,6 +55,8 @@ export function hydrateResponse(
       const { definition } = node;
       const meta = getFieldTypeMeta(definition.fieldType);
       if (!meta) continue;
+
+      if (!isFieldEffectivelyActive(id, normalized, responses)) continue;
 
       // Container → recurse into children, don't emit item
       if (meta.answerType === 'container') {

@@ -25,7 +25,7 @@ export interface EsheetRendererProps {
 
 export interface EsheetRendererHandle {
   /** Get current form responses */
-  getResponse: () => FormResponse;
+  getRawResponse: () => FormResponse;
   /** Get form store instance */
   getFormStore: () => FormStore;
   /** Get UI store instance */
@@ -54,7 +54,7 @@ export interface EsheetRendererHandle {
  * />
  *
  * // Later: get responses
- * const responses = rendererRef.current?.getResponse();
+ * const responses = rendererRef.current?.getRawResponse();
  * ```
  */
 export const EsheetRenderer = React.forwardRef<
@@ -99,7 +99,7 @@ const EsheetRendererInner = React.forwardRef<
   React.useImperativeHandle(
     ref,
     () => ({
-      getResponse: () => formStore.getState().responses,
+      getRawResponse: () => formStore.getState().responses,
       getFormStore: () => formStore,
       getUIStore: () => uiStore,
       getValidResponse: () => {

@@ -20,6 +20,26 @@ function hydrate(fields: FieldDefinition[], responses: FormResponse) {
   return hydrateResponse(normalizeDefinition(fields), responses);
 }
 
+function visibleRule(expected: string) {
+  return {
+    effect: 'visible' as const,
+    logic: 'AND' as const,
+    conditions: [
+      { targetId: 'trigger', operator: 'equals' as const, expected },
+    ],
+  };
+}
+
+function enableRule(expected: string) {
+  return {
+    effect: 'enable' as const,
+    logic: 'AND' as const,
+    conditions: [
+      { targetId: 'trigger', operator: 'equals' as const, expected },
+    ],
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Basic behaviour
 // ---------------------------------------------------------------------------
@@ -157,4 +177,70 @@ describe('hydrateResponse', () => {
     });
     expect(result.map((r) => r.id)).toEqual(['a', 'b', 'c', 'd']);
   });
+
+  it('omits a hidden field from the hydrated payload', () => {
+    const fields: FieldDefinition[] = [
+      mkField({ id: 'trigger', fieldType: 'text', question: 'Trigger' }),
+      mkField({
+        id: 'hidden',
+        fieldType: 'text',
+        question: 'Hidden',
+        rules: [visibleRule('show')],
+      }),
+    ];
+
+    const result = hydrate(fields, {
+      trigger: { answer: 'hide' },
+      hidden: { answer: 'secret' },
+    });
+
+    expect(result.map((item) => item.id)).toEqual(['trigger']);
+  });
+
+  it('omits a disabled field from the hydrated payload', () => {
+    const fields: FieldDefinition[] = [
+      mkField({ id: 'trigger', fieldType: 'text', question: 'Trigger' }),
+      mkField({
+        id: 'disabled',
+        fieldType: 'text',
+        question: 'Disabled',
+        rules: [enableRule('enabled')],
+      }),
+    ];
+
+    const result = hydrate(fields, {
+      trigger: { answer: 'disabled' },
+      disabled: { answer: 'secret' },
+    });
+
+    expect(result.map((item) => item.id)).toEqual(['trigger']);
+  });
+
+  it.each([
+    ['hidden', visibleRule('show'), 'hide'],
+    ['disabled', enableRule('enabled'), 'disabled'],
+  ])(
+    'omits children of a %s section from the hydrated payload',
+    (_label, rule, triggerAnswer) => {
+      const fields: FieldDefinition[] = [
+        mkField({ id: 'trigger', fieldType: 'text', question: 'Trigger' }),
+        {
+          id: 'sec',
+          fieldType: 'section',
+          title: 'Section',
+          rules: [rule],
+          fields: [
+            mkField({ id: 'child', fieldType: 'text', question: 'Child' }),
+          ],
+        },
+      ];
+
+      const result = hydrate(fields, {
+        trigger: { answer: triggerAnswer },
+        child: { answer: 'secret' },
+      });
+
+      expect(result.map((item) => item.id)).toEqual(['trigger']);
+    }
+  );
 });

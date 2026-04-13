@@ -4,7 +4,7 @@
 
 import type { FieldResponse, FormResponse } from '../types.js';
 import type { NormalizedDefinition } from '../functions/normalize.js';
-import { resolveEffect } from './resolve.js';
+import { isFieldEffectivelyActive, resolveEffect } from './resolve.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -77,8 +77,9 @@ export function validateField(
   // Non-input field types can't be "answered" — skip.
   if (NON_INPUT_TYPES.has(definition.fieldType)) return [];
 
-  // Hidden fields shouldn't produce errors.
-  if (!resolveEffect('visible', definition, normalized, responses)) return [];
+  // Hidden or disabled fields, including those inside hidden/disabled sections,
+  // shouldn't produce errors.
+  if (!isFieldEffectivelyActive(fieldId, normalized, responses)) return [];
 
   const errors: ValidationError[] = [];
   const response = responses[fieldId];

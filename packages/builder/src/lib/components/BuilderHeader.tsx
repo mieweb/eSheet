@@ -8,6 +8,8 @@ import {
   type FormStore,
   type UIStore,
   type BuilderMode,
+  type ValidationError,
+  type HydratedResponseItem,
 } from '@esheet/core';
 import {
   VEditorIcon,
@@ -194,12 +196,34 @@ function formatIssueDetails(lines: string[], max: number): string {
   return shown.join('\n');
 }
 
+interface DryRunResult {
+  wouldSubmit: boolean;
+  errorCount: number;
+  errors: ValidationError[];
+  response: HydratedResponseItem[] | null;
+}
+
+function formatDryRunDetails(result: DryRunResult): string {
+  try {
+    return JSON.stringify(result, null, 2);
+  } catch {
+    return 'Unable to serialize dry-run output.';
+  }
+}
+
 /**
  * BuilderHeader — top bar with Build/Code/Preview mode toggle and Import/Export actions.
  */
 export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [feedback, setFeedback] = React.useState<FeedbackState>({
+    open: false,
+    title: '',
+    message: '',
+    details: undefined,
+    variant: 'info',
+  });
+  const [dryRunFeedback, setDryRunFeedback] = React.useState<FeedbackState>({
     open: false,
     title: '',
     message: '',
@@ -219,6 +243,18 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
     []
   );
 
+  const showDryRunFeedback = React.useCallback(
+    (
+      variant: FeedbackModalVariant,
+      title: string,
+      message: string,
+      details?: string
+    ) => {
+      setDryRunFeedback({ open: true, variant, title, message, details });
+    },
+    []
+  );
+
   const mode = useSyncExternalStore(
     (cb) => ui.subscribe(cb),
     () => ui.getState().mode,
@@ -230,6 +266,19 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
     () => ui.getState().codeEditorHasError,
     () => ui.getState().codeEditorHasError
   );
+
+  React.useEffect(() => {
+    if (mode !== 'preview') {
+      setDryRunFeedback((prev) =>
+        prev.open
+          ? {
+              ...prev,
+              open: false,
+            }
+          : prev
+      );
+    }
+  }, [mode]);
 
   const handleExport = () => {
     const definition = form.getState().hydrateDefinition();
@@ -307,6 +356,43 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
     e.currentTarget.value = '';
   };
 
+  const handleDryRunSubmit = () => {
+    const state = form.getState();
+    const errors = state.getErrors();
+
+    if (errors.length > 0) {
+      const result: DryRunResult = {
+        wouldSubmit: false,
+        errorCount: errors.length,
+        errors,
+        response: null,
+      };
+
+      showDryRunFeedback(
+        'warning',
+        'Dry Run Submit Failed',
+        `Submit would fail validation with ${errors.length} error(s).`,
+        formatDryRunDetails(result)
+      );
+      return;
+    }
+
+    const response = state.hydrateResponse();
+    const result: DryRunResult = {
+      wouldSubmit: true,
+      errorCount: 0,
+      errors: [],
+      response,
+    };
+
+    showDryRunFeedback(
+      'success',
+      'Dry Run Submit Passed',
+      'Submit would pass validation.',
+      formatDryRunDetails(result)
+    );
+  };
+
   return (
     <header className="builder-header ms:w-full ms:bg-mssurface ms:border ms:border-msborder ms:rounded-lg ms:shadow-sm ms:shrink-0">
       <FeedbackModal
@@ -322,6 +408,54 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
           }))
         }
       />
+      {dryRunFeedback.open && (
+        <>
+          <button
+            type="button"
+            className="ms:lg:hidden ms:fixed ms:inset-0 ms:z-40 ms:bg-msoverlay ms:border-0"
+            onClick={() =>
+              setDryRunFeedback((prev) => ({
+                ...prev,
+                open: false,
+              }))
+            }
+            aria-label="Close Dry Run result drawer"
+          />
+          <div className="ms:lg:hidden ms:fixed ms:left-0 ms:right-0 ms:bottom-0 ms:z-50 ms:h-[50dvh] ms:bg-mssurface ms:border-t ms:border-msborder ms:rounded-t-2xl ms:shadow-2xl ms:overflow-hidden">
+            <div className="ms:flex ms:items-center ms:justify-between ms:px-4 ms:py-2 ms:border-b ms:border-msborder">
+              <span className="ms:text-sm ms:font-medium ms:text-mstext">
+                Dry Run Result
+              </span>
+              <button
+                type="button"
+                onClick={() =>
+                  setDryRunFeedback((prev) => ({
+                    ...prev,
+                    open: false,
+                  }))
+                }
+                className="ms:px-2 ms:py-1 ms:bg-transparent ms:text-mstextmuted ms:border-0 ms:outline-none ms:focus:outline-none"
+                aria-label="Close Dry Run result drawer"
+              >
+                Close
+              </button>
+            </div>
+            <div className="ms:h-[calc(50dvh-45px)] ms:overflow-y-auto ms:p-4 ms:space-y-3">
+              <h3 className="ms:text-sm ms:font-semibold ms:text-mstext">
+                {dryRunFeedback.title}
+              </h3>
+              <p className="ms:text-sm ms:text-mstextmuted">
+                {dryRunFeedback.message}
+              </p>
+              {dryRunFeedback.details && (
+                <pre className="ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackground ms:p-3 ms:text-xs ms:overflow-auto ms:whitespace-pre-wrap ms:break-words ms:text-mstext">
+                  {dryRunFeedback.details}
+                </pre>
+              )}
+            </div>
+          </div>
+        </>
+      )}
       <div className="ms:px-4 ms:py-4">
         <div className="ms:flex ms:flex-wrap ms:items-center ms:justify-between ms:gap-3">
           {/* Left — mode toggle */}
@@ -372,6 +506,19 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
               <DownloadIcon className="ms:w-4 ms:h-4 ms:text-mstext ms:group-hover:text-mstextsecondary ms:transition-colors" />
               <span className="ms:hidden ms:sm:inline">Export</span>
             </button>
+
+            {mode === 'preview' && (
+              <button
+                type="button"
+                onClick={handleDryRunSubmit}
+                aria-label="Dry run submit"
+                title="Dry Run Submit"
+                className="dry-run-submit-btn ms:group ms:px-2 ms:py-2 ms:lg:px-3 ms:lg:py-2 ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:hover:bg-msprimary ms:hover:text-mstextsecondary ms:hover:border-msprimary ms:text-xs ms:lg:text-sm ms:font-medium ms:transition-colors ms:flex ms:items-center ms:lg:gap-2 ms:gap-0 ms:outline-none ms:focus:outline-none ms:text-mstext ms:cursor-pointer"
+              >
+                <span className="ms:hidden ms:sm:inline">Dry Run Submit</span>
+                <span className="ms:sm:hidden">Dry Run</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

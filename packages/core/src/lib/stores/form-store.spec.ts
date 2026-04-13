@@ -145,6 +145,29 @@ describe('createFormStore', () => {
     });
   });
 
+  describe('validation and hydration', () => {
+    it('skips disabled required fields in errors and hydrated output', () => {
+      store = createFormStore(
+        form([
+          field('trigger', 'text', { question: 'Trigger' }),
+          field('q1', 'text', {
+            question: 'Name?',
+            required: true,
+            rules: [enableRule('trigger', 'enabled')],
+          }),
+        ])
+      );
+
+      store.getState().setResponse('trigger', { answer: 'disabled' });
+      store.getState().setResponse('q1', { answer: 'Ada' });
+
+      expect(store.getState().getErrors()).toEqual([]);
+      expect(store.getState().hydrateResponse()).toEqual([
+        { id: 'trigger', text: 'Trigger', answer: 'disabled' },
+      ]);
+    });
+  });
+
   // -----------------------------------------------------------------------
   // Builder Actions
   // -----------------------------------------------------------------------

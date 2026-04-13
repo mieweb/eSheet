@@ -245,3 +245,131 @@ describe('BuilderHeader import feedback', () => {
     expect(form.getState().normalized.rootIds).toContain('ok');
   });
 });
+
+describe('BuilderHeader dry run submit', () => {
+  function createRequiredTextDefinition() {
+    return {
+      schemaType: 'mieforms-v1.0' as const,
+      fields: [
+        {
+          id: 'q1',
+          fieldType: 'text' as const,
+          question: 'Name?',
+          required: true,
+        },
+      ],
+    };
+  }
+
+  it('dry run shows failed result when required field is unanswered', async () => {
+    const form = createFormStore(createRequiredTextDefinition());
+    const ui = createUIStore();
+
+    act(() => {
+      ui.getState().setMode('preview');
+    });
+
+    render(<BuilderHeader form={form} ui={ui} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Dry run submit' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Dry Run Submit Failed')).toBeTruthy();
+      expect(
+        screen.getByText('Submit would fail validation with 1 error(s).')
+      ).toBeTruthy();
+    });
+
+    expect(screen.getByText(/"wouldSubmit": false/)).toBeTruthy();
+    expect(screen.getByText(/"fieldId": "q1"/)).toBeTruthy();
+    expect(screen.getByText(/"rule": "required"/)).toBeTruthy();
+
+    fireEvent.click(screen.getByText('Close'));
+
+    await waitFor(() => {
+      expect(screen.queryByText('Dry Run Submit Failed')).toBeNull();
+    });
+  });
+
+  it('dry run shows passed result with hydrated response when valid', async () => {
+    const form = createFormStore(createRequiredTextDefinition());
+    const ui = createUIStore();
+
+    act(() => {
+      ui.getState().setMode('preview');
+      form.getState().setResponse('q1', { answer: 'Ada' });
+    });
+
+    render(<BuilderHeader form={form} ui={ui} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Dry run submit' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Dry Run Submit Passed')).toBeTruthy();
+      expect(screen.getByText('Submit would pass validation.')).toBeTruthy();
+    });
+
+    expect(screen.getByText(/"wouldSubmit": true/)).toBeTruthy();
+    expect(screen.getByText(/"errorCount": 0/)).toBeTruthy();
+    expect(screen.getByText(/"id": "q1"/)).toBeTruthy();
+  });
+
+  it('does not show dry run action outside preview mode', () => {
+    const form = createFormStore(createRequiredTextDefinition());
+    const ui = createUIStore();
+
+    render(<BuilderHeader form={form} ui={ui} />);
+
+    expect(screen.queryByRole('button', { name: 'Dry run submit' })).toBeNull();
+  });
+
+  it('dry run excludes disabled answers from the serialized response payload', async () => {
+    const form = createFormStore({
+      schemaType: 'mieforms-v1.0',
+      fields: [
+        {
+          id: 'trigger',
+          fieldType: 'text',
+          question: 'Trigger?',
+        },
+        {
+          id: 'q1',
+          fieldType: 'text',
+          question: 'Name?',
+          required: true,
+          rules: [
+            {
+              effect: 'enable',
+              logic: 'AND',
+              conditions: [
+                {
+                  targetId: 'trigger',
+                  operator: 'equals',
+                  expected: 'enabled',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    const ui = createUIStore();
+
+    act(() => {
+      ui.getState().setMode('preview');
+      form.getState().setResponse('trigger', { answer: 'disabled' });
+      form.getState().setResponse('q1', { answer: 'Ada' });
+    });
+
+    render(<BuilderHeader form={form} ui={ui} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Dry run submit' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Dry Run Submit Passed')).toBeTruthy();
+    });
+
+    expect(screen.getByText(/"id": "trigger"/)).toBeTruthy();
+    expect(screen.queryByText(/"id": "q1"/)).toBeNull();
+  });
+});
