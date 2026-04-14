@@ -13,23 +13,23 @@ interface SubmitResult {
 
 const TEST_SCHEMAS = [
   {
-    label: 'Patient intake',
+    label: 'Patient Intake Form',
     value: `${import.meta.env.BASE_URL}patient-intake.json`,
   },
   {
-    label: 'PHQ-9 depression screening',
+    label: 'PHQ-9 Patient Health Questionnaire',
     value: `${import.meta.env.BASE_URL}phq9.json`,
   },
   {
-    label: 'Net Promoter Score (NPS)',
+    label: 'Net Promoter Score Survey',
     value: `${import.meta.env.BASE_URL}nps.json`,
   },
   {
-    label: 'Employee onboarding',
+    label: 'Employee Onboarding Form',
     value: `${import.meta.env.BASE_URL}employee-onboarding.json`,
   },
   {
-    label: 'Comprehensive field showcase',
+    label: 'Comprehensive Field Showcase',
     value: `${import.meta.env.BASE_URL}comprehensive.json`,
   },
 ];
@@ -94,8 +94,8 @@ export function RendererView() {
     }
 
     const hydrated = renderer.getFormStore().getState().hydrateResponse();
-    console.log('Validated Form Response:', result.response);
-    console.log('Hydrated Submit Payload:', hydrated);
+    console.log('Validated Form Response:', JSON.stringify(result.response, null, 2));
+    console.log('Hydrated Submit Payload:', JSON.stringify(hydrated, null, 2));
     setSubmitResult({
       kind: 'success',
       title: 'Submit successful',

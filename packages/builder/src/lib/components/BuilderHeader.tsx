@@ -408,6 +408,22 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
           }))
         }
       />
+      {/* Dry run: modal on desktop (lg+) */}
+      <div className="ms:hidden ms:lg:block">
+        <FeedbackModal
+          open={dryRunFeedback.open}
+          title={dryRunFeedback.title}
+          message={dryRunFeedback.message}
+          details={dryRunFeedback.details}
+          variant={dryRunFeedback.variant}
+          onClose={() =>
+            setDryRunFeedback((prev) => ({
+              ...prev,
+              open: false,
+            }))
+          }
+        />
+      </div>
       {dryRunFeedback.open && (
         <>
           <button

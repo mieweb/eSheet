@@ -22,8 +22,8 @@ export interface HydratedResponseItem {
   id: string;
   /** The question text shown to the user. */
   text: string;
-  /** The extracted answer value, or `undefined` when unanswered. */
-  answer: unknown;
+  /** The extracted answer value. Omitted when the field was not answered. */
+  answer?: unknown;
 }
 
 // ---------------------------------------------------------------------------
@@ -67,11 +67,13 @@ export function hydrateResponse(
       // Display / none → skip entirely
       if (meta.answerType === 'display' || meta.answerType === 'none') continue;
 
-      items.push({
+      const answer = extractAnswer(responses[id], meta.answerType);
+      const item: HydratedResponseItem = {
         id,
         text: definition.question ?? definition.title ?? '',
-        answer: extractAnswer(responses[id], meta.answerType),
-      });
+      };
+      if (!isEmptyAnswer(answer)) item.answer = answer;
+      items.push(item);
     }
   }
 
@@ -82,6 +84,13 @@ export function hydrateResponse(
 // ---------------------------------------------------------------------------
 // Private helpers
 // ---------------------------------------------------------------------------
+
+/** Returns true when an answer value should be omitted (unanswered). */
+function isEmptyAnswer(value: unknown): boolean {
+  if (value === undefined || value === null || value === '') return true;
+  if (Array.isArray(value) && value.length === 0) return true;
+  return false;
+}
 
 /** Pull the actual answer value out of a FieldResponse based on answer type. */
 function extractAnswer(

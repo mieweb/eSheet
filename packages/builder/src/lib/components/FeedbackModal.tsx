@@ -33,14 +33,14 @@ export function FeedbackModal({
 
   return (
     <div
-      className="feedback-modal-overlay ms:fixed ms:inset-0 ms:z-50 ms:flex ms:items-center ms:justify-center ms:bg-msoverlay ms:p-4"
+      className="feedback-modal-overlay ms:fixed ms:inset-0 ms:z-50 ms:flex ms:items-center ms:justify-center ms:bg-msoverlay ms:px-4 ms:py-8"
       role="dialog"
       aria-modal="true"
       aria-label={title}
       onClick={onClose}
     >
       <div
-        className="feedback-modal-content ms:w-full ms:max-w-lg ms:rounded-xl ms:bg-mssurface ms:border ms:border-msborder ms:shadow-2xl ms:p-5"
+        className="feedback-modal-content ms:w-full ms:max-w-2xl ms:rounded-xl ms:bg-mssurface ms:border ms:border-msborder ms:shadow-2xl ms:p-5"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="ms:flex ms:items-start ms:gap-3 ms:mb-3">
@@ -60,7 +60,7 @@ export function FeedbackModal({
         </div>
 
         {details && (
-          <pre className="ms:text-xs ms:text-mstext ms:bg-msbackground ms:border ms:border-msborder ms:rounded ms:p-2 ms:whitespace-pre-wrap ms:break-words ms:max-h-44 ms:overflow-auto">
+          <pre className="ms:text-xs ms:text-mstext ms:bg-msbackground ms:border ms:border-msborder ms:rounded ms:p-2 ms:whitespace-pre-wrap ms:break-words ms:max-h-96 ms:overflow-auto">
             {details}
           </pre>
         )}
