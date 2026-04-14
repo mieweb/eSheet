@@ -1,7 +1,5 @@
 # eSheet
 
-<img width="900" height="674" alt="eSheet builder screenshot" src="https://github.com/user-attachments/assets/67c3f422-e3df-4fa4-9110-d7046b17ff6e" />
-
 **Modular form builder & renderer for React.**
 
 eSheet is a TypeScript-first Nx monorepo providing composable packages for embedding a visual form builder and renderer into any React application — no lock-in, no required backend.
