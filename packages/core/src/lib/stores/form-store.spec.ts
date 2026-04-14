@@ -22,7 +22,7 @@ function field(
 }
 
 function form(fields: FieldDefinition[]): FormDefinition {
-  return { schemaType: SCHEMA_TYPE, fields };
+  return { schemaType: SCHEMA_TYPE, id: 'test-form', fields };
 }
 
 function visibleRule(targetId: string, expected: string): ConditionalRule {

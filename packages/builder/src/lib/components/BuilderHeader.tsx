@@ -1,10 +1,12 @@
 import React, { useSyncExternalStore } from 'react';
 import YAML from 'js-yaml';
 import {
+  formatZodValidationError,
   formDefinitionSchema,
   type Condition,
   isExpressionValid,
   type FieldDefinition,
+  type FormDefinition,
   type FormStore,
   type UIStore,
   type BuilderMode,
@@ -30,6 +32,9 @@ interface FeedbackState {
   title: string;
   message: string;
   details?: string;
+  issues?: string[];
+  issuesTitle?: string;
+  issuesHint?: string;
   variant: FeedbackModalVariant;
 }
 
@@ -42,6 +47,14 @@ const MODES: {
   { value: 'code', label: 'Code', Icon: CodeIcon },
   { value: 'preview', label: 'Preview', Icon: PreviewIcon },
 ];
+
+function sanitizeFormId(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
 
 interface FlattenedField {
   field: FieldDefinition;
@@ -187,15 +200,6 @@ function collectImportWarnings(fields: FieldDefinition[]): string[] {
   return warnings;
 }
 
-function formatIssueDetails(lines: string[], max: number): string {
-  const shown = lines.slice(0, max).map((line) => `- ${line}`);
-  const remaining = lines.length - shown.length;
-  if (remaining > 0) {
-    shown.push(`- ...and ${remaining} more issue(s).`);
-  }
-  return shown.join('\n');
-}
-
 interface DryRunResult {
   wouldSubmit: boolean;
   errorCount: number;
@@ -216,6 +220,9 @@ function formatDryRunDetails(result: DryRunResult): string {
  */
 export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [exportIdModalOpen, setExportIdModalOpen] = React.useState(false);
+  const [exportIdInput, setExportIdInput] = React.useState('');
+  const [exportIdError, setExportIdError] = React.useState('');
   const [feedback, setFeedback] = React.useState<FeedbackState>({
     open: false,
     title: '',
@@ -236,9 +243,21 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
       variant: FeedbackModalVariant,
       title: string,
       message: string,
-      details?: string
+      details?: string,
+      issues?: string[],
+      issuesTitle?: string,
+      issuesHint?: string
     ) => {
-      setFeedback({ open: true, variant, title, message, details });
+      setFeedback({
+        open: true,
+        variant,
+        title,
+        message,
+        details,
+        issues,
+        issuesTitle,
+        issuesHint,
+      });
     },
     []
   );
@@ -280,16 +299,41 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
     }
   }, [mode]);
 
-  const handleExport = () => {
-    const definition = form.getState().hydrateDefinition();
+  const finalizeExport = React.useCallback((definition: FormDefinition) => {
     const json = JSON.stringify(definition, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${definition.title ?? 'form'}.json`;
+    a.download = `${definition.id}.json`;
     a.click();
     URL.revokeObjectURL(url);
+  }, []);
+
+  const handleConfirmExportId = React.useCallback(() => {
+    const nextId = sanitizeFormId(exportIdInput);
+    if (!nextId) {
+      setExportIdError(
+        'Enter a valid id (letters, numbers, dashes, underscores).'
+      );
+      return;
+    }
+
+    form.getState().setFormId(nextId);
+    const definition = form.getState().hydrateDefinition();
+    finalizeExport(definition);
+    setExportIdModalOpen(false);
+    setExportIdError('');
+  }, [exportIdInput, finalizeExport, form]);
+
+  const handleExport = () => {
+    const definition = form.getState().hydrateDefinition();
+    const currentId = definition.id.trim();
+    const suggested =
+      currentId || sanitizeFormId(definition.title ?? 'form') || 'form';
+    setExportIdInput(suggested);
+    setExportIdError('');
+    setExportIdModalOpen(true);
   };
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -309,34 +353,41 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
 
         const validated = formDefinitionSchema.safeParse(parsed);
         if (!validated.success) {
-          const issues = validated.error.issues.map((issue) => {
-            const path =
-              issue.path.length > 0 ? issue.path.join('.') : '(root)';
-            return `${path}: ${issue.message}`;
-          });
-          const details = formatIssueDetails(issues, 5);
+          const issues = validated.error.issues.map(formatZodValidationError);
+          const shownIssues = issues.slice(0, 8);
 
           showFeedback(
             'error',
             'Import Failed',
             `The file is valid ${format} but does not match the form schema.`,
-            details
+            issues.length > shownIssues.length
+              ? `Showing ${shownIssues.length} of ${issues.length} issue(s).`
+              : undefined,
+            shownIssues,
+            'Unsupported Form Definition',
+            'Fix these issues, then try importing again.'
           );
           return;
         }
 
         const importWarnings = collectImportWarnings(validated.data.fields);
-        form.getState().loadDefinition(validated.data);
         if (importWarnings.length > 0) {
-          const details = formatIssueDetails(importWarnings, 10);
+          const shownWarnings = importWarnings.slice(0, 10);
           showFeedback(
-            'warning',
-            'Imported With Warnings',
-            `Loaded ${validated.data.fields.length} field(s), but found ${importWarnings.length} issue(s) that may affect behavior.`,
-            details
+            'error',
+            'Import Blocked',
+            `This definition contains ${importWarnings.length} unsupported issue(s) and was not imported.`,
+            importWarnings.length > shownWarnings.length
+              ? `Showing ${shownWarnings.length} of ${importWarnings.length} issue(s).`
+              : undefined,
+            shownWarnings,
+            'Unsupported Configuration',
+            'Resolve these issues before importing this file.'
           );
           return;
         }
+
+        form.getState().loadDefinition(validated.data);
 
         showFeedback(
           'success',
@@ -396,10 +447,55 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
   return (
     <header className="builder-header ms:w-full ms:bg-mssurface ms:border ms:border-msborder ms:rounded-lg ms:shadow-sm ms:shrink-0">
       <FeedbackModal
+        open={exportIdModalOpen}
+        title="Use This Form ID?"
+        message={`Do you want to use '${
+          sanitizeFormId(exportIdInput) || exportIdInput
+        }' as the form id? You can edit it below before exporting.`}
+        content={
+          <div className="ms:space-y-2 ms:mb-2">
+            <label
+              htmlFor={`${form.getState().instanceId}-export-form-id`}
+              className="ms:block ms:text-sm ms:font-medium ms:text-mstext"
+            >
+              Form ID
+            </label>
+            <input
+              id={`${form.getState().instanceId}-export-form-id`}
+              aria-label="Form ID"
+              type="text"
+              value={exportIdInput}
+              onChange={(e) => {
+                setExportIdInput(e.target.value);
+                if (exportIdError) setExportIdError('');
+              }}
+              placeholder="my-form-id"
+              className="ms:px-3 ms:py-2 ms:h-10 ms:w-full ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:rounded-lg ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary/30 ms:outline-none ms:transition-colors"
+            />
+            {exportIdError && (
+              <p className="ms:text-xs ms:text-msdanger">{exportIdError}</p>
+            )}
+          </div>
+        }
+        variant="info"
+        confirmLabel="Use This ID & Export"
+        cancelLabel="Cancel"
+        showCancel
+        onConfirm={handleConfirmExportId}
+        onClose={() => {
+          setExportIdModalOpen(false);
+          setExportIdError('');
+        }}
+      />
+
+      <FeedbackModal
         open={feedback.open}
         title={feedback.title}
         message={feedback.message}
         details={feedback.details}
+        issues={feedback.issues}
+        issuesTitle={feedback.issuesTitle}
+        issuesHint={feedback.issuesHint}
         variant={feedback.variant}
         onClose={() =>
           setFeedback((prev) => ({

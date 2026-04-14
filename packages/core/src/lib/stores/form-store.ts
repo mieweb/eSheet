@@ -55,6 +55,8 @@ export interface FormState {
   // --- Data ---
   /** Unique instance ID — used to generate unique DOM IDs when multiple engines share a page. */
   readonly instanceId: string;
+  /** Top-level form identifier used for import/export and schema validation. */
+  readonly formId: string;
   /** Flat-indexed map — the source of truth for field structure. */
   readonly normalized: NormalizedDefinition;
   /** Current responses keyed by field ID. */
@@ -63,6 +65,8 @@ export interface FormState {
   // --- Lifecycle Actions ---
   /** Load a form definition (tree), normalizing it into the flat index. */
   loadDefinition: (definition: FormDefinition) => void;
+  /** Update the top-level form id without replacing fields. */
+  setFormId: (id: string) => void;
   /** Set (or replace) a single field's response. */
   setResponse: (fieldId: string, response: FieldResponse) => void;
   /** Remove a single field's response. */
@@ -249,11 +253,21 @@ function getDefaultOptionValue(
  * @param initial - Optional initial form definition to load immediately.
  */
 let nextInstanceId = 1;
+let nextTemporaryFormId = 1;
+
+function createTemporaryFormId(): string {
+  const id = `tmp-form-${nextTemporaryFormId}`;
+  nextTemporaryFormId += 1;
+  return id;
+}
 
 export function createFormStore(initial?: FormDefinition): FormStore {
+  const initialFormId = initial?.id?.trim() || createTemporaryFormId();
+
   return createStore<FormState>()((set, get) => ({
     // --- Data ---
     instanceId: `ms-${nextInstanceId++}`,
+    formId: initialFormId,
     normalized: initial
       ? normalizeDefinition(initial.fields)
       : EMPTY_NORMALIZED,
@@ -262,9 +276,16 @@ export function createFormStore(initial?: FormDefinition): FormStore {
     // --- Actions ---
     loadDefinition: (definition) =>
       set({
+        formId: definition.id,
         normalized: normalizeDefinition(definition.fields),
         responses: {},
       }),
+
+    setFormId: (id) => {
+      const nextId = id.trim();
+      if (!nextId) return;
+      set({ formId: nextId });
+    },
 
     setResponse: (fieldId, response) =>
       set((state) => ({
@@ -682,9 +703,10 @@ export function createFormStore(initial?: FormDefinition): FormStore {
     },
 
     hydrateDefinition: () => {
-      const { normalized } = get();
+      const { normalized, formId } = get();
       return {
         schemaType: SCHEMA_TYPE,
+        id: formId,
         fields: hydrateDefinition(normalized),
       };
     },

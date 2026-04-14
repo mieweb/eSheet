@@ -11,28 +11,43 @@ interface SubmitResult {
   readonly detail?: string;
 }
 
-const TEST_SCHEMAS = [
-  {
-    label: 'Patient Intake Form',
-    value: `${import.meta.env.BASE_URL}patient-intake.json`,
-  },
-  {
-    label: 'PHQ-9 Patient Health Questionnaire',
-    value: `${import.meta.env.BASE_URL}phq9.json`,
-  },
-  {
-    label: 'Net Promoter Score Survey',
-    value: `${import.meta.env.BASE_URL}nps.json`,
-  },
-  {
-    label: 'Employee Onboarding Form',
-    value: `${import.meta.env.BASE_URL}employee-onboarding.json`,
-  },
-  {
-    label: 'Comprehensive Field Showcase',
-    value: `${import.meta.env.BASE_URL}comprehensive.json`,
-  },
-];
+interface SchemaOption {
+  readonly label: string;
+  readonly value: string;
+  readonly data: FormDefinition;
+}
+
+function toSchemaLabel(fileName: string): string {
+  return fileName
+    .replace(/\.json$/i, '')
+    .split('-')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+const schemaModules = import.meta.glob('../../public/*.json', {
+  eager: true,
+}) as Record<string, { default?: FormDefinition } | FormDefinition>;
+
+const TEST_SCHEMAS: readonly SchemaOption[] = Object.entries(schemaModules)
+  .map(([path, mod]) => {
+    const fileName = path.split('/').pop() ?? path;
+    const data =
+      typeof mod === 'object' && mod !== null && 'default' in mod
+        ? mod.default
+        : (mod as FormDefinition);
+
+    if (!data) return null;
+
+    return {
+      label: data.title?.trim() || toSchemaLabel(fileName),
+      value: fileName,
+      data,
+    };
+  })
+  .filter((schema): schema is SchemaOption => schema !== null)
+  .sort((a, b) => a.label.localeCompare(b.label));
 
 export function RendererView() {
   const [formData, setFormData] = useState<FormDefinition | null>(null);
@@ -44,10 +59,10 @@ export function RendererView() {
     setFormKey((prev) => prev + 1);
   }, []);
 
-  const handleLoadSchema = async (url: string) => {
-    const res = await fetch(url);
-    const json = await res.json();
-    setFormData(json);
+  const handleLoadSchema = (fileName: string) => {
+    const schema = TEST_SCHEMAS.find((s) => s.value === fileName);
+    if (!schema) return;
+    setFormData(schema.data);
     setSubmitResult(null);
     resetFormKey();
   };

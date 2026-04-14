@@ -85,6 +85,8 @@ export {
   type ValidationError,
 } from './lib/logic/validate.js';
 
+export { formatZodValidationError } from './lib/zod-errors.js';
+
 export {
   createFormStore,
   type FormState,

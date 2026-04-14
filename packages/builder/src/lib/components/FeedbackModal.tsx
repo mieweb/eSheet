@@ -1,3 +1,6 @@
+import { ZodIssuesPanel } from '@esheet/fields';
+import type { ReactNode } from 'react';
+
 export type FeedbackModalVariant = 'info' | 'success' | 'warning' | 'error';
 
 export interface FeedbackModalProps {
@@ -5,8 +8,15 @@ export interface FeedbackModalProps {
   title: string;
   message: string;
   details?: string;
+  issues?: string[];
+  issuesTitle?: string;
+  issuesHint?: string;
+  content?: ReactNode;
   variant?: FeedbackModalVariant;
   confirmLabel?: string;
+  cancelLabel?: string;
+  showCancel?: boolean;
+  onConfirm?: () => void;
   onClose: () => void;
 }
 
@@ -25,8 +35,15 @@ export function FeedbackModal({
   title,
   message,
   details,
+  issues,
+  issuesTitle,
+  issuesHint,
+  content,
   variant = 'info',
   confirmLabel = 'OK',
+  cancelLabel = 'Cancel',
+  showCancel = false,
+  onConfirm,
   onClose,
 }: FeedbackModalProps) {
   if (!open) return null;
@@ -59,16 +76,36 @@ export function FeedbackModal({
           </div>
         </div>
 
+        {issues && issues.length > 0 && (
+          <ZodIssuesPanel
+            title={issuesTitle ?? 'Validation Issues'}
+            issues={issues}
+            hint={issuesHint ?? 'Please resolve these issues and try again.'}
+            className="ms:mb-3 ms:p-4"
+          />
+        )}
+
         {details && (
           <pre className="ms:text-xs ms:text-mstext ms:bg-msbackground ms:border ms:border-msborder ms:rounded ms:p-2 ms:whitespace-pre-wrap ms:break-words ms:max-h-96 ms:overflow-auto">
             {details}
           </pre>
         )}
 
-        <div className="ms:mt-4 ms:flex ms:justify-end">
+        {content}
+
+        <div className="ms:mt-4 ms:flex ms:justify-end ms:gap-2">
+          {showCancel && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="ms:px-4 ms:py-2 ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:text-sm ms:font-medium ms:hover:bg-msbackground ms:transition-colors ms:outline-none ms:focus:outline-none ms:cursor-pointer"
+            >
+              {cancelLabel}
+            </button>
+          )}
           <button
             type="button"
-            onClick={onClose}
+            onClick={onConfirm ?? onClose}
             className="ms:px-4 ms:py-2 ms:rounded-lg ms:bg-msprimary ms:text-mstextsecondary ms:text-sm ms:font-medium ms:hover:bg-msprimary/90 ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer"
           >
             {confirmLabel}

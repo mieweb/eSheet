@@ -52,6 +52,12 @@ export {
   useUI,
 } from './lib/context.js';
 
+// Shared validation UI
+export {
+  ZodIssuesPanel,
+  type ZodIssuesPanelProps,
+} from './lib/ZodIssuesPanel.js';
+
 // Field component registry
 export {
   getFieldComponent,

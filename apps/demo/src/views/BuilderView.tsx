@@ -5,6 +5,7 @@ import { Navbar } from '../components/Navbar';
 
 const INITIAL_DEF: FormDefinition = {
   schemaType: 'mieforms-v1.0',
+  id: 'demo-builder',
   fields: [
     { id: 'q1', fieldType: 'text', question: 'What is your name?' },
     {
