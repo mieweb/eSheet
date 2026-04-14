@@ -94,7 +94,10 @@ export function RendererView() {
     }
 
     const hydrated = renderer.getFormStore().getState().hydrateResponse();
-    console.log('Validated Form Response:', JSON.stringify(result.response, null, 2));
+    console.log(
+      'Validated Form Response:',
+      JSON.stringify(result.response, null, 2)
+    );
     console.log('Hydrated Submit Payload:', JSON.stringify(hydrated, null, 2));
     setSubmitResult({
       kind: 'success',
