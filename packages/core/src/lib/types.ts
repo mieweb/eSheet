@@ -326,7 +326,70 @@ export const formDefinitionJSONSchema: Record<string, unknown> = z.toJSONSchema(
 ) as Record<string, unknown>;
 
 /** Response store — maps field IDs to their response values. */
-export type FormResponse = Record<string, FieldResponse>;
+export type FieldResponseMap = Record<string, FieldResponse>;
+
+// ---------------------------------------------------------------------------
+// Submission / Envelope Types
+// ---------------------------------------------------------------------------
+
+/** A ranked item with its 1-based position. */
+export type RankedAnswer = {
+  id: string;
+  value: string;
+  rank: number;
+};
+
+/** A structured media attachment (signature / diagram). */
+export type AttachmentAnswer = {
+  contentType: string;
+  dataUrl?: string;
+  url?: string;
+  title?: string;
+};
+
+/** All possible answer value shapes in a submission payload. */
+export type AnswerValue =
+  | string
+  | number
+  | boolean
+  | null
+  | { id: string; value: string }
+  | Array<{ id: string; value: string }>
+  | RankedAnswer[]
+  | AttachmentAnswer;
+
+/** A single item in the submission payload — one per answerable field. */
+export interface ResponseItem {
+  id: string;
+  text?: string;
+  answer?: AnswerValue;
+}
+
+export const RESPONSE_STATUSES = [
+  'draft',
+  'in-progress',
+  'completed',
+  'amended',
+] as const;
+
+export const responseStatusSchema = z.enum(RESPONSE_STATUSES);
+export type ResponseStatus = z.infer<typeof responseStatusSchema>;
+
+/** Top-level submission envelope wrapping all answers. */
+export interface FormResponse {
+  id: string;
+  definitionRef: {
+    id: string;
+    version?: string;
+  };
+  status?: ResponseStatus;
+  subjectRef?: {
+    type: string;
+    id: string;
+  };
+  authoredAt?: string;
+  items: ResponseItem[];
+}
 
 // ---------------------------------------------------------------------------
 // Field Type Metadata (registry data)

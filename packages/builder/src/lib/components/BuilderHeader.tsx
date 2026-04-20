@@ -11,7 +11,7 @@ import {
   type UIStore,
   type BuilderMode,
   type ValidationError,
-  type HydratedResponseItem,
+  type FormResponseEnvelope,
 } from '@esheet/core';
 import {
   VEditorIcon,
@@ -204,7 +204,7 @@ interface DryRunResult {
   wouldSubmit: boolean;
   errorCount: number;
   errors: ValidationError[];
-  response: HydratedResponseItem[] | null;
+  response: FormResponseEnvelope | null;
 }
 
 function formatDryRunDetails(result: DryRunResult): string {
@@ -428,7 +428,7 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
       return;
     }
 
-    const response = state.hydrateResponse();
+    const response = state.hydrateResponse({ status: 'draft' });
     const result: DryRunResult = {
       wouldSubmit: true,
       errorCount: 0,

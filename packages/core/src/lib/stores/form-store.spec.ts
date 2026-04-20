@@ -162,7 +162,7 @@ describe('createFormStore', () => {
       store.getState().setResponse('q1', { answer: 'Ada' });
 
       expect(store.getState().getErrors()).toEqual([]);
-      expect(store.getState().hydrateResponse()).toEqual([
+      expect(store.getState().hydrateResponse().items).toEqual([
         { id: 'trigger', text: 'Trigger', answer: 'disabled' },
       ]);
     });

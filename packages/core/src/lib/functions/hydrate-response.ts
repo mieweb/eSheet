@@ -2,50 +2,48 @@
 // Response Hydration — combine definition + responses into export-ready items
 // ---------------------------------------------------------------------------
 
-import type { FieldResponse, FormResponse } from '../types.js';
+import type {
+  FieldResponse,
+  FieldResponseMap,
+  SelectedOption,
+  RankedAnswer,
+  AttachmentAnswer,
+  ResponseItem,
+  FormResponse,
+} from '../types.js';
 import type { NormalizedDefinition } from './normalize.js';
 import { getFieldTypeMeta } from '../registry.js';
 import { isFieldEffectivelyActive } from '../logic/resolve.js';
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
-/**
- * A hydrated response item — one per answerable field.
- *
- * Joins the question text from the definition with the field's
- * extracted answer value for export / submission.
- */
-export interface HydratedResponseItem {
-  /** Field ID. */
-  id: string;
-  /** The question text shown to the user. */
-  text: string;
-  /** The extracted answer value. Omitted when the field was not answered. */
-  answer?: unknown;
-}
 
 // ---------------------------------------------------------------------------
 // hydrateResponse()
 // ---------------------------------------------------------------------------
 
 /**
- * Walk the normalized definition in display order and produce a flat
- * array of hydrated response items — one per answerable field.
+ * Walk the normalized definition in display order and produce a
+ * `FormResponseEnvelope` — one `ResponseItem` per answerable field.
  *
  * - **container** fields (sections) recurse into children but are not emitted.
  * - **display / none** fields (image, html) are skipped entirely.
  * - Unknown field types (no registry entry) are skipped.
+ * - **ranking** fields always include their answer, using definition order
+ *   when the user has not interacted.
  *
  * @param normalized - The normalized form definition (flat `byId` map).
  * @param responses  - The current form responses.
+ * @param options    - Optional envelope metadata.
  */
 export function hydrateResponse(
   normalized: NormalizedDefinition,
-  responses: FormResponse
-): HydratedResponseItem[] {
-  const items: HydratedResponseItem[] = [];
+  responses: FieldResponseMap,
+  options?: {
+    id?: string;
+    definitionId?: string;
+    status?: FormResponse['status'];
+    subjectRef?: FormResponse['subjectRef'];
+  }
+): FormResponse {
+  const items: ResponseItem[] = [];
 
   function walk(ids: readonly string[]): void {
     for (const id of ids) {
@@ -67,18 +65,48 @@ export function hydrateResponse(
       // Display / none → skip entirely
       if (meta.answerType === 'display' || meta.answerType === 'none') continue;
 
+      // Ranking: always include, even if the user never dragged
+      if (definition.fieldType === 'ranking') {
+        const opts = definition.options ?? [];
+        const rawSelected = (responses[id]?.selected ?? []) as SelectedOption[];
+        const validOrder =
+          rawSelected.length === opts.length &&
+          rawSelected.every((s) => opts.some((o) => o.id === s.id));
+        const orderedOpts = validOrder ? rawSelected : opts;
+        const answer: RankedAnswer[] = orderedOpts.map((opt, idx) => ({
+          id: opt.id,
+          value: opt.value,
+          rank: idx + 1,
+        }));
+        items.push({
+          id,
+          text: definition.question ?? definition.title ?? '',
+          answer,
+        });
+        continue;
+      }
+
       const answer = extractAnswer(responses[id], meta.answerType);
-      const item: HydratedResponseItem = {
+      const item: ResponseItem = {
         id,
         text: definition.question ?? definition.title ?? '',
       };
-      if (!isEmptyAnswer(answer)) item.answer = answer;
+      if (!isEmptyAnswer(answer))
+        item.answer = answer as ResponseItem['answer'];
       items.push(item);
     }
   }
 
   walk(normalized.rootIds);
-  return items;
+
+  return {
+    id: options?.id ?? crypto.randomUUID(),
+    definitionRef: { id: options?.definitionId ?? '' },
+    status: options?.status ?? 'completed',
+    subjectRef: options?.subjectRef,
+    authoredAt: new Date().toISOString(),
+    items,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -108,13 +136,16 @@ function extractAnswer(
       return response.selected;
     case 'multitext':
       return response.multitextAnswers;
-    case 'media':
-      return (
+    case 'media': {
+      const dataUrl =
         response.signatureImage ??
         response.signatureData ??
         response.markupImage ??
-        response.markupData
-      );
+        response.markupData;
+      if (!dataUrl) return undefined;
+      const result: AttachmentAnswer = { contentType: 'image/png', dataUrl };
+      return result;
+    }
     default:
       return undefined;
   }

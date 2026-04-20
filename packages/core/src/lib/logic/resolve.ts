@@ -5,7 +5,7 @@
 import type {
   ConditionalEffect,
   FieldDefinition,
-  FormResponse,
+  FieldResponseMap,
 } from '../types.js';
 import type { NormalizedDefinition } from '../functions/normalize.js';
 import { evaluateRule } from './conditions.js';
@@ -44,7 +44,7 @@ export function resolveEffect(
   effect: ConditionalEffect,
   field: Pick<FieldDefinition, 'rules' | 'required'>,
   normalized: NormalizedDefinition,
-  responses: FormResponse
+  responses: FieldResponseMap
 ): boolean {
   const rules = field.rules?.filter((r) => r.effect === effect);
 
@@ -64,7 +64,7 @@ export function resolveEffect(
 export function isFieldEffectivelyActive(
   fieldId: string,
   normalized: NormalizedDefinition,
-  responses: FormResponse
+  responses: FieldResponseMap
 ): boolean {
   let currentId: string | null = fieldId;
 

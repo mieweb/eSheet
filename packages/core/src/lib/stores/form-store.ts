@@ -6,7 +6,7 @@ import { createStore } from 'zustand/vanilla';
 import type { StoreApi } from 'zustand/vanilla';
 import type {
   FormDefinition,
-  FormResponse,
+  FieldResponseMap,
   FieldResponse,
   FieldDefinition,
   FieldType,
@@ -31,7 +31,7 @@ import {
   hydrateDefinition,
 } from '../functions/normalize.js';
 import { hydrateResponse } from '../functions/hydrate-response.js';
-import type { HydratedResponseItem } from '../functions/hydrate-response.js';
+import type { FormResponse } from '../types.js';
 import { resolveEffect } from '../logic/resolve.js';
 import { validateField, validateForm } from '../logic/validate.js';
 import type { ValidationError } from '../logic/validate.js';
@@ -60,7 +60,7 @@ export interface FormState {
   /** Flat-indexed map — the source of truth for field structure. */
   readonly normalized: NormalizedDefinition;
   /** Current responses keyed by field ID. */
-  readonly responses: FormResponse;
+  readonly responses: FieldResponseMap;
 
   // --- Lifecycle Actions ---
   /** Load a form definition (tree), normalizing it into the flat index. */
@@ -127,7 +127,11 @@ export interface FormState {
   /** Reconstruct the tree-shaped `FormDefinition` from the flat index. */
   hydrateDefinition: () => FormDefinition;
   /** Produce a flat array of hydrated response items for export / submission. */
-  hydrateResponse: () => HydratedResponseItem[];
+  hydrateResponse: (options?: {
+    id?: string;
+    status?: FormResponse['status'];
+    subjectRef?: FormResponse['subjectRef'];
+  }) => FormResponse;
 }
 
 /** The store handle returned by `createFormStore`. */
@@ -711,9 +715,12 @@ export function createFormStore(initial?: FormDefinition): FormStore {
       };
     },
 
-    hydrateResponse: () => {
-      const { normalized, responses } = get();
-      return hydrateResponse(normalized, responses);
+    hydrateResponse: (options) => {
+      const { normalized, responses, formId } = get();
+      return hydrateResponse(normalized, responses, {
+        definitionId: formId,
+        ...options,
+      });
     },
   }));
 }

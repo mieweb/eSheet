@@ -8,7 +8,7 @@ import type {
   FieldDefinition,
   FieldResponse,
   FormDefinition,
-  FormResponse,
+  FieldResponseMap,
 } from './types.js';
 
 describe('schema types', () => {
@@ -42,7 +42,7 @@ describe('schema types', () => {
   });
 
   it('should allow constructing a response map', () => {
-    const responses: FormResponse = {
+    const responses: FieldResponseMap = {
       q1: { answer: 'John' },
       q2: { selected: { id: 'opt-yes', value: 'Yes' } },
       q3: {

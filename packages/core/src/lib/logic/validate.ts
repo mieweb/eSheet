@@ -2,7 +2,7 @@
 // Validation — validate field responses
 // ---------------------------------------------------------------------------
 
-import type { FieldResponse, FormResponse } from '../types.js';
+import type { FieldResponse, FieldResponseMap } from '../types.js';
 import type { NormalizedDefinition } from '../functions/normalize.js';
 import { isFieldEffectivelyActive, resolveEffect } from './resolve.js';
 
@@ -36,7 +36,7 @@ export interface ValidationError {
  */
 export function validateForm(
   normalized: NormalizedDefinition,
-  responses: FormResponse
+  responses: FieldResponseMap
 ): ValidationError[] {
   const errors: ValidationError[] = [];
   for (const fieldId of Object.keys(normalized.byId)) {
@@ -67,7 +67,7 @@ export function validateForm(
 export function validateField(
   fieldId: string,
   normalized: NormalizedDefinition,
-  responses: FormResponse
+  responses: FieldResponseMap
 ): ValidationError[] {
   const node = normalized.byId[fieldId];
   if (!node) return [];
