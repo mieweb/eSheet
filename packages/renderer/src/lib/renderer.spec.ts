@@ -1,7 +1,4 @@
-import {
-  type FormDefinition,
-  type FormResponse,
-} from '@esheet/core';
+import { type FormDefinition, type FormResponse } from '@esheet/core';
 import { renderer } from './renderer.js';
 
 describe('renderer', () => {

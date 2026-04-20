@@ -103,3 +103,16 @@ export {
 } from './lib/stores/ui-store.js';
 
 export { type FieldComponentProps } from './lib/field-component-props.js';
+
+export {
+  importFromMcp,
+  exportToMcp,
+  type McpElicitationSchema,
+  type McpElicitationRequest,
+  type McpProperty,
+  type McpStringProp,
+  type McpNumberProp,
+  type McpBooleanProp,
+  type McpArrayProp,
+  type McpConstOption,
+} from './lib/functions/mcp.js';
