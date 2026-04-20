@@ -5,16 +5,20 @@ description: Run a local PR check for the current branch using the CI workflow c
 
 # PR Check Current Branch
 
-Use this skill to validate the current branch with a local workflow that mirrors `.github/workflows/ci.yml`.
+Use **`gh act`** to validate the current branch against the exact `.github/workflows/ci.yml` contract.
+This is the canonical local CI/CD method — see `.github/workflows/TESTING-LOCALLY.md` for full details.
 
 ## Default Flow
 
 1. Confirm branch: `git branch --show-current`
-2. Refresh CI base ref: `git fetch origin main`
-3. Install deps exactly like CI: `npm ci`
-4. Run format gate: `npx nx format:check --base="remotes/origin/main"`
-5. Run task gate: `npx nx run-many -t lint test build typecheck`
-6. Produce a concise PASS/FAIL report with failed command details.
+2. Refresh CI base ref: `git fetch origin main --depth=1`
+3. Run CI workflow via gh act:
+   ```bash
+   gh act push -W .github/workflows/ci.yml --pull=false
+   ```
+   - Omit `--pull=false` only on the very first ever run (to pull the runner image).
+   - On all subsequent runs always include `--pull=false` to avoid Docker Hub rate-limiting.
+4. Produce a concise PASS/FAIL report from the gh act output.
 
 ## Report Template
 
@@ -26,27 +30,24 @@ Status: PASS | FAIL
 
 Checks:
 
-- npx nx format:check --base="remotes/origin/main" => PASS|FAIL
-- npx nx run-many -t lint test build typecheck => PASS|FAIL
+- gh act push -W .github/workflows/ci.yml --pull=false => PASS|FAIL
 
 Failure summary:
 
-- {None | first failure and key error lines}
+- {None | first failing step and key error lines}
 ```
 
-## Optional Fast Mode (non-authoritative)
+## Fallback (no Docker / gh act unavailable)
 
-Use only if user asks for a quick pre-check:
+Only when `gh act` is explicitly unavailable, fall back to manual steps and label the output
+as **non-authoritative pre-check**:
 
-```bash
-npx nx affected -t lint test build typecheck --base=remotes/origin/main --head=HEAD
-```
-
-Then clearly label output as pre-check, not full CI-equivalent validation.
+1. `npx nx format:check --base="remotes/origin/main"` — if it fails, run `npx nx format --base="remotes/origin/main"` then recheck
+2. `npx nx run-many -t lint test build typecheck --outputStyle=static`
 
 ## Guardrails
 
-- CI-equivalent mode is the default and authoritative.
-- Do not substitute direct tool commands for Nx tasks.
-- Do not skip `npm ci` unless user explicitly asks to skip install.
-- If `remotes/origin/main` is missing/stale, fetch before format check.
+- `gh act` is the authoritative method. Do not use manual `nx run-many` chains as a CI equivalent by default.
+- Do NOT run `npm ci` locally — it wipes node_modules and breaks locked native binaries on Windows. Use `npm install` to repair deps in place if needed.
+- If `remotes/origin/main` is missing/stale, fetch before running.
+- Always check `.github/workflows/TESTING-LOCALLY.md` for workflow-specific flags and troubleshooting.

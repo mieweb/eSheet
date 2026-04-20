@@ -2,6 +2,7 @@ import React from 'react';
 import { Editor, type Monaco } from '@monaco-editor/react';
 import YAML from 'js-yaml';
 import {
+  formatZodValidationError,
   formDefinitionJSONSchema,
   formDefinitionSchema,
   type FormStore,
@@ -138,13 +139,20 @@ export function CodeView({ form, ui }: CodeViewProps) {
       const parsed = parse(text || '{}', format);
       const validated = formDefinitionSchema.safeParse(parsed);
       if (!validated.success) {
-        const first = validated.error.issues[0];
-        throw new Error(first?.message ?? 'Schema validation failed');
+        const issues = validated.error.issues.map(formatZodValidationError);
+        setError(
+          `Invalid ${format.toUpperCase()}: ${
+            issues[0] ?? 'Schema validation failed'
+          }`
+        );
+        ui.getState().setCodeEditorHasError(true);
+        return;
       }
       setError('');
       ui.getState().setCodeEditorHasError(false);
     } catch (err) {
-      setError(`Invalid ${format.toUpperCase()}: ${(err as Error).message}`);
+      const message = (err as Error).message;
+      setError(`Invalid ${format.toUpperCase()}: ${message}`);
       ui.getState().setCodeEditorHasError(true);
     }
   };
@@ -177,8 +185,10 @@ export function CodeView({ form, ui }: CodeViewProps) {
       const fmt = formatRef.current;
 
       if (!text) {
+        const currentId = fs.getState().hydrateDefinition().id;
         fs.getState().loadDefinition({
           schemaType: 'mieforms-v1.0',
+          id: currentId,
           fields: [],
         });
         return;

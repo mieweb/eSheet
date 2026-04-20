@@ -8,7 +8,7 @@ import {
 
 export interface EsheetRendererStandaloneHandle {
   unmount: () => void;
-  getResponse: () => ReturnType<EsheetRendererHandle['getResponse']> | null;
+  getResponse: () => ReturnType<EsheetRendererHandle['getRawResponse']> | null;
   getValidResponse: () => ReturnType<
     EsheetRendererHandle['getValidResponse']
   > | null;
@@ -27,7 +27,7 @@ export function mountStandaloneRenderer(
 
   return {
     unmount: () => root.unmount(),
-    getResponse: () => rendererRef.current?.getResponse() ?? null,
+    getResponse: () => rendererRef.current?.getRawResponse() ?? null,
     getValidResponse: () => rendererRef.current?.getValidResponse() ?? null,
   };
 }

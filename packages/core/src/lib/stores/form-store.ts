@@ -6,7 +6,7 @@ import { createStore } from 'zustand/vanilla';
 import type { StoreApi } from 'zustand/vanilla';
 import type {
   FormDefinition,
-  FormResponse,
+  FieldResponseMap,
   FieldResponse,
   FieldDefinition,
   FieldType,
@@ -31,7 +31,7 @@ import {
   hydrateDefinition,
 } from '../functions/normalize.js';
 import { hydrateResponse } from '../functions/hydrate-response.js';
-import type { HydratedResponseItem } from '../functions/hydrate-response.js';
+import type { FormResponse } from '../types.js';
 import { resolveEffect } from '../logic/resolve.js';
 import { validateField, validateForm } from '../logic/validate.js';
 import type { ValidationError } from '../logic/validate.js';
@@ -55,14 +55,18 @@ export interface FormState {
   // --- Data ---
   /** Unique instance ID — used to generate unique DOM IDs when multiple engines share a page. */
   readonly instanceId: string;
+  /** Top-level form identifier used for import/export and schema validation. */
+  readonly formId: string;
   /** Flat-indexed map — the source of truth for field structure. */
   readonly normalized: NormalizedDefinition;
   /** Current responses keyed by field ID. */
-  readonly responses: FormResponse;
+  readonly responses: FieldResponseMap;
 
   // --- Lifecycle Actions ---
   /** Load a form definition (tree), normalizing it into the flat index. */
   loadDefinition: (definition: FormDefinition) => void;
+  /** Update the top-level form id without replacing fields. */
+  setFormId: (id: string) => void;
   /** Set (or replace) a single field's response. */
   setResponse: (fieldId: string, response: FieldResponse) => void;
   /** Remove a single field's response. */
@@ -123,7 +127,11 @@ export interface FormState {
   /** Reconstruct the tree-shaped `FormDefinition` from the flat index. */
   hydrateDefinition: () => FormDefinition;
   /** Produce a flat array of hydrated response items for export / submission. */
-  hydrateResponse: () => HydratedResponseItem[];
+  hydrateResponse: (options?: {
+    id?: string;
+    status?: FormResponse['status'];
+    subjectRef?: FormResponse['subjectRef'];
+  }) => FormResponse;
 }
 
 /** The store handle returned by `createFormStore`. */
@@ -249,11 +257,21 @@ function getDefaultOptionValue(
  * @param initial - Optional initial form definition to load immediately.
  */
 let nextInstanceId = 1;
+let nextTemporaryFormId = 1;
+
+function createTemporaryFormId(): string {
+  const id = `tmp-form-${nextTemporaryFormId}`;
+  nextTemporaryFormId += 1;
+  return id;
+}
 
 export function createFormStore(initial?: FormDefinition): FormStore {
+  const initialFormId = initial?.id?.trim() || createTemporaryFormId();
+
   return createStore<FormState>()((set, get) => ({
     // --- Data ---
     instanceId: `ms-${nextInstanceId++}`,
+    formId: initialFormId,
     normalized: initial
       ? normalizeDefinition(initial.fields)
       : EMPTY_NORMALIZED,
@@ -262,9 +280,16 @@ export function createFormStore(initial?: FormDefinition): FormStore {
     // --- Actions ---
     loadDefinition: (definition) =>
       set({
+        formId: definition.id,
         normalized: normalizeDefinition(definition.fields),
         responses: {},
       }),
+
+    setFormId: (id) => {
+      const nextId = id.trim();
+      if (!nextId) return;
+      set({ formId: nextId });
+    },
 
     setResponse: (fieldId, response) =>
       set((state) => ({
@@ -682,16 +707,20 @@ export function createFormStore(initial?: FormDefinition): FormStore {
     },
 
     hydrateDefinition: () => {
-      const { normalized } = get();
+      const { normalized, formId } = get();
       return {
         schemaType: SCHEMA_TYPE,
+        id: formId,
         fields: hydrateDefinition(normalized),
       };
     },
 
-    hydrateResponse: () => {
-      const { normalized, responses } = get();
-      return hydrateResponse(normalized, responses);
+    hydrateResponse: (options) => {
+      const { normalized, responses, formId } = get();
+      return hydrateResponse(normalized, responses, {
+        definitionId: formId,
+        ...options,
+      });
     },
   }));
 }

@@ -5,7 +5,7 @@ import type {
   ConditionalRule,
   FieldDefinition,
   FieldResponse,
-  FormResponse,
+  FieldResponseMap,
 } from '../types.js';
 import type { NormalizedDefinition } from '../functions/normalize.js';
 
@@ -979,10 +979,10 @@ describe('comprehensive conditions integration', () => {
   // -------------------------------------------------------------------------
 
   describe('conditional effects', () => {
-    const boolYes: FormResponse = {
+    const boolYes: FieldResponseMap = {
       'drv-boolean': { selected: sel('drv-bool-y', 'yes') },
     };
-    const boolNo: FormResponse = {
+    const boolNo: FieldResponseMap = {
       'drv-boolean': { selected: sel('drv-bool-n', 'no') },
     };
 
@@ -1033,7 +1033,7 @@ describe('comprehensive conditions integration', () => {
         ],
       };
       const { normalized, field } = setup(f);
-      const responses: FormResponse = {
+      const responses: FieldResponseMap = {
         'drv-radio': { selected: sel('drv-radio-a', 'alpha') },
         'drv-slider': { selected: sel('drv-sl-7', '7') },
       };
@@ -1043,7 +1043,7 @@ describe('comprehensive conditions integration', () => {
       );
 
       // Slider ≤ 5 → not required but still visible
-      const responses2: FormResponse = {
+      const responses2: FieldResponseMap = {
         'drv-radio': { selected: sel('drv-radio-a', 'alpha') },
         'drv-slider': { selected: sel('drv-sl-3', '3') },
       };

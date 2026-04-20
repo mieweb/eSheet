@@ -58,7 +58,7 @@ function DraggableFieldItem({
 
   return (
     <div
-      className="field-canvas-wrapper ms:relative ms:pb-2 ms:last:pb-0"
+      className="field-canvas-wrapper ms:relative ms:pb-1 ms:last:pb-0"
       data-field-id={id}
       data-field-type={field.definition.fieldType}
       data-selected={isSelected ? 'true' : 'false'}

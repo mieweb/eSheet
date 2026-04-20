@@ -1,6 +1,7 @@
 import React from 'react';
 import YAML from 'js-yaml';
 import {
+  formatZodValidationError,
   formDefinitionSchema,
   type FormDefinition,
   type FormResponse,
@@ -16,12 +17,14 @@ import {
  * - Loads definition into form store
  * - Sets UI to preview mode
  * - Applies initial responses if provided
+ * - Calls onValidationError with schema validation issues if validation fails
  */
 export function useRendererInit(
   form: FormStore,
   ui: UIStore,
   formData: FormDefinition | string,
-  initialResponses?: FormResponse
+  initialResponses?: FormResponse,
+  onValidationError?: (errors: string[]) => void
 ): void {
   React.useEffect(() => {
     try {
@@ -39,19 +42,24 @@ export function useRendererInit(
       // Validate schema
       const validated = formDefinitionSchema.safeParse(parsed);
       if (!validated.success) {
+        const errors = validated.error.issues.map(formatZodValidationError);
         console.error(
           '[EsheetRenderer] Invalid form definition:',
           validated.error.issues
         );
+        onValidationError?.(errors);
         // Load empty form instead of crashing
         form.getState().loadDefinition({
           schemaType: 'mieforms-v1.0',
+          id: 'invalid-form',
           title: 'Invalid Form',
           fields: [],
         });
         ui.getState().setMode('preview');
         return;
       }
+      // Clear any previous validation errors on success
+      onValidationError?.([]);
 
       // Load validated definition
       form.getState().loadDefinition(validated.data);
@@ -70,10 +78,11 @@ export function useRendererInit(
       // Load empty form as fallback
       form.getState().loadDefinition({
         schemaType: 'mieforms-v1.0',
+        id: 'error-form',
         title: 'Error',
         fields: [],
       });
       ui.getState().setMode('preview');
     }
-  }, [form, ui, formData, initialResponses]);
+  }, [form, ui, formData, initialResponses, onValidationError]);
 }
