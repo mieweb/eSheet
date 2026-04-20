@@ -14,7 +14,6 @@ import type {
   MatrixRow,
   MatrixColumn,
 } from '../types.js';
-import { SCHEMA_TYPE } from '../types.js';
 import { getFieldTypeMeta } from '../registry.js';
 import {
   generateFieldId,
@@ -709,7 +708,6 @@ export function createFormStore(initial?: FormDefinition): FormStore {
     hydrateDefinition: () => {
       const { normalized, formId } = get();
       return {
-        schemaType: SCHEMA_TYPE,
         id: formId,
         fields: hydrateDefinition(normalized),
       };

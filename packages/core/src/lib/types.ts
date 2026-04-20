@@ -1,15 +1,6 @@
 import { z } from 'zod/mini';
 
 // ---------------------------------------------------------------------------
-// Schema Version
-// ---------------------------------------------------------------------------
-
-/** Supported schema version identifier. */
-export const SCHEMA_TYPE = 'mieforms-v1.0' as const;
-
-export type SchemaType = typeof SCHEMA_TYPE;
-
-// ---------------------------------------------------------------------------
 // Field Types
 // ---------------------------------------------------------------------------
 
@@ -312,7 +303,6 @@ export interface FieldResponse {
 
 /** A complete form definition (no response values). */
 export const formDefinitionSchema = z.strictObject({
-  schemaType: z.literal(SCHEMA_TYPE),
   id: z.string(),
   title: z.optional(z.string()),
   description: z.optional(z.string()),

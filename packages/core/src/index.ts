@@ -1,6 +1,5 @@
 export {
   // Constants
-  SCHEMA_TYPE,
   FIELD_TYPES,
   TEXT_INPUT_TYPES,
   CONDITION_OPERATORS,
@@ -21,7 +20,6 @@ export {
   formDefinitionJSONSchema,
 
   // Types
-  type SchemaType,
   type FieldType,
   type FieldCategory,
   type AnswerType,

@@ -1,5 +1,4 @@
 import {
-  SCHEMA_TYPE,
   type FormDefinition,
   type FormResponse,
 } from '@esheet/core';
@@ -8,7 +7,6 @@ import { renderer } from './renderer.js';
 describe('renderer', () => {
   function baseDefinition(): FormDefinition {
     return {
-      schemaType: SCHEMA_TYPE,
       id: 'renderer-test',
       title: 'Renderer Test',
       fields: [
@@ -126,7 +124,6 @@ describe('renderer', () => {
 
   it('computes enabled and required from responses', () => {
     const definition: FormDefinition = {
-      schemaType: SCHEMA_TYPE,
       id: 'renderer-effects',
       title: 'Renderer Effects Test',
       fields: [
