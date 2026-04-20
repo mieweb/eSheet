@@ -9,7 +9,7 @@ import {
   type UIStore,
   type ValidationError,
 } from '@esheet/core';
-import { FormStoreContext, UIContext } from '@esheet/fields';
+import { FormStoreContext, UIContext, ZodIssuesPanel } from '@esheet/fields';
 import { ensureDefaultFieldComponentsRegistered } from './register-defaults.js';
 import { useRendererInit } from './hooks/useRendererInit.js';
 import { RendererBody } from './components/RendererBody.js';
@@ -25,7 +25,7 @@ export interface EsheetRendererProps {
 
 export interface EsheetRendererHandle {
   /** Get current form responses */
-  getResponse: () => FormResponse;
+  getRawResponse: () => FormResponse;
   /** Get form store instance */
   getFormStore: () => FormStore;
   /** Get UI store instance */
@@ -54,7 +54,7 @@ export interface EsheetRendererHandle {
  * />
  *
  * // Later: get responses
- * const responses = rendererRef.current?.getResponse();
+ * const responses = rendererRef.current?.getRawResponse();
  * ```
  */
 export const EsheetRenderer = React.forwardRef<
@@ -92,14 +92,22 @@ const EsheetRendererInner = React.forwardRef<
   { formData, className = '', initialResponses, formStore, uiStore },
   ref
 ) {
+  const [validationErrors, setValidationErrors] = React.useState<string[]>([]);
+
   // Initialize form definition and set preview mode
-  useRendererInit(formStore, uiStore, formData, initialResponses);
+  useRendererInit(
+    formStore,
+    uiStore,
+    formData,
+    initialResponses,
+    setValidationErrors
+  );
 
   // Expose ref API
   React.useImperativeHandle(
     ref,
     () => ({
-      getResponse: () => formStore.getState().responses,
+      getRawResponse: () => formStore.getState().responses,
       getFormStore: () => formStore,
       getUIStore: () => uiStore,
       getValidResponse: () => {
@@ -124,6 +132,7 @@ const EsheetRendererInner = React.forwardRef<
 
   return (
     <div className={rootClasses}>
+      <ZodIssuesPanel issues={validationErrors} />
       <RendererBody form={formStore} ui={uiStore} />
     </div>
   );

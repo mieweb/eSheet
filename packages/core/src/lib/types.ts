@@ -187,48 +187,49 @@ export type ConditionalRule = z.infer<typeof conditionalRuleSchema>;
  * field type. Type-specific properties are optional and only meaningful
  * when matched with the corresponding `fieldType`.
  */
-export const fieldDefinitionSchema: z.ZodMiniType<FieldDefinition> = z.object({
-  /** Unique identifier within the form. */
-  id: z.string(),
-  /** Determines rendering and behavior. */
-  fieldType: fieldTypeSchema,
-  /** The question / label shown to the user (all types except section). */
-  question: z.optional(z.string()),
-  /** Whether a response is required. */
-  required: z.optional(z.boolean()),
-  /** Conditional rules that control visibility, enabled state, or required state. */
-  rules: z.optional(z.array(conditionalRuleSchema)),
+export const fieldDefinitionSchema: z.ZodMiniType<FieldDefinition> =
+  z.strictObject({
+    /** Unique identifier within the form. */
+    id: z.string(),
+    /** Determines rendering and behavior. */
+    fieldType: fieldTypeSchema,
+    /** The question / label shown to the user (all types except section). */
+    question: z.optional(z.string()),
+    /** Whether a response is required. */
+    required: z.optional(z.boolean()),
+    /** Conditional rules that control visibility, enabled state, or required state. */
+    rules: z.optional(z.array(conditionalRuleSchema)),
 
-  // --- Text fields ---
-  inputType: z.optional(textInputTypeSchema),
-  unit: z.optional(z.string()),
+    // --- Text fields ---
+    inputType: z.optional(textInputTypeSchema),
+    unit: z.optional(z.string()),
 
-  // --- Choice fields ---
-  options: z.optional(z.array(fieldOptionSchema)),
+    // --- Choice fields ---
+    options: z.optional(z.array(fieldOptionSchema)),
 
-  // --- Matrix fields ---
-  rows: z.optional(z.array(matrixRowSchema)),
-  columns: z.optional(z.array(matrixColumnSchema)),
+    // --- Matrix fields ---
+    rows: z.optional(z.array(matrixRowSchema)),
+    columns: z.optional(z.array(matrixColumnSchema)),
 
-  // --- Rich content ---
-  htmlContent: z.optional(z.string()),
-  imageUri: z.optional(z.string()),
-  altText: z.optional(z.string()),
-  caption: z.optional(z.string()),
-  iframeHeight: z.optional(z.number()),
-  /** Placeholder text shown on the drawing canvas (signature / diagram fields). */
-  padPlaceholder: z.optional(z.string()),
-  /** Markdown-like content with inline expression placeholders (display field). */
-  content: z.optional(z.string()),
+    // --- Rich content ---
+    htmlContent: z.optional(z.string()),
+    imageUri: z.optional(z.string()),
+    altText: z.optional(z.string()),
+    caption: z.optional(z.string()),
+    iframeHeight: z.optional(z.number()),
+    /** Placeholder text shown on the drawing canvas (signature / diagram fields). */
+    padPlaceholder: z.optional(z.string()),
+    /** Markdown-like content with inline expression placeholders (display field). */
+    content: z.optional(z.string()),
 
-  // --- Section (container) ---
-  title: z.optional(z.string()),
-  fields: z.optional(z.lazy(() => z.array(fieldDefinitionSchema))),
+    // --- Section (container) ---
+    title: z.optional(z.string()),
+    fields: z.optional(z.lazy(() => z.array(fieldDefinitionSchema))),
 
-  // --- Adapter metadata ---
-  _sourceData: z.optional(z.unknown()),
-  _conversionWarnings: z.optional(z.array(z.unknown())),
-});
+    // --- Adapter metadata ---
+    _sourceData: z.optional(z.unknown()),
+    _conversionWarnings: z.optional(z.array(z.unknown())),
+  });
 
 /** A form field's structure and configuration. */
 export interface FieldDefinition {
@@ -310,8 +311,9 @@ export interface FieldResponse {
 // ---------------------------------------------------------------------------
 
 /** A complete form definition (no response values). */
-export const formDefinitionSchema = z.object({
+export const formDefinitionSchema = z.strictObject({
   schemaType: z.literal(SCHEMA_TYPE),
+  id: z.string(),
   title: z.optional(z.string()),
   description: z.optional(z.string()),
   fields: z.array(fieldDefinitionSchema),
@@ -324,7 +326,70 @@ export const formDefinitionJSONSchema: Record<string, unknown> = z.toJSONSchema(
 ) as Record<string, unknown>;
 
 /** Response store — maps field IDs to their response values. */
-export type FormResponse = Record<string, FieldResponse>;
+export type FieldResponseMap = Record<string, FieldResponse>;
+
+// ---------------------------------------------------------------------------
+// Submission / Envelope Types
+// ---------------------------------------------------------------------------
+
+/** A ranked item with its 1-based position. */
+export type RankedAnswer = {
+  id: string;
+  value: string;
+  rank: number;
+};
+
+/** A structured media attachment (signature / diagram). */
+export type AttachmentAnswer = {
+  contentType: string;
+  dataUrl?: string;
+  url?: string;
+  title?: string;
+};
+
+/** All possible answer value shapes in a submission payload. */
+export type AnswerValue =
+  | string
+  | number
+  | boolean
+  | null
+  | { id: string; value: string }
+  | Array<{ id: string; value: string }>
+  | RankedAnswer[]
+  | AttachmentAnswer;
+
+/** A single item in the submission payload — one per answerable field. */
+export interface ResponseItem {
+  id: string;
+  text?: string;
+  answer?: AnswerValue;
+}
+
+export const RESPONSE_STATUSES = [
+  'draft',
+  'in-progress',
+  'completed',
+  'amended',
+] as const;
+
+export const responseStatusSchema = z.enum(RESPONSE_STATUSES);
+export type ResponseStatus = z.infer<typeof responseStatusSchema>;
+
+/** Top-level submission envelope wrapping all answers. */
+export interface FormResponse {
+  id: string;
+  definitionRef: {
+    id: string;
+    version?: string;
+  };
+  status?: ResponseStatus;
+  subjectRef?: {
+    type: string;
+    id: string;
+  };
+  authoredAt?: string;
+  items: ResponseItem[];
+}
 
 // ---------------------------------------------------------------------------
 // Field Type Metadata (registry data)

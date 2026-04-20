@@ -86,7 +86,7 @@ export function registerBlazeTemplate(
     const root: Root = createRoot(mountNode);
     const rendererRef = React.createRef<EsheetRendererHandle>();
 
-    this.getResponse = () => rendererRef.current?.getResponse() ?? null;
+    this.getResponse = () => rendererRef.current?.getRawResponse() ?? null;
     this.getValidResponse = () =>
       rendererRef.current?.getValidResponse() ?? null;
 

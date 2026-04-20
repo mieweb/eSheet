@@ -175,6 +175,16 @@ npx nx serve docs
 # → http://localhost:3000
 ```
 
+### Run docs and demo together
+
+```bash
+npx nx run-many -t dev -p app-*
+# Demo → http://localhost:4200
+# Docs → http://localhost:3000
+```
+
+This runs both local dev servers at the same time in one terminal. Use Ctrl+C to stop both.
+
 ### Production Static Deploy (Nginx)
 
 ```bash

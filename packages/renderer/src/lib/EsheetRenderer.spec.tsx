@@ -6,6 +6,16 @@ import { EsheetRenderer, type EsheetRendererHandle } from './EsheetRenderer.js';
 
 afterEach(cleanup);
 
+function getRendererHandle(ref: React.RefObject<EsheetRendererHandle | null>) {
+  expect(ref.current).not.toBeNull();
+
+  if (!ref.current) {
+    throw new Error('Expected renderer ref to be available');
+  }
+
+  return ref.current;
+}
+
 describe('EsheetRenderer', () => {
   it('mounts and exposes ref handle', async () => {
     const ref = React.createRef<EsheetRendererHandle>();
@@ -15,6 +25,7 @@ describe('EsheetRenderer', () => {
           ref={ref}
           formData={{
             schemaType: SCHEMA_TYPE,
+            id: 'test-form-1',
             title: 'Test',
             fields: [{ id: 'q1', fieldType: 'text', question: 'Name?' }],
           }}
@@ -22,13 +33,15 @@ describe('EsheetRenderer', () => {
       );
     });
 
-    expect(ref.current).not.toBeNull();
-    expect(typeof ref.current!.getResponse).toBe('function');
-    expect(typeof ref.current!.getFormStore).toBe('function');
-    expect(typeof ref.current!.getUIStore).toBe('function');
+    const renderer = getRendererHandle(ref);
+
+    expect(typeof renderer.getRawResponse).toBe('function');
+    expect(typeof renderer.getValidResponse).toBe('function');
+    expect(typeof renderer.getFormStore).toBe('function');
+    expect(typeof renderer.getUIStore).toBe('function');
   });
 
-  it('getResponse() returns initialResponses after mount', async () => {
+  it('getRawResponse() returns initialResponses after mount', async () => {
     const ref = React.createRef<EsheetRendererHandle>();
     await act(async () => {
       render(
@@ -36,6 +49,7 @@ describe('EsheetRenderer', () => {
           ref={ref}
           formData={{
             schemaType: SCHEMA_TYPE,
+            id: 'test-form-2',
             title: 'Test',
             fields: [{ id: 'q1', fieldType: 'text', question: 'Name?' }],
           }}
@@ -44,7 +58,7 @@ describe('EsheetRenderer', () => {
       );
     });
 
-    const responses = ref.current!.getResponse();
+    const responses = getRendererHandle(ref).getRawResponse();
     expect(responses['q1']).toMatchObject({ answer: 'Alice' });
   });
 
@@ -56,6 +70,7 @@ describe('EsheetRenderer', () => {
           ref={ref}
           formData={{
             schemaType: SCHEMA_TYPE,
+            id: 'test-form-3',
             title: 'Test Form',
             fields: [{ id: 'f1', fieldType: 'text', question: 'Q?' }],
           }}
@@ -63,7 +78,9 @@ describe('EsheetRenderer', () => {
       );
     });
 
-    const normalized = ref.current!.getFormStore().getState().normalized;
+    const normalized = getRendererHandle(ref)
+      .getFormStore()
+      .getState().normalized;
     expect(normalized.rootIds).toContain('f1');
   });
 
@@ -75,6 +92,7 @@ describe('EsheetRenderer', () => {
           ref={ref}
           formData={{
             schemaType: SCHEMA_TYPE,
+            id: 'test-form-4',
             title: 'Test',
             fields: [{ id: 'q1', fieldType: 'text', question: 'Q?' }],
           }}
@@ -82,7 +100,127 @@ describe('EsheetRenderer', () => {
       );
     });
 
-    const mode = ref.current!.getUIStore().getState().mode;
+    const mode = getRendererHandle(ref).getUIStore().getState().mode;
     expect(mode).toBe('preview');
+  });
+
+  it('getValidResponse() returns errors and null response when a required field is unanswered', async () => {
+    const ref = React.createRef<EsheetRendererHandle>();
+    await act(async () => {
+      render(
+        <EsheetRenderer
+          ref={ref}
+          formData={{
+            schemaType: SCHEMA_TYPE,
+            id: 'test-form-5',
+            title: 'Test',
+            fields: [
+              {
+                id: 'q1',
+                fieldType: 'text',
+                question: 'Name?',
+                required: true,
+              },
+            ],
+          }}
+        />
+      );
+    });
+
+    const result = getRendererHandle(ref).getValidResponse();
+
+    expect(result.errors).toEqual([
+      {
+        fieldId: 'q1',
+        rule: 'required',
+        message: 'This field is required',
+      },
+    ]);
+    expect(result.response).toBeNull();
+  });
+
+  it('getValidResponse() returns the raw response and no errors when valid', async () => {
+    const ref = React.createRef<EsheetRendererHandle>();
+    await act(async () => {
+      render(
+        <EsheetRenderer
+          ref={ref}
+          formData={{
+            schemaType: SCHEMA_TYPE,
+            id: 'test-form-6',
+            title: 'Test',
+            fields: [
+              {
+                id: 'q1',
+                fieldType: 'text',
+                question: 'Name?',
+                required: true,
+              },
+            ],
+          }}
+          initialResponses={{ q1: { answer: 'Alice' } }}
+        />
+      );
+    });
+
+    const result = getRendererHandle(ref).getValidResponse();
+
+    expect(result.errors).toEqual([]);
+    expect(result.response).toEqual({ q1: { answer: 'Alice' } });
+  });
+
+  it('getValidResponse() skips required fields inside disabled sections', async () => {
+    const ref = React.createRef<EsheetRendererHandle>();
+    await act(async () => {
+      render(
+        <EsheetRenderer
+          ref={ref}
+          formData={{
+            schemaType: SCHEMA_TYPE,
+            id: 'test-form-7',
+            title: 'Test',
+            fields: [
+              {
+                id: 'trigger',
+                fieldType: 'text',
+                question: 'Trigger?',
+              },
+              {
+                id: 'sec',
+                fieldType: 'section',
+                title: 'Section',
+                rules: [
+                  {
+                    effect: 'enable',
+                    logic: 'AND',
+                    conditions: [
+                      {
+                        targetId: 'trigger',
+                        operator: 'equals',
+                        expected: 'enabled',
+                      },
+                    ],
+                  },
+                ],
+                fields: [
+                  {
+                    id: 'q1',
+                    fieldType: 'text',
+                    question: 'Name?',
+                    required: true,
+                  },
+                ],
+              },
+            ],
+          }}
+          initialResponses={{ trigger: { answer: 'disabled' } }}
+        />
+      );
+    });
+
+    const result = getRendererHandle(ref).getValidResponse();
+
+    expect(result.errors).toEqual([]);
+    expect(result.response).toEqual({ trigger: { answer: 'disabled' } });
   });
 });

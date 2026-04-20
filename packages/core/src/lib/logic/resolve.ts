@@ -5,7 +5,7 @@
 import type {
   ConditionalEffect,
   FieldDefinition,
-  FormResponse,
+  FieldResponseMap,
 } from '../types.js';
 import type { NormalizedDefinition } from '../functions/normalize.js';
 import { evaluateRule } from './conditions.js';
@@ -44,7 +44,7 @@ export function resolveEffect(
   effect: ConditionalEffect,
   field: Pick<FieldDefinition, 'rules' | 'required'>,
   normalized: NormalizedDefinition,
-  responses: FormResponse
+  responses: FieldResponseMap
 ): boolean {
   const rules = field.rules?.filter((r) => r.effect === effect);
 
@@ -55,4 +55,34 @@ export function resolveEffect(
   }
 
   return rules.some((rule) => evaluateRule(rule, normalized, responses));
+}
+
+/**
+ * Check whether a field is effectively active after considering its own
+ * visibility/enabled rules and those of all ancestor sections.
+ */
+export function isFieldEffectivelyActive(
+  fieldId: string,
+  normalized: NormalizedDefinition,
+  responses: FieldResponseMap
+): boolean {
+  let currentId: string | null = fieldId;
+
+  while (currentId) {
+    const node: NormalizedDefinition['byId'][string] | undefined =
+      normalized.byId[currentId];
+    if (!node) return false;
+
+    if (!resolveEffect('visible', node.definition, normalized, responses)) {
+      return false;
+    }
+
+    if (!resolveEffect('enable', node.definition, normalized, responses)) {
+      return false;
+    }
+
+    currentId = node.parentId;
+  }
+
+  return true;
 }

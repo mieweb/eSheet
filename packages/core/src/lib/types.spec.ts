@@ -1,9 +1,14 @@
-import { SCHEMA_TYPE, FIELD_TYPES } from './types.js';
+import {
+  SCHEMA_TYPE,
+  FIELD_TYPES,
+  formDefinitionSchema,
+  fieldDefinitionSchema,
+} from './types.js';
 import type {
   FieldDefinition,
   FieldResponse,
   FormDefinition,
-  FormResponse,
+  FieldResponseMap,
 } from './types.js';
 
 describe('schema types', () => {
@@ -27,6 +32,7 @@ describe('schema types', () => {
 
     const form: FormDefinition = {
       schemaType: SCHEMA_TYPE,
+      id: 'test-form',
       title: 'Test Form',
       fields: [field],
     };
@@ -36,7 +42,7 @@ describe('schema types', () => {
   });
 
   it('should allow constructing a response map', () => {
-    const responses: FormResponse = {
+    const responses: FieldResponseMap = {
       q1: { answer: 'John' },
       q2: { selected: { id: 'opt-yes', value: 'Yes' } },
       q3: {
@@ -72,5 +78,27 @@ describe('schema types', () => {
     // Response has no definition properties
     expect(response).not.toHaveProperty('fieldType');
     expect(response).not.toHaveProperty('question');
+  });
+
+  it('should reject unknown top-level form properties', () => {
+    const result = formDefinitionSchema.safeParse({
+      schemaType: SCHEMA_TYPE,
+      id: 'comprehensive',
+      unknown: true,
+      fields: [],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject unknown field properties', () => {
+    const result = fieldDefinitionSchema.safeParse({
+      id: 'q1',
+      fieldType: 'text',
+      question: 'Name',
+      extra: true,
+    });
+
+    expect(result.success).toBe(false);
   });
 });

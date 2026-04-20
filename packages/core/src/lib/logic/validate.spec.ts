@@ -35,6 +35,14 @@ function visibleRule(targetId: string, expected: string): ConditionalRule {
   };
 }
 
+function enableRule(targetId: string, expected: string): ConditionalRule {
+  return {
+    effect: 'enable',
+    logic: 'AND',
+    conditions: [{ targetId, operator: 'equals', expected }],
+  };
+}
+
 // ---------------------------------------------------------------------------
 // validateField
 // ---------------------------------------------------------------------------
@@ -233,6 +241,49 @@ describe('validateField', () => {
         trigger: { answer: 'show' },
       });
       expect(errors).toHaveLength(1);
+    });
+  });
+
+  describe('disabled fields are skipped', () => {
+    it('no error when required field is disabled by enable rule', () => {
+      const trigger = def('trigger', 'text');
+      const field = def('q1', 'text', {
+        required: true,
+        rules: [enableRule('trigger', 'enabled')],
+      });
+      const normalized = norm([trigger, field]);
+      const errors = validateField('q1', normalized, {
+        trigger: { answer: 'disabled' },
+      });
+      expect(errors).toEqual([]);
+    });
+  });
+
+  describe('ancestor visibility and enabled state are respected', () => {
+    it('skips a required child when its parent section is hidden', () => {
+      const trigger = def('trigger', 'text');
+      const section = def('section', 'section', {
+        rules: [visibleRule('trigger', 'show')],
+        fields: [def('child', 'text', { required: true })],
+      });
+      const normalized = norm([trigger, section]);
+      const errors = validateField('child', normalized, {
+        trigger: { answer: 'hide' },
+      });
+      expect(errors).toEqual([]);
+    });
+
+    it('skips a required child when its parent section is disabled', () => {
+      const trigger = def('trigger', 'text');
+      const section = def('section', 'section', {
+        rules: [enableRule('trigger', 'enabled')],
+        fields: [def('child', 'text', { required: true })],
+      });
+      const normalized = norm([trigger, section]);
+      const errors = validateField('child', normalized, {
+        trigger: { answer: 'disabled' },
+      });
+      expect(errors).toEqual([]);
     });
   });
 

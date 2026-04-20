@@ -22,7 +22,7 @@ function field(
 }
 
 function form(fields: FieldDefinition[]): FormDefinition {
-  return { schemaType: SCHEMA_TYPE, fields };
+  return { schemaType: SCHEMA_TYPE, id: 'test-form', fields };
 }
 
 function visibleRule(targetId: string, expected: string): ConditionalRule {
@@ -142,6 +142,29 @@ describe('createFormStore', () => {
         store.getState().resetResponses();
         expect(store.getState().responses).toEqual({});
       });
+    });
+  });
+
+  describe('validation and hydration', () => {
+    it('skips disabled required fields in errors and hydrated output', () => {
+      store = createFormStore(
+        form([
+          field('trigger', 'text', { question: 'Trigger' }),
+          field('q1', 'text', {
+            question: 'Name?',
+            required: true,
+            rules: [enableRule('trigger', 'enabled')],
+          }),
+        ])
+      );
+
+      store.getState().setResponse('trigger', { answer: 'disabled' });
+      store.getState().setResponse('q1', { answer: 'Ada' });
+
+      expect(store.getState().getErrors()).toEqual([]);
+      expect(store.getState().hydrateResponse().items).toEqual([
+        { id: 'trigger', text: 'Trigger', answer: 'disabled' },
+      ]);
     });
   });
 

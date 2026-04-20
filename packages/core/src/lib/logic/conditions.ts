@@ -7,7 +7,7 @@ import type {
   ConditionalRule,
   FieldDefinition,
   FieldResponse,
-  FormResponse,
+  FieldResponseMap,
   SelectedOption,
 } from '../types.js';
 import type { NormalizedDefinition } from '../functions/normalize.js';
@@ -34,7 +34,7 @@ import type { NormalizedDefinition } from '../functions/normalize.js';
 export function evaluateRule(
   rule: ConditionalRule,
   normalized: NormalizedDefinition,
-  responses: FormResponse
+  responses: FieldResponseMap
 ): boolean {
   if (rule.conditions.length === 0) return true;
 
@@ -157,7 +157,7 @@ export function evaluateCondition(
 function evaluateExpressionCondition(
   condition: Condition,
   normalized: NormalizedDefinition,
-  responses: FormResponse
+  responses: FieldResponseMap
 ): boolean {
   const expression = condition.expression?.trim();
   if (!expression) return false;
@@ -228,7 +228,7 @@ function evaluateExpressionCondition(
 function evaluateExpressionToValue(
   expression: string,
   normalized: NormalizedDefinition,
-  responses: FormResponse
+  responses: FieldResponseMap
 ): unknown {
   const data = buildExpressionData(normalized, responses);
   return evaluateSafeExpression(expression, data);
@@ -238,7 +238,7 @@ function evaluateExpressionToValue(
 export function evaluateExpression(
   expression: string,
   normalized: NormalizedDefinition,
-  responses: FormResponse
+  responses: FieldResponseMap
 ): unknown {
   return evaluateExpressionToValue(expression, normalized, responses);
 }
@@ -731,7 +731,7 @@ function parseBoolean(value: string): boolean {
 
 function buildExpressionData(
   normalized: NormalizedDefinition,
-  responses: FormResponse
+  responses: FieldResponseMap
 ): Record<string, unknown> {
   const data: Record<string, unknown> = {};
   for (const [fieldId, node] of Object.entries(normalized.byId)) {

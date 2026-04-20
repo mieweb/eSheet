@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { resolveEffect } from './resolve.js';
 import type { ConditionalRule, FieldDefinition } from '../types.js';
 import { normalizeDefinition } from '../functions/normalize.js';
-import type { FormResponse } from '../types.js';
+import type { FieldResponseMap } from '../types.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -47,7 +47,7 @@ describe('resolveEffect', () => {
   describe('defaults when no rules exist', () => {
     const field = def('q1');
     const normalized = norm([field, def('q2')]);
-    const responses: FormResponse = {};
+    const responses: FieldResponseMap = {};
 
     it('visible defaults to true', () => {
       expect(resolveEffect('visible', field, normalized, responses)).toBe(true);

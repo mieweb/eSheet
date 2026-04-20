@@ -37,10 +37,15 @@ export {
   type FieldDefinition,
   type FieldResponse,
   type FormDefinition,
-  type FormResponse,
+  type FieldResponseMap as FormResponse,
   type SelectedOption,
   type FieldTypeMeta,
   type FieldTypeRegistry,
+  type RankedAnswer,
+  type AttachmentAnswer,
+  type AnswerValue,
+  type ResponseItem,
+  type FormResponse as FormResponseEnvelope,
 } from './lib/types.js';
 
 export {
@@ -65,10 +70,7 @@ export {
   type NormalizedDefinition,
 } from './lib/functions/normalize.js';
 
-export {
-  hydrateResponse,
-  type HydratedResponseItem,
-} from './lib/functions/hydrate-response.js';
+export { hydrateResponse } from './lib/functions/hydrate-response.js';
 
 export {
   evaluateCondition,
@@ -84,6 +86,8 @@ export {
   validateForm,
   type ValidationError,
 } from './lib/logic/validate.js';
+
+export { formatZodValidationError } from './lib/zod-errors.js';
 
 export {
   createFormStore,

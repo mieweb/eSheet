@@ -18,7 +18,9 @@ This workflow runs on every pull request and on pushes to `main`. It is the auth
 It uses full git history checkout (`fetch-depth: 0`), Node 22, and `npm ci`, then runs these commands:
 
 ```bash
-npx nx format:check --base="remotes/origin/main"
+git fetch origin main --depth=1
+NX_BASE="$(git rev-parse origin/main)"
+npx nx format:check --base="$NX_BASE"
 npx nx run-many -t lint test build typecheck
 ```
 
@@ -57,7 +59,7 @@ This workflow is manual only and runs through `workflow_dispatch`. It has one in
 
 - `dry-run` (boolean, default `true`): when enabled, runs `npx nx release --dry-run --yes`; otherwise runs `npx nx release --yes`.
 
-Before release, it performs the same preflight gates as [ci.yml](./ci.yml): full checkout, Node 22 setup, `npm ci`, `npx nx format:check --base="remotes/origin/main"`, and `npx nx run-many -t lint test build typecheck`.
+Before release, it performs the same preflight gates as [ci.yml](./ci.yml): full checkout, Node 22 setup, `npm ci`, resolving `NX_BASE` from `origin/main`, `npx nx format:check --base="$NX_BASE"`, and `npx nx run-many -t lint test build typecheck`.
 
 The workflow requires `contents: write` permission because it performs repository-writing release operations. For the broader release model and local release commands, see [README.md](../../README.md#releasing).
 
