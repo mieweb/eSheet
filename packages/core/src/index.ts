@@ -40,7 +40,6 @@ export {
   type FieldTypeMeta,
   type FieldTypeRegistry,
   type RankedAnswer,
-  type MatrixRowAnswer,
   type AttachmentAnswer,
   type AnswerValue,
   type ResponseItem,

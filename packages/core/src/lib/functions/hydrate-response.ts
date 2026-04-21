@@ -6,11 +6,10 @@ import type {
   FieldDefinition,
   FieldResponse,
   FieldResponseMap,
-  MatrixRowAnswer,
+  ResponseItem,
   SelectedOption,
   RankedAnswer,
   AttachmentAnswer,
-  ResponseItem,
   FormResponse,
 } from '../types.js';
 import type { NormalizedDefinition } from './normalize.js';
@@ -125,27 +124,25 @@ function isEmptyAnswer(value: unknown): boolean {
   return false;
 }
 
-/** Build a structured MatrixRowAnswer[] from a matrix field response. */
+/** Build nested ResponseItem[] from a matrix field — each row is a sub-item with its own answer. */
 function extractMatrixAnswer(
   response: FieldResponse | undefined,
   definition: Omit<FieldDefinition, 'fields'>
-): MatrixRowAnswer[] | undefined {
+): ResponseItem[] | undefined {
   if (!response?.selected) return undefined;
   const raw = response.selected as Record<
     string,
     SelectedOption | SelectedOption[]
   >;
   const rows = definition.rows ?? [];
-  const result: MatrixRowAnswer[] = [];
+  const result: ResponseItem[] = [];
   for (const row of rows) {
     const sel = raw[row.id];
     if (!sel) continue;
-    const cols = Array.isArray(sel) ? sel : [sel];
-    result.push({
-      id: row.id,
-      value: row.value,
-      items: cols.map((c) => ({ id: c.id, value: c.value })),
-    });
+    const answer = Array.isArray(sel)
+      ? sel.map((c) => ({ id: c.id, value: c.value }))
+      : { id: sel.id, value: sel.value };
+    result.push({ id: row.id, text: row.value, answer });
   }
   return result.length > 0 ? result : undefined;
 }
