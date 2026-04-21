@@ -337,6 +337,13 @@ export type AttachmentAnswer = {
   title?: string;
 };
 
+/** A single row answer in a matrix field — contains the selected column(s) as items. */
+export type MatrixRowAnswer = {
+  id: string;
+  value: string;
+  items: Array<{ id: string; value: string }>;
+};
+
 /** All possible answer value shapes in a submission payload. */
 export type AnswerValue =
   | string
@@ -346,6 +353,7 @@ export type AnswerValue =
   | { id: string; value: string }
   | Array<{ id: string; value: string }>
   | RankedAnswer[]
+  | MatrixRowAnswer[]
   | AttachmentAnswer;
 
 /** A single item in the submission payload — one per answerable field. */

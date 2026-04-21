@@ -3,8 +3,10 @@
 // ---------------------------------------------------------------------------
 
 import type {
+  FieldDefinition,
   FieldResponse,
   FieldResponseMap,
+  MatrixRowAnswer,
   SelectedOption,
   RankedAnswer,
   AttachmentAnswer,
@@ -86,7 +88,10 @@ export function hydrateResponse(
         continue;
       }
 
-      const answer = extractAnswer(responses[id], meta.answerType);
+      const answer =
+        meta.answerType === 'matrix'
+          ? extractMatrixAnswer(responses[id], definition)
+          : extractAnswer(responses[id], meta.answerType);
       const item: ResponseItem = {
         id,
         text: definition.question ?? definition.title ?? '',
@@ -120,6 +125,31 @@ function isEmptyAnswer(value: unknown): boolean {
   return false;
 }
 
+/** Build a structured MatrixRowAnswer[] from a matrix field response. */
+function extractMatrixAnswer(
+  response: FieldResponse | undefined,
+  definition: Omit<FieldDefinition, 'fields'>
+): MatrixRowAnswer[] | undefined {
+  if (!response?.selected) return undefined;
+  const raw = response.selected as Record<
+    string,
+    SelectedOption | SelectedOption[]
+  >;
+  const rows = definition.rows ?? [];
+  const result: MatrixRowAnswer[] = [];
+  for (const row of rows) {
+    const sel = raw[row.id];
+    if (!sel) continue;
+    const cols = Array.isArray(sel) ? sel : [sel];
+    result.push({
+      id: row.id,
+      value: row.value,
+      items: cols.map((c) => ({ id: c.id, value: c.value })),
+    });
+  }
+  return result.length > 0 ? result : undefined;
+}
+
 /** Pull the actual answer value out of a FieldResponse based on answer type. */
 function extractAnswer(
   response: FieldResponse | undefined,
@@ -132,7 +162,6 @@ function extractAnswer(
       return response.answer;
     case 'selection':
     case 'multiselection':
-    case 'matrix':
       return response.selected;
     case 'multitext':
       return response.multitextAnswers;
