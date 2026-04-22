@@ -36,7 +36,7 @@ jobs:
           cache: 'npm'
           registry-url: 'https://registry.npmjs.org'
 
-      - run: npm ci
+      - run: npm ci --legacy-peer-deps
 
       - run: npx nx format:check --base="$NX_BASE"
       - run: npx nx run-many -t lint test build typecheck
