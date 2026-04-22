@@ -58,7 +58,7 @@ function DraggableFieldItem({
 
   return (
     <div
-      className="field-canvas-wrapper ms:relative ms:pb-2 ms:last:pb-0"
+      className="field-canvas-wrapper ms:relative ms:pb-1 ms:last:pb-0"
       data-field-id={id}
       data-field-type={field.definition.fieldType}
       data-selected={isSelected ? 'true' : 'false'}
@@ -456,39 +456,41 @@ export const Canvas = React.memo(function Canvas({
 
   return (
     <div className="ms:flex ms:flex-col ms:flex-1 ms:min-h-0">
-      <div className="ms:bg-msbackground ms:border-b ms:border-msborder ms:px-3 ms:py-1.5 ms:flex ms:items-center ms:justify-between ms:gap-2 ms:py-2 ms:mb-2">
-        <span className="ms:text-xs ms:font-medium ms:text-mstextmuted ms:uppercase ms:tracking-wide ms:select-none">
-          Fields
-        </span>
-        {items.length > 0 && (
-          <div className="ms:flex ms:items-center ms:gap-1">
-            <button
-              type="button"
-              title="Expand all"
-              className="ms:flex ms:items-center ms:gap-1 ms:px-2 ms:py-1 ms:text-xs ms:text-mstextmuted ms:hover:text-mstext ms:rounded ms:hover:bg-msbackgroundhover ms:transition-colors"
-              onClick={(e) => {
-                e.stopPropagation();
-                setExpandAllVersion((v) => (v ?? 0) + 1);
-              }}
-            >
-              <ViewBigIcon className="ms:w-3.5 ms:h-3.5" />
-              Expand all
-            </button>
-            <button
-              type="button"
-              title="Collapse all"
-              className="ms:flex ms:items-center ms:gap-1 ms:px-2 ms:py-1 ms:text-xs ms:text-mstextmuted ms:hover:text-mstext ms:rounded ms:hover:bg-msbackgroundhover ms:transition-colors"
-              onClick={(e) => {
-                e.stopPropagation();
-                setCollapseAllVersion((v) => (v ?? 0) + 1);
-              }}
-            >
-              <ViewSmallIcon className="ms:w-3.5 ms:h-3.5" />
-              Collapse all
-            </button>
-          </div>
-        )}
-      </div>
+      {mode === 'build' && (
+        <div className="ms:bg-msbackground ms:border-b ms:border-msborder ms:px-3 ms:py-1.5 ms:flex ms:items-center ms:justify-between ms:gap-2 ms:py-2 ms:mb-2">
+          <span className="ms:text-xs ms:font-medium ms:text-mstextmuted ms:uppercase ms:tracking-wide ms:select-none ms:py-1">
+            Fields
+          </span>
+          {items.length > 0 && (
+            <div className="ms:flex ms:items-center ms:gap-1">
+              <button
+                type="button"
+                title="Expand all"
+                className="ms:flex ms:items-center ms:gap-1 ms:px-2  ms:text-xs ms:text-mstextmuted ms:hover:text-mstext ms:rounded ms:hover:bg-msbackgroundhover ms:transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setExpandAllVersion((v) => (v ?? 0) + 1);
+                }}
+              >
+                <ViewBigIcon className="ms:w-3.5 ms:h-3.5" />
+                Expand all
+              </button>
+              <button
+                type="button"
+                title="Collapse all"
+                className="ms:flex ms:items-center ms:gap-1 ms:px-2 ms:py-1 ms:text-xs ms:text-mstextmuted ms:hover:text-mstext ms:rounded ms:hover:bg-msbackgroundhover ms:transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCollapseAllVersion((v) => (v ?? 0) + 1);
+                }}
+              >
+                <ViewSmallIcon className="ms:w-3.5 ms:h-3.5" />
+                Collapse all
+              </button>
+            </div>
+          )}
+        </div>
+      )}
       {items.length === 0 ? (
         <div className="canvas-empty ms:flex ms:flex-1 ms:items-center ms:justify-center ms:min-h-[200px] ms:text-mstextmuted ms:text-sm">
           No fields yet. Add a field from the Tool Panel to get started.

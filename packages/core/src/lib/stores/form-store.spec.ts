@@ -7,7 +7,6 @@ import type {
   FieldType,
   ConditionalRule,
 } from '../types.js';
-import { SCHEMA_TYPE } from '../types.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -22,7 +21,7 @@ function field(
 }
 
 function form(fields: FieldDefinition[]): FormDefinition {
-  return { schemaType: SCHEMA_TYPE, fields };
+  return { id: 'test-form', fields };
 }
 
 function visibleRule(targetId: string, expected: string): ConditionalRule {
@@ -142,6 +141,29 @@ describe('createFormStore', () => {
         store.getState().resetResponses();
         expect(store.getState().responses).toEqual({});
       });
+    });
+  });
+
+  describe('validation and hydration', () => {
+    it('skips disabled required fields in errors and hydrated output', () => {
+      store = createFormStore(
+        form([
+          field('trigger', 'text', { question: 'Trigger' }),
+          field('q1', 'text', {
+            question: 'Name?',
+            required: true,
+            rules: [enableRule('trigger', 'enabled')],
+          }),
+        ])
+      );
+
+      store.getState().setResponse('trigger', { answer: 'disabled' });
+      store.getState().setResponse('q1', { answer: 'Ada' });
+
+      expect(store.getState().getErrors()).toEqual([]);
+      expect(store.getState().hydrateResponse().items).toEqual([
+        { id: 'trigger', text: 'Trigger', answer: 'disabled' },
+      ]);
     });
   });
 
@@ -692,7 +714,6 @@ describe('createFormStore', () => {
         form([field('q1', 'text'), field('q2', 'number')])
       );
       const def = store.getState().hydrateDefinition();
-      expect(def.schemaType).toBe(SCHEMA_TYPE);
       expect(def.fields).toHaveLength(2);
       expect(def.fields[0].id).toBe('q1');
       expect(def.fields[1].id).toBe('q2');

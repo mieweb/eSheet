@@ -1,7 +1,5 @@
 # eSheet
 
-<img width="900" height="674" alt="eSheet builder screenshot" src="https://github.com/user-attachments/assets/67c3f422-e3df-4fa4-9110-d7046b17ff6e" />
-
 **Modular form builder & renderer for React.**
 
 eSheet is a TypeScript-first Nx monorepo providing composable packages for embedding a visual form builder and renderer into any React application — no lock-in, no required backend.
@@ -176,6 +174,16 @@ npx nx serve demo
 npx nx serve docs
 # → http://localhost:3000
 ```
+
+### Run docs and demo together
+
+```bash
+npx nx run-many -t dev -p app-*
+# Demo → http://localhost:4200
+# Docs → http://localhost:3000
+```
+
+This runs both local dev servers at the same time in one terminal. Use Ctrl+C to stop both.
 
 ### Production Static Deploy (Nginx)
 

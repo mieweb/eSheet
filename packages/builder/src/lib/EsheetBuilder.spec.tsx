@@ -6,7 +6,11 @@ import {
   waitFor,
   screen,
 } from '@testing-library/react';
-import { createFormStore, createUIStore } from '@esheet/core';
+import {
+  createFormStore,
+  createUIStore,
+  type FormDefinition,
+} from '@esheet/core';
 import { EsheetBuilder, useFormStore, useUI } from './EsheetBuilder.js';
 import { BuilderHeader } from './components/BuilderHeader.js';
 
@@ -33,7 +37,7 @@ describe('EsheetBuilder', () => {
     render(
       <EsheetBuilder
         definition={{
-          schemaType: 'mieforms-v1.0',
+          id: 'initial-form',
           fields: [{ id: 'q1', fieldType: 'text', question: 'Name?' }],
         }}
       >
@@ -55,14 +59,14 @@ describe('EsheetBuilder', () => {
     }
 
     render(
-      <EsheetBuilder onChange={(def) => changes.push(def)}>
+      <EsheetBuilder onChange={(def: FormDefinition) => changes.push(def)}>
         <Capture />
       </EsheetBuilder>
     );
 
     act(() => {
       form!.getState().loadDefinition({
-        schemaType: 'mieforms-v1.0',
+        id: 'change-form',
         fields: [{ id: 'f1', fieldType: 'text' }],
       });
     });
@@ -144,7 +148,7 @@ describe('BuilderHeader import feedback', () => {
     const form = createFormStore();
     const ui = createUIStore();
     mockFileContent = JSON.stringify({
-      schemaType: 'mieforms-v2',
+      id: 'invalid-schema',
       fields: [{ fieldType: 'text' }],
     });
 
@@ -173,11 +177,11 @@ describe('BuilderHeader import feedback', () => {
     expect(form.getState().normalized.rootIds.length).toBe(0);
   });
 
-  it('imports with warning modal when runtime-quality issues are detected', async () => {
+  it('blocks import when runtime-quality issues are detected', async () => {
     const form = createFormStore();
     const ui = createUIStore();
     mockFileContent = JSON.stringify({
-      schemaType: 'mieforms-v1.0',
+      id: 'with-warnings',
       fields: [
         { id: 'a', fieldType: 'text', question: 'A' },
         {
@@ -209,20 +213,21 @@ describe('BuilderHeader import feedback', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('Imported With Warnings')).toBeTruthy();
-      expect(screen.getByText(/found 2 issue\(s\)/)).toBeTruthy();
+      expect(screen.getByText('Import Blocked')).toBeTruthy();
+      expect(
+        screen.getByText(/contains 2 unsupported issue\(s\)/)
+      ).toBeTruthy();
       expect(screen.getByText(/is missing targetId/)).toBeTruthy();
     });
 
-    expect(form.getState().normalized.rootIds).toContain('a');
-    expect(form.getState().normalized.rootIds).toContain('b');
+    expect(form.getState().normalized.rootIds.length).toBe(0);
   });
 
   it('shows success modal for clean import', async () => {
     const form = createFormStore();
     const ui = createUIStore();
     mockFileContent = JSON.stringify({
-      schemaType: 'mieforms-v1.0',
+      id: 'good-form',
       fields: [{ id: 'ok', fieldType: 'text', question: 'OK' }],
     });
 
@@ -243,5 +248,146 @@ describe('BuilderHeader import feedback', () => {
     });
 
     expect(form.getState().normalized.rootIds).toContain('ok');
+  });
+});
+
+describe('BuilderHeader dry run submit', () => {
+  function createRequiredTextDefinition() {
+    return {
+      id: 'dry-run-form',
+      fields: [
+        {
+          id: 'q1',
+          fieldType: 'text' as const,
+          question: 'Name?',
+          required: true,
+        },
+      ],
+    };
+  }
+
+  it('dry run shows failed result when required field is unanswered', async () => {
+    const form = createFormStore(createRequiredTextDefinition());
+    const ui = createUIStore();
+
+    act(() => {
+      ui.getState().setMode('preview');
+    });
+
+    render(<BuilderHeader form={form} ui={ui} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Dry run submit' }));
+
+    await waitFor(() => {
+      expect(
+        screen.getAllByText('Dry Run Submit Failed').length
+      ).toBeGreaterThan(0);
+      expect(
+        screen.getAllByText('Submit would fail validation with 1 error(s).')
+          .length
+      ).toBeGreaterThan(0);
+    });
+
+    expect(screen.getAllByText(/"wouldSubmit": false/).length).toBeGreaterThan(
+      0
+    );
+    expect(screen.getAllByText(/"fieldId": "q1"/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/"rule": "required"/).length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByText('Close'));
+
+    await waitFor(() => {
+      expect(screen.queryAllByText('Dry Run Submit Failed')).toHaveLength(0);
+    });
+  });
+
+  it('dry run shows passed result with hydrated response when valid', async () => {
+    const form = createFormStore(createRequiredTextDefinition());
+    const ui = createUIStore();
+
+    act(() => {
+      ui.getState().setMode('preview');
+      form.getState().setResponse('q1', { answer: 'Ada' });
+    });
+
+    render(<BuilderHeader form={form} ui={ui} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Dry run submit' }));
+
+    await waitFor(() => {
+      expect(
+        screen.getAllByText('Dry Run Submit Passed').length
+      ).toBeGreaterThan(0);
+      expect(
+        screen.getAllByText('Submit would pass validation.').length
+      ).toBeGreaterThan(0);
+    });
+
+    expect(screen.getAllByText(/"wouldSubmit": true/).length).toBeGreaterThan(
+      0
+    );
+    expect(screen.getAllByText(/"errorCount": 0/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/"id": "q1"/).length).toBeGreaterThan(0);
+  });
+
+  it('does not show dry run action outside preview mode', () => {
+    const form = createFormStore(createRequiredTextDefinition());
+    const ui = createUIStore();
+
+    render(<BuilderHeader form={form} ui={ui} />);
+
+    expect(screen.queryByRole('button', { name: 'Dry run submit' })).toBeNull();
+  });
+
+  it('dry run excludes disabled answers from the serialized response payload', async () => {
+    const form = createFormStore({
+      id: 'conditional-form',
+      fields: [
+        {
+          id: 'trigger',
+          fieldType: 'text',
+          question: 'Trigger?',
+        },
+        {
+          id: 'q1',
+          fieldType: 'text',
+          question: 'Name?',
+          required: true,
+          rules: [
+            {
+              effect: 'enable',
+              logic: 'AND',
+              conditions: [
+                {
+                  targetId: 'trigger',
+                  operator: 'equals',
+                  expected: 'enabled',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    const ui = createUIStore();
+
+    act(() => {
+      ui.getState().setMode('preview');
+      form.getState().setResponse('trigger', { answer: 'disabled' });
+      form.getState().setResponse('q1', { answer: 'Ada' });
+    });
+
+    render(<BuilderHeader form={form} ui={ui} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Dry run submit' }));
+
+    await waitFor(() => {
+      expect(
+        screen.getAllByText('Dry Run Submit Passed').length
+      ).toBeGreaterThan(0);
+    });
+
+    expect(screen.getAllByText(/"id": "trigger"/).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/"id": "q1"/)).toBeNull();
   });
 });

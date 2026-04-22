@@ -1,0 +1,252 @@
+{
+  "id": "nps",
+  "title": "Net Promoter Score Survey",
+  "fields": [
+    {
+      "id": "nps-intro",
+      "fieldType": "html",
+      "htmlContent": "<h2 style='margin:0 0 8px'>How are we doing?</h2><p>Your feedback helps us improve. This survey takes less than 2 minutes.</p>",
+      "iframeHeight": 80
+    },
+
+    {
+      "id": "section-score",
+      "fieldType": "section",
+      "title": "Likelihood to Recommend",
+      "fields": [
+        {
+          "id": "nps-score",
+          "fieldType": "slider",
+          "question": "How likely are you to recommend us to a friend or colleague? (0 = Not at all likely, 10 = Extremely likely)",
+          "required": true,
+          "options": [
+            { "id": "nps-0", "value": "0", "text": "0" },
+            { "id": "nps-1", "value": "1", "text": "1" },
+            { "id": "nps-2", "value": "2", "text": "2" },
+            { "id": "nps-3", "value": "3", "text": "3" },
+            { "id": "nps-4", "value": "4", "text": "4" },
+            { "id": "nps-5", "value": "5", "text": "5" },
+            { "id": "nps-6", "value": "6", "text": "6" },
+            { "id": "nps-7", "value": "7", "text": "7" },
+            { "id": "nps-8", "value": "8", "text": "8" },
+            { "id": "nps-9", "value": "9", "text": "9" },
+            { "id": "nps-10", "value": "10", "text": "10" }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "section-promoter",
+      "fieldType": "section",
+      "title": "Great to hear! 🎉",
+      "rules": [
+        {
+          "effect": "visible",
+          "logic": "AND",
+          "conditions": [
+            {
+              "conditionType": "expression",
+              "expression": "{nps-score} >= 9"
+            }
+          ]
+        }
+      ],
+      "fields": [
+        {
+          "id": "nps-promoter-reason",
+          "fieldType": "longtext",
+          "question": "What's the main reason for your high score? We'd love to share your story."
+        },
+        {
+          "id": "nps-promoter-feature",
+          "fieldType": "radio",
+          "question": "Which aspect do you value most?",
+          "options": [
+            {
+              "id": "nps-pf-quality",
+              "value": "quality",
+              "text": "Quality of service"
+            },
+            {
+              "id": "nps-pf-support",
+              "value": "support",
+              "text": "Customer support"
+            },
+            { "id": "nps-pf-ease", "value": "ease", "text": "Ease of use" },
+            {
+              "id": "nps-pf-price",
+              "value": "price",
+              "text": "Value for money"
+            },
+            { "id": "nps-pf-other", "value": "other", "text": "Something else" }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "section-passive",
+      "fieldType": "section",
+      "title": "Thanks for your feedback",
+      "rules": [
+        {
+          "effect": "visible",
+          "logic": "AND",
+          "conditions": [
+            {
+              "conditionType": "expression",
+              "expression": "{nps-score} >= 7 && {nps-score} <= 8"
+            }
+          ]
+        }
+      ],
+      "fields": [
+        {
+          "id": "nps-passive-reason",
+          "fieldType": "longtext",
+          "question": "What would it take to earn a higher score from you?"
+        },
+        {
+          "id": "nps-passive-improvements",
+          "fieldType": "check",
+          "question": "Which areas would you like to see us improve? (select all that apply)",
+          "options": [
+            {
+              "id": "nps-pi-speed",
+              "value": "speed",
+              "text": "Response speed"
+            },
+            { "id": "nps-pi-docs", "value": "docs", "text": "Documentation" },
+            { "id": "nps-pi-ui", "value": "ui", "text": "User interface" },
+            { "id": "nps-pi-price", "value": "price", "text": "Pricing" },
+            {
+              "id": "nps-pi-features",
+              "value": "features",
+              "text": "More features"
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "section-detractor",
+      "fieldType": "section",
+      "title": "We're sorry to hear that",
+      "rules": [
+        {
+          "effect": "visible",
+          "logic": "AND",
+          "conditions": [
+            {
+              "conditionType": "expression",
+              "expression": "{nps-score} <= 6"
+            }
+          ]
+        }
+      ],
+      "fields": [
+        {
+          "id": "nps-detractor-reason",
+          "fieldType": "longtext",
+          "question": "What's the main reason for your score? Please be as specific as you can."
+        },
+        {
+          "id": "nps-detractor-issue",
+          "fieldType": "radio",
+          "question": "Which area disappointed you most?",
+          "options": [
+            {
+              "id": "nps-di-quality",
+              "value": "quality",
+              "text": "Quality of service"
+            },
+            {
+              "id": "nps-di-support",
+              "value": "support",
+              "text": "Customer support"
+            },
+            { "id": "nps-di-ease", "value": "ease", "text": "Ease of use" },
+            {
+              "id": "nps-di-price",
+              "value": "price",
+              "text": "Value for money"
+            },
+            { "id": "nps-di-other", "value": "other", "text": "Something else" }
+          ]
+        },
+        {
+          "id": "nps-detractor-contact",
+          "fieldType": "boolean",
+          "question": "May someone from our team reach out to you about your experience?",
+          "options": [
+            {
+              "id": "nps-dc-yes",
+              "value": "yes",
+              "text": "Yes, please contact me"
+            },
+            { "id": "nps-dc-no", "value": "no", "text": "No, thank you" }
+          ]
+        },
+        {
+          "id": "nps-detractor-email",
+          "fieldType": "text",
+          "question": "Best email address to reach you",
+          "inputType": "email",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "nps-detractor-contact",
+                  "operator": "equals",
+                  "expected": "nps-dc-yes"
+                }
+              ]
+            },
+            {
+              "effect": "required",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "nps-detractor-contact",
+                  "operator": "equals",
+                  "expected": "nps-dc-yes"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "section-overall",
+      "fieldType": "section",
+      "title": "Overall Experience",
+      "fields": [
+        {
+          "id": "nps-overall-rating",
+          "fieldType": "rating",
+          "question": "Overall satisfaction rating",
+          "options": [
+            { "id": "nps-or-1", "value": "1", "text": "1" },
+            { "id": "nps-or-2", "value": "2", "text": "2" },
+            { "id": "nps-or-3", "value": "3", "text": "3" },
+            { "id": "nps-or-4", "value": "4", "text": "4" },
+            { "id": "nps-or-5", "value": "5", "text": "5" }
+          ]
+        },
+        {
+          "id": "nps-additional",
+          "fieldType": "longtext",
+          "question": "Any other comments or suggestions?"
+        }
+      ]
+    }
+  ]
+}

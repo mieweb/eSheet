@@ -1,13 +1,20 @@
 import React, { useSyncExternalStore } from 'react';
 import YAML from 'js-yaml';
 import {
+  formatZodValidationError,
   formDefinitionSchema,
+  importFromMcp,
+  exportToMcp,
+  type McpElicitationSchema,
   type Condition,
   isExpressionValid,
   type FieldDefinition,
+  type FormDefinition,
   type FormStore,
   type UIStore,
   type BuilderMode,
+  type ValidationError,
+  type FormResponseEnvelope,
 } from '@esheet/core';
 import {
   VEditorIcon,
@@ -28,6 +35,9 @@ interface FeedbackState {
   title: string;
   message: string;
   details?: string;
+  issues?: string[];
+  issuesTitle?: string;
+  issuesHint?: string;
   variant: FeedbackModalVariant;
 }
 
@@ -40,6 +50,14 @@ const MODES: {
   { value: 'code', label: 'Code', Icon: CodeIcon },
   { value: 'preview', label: 'Preview', Icon: PreviewIcon },
 ];
+
+function sanitizeFormId(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
 
 interface FlattenedField {
   field: FieldDefinition;
@@ -185,13 +203,19 @@ function collectImportWarnings(fields: FieldDefinition[]): string[] {
   return warnings;
 }
 
-function formatIssueDetails(lines: string[], max: number): string {
-  const shown = lines.slice(0, max).map((line) => `- ${line}`);
-  const remaining = lines.length - shown.length;
-  if (remaining > 0) {
-    shown.push(`- ...and ${remaining} more issue(s).`);
+interface DryRunResult {
+  wouldSubmit: boolean;
+  errorCount: number;
+  errors: ValidationError[];
+  response: FormResponseEnvelope | null;
+}
+
+function formatDryRunDetails(result: DryRunResult): string {
+  try {
+    return JSON.stringify(result, null, 2);
+  } catch {
+    return 'Unable to serialize dry-run output.';
   }
-  return shown.join('\n');
 }
 
 /**
@@ -199,7 +223,20 @@ function formatIssueDetails(lines: string[], max: number): string {
  */
 export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [exportIdModalOpen, setExportIdModalOpen] = React.useState(false);
+  const [exportIdInput, setExportIdInput] = React.useState('');
+  const [exportIdError, setExportIdError] = React.useState('');
+  const [exportFormat, setExportFormat] = React.useState<'esheet' | 'mcp'>(
+    'esheet'
+  );
   const [feedback, setFeedback] = React.useState<FeedbackState>({
+    open: false,
+    title: '',
+    message: '',
+    details: undefined,
+    variant: 'info',
+  });
+  const [dryRunFeedback, setDryRunFeedback] = React.useState<FeedbackState>({
     open: false,
     title: '',
     message: '',
@@ -212,9 +249,33 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
       variant: FeedbackModalVariant,
       title: string,
       message: string,
+      details?: string,
+      issues?: string[],
+      issuesTitle?: string,
+      issuesHint?: string
+    ) => {
+      setFeedback({
+        open: true,
+        variant,
+        title,
+        message,
+        details,
+        issues,
+        issuesTitle,
+        issuesHint,
+      });
+    },
+    []
+  );
+
+  const showDryRunFeedback = React.useCallback(
+    (
+      variant: FeedbackModalVariant,
+      title: string,
+      message: string,
       details?: string
     ) => {
-      setFeedback({ open: true, variant, title, message, details });
+      setDryRunFeedback({ open: true, variant, title, message, details });
     },
     []
   );
@@ -231,26 +292,80 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
     () => ui.getState().codeEditorHasError
   );
 
-  const handleExport = () => {
-    const definition = form.getState().hydrateDefinition();
+  React.useEffect(() => {
+    if (mode !== 'preview') {
+      setDryRunFeedback((prev) =>
+        prev.open
+          ? {
+              ...prev,
+              open: false,
+            }
+          : prev
+      );
+    }
+  }, [mode]);
+
+  const finalizeExport = React.useCallback((definition: FormDefinition) => {
     const json = JSON.stringify(definition, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${definition.title ?? 'form'}.json`;
+    a.download = `${definition.id}.json`;
     a.click();
     URL.revokeObjectURL(url);
+  }, []);
+
+  const handleConfirmExportId = React.useCallback(() => {
+    if (exportFormat === 'mcp') {
+      const definition = form.getState().hydrateDefinition();
+      const schema = exportToMcp(definition);
+      const filename = (definition.id || 'form') + '-mcp-schema.json';
+      const blob = new Blob([JSON.stringify(schema, null, 2)], {
+        type: 'application/json',
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      setExportIdModalOpen(false);
+      return;
+    }
+
+    const nextId = sanitizeFormId(exportIdInput);
+    if (!nextId) {
+      setExportIdError(
+        'Enter a valid id (letters, numbers, dashes, underscores).'
+      );
+      return;
+    }
+
+    form.getState().setFormId(nextId);
+    const definition = form.getState().hydrateDefinition();
+    finalizeExport(definition);
+    setExportIdModalOpen(false);
+    setExportIdError('');
+  }, [exportFormat, exportIdInput, finalizeExport, form]);
+
+  const handleExport = () => {
+    const definition = form.getState().hydrateDefinition();
+    const currentId = definition.id.trim();
+    const suggested =
+      currentId || sanitizeFormId(definition.title ?? 'form') || 'form';
+    setExportIdInput(suggested);
+    setExportIdError('');
+    setExportIdModalOpen(true);
   };
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.currentTarget.files?.[0];
     if (!file) return;
 
-    // Detect file format from extension
     const fileName = file.name.toLowerCase();
     const isYaml = fileName.endsWith('.yaml') || fileName.endsWith('.yml');
-    const format = isYaml ? 'YAML' : 'JSON';
+    const fileFormat = isYaml ? 'YAML' : 'JSON';
 
     const reader = new FileReader();
     reader.onload = (ev) => {
@@ -258,37 +373,94 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
         const content = ev.target?.result as string;
         const parsed = isYaml ? YAML.load(content) : JSON.parse(content);
 
+        // Auto-detect MCP elicitation schema (JSON only).
+        // Accepts: full elicitation/create request, params object, or raw requestedSchema.
+        if (!isYaml) {
+          const p = parsed as Record<string, unknown>;
+          const params = p?.params as Record<string, unknown> | undefined;
+
+          // URL mode — no requestedSchema, nothing to import as a form.
+          const mode = params?.mode ?? p?.mode;
+          if (mode === 'url') {
+            showFeedback(
+              'error',
+              'URL Mode Not Supported',
+              'This MCP elicitation uses URL mode (out-of-band). Only form mode schemas can be imported into the builder.'
+            );
+            return;
+          }
+
+          let mcpSchema: McpElicitationSchema | undefined;
+          if (params?.requestedSchema) {
+            mcpSchema = params.requestedSchema as McpElicitationSchema;
+          } else if (p?.requestedSchema) {
+            mcpSchema = p.requestedSchema as McpElicitationSchema;
+          } else if (p?.type === 'object' && p?.properties) {
+            mcpSchema = p as unknown as McpElicitationSchema;
+          }
+
+          if (mcpSchema) {
+            const message = params?.message ?? p?.message;
+            const mcpId = p?.id ?? params?.id;
+            const mcpMeta = p?.meta;
+            const formDef = importFromMcp(mcpSchema, {
+              formId: form.getState().hydrateDefinition().id || 'mcp-form',
+              ...(typeof message === 'string' && message.length > 0
+                ? { description: message }
+                : {}),
+              ...(mcpId !== undefined
+                ? { mcpId: mcpId as string | number }
+                : {}),
+              ...(typeof message === 'string' ? { mcpMessage: message } : {}),
+              ...(mcpMeta !== undefined ? { mcpMeta } : {}),
+            });
+            form.getState().loadDefinition(formDef);
+            showFeedback(
+              'success',
+              'Import Successful',
+              `Loaded ${formDef.fields.length} field(s) from MCP elicitation schema.`
+            );
+            return;
+          }
+        }
+
         const validated = formDefinitionSchema.safeParse(parsed);
         if (!validated.success) {
-          const issues = validated.error.issues.map((issue) => {
-            const path =
-              issue.path.length > 0 ? issue.path.join('.') : '(root)';
-            return `${path}: ${issue.message}`;
-          });
-          const details = formatIssueDetails(issues, 5);
+          const issues = validated.error.issues.map(formatZodValidationError);
+          const shownIssues = issues.slice(0, 8);
 
           showFeedback(
             'error',
             'Import Failed',
-            `The file is valid ${format} but does not match the form schema.`,
-            details
+            `The file is valid ${fileFormat} but does not match the form schema.`,
+            issues.length > shownIssues.length
+              ? `Showing ${shownIssues.length} of ${issues.length} issue(s).`
+              : undefined,
+            shownIssues,
+            'Unsupported Form Definition',
+            'Fix these issues, then try importing again.'
           );
           return;
         }
 
         const importWarnings = collectImportWarnings(validated.data.fields);
-        form.getState().loadDefinition(validated.data);
         if (importWarnings.length > 0) {
-          const details = formatIssueDetails(importWarnings, 10);
+          const shownWarnings = importWarnings.slice(0, 10);
           showFeedback(
-            'warning',
-            'Imported With Warnings',
-            `Loaded ${validated.data.fields.length} field(s), but found ${importWarnings.length} issue(s) that may affect behavior.`,
-            details
+            'error',
+            'Import Blocked',
+            `This definition contains ${importWarnings.length} unsupported issue(s) and was not imported.`,
+            importWarnings.length > shownWarnings.length
+              ? `Showing ${shownWarnings.length} of ${importWarnings.length} issue(s).`
+              : undefined,
+            shownWarnings,
+            'Unsupported Configuration',
+            'Resolve these issues before importing this file.'
           );
           return;
         }
 
+        form.getState().loadDefinition(validated.data);
         showFeedback(
           'success',
           'Import Successful',
@@ -298,7 +470,7 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
         showFeedback(
           'error',
           'Import Failed',
-          `Invalid ${format} file format.`
+          `Invalid ${fileFormat} file format.`
         );
       }
     };
@@ -307,13 +479,138 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
     e.currentTarget.value = '';
   };
 
+  const handleDryRunSubmit = () => {
+    const state = form.getState();
+    const errors = state.getErrors();
+
+    if (errors.length > 0) {
+      const result: DryRunResult = {
+        wouldSubmit: false,
+        errorCount: errors.length,
+        errors,
+        response: null,
+      };
+
+      showDryRunFeedback(
+        'warning',
+        'Dry Run Submit Failed',
+        `Submit would fail validation with ${errors.length} error(s).`,
+        formatDryRunDetails(result)
+      );
+      return;
+    }
+
+    const response = state.hydrateResponse({ status: 'draft' });
+    const result: DryRunResult = {
+      wouldSubmit: true,
+      errorCount: 0,
+      errors: [],
+      response,
+    };
+
+    showDryRunFeedback(
+      'success',
+      'Dry Run Submit Passed',
+      'Submit would pass validation.',
+      formatDryRunDetails(result)
+    );
+  };
+
   return (
     <header className="builder-header ms:w-full ms:bg-mssurface ms:border ms:border-msborder ms:rounded-lg ms:shadow-sm ms:shrink-0">
+      <FeedbackModal
+        open={exportIdModalOpen}
+        title="Export Form"
+        message={
+          exportFormat === 'mcp'
+            ? 'Choose a format to export your form.'
+            : `Do you want to use '${
+                sanitizeFormId(exportIdInput) || exportIdInput
+              }' as the form id? You can edit it below before exporting.`
+        }
+        content={
+          <div className="ms:space-y-4 ms:mb-2">
+            <div className="ms:flex ms:gap-4">
+              <label className="ms:flex ms:items-center ms:gap-2 ms:text-sm ms:text-mstext ms:cursor-pointer">
+                <input
+                  type="radio"
+                  name="export-format"
+                  value="esheet"
+                  checked={exportFormat === 'esheet'}
+                  onChange={() => setExportFormat('esheet')}
+                />
+                eSheet JSON
+              </label>
+              <label className="ms:flex ms:items-center ms:gap-2 ms:text-sm ms:text-mstext ms:cursor-pointer">
+                <input
+                  type="radio"
+                  name="export-format"
+                  value="mcp"
+                  checked={exportFormat === 'mcp'}
+                  onChange={() => setExportFormat('mcp')}
+                />
+                MCP Elicitation Schema
+              </label>
+            </div>
+            {exportFormat === 'esheet' && (
+              <div className="ms:space-y-2">
+                <label
+                  htmlFor={`${form.getState().instanceId}-export-form-id`}
+                  className="ms:block ms:text-sm ms:font-medium ms:text-mstext"
+                >
+                  Form ID
+                </label>
+                <input
+                  id={`${form.getState().instanceId}-export-form-id`}
+                  aria-label="Form ID"
+                  type="text"
+                  value={exportIdInput}
+                  onChange={(e) => {
+                    setExportIdInput(e.target.value);
+                    if (exportIdError) setExportIdError('');
+                  }}
+                  placeholder="my-form-id"
+                  className="ms:px-3 ms:py-2 ms:h-10 ms:w-full ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:rounded-lg ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary/30 ms:outline-none ms:transition-colors"
+                />
+                {exportIdError && (
+                  <p className="ms:text-xs ms:text-msdanger">{exportIdError}</p>
+                )}
+              </div>
+            )}
+            {exportFormat === 'mcp' && (
+              <p className="ms:text-sm ms:text-mstextmuted">
+                Exports as a flat{' '}
+                <code className="ms:font-mono ms:text-xs ms:bg-msbackground ms:px-1 ms:py-0.5 ms:rounded">
+                  requestedSchema
+                </code>{' '}
+                object. Field IDs, required fields, and supported types are
+                preserved. Unsupported types (matrix, signature, etc.) are
+                omitted.
+              </p>
+            )}
+          </div>
+        }
+        variant="info"
+        confirmLabel={
+          exportFormat === 'mcp' ? 'Export MCP Schema' : 'Use This ID & Export'
+        }
+        cancelLabel="Cancel"
+        showCancel
+        onConfirm={handleConfirmExportId}
+        onClose={() => {
+          setExportIdModalOpen(false);
+          setExportIdError('');
+        }}
+      />
+
       <FeedbackModal
         open={feedback.open}
         title={feedback.title}
         message={feedback.message}
         details={feedback.details}
+        issues={feedback.issues}
+        issuesTitle={feedback.issuesTitle}
+        issuesHint={feedback.issuesHint}
         variant={feedback.variant}
         onClose={() =>
           setFeedback((prev) => ({
@@ -322,6 +619,70 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
           }))
         }
       />
+      {/* Dry run: modal on desktop (lg+) */}
+      <div className="ms:hidden ms:lg:block">
+        <FeedbackModal
+          open={dryRunFeedback.open}
+          title={dryRunFeedback.title}
+          message={dryRunFeedback.message}
+          details={dryRunFeedback.details}
+          variant={dryRunFeedback.variant}
+          onClose={() =>
+            setDryRunFeedback((prev) => ({
+              ...prev,
+              open: false,
+            }))
+          }
+        />
+      </div>
+      {dryRunFeedback.open && (
+        <>
+          <button
+            type="button"
+            className="ms:lg:hidden ms:fixed ms:inset-0 ms:z-40 ms:bg-msoverlay ms:border-0"
+            onClick={() =>
+              setDryRunFeedback((prev) => ({
+                ...prev,
+                open: false,
+              }))
+            }
+            aria-label="Close Dry Run result drawer"
+          />
+          <div className="ms:lg:hidden ms:fixed ms:left-0 ms:right-0 ms:bottom-0 ms:z-50 ms:h-[50dvh] ms:bg-mssurface ms:border-t ms:border-msborder ms:rounded-t-2xl ms:shadow-2xl ms:overflow-hidden">
+            <div className="ms:flex ms:items-center ms:justify-between ms:px-4 ms:py-2 ms:border-b ms:border-msborder">
+              <span className="ms:text-sm ms:font-medium ms:text-mstext">
+                Dry Run Result
+              </span>
+              <button
+                type="button"
+                onClick={() =>
+                  setDryRunFeedback((prev) => ({
+                    ...prev,
+                    open: false,
+                  }))
+                }
+                className="ms:px-2 ms:py-1 ms:bg-transparent ms:text-mstextmuted ms:border-0 ms:outline-none ms:focus:outline-none"
+                aria-label="Close Dry Run result drawer"
+              >
+                Close
+              </button>
+            </div>
+            <div className="ms:h-[calc(50dvh-45px)] ms:overflow-y-auto ms:p-4 ms:space-y-3">
+              <h3 className="ms:text-sm ms:font-semibold ms:text-mstext">
+                {dryRunFeedback.title}
+              </h3>
+              <p className="ms:text-sm ms:text-mstextmuted">
+                {dryRunFeedback.message}
+              </p>
+              {dryRunFeedback.details && (
+                <pre className="ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackground ms:p-3 ms:text-xs ms:overflow-auto ms:whitespace-pre-wrap ms:break-words ms:text-mstext">
+                  {dryRunFeedback.details}
+                </pre>
+              )}
+            </div>
+          </div>
+        </>
+      )}
       <div className="ms:px-4 ms:py-4">
         <div className="ms:flex ms:flex-wrap ms:items-center ms:justify-between ms:gap-3">
           {/* Left — mode toggle */}
@@ -372,6 +733,19 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
               <DownloadIcon className="ms:w-4 ms:h-4 ms:text-mstext ms:group-hover:text-mstextsecondary ms:transition-colors" />
               <span className="ms:hidden ms:sm:inline">Export</span>
             </button>
+
+            {mode === 'preview' && (
+              <button
+                type="button"
+                onClick={handleDryRunSubmit}
+                aria-label="Dry run submit"
+                title="Dry Run Submit"
+                className="dry-run-submit-btn ms:group ms:px-2 ms:py-2 ms:lg:px-3 ms:lg:py-2 ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:hover:bg-msprimary ms:hover:text-mstextsecondary ms:hover:border-msprimary ms:text-xs ms:lg:text-sm ms:font-medium ms:transition-colors ms:flex ms:items-center ms:lg:gap-2 ms:gap-0 ms:outline-none ms:focus:outline-none ms:text-mstext ms:cursor-pointer"
+              >
+                <span className="ms:hidden ms:sm:inline">Dry Run Submit</span>
+                <span className="ms:sm:hidden">Dry Run</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

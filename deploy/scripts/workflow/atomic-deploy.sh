@@ -10,8 +10,8 @@ REL_DIR="$RELEASES_DIR/$SHA"
 
 cd "$REPO_ROOT"
 
-CI=1 NX_INTERACTIVE=false npx nx build docs --outputStyle=static
-CI=1 NX_INTERACTIVE=false npx nx build demo --outputStyle=static
+CI=1 NX_INTERACTIVE=false npx nx build app-docs --outputStyle=static
+CI=1 NX_INTERACTIVE=false npx nx build app-demo --outputStyle=static
 
 sudo mkdir -p "$REL_DIR/demo"
 sudo rsync -a --delete "$REPO_ROOT/apps/docs/build/" "$REL_DIR/"

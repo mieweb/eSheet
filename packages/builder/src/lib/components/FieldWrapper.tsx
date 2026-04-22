@@ -198,10 +198,10 @@ export function FieldWrapper({
     return (
       <div
         className={`field-wrapper ms:bg-mssurface${
-          isSection ? ' ms:mb-2 ms:border ms:border-msborder ms:rounded' : ''
+          isSection ? ' ms:mb-1 ms:border ms:border-msborder ms:rounded' : ''
         }${
           !isSection && !isChildOfSection
-            ? ' ms:mb-2 ms:p-6 ms:border ms:border-msborder ms:rounded'
+            ? ' ms:mb-1 ms:p-6 ms:border ms:border-msborder ms:rounded'
             : ''
         }${
           isChildOfSection

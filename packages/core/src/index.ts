@@ -1,6 +1,5 @@
 export {
   // Constants
-  SCHEMA_TYPE,
   FIELD_TYPES,
   TEXT_INPUT_TYPES,
   CONDITION_OPERATORS,
@@ -21,7 +20,6 @@ export {
   formDefinitionJSONSchema,
 
   // Types
-  type SchemaType,
   type FieldType,
   type FieldCategory,
   type AnswerType,
@@ -37,10 +35,15 @@ export {
   type FieldDefinition,
   type FieldResponse,
   type FormDefinition,
-  type FormResponse,
+  type FieldResponseMap as FormResponse,
   type SelectedOption,
   type FieldTypeMeta,
   type FieldTypeRegistry,
+  type RankedAnswer,
+  type AttachmentAnswer,
+  type AnswerValue,
+  type ResponseItem,
+  type FormResponse as FormResponseEnvelope,
 } from './lib/types.js';
 
 export {
@@ -65,10 +68,7 @@ export {
   type NormalizedDefinition,
 } from './lib/functions/normalize.js';
 
-export {
-  hydrateResponse,
-  type HydratedResponseItem,
-} from './lib/functions/hydrate-response.js';
+export { hydrateResponse } from './lib/functions/hydrate-response.js';
 
 export {
   evaluateCondition,
@@ -84,6 +84,8 @@ export {
   validateForm,
   type ValidationError,
 } from './lib/logic/validate.js';
+
+export { formatZodValidationError } from './lib/zod-errors.js';
 
 export {
   createFormStore,
@@ -101,3 +103,16 @@ export {
 } from './lib/stores/ui-store.js';
 
 export { type FieldComponentProps } from './lib/field-component-props.js';
+
+export {
+  importFromMcp,
+  exportToMcp,
+  type McpElicitationSchema,
+  type McpElicitationRequest,
+  type McpProperty,
+  type McpStringProp,
+  type McpNumberProp,
+  type McpBooleanProp,
+  type McpArrayProp,
+  type McpConstOption,
+} from './lib/functions/mcp.js';

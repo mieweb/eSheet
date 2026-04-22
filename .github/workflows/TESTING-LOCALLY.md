@@ -24,6 +24,17 @@ This guide explains how to test all GitHub Actions workflows locally using `gh a
 
 ## General Setup (All Workflows)
 
+### 0. Verify Docker daemon connectivity
+
+`gh act` requires a reachable Docker daemon before any workflow step can start.
+
+```bash
+docker version
+docker context ls
+```
+
+`docker version` must include both Client and Server sections.
+
 ### 1. Verify git checkout
 
 All workflows expect a full git history or a properly resolved base ref:
@@ -69,7 +80,7 @@ gh act push -W .github/workflows/ci.yml --pull=false
 1. Checks out current branch with full git history
 2. Sets up Node 22 and npm
 3. Runs `npm ci`
-4. Validates `npx nx format:check --base="remotes/origin/main"` (no uncommitted changes allowed)
+4. Resolves `NX_BASE` from `origin/main` and validates `npx nx format:check --base="$NX_BASE"` (no uncommitted changes allowed)
 5. Runs all lint, test, build, typecheck targets via `npx nx run-many -t lint test build typecheck`
 
 **Expected result:**
@@ -79,8 +90,8 @@ All steps show ✅; final line is `Job succeeded`. If any step fails, review the
 **Troubleshooting:**
 
 - If `format:check` fails locally but passes in CI, run `npx nx format` to auto-fix formatting
-- If you see "cannot find module" errors, run `npm ci` to ensure lockfile-locked dependencies
-- If you see stale module errors after checkpoint or machine restart, run `npm ci` to reset node_modules
+- If you see "cannot find module" errors in an active local Windows workspace, run `npm install` to repair dependencies in place
+- If you see stale module errors after checkpoint or machine restart, run `npm install` (avoid `npm ci` in active local Windows workspaces)
 
 ### Testing Release Workflow
 

@@ -1,0 +1,404 @@
+{
+  "id": "patient-intake",
+  "title": "Patient Intake Form",
+  "fields": [
+    {
+      "id": "intro",
+      "fieldType": "html",
+      "htmlContent": "<h2 style='margin:0 0 8px'>Patient Intake Form</h2><p>Please complete all sections before your appointment.</p>",
+      "iframeHeight": 90
+    },
+
+    {
+      "id": "section-personal",
+      "fieldType": "section",
+      "title": "Personal Information",
+      "fields": [
+        {
+          "id": "pi-first-name",
+          "fieldType": "text",
+          "question": "First name",
+          "inputType": "string",
+          "required": true
+        },
+        {
+          "id": "pi-last-name",
+          "fieldType": "text",
+          "question": "Last name",
+          "inputType": "string",
+          "required": true
+        },
+        {
+          "id": "pi-dob",
+          "fieldType": "text",
+          "question": "Date of birth",
+          "inputType": "date",
+          "required": true
+        },
+        {
+          "id": "pi-sex",
+          "fieldType": "radio",
+          "question": "Biological sex",
+          "options": [
+            { "id": "pi-sex-m", "value": "male", "text": "Male" },
+            { "id": "pi-sex-f", "value": "female", "text": "Female" },
+            {
+              "id": "pi-sex-o",
+              "value": "other",
+              "text": "Other / Prefer not to say"
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "section-contact",
+      "fieldType": "section",
+      "title": "Contact & Address",
+      "fields": [
+        {
+          "id": "pi-phone",
+          "fieldType": "text",
+          "question": "Phone number",
+          "inputType": "tel"
+        },
+        {
+          "id": "pi-email",
+          "fieldType": "text",
+          "question": "Email address",
+          "inputType": "email"
+        },
+        {
+          "id": "pi-street",
+          "fieldType": "text",
+          "question": "Street address",
+          "inputType": "string"
+        },
+        {
+          "id": "pi-city",
+          "fieldType": "text",
+          "question": "City",
+          "inputType": "string"
+        },
+        {
+          "id": "pi-state",
+          "fieldType": "text",
+          "question": "State",
+          "inputType": "string"
+        },
+        {
+          "id": "pi-zip",
+          "fieldType": "text",
+          "question": "ZIP / Postal code",
+          "inputType": "string"
+        }
+      ]
+    },
+
+    {
+      "id": "section-insurance",
+      "fieldType": "section",
+      "title": "Insurance Information",
+      "fields": [
+        {
+          "id": "pi-ins-type",
+          "fieldType": "radio",
+          "question": "Insurance type",
+          "required": true,
+          "options": [
+            { "id": "pi-ins-self", "value": "self-pay", "text": "Self-pay" },
+            {
+              "id": "pi-ins-private",
+              "value": "private",
+              "text": "Private insurance"
+            },
+            {
+              "id": "pi-ins-medicare",
+              "value": "medicare",
+              "text": "Medicare"
+            },
+            { "id": "pi-ins-medicaid", "value": "medicaid", "text": "Medicaid" }
+          ]
+        },
+        {
+          "id": "pi-ins-provider",
+          "fieldType": "text",
+          "question": "Insurance provider name",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "pi-ins-type",
+                  "operator": "notEquals",
+                  "expected": "pi-ins-self"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "pi-ins-member-id",
+          "fieldType": "text",
+          "question": "Member / Policy ID",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "pi-ins-type",
+                  "operator": "notEquals",
+                  "expected": "pi-ins-self"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "pi-ins-group",
+          "fieldType": "text",
+          "question": "Group number",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "pi-ins-type",
+                  "operator": "notEquals",
+                  "expected": "pi-ins-self"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "section-complaint",
+      "fieldType": "section",
+      "title": "Chief Complaint",
+      "fields": [
+        {
+          "id": "pi-complaint",
+          "fieldType": "longtext",
+          "question": "What brings you in today?",
+          "required": true
+        },
+        {
+          "id": "pi-pain-scale",
+          "fieldType": "slider",
+          "question": "Current pain level (0 = none, 10 = worst imaginable)",
+          "options": [
+            { "id": "pi-ps-0", "value": "0", "text": "0" },
+            { "id": "pi-ps-1", "value": "1", "text": "1" },
+            { "id": "pi-ps-2", "value": "2", "text": "2" },
+            { "id": "pi-ps-3", "value": "3", "text": "3" },
+            { "id": "pi-ps-4", "value": "4", "text": "4" },
+            { "id": "pi-ps-5", "value": "5", "text": "5" },
+            { "id": "pi-ps-6", "value": "6", "text": "6" },
+            { "id": "pi-ps-7", "value": "7", "text": "7" },
+            { "id": "pi-ps-8", "value": "8", "text": "8" },
+            { "id": "pi-ps-9", "value": "9", "text": "9" },
+            { "id": "pi-ps-10", "value": "10", "text": "10" }
+          ]
+        },
+        {
+          "id": "pi-pain-location",
+          "fieldType": "text",
+          "question": "Location of pain or discomfort",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "pi-pain-scale",
+                  "operator": "greaterThan",
+                  "expected": "0"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "pi-onset",
+          "fieldType": "text",
+          "question": "When did symptoms begin?",
+          "inputType": "date"
+        }
+      ]
+    },
+
+    {
+      "id": "section-allergies",
+      "fieldType": "section",
+      "title": "Allergies",
+      "fields": [
+        {
+          "id": "pi-has-allergies",
+          "fieldType": "boolean",
+          "question": "Do you have any known allergies?",
+          "required": true,
+          "options": [
+            { "id": "pi-allergy-yes", "value": "yes", "text": "Yes" },
+            { "id": "pi-allergy-no", "value": "no", "text": "No" }
+          ]
+        },
+        {
+          "id": "pi-allergy-details",
+          "fieldType": "longtext",
+          "question": "Please list your allergies and describe the reaction for each",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "pi-has-allergies",
+                  "operator": "equals",
+                  "expected": "pi-allergy-yes"
+                }
+              ]
+            },
+            {
+              "effect": "required",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "pi-has-allergies",
+                  "operator": "equals",
+                  "expected": "pi-allergy-yes"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "section-history",
+      "fieldType": "section",
+      "title": "Medical History",
+      "fields": [
+        {
+          "id": "pi-conditions",
+          "fieldType": "check",
+          "question": "Do you have any of the following conditions? (select all that apply)",
+          "options": [
+            {
+              "id": "pi-cond-diabetes",
+              "value": "diabetes",
+              "text": "Diabetes"
+            },
+            {
+              "id": "pi-cond-htn",
+              "value": "hypertension",
+              "text": "Hypertension"
+            },
+            {
+              "id": "pi-cond-heart",
+              "value": "heart-disease",
+              "text": "Heart disease"
+            },
+            {
+              "id": "pi-cond-asthma",
+              "value": "asthma",
+              "text": "Asthma / COPD"
+            },
+            {
+              "id": "pi-cond-cancer",
+              "value": "cancer",
+              "text": "Cancer (current or prior)"
+            },
+            {
+              "id": "pi-cond-none",
+              "value": "none",
+              "text": "None of the above"
+            }
+          ]
+        },
+        {
+          "id": "pi-medications",
+          "fieldType": "longtext",
+          "question": "Current medications (name, dose, frequency)"
+        },
+        {
+          "id": "pi-smoker",
+          "fieldType": "radio",
+          "question": "Tobacco use",
+          "options": [
+            { "id": "pi-smk-never", "value": "never", "text": "Never" },
+            {
+              "id": "pi-smk-former",
+              "value": "former",
+              "text": "Former smoker"
+            },
+            {
+              "id": "pi-smk-current",
+              "value": "current",
+              "text": "Current smoker"
+            }
+          ]
+        },
+        {
+          "id": "pi-packs-per-day",
+          "fieldType": "text",
+          "question": "Packs per day",
+          "inputType": "number",
+          "unit": "packs/day",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "field",
+                  "targetId": "pi-smoker",
+                  "operator": "equals",
+                  "expected": "pi-smk-current"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "section-consent",
+      "fieldType": "section",
+      "title": "Consent & Signature",
+      "fields": [
+        {
+          "id": "pi-consent-note",
+          "fieldType": "html",
+          "htmlContent": "<p style='font-size:13px;color:#555'>By signing below you confirm that the information provided is accurate and you consent to treatment.</p>",
+          "iframeHeight": 55
+        },
+        {
+          "id": "pi-signature",
+          "fieldType": "signature",
+          "question": "Patient signature",
+          "required": true,
+          "padPlaceholder": "Sign here"
+        }
+      ]
+    }
+  ]
+}
