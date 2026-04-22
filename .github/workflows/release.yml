@@ -49,9 +49,12 @@ jobs:
       - name: Nx release (dry-run)
         if: ${{ env.DRY_RUN == 'true' }}
         run: npx nx release --dry-run --yes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Nx release
         if: ${{ env.DRY_RUN == 'false' }}
         run: npx nx release --yes
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
