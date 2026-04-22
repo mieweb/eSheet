@@ -1,5 +1,4 @@
 import {
-  SCHEMA_TYPE,
   FIELD_TYPES,
   formDefinitionSchema,
   fieldDefinitionSchema,
@@ -12,10 +11,6 @@ import type {
 } from './types.js';
 
 describe('schema types', () => {
-  it('should export the schema type constant', () => {
-    expect(SCHEMA_TYPE).toBe('mieforms-v1.0');
-  });
-
   it('should export all field types', () => {
     expect(FIELD_TYPES).toContain('text');
     expect(FIELD_TYPES).toContain('section');
@@ -31,14 +26,12 @@ describe('schema types', () => {
     };
 
     const form: FormDefinition = {
-      schemaType: SCHEMA_TYPE,
       id: 'test-form',
       title: 'Test Form',
       fields: [field],
     };
 
     expect(form.fields).toHaveLength(1);
-    expect(form.schemaType).toBe('mieforms-v1.0');
   });
 
   it('should allow constructing a response map', () => {
@@ -82,7 +75,6 @@ describe('schema types', () => {
 
   it('should reject unknown top-level form properties', () => {
     const result = formDefinitionSchema.safeParse({
-      schemaType: SCHEMA_TYPE,
       id: 'comprehensive',
       unknown: true,
       fields: [],

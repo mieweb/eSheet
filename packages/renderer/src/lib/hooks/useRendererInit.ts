@@ -50,7 +50,6 @@ export function useRendererInit(
         onValidationError?.(errors);
         // Load empty form instead of crashing
         form.getState().loadDefinition({
-          schemaType: 'mieforms-v1.0',
           id: 'invalid-form',
           title: 'Invalid Form',
           fields: [],
@@ -77,7 +76,6 @@ export function useRendererInit(
       console.error('[EsheetRenderer] Failed to initialize:', error);
       // Load empty form as fallback
       form.getState().loadDefinition({
-        schemaType: 'mieforms-v1.0',
         id: 'error-form',
         title: 'Error',
         fields: [],

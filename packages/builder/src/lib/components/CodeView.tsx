@@ -187,7 +187,6 @@ export function CodeView({ form, ui }: CodeViewProps) {
       if (!text) {
         const currentId = fs.getState().hydrateDefinition().id;
         fs.getState().loadDefinition({
-          schemaType: 'mieforms-v1.0',
           id: currentId,
           fields: [],
         });

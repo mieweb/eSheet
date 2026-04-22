@@ -1,5 +1,4 @@
 {
-  "schemaType": "mieforms-v1.0",
   "id": "nps",
   "title": "Net Promoter Score Survey",
   "fields": [

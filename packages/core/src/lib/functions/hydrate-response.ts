@@ -5,10 +5,10 @@
 import type {
   FieldResponse,
   FieldResponseMap,
+  ResponseItem,
   SelectedOption,
   RankedAnswer,
   AttachmentAnswer,
-  ResponseItem,
   FormResponse,
 } from '../types.js';
 import type { NormalizedDefinition } from './normalize.js';

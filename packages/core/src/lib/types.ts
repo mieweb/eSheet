@@ -1,15 +1,6 @@
 import { z } from 'zod/mini';
 
 // ---------------------------------------------------------------------------
-// Schema Version
-// ---------------------------------------------------------------------------
-
-/** Supported schema version identifier. */
-export const SCHEMA_TYPE = 'mieforms-v1.0' as const;
-
-export type SchemaType = typeof SCHEMA_TYPE;
-
-// ---------------------------------------------------------------------------
 // Field Types
 // ---------------------------------------------------------------------------
 
@@ -312,11 +303,11 @@ export interface FieldResponse {
 
 /** A complete form definition (no response values). */
 export const formDefinitionSchema = z.strictObject({
-  schemaType: z.literal(SCHEMA_TYPE),
   id: z.string(),
   title: z.optional(z.string()),
   description: z.optional(z.string()),
   fields: z.array(fieldDefinitionSchema),
+  _sourceData: z.optional(z.unknown()),
 });
 export type FormDefinition = z.infer<typeof formDefinitionSchema>;
 
@@ -356,7 +347,9 @@ export type AnswerValue =
   | { id: string; value: string }
   | Array<{ id: string; value: string }>
   | RankedAnswer[]
-  | AttachmentAnswer;
+  | ResponseItem[]
+  | AttachmentAnswer
+  | Record<string, SelectedOption | SelectedOption[]>;
 
 /** A single item in the submission payload — one per answerable field. */
 export interface ResponseItem {

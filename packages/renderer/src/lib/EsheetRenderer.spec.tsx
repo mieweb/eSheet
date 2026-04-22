@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { render, act, cleanup } from '@testing-library/react';
-import { SCHEMA_TYPE } from '@esheet/core';
 import { EsheetRenderer, type EsheetRendererHandle } from './EsheetRenderer.js';
 
 afterEach(cleanup);
@@ -24,7 +23,6 @@ describe('EsheetRenderer', () => {
         <EsheetRenderer
           ref={ref}
           formData={{
-            schemaType: SCHEMA_TYPE,
             id: 'test-form-1',
             title: 'Test',
             fields: [{ id: 'q1', fieldType: 'text', question: 'Name?' }],
@@ -48,7 +46,6 @@ describe('EsheetRenderer', () => {
         <EsheetRenderer
           ref={ref}
           formData={{
-            schemaType: SCHEMA_TYPE,
             id: 'test-form-2',
             title: 'Test',
             fields: [{ id: 'q1', fieldType: 'text', question: 'Name?' }],
@@ -69,7 +66,6 @@ describe('EsheetRenderer', () => {
         <EsheetRenderer
           ref={ref}
           formData={{
-            schemaType: SCHEMA_TYPE,
             id: 'test-form-3',
             title: 'Test Form',
             fields: [{ id: 'f1', fieldType: 'text', question: 'Q?' }],
@@ -91,7 +87,6 @@ describe('EsheetRenderer', () => {
         <EsheetRenderer
           ref={ref}
           formData={{
-            schemaType: SCHEMA_TYPE,
             id: 'test-form-4',
             title: 'Test',
             fields: [{ id: 'q1', fieldType: 'text', question: 'Q?' }],
@@ -111,7 +106,6 @@ describe('EsheetRenderer', () => {
         <EsheetRenderer
           ref={ref}
           formData={{
-            schemaType: SCHEMA_TYPE,
             id: 'test-form-5',
             title: 'Test',
             fields: [
@@ -146,7 +140,6 @@ describe('EsheetRenderer', () => {
         <EsheetRenderer
           ref={ref}
           formData={{
-            schemaType: SCHEMA_TYPE,
             id: 'test-form-6',
             title: 'Test',
             fields: [
@@ -176,7 +169,6 @@ describe('EsheetRenderer', () => {
         <EsheetRenderer
           ref={ref}
           formData={{
-            schemaType: SCHEMA_TYPE,
             id: 'test-form-7',
             title: 'Test',
             fields: [

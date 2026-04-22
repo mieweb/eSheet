@@ -1,5 +1,4 @@
 {
-  "schemaType": "mieforms-v1.0",
   "id": "patient-intake",
   "title": "Patient Intake Form",
   "fields": [
