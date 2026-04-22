@@ -6,7 +6,11 @@ import {
   waitFor,
   screen,
 } from '@testing-library/react';
-import { createFormStore, createUIStore } from '@esheet/core';
+import {
+  createFormStore,
+  createUIStore,
+  type FormDefinition,
+} from '@esheet/core';
 import { EsheetBuilder, useFormStore, useUI } from './EsheetBuilder.js';
 import { BuilderHeader } from './components/BuilderHeader.js';
 
@@ -55,7 +59,7 @@ describe('EsheetBuilder', () => {
     }
 
     render(
-      <EsheetBuilder onChange={(def) => changes.push(def)}>
+      <EsheetBuilder onChange={(def: FormDefinition) => changes.push(def)}>
         <Capture />
       </EsheetBuilder>
     );

@@ -3,10 +3,12 @@ import YAML from 'js-yaml';
 import {
   formatZodValidationError,
   formDefinitionSchema,
+  importFromMcp,
   type FormDefinition,
   type FormResponse,
   type FormStore,
   type UIStore,
+  type McpElicitationRequest,
 } from '@esheet/core';
 
 /**
@@ -37,6 +39,17 @@ export function useRendererInit(
         parsed = isYaml ? YAML.load(trimmed) : JSON.parse(trimmed);
       } else {
         parsed = formData;
+      }
+
+      // Detect MCP elicitation/create envelope and convert to FormDefinition
+      if (isMcpElicitationRequest(parsed)) {
+        const mcpReq = parsed as McpElicitationRequest;
+        if (mcpReq.params.mode !== 'url') {
+          parsed = importFromMcp(mcpReq.params.requestedSchema, {
+            mcpId: mcpReq.id,
+            mcpMessage: mcpReq.params.message,
+          });
+        }
       }
 
       // Validate schema
@@ -83,4 +96,13 @@ export function useRendererInit(
       ui.getState().setMode('preview');
     }
   }, [form, ui, formData, initialResponses, onValidationError]);
+}
+
+/** Type guard — detects an MCP elicitation/create JSON-RPC envelope. */
+function isMcpElicitationRequest(
+  value: unknown
+): value is McpElicitationRequest {
+  if (typeof value !== 'object' || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return v['jsonrpc'] === '2.0' && v['method'] === 'elicitation/create';
 }
