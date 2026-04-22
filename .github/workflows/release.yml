@@ -40,6 +40,11 @@ jobs:
       - run: npx nx format:check --base="$NX_BASE"
       - run: npx nx run-many -t lint test build typecheck
 
+      - name: Configure git identity
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+
       - name: Nx release (dry-run)
         if: ${{ env.DRY_RUN == 'true' }}
         run: npx nx release --dry-run --yes
