@@ -3,7 +3,6 @@
 // ---------------------------------------------------------------------------
 
 import type {
-  FieldDefinition,
   FieldResponse,
   FieldResponseMap,
   ResponseItem,
@@ -87,10 +86,7 @@ export function hydrateResponse(
         continue;
       }
 
-      const answer =
-        meta.answerType === 'matrix'
-          ? extractMatrixAnswer(responses[id], definition)
-          : extractAnswer(responses[id], meta.answerType);
+      const answer = extractAnswer(responses[id], meta.answerType);
       const item: ResponseItem = {
         id,
         text: definition.question ?? definition.title ?? '',
@@ -124,29 +120,6 @@ function isEmptyAnswer(value: unknown): boolean {
   return false;
 }
 
-/** Build nested ResponseItem[] from a matrix field — each row is a sub-item with its own answer. */
-function extractMatrixAnswer(
-  response: FieldResponse | undefined,
-  definition: Omit<FieldDefinition, 'fields'>
-): ResponseItem[] | undefined {
-  if (!response?.selected) return undefined;
-  const raw = response.selected as Record<
-    string,
-    SelectedOption | SelectedOption[]
-  >;
-  const rows = definition.rows ?? [];
-  const result: ResponseItem[] = [];
-  for (const row of rows) {
-    const sel = raw[row.id];
-    if (!sel) continue;
-    const answer = Array.isArray(sel)
-      ? sel.map((c) => ({ id: c.id, value: c.value }))
-      : { id: sel.id, value: sel.value };
-    result.push({ id: row.id, text: row.value, answer });
-  }
-  return result.length > 0 ? result : undefined;
-}
-
 /** Pull the actual answer value out of a FieldResponse based on answer type. */
 function extractAnswer(
   response: FieldResponse | undefined,
@@ -159,6 +132,7 @@ function extractAnswer(
       return response.answer;
     case 'selection':
     case 'multiselection':
+    case 'matrix':
       return response.selected;
     case 'multitext':
       return response.multitextAnswers;

@@ -378,6 +378,18 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
         if (!isYaml) {
           const p = parsed as Record<string, unknown>;
           const params = p?.params as Record<string, unknown> | undefined;
+
+          // URL mode — no requestedSchema, nothing to import as a form.
+          const mode = params?.mode ?? p?.mode;
+          if (mode === 'url') {
+            showFeedback(
+              'error',
+              'URL Mode Not Supported',
+              'This MCP elicitation uses URL mode (out-of-band). Only form mode schemas can be imported into the builder.'
+            );
+            return;
+          }
+
           let mcpSchema: McpElicitationSchema | undefined;
           if (params?.requestedSchema) {
             mcpSchema = params.requestedSchema as McpElicitationSchema;
@@ -389,9 +401,18 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
 
           if (mcpSchema) {
             const message = params?.message ?? p?.message;
+            const mcpId = p?.id ?? params?.id;
+            const mcpMeta = p?.meta;
             const formDef = importFromMcp(mcpSchema, {
               formId: form.getState().hydrateDefinition().id || 'mcp-form',
-              ...(typeof message === 'string' ? { title: message } : {}),
+              ...(typeof message === 'string' && message.length > 0
+                ? { description: message }
+                : {}),
+              ...(mcpId !== undefined
+                ? { mcpId: mcpId as string | number }
+                : {}),
+              ...(typeof message === 'string' ? { mcpMessage: message } : {}),
+              ...(mcpMeta !== undefined ? { mcpMeta } : {}),
             });
             form.getState().loadDefinition(formDef);
             showFeedback(

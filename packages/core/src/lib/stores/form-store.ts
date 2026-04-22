@@ -56,6 +56,8 @@ export interface FormState {
   readonly instanceId: string;
   /** Top-level form identifier used for import/export and schema validation. */
   readonly formId: string;
+  /** Opaque metadata preserved from the original import source (e.g. MCP envelope fields). */
+  readonly formSourceData?: unknown;
   /** Flat-indexed map — the source of truth for field structure. */
   readonly normalized: NormalizedDefinition;
   /** Current responses keyed by field ID. */
@@ -271,6 +273,7 @@ export function createFormStore(initial?: FormDefinition): FormStore {
     // --- Data ---
     instanceId: `ms-${nextInstanceId++}`,
     formId: initialFormId,
+    formSourceData: initial?._sourceData,
     normalized: initial
       ? normalizeDefinition(initial.fields)
       : EMPTY_NORMALIZED,
@@ -280,6 +283,7 @@ export function createFormStore(initial?: FormDefinition): FormStore {
     loadDefinition: (definition) =>
       set({
         formId: definition.id,
+        formSourceData: definition._sourceData,
         normalized: normalizeDefinition(definition.fields),
         responses: {},
       }),
@@ -706,9 +710,12 @@ export function createFormStore(initial?: FormDefinition): FormStore {
     },
 
     hydrateDefinition: () => {
-      const { normalized, formId } = get();
+      const { normalized, formId, formSourceData } = get();
       return {
         id: formId,
+        ...(formSourceData !== undefined
+          ? { _sourceData: formSourceData }
+          : {}),
         fields: hydrateDefinition(normalized),
       };
     },

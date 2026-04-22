@@ -307,6 +307,7 @@ export const formDefinitionSchema = z.strictObject({
   title: z.optional(z.string()),
   description: z.optional(z.string()),
   fields: z.array(fieldDefinitionSchema),
+  _sourceData: z.optional(z.unknown()),
 });
 export type FormDefinition = z.infer<typeof formDefinitionSchema>;
 
@@ -347,7 +348,8 @@ export type AnswerValue =
   | Array<{ id: string; value: string }>
   | RankedAnswer[]
   | ResponseItem[]
-  | AttachmentAnswer;
+  | AttachmentAnswer
+  | Record<string, SelectedOption | SelectedOption[]>;
 
 /** A single item in the submission payload — one per answerable field. */
 export interface ResponseItem {
