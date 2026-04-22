@@ -3,6 +3,9 @@ import YAML from 'js-yaml';
 import {
   formatZodValidationError,
   formDefinitionSchema,
+  importFromMcp,
+  exportToMcp,
+  type McpElicitationSchema,
   type Condition,
   isExpressionValid,
   type FieldDefinition,
@@ -223,6 +226,9 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
   const [exportIdModalOpen, setExportIdModalOpen] = React.useState(false);
   const [exportIdInput, setExportIdInput] = React.useState('');
   const [exportIdError, setExportIdError] = React.useState('');
+  const [exportFormat, setExportFormat] = React.useState<'esheet' | 'mcp'>(
+    'esheet'
+  );
   const [feedback, setFeedback] = React.useState<FeedbackState>({
     open: false,
     title: '',
@@ -311,6 +317,23 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
   }, []);
 
   const handleConfirmExportId = React.useCallback(() => {
+    if (exportFormat === 'mcp') {
+      const definition = form.getState().hydrateDefinition();
+      const schema = exportToMcp(definition);
+      const filename = (definition.id || 'form') + '-mcp-schema.json';
+      const blob = new Blob([JSON.stringify(schema, null, 2)], {
+        type: 'application/json',
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      setExportIdModalOpen(false);
+      return;
+    }
+
     const nextId = sanitizeFormId(exportIdInput);
     if (!nextId) {
       setExportIdError(
@@ -324,7 +347,7 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
     finalizeExport(definition);
     setExportIdModalOpen(false);
     setExportIdError('');
-  }, [exportIdInput, finalizeExport, form]);
+  }, [exportFormat, exportIdInput, finalizeExport, form]);
 
   const handleExport = () => {
     const definition = form.getState().hydrateDefinition();
@@ -340,16 +363,66 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
     const file = e.currentTarget.files?.[0];
     if (!file) return;
 
-    // Detect file format from extension
     const fileName = file.name.toLowerCase();
     const isYaml = fileName.endsWith('.yaml') || fileName.endsWith('.yml');
-    const format = isYaml ? 'YAML' : 'JSON';
+    const fileFormat = isYaml ? 'YAML' : 'JSON';
 
     const reader = new FileReader();
     reader.onload = (ev) => {
       try {
         const content = ev.target?.result as string;
         const parsed = isYaml ? YAML.load(content) : JSON.parse(content);
+
+        // Auto-detect MCP elicitation schema (JSON only).
+        // Accepts: full elicitation/create request, params object, or raw requestedSchema.
+        if (!isYaml) {
+          const p = parsed as Record<string, unknown>;
+          const params = p?.params as Record<string, unknown> | undefined;
+
+          // URL mode — no requestedSchema, nothing to import as a form.
+          const mode = params?.mode ?? p?.mode;
+          if (mode === 'url') {
+            showFeedback(
+              'error',
+              'URL Mode Not Supported',
+              'This MCP elicitation uses URL mode (out-of-band). Only form mode schemas can be imported into the builder.'
+            );
+            return;
+          }
+
+          let mcpSchema: McpElicitationSchema | undefined;
+          if (params?.requestedSchema) {
+            mcpSchema = params.requestedSchema as McpElicitationSchema;
+          } else if (p?.requestedSchema) {
+            mcpSchema = p.requestedSchema as McpElicitationSchema;
+          } else if (p?.type === 'object' && p?.properties) {
+            mcpSchema = p as unknown as McpElicitationSchema;
+          }
+
+          if (mcpSchema) {
+            const message = params?.message ?? p?.message;
+            const mcpId = p?.id ?? params?.id;
+            const mcpMeta = p?.meta;
+            const formDef = importFromMcp(mcpSchema, {
+              formId: form.getState().hydrateDefinition().id || 'mcp-form',
+              ...(typeof message === 'string' && message.length > 0
+                ? { description: message }
+                : {}),
+              ...(mcpId !== undefined
+                ? { mcpId: mcpId as string | number }
+                : {}),
+              ...(typeof message === 'string' ? { mcpMessage: message } : {}),
+              ...(mcpMeta !== undefined ? { mcpMeta } : {}),
+            });
+            form.getState().loadDefinition(formDef);
+            showFeedback(
+              'success',
+              'Import Successful',
+              `Loaded ${formDef.fields.length} field(s) from MCP elicitation schema.`
+            );
+            return;
+          }
+        }
 
         const validated = formDefinitionSchema.safeParse(parsed);
         if (!validated.success) {
@@ -359,7 +432,7 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
           showFeedback(
             'error',
             'Import Failed',
-            `The file is valid ${format} but does not match the form schema.`,
+            `The file is valid ${fileFormat} but does not match the form schema.`,
             issues.length > shownIssues.length
               ? `Showing ${shownIssues.length} of ${issues.length} issue(s).`
               : undefined,
@@ -388,7 +461,6 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
         }
 
         form.getState().loadDefinition(validated.data);
-
         showFeedback(
           'success',
           'Import Successful',
@@ -398,7 +470,7 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
         showFeedback(
           'error',
           'Import Failed',
-          `Invalid ${format} file format.`
+          `Invalid ${fileFormat} file format.`
         );
       }
     };
@@ -448,37 +520,80 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
     <header className="builder-header ms:w-full ms:bg-mssurface ms:border ms:border-msborder ms:rounded-lg ms:shadow-sm ms:shrink-0">
       <FeedbackModal
         open={exportIdModalOpen}
-        title="Use This Form ID?"
-        message={`Do you want to use '${
-          sanitizeFormId(exportIdInput) || exportIdInput
-        }' as the form id? You can edit it below before exporting.`}
+        title="Export Form"
+        message={
+          exportFormat === 'mcp'
+            ? 'Choose a format to export your form.'
+            : `Do you want to use '${
+                sanitizeFormId(exportIdInput) || exportIdInput
+              }' as the form id? You can edit it below before exporting.`
+        }
         content={
-          <div className="ms:space-y-2 ms:mb-2">
-            <label
-              htmlFor={`${form.getState().instanceId}-export-form-id`}
-              className="ms:block ms:text-sm ms:font-medium ms:text-mstext"
-            >
-              Form ID
-            </label>
-            <input
-              id={`${form.getState().instanceId}-export-form-id`}
-              aria-label="Form ID"
-              type="text"
-              value={exportIdInput}
-              onChange={(e) => {
-                setExportIdInput(e.target.value);
-                if (exportIdError) setExportIdError('');
-              }}
-              placeholder="my-form-id"
-              className="ms:px-3 ms:py-2 ms:h-10 ms:w-full ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:rounded-lg ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary/30 ms:outline-none ms:transition-colors"
-            />
-            {exportIdError && (
-              <p className="ms:text-xs ms:text-msdanger">{exportIdError}</p>
+          <div className="ms:space-y-4 ms:mb-2">
+            <div className="ms:flex ms:gap-4">
+              <label className="ms:flex ms:items-center ms:gap-2 ms:text-sm ms:text-mstext ms:cursor-pointer">
+                <input
+                  type="radio"
+                  name="export-format"
+                  value="esheet"
+                  checked={exportFormat === 'esheet'}
+                  onChange={() => setExportFormat('esheet')}
+                />
+                eSheet JSON
+              </label>
+              <label className="ms:flex ms:items-center ms:gap-2 ms:text-sm ms:text-mstext ms:cursor-pointer">
+                <input
+                  type="radio"
+                  name="export-format"
+                  value="mcp"
+                  checked={exportFormat === 'mcp'}
+                  onChange={() => setExportFormat('mcp')}
+                />
+                MCP Elicitation Schema
+              </label>
+            </div>
+            {exportFormat === 'esheet' && (
+              <div className="ms:space-y-2">
+                <label
+                  htmlFor={`${form.getState().instanceId}-export-form-id`}
+                  className="ms:block ms:text-sm ms:font-medium ms:text-mstext"
+                >
+                  Form ID
+                </label>
+                <input
+                  id={`${form.getState().instanceId}-export-form-id`}
+                  aria-label="Form ID"
+                  type="text"
+                  value={exportIdInput}
+                  onChange={(e) => {
+                    setExportIdInput(e.target.value);
+                    if (exportIdError) setExportIdError('');
+                  }}
+                  placeholder="my-form-id"
+                  className="ms:px-3 ms:py-2 ms:h-10 ms:w-full ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:rounded-lg ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary/30 ms:outline-none ms:transition-colors"
+                />
+                {exportIdError && (
+                  <p className="ms:text-xs ms:text-msdanger">{exportIdError}</p>
+                )}
+              </div>
+            )}
+            {exportFormat === 'mcp' && (
+              <p className="ms:text-sm ms:text-mstextmuted">
+                Exports as a flat{' '}
+                <code className="ms:font-mono ms:text-xs ms:bg-msbackground ms:px-1 ms:py-0.5 ms:rounded">
+                  requestedSchema
+                </code>{' '}
+                object. Field IDs, required fields, and supported types are
+                preserved. Unsupported types (matrix, signature, etc.) are
+                omitted.
+              </p>
             )}
           </div>
         }
         variant="info"
-        confirmLabel="Use This ID & Export"
+        confirmLabel={
+          exportFormat === 'mcp' ? 'Export MCP Schema' : 'Use This ID & Export'
+        }
         cancelLabel="Cancel"
         showCancel
         onConfirm={handleConfirmExportId}

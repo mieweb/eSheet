@@ -1,6 +1,5 @@
 export {
   // Constants
-  SCHEMA_TYPE,
   FIELD_TYPES,
   TEXT_INPUT_TYPES,
   CONDITION_OPERATORS,
@@ -21,7 +20,6 @@ export {
   formDefinitionJSONSchema,
 
   // Types
-  type SchemaType,
   type FieldType,
   type FieldCategory,
   type AnswerType,
@@ -105,3 +103,16 @@ export {
 } from './lib/stores/ui-store.js';
 
 export { type FieldComponentProps } from './lib/field-component-props.js';
+
+export {
+  importFromMcp,
+  exportToMcp,
+  type McpElicitationSchema,
+  type McpElicitationRequest,
+  type McpProperty,
+  type McpStringProp,
+  type McpNumberProp,
+  type McpBooleanProp,
+  type McpArrayProp,
+  type McpConstOption,
+} from './lib/functions/mcp.js';

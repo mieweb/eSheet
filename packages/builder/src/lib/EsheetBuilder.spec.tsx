@@ -33,7 +33,6 @@ describe('EsheetBuilder', () => {
     render(
       <EsheetBuilder
         definition={{
-          schemaType: 'mieforms-v1.0',
           id: 'initial-form',
           fields: [{ id: 'q1', fieldType: 'text', question: 'Name?' }],
         }}
@@ -63,7 +62,6 @@ describe('EsheetBuilder', () => {
 
     act(() => {
       form!.getState().loadDefinition({
-        schemaType: 'mieforms-v1.0',
         id: 'change-form',
         fields: [{ id: 'f1', fieldType: 'text' }],
       });
@@ -146,7 +144,6 @@ describe('BuilderHeader import feedback', () => {
     const form = createFormStore();
     const ui = createUIStore();
     mockFileContent = JSON.stringify({
-      schemaType: 'mieforms-v2',
       id: 'invalid-schema',
       fields: [{ fieldType: 'text' }],
     });
@@ -180,7 +177,6 @@ describe('BuilderHeader import feedback', () => {
     const form = createFormStore();
     const ui = createUIStore();
     mockFileContent = JSON.stringify({
-      schemaType: 'mieforms-v1.0',
       id: 'with-warnings',
       fields: [
         { id: 'a', fieldType: 'text', question: 'A' },
@@ -227,7 +223,6 @@ describe('BuilderHeader import feedback', () => {
     const form = createFormStore();
     const ui = createUIStore();
     mockFileContent = JSON.stringify({
-      schemaType: 'mieforms-v1.0',
       id: 'good-form',
       fields: [{ id: 'ok', fieldType: 'text', question: 'OK' }],
     });
@@ -255,7 +250,6 @@ describe('BuilderHeader import feedback', () => {
 describe('BuilderHeader dry run submit', () => {
   function createRequiredTextDefinition() {
     return {
-      schemaType: 'mieforms-v1.0' as const,
       id: 'dry-run-form',
       fields: [
         {
@@ -343,7 +337,6 @@ describe('BuilderHeader dry run submit', () => {
 
   it('dry run excludes disabled answers from the serialized response payload', async () => {
     const form = createFormStore({
-      schemaType: 'mieforms-v1.0',
       id: 'conditional-form',
       fields: [
         {
