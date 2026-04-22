@@ -1,8 +1,9 @@
 name: Release
 
 on:
-  push:
+  pull_request:
     branches: [main]
+    types: [closed]
   workflow_dispatch:
     inputs:
       dry-run:
@@ -16,10 +17,10 @@ permissions:
 
 jobs:
   release:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     env:
-      # Automation (push) always dry-runs; manual dispatch uses the input (default: false)
-      DRY_RUN: ${{ github.event_name == 'push' || inputs['dry-run'] == true }}
+      DRY_RUN: ${{ github.event_name == 'pull_request' || inputs['dry-run'] == true }}
     steps:
       - uses: actions/checkout@v4
         with:
