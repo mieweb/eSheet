@@ -99,6 +99,7 @@ jobs:
           cd "$DEPLOY_REPO_PATH"
           git fetch --prune origin
           git checkout --force "$DEPLOY_REF"
+          git reset --hard "origin/$DEPLOY_REF" 2>/dev/null || git reset --hard "$DEPLOY_REF"
 
           command -v rsync >/dev/null 2>&1 || sudo apt-get install -y rsync
 
