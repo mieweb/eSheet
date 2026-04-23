@@ -72,9 +72,21 @@ export function determineBump(commits) {
 /**
  * Apply a bump to a semver string and return the new version.
  * @param {string} current e.g. "0.0.2"
- * @param {'minor' | 'patch'} bump
+ * @param {'major' | 'minor' | 'patch' | 'prerelease'} bump
  */
 export function applyBump(current, bump) {
-  const [maj, min, pat] = current.split('.').map(Number);
-  return bump === 'minor' ? `${maj}.${min + 1}.0` : `${maj}.${min}.${pat + 1}`;
+  const [base] = current.split('-');
+  const [maj, min, pat] = base.split('.').map(Number);
+  switch (bump) {
+    case 'major':
+      return `${maj + 1}.0.0`;
+    case 'minor':
+      return `${maj}.${min + 1}.0`;
+    case 'patch':
+      return `${maj}.${min}.${pat + 1}`;
+    case 'prerelease':
+      return `${maj}.${min}.${pat + 1}-0`;
+    default:
+      throw new Error(`Unknown bump level: ${bump}`);
+  }
 }

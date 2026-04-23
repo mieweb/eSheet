@@ -20,6 +20,8 @@ import { buildEntry, prependChangelog } from './changelog.mjs';
 import { bumpAll, readPkg } from './versions.mjs';
 
 const DRY_RUN = process.argv.includes('--dry-run');
+const bumpArg = process.argv.find((a) => a.startsWith('--bump='));
+const MANUAL_BUMP = bumpArg ? bumpArg.split('=')[1] : null;
 
 // ---------------------------------------------------------------------------
 // 1. Resolve current version from last tag
@@ -48,13 +50,11 @@ if (!commits.length) {
 // 3. Determine semver bump and compute new version
 // ---------------------------------------------------------------------------
 
-const bump = determineBump(commits);
+// --bump is required for dispatch; PR merge auto-detects from conventional commits.
+const bump = MANUAL_BUMP ?? determineBump(commits) ?? 'patch';
 
-if (!bump) {
-  console.log(
-    'No releasable commits (no feat/fix/enhance/perf) — nothing to release.'
-  );
-  process.exit(0);
+if (!MANUAL_BUMP) {
+  console.log(`Auto-detected bump: ${bump} (from conventional commits)`);
 }
 
 const newVersion = applyBump(currentVersion, bump);

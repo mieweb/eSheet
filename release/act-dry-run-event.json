@@ -1,5 +1,6 @@
 {
   "inputs": {
-    "dry-run": "true"
+    "mode": "dry-run",
+    "bump": "minor"
   }
 }

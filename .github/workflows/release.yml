@@ -6,11 +6,24 @@ on:
     types: [closed]
   workflow_dispatch:
     inputs:
-      dry-run:
-        description: Run release in dry-run mode (no commits, no publish)
-        required: false
-        default: false
-        type: boolean
+      mode:
+        description: 'Release mode'
+        required: true
+        default: dry-run
+        type: choice
+        options:
+          - full-release
+          - dry-run
+      bump:
+        description: 'Semver bump level'
+        required: true
+        default: patch
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+          - prerelease
 
 permissions:
   contents: write
@@ -36,22 +49,29 @@ jobs:
       - run: npm ci --legacy-peer-deps
 
       - name: Lint, test, typecheck
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs['dry-run'] == false }}
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'full-release'
         run: npx nx run-many -t lint test typecheck
 
       - name: Configure git identity
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'full-release'
         run: |
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
 
-      - name: Release (dry-run)
-        if: ${{ inputs['dry-run'] == true }}
+      - name: Preview changelog (PR merge)
+        if: github.event_name == 'pull_request'
         run: node release/release.mjs --dry-run
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Release
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs['dry-run'] == false }}
-        run: node release/release.mjs
+      - name: Dry run
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'dry-run'
+        run: node release/release.mjs --dry-run --bump=${{ inputs.bump }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Full release
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'full-release'
+        run: node release/release.mjs --bump=${{ inputs.bump }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
