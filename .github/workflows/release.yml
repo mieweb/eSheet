@@ -1,52 +1,77 @@
 name: Release
 
 on:
-  push:
+  pull_request:
     branches: [main]
+    types: [closed]
   workflow_dispatch:
     inputs:
-      dry-run:
-        description: Run nx release in dry-run mode only
-        required: false
-        default: false
-        type: boolean
+      mode:
+        description: 'Release mode'
+        required: true
+        default: dry-run
+        type: choice
+        options:
+          - full-release
+          - dry-run
+      bump:
+        description: 'Semver bump level'
+        required: true
+        default: patch
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+          - prerelease
 
 permissions:
   contents: write
+  id-token: write
 
 jobs:
   release:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
     runs-on: ubuntu-latest
-    env:
-      # Automation (push) always dry-runs; manual dispatch uses the input (default: false)
-      DRY_RUN: ${{ github.event_name == 'push' || inputs['dry-run'] == true }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Resolve Nx base ref
-        run: |
-          git fetch origin main --depth=1
-          echo "NX_BASE=$(git rev-parse origin/main)" >> "$GITHUB_ENV"
+      - name: Fetch all tags
+        run: git fetch --tags --force --unshallow || git fetch --tags --force
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: 'npm'
-          registry-url: 'https://registry.npmjs.org'
 
-      - run: npm ci
+      - run: npm ci --legacy-peer-deps
 
-      - run: npx nx format:check --base="$NX_BASE"
-      - run: npx nx run-many -t lint test build typecheck
+      - name: Lint, test, typecheck
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'full-release'
+        run: npx nx run-many -t lint test typecheck
 
-      - name: Nx release (dry-run)
-        if: ${{ env.DRY_RUN == 'true' }}
-        run: npx nx release --dry-run --yes
+      - name: Configure git identity
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'full-release'
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
 
-      - name: Nx release
-        if: ${{ env.DRY_RUN == 'false' }}
-        run: npx nx release --yes
+      - name: Preview changelog (PR merge)
+        if: github.event_name == 'pull_request'
+        run: node release/release.mjs --dry-run
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Dry run
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'dry-run'
+        run: node release/release.mjs --dry-run --bump=${{ inputs.bump }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Full release
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'full-release'
+        run: node release/release.mjs --bump=${{ inputs.bump }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

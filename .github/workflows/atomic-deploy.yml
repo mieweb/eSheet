@@ -1,9 +1,11 @@
 name: Atomic Deploy
 
 on:
-  push:
+  pull_request:
     branches:
       - main
+    types:
+      - closed
   workflow_dispatch:
     inputs:
       ref:
@@ -23,6 +25,7 @@ concurrency:
 
 jobs:
   deploy:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     environment: production
     env:
@@ -59,11 +62,11 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: 'npm'
 
       - name: 'Preflight: install'
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: 'Preflight: build'
         run: npx nx run-many -t build -p app-docs,app-demo --outputStyle=static
@@ -96,9 +99,10 @@ jobs:
           cd "$DEPLOY_REPO_PATH"
           git fetch --prune origin
           git checkout --force "$DEPLOY_REF"
+          git reset --hard "origin/$DEPLOY_REF" 2>/dev/null || git reset --hard "$DEPLOY_REF"
 
           command -v rsync >/dev/null 2>&1 || sudo apt-get install -y rsync
 
-          npm ci
+          npm ci --legacy-peer-deps
           bash deploy/scripts/workflow/atomic-deploy.sh
           EOF
