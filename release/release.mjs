@@ -58,9 +58,10 @@ if (!MANUAL_BUMP) {
 }
 
 const newVersion = applyBump(currentVersion, bump);
+const IS_PRERELEASE = newVersion.includes('-');
 
 console.log(`\nBump:        ${bump}`);
-console.log(`New version: ${newVersion}${DRY_RUN ? '  [DRY RUN]' : ''}\n`);
+console.log(`New version: ${newVersion}${IS_PRERELEASE ? '  [PRERELEASE]' : ''}${DRY_RUN ? '  [DRY RUN]' : ''}\n`);
 
 // ---------------------------------------------------------------------------
 // 4. Bump all package.json versions
@@ -82,25 +83,35 @@ if (DRY_RUN) {
 }
 
 // ---------------------------------------------------------------------------
-// 6. Generate and write CHANGELOG entry
+// 6. Generate and write CHANGELOG entry (skipped for prereleases)
 // ---------------------------------------------------------------------------
 
 const changelogEntry = buildEntry(newVersion, commits);
 
-console.log('--- CHANGELOG ENTRY ---');
-console.log(changelogEntry + '---\n');
+if (IS_PRERELEASE) {
+  console.log('[PRERELEASE] Skipping CHANGELOG update.');
+} else {
+  console.log('--- CHANGELOG ENTRY ---');
+  console.log(changelogEntry + '---\n');
 
-if (!DRY_RUN) {
-  prependChangelog(changelogEntry);
-  console.log('✍  CHANGELOG.md updated');
+  if (!DRY_RUN) {
+    prependChangelog(changelogEntry);
+    console.log('✍  CHANGELOG.md updated');
+  }
 }
 
 // ---------------------------------------------------------------------------
-// 7. Git commit + tag + push
+// 7. Git commit + tag + push (prereleases: no tag, no changelog in commit)
 // ---------------------------------------------------------------------------
 
 if (DRY_RUN) {
-  console.log(`[DRY RUN] Would commit, tag v${newVersion}, and push`);
+  console.log(`[DRY RUN] Would commit${IS_PRERELEASE ? '' : `, tag v${newVersion},`} and push`);
+} else if (IS_PRERELEASE) {
+  const changedFiles = PACKAGES.map((p) => `${p}/package.json`).join(' ');
+  run(`git add ${changedFiles}`);
+  run(`git commit -m "chore(release): bump to ${newVersion} [prerelease]"`);
+  run('git push origin main');
+  console.log(`📦 Committed version bumps for ${newVersion} (no tag)`);
 } else {
   const changedFiles = PACKAGES.map((p) => `${p}/package.json`).join(' ');
   run(`git add ${changedFiles} CHANGELOG.md`);
@@ -112,21 +123,25 @@ if (DRY_RUN) {
 }
 
 // ---------------------------------------------------------------------------
-// 8. GitHub Release
+// 8. GitHub Release (skipped for prereleases)
 // ---------------------------------------------------------------------------
 
-// Strip the heading line — gh uses the tag as the release title.
-const releaseNotes = changelogEntry.replace(/^## .+\n/, '').trim();
-const notesFile = join(tmpdir(), 'esheet-release-notes.md');
-
-if (DRY_RUN) {
-  console.log(`[DRY RUN] Would create GitHub release v${newVersion}`);
+if (IS_PRERELEASE) {
+  console.log('[PRERELEASE] Skipping GitHub release creation.');
 } else {
-  writeFileSync(notesFile, releaseNotes);
-  exec(
-    `gh release create v${newVersion} --title "v${newVersion}" --notes-file "${notesFile}"`
-  );
-  console.log(`📦 GitHub release v${newVersion} created`);
+  // Strip the heading line — gh uses the tag as the release title.
+  const releaseNotes = changelogEntry.replace(/^## .+\n/, '').trim();
+  const notesFile = join(tmpdir(), 'esheet-release-notes.md');
+
+  if (DRY_RUN) {
+    console.log(`[DRY RUN] Would create GitHub release v${newVersion}`);
+  } else {
+    writeFileSync(notesFile, releaseNotes);
+    exec(
+      `gh release create v${newVersion} --title "v${newVersion}" --notes-file "${notesFile}"`
+    );
+    console.log(`📦 GitHub release v${newVersion} created`);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -140,7 +155,8 @@ for (const pkgDir of PACKAGES) {
     continue;
   }
   console.log(`\nPublishing ${pkg.name}@${newVersion}...`);
-  exec('npm publish --provenance --access public', { cwd: pkgDir });
+  const publishTag = IS_PRERELEASE ? '--tag next' : '';
+  exec(`npm publish --provenance --access public ${publishTag}`.trim(), { cwd: pkgDir });
 }
 
 console.log(`\n✅  Released v${newVersion}`);
