@@ -11,12 +11,12 @@ This guide explains how to test all GitHub Actions workflows locally using `gh a
 
 ## Quick Reference
 
-| Workflow                              | Command                                                                                          | Notes                                                                                    |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
-| **CI** (lint, test, build, typecheck) | `gh act push -W .github/workflows/ci.yml --pull=false`                                           | No secrets needed; validates code quality                                                |
-| **Release** (with dry-run)            | `gh act push -W .github/workflows/release.yml --pull=false`                                      | Tests release workflow without publishing; requires git history                          |
-| **PR Title Check**                    | `gh act pull_request -e /tmp/pr-event.json -W .github/workflows/pr-title-check.yml --pull=false` | Uses synthetic PR event; see [Testing PR Title Check](#testing-pr-title-check)           |
-| **Atomic Deploy**                     | `gh act push -W .github/workflows/atomic-deploy.yml --secret-file .secrets.local ...`            | Requires Docker container + SSH setup; see [Local Deploy Testing](#local-deploy-testing) |
+| Workflow                              | Command                                                                                                    | Notes                                                                                    |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| **CI** (lint, test, build, typecheck) | `gh act push -W .github/workflows/ci.yml --pull=false`                                                     | No secrets needed; validates code quality                                                |
+| **Release** (with dry-run)            | `gh act workflow_dispatch -W .github/workflows/release.yml -e release/act-dry-run-event.json --pull=false` | Dry-run only; skips lint/test; no commits, tags, or npm publish                          |
+| **PR Title Check**                    | `gh act pull_request -e /tmp/pr-event.json -W .github/workflows/pr-title-check.yml --pull=false`           | Uses synthetic PR event; see [Testing PR Title Check](#testing-pr-title-check)           |
+| **Atomic Deploy**                     | `gh act push -W .github/workflows/atomic-deploy.yml --secret-file .secrets.local ...`                      | Requires Docker container + SSH setup; see [Local Deploy Testing](#local-deploy-testing) |
 
 **Note on `--pull=false`:** This flag skips pulling the Docker runner image and uses a cached local copy. Use it on subsequent runs to avoid Docker Hub rate-limiting and auth issues. On the **first run (ever)**, omit `--pull=false` to pull and cache the runner image (~1 min), then use it for all subsequent runs.
 
@@ -95,25 +95,26 @@ All steps show ✅; final line is `Job succeeded`. If any step fails, review the
 
 ### Testing Release Workflow
 
-The Release workflow re-runs CI checks, then performs a dry-run release (no publishing).
+The Release workflow runs in dry-run mode locally — it shows what would be bumped, generates the changelog entry, and prints what would be published without committing, tagging, or touching npm.
 
 **Command:**
 
 ```bash
-gh act push -W .github/workflows/release.yml --pull=false
+gh act workflow_dispatch -W .github/workflows/release.yml -e release/act-dry-run-event.json --pull=false
 ```
 
 **What it does:**
 
-1. Runs all CI checks (format, lint, test, build, typecheck) — same as [CI Workflow](#testing-ci-workflow)
-2. Executes `npx nx release --dry-run --yes`
-3. Shows what would be released without actually publishing
+1. Runs `npm ci --legacy-peer-deps`
+2. Skips lint/test/typecheck (dry-run skips preflight to keep the loop fast)
+3. Executes `node release/release.mjs --dry-run`
+4. Prints the computed version bump, changelog entry, and list of packages that would be published
 
 **Expected result:**
 
-All preflight checks pass ✅. Release step shows dry-run output (version bumps, changelog entries, git tags simulated). Final line is `Job succeeded`.
+Output ends with `✅  Released vX.Y.Z` (DRY RUN). No git commits, no tags, no npm publishes.
 
-**Note:** This does not publish to npm; it's purely a validation and preview.
+**Note:** OIDC (`id-token: write`) is not available in `gh act` — provenance signing only runs in real GitHub Actions. The dry-run skips publish entirely so this is not a problem locally.
 
 ### Testing PR Title Check
 
@@ -373,7 +374,7 @@ docker-compose -f docker-compose.local.yml up -d
 gh act push -W .github/workflows/ci.yml --pull=false
 
 # Test release (no container needed)
-gh act push -W .github/workflows/release.yml --pull=false
+gh act workflow_dispatch -W .github/workflows/release.yml -e release/act-dry-run-event.json --pull=false
 
 # Test deploy (uses container)
 gh act push -W .github/workflows/atomic-deploy.yml --secret-file .secrets.local -s DEPLOY_SSH_KEY="$(cat .keys-local/deploy_test_rsa)" --pull=false
