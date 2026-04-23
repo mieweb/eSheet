@@ -11,6 +11,11 @@ on:
         required: false
         default: false
         type: boolean
+      publish-only:
+        description: Build and publish current package versions without bumping (use to recover a failed publish)
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -21,6 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DRY_RUN: ${{ github.event_name == 'pull_request' || inputs['dry-run'] == true }}
+      PUBLISH_ONLY: ${{ inputs['publish-only'] == true }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -39,7 +45,13 @@ jobs:
       - run: npm ci --legacy-peer-deps
 
       - run: npx nx format:check --base="$NX_BASE"
+        if: ${{ env.PUBLISH_ONLY == 'false' }}
       - run: npx nx run-many -t lint test build typecheck
+        if: ${{ env.PUBLISH_ONLY == 'false' }}
+
+      - name: Build packages (publish-only mode)
+        if: ${{ env.PUBLISH_ONLY == 'true' }}
+        run: npx nx run-many -t build --projects=@esheet/core,@esheet/fields,@esheet/renderer,@esheet/builder,@esheet/renderer-blaze,@esheet/renderer-standalone
 
       - name: Configure git identity
         run: |
@@ -47,14 +59,21 @@ jobs:
           git config user.name "github-actions[bot]"
 
       - name: Nx release (dry-run)
-        if: ${{ env.DRY_RUN == 'true' }}
+        if: ${{ env.DRY_RUN == 'true' && env.PUBLISH_ONLY == 'false' }}
         run: npx nx release --dry-run --yes
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Nx release
-        if: ${{ env.DRY_RUN == 'false' }}
+        if: ${{ env.DRY_RUN == 'false' && env.PUBLISH_ONLY == 'false' }}
         run: npx nx release --yes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish only (recover failed publish)
+        if: ${{ env.PUBLISH_ONLY == 'true' }}
+        run: npx nx release publish --yes
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
