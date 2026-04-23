@@ -54,6 +54,7 @@ export function RendererView() {
   const [formData, setFormData] = useState<FormDefinition | null>(null);
   const [formKey, setFormKey] = useState(0);
   const [submitResult, setSubmitResult] = useState<SubmitResult | null>(null);
+  const [selectedSchema, setSelectedSchema] = useState('');
   const rendererRef = useRef<EsheetRendererHandle>(null);
 
   const resetFormKey = useCallback(() => {
@@ -64,6 +65,7 @@ export function RendererView() {
     const schema = TEST_SCHEMAS.find((s) => s.value === fileName);
     if (!schema) return;
     setFormData(schema.data);
+    setSelectedSchema(fileName);
     setSubmitResult(null);
     resetFormKey();
   };
@@ -76,6 +78,7 @@ export function RendererView() {
       try {
         const data = JSON.parse(ev.target?.result as string);
         setFormData(data);
+        setSelectedSchema('');
         setSubmitResult(null);
         resetFormKey();
       } catch (err) {
@@ -127,7 +130,7 @@ export function RendererView() {
     <>
       <Navbar>
         <Select
-          value=""
+          value={selectedSchema}
           onValueChange={(val) => {
             if (val) handleLoadSchema(val);
           }}

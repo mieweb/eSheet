@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { isValidBrand } from '../hooks/useBrand';
 
 const STORAGE_KEY = 'esheet-brand';
 const LINK_ID = 'mieweb-brand-css';
@@ -10,7 +11,7 @@ const LINK_ID = 'mieweb-brand-css';
 export function BrandInitializer() {
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved) return;
+    if (!saved || !isValidBrand(saved)) return;
 
     let link = document.getElementById(LINK_ID) as HTMLLinkElement | null;
     if (link) return; // already injected (e.g. by useBrand)

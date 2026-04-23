@@ -20,8 +20,7 @@
  *   @import '@mieweb/ui/brands/enterprise-health.css' layer(theme);
  */
 
-/* Import Jost font from Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&display=swap');
+/* Jost font is loaded via <link> tag by the brand system (see useBrand.ts) */
 
 /* ============================================
    Enterprise Health Design Tokens
