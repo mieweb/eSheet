@@ -102,6 +102,6 @@ jobs:
 
           command -v rsync >/dev/null 2>&1 || sudo apt-get install -y rsync
 
-          npm ci
+          npm ci --legacy-peer-deps
           bash deploy/scripts/workflow/atomic-deploy.sh
           EOF
