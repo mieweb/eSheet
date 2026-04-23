@@ -6,9 +6,9 @@
     "name": "demo"
   },
   "dependencies": {
-    "@esheet/builder": "0.0.0 || ^0.0.1-0",
-    "@esheet/fields": "0.0.0 || ^0.0.1-0",
-    "@esheet/renderer": "0.0.0 || ^0.0.1-0",
+    "@esheet/builder": "0.x",
+    "@esheet/fields": "0.x",
+    "@esheet/renderer": "0.x",
     "react-router-dom": "^7.11.0"
   }
 }
