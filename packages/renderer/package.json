@@ -38,8 +38,8 @@
     ]
   },
   "dependencies": {
-    "@esheet/core": "0.x",
-    "@esheet/fields": "0.x",
+    "@esheet/core": "0.0.2-0",
+    "@esheet/fields": "0.0.2-0",
     "js-yaml": "^4.1.0"
   },
   "peerDependencies": {
