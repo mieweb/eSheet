@@ -2,7 +2,9 @@
   "name": "@esheet/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "build:cf": "bash deploy/scripts/cf-build.sh"
+  },
   "private": true,
   "devDependencies": {
     "@babel/core": "^7.14.5",
