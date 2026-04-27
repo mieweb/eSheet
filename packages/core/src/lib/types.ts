@@ -311,10 +311,108 @@ export const formDefinitionSchema = z.strictObject({
 });
 export type FormDefinition = z.infer<typeof formDefinitionSchema>;
 
+// ---------------------------------------------------------------------------
+// JSON Schema (OpenAI Structured Outputs compatible)
+// ---------------------------------------------------------------------------
+
+type JsonSchemaObject = Record<string, unknown>;
+
+/**
+ * Check if a value is an empty object (no type key).
+ * zod's z.unknown() produces `{}` which is invalid for OpenAI strict mode.
+ */
+function isEmptySchema(value: unknown): boolean {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    Object.keys(value).length === 0
+  );
+}
+
+/**
+ * Check if a schema object represents an array of unknown items.
+ * e.g., { type: "array", items: {} }
+ */
+function isArrayOfUnknown(value: unknown): boolean {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return false;
+  }
+  const obj = value as JsonSchemaObject;
+  return (
+    obj['type'] === 'array' &&
+    typeof obj['items'] === 'object' &&
+    isEmptySchema(obj['items'])
+  );
+}
+
+/**
+ * Recursively process JSON Schema for OpenAI Structured Outputs compatibility:
+ * 1. Makes all properties required (OpenAI requires this)
+ * 2. Removes internal adapter fields (properties starting with `_`)
+ * 3. Removes properties with empty schemas (z.unknown() produces {})
+ */
+function makeOpenAICompatible(schema: JsonSchemaObject): JsonSchemaObject {
+  if (typeof schema !== 'object' || schema === null) {
+    return schema;
+  }
+
+  const result: JsonSchemaObject = { ...schema };
+
+  // Process properties: remove internal fields and empty schemas
+  if (result['properties'] && typeof result['properties'] === 'object') {
+    const props = result['properties'] as JsonSchemaObject;
+    const cleanedProps: JsonSchemaObject = {};
+
+    for (const [key, value] of Object.entries(props)) {
+      // Skip internal fields (prefixed with _)
+      if (key.startsWith('_')) continue;
+      // Skip empty schemas (z.unknown() produces {})
+      if (isEmptySchema(value)) continue;
+      // Skip arrays of unknown items
+      if (isArrayOfUnknown(value)) continue;
+
+      cleanedProps[key] = makeOpenAICompatible(value as JsonSchemaObject);
+    }
+
+    result['properties'] = cleanedProps;
+    // All remaining properties must be required
+    result['required'] = Object.keys(cleanedProps);
+  }
+
+  // Process items in arrays
+  if (result['items'] && typeof result['items'] === 'object') {
+    result['items'] = makeOpenAICompatible(result['items'] as JsonSchemaObject);
+  }
+
+  // Process $defs
+  if (result['$defs'] && typeof result['$defs'] === 'object') {
+    const defs = result['$defs'] as JsonSchemaObject;
+    result['$defs'] = Object.fromEntries(
+      Object.entries(defs).map(([key, value]) => [
+        key,
+        makeOpenAICompatible(value as JsonSchemaObject),
+      ])
+    );
+  }
+
+  // Process anyOf/oneOf/allOf
+  for (const key of ['anyOf', 'oneOf', 'allOf'] as const) {
+    if (Array.isArray(result[key])) {
+      result[key] = (result[key] as JsonSchemaObject[]).map((item) =>
+        makeOpenAICompatible(item)
+      );
+    }
+  }
+
+  return result;
+}
+
 /** Pre-computed JSON Schema (Draft-07) for FormDefinition — used by builder's Monaco editor. */
-export const formDefinitionJSONSchema: Record<string, unknown> = z.toJSONSchema(
-  formDefinitionSchema
-) as Record<string, unknown>;
+export const formDefinitionJSONSchema: Record<string, unknown> =
+  makeOpenAICompatible(
+    z.toJSONSchema(formDefinitionSchema) as JsonSchemaObject
+  );
 
 /** Response store — maps field IDs to their response values. */
 export type FieldResponseMap = Record<string, FieldResponse>;

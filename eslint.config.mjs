@@ -45,6 +45,21 @@ export default [
               sourceTag: 'scope:fields',
               onlyDependOnLibsWithTags: ['scope:core'],
             },
+            {
+              sourceTag: 'scope:ai-gateway',
+              onlyDependOnLibsWithTags: ['scope:core'],
+            },
+            {
+              // Private apps can depend on any internal library
+              sourceTag: 'npm:private',
+              onlyDependOnLibsWithTags: [
+                'scope:core',
+                'scope:fields',
+                'scope:builder',
+                'scope:renderer',
+                'scope:ai-gateway',
+              ],
+            },
           ],
         },
       ],

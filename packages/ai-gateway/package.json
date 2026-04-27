@@ -1,0 +1,48 @@
+{
+  "name": "@esheet/ai-gateway",
+  "version": "0.0.2",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mieweb/eSheet"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "@esheet/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "!**/*.tsbuildinfo"
+  ],
+  "nx": {
+    "tags": [
+      "scope:ai-gateway"
+    ]
+  },
+  "dependencies": {
+    "@esheet/core": "0.0.2",
+    "tslib": "^2.3.0"
+  },
+  "peerDependencies": {
+    "openai": "^4.73.0"
+  },
+  "peerDependenciesMeta": {
+    "openai": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "openai": "^4.73.0"
+  }
+}

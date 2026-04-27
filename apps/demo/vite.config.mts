@@ -2,19 +2,24 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { resolve } from 'path';
 
 export default defineConfig(({ command }) => ({
   root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/apps/demo',
   // Keep local dev at / while producing /demo/ assets for canonical host routing.
   base: command === 'serve' ? '/' : '/demo/',
-  ...(command === 'serve'
-    ? {
-        resolve: {
-          conditions: ['@esheet/source'],
-        },
-      }
-    : {}),
+  // Resolve workspace packages to their TypeScript source for dev and build.
+  // Explicit aliases are needed because Vite's commonjs resolver doesn't respect
+  // custom export conditions (@esheet/source) during production builds.
+  resolve: {
+    alias: {
+      '@esheet/core': resolve(import.meta.dirname, '../../packages/core/src/index.ts'),
+      '@esheet/fields': resolve(import.meta.dirname, '../../packages/fields/src/index.ts'),
+      '@esheet/builder': resolve(import.meta.dirname, '../../packages/builder/src/index.ts'),
+      '@esheet/renderer': resolve(import.meta.dirname, '../../packages/renderer/src/index.ts'),
+    },
+  },
   server: {
     port: 3001,
     host: 'localhost',
@@ -32,9 +37,6 @@ export default defineConfig(({ command }) => ({
     outDir: './dist',
     emptyOutDir: true,
     reportCompressedSize: true,
-    commonjsOptions: {
-      transformMixedEsModules: true,
-    },
   },
   define: {
     'import.meta.vitest': undefined,

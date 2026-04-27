@@ -11,14 +11,7 @@
     "types": ["node"]
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
-  "references": [
-    {
-      "path": "../fields/tsconfig.lib.json"
-    },
-    {
-      "path": "../core/tsconfig.lib.json"
-    }
-  ],
+  "references": [],
   "exclude": [
     "vite.config.ts",
     "vite.config.mts",

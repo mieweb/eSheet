@@ -23,6 +23,9 @@
     },
     {
       "path": "./apps/demo"
+    },
+    {
+      "path": "./packages/ai-gateway"
     }
   ]
 }
