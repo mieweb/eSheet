@@ -81,3 +81,4 @@ vitest.config.*.timestamp*
 # Local CI log artifacts
 .tmp_ci_logs/
 .tmp-*.log
+.nx/self-healing
