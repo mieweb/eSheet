@@ -428,6 +428,7 @@ function getTotal(items) {
 - Add new dependencies/config.
 - Create new architectural layers.
 - Use `any` — use `unknown` and narrow.
+- Run `git add`, `git commit`, or `git push` — never stage, commit, or push changes.
 - Run `npm ci` locally — it wipes and reinstalls `node_modules`, which breaks locked native binaries (e.g. `esbuild.exe`) on Windows when VS Code or dev servers hold file locks. Use `npm install` to repair dependencies in place.
 
 ---
