@@ -134,7 +134,7 @@ export function RendererView() {
       <Navbar>
         <Select
           value={selectedSchema}
-          onValueChange={(val) => {
+          onValueChange={(val: string) => {
             if (val) handleLoadSchema(val);
           }}
           options={TEST_SCHEMAS.map((s) => ({
