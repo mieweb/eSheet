@@ -3,9 +3,6 @@ import YAML from 'js-yaml';
 import {
   formatZodValidationError,
   formDefinitionSchema,
-  importFromMcp,
-  exportToMcp,
-  type McpElicitationSchema,
   type Condition,
   isExpressionValid,
   type FieldDefinition,
@@ -16,6 +13,11 @@ import {
   type ValidationError,
   type FormResponseEnvelope,
 } from '@esheet/core';
+import {
+  importFromMcp,
+  exportToMcp,
+  type McpElicitationSchema,
+} from '@esheet/adapters';
 import {
   VEditorIcon,
   CodeIcon,

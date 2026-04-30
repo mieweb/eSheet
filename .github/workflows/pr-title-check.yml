@@ -22,7 +22,7 @@ jobs:
             exit 1
           fi
 
-          REGEX='^(feat|enhance|fix|perf|refactor|docs|test|chore|ci|build|repo)\((repo|docs|demo|core|fields|builder|renderer|renderer-standalone|renderer-blaze)\): .+$'
+          REGEX='^(feat|enhance|fix|perf|refactor|docs|test|chore|ci|build|repo)\((repo|docs|demo|core|fields|builder|renderer|renderer-standalone|renderer-blaze|adapters)\): .+$'
 
           if [[ "$PR_TITLE" =~ $REGEX ]]; then
             echo "PR title is valid: $PR_TITLE"
@@ -47,7 +47,7 @@ jobs:
             feat, enhance, fix, perf, refactor, docs, test, chore, ci, build, repo
 
           Allowed scopes:
-            repo, docs, demo, core, fields, builder, renderer, renderer-standalone, renderer-blaze
+            repo, docs, demo, core, fields, builder, renderer, renderer-standalone, renderer-blaze, adapters
 
           Examples:
             repo(repo): update CI workflow

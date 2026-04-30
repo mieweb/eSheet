@@ -77,3 +77,8 @@ vitest.config.*.timestamp*
 .nx/polygraph
 .claude/worktrees
 .claude/settings.local.json
+
+# Local CI log artifacts
+.tmp_ci_logs/
+.tmp-*.log
+.nx/self-healing

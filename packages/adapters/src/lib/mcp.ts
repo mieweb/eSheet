@@ -3,8 +3,8 @@ import type {
   FieldDefinition,
   FieldOption,
   TextInputType,
-} from '../types.js';
-import { generateOptionId } from './ids.js';
+} from '@esheet/core';
+import { generateOptionId } from '@esheet/core';
 
 // ---------------------------------------------------------------------------
 // MCP Elicitation Types (spec 2025-11-25)

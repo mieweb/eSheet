@@ -13,10 +13,7 @@
   "include": ["src/**/*.ts", "src/**/*.tsx"],
   "references": [
     {
-      "path": "../fields/tsconfig.lib.json"
-    },
-    {
-      "path": "../core/tsconfig.lib.json"
+      "path": "../adapters/tsconfig.lib.json"
     }
   ],
   "exclude": [
