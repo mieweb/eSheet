@@ -4,6 +4,7 @@
 
 import { importFromMcp, exportToMcp } from './mcp.js';
 import type { McpElicitationSchema, McpElicitationRequest } from './mcp.js';
+import type { FlatFieldDefinition } from '@esheet/core';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -97,7 +98,7 @@ describe('importFromMcp', () => {
         },
       },
     });
-    const field = form.fields[0];
+    const field = form.fields[0] as FlatFieldDefinition;
     expect(field.fieldType).toBe('radio');
     expect(field.options?.map((o) => o.value)).toEqual(['SaaS', 'Portfolio']);
   });
@@ -116,7 +117,7 @@ describe('importFromMcp', () => {
         },
       },
     });
-    const field = form.fields[0];
+    const field = form.fields[0] as FlatFieldDefinition;
     expect(field.fieldType).toBe('radio');
     expect(field.options?.map((o) => o.value)).toEqual(['#FF0000', '#00FF00']);
     expect(field.options?.map((o) => o.text)).toEqual(['Red', 'Green']);
@@ -134,7 +135,7 @@ describe('importFromMcp', () => {
         },
       },
     });
-    const field = form.fields[0];
+    const field = form.fields[0] as FlatFieldDefinition;
     expect(field.fieldType).toBe('check');
     expect(field.options?.map((o) => o.value)).toEqual(['A', 'B', 'C']);
   });
@@ -176,7 +177,7 @@ describe('importFromMcp', () => {
         },
       },
     });
-    const field = form.fields[0];
+    const field = form.fields[0] as FlatFieldDefinition;
     expect(field.fieldType).toBe('text');
     expect(field.inputType).toBe('number');
     const meta = field._sourceData as {
@@ -194,7 +195,7 @@ describe('importFromMcp', () => {
       type: 'object',
       properties: { email: { type: 'string', format: 'email' } },
     });
-    expect(form.fields[0].inputType).toBe('email');
+    expect((form.fields[0] as FlatFieldDefinition).inputType).toBe('email');
   });
 
   it('preserves string constraints in _sourceData', () => {

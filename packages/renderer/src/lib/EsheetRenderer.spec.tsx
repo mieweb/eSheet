@@ -22,7 +22,7 @@ describe('EsheetRenderer', () => {
       render(
         <EsheetRenderer
           ref={ref}
-          formData={{
+          formDataInput={{
             id: 'test-form-1',
             title: 'Test',
             fields: [{ id: 'q1', fieldType: 'text', question: 'Name?' }],
@@ -45,7 +45,7 @@ describe('EsheetRenderer', () => {
       render(
         <EsheetRenderer
           ref={ref}
-          formData={{
+          formDataInput={{
             id: 'test-form-2',
             title: 'Test',
             fields: [{ id: 'q1', fieldType: 'text', question: 'Name?' }],
@@ -65,7 +65,7 @@ describe('EsheetRenderer', () => {
       render(
         <EsheetRenderer
           ref={ref}
-          formData={{
+          formDataInput={{
             id: 'test-form-3',
             title: 'Test Form',
             fields: [{ id: 'f1', fieldType: 'text', question: 'Q?' }],
@@ -86,7 +86,7 @@ describe('EsheetRenderer', () => {
       render(
         <EsheetRenderer
           ref={ref}
-          formData={{
+          formDataInput={{
             id: 'test-form-4',
             title: 'Test',
             fields: [{ id: 'q1', fieldType: 'text', question: 'Q?' }],
@@ -105,7 +105,7 @@ describe('EsheetRenderer', () => {
       render(
         <EsheetRenderer
           ref={ref}
-          formData={{
+          formDataInput={{
             id: 'test-form-5',
             title: 'Test',
             fields: [
@@ -139,7 +139,7 @@ describe('EsheetRenderer', () => {
       render(
         <EsheetRenderer
           ref={ref}
-          formData={{
+          formDataInput={{
             id: 'test-form-6',
             title: 'Test',
             fields: [
@@ -168,7 +168,7 @@ describe('EsheetRenderer', () => {
       render(
         <EsheetRenderer
           ref={ref}
-          formData={{
+          formDataInput={{
             id: 'test-form-7',
             title: 'Test',
             fields: [

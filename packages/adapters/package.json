@@ -1,6 +1,7 @@
 {
-  "name": "@esheet/ai-gateway",
+  "name": "@esheet/adapters",
   "version": "0.0.2",
+  "description": "Convert external form schemas (SurveyJS, etc.) to eSheet FormDefinition",
   "repository": {
     "type": "git",
     "url": "https://github.com/mieweb/eSheet"
@@ -27,22 +28,12 @@
   ],
   "nx": {
     "tags": [
-      "scope:ai-gateway"
+      "scope:adapters"
     ]
   },
   "dependencies": {
     "@esheet/core": "0.0.2",
     "tslib": "^2.3.0"
   },
-  "peerDependencies": {
-    "openai": "^4.73.0"
-  },
-  "peerDependenciesMeta": {
-    "openai": {
-      "optional": true
-    }
-  },
-  "devDependencies": {
-    "openai": "^4.73.0"
-  }
+  "devDependencies": {}
 }

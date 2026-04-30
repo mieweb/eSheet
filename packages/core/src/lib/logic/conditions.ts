@@ -5,9 +5,9 @@
 import type {
   Condition,
   ConditionalRule,
-  FieldDefinition,
   FieldResponse,
   FieldResponseMap,
+  FlatFieldDefinition,
   SelectedOption,
 } from '../types.js';
 import type { NormalizedDefinition } from '../functions/normalize.js';
@@ -72,7 +72,7 @@ export function evaluateRule(
  */
 export function evaluateCondition(
   condition: Condition,
-  definition: Omit<FieldDefinition, 'fields'>,
+  definition: Omit<FlatFieldDefinition, 'fields'>,
   response: FieldResponse | undefined
 ): boolean {
   if (!condition.operator) return false;
@@ -744,7 +744,7 @@ function buildExpressionData(
 }
 
 function getExpressionFieldValue(
-  definition: Omit<FieldDefinition, 'fields'>,
+  definition: Omit<FlatFieldDefinition, 'fields'>,
   response: FieldResponse | undefined
 ): unknown {
   if (!response) return '';
@@ -798,7 +798,7 @@ function getExpressionFieldValue(
 // ---------------------------------------------------------------------------
 
 function getActualValue(
-  definition: Omit<FieldDefinition, 'fields'>,
+  definition: Omit<FlatFieldDefinition, 'fields'>,
   response: FieldResponse | undefined
 ): string | string[] | Record<string, unknown> | null {
   if (!response) return null;

@@ -38,6 +38,7 @@
     ]
   },
   "dependencies": {
+    "@esheet/adapters": "0.0.2",
     "@esheet/core": "0.0.2-0",
     "@esheet/fields": "0.0.2-0",
     "@monaco-editor/react": "^4.7.0",

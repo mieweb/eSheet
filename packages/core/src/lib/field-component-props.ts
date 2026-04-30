@@ -3,7 +3,7 @@
 // (builder / renderer). Lives in core so field packages only depend on core.
 // ---------------------------------------------------------------------------
 
-import type { FieldDefinition, FieldResponse } from './types.js';
+import type { FlatFieldDefinition, FieldResponse } from './types.js';
 import type { FieldNode } from './functions/normalize.js';
 import type { FormStore } from './stores/form-store.js';
 import type { UIStore } from './stores/ui-store.js';
@@ -33,7 +33,7 @@ export interface FieldComponentProps {
   /** Remove this field from the form. */
   onRemove: () => void;
   /** Patch this field's definition (shallow merge). */
-  onUpdate: (patch: Partial<Omit<FieldDefinition, 'fields'>>) => void;
+  onUpdate: (patch: Partial<Omit<FlatFieldDefinition, 'fields'>>) => void;
   /** Set this field's response value. */
   onResponse: (response: FieldResponse) => void;
 }

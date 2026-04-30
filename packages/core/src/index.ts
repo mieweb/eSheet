@@ -18,6 +18,7 @@ export {
   fieldDefinitionSchema,
   formDefinitionSchema,
   formDefinitionJSONSchema,
+  normalizeFormDefinition,
 
   // Types
   type FieldType,
@@ -33,6 +34,28 @@ export {
   type Condition,
   type ConditionalRule,
   type FieldDefinition,
+  type FlatFieldDefinition,
+  type FlatFieldWithoutFields,
+  // Per-field-type interfaces (discriminated union members)
+  type TextFieldDefinition,
+  type LongtextFieldDefinition,
+  type MultitextFieldDefinition,
+  type RadioFieldDefinition,
+  type CheckFieldDefinition,
+  type BooleanFieldDefinition,
+  type DropdownFieldDefinition,
+  type MultiselectDropdownFieldDefinition,
+  type RatingFieldDefinition,
+  type RankingFieldDefinition,
+  type SliderFieldDefinition,
+  type SingleMatrixFieldDefinition,
+  type MultiMatrixFieldDefinition,
+  type ImageFieldDefinition,
+  type HtmlFieldDefinition,
+  type SignatureFieldDefinition,
+  type DiagramFieldDefinition,
+  type DisplayFieldDefinition,
+  type SectionFieldDefinition,
   type FieldResponse,
   type FormDefinition,
   type FieldResponseMap as FormResponse,
@@ -103,16 +126,3 @@ export {
 } from './lib/stores/ui-store.js';
 
 export { type FieldComponentProps } from './lib/field-component-props.js';
-
-export {
-  importFromMcp,
-  exportToMcp,
-  type McpElicitationSchema,
-  type McpElicitationRequest,
-  type McpProperty,
-  type McpStringProp,
-  type McpNumberProp,
-  type McpBooleanProp,
-  type McpArrayProp,
-  type McpConstOption,
-} from './lib/functions/mcp.js';

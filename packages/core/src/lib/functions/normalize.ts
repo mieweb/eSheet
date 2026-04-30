@@ -2,7 +2,7 @@
 // Normalization — tree → flat indexed map
 // ---------------------------------------------------------------------------
 
-import type { FieldDefinition } from '../types.js';
+import type { FieldDefinition, FlatFieldDefinition } from '../types.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -11,7 +11,7 @@ import type { FieldDefinition } from '../types.js';
 /** A field definition wrapped with tree-position metadata. */
 export interface FieldNode {
   /** The field definition (without nested `fields` — children are tracked via `childIds`). */
-  readonly definition: Omit<FieldDefinition, 'fields'>;
+  readonly definition: Omit<FlatFieldDefinition, 'fields'>;
   /** Parent section ID, or `null` for top-level fields. */
   readonly parentId: string | null;
   /** Ordered child field IDs (non-empty only for sections). */
@@ -55,7 +55,9 @@ export function normalizeDefinition(
 
     for (let i = 0; i < defs.length; i++) {
       const def = defs[i];
-      const { fields: children, ...rest } = def;
+      // Cast to access all properties - we handle fieldType-specific logic below
+      const defFlat = def as FlatFieldDefinition;
+      const { fields: children, ...rest } = defFlat;
 
       const childIds =
         def.fieldType === 'section' && Array.isArray(children)
@@ -100,11 +102,12 @@ export function hydrateDefinition(
       const node = normalized.byId[id];
       if (!node) return { id, fieldType: 'text' } as FieldDefinition;
 
-      const def = { ...node.definition } as FieldDefinition;
+      // Use FlatFieldDefinition to allow setting `fields` property
+      const def = { ...node.definition } as FlatFieldDefinition;
       if (node.childIds.length > 0) {
         def.fields = build(node.childIds);
       }
-      return def;
+      return def as FieldDefinition;
     });
   }
 

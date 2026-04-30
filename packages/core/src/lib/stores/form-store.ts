@@ -9,6 +9,7 @@ import type {
   FieldResponseMap,
   FieldResponse,
   FieldDefinition,
+  FlatFieldDefinition,
   FieldType,
   FieldOption,
   MatrixRow,
@@ -81,7 +82,7 @@ export interface FormState {
   /** Patch a field's definition. Returns `false` if not found or rename collided. */
   updateField: (
     fieldId: string,
-    patch: Partial<Omit<FieldDefinition, 'fields'>>
+    patch: Partial<Omit<FlatFieldDefinition, 'fields'>>
   ) => boolean;
   /** Remove a field (and its children if it is a section). */
   removeField: (fieldId: string) => boolean;
@@ -162,8 +163,8 @@ function patchField(
   normalized: NormalizedDefinition,
   fieldId: string,
   updater: (
-    def: Omit<FieldDefinition, 'fields'>
-  ) => Omit<FieldDefinition, 'fields'> | null
+    def: Omit<FlatFieldDefinition, 'fields'>
+  ) => Omit<FlatFieldDefinition, 'fields'> | null
 ): NormalizedDefinition | null {
   const node = normalized.byId[fieldId];
   if (!node) return null;
@@ -328,7 +329,7 @@ export function createFormStore(initial?: FormDefinition): FormStore {
         ...options?.patch,
         id,
         fieldType,
-      } as Omit<FieldDefinition, 'fields'>;
+      } as Omit<FlatFieldDefinition, 'fields'>;
 
       if (!definition.question) {
         const defaultQuestion = getDefaultQuestion(fieldType, meta.label);

@@ -31,6 +31,7 @@ export default [
                 'scope:core',
                 'scope:fields',
                 'scope:renderer',
+                'scope:adapters',
               ],
             },
             {
@@ -39,6 +40,7 @@ export default [
                 'scope:core',
                 'scope:builder',
                 'scope:fields',
+                'scope:adapters',
               ],
             },
             {

@@ -7,10 +7,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig(() => ({
   root: __dirname,
-  cacheDir: '../../node_modules/.vite/packages/ai-gateway',
+  cacheDir: '../../node_modules/.vite/packages/adapters',
   plugins: [],
   test: {
-    name: '@esheet/ai-gateway',
+    name: '@esheet/adapters',
     watch: false,
     globals: true,
     environment: 'node',

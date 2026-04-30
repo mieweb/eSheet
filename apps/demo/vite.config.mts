@@ -14,10 +14,26 @@ export default defineConfig(({ command }) => ({
   // custom export conditions (@esheet/source) during production builds.
   resolve: {
     alias: {
-      '@esheet/core': resolve(import.meta.dirname, '../../packages/core/src/index.ts'),
-      '@esheet/fields': resolve(import.meta.dirname, '../../packages/fields/src/index.ts'),
-      '@esheet/builder': resolve(import.meta.dirname, '../../packages/builder/src/index.ts'),
-      '@esheet/renderer': resolve(import.meta.dirname, '../../packages/renderer/src/index.ts'),
+      '@esheet/adapters': resolve(
+        import.meta.dirname,
+        '../../packages/adapters/src/index.ts'
+      ),
+      '@esheet/core': resolve(
+        import.meta.dirname,
+        '../../packages/core/src/index.ts'
+      ),
+      '@esheet/fields': resolve(
+        import.meta.dirname,
+        '../../packages/fields/src/index.ts'
+      ),
+      '@esheet/builder': resolve(
+        import.meta.dirname,
+        '../../packages/builder/src/index.ts'
+      ),
+      '@esheet/renderer': resolve(
+        import.meta.dirname,
+        '../../packages/renderer/src/index.ts'
+      ),
     },
   },
   server: {
