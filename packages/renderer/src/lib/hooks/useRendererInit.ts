@@ -48,14 +48,19 @@ export function useRendererInit(
         const mcpReq = parsed as McpElicitationRequest;
         if (mcpReq.params.mode !== 'url') {
           parsed = importFromMcp(
-            mcpReq.params.requestedSchema as Parameters<typeof importFromMcp>[0],
+            mcpReq.params.requestedSchema as Parameters<
+              typeof importFromMcp
+            >[0],
             {
-            mcpId: mcpReq.id,
-            mcpMessage: mcpReq.params.message,
-          });
+              mcpId: mcpReq.id,
+              mcpMessage: mcpReq.params.message,
+            }
+          );
         }
       } else if (!strict && isSurveyJSSchema(parsed)) {
-        parsed = convertSurveyJS(parsed as Parameters<typeof convertSurveyJS>[0]);
+        parsed = convertSurveyJS(
+          parsed as Parameters<typeof convertSurveyJS>[0]
+        );
       }
 
       // Validate schema
@@ -112,7 +117,9 @@ interface McpElicitationRequest {
   id: string | number;
   params: { mode?: string; message?: string; requestedSchema: unknown };
 }
-function isMcpElicitationRequest(value: unknown): value is McpElicitationRequest {
+function isMcpElicitationRequest(
+  value: unknown
+): value is McpElicitationRequest {
   if (typeof value !== 'object' || value === null) return false;
   const v = value as Record<string, unknown>;
   return v['jsonrpc'] === '2.0' && v['method'] === 'elicitation/create';
