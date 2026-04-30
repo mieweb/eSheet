@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { EsheetRenderer, type EsheetRendererHandle } from '@esheet/renderer';
-import type { FormDefinition } from '@esheet/core';
+import type { FormDefinition, FormResponseEnvelope } from '@esheet/core';
 import { Navbar } from '../components/Navbar';
 
 interface SubmitResult {
@@ -9,12 +9,13 @@ interface SubmitResult {
   readonly message: string;
   readonly items?: readonly string[];
   readonly detail?: string;
+  readonly data?: FormResponseEnvelope;
 }
 
 interface SchemaOption {
   readonly label: string;
   readonly value: string;
-  readonly data: FormDefinition;
+  readonly data: unknown;
 }
 
 function toSchemaLabel(fileName: string): string {
@@ -26,7 +27,7 @@ function toSchemaLabel(fileName: string): string {
     .join(' ');
 }
 
-const schemaModules = import.meta.glob('../../public/*.json', {
+const schemaModules = import.meta.glob('../schemas/*.json', {
   eager: true,
 }) as Record<string, { default?: FormDefinition } | FormDefinition>;
 
@@ -43,17 +44,20 @@ const TEST_SCHEMAS: readonly SchemaOption[] = Object.entries(schemaModules)
     return {
       label: data.title?.trim() || toSchemaLabel(fileName),
       value: fileName,
-      data,
+      data: data as unknown,
     };
   })
   .filter((schema): schema is SchemaOption => schema !== null)
-  .sort((a, b) => a.label.localeCompare(b.label));
+  .sort((a, b) => a!.label.localeCompare(b!.label));
 
 export function RendererView() {
-  const [formData, setFormData] = useState<FormDefinition | null>(null);
+  const [rawInput, setRawInput] = useState<unknown>(null);
   const [formKey, setFormKey] = useState(0);
   const [submitResult, setSubmitResult] = useState<SubmitResult | null>(null);
+  const [definition, setDefinition] = useState<unknown>(null);
   const rendererRef = useRef<EsheetRendererHandle>(null);
+
+  const [showDefinition, setShowDefinition] = useState(false);
 
   const resetFormKey = useCallback(() => {
     setFormKey((prev) => prev + 1);
@@ -62,7 +66,7 @@ export function RendererView() {
   const handleLoadSchema = (fileName: string) => {
     const schema = TEST_SCHEMAS.find((s) => s.value === fileName);
     if (!schema) return;
-    setFormData(schema.data);
+    setRawInput(schema.data);
     setSubmitResult(null);
     resetFormKey();
   };
@@ -74,7 +78,7 @@ export function RendererView() {
     reader.onload = (ev) => {
       try {
         const data = JSON.parse(ev.target?.result as string);
-        setFormData(data);
+        setRawInput(data);
         setSubmitResult(null);
         resetFormKey();
       } catch (err) {
@@ -117,8 +121,8 @@ export function RendererView() {
     setSubmitResult({
       kind: 'success',
       title: 'Submit successful',
-      message:
-        'Validation passed. Validated response and hydrated submit payload were logged to the console.',
+      message: 'Validation passed. Form response data:',
+      data: hydrated,
     });
   };
 
@@ -152,7 +156,16 @@ export function RendererView() {
           />
         </label>
 
-        {formData && (
+        {rawInput != null && (
+          <button
+            onClick={() => setShowDefinition((prev) => !prev)}
+            className="px-3 py-1.5 text-sm font-medium bg-slate-500 hover:bg-slate-600 text-white rounded-lg transition-colors whitespace-nowrap"
+          >
+            {showDefinition ? 'Hide' : 'Show'} Definition
+          </button>
+        )}
+
+        {rawInput != null && (
           <button
             onClick={handleSubmit}
             className="px-4 py-1.5 text-sm font-medium bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors whitespace-nowrap"
@@ -189,12 +202,18 @@ export function RendererView() {
                 {submitResult.detail}
               </p>
             )}
+            {submitResult.data && (
+              <pre className="mt-3 p-3 bg-white/50 rounded-lg text-xs overflow-auto max-h-96 border border-emerald-200">
+                {JSON.stringify(submitResult.data, null, 2)}
+              </pre>
+            )}
           </div>
         </div>
       )}
 
       <div className="demo-renderer-content bg-gray-100 pt-6 pb-20 min-h-[calc(100vh-3.5rem)]">
-        {!formData ? (
+        {/* SurveyJS conversion errors removed */}
+        {rawInput == null ? (
           <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] gap-6">
             <div className="text-center max-w-md">
               <h2 className="text-2xl font-semibold text-slate-900 mb-3">
@@ -207,12 +226,43 @@ export function RendererView() {
             </div>
           </div>
         ) : (
-          <div className="max-w-4xl mx-auto px-4">
-            <EsheetRenderer
-              key={formKey}
-              formData={formData}
-              ref={rendererRef}
-            />
+          <div
+            className={
+              showDefinition
+                ? 'grid grid-cols-1 lg:grid-cols-2 gap-4 max-w-7xl mx-auto px-4'
+                : 'max-w-4xl mx-auto px-4'
+            }
+          >
+            <div>
+              <EsheetRenderer
+                key={formKey}
+                formDataInput={rawInput}
+                ref={rendererRef}
+                onReady={() => {
+                  const def = rendererRef.current
+                    ?.getFormStore()
+                    .getState()
+                    .hydrateDefinition();
+                  if (def) setDefinition(def);
+                }}
+              />
+            </div>
+            {showDefinition && (
+              <div className="lg:sticky lg:top-20 lg:self-start space-y-4">
+                <div className="bg-white rounded-lg border border-slate-200 shadow-sm">
+                  <div className="px-4 py-2 border-b border-slate-200 bg-slate-50 rounded-t-lg">
+                    <h3 className="text-sm font-semibold text-slate-700">
+                      eSheet FormDefinition
+                    </h3>
+                  </div>
+                  <pre className="p-4 text-xs overflow-auto max-h-[40vh] text-slate-800">
+                    {definition
+                      ? JSON.stringify(definition, null, 2)
+                      : '(loading…)'}
+                  </pre>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

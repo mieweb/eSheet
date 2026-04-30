@@ -1606,7 +1606,9 @@ describe('comprehensive conditions integration', () => {
 
     for (const baseDef of FIELD_TYPE_DEFS) {
       it(`${baseDef.fieldType}${
-        baseDef.inputType ? ` (${baseDef.inputType})` : ''
+        (baseDef as { inputType?: string }).inputType
+          ? ` (${(baseDef as { inputType?: string }).inputType})`
+          : ''
       } — visibility rule fires correctly`, () => {
         const f: FieldDefinition = {
           ...baseDef,

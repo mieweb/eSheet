@@ -11,14 +11,15 @@ eSheet is a TypeScript-first Nx monorepo providing composable packages for embed
 
 ## Packages
 
-| Package                                                       | Description                                                              |
-| ------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| [`@esheet/core`](packages/core)                               | Zod schemas, Zustand stores, conditional logic engine — no React         |
-| [`@esheet/fields`](packages/fields)                           | 19 built-in field components (text, choice, scale, matrix, rich, layout) |
-| [`@esheet/builder`](packages/builder)                         | Drag-and-drop visual form builder (`<EsheetBuilder />`)                  |
-| [`@esheet/renderer`](packages/renderer)                       | Read-only React form renderer (`<EsheetRenderer />`)                     |
-| [`@esheet/renderer-standalone`](packages/renderer-standalone) | Standalone mount API and global registration                             |
-| [`@esheet/renderer-blaze`](packages/renderer-blaze)           | Meteor Blaze template integration                                        |
+| Package                                                       | Description                                                                              |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| [`@esheet/core`](packages/core)                               | Zod schemas, Zustand stores, conditional logic engine — no React                         |
+| [`@esheet/fields`](packages/fields)                           | 19 built-in field components (text, choice, scale, matrix, rich, layout)                 |
+| [`@esheet/builder`](packages/builder)                         | Drag-and-drop visual form builder (`<EsheetBuilder />`)                                  |
+| [`@esheet/renderer`](packages/renderer)                       | Read-only React form renderer (`<EsheetRenderer />`) with auto-detection of SurveyJS/MCP |
+| [`@esheet/adapters`](packages/adapters)                       | SurveyJS ↔ eSheet converters, MCP import/export, AI system prompt                        |
+| [`@esheet/renderer-standalone`](packages/renderer-standalone) | Standalone mount API and global registration                                             |
+| [`@esheet/renderer-blaze`](packages/renderer-blaze)           | Meteor Blaze template integration                                                        |
 
 All packages are versioned together and published to npm under the `@esheet` scope.
 
@@ -55,7 +56,7 @@ function App() {
   const rendererRef = useRef<EsheetRendererHandle>(null);
   return (
     <>
-      <EsheetRenderer formData={definition} ref={rendererRef} />
+      <EsheetRenderer formDataInput={definition} ref={rendererRef} />
       <button onClick={() => console.log(rendererRef.current?.getResponse())}>
         Submit
       </button>
@@ -74,7 +75,8 @@ mSheet/
 │   ├── core/        # @esheet/core     — types, stores, logic (no React)
 │   ├── fields/      # @esheet/fields   — 19 field components
 │   ├── builder/     # @esheet/builder  — visual builder UI
-│   ├── renderer/    # @esheet/renderer — form renderer
+│   ├── renderer/    # @esheet/renderer — form renderer (auto-detects SurveyJS/MCP)
+│   ├── adapters/    # @esheet/adapters — SurveyJS/MCP converters, AI prompt
 │   ├── renderer-standalone/ # @esheet/renderer-standalone — standalone integration
 │   └── renderer-blaze/ # @esheet/renderer-blaze — blaze integration
 └── apps/
@@ -87,8 +89,8 @@ mSheet/
 ```
 @esheet/core
     ↑
-@esheet/fields
-  ↑           ↑
+@esheet/fields       @esheet/adapters
+  ↑           ↑           ↑
 @esheet/builder  @esheet/renderer
          ↑                 ↑
    @esheet/renderer-standalone   @esheet/renderer-blaze

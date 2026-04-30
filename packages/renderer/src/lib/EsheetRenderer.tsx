@@ -3,7 +3,6 @@ import {
   createFormStore,
   createUIStore,
   validateForm,
-  type FormDefinition,
   type FormResponse,
   type FormStore,
   type UIStore,
@@ -15,12 +14,19 @@ import { useRendererInit } from './hooks/useRendererInit.js';
 import { RendererBody } from './components/RendererBody.js';
 
 export interface EsheetRendererProps {
-  /** Form definition (JSON object, JSON string, or YAML string) */
-  formData: FormDefinition | string;
+  /** Form definition — accepts FormDefinition, SurveyJS schema, MCP elicitation envelope,
+   *  or any of the above as a JSON/YAML string. Auto-detected and converted internally.
+   *  Set `strict` to disable auto-conversion and require a valid FormDefinition directly. */
+  formDataInput: unknown;
   /** Additional CSS classes for root container */
   className?: string;
   /** Initial form responses (pre-fill data) */
   initialResponses?: FormResponse;
+  /** When true, disables auto-detection of MCP/SurveyJS formats.
+   *  Only accepts a valid eSheet FormDefinition (or JSON/YAML string thereof). */
+  strict?: boolean;
+  /** Called after the form definition has been parsed and loaded into the store. */
+  onReady?: () => void;
 }
 
 export interface EsheetRendererHandle {
@@ -89,7 +95,15 @@ const EsheetRendererInner = React.forwardRef<
   EsheetRendererHandle,
   EsheetRendererInnerProps
 >(function EsheetRendererInner(
-  { formData, className = '', initialResponses, formStore, uiStore },
+  {
+    formDataInput: formData,
+    className = '',
+    initialResponses,
+    strict = false,
+    onReady,
+    formStore,
+    uiStore,
+  },
   ref
 ) {
   const [validationErrors, setValidationErrors] = React.useState<string[]>([]);
@@ -100,7 +114,9 @@ const EsheetRendererInner = React.forwardRef<
     uiStore,
     formData,
     initialResponses,
-    setValidationErrors
+    setValidationErrors,
+    strict,
+    onReady
   );
 
   // Expose ref API

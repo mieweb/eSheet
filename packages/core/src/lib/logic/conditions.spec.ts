@@ -4,6 +4,8 @@ import type {
   Condition,
   ConditionalRule,
   FieldDefinition,
+  TextFieldDefinition,
+  FieldOption,
   FieldResponse,
 } from '../types.js';
 import type {
@@ -15,7 +17,7 @@ import type {
 // Helpers
 // ---------------------------------------------------------------------------
 
-type Def = Omit<FieldDefinition, 'fields'>;
+type Def = FieldDefinition;
 
 function textDef(id: string, inputType?: string): Def {
   return {
@@ -23,20 +25,20 @@ function textDef(id: string, inputType?: string): Def {
     fieldType: 'text',
     question: 'Q',
     ...(inputType
-      ? { inputType: inputType as FieldDefinition['inputType'] }
+      ? { inputType: inputType as TextFieldDefinition['inputType'] }
       : {}),
   };
 }
 
-function radioDef(id: string, options?: FieldDefinition['options']): Def {
+function radioDef(id: string, options?: FieldOption[]): Def {
   return { id, fieldType: 'radio', question: 'Q', options };
 }
 
-function checkDef(id: string, options?: FieldDefinition['options']): Def {
+function checkDef(id: string, options?: FieldOption[]): Def {
   return { id, fieldType: 'check', question: 'Q', options };
 }
 
-function ratingDef(id: string, options?: FieldDefinition['options']): Def {
+function ratingDef(id: string, options?: FieldOption[]): Def {
   return { id, fieldType: 'rating', question: 'Q', options };
 }
 

@@ -1,5 +1,9 @@
 import { normalizeDefinition } from './normalize.js';
-import type { FieldDefinition } from '../types.js';
+import type {
+  FieldDefinition,
+  SectionFieldDefinition,
+  TextFieldDefinition,
+} from '../types.js';
 
 describe('normalizeDefinition', () => {
   it('should return empty result for empty fields', () => {
@@ -127,7 +131,9 @@ describe('normalizeDefinition', () => {
 
     const result = normalizeDefinition(fields);
     expect(result.byId['s1'].definition).not.toHaveProperty('fields');
-    expect(result.byId['s1'].definition.title).toBe('Section');
+    expect((result.byId['s1'].definition as SectionFieldDefinition).title).toBe(
+      'Section'
+    );
   });
 
   it('should handle nested sections (recursive)', () => {
@@ -211,7 +217,7 @@ describe('normalizeDefinition', () => {
     const def = result.byId['q1'].definition;
     expect(def.question).toBe('Name?');
     expect(def.required).toBe(true);
-    expect(def.inputType).toBe('string');
-    expect(def.unit).toBe('kg');
+    expect((def as TextFieldDefinition).inputType).toBe('string');
+    expect((def as TextFieldDefinition).unit).toBe('kg');
   });
 });

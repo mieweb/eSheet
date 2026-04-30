@@ -1,0 +1,5 @@
+{
+  "name": "@esheet/adapters",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "tags": ["scope:esheet", "scope:adapters", "type:lib"]
+}
