@@ -369,49 +369,6 @@ export type FieldDefinition =
   // Organization
   | SectionFieldDefinition;
 
-/**
- * A "wide" field definition with all possible properties accessible.
- * Use this when you need to access properties without type narrowing
- * (e.g., in generic field handlers that don't switch on fieldType).
- *
- * For type-safe code that narrows on fieldType, use `FieldDefinition` instead.
- */
-export interface FlatFieldDefinition {
-  id: string;
-  fieldType: FieldType;
-  question?: string;
-  required?: boolean;
-  rules?: ConditionalRule[];
-  // Text fields
-  inputType?: TextInputType;
-  unit?: string;
-  // Choice/rating fields
-  options?: FieldOption[];
-  // Matrix fields
-  rows?: MatrixRow[];
-  columns?: MatrixColumn[];
-  // Rich content
-  htmlContent?: string;
-  imageUri?: string;
-  altText?: string;
-  caption?: string;
-  iframeHeight?: number;
-  padPlaceholder?: string;
-  content?: string;
-  // Section
-  title?: string;
-  fields?: FieldDefinition[];
-  // Adapter metadata
-  _sourceData?: unknown;
-  _conversionWarnings?: unknown[];
-}
-
-/**
- * Type alias for a flat field definition without the recursive `fields` property.
- * Use this for generic field handlers that need access to all properties.
- */
-export type FlatFieldWithoutFields = Omit<FlatFieldDefinition, 'fields'>;
-
 // ---------------------------------------------------------------------------
 // Field Normalization (strips irrelevant properties by fieldType)
 // ---------------------------------------------------------------------------
@@ -716,54 +673,6 @@ export const fieldDefinitionSchema = z.discriminatedUnion('fieldType', [
 ]);
 
 // ---------------------------------------------------------------------------
-// Flat Field Schema (for OpenAI compatibility — no oneOf/discriminatedUnion)
-// ---------------------------------------------------------------------------
-
-/**
- * A "wide" Zod schema with all possible properties.
- * Used for OpenAI JSON Schema generation since OpenAI doesn't support `oneOf`.
- */
-const flatFieldDefinitionSchema: z.ZodMiniType<FlatFieldDefinition> =
-  z.strictObject({
-    id: z.string(),
-    fieldType: fieldTypeSchema,
-    question: z.optional(z.string()),
-    required: z.optional(z.boolean()),
-    rules: z.optional(z.array(conditionalRuleSchema)),
-    // Text fields
-    inputType: z.optional(textInputTypeSchema),
-    unit: z.optional(z.string()),
-    // Choice/rating fields
-    options: z.optional(z.array(fieldOptionSchema)),
-    // Matrix fields
-    rows: z.optional(z.array(matrixRowSchema)),
-    columns: z.optional(z.array(matrixColumnSchema)),
-    // Rich content
-    htmlContent: z.optional(z.string()),
-    imageUri: z.optional(z.string()),
-    altText: z.optional(z.string()),
-    caption: z.optional(z.string()),
-    iframeHeight: z.optional(z.number()),
-    padPlaceholder: z.optional(z.string()),
-    content: z.optional(z.string()),
-    // Section
-    title: z.optional(z.string()),
-    fields: z.optional(z.lazy(() => z.array(flatFieldDefinitionSchema))),
-    // Adapter metadata
-    _sourceData: z.optional(z.unknown()),
-    _conversionWarnings: z.optional(z.array(z.unknown())),
-  });
-
-/** Flat form definition schema for OpenAI compatibility. */
-const flatFormDefinitionSchema = z.strictObject({
-  id: z.string(),
-  title: z.optional(z.string()),
-  description: z.optional(z.string()),
-  fields: z.array(flatFieldDefinitionSchema),
-  _sourceData: z.optional(z.unknown()),
-});
-
-// ---------------------------------------------------------------------------
 // Field Response Values (answers only)
 // ---------------------------------------------------------------------------
 
@@ -925,7 +834,7 @@ function makeOpenAICompatible(schema: JsonSchemaObject): JsonSchemaObject {
 /** Pre-computed JSON Schema (Draft-07) for FormDefinition — used by builder's Monaco editor. */
 export const formDefinitionJSONSchema: Record<string, unknown> =
   makeOpenAICompatible(
-    z.toJSONSchema(flatFormDefinitionSchema) as JsonSchemaObject
+    z.toJSONSchema(formDefinitionSchema) as JsonSchemaObject
   );
 
 /** Response store — maps field IDs to their response values. */
@@ -1013,7 +922,7 @@ export interface FieldTypeMeta {
   /** Whether the field uses a matrix (rows + columns). */
   hasMatrix: boolean;
   /** Default property values when creating a new field of this type. */
-  defaultProps: Partial<FlatFieldDefinition>;
+  defaultProps: Record<string, unknown>;
   /** Placeholder strings keyed by input purpose (e.g. `{ question: '...', answer: '...' }`). */
   placeholder?: Record<string, string>;
   /** Number of starter options/rows the builder creates for a new field (defaults to 3 if hasOptions/hasMatrix). */

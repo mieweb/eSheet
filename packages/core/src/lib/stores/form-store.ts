@@ -9,7 +9,6 @@ import type {
   FieldResponseMap,
   FieldResponse,
   FieldDefinition,
-  FlatFieldDefinition,
   FieldType,
   FieldOption,
   MatrixRow,
@@ -47,7 +46,7 @@ export interface AddFieldOptions {
   /** Insert at this index among siblings. If omitted, append at end. */
   index?: number;
   /** Initial property overrides applied after default props. */
-  patch?: Partial<Omit<FieldDefinition, 'id' | 'fieldType' | 'fields'>>;
+  patch?: Record<string, unknown>;
 }
 
 /** The full form state — data + actions + selectors. */
@@ -80,10 +79,7 @@ export interface FormState {
   /** Add a new field. Returns the generated field ID, or `null` if the type is unknown. */
   addField: (fieldType: FieldType, options?: AddFieldOptions) => string | null;
   /** Patch a field's definition. Returns `false` if not found or rename collided. */
-  updateField: (
-    fieldId: string,
-    patch: Partial<Omit<FlatFieldDefinition, 'fields'>>
-  ) => boolean;
+  updateField: (fieldId: string, patch: Record<string, unknown>) => boolean;
   /** Remove a field (and its children if it is a section). */
   removeField: (fieldId: string) => boolean;
   /** Move a field to a new position/parent. `toParentId` defaults to current parent; pass `null` for root. */
@@ -162,9 +158,7 @@ function insertAt<T>(arr: readonly T[], item: T, index?: number): T[] {
 function patchField(
   normalized: NormalizedDefinition,
   fieldId: string,
-  updater: (
-    def: Omit<FlatFieldDefinition, 'fields'>
-  ) => Omit<FlatFieldDefinition, 'fields'> | null
+  updater: (def: FieldDefinition) => FieldDefinition | null
 ): NormalizedDefinition | null {
   const node = normalized.byId[fieldId];
   if (!node) return null;
@@ -329,12 +323,13 @@ export function createFormStore(initial?: FormDefinition): FormStore {
         ...options?.patch,
         id,
         fieldType,
-      } as Omit<FlatFieldDefinition, 'fields'>;
+      } as FieldDefinition;
 
       if (!definition.question) {
         const defaultQuestion = getDefaultQuestion(fieldType, meta.label);
         if (defaultQuestion) {
-          (definition as Record<string, unknown>).question = defaultQuestion;
+          (definition as unknown as Record<string, unknown>).question =
+            defaultQuestion;
         }
       }
 
@@ -342,7 +337,11 @@ export function createFormStore(initial?: FormDefinition): FormStore {
       const count =
         meta.defaultOptionCount ?? (meta.hasOptions || meta.hasMatrix ? 3 : 0);
 
-      if (meta.hasOptions && count > 0 && !definition.options?.length) {
+      if (
+        meta.hasOptions &&
+        count > 0 &&
+        !(definition as { options?: unknown[] }).options?.length
+      ) {
         const opts: FieldOption[] = [];
         const oIds = new Set<string>();
         for (let i = 0; i < count; i++) {
@@ -353,11 +352,11 @@ export function createFormStore(initial?: FormDefinition): FormStore {
             value: getDefaultOptionValue(fieldType, i, count),
           });
         }
-        (definition as Record<string, unknown>).options = opts;
+        (definition as unknown as Record<string, unknown>).options = opts;
       }
 
       if (meta.hasMatrix && count > 0) {
-        if (!definition.rows?.length) {
+        if (!(definition as { rows?: unknown[] }).rows?.length) {
           const rows: MatrixRow[] = [];
           const rIds = new Set<string>();
           for (let i = 0; i < count; i++) {
@@ -365,9 +364,9 @@ export function createFormStore(initial?: FormDefinition): FormStore {
             rIds.add(rid);
             rows.push({ id: rid, value: `Row ${i + 1}` });
           }
-          (definition as Record<string, unknown>).rows = rows;
+          (definition as unknown as Record<string, unknown>).rows = rows;
         }
-        if (!definition.columns?.length) {
+        if (!(definition as { columns?: unknown[] }).columns?.length) {
           const cols: MatrixColumn[] = [];
           const cIds = new Set<string>();
           for (let i = 0; i < count; i++) {
@@ -375,7 +374,7 @@ export function createFormStore(initial?: FormDefinition): FormStore {
             cIds.add(cid);
             cols.push({ id: cid, value: `Column ${i + 1}` });
           }
-          (definition as Record<string, unknown>).columns = cols;
+          (definition as unknown as Record<string, unknown>).columns = cols;
         }
       }
 
@@ -404,13 +403,13 @@ export function createFormStore(initial?: FormDefinition): FormStore {
       const node = normalized.byId[fieldId];
       if (!node) return false;
 
-      const newId = patch.id;
+      const newId = patch['id'] as string | undefined;
       const isRename = newId !== undefined && newId !== fieldId;
 
       if (isRename) {
         if (normalized.byId[newId!]) return false;
 
-        const newDef = { ...node.definition, ...patch };
+        const newDef = { ...node.definition, ...patch } as FieldDefinition;
         const { [fieldId]: _removed, ...rest } = normalized.byId;
         void _removed;
         const byId: Record<string, FieldNode> = {
@@ -444,10 +443,15 @@ export function createFormStore(initial?: FormDefinition): FormStore {
       }
 
       // Simple patch (no rename)
-      const result = patchField(normalized, fieldId, (def) => ({
-        ...def,
-        ...patch,
-      }));
+      const result = patchField(
+        normalized,
+        fieldId,
+        (def) =>
+          ({
+            ...def,
+            ...patch,
+          } as FieldDefinition)
+      );
       if (!result) return false;
       set({ normalized: result });
       return true;
@@ -535,14 +539,24 @@ export function createFormStore(initial?: FormDefinition): FormStore {
       const node = normalized.byId[fieldId];
       if (!node) return null;
 
-      const opts = node.definition.options ?? [];
+      const opts =
+        (node.definition as { options?: FieldOption[] }).options ?? [];
       const eIds = new Set(opts.map((o) => o.id));
       const optionId = generateOptionId(eIds, fieldId);
 
-      const result = patchField(normalized, fieldId, (def) => ({
-        ...def,
-        options: [...(def.options ?? []), { id: optionId, value }],
-      }));
+      const result = patchField(
+        normalized,
+        fieldId,
+        (def) =>
+          ({
+            ...def,
+            options: [
+              ...((def as unknown as { options?: FieldOption[] }).options ??
+                []),
+              { id: optionId, value },
+            ],
+          } as unknown as FieldDefinition)
+      );
       if (!result) return null;
       set({ normalized: result });
       return optionId;
@@ -550,7 +564,7 @@ export function createFormStore(initial?: FormDefinition): FormStore {
 
     updateOption: (fieldId, optionId, value) => {
       const result = patchField(get().normalized, fieldId, (def) => {
-        const opts = def.options;
+        const opts = (def as unknown as { options?: FieldOption[] }).options;
         if (!opts) return null;
         let changed = false;
         const next = opts.map((o) => {
@@ -559,7 +573,9 @@ export function createFormStore(initial?: FormDefinition): FormStore {
           changed = true;
           return { ...o, value };
         });
-        return changed ? { ...def, options: next } : null;
+        return changed
+          ? ({ ...def, options: next } as unknown as FieldDefinition)
+          : null;
       });
       if (!result) return false;
       set({ normalized: result });
@@ -568,10 +584,12 @@ export function createFormStore(initial?: FormDefinition): FormStore {
 
     removeOption: (fieldId, optionId) => {
       const result = patchField(get().normalized, fieldId, (def) => {
-        const opts = def.options;
+        const opts = (def as unknown as { options?: FieldOption[] }).options;
         if (!opts) return null;
         const next = opts.filter((o) => o.id !== optionId);
-        return next.length !== opts.length ? { ...def, options: next } : null;
+        return next.length !== opts.length
+          ? ({ ...def, options: next } as unknown as FieldDefinition)
+          : null;
       });
       if (!result) return false;
       set({ normalized: result });
@@ -583,14 +601,22 @@ export function createFormStore(initial?: FormDefinition): FormStore {
       const node = normalized.byId[fieldId];
       if (!node) return null;
 
-      const rows = node.definition.rows ?? [];
+      const rows = (node.definition as { rows?: MatrixRow[] }).rows ?? [];
       const eIds = new Set(rows.map((r) => r.id));
       const rowId = generateRowId(eIds, fieldId);
 
-      const result = patchField(normalized, fieldId, (def) => ({
-        ...def,
-        rows: [...(def.rows ?? []), { id: rowId, value }],
-      }));
+      const result = patchField(
+        normalized,
+        fieldId,
+        (def) =>
+          ({
+            ...def,
+            rows: [
+              ...((def as unknown as { rows?: MatrixRow[] }).rows ?? []),
+              { id: rowId, value },
+            ],
+          } as unknown as FieldDefinition)
+      );
       if (!result) return null;
       set({ normalized: result });
       return rowId;
@@ -598,7 +624,7 @@ export function createFormStore(initial?: FormDefinition): FormStore {
 
     updateRow: (fieldId, rowId, value) => {
       const result = patchField(get().normalized, fieldId, (def) => {
-        const rows = def.rows;
+        const rows = (def as unknown as { rows?: MatrixRow[] }).rows;
         if (!rows) return null;
         let changed = false;
         const next = rows.map((r) => {
@@ -607,7 +633,9 @@ export function createFormStore(initial?: FormDefinition): FormStore {
           changed = true;
           return { ...r, value };
         });
-        return changed ? { ...def, rows: next } : null;
+        return changed
+          ? ({ ...def, rows: next } as unknown as FieldDefinition)
+          : null;
       });
       if (!result) return false;
       set({ normalized: result });
@@ -616,10 +644,12 @@ export function createFormStore(initial?: FormDefinition): FormStore {
 
     removeRow: (fieldId, rowId) => {
       const result = patchField(get().normalized, fieldId, (def) => {
-        const rows = def.rows;
+        const rows = (def as unknown as { rows?: MatrixRow[] }).rows;
         if (!rows) return null;
         const next = rows.filter((r) => r.id !== rowId);
-        return next.length !== rows.length ? { ...def, rows: next } : null;
+        return next.length !== rows.length
+          ? ({ ...def, rows: next } as unknown as FieldDefinition)
+          : null;
       });
       if (!result) return false;
       set({ normalized: result });
@@ -631,14 +661,24 @@ export function createFormStore(initial?: FormDefinition): FormStore {
       const node = normalized.byId[fieldId];
       if (!node) return null;
 
-      const cols = node.definition.columns ?? [];
+      const cols =
+        (node.definition as { columns?: MatrixColumn[] }).columns ?? [];
       const eIds = new Set(cols.map((c) => c.id));
       const colId = generateColumnId(eIds, fieldId);
 
-      const result = patchField(normalized, fieldId, (def) => ({
-        ...def,
-        columns: [...(def.columns ?? []), { id: colId, value }],
-      }));
+      const result = patchField(
+        normalized,
+        fieldId,
+        (def) =>
+          ({
+            ...def,
+            columns: [
+              ...((def as unknown as { columns?: MatrixColumn[] }).columns ??
+                []),
+              { id: colId, value },
+            ],
+          } as unknown as FieldDefinition)
+      );
       if (!result) return null;
       set({ normalized: result });
       return colId;
@@ -646,7 +686,7 @@ export function createFormStore(initial?: FormDefinition): FormStore {
 
     updateColumn: (fieldId, columnId, value) => {
       const result = patchField(get().normalized, fieldId, (def) => {
-        const cols = def.columns;
+        const cols = (def as unknown as { columns?: MatrixColumn[] }).columns;
         if (!cols) return null;
         let changed = false;
         const next = cols.map((c) => {
@@ -655,7 +695,9 @@ export function createFormStore(initial?: FormDefinition): FormStore {
           changed = true;
           return { ...c, value };
         });
-        return changed ? { ...def, columns: next } : null;
+        return changed
+          ? ({ ...def, columns: next } as unknown as FieldDefinition)
+          : null;
       });
       if (!result) return false;
       set({ normalized: result });
@@ -664,10 +706,12 @@ export function createFormStore(initial?: FormDefinition): FormStore {
 
     removeColumn: (fieldId, columnId) => {
       const result = patchField(get().normalized, fieldId, (def) => {
-        const cols = def.columns;
+        const cols = (def as unknown as { columns?: MatrixColumn[] }).columns;
         if (!cols) return null;
         const next = cols.filter((c) => c.id !== columnId);
-        return next.length !== cols.length ? { ...def, columns: next } : null;
+        return next.length !== cols.length
+          ? ({ ...def, columns: next } as unknown as FieldDefinition)
+          : null;
       });
       if (!result) return false;
       set({ normalized: result });

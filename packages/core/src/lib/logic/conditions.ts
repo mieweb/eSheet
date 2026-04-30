@@ -5,9 +5,9 @@
 import type {
   Condition,
   ConditionalRule,
+  FieldDefinition,
   FieldResponse,
   FieldResponseMap,
-  FlatFieldDefinition,
   SelectedOption,
 } from '../types.js';
 import type { NormalizedDefinition } from '../functions/normalize.js';
@@ -72,7 +72,7 @@ export function evaluateRule(
  */
 export function evaluateCondition(
   condition: Condition,
-  definition: Omit<FlatFieldDefinition, 'fields'>,
+  definition: FieldDefinition,
   response: FieldResponse | undefined
 ): boolean {
   if (!condition.operator) return false;
@@ -96,8 +96,11 @@ export function evaluateCondition(
     typeof actual === 'string' &&
     isNaN(parseFloat(actual))
   ) {
-    if (definition.options) {
-      const opt = definition.options.find((o) => o.id === actual);
+    const defOpts = (
+      definition as { options?: { id: string; value: string }[] }
+    ).options;
+    if (defOpts) {
+      const opt = defOpts.find((o) => o.id === actual);
       if (opt) {
         const parsed = parseFloat(opt.value);
         if (!isNaN(parsed)) actual = parsed;
@@ -107,7 +110,8 @@ export function evaluateCondition(
 
   // Decide numeric vs string path
   const isNumericText =
-    definition.fieldType === 'text' && definition.inputType === 'number';
+    definition.fieldType === 'text' &&
+    (definition as { inputType?: string }).inputType === 'number';
   const isNumeric =
     NUMERIC_OPERATORS.has(operator) ||
     typeof actual === 'number' ||
@@ -744,7 +748,7 @@ function buildExpressionData(
 }
 
 function getExpressionFieldValue(
-  definition: Omit<FlatFieldDefinition, 'fields'>,
+  definition: FieldDefinition,
   response: FieldResponse | undefined
 ): unknown {
   if (!response) return '';
@@ -798,7 +802,7 @@ function getExpressionFieldValue(
 // ---------------------------------------------------------------------------
 
 function getActualValue(
-  definition: Omit<FlatFieldDefinition, 'fields'>,
+  definition: FieldDefinition,
   response: FieldResponse | undefined
 ): string | string[] | Record<string, unknown> | null {
   if (!response) return null;

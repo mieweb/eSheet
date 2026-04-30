@@ -6,6 +6,9 @@ import type {
   FieldDefinition,
   FieldType,
   ConditionalRule,
+  SectionFieldDefinition,
+  RadioFieldDefinition,
+  SingleMatrixFieldDefinition,
 } from '../types.js';
 
 // ---------------------------------------------------------------------------
@@ -225,8 +228,10 @@ describe('createFormStore', () => {
         store = createFormStore(form([]));
         const id = store.getState().addField('radio');
         const def = store.getState().normalized.byId[id!].definition;
-        expect(def.options!.length).toBeGreaterThan(0);
-        expect(def.options![0].id).toBeTruthy();
+        expect((def as RadioFieldDefinition).options!.length).toBeGreaterThan(
+          0
+        );
+        expect((def as RadioFieldDefinition).options![0].id).toBeTruthy();
       });
 
       it('prefills question and option values for choice fields', () => {
@@ -234,21 +239,18 @@ describe('createFormStore', () => {
         const id = store.getState().addField('radio');
         const def = store.getState().normalized.byId[id!].definition;
         expect(def.question).toBe('Radio question');
-        expect(def.options?.map((o) => o.value)).toEqual([
-          'Option 1',
-          'Option 2',
-          'Option 3',
-        ]);
+        expect(
+          (def as RadioFieldDefinition).options?.map((o) => o.value)
+        ).toEqual(['Option 1', 'Option 2', 'Option 3']);
       });
 
       it('uses type-specific option defaults for boolean fields', () => {
         store = createFormStore(form([]));
         const id = store.getState().addField('boolean');
         const def = store.getState().normalized.byId[id!].definition;
-        expect(def.options?.slice(0, 2).map((o) => o.value)).toEqual([
-          'Yes',
-          'No',
-        ]);
+        expect(
+          (def as RadioFieldDefinition).options?.slice(0, 2).map((o) => o.value)
+        ).toEqual(['Yes', 'No']);
       });
 
       it('keeps caller patch values over generated defaults', () => {
@@ -264,15 +266,21 @@ describe('createFormStore', () => {
         });
         const def = store.getState().normalized.byId[id!].definition;
         expect(def.question).toBe('Preferred color?');
-        expect(def.options?.map((o) => o.value)).toEqual(['Red', 'Blue']);
+        expect(
+          (def as RadioFieldDefinition).options?.map((o) => o.value)
+        ).toEqual(['Red', 'Blue']);
       });
 
       it('auto-generates rows and columns for matrix fields', () => {
         store = createFormStore(form([]));
         const id = store.getState().addField('singlematrix');
         const def = store.getState().normalized.byId[id!].definition;
-        expect(def.rows!.length).toBeGreaterThan(0);
-        expect(def.columns!.length).toBeGreaterThan(0);
+        expect(
+          (def as SingleMatrixFieldDefinition).rows!.length
+        ).toBeGreaterThan(0);
+        expect(
+          (def as SingleMatrixFieldDefinition).columns!.length
+        ).toBeGreaterThan(0);
       });
 
       it('assigns correct indices to siblings', () => {
@@ -485,7 +493,10 @@ describe('createFormStore', () => {
         store = createFormStore(form([field('q1', 'text')]));
         const id = store.getState().addOption('q1', 'Yes');
         expect(id).toBeTruthy();
-        const opts = store.getState().normalized.byId['q1'].definition.options;
+        const opts = (
+          store.getState().normalized.byId['q1']
+            .definition as RadioFieldDefinition
+        ).options;
         expect(opts).toEqual([{ id, value: 'Yes' }]);
       });
 
@@ -493,7 +504,10 @@ describe('createFormStore', () => {
         store = createFormStore(form([field('q1', 'text')]));
         const id = store.getState().addOption('q1', 'Old');
         expect(store.getState().updateOption('q1', id!, 'New')).toBe(true);
-        const opts = store.getState().normalized.byId['q1'].definition.options;
+        const opts = (
+          store.getState().normalized.byId['q1']
+            .definition as RadioFieldDefinition
+        ).options;
         expect(opts![0].value).toBe('New');
       });
 
@@ -502,7 +516,10 @@ describe('createFormStore', () => {
         const id = store.getState().addOption('q1', 'X');
         expect(store.getState().removeOption('q1', id!)).toBe(true);
         const opts =
-          store.getState().normalized.byId['q1'].definition.options ?? [];
+          (
+            store.getState().normalized.byId['q1']
+              .definition as RadioFieldDefinition
+          ).options ?? [];
         expect(opts).toEqual([]);
       });
 
@@ -519,19 +536,28 @@ describe('createFormStore', () => {
         store = createFormStore(form([field('m1', 'singlematrix')]));
         const rowId = store.getState().addRow('m1', 'Row 1');
         expect(rowId).toBeTruthy();
-        expect(store.getState().normalized.byId['m1'].definition.rows).toEqual([
-          { id: rowId, value: 'Row 1' },
-        ]);
+        expect(
+          (
+            store.getState().normalized.byId['m1']
+              .definition as SingleMatrixFieldDefinition
+          ).rows
+        ).toEqual([{ id: rowId, value: 'Row 1' }]);
 
         store.getState().updateRow('m1', rowId!, 'Updated');
         expect(
-          store.getState().normalized.byId['m1'].definition.rows![0].value
+          (
+            store.getState().normalized.byId['m1']
+              .definition as SingleMatrixFieldDefinition
+          ).rows![0].value
         ).toBe('Updated');
 
         store.getState().removeRow('m1', rowId!);
-        expect(store.getState().normalized.byId['m1'].definition.rows).toEqual(
-          []
-        );
+        expect(
+          (
+            store.getState().normalized.byId['m1']
+              .definition as SingleMatrixFieldDefinition
+          ).rows
+        ).toEqual([]);
       });
     });
 
@@ -541,17 +567,26 @@ describe('createFormStore', () => {
         const colId = store.getState().addColumn('m1', 'Col 1');
         expect(colId).toBeTruthy();
         expect(
-          store.getState().normalized.byId['m1'].definition.columns
+          (
+            store.getState().normalized.byId['m1']
+              .definition as SingleMatrixFieldDefinition
+          ).columns
         ).toEqual([{ id: colId, value: 'Col 1' }]);
 
         store.getState().updateColumn('m1', colId!, 'Updated');
         expect(
-          store.getState().normalized.byId['m1'].definition.columns![0].value
+          (
+            store.getState().normalized.byId['m1']
+              .definition as SingleMatrixFieldDefinition
+          ).columns![0].value
         ).toBe('Updated');
 
         store.getState().removeColumn('m1', colId!);
         expect(
-          store.getState().normalized.byId['m1'].definition.columns
+          (
+            store.getState().normalized.byId['m1']
+              .definition as SingleMatrixFieldDefinition
+          ).columns
         ).toEqual([]);
       });
     });
@@ -727,9 +762,10 @@ describe('createFormStore', () => {
       const def = store.getState().hydrateDefinition();
       expect(def.fields).toHaveLength(2);
       expect(def.fields[0].id).toBe('s1');
-      expect(def.fields[0].fields).toHaveLength(2);
-      expect(def.fields[0].fields![0].id).toBe('c1');
-      expect(def.fields[0].fields![1].id).toBe('c2');
+      const sec0 = def.fields[0] as SectionFieldDefinition;
+      expect(sec0.fields).toHaveLength(2);
+      expect(sec0.fields![0].id).toBe('c1');
+      expect(sec0.fields![1].id).toBe('c2');
       expect(def.fields[1].id).toBe('q1');
     });
 

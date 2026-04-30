@@ -9,7 +9,6 @@
 import type {
   FormDefinition,
   FieldDefinition,
-  FlatFieldDefinition,
   FieldOption,
   MatrixRow,
   MatrixColumn,
@@ -741,7 +740,6 @@ function ruleToSurveyExpr(rule: ConditionalRule): string {
 
 function fieldToSurveyElement(field: FieldDefinition): SurveyJSElement {
   const meta = field._sourceData as SurveyJSFieldMeta | null | undefined;
-  const flat = field as FlatFieldDefinition;
 
   // Restore original SurveyJS name if available; otherwise convert id back
   const name = meta?.surveyName ?? field.id;
@@ -800,7 +798,7 @@ function fieldToSurveyElement(field: FieldDefinition): SurveyJSElement {
   switch (field.fieldType) {
     case 'text':
     case 'longtext': {
-      const inputType = flat.inputType;
+      const inputType = field.inputType;
       if (inputType && inputType !== 'string') {
         el.inputType = ESHEET_INPUT_TO_SURVEY[inputType] ?? inputType;
       }
@@ -812,7 +810,7 @@ function fieldToSurveyElement(field: FieldDefinition): SurveyJSElement {
     case 'multiselectdropdown':
     case 'ranking':
     case 'rating':
-      el.choices = (flat.options ?? []).map((o) =>
+      el.choices = (field.options ?? []).map((o) =>
         o.text !== undefined
           ? {
               value: o.value,
@@ -824,33 +822,33 @@ function fieldToSurveyElement(field: FieldDefinition): SurveyJSElement {
       break;
     case 'singlematrix':
     case 'multimatrix':
-      el.rows = (flat.rows ?? []).map((r) => ({ value: r.id, text: r.value }));
-      el.columns = (flat.columns ?? []).map((c) => ({
+      el.rows = (field.rows ?? []).map((r) => ({ value: r.id, text: r.value }));
+      el.columns = (field.columns ?? []).map((c) => ({
         value: c.id,
         text: c.value,
         ...(c.score !== undefined ? { score: c.score } : {}),
       }));
       break;
     case 'image':
-      if (flat.imageUri) el.imageLink = flat.imageUri;
-      if (flat.altText) el.altText = flat.altText;
+      if (field.imageUri) el.imageLink = field.imageUri;
+      if (field.altText) el.altText = field.altText;
       break;
     case 'html':
       // expression type: restore expression property instead of html
       if (type === 'expression') {
-        el.expression = flat.htmlContent ?? '';
+        el.expression = field.htmlContent ?? '';
       } else {
-        el.html = flat.htmlContent ?? '';
+        el.html = field.htmlContent ?? '';
       }
       break;
     case 'multitext':
-      el.items = (flat.options ?? []).map((o) => ({
+      el.items = (field.options ?? []).map((o) => ({
         name: o.value,
         title: o.text ?? o.value,
       }));
       break;
     case 'section':
-      el.elements = (flat.fields ?? []).map(fieldToSurveyElement);
+      el.elements = (field.fields ?? []).map(fieldToSurveyElement);
       break;
   }
 
@@ -886,12 +884,11 @@ export function exportToSurveyJS(form: FormDefinition): SurveyJSSchema {
     }
     for (const field of form.fields) {
       if (field.fieldType !== 'section') continue;
-      const flat = field as FlatFieldDefinition;
       const meta = field._sourceData as SurveyJSFieldMeta | null | undefined;
       pages.push({
         name: meta?.surveyName ?? field.id,
-        title: flat.title ?? field.question,
-        elements: (flat.fields ?? []).map(fieldToSurveyElement),
+        title: field.title ?? field.question,
+        elements: (field.fields ?? []).map(fieldToSurveyElement),
       });
     }
     return {

@@ -2,7 +2,7 @@
 // Normalization — tree → flat indexed map
 // ---------------------------------------------------------------------------
 
-import type { FieldDefinition, FlatFieldDefinition } from '../types.js';
+import type { FieldDefinition, SectionFieldDefinition } from '../types.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -11,7 +11,7 @@ import type { FieldDefinition, FlatFieldDefinition } from '../types.js';
 /** A field definition wrapped with tree-position metadata. */
 export interface FieldNode {
   /** The field definition (without nested `fields` — children are tracked via `childIds`). */
-  readonly definition: Omit<FlatFieldDefinition, 'fields'>;
+  readonly definition: FieldDefinition;
   /** Parent section ID, or `null` for top-level fields. */
   readonly parentId: string | null;
   /** Ordered child field IDs (non-empty only for sections). */
@@ -55,9 +55,9 @@ export function normalizeDefinition(
 
     for (let i = 0; i < defs.length; i++) {
       const def = defs[i];
-      // Cast to access all properties - we handle fieldType-specific logic below
-      const defFlat = def as FlatFieldDefinition;
-      const { fields: children, ...rest } = defFlat;
+      // Cast to SectionFieldDefinition to destructure out the recursive `fields` array.
+      // For non-section fields the cast is safe at runtime (fields is absent/undefined).
+      const { fields: children, ...rest } = def as SectionFieldDefinition;
 
       const childIds =
         def.fieldType === 'section' && Array.isArray(children)
@@ -65,7 +65,7 @@ export function normalizeDefinition(
           : [];
 
       byId[def.id] = {
-        definition: rest,
+        definition: rest as FieldDefinition,
         parentId,
         childIds,
         index: i,
@@ -102,12 +102,14 @@ export function hydrateDefinition(
       const node = normalized.byId[id];
       if (!node) return { id, fieldType: 'text' } as FieldDefinition;
 
-      // Use FlatFieldDefinition to allow setting `fields` property
-      const def = { ...node.definition } as FlatFieldDefinition;
+      // Use an intersection type to allow adding the recursive `fields` array for sections.
+      const def = { ...node.definition } as FieldDefinition & {
+        fields?: FieldDefinition[];
+      };
       if (node.childIds.length > 0) {
         def.fields = build(node.childIds);
       }
-      return def as FieldDefinition;
+      return def;
     });
   }
 

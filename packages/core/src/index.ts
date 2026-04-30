@@ -34,8 +34,6 @@ export {
   type Condition,
   type ConditionalRule,
   type FieldDefinition,
-  type FlatFieldDefinition,
-  type FlatFieldWithoutFields,
   // Per-field-type interfaces (discriminated union members)
   type TextFieldDefinition,
   type LongtextFieldDefinition,
