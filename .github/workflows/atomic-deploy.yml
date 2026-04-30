@@ -103,6 +103,9 @@ jobs:
 
           command -v rsync >/dev/null 2>&1 || sudo apt-get install -y rsync
 
+          # Clear any per-package node_modules that may be owned by a different user
+          # (e.g. from a previous deploy run as root), which would cause EACCES on npm ci.
+          sudo rm -rf packages/*/node_modules
           npm ci --legacy-peer-deps
           bash deploy/scripts/workflow/atomic-deploy.sh
           EOF
