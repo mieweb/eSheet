@@ -1,6 +1,7 @@
 {
-  "name": "@esheet/renderer-blaze",
+  "name": "@esheet/adapters",
   "version": "0.0.2",
+  "description": "Convert external form schemas (SurveyJS, etc.) to eSheet FormDefinition",
   "repository": {
     "type": "git",
     "url": "https://github.com/mieweb/eSheet"
@@ -9,16 +10,16 @@
     "access": "public"
   },
   "type": "module",
-  "main": "./dist/blaze.js",
-  "module": "./dist/blaze.js",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "@esheet/source": "./src/index.tsx",
+      "@esheet/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
-      "import": "./dist/blaze.js",
-      "default": "./dist/blaze.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     }
   },
   "files": [
@@ -27,13 +28,12 @@
   ],
   "nx": {
     "tags": [
-      "scope:renderer"
+      "scope:adapters"
     ]
   },
   "dependencies": {
-    "@esheet/renderer": "0.0.2-0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "@esheet/core": "0.0.2",
     "tslib": "^2.3.0"
-  }
+  },
+  "devDependencies": {}
 }

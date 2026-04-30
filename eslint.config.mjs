@@ -8,6 +8,7 @@ export default [
     ignores: [
       '**/dist',
       '**/build',
+      '**/.docusaurus',
       '**/vite.config.*.timestamp*',
       '**/vitest.config.*.timestamp*',
     ],
@@ -31,6 +32,7 @@ export default [
                 'scope:core',
                 'scope:fields',
                 'scope:renderer',
+                'scope:adapters',
               ],
             },
             {
@@ -39,11 +41,27 @@ export default [
                 'scope:core',
                 'scope:builder',
                 'scope:fields',
+                'scope:adapters',
               ],
             },
             {
               sourceTag: 'scope:fields',
               onlyDependOnLibsWithTags: ['scope:core'],
+            },
+            {
+              sourceTag: 'scope:ai-gateway',
+              onlyDependOnLibsWithTags: ['scope:core'],
+            },
+            {
+              // Private apps can depend on any internal library
+              sourceTag: 'npm:private',
+              onlyDependOnLibsWithTags: [
+                'scope:core',
+                'scope:fields',
+                'scope:builder',
+                'scope:renderer',
+                'scope:ai-gateway',
+              ],
             },
           ],
         },

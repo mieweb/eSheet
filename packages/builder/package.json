@@ -1,6 +1,6 @@
 {
   "name": "@esheet/builder",
-  "version": "0.0.2-0",
+  "version": "0.0.2",
   "repository": {
     "type": "git",
     "url": "https://github.com/mieweb/eSheet"
@@ -38,8 +38,9 @@
     ]
   },
   "dependencies": {
-    "@esheet/core": "0.x",
-    "@esheet/fields": "0.x",
+    "@esheet/adapters": "0.0.2",
+    "@esheet/core": "0.0.2-0",
+    "@esheet/fields": "0.0.2-0",
     "@monaco-editor/react": "^4.7.0",
     "js-yaml": "^4.1.1",
     "react": "^19.2.4",

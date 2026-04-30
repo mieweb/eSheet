@@ -6,9 +6,12 @@
     "name": "demo"
   },
   "dependencies": {
-    "@esheet/builder": "0.x",
-    "@esheet/fields": "0.x",
-    "@esheet/renderer": "0.x",
+    "@esheet/adapters": "0.0.2",
+    "@esheet/builder": "0.0.2",
+    "@esheet/core": "0.0.2",
+    "@esheet/fields": "0.0.2",
+    "@esheet/renderer": "0.0.2",
+    "@mieweb/ui": "^0.2.4",
     "react-router-dom": "^7.11.0"
   }
 }
