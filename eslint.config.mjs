@@ -8,6 +8,7 @@ export default [
     ignores: [
       '**/dist',
       '**/build',
+      '**/.docusaurus',
       '**/vite.config.*.timestamp*',
       '**/vitest.config.*.timestamp*',
     ],
