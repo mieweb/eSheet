@@ -23,7 +23,7 @@ jobs:
           node-version: 24
           cache: 'npm'
 
-      - run: npm ci --legacy-peer-deps --include=optional
+      - run: npm ci --include=optional
 
       - run: npx nx format:check --base="$NX_BASE"
       - run: npx nx run-many -t lint test build typecheck
