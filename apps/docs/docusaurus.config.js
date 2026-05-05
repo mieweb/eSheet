@@ -1,5 +1,12 @@
 // @ts-check
+import dotenv from 'dotenv';
+import { resolve } from 'path';
 import { themes as prismThemes } from 'prism-react-renderer';
+
+// Load .env.local from workspace root — try __dirname-relative first,
+// then fall back to CWD-relative (handles nx run-many from repo root).
+dotenv.config({ path: resolve(__dirname, '../../.env.local') });
+dotenv.config({ path: resolve(process.cwd(), '.env.local') });
 
 const isDev = process.env.NODE_ENV !== 'production';
 const siteOrigin =
@@ -28,6 +35,18 @@ const config = {
   customFields: {
     demoUrl,
   },
+
+  // Ozwell chat widget — CDN embed approach.
+  // ozwell-config.js sets window.OzwellChatConfig synchronously before the
+  // loader runs, so no headTags trick is needed and it works in dev + prod.
+  scripts: [
+    { src: '/js/ozwell-config.js' },
+    {
+      src: 'https://ozwell-dev-refserver.opensource.mieweb.org/embed/ozwell-loader.js',
+      async: true,
+    },
+    { src: '/js/ozwell-tools.js', async: true },
+  ],
 
   i18n: {
     defaultLocale: 'en',
