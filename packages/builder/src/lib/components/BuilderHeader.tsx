@@ -16,6 +16,10 @@ import {
 import {
   importFromMcp,
   exportToMcp,
+  convertSurveyJS,
+  isSurveyJSSchema,
+  isMcpElicitationRequest,
+  type McpElicitationRequest,
   type McpElicitationSchema,
 } from '@esheet/adapters';
 import {
@@ -376,45 +380,43 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
         const parsed = isYaml ? YAML.load(content) : JSON.parse(content);
 
         // Auto-detect MCP elicitation schema (JSON only).
-        // Accepts: full elicitation/create request, params object, or raw requestedSchema.
+        // Accepts: full elicitation/create envelope or raw requestedSchema object.
         if (!isYaml) {
-          const p = parsed as Record<string, unknown>;
-          const params = p?.params as Record<string, unknown> | undefined;
-
-          // URL mode — no requestedSchema, nothing to import as a form.
-          const mode = params?.mode ?? p?.mode;
-          if (mode === 'url') {
+          if (isMcpElicitationRequest(parsed)) {
+            const mcpReq = parsed as McpElicitationRequest;
+            if (mcpReq.params.mode === 'url') {
+              showFeedback(
+                'error',
+                'URL Mode Not Supported',
+                'This MCP elicitation uses URL mode (out-of-band). Only form mode schemas can be imported into the builder.'
+              );
+              return;
+            }
+            const formDef = importFromMcp(
+              mcpReq.params.requestedSchema as McpElicitationSchema,
+              {
+                formId: form.getState().hydrateDefinition().id || 'mcp-form',
+                ...(typeof mcpReq.params.message === 'string' && mcpReq.params.message.length > 0
+                  ? { description: mcpReq.params.message }
+                  : {}),
+                mcpId: mcpReq.id,
+                mcpMessage: mcpReq.params.message,
+              }
+            );
+            form.getState().loadDefinition(formDef);
             showFeedback(
-              'error',
-              'URL Mode Not Supported',
-              'This MCP elicitation uses URL mode (out-of-band). Only form mode schemas can be imported into the builder.'
+              'success',
+              'Import Successful',
+              `Loaded ${formDef.fields.length} field(s) from MCP elicitation schema.`
             );
             return;
           }
 
-          let mcpSchema: McpElicitationSchema | undefined;
-          if (params?.requestedSchema) {
-            mcpSchema = params.requestedSchema as McpElicitationSchema;
-          } else if (p?.requestedSchema) {
-            mcpSchema = p.requestedSchema as McpElicitationSchema;
-          } else if (p?.type === 'object' && p?.properties) {
-            mcpSchema = p as unknown as McpElicitationSchema;
-          }
-
-          if (mcpSchema) {
-            const message = params?.message ?? p?.message;
-            const mcpId = p?.id ?? params?.id;
-            const mcpMeta = p?.meta;
-            const formDef = importFromMcp(mcpSchema, {
+          // Raw requestedSchema: { type: 'object', properties: {...} }
+          const p = parsed as Record<string, unknown>;
+          if (p?.type === 'object' && p?.properties) {
+            const formDef = importFromMcp(p as unknown as McpElicitationSchema, {
               formId: form.getState().hydrateDefinition().id || 'mcp-form',
-              ...(typeof message === 'string' && message.length > 0
-                ? { description: message }
-                : {}),
-              ...(mcpId !== undefined
-                ? { mcpId: mcpId as string | number }
-                : {}),
-              ...(typeof message === 'string' ? { mcpMessage: message } : {}),
-              ...(mcpMeta !== undefined ? { mcpMeta } : {}),
             });
             form.getState().loadDefinition(formDef);
             showFeedback(
@@ -424,6 +426,19 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
             );
             return;
           }
+        }
+
+        if (!isYaml && isSurveyJSSchema(parsed)) {
+          const formDef = convertSurveyJS(
+            parsed as Parameters<typeof convertSurveyJS>[0]
+          );
+          form.getState().loadDefinition(formDef);
+          showFeedback(
+            'success',
+            'Import Successful',
+            `Loaded ${formDef.fields.length} field(s) from SurveyJS schema.`
+          );
+          return;
         }
 
         const validated = formDefinitionSchema.safeParse(parsed);

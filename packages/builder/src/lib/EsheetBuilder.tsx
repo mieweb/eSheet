@@ -8,6 +8,7 @@ import {
   type UIStore,
 } from '@esheet/core';
 import { FormStoreContext, UIContext } from '@esheet/fields';
+import { convertSurveyJS, isSurveyJSSchema, importFromMcp, isMcpElicitationRequest, type McpElicitationRequest, type McpElicitationSchema } from '@esheet/adapters';
 import { Canvas } from './components/Canvas.js';
 import { ToolPanel } from './components/ToolPanel.js';
 import { EditPanel } from './components/edit-panel/EditPanel.js';
@@ -38,8 +39,8 @@ export function useInstanceId(): string {
 // ---------------------------------------------------------------------------
 
 export interface EsheetBuilderProps {
-  /** Initial form definition to load. */
-  definition?: FormDefinition;
+  /** Initial form definition to load. Also accepts SurveyJS or MCP elicitation schemas, which are auto-converted. */
+  definition?: FormDefinition | Record<string, unknown>;
   /** Callback fired when the form definition changes. */
   onChange?: (definition: FormDefinition) => void;
   /** Whether drag-and-drop reordering is enabled (default: true). Disable for better performance on slow devices. */
@@ -112,7 +113,21 @@ export function EsheetBuilder({
   const uiRef = React.useRef<UIStore | null>(null);
 
   if (!formRef.current) {
-    formRef.current = createFormStore(definition);
+    let resolved: FormDefinition | undefined;
+    if (isSurveyJSSchema(definition)) {
+      resolved = convertSurveyJS(definition as Parameters<typeof convertSurveyJS>[0]);
+    } else if (isMcpElicitationRequest(definition)) {
+      const mcpReq = definition as McpElicitationRequest;
+      if (mcpReq.params.mode !== 'url') {
+        resolved = importFromMcp(
+          mcpReq.params.requestedSchema as McpElicitationSchema,
+          { mcpId: mcpReq.id, mcpMessage: mcpReq.params.message }
+        );
+      }
+    } else {
+      resolved = definition as FormDefinition | undefined;
+    }
+    formRef.current = createFormStore(resolved);
   }
   if (!uiRef.current) {
     uiRef.current = createUIStore();

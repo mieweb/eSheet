@@ -636,8 +636,10 @@ export function convertSurveyJSToESheet(
       if (survey.pages.length === 1) {
         fields.push(...page.elements.map((el) => convertElement(el)));
       } else {
-        // Multiple pages become sections
-        const sectionId = toKebabCase(page.name ?? page.title ?? 'page');
+        // Multiple pages become sections — prefix with "page-" to avoid
+        // collisions when a page name matches one of its element names.
+        const sectionId =
+          'page-' + toKebabCase(page.name ?? page.title ?? 'page');
         const sectionAncestors = new Set([sectionId]);
         fields.push({
           id: sectionId,
@@ -919,3 +921,24 @@ export const importFromSurveyJS = convertSurveyJSToESheet;
  * Alias for importFromSurveyJS / convertSurveyJSToESheet.
  */
 export const convertSurveyJS = convertSurveyJSToESheet;
+
+/** Minimal SurveyJS schema shape for detection. */
+export interface SurveyJSDetectionSchema {
+  pages?: unknown[];
+  elements?: unknown[];
+}
+
+/**
+ * Type guard — returns true if the value looks like a SurveyJS schema
+ * (has top-level `pages` or `elements` array but NOT eSheet's `fields` property).
+ */
+export function isSurveyJSSchema(
+  value: unknown
+): value is SurveyJSDetectionSchema {
+  if (typeof value !== 'object' || value === null) return false;
+  const v = value as Record<string, unknown>;
+  const hasPages = Array.isArray(v['pages']);
+  const hasElements = Array.isArray(v['elements']);
+  const hasESheetFields = typeof v['fields'] !== 'undefined';
+  return (hasPages || hasElements) && !hasESheetFields;
+}

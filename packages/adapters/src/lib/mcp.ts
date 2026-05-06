@@ -120,6 +120,15 @@ export interface McpElicitationRequest {
  * `minimum`, `maximum`, `minItems`, `maxItems`) are preserved in each
  * field's `_sourceData` so they survive a round-trip export.
  */
+/** Type guard — detects an MCP elicitation/create JSON-RPC envelope. */
+export function isMcpElicitationRequest(
+  value: unknown
+): value is McpElicitationRequest {
+  if (typeof value !== 'object' || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return v['jsonrpc'] === '2.0' && v['method'] === 'elicitation/create';
+}
+
 export function importFromMcp(
   schema: McpElicitationSchema,
   options?: {

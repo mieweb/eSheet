@@ -7,7 +7,7 @@ import {
   type FormStore,
   type UIStore,
 } from '@esheet/core';
-import { importFromMcp, convertSurveyJS } from '@esheet/adapters';
+import { importFromMcp, convertSurveyJS, isSurveyJSSchema, isMcpElicitationRequest, type McpElicitationRequest } from '@esheet/adapters';
 
 /**
  * Initialize renderer with form definition.
@@ -110,33 +110,6 @@ export function useRendererInit(
   }, [form, ui, formData, initialResponses, onValidationError, strict]);
 }
 
-/** Type guard — detects an MCP elicitation/create JSON-RPC envelope. */
-interface McpElicitationRequest {
-  jsonrpc: '2.0';
-  method: 'elicitation/create';
-  id: string | number;
-  params: { mode?: string; message?: string; requestedSchema: unknown };
-}
-function isMcpElicitationRequest(
-  value: unknown
-): value is McpElicitationRequest {
-  if (typeof value !== 'object' || value === null) return false;
-  const v = value as Record<string, unknown>;
-  return v['jsonrpc'] === '2.0' && v['method'] === 'elicitation/create';
-}
 
-/** Minimal SurveyJS schema shape for detection. */
-interface SurveyJSSchema {
-  pages?: unknown[];
-  elements?: unknown[];
-}
-/** Type guard — detects a SurveyJS schema (has top-level pages or elements array). */
-function isSurveyJSSchema(value: unknown): value is SurveyJSSchema {
-  if (typeof value !== 'object' || value === null) return false;
-  const v = value as Record<string, unknown>;
-  const hasPages = Array.isArray(v['pages']);
-  const hasElements = Array.isArray(v['elements']);
-  // SurveyJS schemas have pages/elements but NOT eSheet's required fields
-  const hasESheetFields = typeof v['fields'] !== 'undefined';
-  return (hasPages || hasElements) && !hasESheetFields;
-}
+
+
