@@ -20,6 +20,11 @@ html,
 body {
   height: 100%;
   margin: 0;
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
 }
 
 #root {
@@ -29,4 +34,26 @@ body {
 body {
   font-family: system-ui, sans-serif;
   @apply bg-neutral-50 text-neutral-800 dark:bg-neutral-900 dark:text-neutral-100;
+}
+
+/* Override Chrome autofill background in dark mode */
+[data-theme='dark'] input:-webkit-autofill,
+[data-theme='dark'] input:-webkit-autofill:hover,
+[data-theme='dark'] input:-webkit-autofill:focus,
+[data-theme='dark'] select:-webkit-autofill,
+[data-theme='dark'] textarea:-webkit-autofill {
+  -webkit-text-fill-color: theme(--color-neutral-100);
+  -webkit-box-shadow: 0 0 0px 1000px theme(--color-neutral-800) inset;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Light mode autofill (consistent styling) */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+select:-webkit-autofill,
+textarea:-webkit-autofill {
+  -webkit-text-fill-color: theme(--color-neutral-800);
+  -webkit-box-shadow: 0 0 0px 1000px theme(--color-neutral-50) inset;
+  transition: background-color 5000s ease-in-out 0s;
 }

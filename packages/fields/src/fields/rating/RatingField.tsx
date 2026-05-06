@@ -33,7 +33,7 @@ export const RatingField = React.memo(function RatingField({
           {isRequired && <span className="ms:text-msdanger ms:ml-0.5">*</span>}
         </div>
         {options.length > 0 ? (
-          <div className="ms:inline-flex ms:w-fit ms:border ms:border-msborder ms:rounded ms:overflow-hidden">
+          <div className="ms:inline-flex ms:w-fit ms:self-start ms:border ms:border-msborder ms:rounded ms:overflow-hidden">
             {options.map((option, index) => {
               const isSelected = selectedIndex === index;
 

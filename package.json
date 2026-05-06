@@ -70,7 +70,8 @@
     }
   },
   "dependencies": {
-    "@mieweb/ui": "^0.2.4",
+    "@mieweb/ui": "^0.3.0-dev.106",
+    "@parcel/watcher-darwin-arm64": "^2.5.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

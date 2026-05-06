@@ -25,6 +25,10 @@ export const SignatureField = React.memo(function SignatureField({
     [onResponse]
   );
 
+  const isDark =
+    typeof document !== 'undefined' &&
+    document.documentElement.getAttribute('data-theme') === 'dark';
+
   if (isPreview) {
     return (
       <div className="signature-field-preview ms:space-y-2 ms:pb-4">
@@ -36,10 +40,10 @@ export const SignatureField = React.memo(function SignatureField({
           config={{
             baseWidth: 600,
             baseHeight: 200,
-            strokeColor: '#000000',
+            strokeColor: isDark ? '#fafafa' : '#000000',
             strokeWidth: 2,
             hasEraser: false,
-            backgroundColor: '#ffffff',
+            backgroundColor: isDark ? '#404040' : '#ffffff',
           }}
           placeholder={def.padPlaceholder || 'Sign here'}
           existingData={response?.signatureData}
