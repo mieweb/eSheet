@@ -9,20 +9,20 @@
 /* Semantic color tokens (same as builder/fields)                      */
 /* ------------------------------------------------------------------ */
 @theme {
-  --color-msprimary: var(--color-primary, #3b82f6);
-  --color-mssecondary: var(--color-muted-foreground, #6b7280);
-  --color-msaccent: var(--color-success, #10b981);
-  --color-msdanger: var(--color-destructive, #ef4444);
-  --color-mswarning: var(--color-warning, #f97316);
-  --color-mssurface: var(--color-card, #ffffff);
-  --color-msborder: var(--color-border, #e5e7eb);
-  --color-msborderinactive: var(--color-muted-foreground, #9ca3af);
-  --color-mstext: var(--color-foreground, #111827);
-  --color-mstextsecondary: var(--color-primary-foreground, #f8fafc);
-  --color-mstextmuted: var(--color-muted-foreground, #6b7280);
-  --color-msbackground: var(--color-muted, #f9fafb);
-  --color-msbackgroundsecondary: var(--color-muted, #f3f4f6);
-  --color-msbackgroundhover: var(--color-muted, #eceef1);
+  --color-msprimary: var(--mieweb-primary-500, #3b82f6);
+  --color-mssecondary: var(--mieweb-muted-foreground, #6b7280);
+  --color-msaccent: var(--mieweb-success, #10b981);
+  --color-msdanger: var(--mieweb-destructive, #ef4444);
+  --color-mswarning: var(--mieweb-warning, #f97316);
+  --color-mssurface: var(--mieweb-card, #ffffff);
+  --color-msborder: var(--mieweb-border, #e5e7eb);
+  --color-msborderinactive: var(--mieweb-muted-foreground, #9ca3af);
+  --color-mstext: var(--mieweb-foreground, #111827);
+  --color-mstextsecondary: var(--mieweb-secondary-foreground, #f8fafc);
+  --color-mstextmuted: var(--mieweb-muted-foreground, #6b7280);
+  --color-msbackground: var(--mieweb-muted, #f5f5f5);
+  --color-msbackgroundsecondary: var(--mieweb-muted, #f3f4f6);
+  --color-msbackgroundhover: var(--mieweb-muted, #eceef1);
   --color-msoverlay: rgba(0, 0, 0, 0.5);
 }
 
@@ -51,33 +51,6 @@
   .esheet-renderer-root textarea {
     font: inherit;
   }
-}
-
-/* ------------------------------------------------------------------ */
-/* Dark mode variant — scoped to wrapper class                         */
-/* ------------------------------------------------------------------ */
-@custom-variant dark (&:where(.esheet-renderer-root.dark, .esheet-renderer-root.dark *));
-
-/* ------------------------------------------------------------------ */
-/* Dark mode theme overrides                                           */
-/* ------------------------------------------------------------------ */
-.esheet-renderer-root.dark {
-  --ms-color-msprimary: #6b7fa3; /* grayish-blue for dark mode */
-  --ms-color-mssecondary: #9ca3af; /* gray-400 */
-  --ms-color-msaccent: #34d399; /* green-400 */
-  --ms-color-msdanger: #f87171; /* red-400 */
-  --ms-color-mswarning: #fb923c; /* orange-400 */
-
-  --ms-color-mssurface: #252526; /* VS Code sidebar */
-  --ms-color-msborder: #3c3c3c; /* VS Code border */
-  --ms-color-msborderinactive: #5a5a5a; /* unchecked inputs */
-  --ms-color-mstext: #d4d4d4; /* VS Code foreground */
-  --ms-color-mstextsecondary: #1e1e1e; /* text on primary bg */
-  --ms-color-mstextmuted: #808080; /* VS Code muted text */
-  --ms-color-msbackground: #1e1e1e; /* VS Code editor background */
-  --ms-color-msbackgroundsecondary: #252526; /* VS Code sidebar */
-  --ms-color-msbackgroundhover: #2a2d2e; /* VS Code list hover */
-  --ms-color-msoverlay: rgba(0, 0, 0, 0.7); /* darker overlay for dark mode */
 }
 
 /* Matrix field grid layout: collapse @mieweb/ui wrapper elements in CSS grids */

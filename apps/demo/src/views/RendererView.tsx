@@ -192,8 +192,8 @@ export function RendererView() {
             className={[
               'max-w-4xl mx-auto rounded-2xl border px-4 py-4 shadow-sm',
               submitResult.kind === 'success'
-                ? 'border-emerald-200 bg-emerald-50 text-emerald-950'
-                : 'border-rose-200 bg-rose-50 text-rose-950',
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-950 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-100'
+                : 'border-rose-200 bg-rose-50 text-rose-950 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-100',
             ].join(' ')}
           >
             <h2 className="text-base font-semibold">{submitResult.title}</h2>
@@ -206,12 +206,12 @@ export function RendererView() {
               </ul>
             )}
             {submitResult.detail && (
-              <p className="mt-3 text-sm text-slate-700">
+              <p className="mt-3 text-sm text-slate-700 dark:text-slate-300">
                 {submitResult.detail}
               </p>
             )}
             {submitResult.data && (
-              <pre className="mt-3 p-3 bg-white/50 rounded-lg text-xs overflow-auto max-h-96 border border-emerald-200">
+              <pre className="mt-3 p-3 bg-white/50 dark:bg-white/10 rounded-lg text-xs overflow-auto max-h-96 border border-emerald-200 dark:border-emerald-800">
                 {JSON.stringify(submitResult.data, null, 2)}
               </pre>
             )}
@@ -219,7 +219,7 @@ export function RendererView() {
         </div>
       )}
 
-      <div className="demo-renderer-content bg-gray-100 pt-6 pb-20 min-h-[calc(100vh-3.5rem)]">
+      <div className="demo-renderer-content bg-gray-100 dark:bg-neutral-900 pt-6 pb-20 min-h-[calc(100vh-3.5rem)]">
         {/* SurveyJS conversion errors removed */}
         {rawInput == null ? (
           <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] gap-6">
@@ -257,13 +257,13 @@ export function RendererView() {
             </div>
             {showDefinition && (
               <div className="lg:sticky lg:top-20 lg:self-start space-y-4">
-                <div className="bg-white rounded-lg border border-slate-200 shadow-sm">
-                  <div className="px-4 py-2 border-b border-slate-200 bg-slate-50 rounded-t-lg">
-                    <h3 className="text-sm font-semibold text-slate-700">
+                <div className="bg-white dark:bg-neutral-800 rounded-lg border border-slate-200 dark:border-neutral-700 shadow-sm">
+                  <div className="px-4 py-2 border-b border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-900 rounded-t-lg">
+                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                       eSheet FormDefinition
                     </h3>
                   </div>
-                  <pre className="p-4 text-xs overflow-auto max-h-[40vh] text-slate-800">
+                  <pre className="p-4 text-xs overflow-auto max-h-[40vh] text-slate-800 dark:text-slate-200">
                     {definition
                       ? JSON.stringify(definition, null, 2)
                       : '(loading…)'}

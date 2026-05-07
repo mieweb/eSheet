@@ -5,28 +5,133 @@ const clamp = (v: number, lo: number, hi: number) =>
   Math.max(lo, Math.min(hi, v));
 
 /**
+ * Read the resolved --mieweb-* CSS custom properties from a DOM element
+ * so they can be forwarded into the sandboxed iframe (which cannot inherit
+ * parent-page variables across the frame boundary).
+ */
+const MIEWEB_VARS = [
+  '--mieweb-background',
+  '--mieweb-foreground',
+  '--mieweb-card',
+  '--mieweb-card-foreground',
+  '--mieweb-muted',
+  '--mieweb-muted-foreground',
+  '--mieweb-border',
+  '--mieweb-input',
+  '--mieweb-ring',
+  '--mieweb-primary-50',
+  '--mieweb-primary-100',
+  '--mieweb-primary-200',
+  '--mieweb-primary-300',
+  '--mieweb-primary-400',
+  '--mieweb-primary-500',
+  '--mieweb-primary-600',
+  '--mieweb-primary-700',
+  '--mieweb-primary-800',
+  '--mieweb-primary-900',
+  '--mieweb-primary-950',
+  '--mieweb-destructive',
+  '--mieweb-destructive-foreground',
+  '--mieweb-success',
+  '--mieweb-success-foreground',
+  '--mieweb-warning',
+  '--mieweb-warning-foreground',
+  '--mieweb-font-sans',
+  '--mieweb-font-mono',
+  '--mieweb-radius-none',
+  '--mieweb-radius-sm',
+  '--mieweb-radius-md',
+  '--mieweb-radius-lg',
+  '--mieweb-radius-xl',
+] as const;
+
+// Read --mieweb-* CSS vars at call time from the nearest themed root element.
+// Reading at render time (not in state) ensures values are always current,
+// including after dark mode toggles.
+function getThemeVars(): string {
+  const root = document.querySelector(
+    '.esheet-renderer-root, .ms-builder-root'
+  );
+  if (!root) return '';
+  const computed = getComputedStyle(root);
+  return MIEWEB_VARS.map(
+    (v) => `${v}: ${computed.getPropertyValue(v).trim()};`
+  ).join('\n    ');
+}
+
+function getFontFamily(): string {
+  const root = document.querySelector(
+    '.esheet-renderer-root, .ms-builder-root'
+  );
+  return root
+    ? getComputedStyle(root).fontFamily || 'sans-serif'
+    : 'sans-serif';
+}
+
+/**
+ * Extract the first font name from a CSS font-family string and return a
+ * Google Fonts <link> tag for it, or empty string if it's a system font.
+ */
+function buildFontLink(fontFamily: string): string {
+  const first = fontFamily.split(',')[0].trim().replace(/['"]/g, '');
+  // Skip generic/system fonts
+  if (
+    !first ||
+    /^(sans-serif|serif|monospace|system-ui|ui-sans-serif|inherit)$/i.test(
+      first
+    )
+  ) {
+    return '';
+  }
+  const encoded = encodeURIComponent(first);
+  return `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=${encoded}:wght@400;600;700&display=swap" />`;
+}
+
+/**
  * Wrap user-authored HTML in a minimal document shell that:
  *   - Sets UTF-8 charset and viewport meta
- *   - Applies a reset so content inherits page font / line-height
- *   - Does NOT inject theme variables (consumers write their own styles)
+ *   - Forwards resolved --mieweb-* brand variables from the parent page
+ *   - Applies base typography so content inherits the brand font / colors
+ *   - Allows override by styles inside the HTML content itself
  *
  * The outer `<iframe sandbox="">` attribute already blocks script execution,
- * plug-ins, form submission, and navigation — so this wrapper is purely for
- * a clean rendering context, not additional security.
+ * plug-ins, form submission, and navigation.
  */
 function buildIframeDoc(html: string): string {
   if (!html) return '';
+  const themeVars = getThemeVars();
+  const fontFamily = getFontFamily();
+  const fontLink = buildFontLink(fontFamily);
   return `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  ${fontLink}
   <style>
+    :root {
+    ${themeVars}
+    }
     *, *::before, *::after { box-sizing: border-box; }
-    html, body { margin: 0; padding: 16px; font-family: inherit; font-size: inherit; line-height: 1.5; }
+    html, body {
+      margin: 0;
+      padding: 16px;
+      font-family: ${fontFamily};
+      font-size: 1rem;
+      line-height: 1.5;
+      color: var(--mieweb-foreground);
+      background: transparent;
+      overflow-x: hidden;
+    }
+    a { color: var(--mieweb-primary-500); }
     img { max-width: 100%; height: auto; }
     table { border-collapse: collapse; width: 100%; }
-    th, td { border: 1px solid #e2e8f0; padding: 6px 10px; text-align: left; }
+    th, td { border: 1px solid var(--mieweb-border); padding: 6px 10px; text-align: left; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--mieweb-border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--mieweb-muted-foreground); }
+    * { scrollbar-width: thin; scrollbar-color: var(--mieweb-border) transparent; }
   </style>
 </head>
 <body>${html}</body>
@@ -44,6 +149,32 @@ export const HtmlField = React.memo(function HtmlField({
 
   const frameHeight = clamp(def.iframeHeight ?? 300, 50, 800);
   const [localHeight, setLocalHeight] = React.useState(frameHeight);
+  const [autoHeight, setAutoHeight] = React.useState<number | null>(null);
+
+  const handleIframeLoad = (e: React.SyntheticEvent<HTMLIFrameElement>) => {
+    const doc = e.currentTarget.contentDocument;
+    if (doc?.body) {
+      setAutoHeight(doc.body.scrollHeight + 32); // +32 for body padding
+    }
+  };
+
+  // Force re-render when dark mode toggles (data-theme on <html> or class on root)
+  const [, forceUpdate] = React.useReducer((x: number) => x + 1, 0);
+  React.useEffect(() => {
+    const targets: Element[] = [document.documentElement];
+    const root = document.querySelector(
+      '.esheet-renderer-root, .ms-builder-root'
+    );
+    if (root) targets.push(root);
+    const observer = new MutationObserver(forceUpdate);
+    targets.forEach((t) =>
+      observer.observe(t, {
+        attributes: true,
+        attributeFilter: ['class', 'data-theme'],
+      })
+    );
+    return () => observer.disconnect();
+  }, []);
 
   // Keep local slider in sync if the stored value changes externally.
   React.useEffect(() => {
@@ -56,17 +187,20 @@ export const HtmlField = React.memo(function HtmlField({
     onUpdate({ iframeHeight: h });
   };
 
+  const iframeDoc = buildIframeDoc(def.htmlContent ?? '');
+
   // --- Preview (display) mode ---
   if (isPreview) {
     return (
       <div className="html-field-preview">
         <iframe
-          srcDoc={buildIframeDoc(def.htmlContent ?? '')}
-          sandbox=""
+          srcDoc={iframeDoc}
+          sandbox="allow-same-origin"
           title="HTML content"
+          onLoad={handleIframeLoad}
           style={{
             width: '100%',
-            height: `${frameHeight}px`,
+            height: `${autoHeight ?? frameHeight}px`,
             border: 'none',
             display: 'block',
           }}
@@ -145,15 +279,14 @@ export const HtmlField = React.memo(function HtmlField({
         </p>
         <div className="ms:rounded-lg ms:border ms:border-msborder ms:overflow-hidden">
           <iframe
-            srcDoc={buildIframeDoc(def.htmlContent ?? '')}
-            sandbox=""
+            srcDoc={iframeDoc}
+            sandbox="allow-same-origin"
             title="HTML preview"
             style={{
               width: '100%',
               height: `${localHeight}px`,
               border: 'none',
               display: 'block',
-              background: '#fff',
             }}
           />
         </div>

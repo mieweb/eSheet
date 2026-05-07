@@ -15,7 +15,9 @@
     "noUnusedLocals": true,
     "skipLibCheck": true,
     "strict": true,
+    "allowArbitraryExtensions": true,
     "target": "es2022",
     "customConditions": ["@esheet/source"]
-  }
+  },
+  "include": ["types/**/*.d.ts"]
 }

@@ -30,76 +30,144 @@ export const SingleMatrixField = React.memo(function SingleMatrixField({
         </div>
 
         {rows.length > 0 && columns.length > 0 ? (
-          <div
-            className="singlematrix-field-grid ms:border-t ms:border-msborder ms:pt-3"
-            style={{
-              display: 'grid',
-              gridTemplateColumns: `auto repeat(${columns.length}, 1fr)`,
-              gap: '0.5rem 1rem',
-              alignItems: 'center',
-            }}
-          >
-            <div />
-            {columns.map((col) => (
-              <div
-                key={col.id}
-                className="ms:text-center ms:font-normal ms:text-mstext ms:py-1"
-              >
-                {col.value}
-              </div>
-            ))}
-
-            {rows.map((row, rowIndex) => (
-              <RadioGroup
-                key={row.id}
-                value={selected[row.id]?.id || ''}
-                onValueChange={(val) => {
-                  const updated: Record<string, SelectedOption> = {};
-                  for (const r of rows) {
-                    if (r.id === row.id) {
-                      const col = columns.find((c) => c.id === val);
-                      if (col) updated[r.id] = { id: col.id, value: col.value };
-                    } else if (selected[r.id]) {
-                      updated[r.id] = selected[r.id];
-                    }
-                  }
-                  onResponse({ selected: updated });
-                }}
-                disabled={!isEnabled}
-                orientation="horizontal"
-              >
-                <div className="ms:font-normal ms:text-mstext ms:py-2">
-                  {row.value}
-                </div>
-                {columns.map((col, colIndex) => {
-                  const inputId = `${instanceId}-singlematrix-answer-${def.id}-${rowIndex}-${colIndex}`;
-
-                  return (
-                    <div
-                      key={col.id}
-                      className="ms:flex ms:justify-center ms:py-2"
-                    >
-                      <Radio
-                        id={inputId}
-                        value={col.id}
-                        onClick={() => {
-                          if (selected[row.id]?.id === col.id) {
-                            const updated: Record<string, SelectedOption> = {};
-                            for (const r of rows) {
-                              if (r.id !== row.id && selected[r.id]) {
-                                updated[r.id] = selected[r.id];
+          <>
+            {/* Mobile: card-per-row layout */}
+            <div className="singlematrix-mobile ms:block ms:sm:hidden ms:space-y-3 ms:border-t ms:border-msborder ms:pt-3">
+              {rows.map((row, rowIndex) => (
+                <div
+                  key={row.id}
+                  className="ms:border ms:border-msborder ms:rounded-lg ms:p-3"
+                >
+                  <div className="ms:font-medium ms:text-mstext ms:mb-2">
+                    {row.value}
+                  </div>
+                  <RadioGroup
+                    value={selected[row.id]?.id || ''}
+                    onValueChange={(val) => {
+                      const updated: Record<string, SelectedOption> = {};
+                      for (const r of rows) {
+                        if (r.id === row.id) {
+                          const col = columns.find((c) => c.id === val);
+                          if (col)
+                            updated[r.id] = { id: col.id, value: col.value };
+                        } else if (selected[r.id]) {
+                          updated[r.id] = selected[r.id];
+                        }
+                      }
+                      onResponse({ selected: updated });
+                    }}
+                    disabled={!isEnabled}
+                    orientation="vertical"
+                  >
+                    {columns.map((col, colIndex) => {
+                      const inputId = `${instanceId}-singlematrix-answer-${def.id}-${rowIndex}-${colIndex}-m`;
+                      return (
+                        <div
+                          key={col.id}
+                          className="ms:flex ms:items-center ms:gap-2 ms:py-1"
+                        >
+                          <Radio
+                            id={inputId}
+                            value={col.id}
+                            onClick={() => {
+                              if (selected[row.id]?.id === col.id) {
+                                const updated: Record<string, SelectedOption> =
+                                  {};
+                                for (const r of rows) {
+                                  if (r.id !== row.id && selected[r.id])
+                                    updated[r.id] = selected[r.id];
+                                }
+                                onResponse({ selected: updated });
                               }
-                            }
-                            onResponse({ selected: updated });
-                          }
-                        }}
-                      />
+                            }}
+                          />
+                          <label
+                            htmlFor={inputId}
+                            className="ms:text-sm ms:text-mstext ms:cursor-pointer"
+                          >
+                            {col.value}
+                          </label>
+                        </div>
+                      );
+                    })}
+                  </RadioGroup>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop: grid layout */}
+            <div className="singlematrix-field-grid ms:hidden ms:sm:block ms:border-t ms:border-msborder ms:pt-3">
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: `auto repeat(${columns.length}, 1fr)`,
+                  gap: '0.5rem 1rem',
+                  alignItems: 'center',
+                }}
+              >
+                <div />
+                {columns.map((col) => (
+                  <div
+                    key={col.id}
+                    className="ms:text-center ms:font-normal ms:text-mstext ms:py-1"
+                  >
+                    {col.value}
+                  </div>
+                ))}
+
+                {rows.map((row, rowIndex) => (
+                  <RadioGroup
+                    key={row.id}
+                    value={selected[row.id]?.id || ''}
+                    onValueChange={(val) => {
+                      const updated: Record<string, SelectedOption> = {};
+                      for (const r of rows) {
+                        if (r.id === row.id) {
+                          const col = columns.find((c) => c.id === val);
+                          if (col)
+                            updated[r.id] = { id: col.id, value: col.value };
+                        } else if (selected[r.id]) {
+                          updated[r.id] = selected[r.id];
+                        }
+                      }
+                      onResponse({ selected: updated });
+                    }}
+                    disabled={!isEnabled}
+                    orientation="horizontal"
+                  >
+                    <div className="ms:font-normal ms:text-mstext ms:py-2">
+                      {row.value}
                     </div>
-                  );
-                })}
-              </RadioGroup>
-            ))}
-          </div>
+                    {columns.map((col, colIndex) => {
+                      const inputId = `${instanceId}-singlematrix-answer-${def.id}-${rowIndex}-${colIndex}`;
+                      return (
+                        <div
+                          key={col.id}
+                          className="ms:flex ms:justify-center ms:py-2"
+                        >
+                          <Radio
+                            id={inputId}
+                            value={col.id}
+                            onClick={() => {
+                              if (selected[row.id]?.id === col.id) {
+                                const updated: Record<string, SelectedOption> =
+                                  {};
+                                for (const r of rows) {
+                                  if (r.id !== row.id && selected[r.id])
+                                    updated[r.id] = selected[r.id];
+                                }
+                                onResponse({ selected: updated });
+                              }
+                            }}
+                          />
+                        </div>
+                      );
+                    })}
+                  </RadioGroup>
+                ))}
+              </div>
+            </div>
+          </>
         ) : (
           <div className="ms:text-mstextmuted ms:text-sm">
             Configure rows and columns in edit mode

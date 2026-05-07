@@ -24,43 +24,48 @@ export function Navbar({ children }: { children?: ReactNode }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
-    <nav className="demo-navbar h-14 px-6 flex items-center gap-5 bg-card border-b border-border sticky top-0 z-50">
-      <a
-        href={landingUrl}
-        className="inline-flex items-center gap-2 text-foreground hover:text-primary-600 text-base font-bold no-underline transition-colors shrink-0"
-      >
-        eSheet
-      </a>
-      <div className="demo-navbar-links flex items-center gap-4 ml-0 sm:ml-2">
+    <nav className="demo-navbar bg-card border-b border-border sticky top-0 z-50">
+      {/* Top row — always visible */}
+      <div className="flex items-center gap-3 px-4 h-14">
         <a
-          href={docsUrl}
-          className="text-sm text-muted-foreground hover:text-primary-600 no-underline transition-colors"
+          href={landingUrl}
+          className="inline-flex items-center gap-2 text-foreground hover:text-primary-600 text-base font-bold no-underline transition-colors shrink-0"
         >
-          Documentation
+          eSheet
         </a>
-        <a
-          href={demoUrl}
-          className="text-sm text-muted-foreground hover:text-primary-600 no-underline transition-colors ml-2"
-        >
-          Demo
-        </a>
+        <div className="demo-navbar-links hidden sm:flex items-center gap-4 ml-2">
+          <a
+            href={docsUrl}
+            className="text-sm text-muted-foreground hover:text-primary-600 no-underline transition-colors"
+          >
+            Documentation
+          </a>
+          <a
+            href={demoUrl}
+            className="text-sm text-muted-foreground hover:text-primary-600 no-underline transition-colors"
+          >
+            Demo
+          </a>
+        </div>
+        <div className="ml-auto flex items-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSettingsOpen(true)}
+            aria-label="Settings"
+          >
+            <Settings size={16} />
+            <span className="hidden sm:inline">Settings</span>
+          </Button>
+        </div>
       </div>
+
+      {/* Actions row — children from page (Select, buttons, etc.) */}
       {children && (
-        <div className="demo-navbar-actions order-last basis-full w-full flex flex-wrap items-center gap-2 min-w-0 sm:order-none sm:basis-auto sm:w-auto sm:flex-1">
+        <div className="demo-navbar-actions flex flex-wrap items-center gap-2 px-4 py-2 border-t border-border sm:border-t-0 sm:py-0 sm:absolute sm:top-0 sm:left-1/2 sm:-translate-x-1/2 sm:h-14 sm:flex-nowrap sm:max-w-2xl sm:w-full">
           {children}
         </div>
       )}
-      <div className="demo-navbar-settings flex items-center ml-auto">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setSettingsOpen(true)}
-          aria-label="Settings"
-        >
-          <Settings size={16} />
-          Settings
-        </Button>
-      </div>
 
       <Modal open={settingsOpen} onOpenChange={setSettingsOpen}>
         <ModalHeader>
