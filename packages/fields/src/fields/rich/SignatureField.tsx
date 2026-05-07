@@ -2,6 +2,28 @@ import React from 'react';
 import type { FieldComponentProps } from '@esheet/core';
 import { DrawingPad } from './DrawingPad.js';
 
+/** Detect dark mode from the document root and re-render on changes. */
+function useIsDark(): boolean {
+  const [isDark, setIsDark] = React.useState(
+    () =>
+      typeof document !== 'undefined' &&
+      document.documentElement.classList.contains('dark'),
+  );
+
+  React.useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+    return () => observer.disconnect();
+  }, []);
+
+  return isDark;
+}
+
 export const SignatureField = React.memo(function SignatureField({
   field,
   form,
@@ -25,9 +47,7 @@ export const SignatureField = React.memo(function SignatureField({
     [onResponse]
   );
 
-  const isDark =
-    typeof document !== 'undefined' &&
-    document.documentElement.getAttribute('data-theme') === 'dark';
+  const isDark = useIsDark();
 
   if (isPreview) {
     return (
@@ -103,10 +123,10 @@ export const SignatureField = React.memo(function SignatureField({
           config={{
             baseWidth: 600,
             baseHeight: 200,
-            strokeColor: '#000000',
+            strokeColor: isDark ? '#fafafa' : '#000000',
             strokeWidth: 2,
             hasEraser: false,
-            backgroundColor: '#ffffff',
+            backgroundColor: isDark ? '#404040' : '#ffffff',
           }}
           placeholder={def.padPlaceholder || 'Sign here'}
           disabled
