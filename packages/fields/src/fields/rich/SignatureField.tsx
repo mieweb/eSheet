@@ -7,7 +7,7 @@ function useIsDark(): boolean {
   const [isDark, setIsDark] = React.useState(
     () =>
       typeof document !== 'undefined' &&
-      document.documentElement.classList.contains('dark'),
+      document.documentElement.classList.contains('dark')
   );
 
   React.useEffect(() => {

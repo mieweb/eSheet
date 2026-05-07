@@ -13,7 +13,7 @@ This guide explains how to test all GitHub Actions workflows locally using `gh a
 
 | Workflow                              | Command                                                                                                    | Notes                                                                                    |
 | ------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| **CI** (lint, test, build, typecheck) | `gh act push -W .github/workflows/ci.yml --pull=false`                                                     | No secrets needed; validates code quality                                                |
+| **CI** (lint, test, build, typecheck) | `gh act pull_request -W .github/workflows/ci.yml --pull=false`                                              | No secrets needed; validates code quality                                                |
 | **Release** (with dry-run)            | `gh act workflow_dispatch -W .github/workflows/release.yml -e release/act-dry-run-event.json --pull=false` | Dry-run only; skips lint/test; no commits, tags, or npm publish                          |
 | **PR Title Check**                    | `gh act pull_request -e /tmp/pr-event.json -W .github/workflows/pr-title-check.yml --pull=false`           | Uses synthetic PR event; see [Testing PR Title Check](#testing-pr-title-check)           |
 | **Atomic Deploy**                     | `gh act push -W .github/workflows/atomic-deploy.yml --secret-file .secrets.local ...`                      | Requires Docker container + SSH setup; see [Local Deploy Testing](#local-deploy-testing) |
@@ -53,10 +53,10 @@ From repository root:
 
 ```bash
 # First time using gh act (pulls the runner image, ~1 min):
-gh act push -W .github/workflows/ci.yml
+gh act pull_request -W .github/workflows/ci.yml
 
 # Subsequent runs (uses cached image, much faster):
-gh act push -W .github/workflows/ci.yml --pull=false
+gh act pull_request -W .github/workflows/ci.yml --pull=false
 ```
 
 The workflow runs through all jobs; watch Terminal output for step details. After the first run, always use `--pull=false` to skip the image pull and avoid Docker Hub rate-limiting.
@@ -72,7 +72,7 @@ The CI workflow validates formatting, linting, tests, builds, and type checking.
 **Command:**
 
 ```bash
-gh act push -W .github/workflows/ci.yml --pull=false
+gh act pull_request -W .github/workflows/ci.yml --pull=false
 ```
 
 **What it does:**
