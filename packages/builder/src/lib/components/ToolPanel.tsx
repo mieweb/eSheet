@@ -15,6 +15,8 @@ import {
   OrganizationIcon,
   ChevronIcon,
 } from '../icons.js';
+import { useFormApi } from '../hooks/useFormApi.js';
+import { useUiApi } from '../hooks/useUiApi.js';
 
 export interface ToolPanelProps {
   /** The form store */
@@ -74,24 +76,15 @@ export const ToolPanel = React.memo(function ToolPanel({
   form,
   ui,
 }: ToolPanelProps) {
-  const selectedFieldId = React.useSyncExternalStore(
-    (cb) => ui.subscribe(cb),
-    () => ui.getState().selectedFieldId,
-    () => ui.getState().selectedFieldId
-  );
-  const selectedField = React.useSyncExternalStore(
-    (cb) => form.subscribe(cb),
-    () =>
-      selectedFieldId ? form.getState().getField(selectedFieldId) : undefined,
-    () =>
-      selectedFieldId ? form.getState().getField(selectedFieldId) : undefined
-  );
+  const { normalized, form: formApi, _form } = useFormApi();
+  const { selectedFieldId, selectField, selectFieldChild, _ui } = useUiApi();
+  const selectedField = selectedFieldId ? normalized.byId[selectedFieldId] : undefined;
   const selectedSectionId =
     selectedField?.definition.fieldType === 'section'
       ? selectedFieldId
       : undefined;
   const selectedSectionLabel = selectedSectionId
-    ? selectedField?.definition.title ||
+    ? (selectedField?.definition as { title?: string })?.title ||
       selectedField?.definition.id ||
       selectedSectionId
     : null;
@@ -127,30 +120,28 @@ export const ToolPanel = React.memo(function ToolPanel({
 
   const handleAdd = React.useCallback(
     (type: string) => {
-      const selectedFieldId = ui.getState().selectedFieldId;
-      const selectedField = selectedFieldId
-        ? form.getState().getField(selectedFieldId)
+      const curSelectedId = _ui.getState().selectedFieldId;
+      const curSelectedField = curSelectedId
+        ? _form.getState().getField(curSelectedId)
         : undefined;
       const sectionParentId =
-        selectedField?.definition.fieldType === 'section'
-          ? selectedFieldId
+        curSelectedField?.definition.fieldType === 'section'
+          ? curSelectedId
           : undefined;
 
-      const newId = form
-        .getState()
-        .addField(
-          type as FieldType,
-          sectionParentId ? { parentId: sectionParentId } : undefined
-        );
+      const newId = formApi.addField(
+        type as FieldType,
+        sectionParentId ? { parentId: sectionParentId } : undefined
+      );
       if (newId) {
         if (sectionParentId) {
-          ui.getState().selectFieldChild(sectionParentId, newId);
+          selectFieldChild(sectionParentId, newId);
         } else {
-          ui.getState().selectField(newId);
+          selectField(newId);
         }
       }
     },
-    [form, ui]
+    [_form, _ui, formApi, selectField, selectFieldChild]
   );
 
   const allCollapsed = collapsed.size === categoryNames.length;

@@ -1,8 +1,11 @@
-import React, { useSyncExternalStore } from 'react';
+import React from 'react';
 import {
   getFieldTypeMeta,
   type FieldDefinition,
+  type FieldOption,
   type FormStore,
+  type MatrixColumn,
+  type MatrixRow,
   type UIStore,
   type EditTab,
 } from '@esheet/core';
@@ -13,6 +16,8 @@ import { CommonEditor } from './CommonEditor.js';
 import { OptionListEditor } from './OptionListEditor.js';
 import { MatrixEditor } from './MatrixEditor.js';
 import { LogicEditor } from './LogicEditor.js';
+import { useFormApi } from '../../hooks/useFormApi.js';
+import { useUiApi } from '../../hooks/useUiApi.js';
 
 export interface EditPanelProps {
   form: FormStore;
@@ -26,54 +31,33 @@ export interface EditPanelProps {
  * Renders nothing meaningful when no field is selected.
  */
 export function EditPanel({ form, ui }: EditPanelProps) {
-  // Subscribe to UI state for selected field + active tab
-  const selectedFieldId = useSyncExternalStore(
-    (cb) => ui.subscribe(cb),
-    () => ui.getState().selectedFieldId,
-    () => ui.getState().selectedFieldId
-  );
-  const selectedFieldChildId = useSyncExternalStore(
-    (cb) => ui.subscribe(cb),
-    () => ui.getState().selectedFieldChildId,
-    () => ui.getState().selectedFieldChildId
-  );
-  const editTab = useSyncExternalStore(
-    (cb) => ui.subscribe(cb),
-    () => ui.getState().editTab,
-    () => ui.getState().editTab
-  );
+  const {
+    selectedFieldId,
+    selectedFieldChildId,
+    editTab,
+    selectField,
+    setEditTab,
+  } = useUiApi();
+  const { normalized } = useFormApi(undefined);
 
-  // Subscribe to form so we re-render when the field definition changes
-  const field = useSyncExternalStore(
-    (cb) => form.subscribe(cb),
-    () =>
-      selectedFieldId ? form.getState().getField(selectedFieldId) : undefined,
-    () =>
-      selectedFieldId ? form.getState().getField(selectedFieldId) : undefined
-  );
+  // Bind field actions to the currently selected field
+  const { field_: selectedField_ } = useFormApi(selectedFieldId ?? undefined);
 
   // Logic tab target: when a section is selected, edit logic for the active child.
-  const logicField = useSyncExternalStore(
-    (cb) => form.subscribe(cb),
-    () => {
-      if (!selectedFieldId) return undefined;
-      const parent = form.getState().getField(selectedFieldId);
-      if (!parent) return undefined;
-
-      if (parent.definition.fieldType !== 'section' || !selectedFieldChildId) {
-        return parent;
-      }
-
-      return form.getState().getField(selectedFieldChildId) ?? parent;
-    },
-    () => {
-      if (!selectedFieldId) return undefined;
-      return form.getState().getField(selectedFieldId);
+  const logicField = React.useMemo(() => {
+    if (!selectedFieldId) return undefined;
+    const parent = normalized.byId[selectedFieldId];
+    if (!parent) return undefined;
+    if (parent.definition.fieldType !== 'section' || !selectedFieldChildId) {
+      return parent;
     }
-  );
+    return normalized.byId[selectedFieldChildId] ?? parent;
+  }, [normalized, selectedFieldId, selectedFieldChildId]);
+
+  const activeField = selectedFieldId ? normalized.byId[selectedFieldId] : undefined;
 
   // No selection
-  if (!selectedFieldId || !field) {
+  if (!selectedFieldId || !activeField) {
     return (
       <div className="edit-panel-empty ms:flex ms:flex-1 ms:min-h-0 ms:items-center ms:justify-center ms:text-mstextmuted ms:text-sm ms:p-4 ms:text-center">
         Select a field to edit its properties
@@ -81,7 +65,7 @@ export function EditPanel({ form, ui }: EditPanelProps) {
     );
   }
 
-  const def = field.definition;
+  const def = activeField.definition;
   const meta = getFieldTypeMeta(def.fieldType);
   const logicTargetLabel = logicField
     ? logicField.definition.fieldType === 'section'
@@ -101,18 +85,18 @@ export function EditPanel({ form, ui }: EditPanelProps) {
   const handleUpdate = (
     patch: Partial<Omit<import('@esheet/core').FieldDefinition, 'fields'>>
   ) => {
-    form.getState().updateField(selectedFieldId, patch);
+    selectedField_.update(patch);
   };
 
   const handleRenameId = (newId: string): boolean => {
-    const success = form.getState().updateField(selectedFieldId, { id: newId });
+    const success = selectedField_.update({ id: newId });
     if (success) {
-      ui.getState().selectField(newId);
+      selectField(newId);
     }
     return success;
   };
 
-  const setTab = (tab: EditTab) => ui.getState().setEditTab(tab);
+  const setTab = (tab: EditTab) => setEditTab(tab);
 
   return (
     <div className="edit-panel ms:flex ms:flex-1 ms:flex-col ms:min-h-0">
@@ -153,8 +137,6 @@ export function EditPanel({ form, ui }: EditPanelProps) {
             fieldId={selectedFieldId}
             def={def}
             meta={meta}
-            form={form}
-            ui={ui}
             onUpdate={handleUpdate}
             onRenameId={handleRenameId}
           />
@@ -171,7 +153,6 @@ export function EditPanel({ form, ui }: EditPanelProps) {
             <LogicEditor
               fieldId={logicField.definition.id}
               rules={logicField.definition.rules ?? []}
-              form={form}
             />
           </div>
         ) : null}
@@ -188,8 +169,6 @@ interface EditTabContentProps {
   fieldId: string;
   def: Omit<import('@esheet/core').FieldDefinition, 'fields'>;
   meta: import('@esheet/core').FieldTypeMeta | undefined;
-  form: FormStore;
-  ui: UIStore;
   onUpdate: (
     patch: Partial<Omit<import('@esheet/core').FieldDefinition, 'fields'>>
   ) => void;
@@ -200,8 +179,6 @@ function EditTabContent({
   fieldId,
   def,
   meta,
-  form,
-  ui,
   onUpdate,
   onRenameId,
 }: EditTabContentProps) {
@@ -212,8 +189,6 @@ function EditTabContent({
       <SectionEditContent
         fieldId={fieldId}
         def={def}
-        form={form}
-        ui={ui}
         onUpdate={onUpdate}
         onRenameId={onRenameId}
       />
@@ -241,7 +216,6 @@ function EditTabContent({
           fieldId={fieldId}
           fieldType={def.fieldType}
           options={def.options}
-          form={form}
         />
       )}
 
@@ -251,7 +225,6 @@ function EditTabContent({
           fieldId={fieldId}
           rows={def.rows ?? []}
           columns={def.columns ?? []}
-          form={form}
         />
       )}
     </div>
@@ -265,8 +238,6 @@ function EditTabContent({
 interface SectionEditContentProps {
   fieldId: string;
   def: Omit<import('@esheet/core').FieldDefinition, 'fields'>;
-  form: FormStore;
-  ui: UIStore;
   onUpdate: (
     patch: Partial<Omit<import('@esheet/core').FieldDefinition, 'fields'>>
   ) => void;
@@ -276,31 +247,22 @@ interface SectionEditContentProps {
 function SectionEditContent({
   fieldId,
   def,
-  form,
-  ui,
   onUpdate,
   onRenameId,
 }: SectionEditContentProps) {
   const instanceId = useInstanceId();
-  const normalized = useSyncExternalStore(
-    (cb) => form.subscribe(cb),
-    () => form.getState().normalized,
-    () => form.getState().normalized
-  );
-  const selectedFieldId = useSyncExternalStore(
-    (cb) => ui.subscribe(cb),
-    () => ui.getState().selectedFieldId,
-    () => ui.getState().selectedFieldId
-  );
-  const selectedFieldChildId = useSyncExternalStore(
-    (cb) => ui.subscribe(cb),
-    () => ui.getState().selectedFieldChildId,
-    () => ui.getState().selectedFieldChildId
-  );
-  const editTab = useSyncExternalStore(
-    (cb) => ui.subscribe(cb),
-    () => ui.getState().editTab,
-    () => ui.getState().editTab
+  const {
+    selectedFieldId,
+    selectedFieldChildId,
+    editTab,
+    selectFieldChild,
+    setEditTab,
+  } = useUiApi();
+  const { normalized } = useFormApi();
+  const { field_: activeChildField_ } = useFormApi(
+    selectedFieldId === fieldId && selectedFieldChildId
+      ? selectedFieldChildId
+      : undefined
   );
 
   const childIds = normalized.byId[fieldId]?.childIds ?? [];
@@ -325,30 +287,26 @@ function SectionEditContent({
     : undefined;
 
   React.useEffect(() => {
-    // Only heal stale non-null child IDs (e.g. deleted child). Do not auto-pick
-    // a new child when none is selected so section-level selection can persist.
     if (activeChildId !== null && resolvedActiveChildId !== activeChildId) {
-      ui.getState().selectFieldChild(fieldId, resolvedActiveChildId);
+      selectFieldChild(fieldId, resolvedActiveChildId);
       if (editTab === 'logic') {
-        ui.getState().setEditTab('logic');
+        setEditTab('logic');
       }
     }
-  }, [activeChildId, editTab, fieldId, resolvedActiveChildId, ui]);
+  }, [activeChildId, editTab, fieldId, resolvedActiveChildId, selectFieldChild, setEditTab]);
 
   const handleSelectChild = (childId: string) => {
-    ui.getState().selectFieldChild(fieldId, childId);
+    selectFieldChild(fieldId, childId);
     if (editTab === 'logic') {
-      ui.getState().setEditTab('logic');
+      setEditTab('logic');
     }
   };
 
   const handleRenameChildId = (newId: string): boolean => {
     if (!activeChildDef) return false;
-    const success = form
-      .getState()
-      .updateField(activeChildDef.id, { id: newId });
+    const success = activeChildField_.update({ id: newId });
     if (success) {
-      ui.getState().selectFieldChild(fieldId, newId);
+      selectFieldChild(fieldId, newId);
     }
     return success;
   };
@@ -357,16 +315,16 @@ function SectionEditContent({
     patch: Partial<Omit<FieldDefinition, 'fields'>>
   ) => {
     if (!activeChildDef) return;
-    form.getState().updateField(activeChildDef.id, patch);
+    activeChildField_.update(patch);
   };
 
   const handleDeleteChild = () => {
     if (!activeChildDef) return;
-    form.getState().removeField(activeChildDef.id);
+    activeChildField_.remove();
     const nextChildId = childFields.find(
       (node) => node.definition.id !== activeChildDef.id
     )?.definition.id;
-    ui.getState().selectFieldChild(fieldId, nextChildId ?? null);
+    selectFieldChild(fieldId, nextChildId ?? null);
   };
 
   return (
@@ -503,21 +461,19 @@ function SectionEditContent({
             <hr className="ms:border-msborder" />
           )}
 
-          {activeChildMeta?.hasOptions && activeChildDef.options && (
+          {activeChildMeta?.hasOptions && (activeChildDef as { options?: FieldOption[] }).options && (
             <OptionListEditor
               fieldId={activeChildDef.id}
               fieldType={activeChildDef.fieldType}
-              options={activeChildDef.options}
-              form={form}
+              options={(activeChildDef as { options?: FieldOption[] }).options!}
             />
           )}
 
           {activeChildMeta?.hasMatrix && (
             <MatrixEditor
               fieldId={activeChildDef.id}
-              rows={activeChildDef.rows ?? []}
-              columns={activeChildDef.columns ?? []}
-              form={form}
+              rows={(activeChildDef as { rows?: MatrixRow[] }).rows ?? []}
+              columns={(activeChildDef as { columns?: MatrixColumn[] }).columns ?? []}
             />
           )}
         </div>

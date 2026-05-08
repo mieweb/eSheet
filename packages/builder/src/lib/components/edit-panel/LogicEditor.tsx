@@ -1,4 +1,4 @@
-import React, { useSyncExternalStore } from 'react';
+import React from 'react';
 import {
   CONDITION_OPERATORS,
   CONDITIONAL_EFFECTS,
@@ -8,12 +8,12 @@ import {
   type ConditionOperator,
   type ConditionalEffect,
   type ConditionalRule,
-  type FormStore,
   type LogicMode,
   type NormalizedDefinition,
 } from '@esheet/core';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 import { useInstanceId } from '../../EsheetBuilder.js';
+import { useFormApi } from '../../hooks/useFormApi.js';
 
 // ---------------------------------------------------------------------------
 // Public component
@@ -22,7 +22,6 @@ import { useInstanceId } from '../../EsheetBuilder.js';
 export interface LogicEditorProps {
   fieldId: string;
   rules: readonly ConditionalRule[];
-  form: FormStore;
 }
 
 /**
@@ -33,22 +32,17 @@ export interface LogicEditorProps {
  * use OR semantics (any rule can trigger the effect). Within a rule,
  * conditions combine with the rule's logic mode (AND / OR).
  */
-export function LogicEditor({ fieldId, rules, form }: LogicEditorProps) {
+export function LogicEditor({ fieldId, rules }: LogicEditorProps) {
   const instanceId = useInstanceId();
+  const { normalized, field_ } = useFormApi(fieldId);
 
-  // Subscribe to the stable normalized reference, then derive target fields
-  const normalized = useSyncExternalStore(
-    (cb) => form.subscribe(cb),
-    () => form.getState().normalized,
-    () => form.getState().normalized
-  );
   const otherFields = React.useMemo(
     () => buildOtherFields(normalized, fieldId),
     [normalized, fieldId]
   );
 
   const updateRules = (next: ConditionalRule[]) => {
-    form.getState().updateField(fieldId, { rules: next });
+    field_.update({ rules: next });
   };
 
   // ── Handlers ────────────────────────────────────────────────

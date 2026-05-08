@@ -1,7 +1,9 @@
 import React from 'react';
 import type { FieldComponentProps, FormStore, UIStore } from '@esheet/core';
 import Sortable from 'sortablejs';
-import { useVisibleFields } from '../hooks/useVisibleFields.js';
+import { useFormApi } from '../hooks/useFormApi.js';
+import { useUiApi } from '../hooks/useUiApi.js';
+import { useVisibleRootIds } from '../hooks/useVisibleRootIds.js';
 import { FieldWrapper } from './FieldWrapper.js';
 import { getFieldComponent } from '@esheet/fields';
 import { ViewBigIcon, ViewSmallIcon } from '../icons.js';
@@ -104,32 +106,9 @@ export const Canvas = React.memo(function Canvas({
   dragEnabled = true,
 }: CanvasProps) {
   const canvasRef = React.useRef<HTMLDivElement | null>(null);
-  const rootIds = useVisibleFields(form, ui);
-  const normalized = React.useSyncExternalStore(
-    (cb) => form.subscribe(cb),
-    () => form.getState().normalized,
-    () => form.getState().normalized
-  );
-  const mode = React.useSyncExternalStore(
-    (cb) => ui.subscribe(cb),
-    () => ui.getState().mode,
-    () => ui.getState().mode
-  );
-  const responses = React.useSyncExternalStore(
-    (cb) => form.subscribe(cb),
-    () => form.getState().responses,
-    () => form.getState().responses
-  );
-  const selectedFieldId = React.useSyncExternalStore(
-    (cb) => ui.subscribe(cb),
-    () => ui.getState().selectedFieldId,
-    () => ui.getState().selectedFieldId
-  );
-  const selectedFieldChildId = React.useSyncExternalStore(
-    (cb) => ui.subscribe(cb),
-    () => ui.getState().selectedFieldChildId,
-    () => ui.getState().selectedFieldChildId
-  );
+  const rootIds = useVisibleRootIds();
+  const { normalized, responses } = useFormApi();
+  const { mode, selectedFieldId, selectedFieldChildId } = useUiApi();
   const [sectionExpandSignal, setSectionExpandSignal] = React.useState<{
     sectionId: string;
     version: number;
