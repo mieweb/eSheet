@@ -2,6 +2,24 @@ import React from 'react';
 import type { FieldComponentProps } from '@esheet/core';
 import { DrawingPad } from './DrawingPad.js';
 
+function useIsDark(): boolean {
+  const [isDark, setIsDark] = React.useState(
+    () =>
+      typeof document !== 'undefined' &&
+      document.documentElement.classList.contains('dark')
+  );
+
+  React.useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
+
+  return isDark;
+}
+
 export const DiagramField = React.memo(function DiagramField({
   field,
   form,
@@ -14,6 +32,7 @@ export const DiagramField = React.memo(function DiagramField({
 }: FieldComponentProps) {
   const def = field.definition;
   const instanceId = form.getState().instanceId;
+  const isDark = useIsDark();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
 
@@ -82,7 +101,7 @@ export const DiagramField = React.memo(function DiagramField({
             strokeWidth: 3,
             eraserWidth: 20,
             hasEraser: true,
-            backgroundColor: '#ffffff',
+            backgroundColor: isDark ? '#404040' : '#ffffff',
           }}
           backgroundImage={def.imageUri}
           placeholder={def.padPlaceholder || 'Draw on the diagram'}
@@ -224,7 +243,7 @@ export const DiagramField = React.memo(function DiagramField({
             strokeWidth: 3,
             eraserWidth: 20,
             hasEraser: true,
-            backgroundColor: '#ffffff',
+            backgroundColor: isDark ? '#404040' : '#ffffff',
           }}
           backgroundImage={def.imageUri}
           placeholder={def.padPlaceholder || 'Draw on the diagram'}
