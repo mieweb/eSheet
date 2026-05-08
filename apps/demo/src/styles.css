@@ -1,12 +1,30 @@
+/* 1. Import brand CSS in a layer so it can be overridden */
+@import '@mieweb/ui/brands/bluehive.css' layer(theme);
+
+/* 2. Import Tailwind */
 @import 'tailwindcss';
 
-/* Tell Tailwind to scan demo app source files for utility classes */
+/* 3. Import @mieweb/ui compiled CSS AFTER Tailwind, unlayered.
+   This ensures @mieweb/ui utilities (border-2, appearance-none, etc.)
+   override Tailwind's preflight resets (border-width: 0) by source order. */
+@import '@mieweb/ui/styles.css';
+
+/* 4. Tell Tailwind to scan demo app source files + @mieweb/ui dist */
 @source "./";
+@source "../../../node_modules/@mieweb/ui/dist";
+
+/* 5. Define dark mode variant for Tailwind 4 */
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
 html,
 body {
   height: 100%;
   margin: 0;
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
 }
 
 #root {
@@ -15,4 +33,27 @@ body {
 
 body {
   font-family: system-ui, sans-serif;
+  @apply bg-neutral-50 text-neutral-800 dark:bg-neutral-900 dark:text-neutral-100;
+}
+
+/* Override Chrome autofill background in dark mode */
+[data-theme='dark'] input:-webkit-autofill,
+[data-theme='dark'] input:-webkit-autofill:hover,
+[data-theme='dark'] input:-webkit-autofill:focus,
+[data-theme='dark'] select:-webkit-autofill,
+[data-theme='dark'] textarea:-webkit-autofill {
+  -webkit-text-fill-color: theme(--color-neutral-100);
+  -webkit-box-shadow: 0 0 0px 1000px theme(--color-neutral-800) inset;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Light mode autofill (consistent styling) */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+select:-webkit-autofill,
+textarea:-webkit-autofill {
+  -webkit-text-fill-color: theme(--color-neutral-800);
+  -webkit-box-shadow: 0 0 0px 1000px theme(--color-neutral-50) inset;
+  transition: background-color 5000s ease-in-out 0s;
 }

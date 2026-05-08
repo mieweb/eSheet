@@ -171,7 +171,7 @@ export function EsheetBuilder({
             className={`ms-builder-root ms:flex ms:h-full ms:flex-1 ms:min-h-0 ms:max-h-full ms:w-full ms:min-w-0 ms:max-w-[1440px] ms:mx-auto ms:flex-col ms:gap-2 
                         ms:overflow-x-hidden ms:bg-msbackground ms:text-mstext ${className}`.trim()}
           >
-            <div className="ms:sticky ms:top-0 ms:z-50 ms:bg-msbackground">
+            <div className="ms:sticky ms:top-0 ms:z-40 ms:bg-msbackground">
               <BuilderHeader form={form} ui={ui} />
             </div>
             {children}

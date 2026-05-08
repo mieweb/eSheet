@@ -140,7 +140,7 @@ const EsheetRendererInner = React.forwardRef<
 
   const rootClasses = [
     'esheet-renderer-root',
-    'ms:w-full ms:max-w-2xl ms:mx-auto ms:p-4 ms:bg-msbackground ms:text-mstext',
+    'ms:w-full ms:max-w-2xl ms:mx-auto ms:p-4 ms:text-mstext',
     className,
   ]
     .filter(Boolean)

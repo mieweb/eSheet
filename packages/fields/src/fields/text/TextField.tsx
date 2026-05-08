@@ -1,5 +1,6 @@
 import React from 'react';
 import type { FieldComponentProps } from '@esheet/core';
+import { Input } from '@mieweb/ui';
 
 function formatPhoneNumber(value: string): string {
   if (!value) return value;
@@ -59,7 +60,7 @@ export const TextField = React.memo(function TextField({
           {isRequired && <span className="ms:text-msdanger ms:ml-0.5">*</span>}
         </div>
         <div className="ms:relative">
-          <input
+          <Input
             id={`${instanceId}-text-answer-${def.id}`}
             aria-label={def.question || 'Question'}
             type={inputType}
@@ -73,9 +74,7 @@ export const TextField = React.memo(function TextField({
               onResponse({ answer: val });
             }}
             placeholder={placeholder}
-            className={`ms:px-4 ms:py-2 ms:h-10 ms:w-full ms:min-w-0 ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:shadow-sm ms:rounded-lg ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary/30 ms:outline-none ms:transition-colors ${
-              unit ? 'ms:pr-16' : ''
-            }`}
+            className={unit ? 'pr-16' : ''}
           />
           {unit && (
             <span className="ms:absolute ms:right-3 ms:top-1/2 ms:-translate-y-1/2 ms:text-sm ms:text-mstextmuted ms:pointer-events-none">
