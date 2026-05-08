@@ -7,6 +7,11 @@ import {
   type FormStore,
   type UIStore,
 } from '@esheet/core';
+import {
+  createBuilderTools,
+  type BuilderTools,
+  type FieldSummary,
+} from './builder-tools.js';
 import { FormStoreContext, UIContext } from '@esheet/fields';
 import { convertSurveyJS, isSurveyJSSchema, importFromMcp, isMcpElicitationRequest, type McpElicitationRequest, type McpElicitationSchema } from '@esheet/adapters';
 import { Canvas } from './components/Canvas.js';
@@ -16,6 +21,7 @@ import { BuilderHeader } from './components/BuilderHeader.js';
 import { CodeView } from './components/CodeView.js';
 import { PlusIcon } from './icons.js';
 import { ensureDefaultFieldComponentsRegistered } from './register-defaults.js';
+import { MobileBottomDrawer } from './components/MobileBottomDrawer.js';
 
 // ---------------------------------------------------------------------------
 // Contexts
@@ -34,6 +40,9 @@ export function useInstanceId(): string {
   return React.useContext(InstanceIdContext);
 }
 
+// Re-export for public API
+export type { BuilderTools, FieldSummary };
+
 // ---------------------------------------------------------------------------
 // Props
 // ---------------------------------------------------------------------------
@@ -43,57 +52,18 @@ export interface EsheetBuilderProps {
   definition?: FormDefinition | Record<string, unknown>;
   /** Callback fired when the form definition changes. */
   onChange?: (definition: FormDefinition) => void;
+  /**
+   * Called once after the builder mounts, providing a narrow `BuilderTools`
+   * facade for MCP / AI tool integrations. Not intended for general developer use —
+   * everything a developer needs is available through the builder's own UI and props.
+   */
+  onBuilderToolsReady?: (tools: BuilderTools) => void;
   /** Whether drag-and-drop reordering is enabled (default: true). Disable for better performance on slow devices. */
   dragEnabled?: boolean;
   /** Additional CSS class name. */
   className?: string;
   /** Optional content rendered below the header (e.g. custom status/debug panels). */
   children?: React.ReactNode;
-}
-
-interface MobileBottomDrawerProps {
-  title: string;
-  open: boolean;
-  onClose: () => void;
-  children: React.ReactNode;
-}
-
-function MobileBottomDrawer({
-  title,
-  open,
-  onClose,
-  children,
-}: MobileBottomDrawerProps) {
-  if (!open) return null;
-
-  return (
-    <>
-      <button
-        type="button"
-        className="ms:lg:hidden ms:fixed ms:inset-0 ms:z-40 ms:bg-msoverlay ms:border-0"
-        onClick={onClose}
-        aria-label={`Close ${title} drawer`}
-      />
-      <div className="ms:lg:hidden ms:fixed ms:left-0 ms:right-0 ms:bottom-0 ms:z-50 ms:h-[50dvh] ms:bg-mssurface ms:border-t ms:border-msborder ms:rounded-t-2xl ms:shadow-2xl ms:overflow-hidden">
-        <div className="ms:flex ms:items-center ms:justify-between ms:px-4 ms:py-2 ms:border-b ms:border-msborder">
-          <span className="ms:text-sm ms:font-medium ms:text-mstext">
-            {title}
-          </span>
-          <button
-            type="button"
-            onClick={onClose}
-            className="ms:px-2 ms:py-1 ms:bg-transparent ms:text-mstextmuted ms:border-0 ms:outline-none ms:focus:outline-none"
-            aria-label={`Close ${title} drawer`}
-          >
-            Close
-          </button>
-        </div>
-        <div className="ms:h-[calc(50dvh-45px)] ms:overflow-y-auto">
-          {children}
-        </div>
-      </div>
-    </>
-  );
 }
 
 // ---------------------------------------------------------------------------
@@ -103,6 +73,7 @@ function MobileBottomDrawer({
 export function EsheetBuilder({
   definition,
   onChange,
+  onBuilderToolsReady,
   dragEnabled = true,
   className = '',
   children,
@@ -178,6 +149,12 @@ export function EsheetBuilder({
     });
   }, [form, onChange]);
 
+  // Expose a narrow BuilderTools facade to MCP / AI tool callers once on mount.
+  React.useEffect(() => {
+    if (onBuilderToolsReady) onBuilderToolsReady(createBuilderTools(form));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form]);
+
   return (
     <FormStoreContext.Provider value={form}>
       <UIContext.Provider value={ui}>
@@ -187,13 +164,13 @@ export function EsheetBuilder({
                         ms:overflow-x-hidden ms:bg-msbackground ms:text-mstext ${className}`.trim()}
           >
             <div className="ms:sticky ms:top-0 ms:z-40 ms:bg-msbackground">
-              <BuilderHeader form={form} ui={ui} />
+              <BuilderHeader />
             </div>
             {children}
             {mode === 'build' && (
               <div className="builder-layout ms:grid ms:flex-1 ms:min-h-0 ms:min-w-0 ms:grid-cols-1 ms:lg:grid-cols-[18rem_minmax(0,1fr)_340px] ms:gap-3 ms:overflow-hidden">
                 <aside className="panel-tools-wrap panel-tools ms:hidden ms:lg:flex ms:self-start ms:min-h-0 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto ms:flex-col ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
-                  <ToolPanel form={form} ui={ui} />
+                  <ToolPanel />
                 </aside>
                 <main className="panel-canvas ms:min-w-0 ms:min-h-0 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-hidden ms:flex ms:flex-col ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:px-4 ms:pb-4">
                   <Canvas form={form} ui={ui} dragEnabled={dragEnabled} />
@@ -210,7 +187,7 @@ export function EsheetBuilder({
                   </div>
                 </main>
                 <aside className="panel-editor-wrap panel-editor ms:hidden ms:lg:flex ms:self-start ms:min-h-0 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto ms:flex-col ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
-                  <EditPanel form={form} ui={ui} />
+                  <EditPanel />
                 </aside>
 
                 <MobileBottomDrawer
@@ -218,7 +195,7 @@ export function EsheetBuilder({
                   open={toolsModalOpen}
                   onClose={() => setToolsModalOpen(false)}
                 >
-                  <ToolPanel form={form} ui={ui} />
+                  <ToolPanel />
                 </MobileBottomDrawer>
 
                 <MobileBottomDrawer
@@ -226,7 +203,7 @@ export function EsheetBuilder({
                   open={editModalOpen && !!selectedFieldId}
                   onClose={() => ui.getState().setEditModalOpen(false)}
                 >
-                  <EditPanel form={form} ui={ui} />
+                  <EditPanel />
                 </MobileBottomDrawer>
               </div>
             )}

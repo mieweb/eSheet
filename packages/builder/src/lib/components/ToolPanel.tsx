@@ -2,8 +2,6 @@ import React from 'react';
 import {
   getRegisteredFieldTypes,
   getFieldTypeMeta,
-  type FormStore,
-  type UIStore,
   type FieldType,
 } from '@esheet/core';
 import {
@@ -19,10 +17,7 @@ import { useFormApi } from '../hooks/useFormApi.js';
 import { useUiApi } from '../hooks/useUiApi.js';
 
 export interface ToolPanelProps {
-  /** The form store */
-  form: FormStore;
-  /** The UI store */
-  ui: UIStore;
+  // intentionally empty — ToolPanel sources all state from useFormApi/useUiApi context hooks.
 }
 
 /** Category display labels. */
@@ -72,10 +67,9 @@ function buildCategories(): Record<string, { type: string; label: string }[]> {
  * Clicking a button calls `form.addField(type)` and auto-selects
  * the new field. Groups field types by category from the registry.
  */
-export const ToolPanel = React.memo(function ToolPanel({
-  form,
-  ui,
-}: ToolPanelProps) {
+export const ToolPanel = React.memo(function ToolPanel(
+  _props: ToolPanelProps,
+) {
   const { normalized, form: formApi, _form } = useFormApi();
   const { selectedFieldId, selectField, selectFieldChild, _ui } = useUiApi();
   const selectedField = selectedFieldId ? normalized.byId[selectedFieldId] : undefined;
@@ -167,7 +161,7 @@ export const ToolPanel = React.memo(function ToolPanel({
               <>
                 <button
                   type="button"
-                  onClick={() => ui.getState().selectField(null)}
+                  onClick={() => selectField(null)}
                   className="ms:flex ms:min-w-0 ms:flex-1 ms:items-center ms:gap-1 ms:bg-transparent ms:p-0 ms:text-left ms:text-msprimary ms:outline-none ms:focus:outline-none ms:cursor-pointer"
                   title="Switch to adding into root"
                   aria-label="Switch to adding into root"
@@ -181,7 +175,7 @@ export const ToolPanel = React.memo(function ToolPanel({
                 </button>
                 <button
                   type="button"
-                  onClick={() => ui.getState().selectField(null)}
+                  onClick={() => selectField(null)}
                   className="ms:inline-flex ms:h-4 ms:w-4 ms:flex-shrink-0 ms:items-center ms:justify-center ms:rounded-full ms:bg-transparent ms:text-msprimary ms:hover:bg-msprimary/15 ms:outline-none ms:focus:outline-none ms:cursor-pointer"
                   title="Switch to adding into root"
                   aria-label="Switch to adding into root"

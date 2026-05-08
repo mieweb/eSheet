@@ -7,8 +7,6 @@ import {
   isExpressionValid,
   type FieldDefinition,
   type FormDefinition,
-  type FormStore,
-  type UIStore,
   type BuilderMode,
   type ValidationError,
   type FormResponseEnvelope,
@@ -30,11 +28,11 @@ import {
   DownloadIcon,
 } from '../icons.js';
 import { FeedbackModal, type FeedbackModalVariant } from './FeedbackModal.js';
-import { useStore } from 'zustand';
+import { useUiApi } from '../hooks/useUiApi.js';
+import { useFormApi } from '../hooks/useFormApi.js';
 
 export interface BuilderHeaderProps {
-  form: FormStore;
-  ui: UIStore;
+  // intentionally empty — BuilderHeader sources all state from useFormApi/useUiApi context hooks.
 }
 
 interface FeedbackState {
@@ -228,7 +226,7 @@ function formatDryRunDetails(result: DryRunResult): string {
 /**
  * BuilderHeader — top bar with Build/Code/Preview mode toggle and Import/Export actions.
  */
-export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
+export function BuilderHeader(_props: BuilderHeaderProps) {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [exportIdModalOpen, setExportIdModalOpen] = React.useState(false);
   const [exportIdInput, setExportIdInput] = React.useState('');
@@ -287,9 +285,8 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
     []
   );
 
-  const mode = useStore(ui, (s) => s.mode);
-  const codeHasError = useStore(ui, (s) => s.codeEditorHasError);
-  const uiApi = { setMode: (m: BuilderMode) => ui.getState().setMode(m) };
+  const { mode, codeEditorHasError: codeHasError, setMode } = useUiApi();
+  const { _form: form } = useFormApi();
 
   React.useEffect(() => {
     if (mode !== 'preview') {
@@ -701,7 +698,7 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
               <button
                 key={value}
                 type="button"
-                onClick={() => uiApi.setMode(value)}
+                onClick={() => setMode(value)}
                 disabled={codeHasError && value !== 'code'}
                 className={`mode-btn ms:flex ms:items-center ms:justify-center ms:gap-2 ms:px-2 ms:lg:px-4 ms:py-2 ms:rounded-lg ms:text-xs ms:lg:text-sm ms:font-medium ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none ${
                   codeHasError && value !== 'code'

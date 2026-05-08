@@ -47,3 +47,5 @@ export type { FormApi, FieldResponseMap } from './lib/hooks/useFormApi.js';
 export { useUiApi } from './lib/hooks/useUiApi.js';
 export type { UiApi } from './lib/hooks/useUiApi.js';
 export { useVisibleRootIds } from './lib/hooks/useVisibleRootIds.js';
+
+export type { BuilderTools, FieldSummary } from './lib/builder-tools.js';

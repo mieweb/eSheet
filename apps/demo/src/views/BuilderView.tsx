@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { EsheetBuilder } from '@esheet/builder';
 import type { FormDefinition } from '@esheet/core';
+import type { BuilderTools } from '@esheet/builder';
 import { Navbar } from '../components/Navbar.js';
 import { executeToolCall } from '../ai/tools.js';
 
@@ -29,11 +30,9 @@ const INITIAL_DEF: FormDefinition = {
 
 export function BuilderView() {
   const [def, setDef] = useState<FormDefinition>(INITIAL_DEF);
-  const defRef = useRef(def);
-  const [formKey, setFormKey] = useState(0);
+  const toolsRef = useRef<BuilderTools | null>(null);
 
   function handleChange(next: FormDefinition) {
-    defRef.current = next;
     setDef(next);
   }
 
@@ -44,16 +43,12 @@ export function BuilderView() {
         arguments: Record<string, unknown>;
         respond: (result: unknown) => void;
       };
-      const result = executeToolCall(name, args, {
-        getDefinition: () => defRef.current,
-        setDefinition: handleChange,
-      });
-      // get_form_summary returns raw data so the LLM can chain a second tool call.
-      // Mutation tools return a string confirmation wrapped as success/message.
+      if (!toolsRef.current) {
+        respond({ success: false, message: 'Builder not ready' });
+        return;
+      }
+      const result = executeToolCall(name, args, toolsRef.current);
       if (typeof result === 'string') {
-        // Increment key to force EsheetBuilder to remount with the updated definition,
-        // since it ignores definition prop changes after mount.
-        setFormKey((k) => k + 1);
         respond({ success: true, message: result });
       } else {
         respond(result);
@@ -68,7 +63,13 @@ export function BuilderView() {
       <Navbar />
       <div className="flex-1 overflow-y-auto bg-gray-100">
         <div className="w-full flex justify-center px-2 pt-5">
-          <EsheetBuilder key={formKey} definition={def} onChange={handleChange} />
+          <EsheetBuilder
+            definition={def}
+            onChange={handleChange}
+            onBuilderToolsReady={(tools) => {
+              toolsRef.current = tools;
+            }}
+          />
         </div>
       </div>
     </div>

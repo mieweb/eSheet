@@ -3,10 +3,8 @@ import {
   getFieldTypeMeta,
   type FieldDefinition,
   type FieldOption,
-  type FormStore,
   type MatrixColumn,
   type MatrixRow,
-  type UIStore,
   type EditTab,
 } from '@esheet/core';
 import { useInstanceId } from '../../EsheetBuilder.js';
@@ -20,8 +18,7 @@ import { useFormApi } from '../../hooks/useFormApi.js';
 import { useUiApi } from '../../hooks/useUiApi.js';
 
 export interface EditPanelProps {
-  form: FormStore;
-  ui: UIStore;
+  // intentionally empty — EditPanel sources all state from useFormApi/useUiApi context hooks.
 }
 
 /**
@@ -30,7 +27,7 @@ export interface EditPanelProps {
  * Shows Edit tab (common + per-type editors) and Logic tab.
  * Renders nothing meaningful when no field is selected.
  */
-export function EditPanel({ form, ui }: EditPanelProps) {
+export function EditPanel(_props: EditPanelProps) {
   const {
     selectedFieldId,
     selectedFieldChildId,
