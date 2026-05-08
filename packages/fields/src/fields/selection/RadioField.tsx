@@ -1,6 +1,6 @@
 import React from 'react';
 import type { FieldComponentProps, SelectedOption } from '@esheet/core';
-import { CustomRadio } from '../../controls/CustomRadio.js';
+import { RadioGroup, Radio } from '@mieweb/ui';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 
 export const RadioField = React.memo(function RadioField({
@@ -26,36 +26,29 @@ export const RadioField = React.memo(function RadioField({
           {def.question || 'Question'}
           {isRequired && <span className="ms:text-msdanger ms:ml-0.5">*</span>}
         </div>
-        <div>
-          {options.map((option) => {
-            const inputId = `${instanceId}-radio-answer-${def.id}-${option.id}`;
-            const isSelected = selectedId === option.id;
-
-            return (
-              <label
-                key={option.id}
-                htmlFor={inputId}
-                className="ms:flex ms:items-center ms:gap-3 ms:px-3 ms:py-2 ms:my-2 ms:cursor-pointer ms:rounded-lg ms:hover:bg-msprimary/10 ms:transition-colors"
-              >
-                <CustomRadio
-                  id={inputId}
-                  name={`question-${def.id}`}
-                  value={option.id}
-                  checked={isSelected}
-                  disabled={!isEnabled}
-                  onSelect={() =>
-                    onResponse({
-                      selected: { id: option.id, value: option.value },
-                    })
-                  }
-                  onUnselect={() => onResponse({ selected: undefined })}
-                  size="lg"
-                />
-                <span className="ms:text-mstext">{option.value}</span>
-              </label>
-            );
-          })}
-        </div>
+        <RadioGroup
+          value={selectedId || ''}
+          onValueChange={(val) => {
+            const opt = options.find((o) => o.id === val);
+            if (opt) onResponse({ selected: { id: opt.id, value: opt.value } });
+          }}
+          disabled={!isEnabled}
+          orientation="vertical"
+        >
+          {options.map((option) => (
+            <Radio
+              key={option.id}
+              id={`${instanceId}-radio-answer-${def.id}-${option.id}`}
+              value={option.id}
+              label={option.value}
+              onClick={() => {
+                if (selectedId === option.id) {
+                  onResponse({ selected: undefined });
+                }
+              }}
+            />
+          ))}
+        </RadioGroup>
       </div>
     );
   }

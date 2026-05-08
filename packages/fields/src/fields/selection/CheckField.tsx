@@ -1,6 +1,6 @@
 import React from 'react';
 import type { FieldComponentProps, SelectedOption } from '@esheet/core';
-import { CustomCheckbox } from '../../controls/CustomCheckbox.js';
+import { Checkbox } from '@mieweb/ui';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 
 export const CheckField = React.memo(function CheckField({
@@ -37,21 +37,14 @@ export const CheckField = React.memo(function CheckField({
         </div>
         <div className="ms:space-y-2">
           {options.map((option) => (
-            <label
+            <Checkbox
               key={option.id}
-              className="ms:flex ms:items-center ms:gap-3 ms:px-3 ms:py-2 ms:cursor-pointer ms:rounded-lg ms:hover:bg-msprimary/10 ms:transition-colors"
-            >
-              <CustomCheckbox
-                id={`${instanceId}-check-answer-${def.id}-${option.id}`}
-                checked={selectedIds.includes(option.id)}
-                onChange={() => toggleOption(option.id, option.value)}
-                disabled={!isEnabled}
-                size="lg"
-              />
-              <span className="ms:text-mstext ms:break-words ms:overflow-hidden">
-                {option.value}
-              </span>
-            </label>
+              id={`${instanceId}-check-answer-${def.id}-${option.id}`}
+              checked={selectedIds.includes(option.id)}
+              onChange={() => toggleOption(option.id, option.value)}
+              disabled={!isEnabled}
+              label={option.value}
+            />
           ))}
         </div>
       </div>

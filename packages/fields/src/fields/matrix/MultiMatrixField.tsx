@@ -1,6 +1,6 @@
 import React from 'react';
 import type { FieldComponentProps, SelectedOption } from '@esheet/core';
-import { CustomCheckbox } from '../../controls/CustomCheckbox.js';
+import { Checkbox } from '@mieweb/ui';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 
 export const MultiMatrixField = React.memo(function MultiMatrixField({
@@ -49,60 +49,107 @@ export const MultiMatrixField = React.memo(function MultiMatrixField({
         </div>
 
         {rows.length > 0 && columns.length > 0 ? (
-          <div
-            className="multimatrix-field-grid ms:border-t ms:border-msborder ms:pt-3"
-            style={{
-              display: 'grid',
-              gridTemplateColumns: `auto repeat(${columns.length}, 1fr)`,
-              gap: '0.5rem 1rem',
-              alignItems: 'center',
-            }}
-          >
-            <div />
-            {columns.map((col) => (
-              <div
-                key={col.id}
-                className="ms:text-center ms:font-normal ms:text-mstext ms:py-1"
-              >
-                {col.value}
-              </div>
-            ))}
-
-            {rows.map((row, rowIndex) => {
-              const rowSelections = selected[row.id] || [];
-
-              return (
-                <React.Fragment key={row.id}>
-                  <div className="ms:font-normal ms:text-mstext ms:py-2">
-                    {row.value}
+          <>
+            {/* Mobile: card-per-row layout */}
+            <div className="multimatrix-mobile ms:block ms:sm:hidden ms:space-y-3 ms:border-t ms:border-msborder ms:pt-3">
+              {rows.map((row, rowIndex) => {
+                const rowSelections = selected[row.id] || [];
+                return (
+                  <div
+                    key={row.id}
+                    className="ms:border ms:border-msborder ms:rounded-lg ms:p-3"
+                  >
+                    <div className="ms:font-medium ms:text-mstext ms:mb-2">
+                      {row.value}
+                    </div>
+                    <div className="ms:space-y-1">
+                      {columns.map((col, colIndex) => {
+                        const isChecked = rowSelections.some(
+                          (s) => s.id === col.id
+                        );
+                        const inputId = `${instanceId}-multimatrix-answer-${def.id}-${rowIndex}-${colIndex}-m`;
+                        return (
+                          <div
+                            key={col.id}
+                            className="ms:flex ms:items-center ms:gap-2 ms:py-1"
+                          >
+                            <Checkbox
+                              id={inputId}
+                              checked={isChecked}
+                              onChange={() =>
+                                toggleSelection(row.id, col.id, col.value)
+                              }
+                              disabled={!isEnabled}
+                            />
+                            <label
+                              htmlFor={inputId}
+                              className="ms:text-sm ms:text-mstext ms:cursor-pointer"
+                            >
+                              {col.value}
+                            </label>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                  {columns.map((col, colIndex) => {
-                    const isChecked = rowSelections.some(
-                      (s) => s.id === col.id
-                    );
-                    const inputId = `${instanceId}-multimatrix-answer-${def.id}-${rowIndex}-${colIndex}`;
+                );
+              })}
+            </div>
 
-                    return (
-                      <div
-                        key={col.id}
-                        className="ms:flex ms:justify-center ms:py-2"
-                      >
-                        <CustomCheckbox
-                          id={inputId}
-                          checked={isChecked}
-                          onChange={() =>
-                            toggleSelection(row.id, col.id, col.value)
-                          }
-                          disabled={!isEnabled}
-                          size="lg"
-                        />
+            {/* Desktop: grid layout */}
+            <div className="multimatrix-field-grid ms:hidden ms:sm:block ms:border-t ms:border-msborder ms:pt-3">
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: `auto repeat(${columns.length}, 1fr)`,
+                  gap: '0.5rem 1rem',
+                  alignItems: 'center',
+                }}
+              >
+                <div />
+                {columns.map((col) => (
+                  <div
+                    key={col.id}
+                    className="ms:text-center ms:font-normal ms:text-mstext ms:py-1"
+                  >
+                    {col.value}
+                  </div>
+                ))}
+
+                {rows.map((row, rowIndex) => {
+                  const rowSelections = selected[row.id] || [];
+                  return (
+                    <React.Fragment key={row.id}>
+                      <div className="ms:font-normal ms:text-mstext ms:py-2">
+                        {row.value}
                       </div>
-                    );
-                  })}
-                </React.Fragment>
-              );
-            })}
-          </div>
+                      {columns.map((col, colIndex) => {
+                        const isChecked = rowSelections.some(
+                          (s) => s.id === col.id
+                        );
+                        const inputId = `${instanceId}-multimatrix-answer-${def.id}-${rowIndex}-${colIndex}`;
+                        return (
+                          <div
+                            key={col.id}
+                            className="ms:flex ms:justify-center ms:py-2"
+                          >
+                            <Checkbox
+                              id={inputId}
+                              checked={isChecked}
+                              onChange={() =>
+                                toggleSelection(row.id, col.id, col.value)
+                              }
+                              disabled={!isEnabled}
+                            />
+                          </div>
+                        );
+                      })}
+                    </React.Fragment>
+                  );
+                })}
+              </div>
+            </div>
+          </>
         ) : (
           <div className="ms:text-mstextmuted ms:text-sm">
             Configure rows and columns in edit mode

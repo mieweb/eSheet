@@ -1,6 +1,5 @@
 import React from 'react';
 import type { FieldComponentProps, SelectedOption } from '@esheet/core';
-import { CustomRadio } from '../../controls/CustomRadio.js';
 
 export const BooleanField = React.memo(function BooleanField({
   field,
@@ -33,41 +32,31 @@ export const BooleanField = React.memo(function BooleanField({
         </div>
         <div className="ms:flex ms:gap-2">
           {options.map((option) => {
-            const inputId = `${instanceId}-boolean-answer-${def.id}-${option.id}`;
             const isSelected = selectedId === option.id;
 
             return (
-              <label
+              <button
                 key={option.id}
-                htmlFor={inputId}
-                className={`ms:flex-1 ms:flex ms:items-center ms:justify-center ms:px-4 ms:py-2 ms:h-10 ms:border-2 ms:rounded-lg ms:cursor-pointer ms:transition-all ${
+                id={`${instanceId}-boolean-answer-${def.id}-${option.id}`}
+                type="button"
+                disabled={!isEnabled}
+                className={`ms:flex-1 ms:px-3 ms:py-2 ms:rounded-lg ms:text-sm ms:font-medium ms:transition-colors ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:disabled:opacity-50 ms:disabled:cursor-not-allowed ${
                   isSelected
-                    ? 'ms:bg-msprimary ms:text-mstextsecondary ms:border-msprimary'
-                    : 'ms:border-msborder ms:bg-mssurface ms:hover:bg-msprimary/10 ms:hover:border-msprimary/50'
+                    ? 'ms:bg-msprimary ms:text-mstextsecondary ms:border ms:border-msprimary ms:shadow-sm'
+                    : 'ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:hover:bg-msprimary ms:hover:text-mstextsecondary ms:hover:border-msprimary'
                 }`}
-              >
-                <CustomRadio
-                  id={inputId}
-                  name={`question-${def.id}`}
-                  value={option.id}
-                  checked={isSelected}
-                  disabled={!isEnabled}
-                  onSelect={() =>
+                onClick={() => {
+                  if (isSelected) {
+                    onResponse({ selected: undefined });
+                  } else {
                     onResponse({
                       selected: { id: option.id, value: option.value },
-                    })
+                    });
                   }
-                  onUnselect={() => onResponse({ selected: undefined })}
-                  hidden
-                />
-                <span
-                  className={
-                    isSelected ? 'ms:text-mstextsecondary' : 'ms:text-mstext'
-                  }
-                >
-                  {option.value}
-                </span>
-              </label>
+                }}
+              >
+                {option.value}
+              </button>
             );
           })}
         </div>
