@@ -135,6 +135,34 @@ export const DrawingPad = React.memo(function DrawingPad({
   const [canRedo, setCanRedo] = React.useState(false);
   const [hasStrokes, setHasStrokes] = React.useState(false);
 
+  // Sync pen color and remap existing strokes when theme switches.
+  const prevBgRef = React.useRef(backgroundColor);
+  React.useEffect(() => {
+    setCurrentColor(strokeColor);
+
+    const prevBg = prevBgRef.current;
+    prevBgRef.current = backgroundColor;
+    if (prevBg === backgroundColor) return;
+
+    // Remap stroke colors so drawings stay visible after a theme switch.
+    const swap: Record<string, string> = {
+      '#000000': '#fafafa',
+      '#fafafa': '#000000',
+    };
+    for (const stroke of strokesRef.current) {
+      const mapped = swap[stroke.color];
+      if (mapped) stroke.color = mapped;
+    }
+    // Remap undo stack too.
+    for (const stroke of undoStackRef.current) {
+      const mapped = swap[stroke.color];
+      if (mapped) stroke.color = mapped;
+    }
+
+    const { width: w, height: h } = displaySize;
+    if (w > 0) repaint(w, h);
+  }, [strokeColor, backgroundColor]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ---- Stable DPR helper --------------------------------------------------
 
   const getDPR = () =>
@@ -630,11 +658,17 @@ export const DrawingPad = React.memo(function DrawingPad({
 
   // ---- Cursors ------------------------------------------------------------
 
-  const penCursor = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20h4L18.5 9.5a2.828 2.828 0 1 0-4-4L4 16v4'/%3E%3Cpath d='m13.5 6.5 4 4'/%3E%3C/svg%3E") 2 22, crosshair`;
-  const eraserCursor = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19 20H8.5l-4.21-4.3a1 1 0 0 1 0-1.41l10-10a1 1 0 0 1 1.41 0l5 5a1 1 0 0 1 0 1.41L11.5 20'/%3E%3Cpath d='M18 13.3 11.7 7'/%3E%3C/svg%3E") 2 22, cell`;
+  const cursorStroke = backgroundColor === '#ffffff' ? 'black' : 'white';
+  const penCursor = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='${cursorStroke}' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20h4L18.5 9.5a2.828 2.828 0 1 0-4-4L4 16v4'/%3E%3Cpath d='m13.5 6.5 4 4'/%3E%3C/svg%3E") 2 22, crosshair`;
+  const eraserCursor = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='${cursorStroke}' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19 20H8.5l-4.21-4.3a1 1 0 0 1 0-1.41l10-10a1 1 0 0 1 1.41 0l5 5a1 1 0 0 1 0 1.41L11.5 20'/%3E%3Cpath d='M18 13.3 11.7 7'/%3E%3C/svg%3E") 2 22, cell`;
 
   // Colour palette (the same three as the old QB DrawingCanvas)
-  const COLOR_PALETTE = ['#000000', '#ef4444', '#3b82f6'];
+  const isLightBg = backgroundColor.toLowerCase() === '#ffffff';
+  const COLOR_PALETTE = [
+    isLightBg ? '#000000' : '#fafafa',
+    '#ef4444',
+    '#3b82f6',
+  ];
 
   // ---- Render -------------------------------------------------------------
 

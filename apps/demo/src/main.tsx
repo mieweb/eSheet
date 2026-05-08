@@ -6,6 +6,7 @@ import { LandingPage } from './views/LandingPage';
 import { BuilderView } from './views/BuilderView';
 import { RendererView } from './views/RendererView';
 import { Navbar } from './components/Navbar';
+import { BrandInitializer } from './components/BrandInitializer';
 
 if (import.meta.env.DEV) {
   await import('../../../packages/builder/src/index.output.css');
@@ -15,6 +16,7 @@ if (import.meta.env.DEV) {
 function App() {
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>
+      <BrandInitializer />
       <Routes>
         <Route
           path="/"

@@ -1,5 +1,6 @@
 import React from 'react';
 import type { FieldComponentProps, SelectedOption } from '@esheet/core';
+import { Slider } from '@mieweb/ui';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 
 export const SliderField = React.memo(function SliderField({
@@ -33,86 +34,23 @@ export const SliderField = React.memo(function SliderField({
           {isRequired && <span className="ms:text-msdanger ms:ml-0.5">*</span>}
         </div>
         {options.length > 0 ? (
-          <div className="ms:relative ms:pt-1">
-            <input
-              id={`${instanceId}-slider-answer-${def.id}`}
-              aria-label={def.question || 'Question'}
-              type="range"
-              min="0"
-              max={options.length - 1}
-              step="1"
-              value={selectedIndex >= 0 ? selectedIndex : 0}
-              disabled={!isEnabled}
-              onChange={(e) => {
-                const idx = parseInt(e.target.value);
-                const opt = options[idx];
-                if (opt)
-                  onResponse({ selected: { id: opt.id, value: opt.value } });
-              }}
-              className="ms:w-full ms:h-1 ms:bg-msborder ms:rounded-lg ms:appearance-none ms:cursor-pointer slider-thumb"
-            />
-
-            <div className="ms:relative ms:mt-2 ms:px-2">
-              <div className="ms:relative ms:h-4 ms:text-mstextmuted ms:text-center">
-                {options.map((option, index) => {
-                  const position =
-                    options.length > 1
-                      ? (index / (options.length - 1)) * 100
-                      : 50;
-                  return (
-                    <span
-                      key={option.id}
-                      className="ms:absolute"
-                      style={{
-                        left: `${position}%`,
-                        transform: 'translateX(-50%)',
-                      }}
-                    >
-                      ╹
-                    </span>
-                  );
-                })}
-              </div>
-              <div className="ms:relative ms:mt-1">
-                {options.map((option, index) => {
-                  const position =
-                    options.length > 1
-                      ? (index / (options.length - 1)) * 100
-                      : 50;
-                  return (
-                    <div
-                      key={option.id}
-                      className="ms:absolute"
-                      style={{
-                        left: `${position}%`,
-                        transform: 'translateX(-50%)',
-                      }}
-                    >
-                      <button
-                        type="button"
-                        onClick={() =>
-                          onResponse({
-                            selected: { id: option.id, value: option.value },
-                          })
-                        }
-                        className="ms:cursor-pointer ms:bg-transparent ms:border-0 ms:outline-none ms:focus:outline-none ms:whitespace-nowrap"
-                      >
-                        <span
-                          className={`ms:text-sm ${
-                            selectedIndex === index
-                              ? 'ms:text-msprimary ms:font-semibold'
-                              : 'ms:text-mstextmuted ms:hover:text-msprimary'
-                          }`}
-                        >
-                          {option.value}
-                        </span>
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
+          <Slider
+            id={`${instanceId}-slider-answer-${def.id}`}
+            min={0}
+            max={options.length - 1}
+            step={1}
+            value={selectedIndex >= 0 ? selectedIndex : 0}
+            disabled={!isEnabled}
+            onValueChange={(val) => {
+              const opt = options[val];
+              if (opt)
+                onResponse({ selected: { id: opt.id, value: opt.value } });
+            }}
+            formatValue={(val) => options[val]?.value ?? ''}
+            minLabel={options[0]?.value}
+            maxLabel={options[options.length - 1]?.value}
+            showValue
+          />
         ) : (
           <div className="ms:text-sm ms:text-mstextmuted ms:italic">
             No options available

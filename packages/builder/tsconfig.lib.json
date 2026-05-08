@@ -10,7 +10,7 @@
     "lib": ["es2022", "dom", "dom.iterable"],
     "types": ["node"]
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "../../types/**/*.d.ts"],
   "references": [
     {
       "path": "../adapters/tsconfig.lib.json"

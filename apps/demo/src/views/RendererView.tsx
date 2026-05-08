@@ -2,6 +2,7 @@ import { useState, useCallback, useRef } from 'react';
 import { EsheetRenderer, type EsheetRendererHandle } from '@esheet/renderer';
 import type { FormDefinition, FormResponseEnvelope } from '@esheet/core';
 import { Navbar } from '../components/Navbar';
+import { Button, Select } from '@mieweb/ui';
 
 interface SubmitResult {
   readonly kind: 'success' | 'error';
@@ -52,6 +53,7 @@ const TEST_SCHEMAS: readonly SchemaOption[] = Object.entries(schemaModules)
 
 export function RendererView() {
   const [rawInput, setRawInput] = useState<unknown>(null);
+  const [selectedSchema, setSelectedSchema] = useState<string>('');
   const [formKey, setFormKey] = useState(0);
   const [submitResult, setSubmitResult] = useState<SubmitResult | null>(null);
   const [definition, setDefinition] = useState<unknown>(null);
@@ -66,6 +68,7 @@ export function RendererView() {
   const handleLoadSchema = (fileName: string) => {
     const schema = TEST_SCHEMAS.find((s) => s.value === fileName);
     if (!schema) return;
+    setSelectedSchema(fileName);
     setRawInput(schema.data);
     setSubmitResult(null);
     resetFormKey();
@@ -129,32 +132,35 @@ export function RendererView() {
   return (
     <>
       <Navbar>
-        <select
-          defaultValue=""
-          onChange={(e) => {
-            if (e.target.value) handleLoadSchema(e.target.value);
+        <Select
+          value={selectedSchema}
+          onValueChange={(val: string) => {
+            if (val) handleLoadSchema(val);
           }}
-          className="px-3 py-1.5 text-sm border border-slate-300 rounded-lg bg-white whitespace-nowrap"
-        >
-          <option value="" disabled>
-            Load example…
-          </option>
-          {TEST_SCHEMAS.map((s) => (
-            <option key={s.value} value={s.value}>
-              {s.label}
-            </option>
-          ))}
-        </select>
+          options={TEST_SCHEMAS.map((s) => ({
+            value: s.value,
+            label: s.label,
+          }))}
+          placeholder="Load example…"
+          className="w-48"
+        />
 
-        <label className="inline-flex items-center justify-center sm:justify-start gap-2 px-3 py-1.5 text-sm border border-slate-300 rounded-lg bg-white cursor-pointer hover:bg-slate-50 whitespace-nowrap">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() =>
+            document.getElementById('renderer-file-import')?.click()
+          }
+        >
           Import JSON
-          <input
-            type="file"
-            accept=".json"
-            onChange={handleFileImport}
-            className="hidden"
-          />
-        </label>
+        </Button>
+        <input
+          id="renderer-file-import"
+          type="file"
+          accept=".json"
+          onChange={handleFileImport}
+          className="hidden"
+        />
 
         {rawInput != null && (
           <button
@@ -166,17 +172,19 @@ export function RendererView() {
         )}
 
         {rawInput != null && (
-          <button
+          <Button
             onClick={handleSubmit}
-            className="px-4 py-1.5 text-sm font-medium bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors whitespace-nowrap"
+            variant="primary"
+            size="sm"
+            className="ml-auto"
           >
             Submit
-          </button>
+          </Button>
         )}
       </Navbar>
 
       {submitResult && (
-        <div className="bg-gray-100 pt-4">
+        <div className="bg-muted pt-4">
           <div
             role={submitResult.kind === 'success' ? 'status' : 'alert'}
             aria-live={submitResult.kind === 'success' ? 'polite' : undefined}
@@ -184,8 +192,8 @@ export function RendererView() {
             className={[
               'max-w-4xl mx-auto rounded-2xl border px-4 py-4 shadow-sm',
               submitResult.kind === 'success'
-                ? 'border-emerald-200 bg-emerald-50 text-emerald-950'
-                : 'border-rose-200 bg-rose-50 text-rose-950',
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-950 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-100'
+                : 'border-rose-200 bg-rose-50 text-rose-950 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-100',
             ].join(' ')}
           >
             <h2 className="text-base font-semibold">{submitResult.title}</h2>
@@ -198,12 +206,12 @@ export function RendererView() {
               </ul>
             )}
             {submitResult.detail && (
-              <p className="mt-3 text-sm text-slate-700">
+              <p className="mt-3 text-sm text-slate-700 dark:text-slate-300">
                 {submitResult.detail}
               </p>
             )}
             {submitResult.data && (
-              <pre className="mt-3 p-3 bg-white/50 rounded-lg text-xs overflow-auto max-h-96 border border-emerald-200">
+              <pre className="mt-3 p-3 bg-white/50 dark:bg-white/10 rounded-lg text-xs overflow-auto max-h-96 border border-emerald-200 dark:border-emerald-800">
                 {JSON.stringify(submitResult.data, null, 2)}
               </pre>
             )}
@@ -211,15 +219,15 @@ export function RendererView() {
         </div>
       )}
 
-      <div className="demo-renderer-content bg-gray-100 pt-6 pb-20 min-h-[calc(100vh-3.5rem)]">
+      <div className="demo-renderer-content bg-gray-100 dark:bg-neutral-900 pt-6 pb-20 min-h-[calc(100vh-3.5rem)]">
         {/* SurveyJS conversion errors removed */}
         {rawInput == null ? (
           <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] gap-6">
             <div className="text-center max-w-md">
-              <h2 className="text-2xl font-semibold text-slate-900 mb-3">
+              <h2 className="text-2xl font-semibold text-foreground mb-3">
                 No Form Loaded
               </h2>
-              <p className="text-slate-600 mb-6">
+              <p className="text-muted-foreground mb-6">
                 Select an example from the dropdown above, or import your own
                 JSON form definition.
               </p>
@@ -249,13 +257,13 @@ export function RendererView() {
             </div>
             {showDefinition && (
               <div className="lg:sticky lg:top-20 lg:self-start space-y-4">
-                <div className="bg-white rounded-lg border border-slate-200 shadow-sm">
-                  <div className="px-4 py-2 border-b border-slate-200 bg-slate-50 rounded-t-lg">
-                    <h3 className="text-sm font-semibold text-slate-700">
+                <div className="bg-white dark:bg-neutral-800 rounded-lg border border-slate-200 dark:border-neutral-700 shadow-sm">
+                  <div className="px-4 py-2 border-b border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-900 rounded-t-lg">
+                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                       eSheet FormDefinition
                     </h3>
                   </div>
-                  <pre className="p-4 text-xs overflow-auto max-h-[40vh] text-slate-800">
+                  <pre className="p-4 text-xs overflow-auto max-h-[40vh] text-slate-800 dark:text-slate-200">
                     {definition
                       ? JSON.stringify(definition, null, 2)
                       : '(loading…)'}

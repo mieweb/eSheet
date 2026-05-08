@@ -1,6 +1,6 @@
 import React from 'react';
 import type { FieldComponentProps, SelectedOption } from '@esheet/core';
-import { CustomDropdown } from '../../controls/CustomDropdown.js';
+import { Select } from '@mieweb/ui';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 
 export const DropdownField = React.memo(function DropdownField({
@@ -20,27 +20,31 @@ export const DropdownField = React.memo(function DropdownField({
     (response?.selected as SelectedOption | undefined)?.id ?? null;
 
   if (isPreview) {
+    const selectOptions = options.map((o) => ({
+      value: o.id,
+      label: o.value,
+    }));
+
     return (
       <div className="dropdown-field-preview ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
         <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
           {def.question || 'Question'}
           {isRequired && <span className="ms:text-msdanger ms:ml-0.5">*</span>}
         </div>
-        <CustomDropdown
-          options={options}
-          value={selectedId}
-          onChange={(id) => {
-            if (id == null) {
+        <Select
+          options={selectOptions}
+          value={selectedId || ''}
+          onValueChange={(val) => {
+            if (!val) {
               onResponse({ selected: undefined });
             } else {
-              const opt = options.find((o) => o.id === id);
+              const opt = options.find((o) => o.id === val);
               if (opt)
                 onResponse({ selected: { id: opt.id, value: opt.value } });
             }
           }}
           placeholder="Select an option"
           disabled={!isEnabled}
-          showClearOption
         />
       </div>
     );

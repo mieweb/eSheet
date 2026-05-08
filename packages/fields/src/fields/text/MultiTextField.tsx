@@ -1,5 +1,6 @@
 import React from 'react';
 import type { FieldComponentProps } from '@esheet/core';
+import { Input } from '@mieweb/ui';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 
 export const MultiTextField = React.memo(function MultiTextField({
@@ -39,7 +40,7 @@ export const MultiTextField = React.memo(function MultiTextField({
                 >
                   {option.value}
                 </label>
-                <input
+                <Input
                   id={inputId}
                   type="text"
                   disabled={!isEnabled}
@@ -53,7 +54,6 @@ export const MultiTextField = React.memo(function MultiTextField({
                     })
                   }
                   placeholder=""
-                  className="ms:w-full ms:px-4 ms:py-2 ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:rounded-lg ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary ms:outline-none ms:transition-colors ms:min-w-0"
                 />
               </div>
             );

@@ -41,6 +41,7 @@
   },
   "dependencies": {
     "@esheet/core": "0.0.2-0",
+    "@mieweb/ui": "^0.3.0-dev.106",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "sortablejs": "^1.15.7",

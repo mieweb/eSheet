@@ -418,7 +418,7 @@ function getTotal(items) {
 - Run `npx nx affected -t lint test build` to verify changes.
 - **Run local CI/CD via `gh act`** — when asked to test CI/CD locally, always follow `.github/workflows/TESTING-LOCALLY.md`. The canonical command for the CI workflow is:
   ```bash
-  gh act push -W .github/workflows/ci.yml --pull=false
+  gh act pull_request -W .github/workflows/ci.yml --pull=false
   ```
   Use `--pull=false` on all runs after the first (avoids Docker Hub rate-limiting). Never substitute manual `nx run-many` chains as a CI equivalent — use `gh act` so the exact workflow contract is exercised.
 
