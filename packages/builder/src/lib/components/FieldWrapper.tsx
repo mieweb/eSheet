@@ -276,23 +276,24 @@ export function FieldWrapper({
             ref={dragHandleRef}
             className="drag-handle ms:flex ms:items-center ms:p-1 ms:text-mstextmuted ms:cursor-grab ms:active:cursor-grabbing ms:shrink-0 ms:user-select-none"
             style={{ touchAction: 'none' }}
+            role="img"
             aria-label="Drag to reorder"
           >
             <DragHandleIcon className="ms:w-4 ms:h-4" />
           </div>
         )}
         <div className="ms:flex-1 ms:flex ms:items-center ms:gap-1.5 ms:min-w-0 ms:select-none">
-          {/* Type chip — tinted primary bg, same as before */}
-          <span className="fieldtype-chip ms:inline-block ms:shrink-0 ms:text-xs ms:font-medium ms:text-msprimary ms:bg-msprimary/10 ms:px-2 ms:py-0.5 ms:rounded">
+          {/* Type chip — foreground text on tinted primary bg, always accessible */}
+          <span className="fieldtype-chip ms:inline-block ms:shrink-0 ms:text-xs ms:font-medium ms:text-mstext ms:bg-msprimary/10 ms:px-2 ms:py-0.5 ms:rounded">
             {field.definition.fieldType}
           </span>
           {/* ID chip — explicit label for quick scanning */}
-          <span className="id-chip ms:inline-flex ms:items-center ms:gap-1 ms:shrink-0 ms:text-xs ms:font-mono ms:text-mssecondary ms:bg-mssecondary/10 ms:px-2 ms:py-0.5 ms:rounded">
-            <span className="ms:opacity-70">id:</span>
+          <span className="id-chip ms:inline-flex ms:items-center ms:gap-1 ms:shrink-0 ms:text-xs ms:font-mono ms:text-mstext ms:bg-mssecondary/10 ms:px-2 ms:py-0.5 ms:rounded">
+            <span>id:</span>
             <span className="ms:font-semibold">{field.definition.id}</span>
           </span>
           {/* Question — plain muted text */}
-          <span className="question-label ms:text-xs ms:text-mstextmuted ms:truncate ms:min-w-0">
+          <span className="question-label ms:text-xs ms:text-mstext/65 ms:truncate ms:min-w-0">
             {questionPreview}
           </span>
           {field.definition.required && (

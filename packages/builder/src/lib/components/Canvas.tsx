@@ -458,7 +458,7 @@ export const Canvas = React.memo(function Canvas({
     <div className="ms:flex ms:flex-col ms:flex-1 ms:min-h-0">
       {mode === 'build' && (
         <div className="ms:bg-msbackground ms:border-b ms:border-msborder ms:px-3 ms:py-1.5 ms:flex ms:items-center ms:justify-between ms:gap-2 ms:py-2 ms:mb-2">
-          <span className="ms:text-xs ms:font-medium ms:text-mstextmuted ms:uppercase ms:tracking-wide ms:select-none ms:py-1">
+          <span className="ms:text-xs ms:font-medium ms:text-mstext/65 ms:uppercase ms:tracking-wide ms:select-none ms:py-1">
             Fields
           </span>
           {items.length > 0 && (
@@ -466,7 +466,7 @@ export const Canvas = React.memo(function Canvas({
               <button
                 type="button"
                 title="Expand all"
-                className="ms:flex ms:items-center ms:gap-1 ms:px-2  ms:text-xs ms:text-mstextmuted ms:hover:text-mstext ms:rounded ms:hover:bg-msbackgroundhover ms:transition-colors"
+                className="ms:flex ms:items-center ms:gap-1 ms:px-2  ms:text-xs ms:text-mstext/65 ms:hover:text-mstext ms:rounded ms:hover:bg-msbackgroundhover ms:transition-colors"
                 onClick={(e) => {
                   e.stopPropagation();
                   setExpandAllVersion((v) => (v ?? 0) + 1);
@@ -478,7 +478,7 @@ export const Canvas = React.memo(function Canvas({
               <button
                 type="button"
                 title="Collapse all"
-                className="ms:flex ms:items-center ms:gap-1 ms:px-2 ms:py-1 ms:text-xs ms:text-mstextmuted ms:hover:text-mstext ms:rounded ms:hover:bg-msbackgroundhover ms:transition-colors"
+                className="ms:flex ms:items-center ms:gap-1 ms:px-2 ms:py-1 ms:text-xs ms:text-mstext/65 ms:hover:text-mstext ms:rounded ms:hover:bg-msbackgroundhover ms:transition-colors"
                 onClick={(e) => {
                   e.stopPropagation();
                   setCollapseAllVersion((v) => (v ?? 0) + 1);

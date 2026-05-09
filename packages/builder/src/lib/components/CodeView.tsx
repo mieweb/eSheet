@@ -262,7 +262,7 @@ export function CodeView({ form, ui }: CodeViewProps) {
               onClick={() => handleFormatChange(fmt)}
               className={`format-btn ms:px-3 ms:py-1 ms:rounded-md ms:text-sm ms:font-medium ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ${
                 format === fmt
-                  ? 'ms:bg-msprimary ms:text-mstextsecondary ms:shadow-sm'
+                  ? 'ms:bg-msprimary-active ms:text-mstextsecondary ms:shadow-sm'
                   : 'ms:bg-transparent ms:text-mstextmuted ms:hover:text-mstext ms:hover:bg-mssurface'
               }`}
             >

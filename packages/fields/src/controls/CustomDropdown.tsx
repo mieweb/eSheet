@@ -133,7 +133,7 @@ export function CustomDropdown(props: CustomDropdownProps) {
             selectedOptions.map((option) => (
               <span
                 key={option.id}
-                className="custom-dropdown-selected-pill ms:inline-flex ms:items-center ms:gap-1 ms:px-3 ms:py-1 ms:bg-msprimary ms:text-mstextsecondary ms:rounded ms:text-sm"
+                className="custom-dropdown-selected-pill ms:inline-flex ms:items-center ms:gap-1 ms:px-3 ms:py-1 ms:bg-msprimary-active ms:text-mstextsecondary ms:rounded ms:text-sm"
               >
                 {option.value}
                 <button
@@ -142,7 +142,7 @@ export function CustomDropdown(props: CustomDropdownProps) {
                     e.stopPropagation();
                     handleRemove(option.id);
                   }}
-                  className="custom-dropdown-remove-btn ms:flex ms:items-center ms:justify-center ms:bg-transparent ms:text-mstextsecondary ms:hover:bg-msprimary/80 ms:rounded ms:border-0 ms:outline-none ms:focus:outline-none"
+                  className="custom-dropdown-remove-btn ms:flex ms:items-center ms:justify-center ms:bg-transparent ms:text-mstextsecondary ms:hover:bg-msprimary-active/80 ms:rounded ms:border-0 ms:outline-none ms:focus:outline-none"
                   aria-label={`Remove ${option.value}`}
                 >
                   <CloseIcon className="ms:w-4 ms:h-4" />
