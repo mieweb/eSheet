@@ -164,7 +164,7 @@ export const ToolPanel = React.memo(function ToolPanel({
             className={`ms:inline-flex ms:min-w-0 ms:max-w-[120px] ms:flex-shrink ms:items-center ms:gap-1 ms:rounded-full ms:px-2.5 ms:py-1 ms:text-[11px] ms:font-medium ${
               selectedSectionId
                 ? 'ms:bg-msprimary/10 ms:text-msprimary'
-                : 'ms:bg-msbackgroundsecondary ms:text-mstextmuted'
+                : 'ms:bg-msbackgroundsecondary ms:text-mstext/65'
             }`}
             title={
               selectedSectionId

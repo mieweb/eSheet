@@ -776,7 +776,7 @@ export const DrawingPad = React.memo(function DrawingPad({
             title="Pen"
             className={`drawing-pad-pen-btn ms:w-7 ms:h-7 ms:flex ms:items-center ms:justify-center ms:rounded ms:border ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:transition-colors ${
               currentTool === 'pen'
-                ? 'ms:bg-msprimary ms:text-mstextsecondary ms:border-msprimary'
+                ? 'ms:bg-msprimary-active ms:text-mstextsecondary ms:border-msprimary'
                 : 'ms:bg-msbackground ms:text-mstext ms:border-msborder ms:hover:bg-msbackgroundsecondary'
             }`}
           >
@@ -803,7 +803,7 @@ export const DrawingPad = React.memo(function DrawingPad({
               title="Eraser"
               className={`drawing-pad-eraser-btn ms:w-7 ms:h-7 ms:flex ms:items-center ms:justify-center ms:rounded ms:border ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:transition-colors ${
                 currentTool === 'eraser'
-                  ? 'ms:bg-msprimary ms:text-mstextsecondary ms:border-msprimary'
+                  ? 'ms:bg-msprimary-active ms:text-mstextsecondary ms:border-msprimary'
                   : 'ms:bg-msbackground ms:text-mstext ms:border-msborder ms:hover:bg-msbackgroundsecondary'
               }`}
             >
@@ -881,7 +881,7 @@ export const DrawingPad = React.memo(function DrawingPad({
                   title={`${s}px`}
                   className={`drawing-pad-size-btn ms:w-7 ms:h-7 ms:flex ms:items-center ms:justify-center ms:rounded ms:border ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:transition-all ${
                     currentSize === s
-                      ? 'ms:bg-msprimary ms:border-msprimary'
+                      ? 'ms:bg-msprimary-active ms:border-msprimary'
                       : 'ms:bg-msbackground ms:border-msborder ms:hover:bg-msbackgroundsecondary'
                   }`}
                 >
