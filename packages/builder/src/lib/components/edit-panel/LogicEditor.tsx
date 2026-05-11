@@ -394,7 +394,7 @@ function LogicToggle({
         onClick={() => onChange('AND')}
         className={`ms:px-2 ms:py-0.5 ms:text-xs ms:font-medium ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:transition-colors ${
           value === 'AND'
-            ? 'ms:bg-msprimary ms:text-mstextsecondary'
+            ? 'ms:bg-msprimary-active ms:text-mstextsecondary'
             : 'ms:bg-transparent ms:text-mstextmuted ms:hover:bg-msbackgroundhover'
         }`}
       >
@@ -407,7 +407,7 @@ function LogicToggle({
         onClick={() => onChange('OR')}
         className={`ms:px-2 ms:py-0.5 ms:text-xs ms:font-medium ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:transition-colors ${
           value === 'OR'
-            ? 'ms:bg-msprimary ms:text-mstextsecondary'
+            ? 'ms:bg-msprimary-active ms:text-mstextsecondary'
             : 'ms:bg-transparent ms:text-mstextmuted ms:hover:bg-msbackgroundhover'
         }`}
       >
@@ -571,7 +571,7 @@ function ConditionRow({
             }
             className={`ms:px-2 ms:py-0.5 ms:text-xs ms:font-medium ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:transition-colors ${
               conditionType === 'field'
-                ? 'ms:bg-msprimary ms:text-mstextsecondary'
+                ? 'ms:bg-msprimary-active ms:text-mstextsecondary'
                 : 'ms:bg-transparent ms:text-mstextmuted ms:hover:bg-msbackgroundhover'
             }`}
           >
@@ -591,7 +591,7 @@ function ConditionRow({
             }
             className={`ms:px-2 ms:py-0.5 ms:text-xs ms:font-medium ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:transition-colors ${
               conditionType === 'expression'
-                ? 'ms:bg-msprimary ms:text-mstextsecondary'
+                ? 'ms:bg-msprimary-active ms:text-mstextsecondary'
                 : 'ms:bg-transparent ms:text-mstextmuted ms:hover:bg-msbackgroundhover'
             }`}
           >

@@ -45,7 +45,7 @@ export const RatingField = React.memo(function RatingField({
                   disabled={!isEnabled}
                   className={`ms:min-w-10 ms:h-10 ms:px-3 ms:text-sm ms:font-medium ms:border-0 ms:cursor-pointer ms:transition-colors ms:outline-none ms:focus:ring-2 ms:focus:ring-msprimary ms:focus:ring-inset ${
                     isSelected
-                      ? 'ms:bg-msprimary ms:text-mstextsecondary'
+                      ? 'ms:bg-msprimary-active ms:text-mstextsecondary'
                       : 'ms:bg-mssurface ms:text-mstext ms:hover:bg-msbackgroundhover'
                   } ${index > 0 ? 'ms:border-l ms:border-l-msborder' : ''}`}
                   onClick={() => {

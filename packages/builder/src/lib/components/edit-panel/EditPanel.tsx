@@ -124,7 +124,7 @@ export function EditPanel({ form, ui }: EditPanelProps) {
             onClick={() => setTab('edit')}
             className={`edit-tab-btn ms:flex-1 ms:flex ms:items-center ms:justify-center ms:gap-1.5 ms:px-3 ms:py-1.5 ms:rounded-md ms:text-xs ms:font-medium ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ${
               editTab === 'edit'
-                ? 'ms:bg-msprimary ms:text-mstextsecondary ms:shadow-sm'
+                ? 'ms:bg-msprimary-active ms:text-mstextsecondary ms:shadow-sm'
                 : 'ms:bg-transparent ms:text-mstextmuted ms:hover:text-mstext ms:hover:bg-mssurface'
             }`}
           >
@@ -136,7 +136,7 @@ export function EditPanel({ form, ui }: EditPanelProps) {
             onClick={() => setTab('logic')}
             className={`logic-tab-btn ms:flex-1 ms:flex ms:items-center ms:justify-center ms:gap-1.5 ms:px-3 ms:py-1.5 ms:rounded-md ms:text-xs ms:font-medium ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ${
               editTab === 'logic'
-                ? 'ms:bg-msprimary ms:text-mstextsecondary ms:shadow-sm'
+                ? 'ms:bg-msprimary-active ms:text-mstextsecondary ms:shadow-sm'
                 : 'ms:bg-transparent ms:text-mstextmuted ms:hover:text-mstext ms:hover:bg-mssurface'
             }`}
           >
