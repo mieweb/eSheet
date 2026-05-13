@@ -14,4 +14,4 @@ export type { ValidationError } from '@esheet/core';
 export { RendererBody, FieldNode } from './lib/components/index.js';
 
 // Hooks (for advanced use cases)
-export { useRendererInit } from './lib/hooks/index.js';
+export { useRendererInit } from '../../../hooks/index.js';

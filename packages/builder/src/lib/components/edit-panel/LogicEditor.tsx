@@ -8,6 +8,7 @@ import {
   type ConditionOperator,
   type ConditionalEffect,
   type ConditionalRule,
+  type FieldOption,
   type FormStore,
   type LogicMode,
   type NormalizedDefinition,
@@ -169,7 +170,7 @@ interface TargetField {
   label: string;
   fieldType: string;
   hasOptions: boolean;
-  options?: readonly { id: string; value: string }[];
+  options?: readonly FieldOption[];
   answerType: string;
   supportsNumericCompare: boolean;
 }
@@ -934,12 +935,16 @@ function buildOtherFields(
       node.definition.fieldType === 'slider' ||
       (node.definition.fieldType === 'text' &&
         node.definition.inputType === 'number');
+    // Extract options if field type supports them
+    const defWithOptions = node.definition as unknown as {
+      options?: FieldOption[];
+    };
     result.push({
       id,
       label: node.definition.question || node.definition.id,
       fieldType: node.definition.fieldType,
       hasOptions: meta?.hasOptions ?? false,
-      options: node.definition.options,
+      options: meta?.hasOptions ? defWithOptions.options : undefined,
       answerType: meta?.answerType ?? 'none',
       supportsNumericCompare,
     });
