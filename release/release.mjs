@@ -107,14 +107,14 @@ if (IS_PRERELEASE) {
 if (DRY_RUN) {
   console.log(`[DRY RUN] Would commit${IS_PRERELEASE ? '' : `, tag v${newVersion},`} and push`);
 } else if (IS_PRERELEASE) {
-  const changedFiles = [...PACKAGES, 'apps/demo'].map((p) => `${p}/package.json`).join(' ');
+  const changedFiles = PACKAGES.map((p) => `${p}/package.json`).join(' ');
   exec('npm install --legacy-peer-deps');
   run(`git add ${changedFiles} package-lock.json`);
   run(`git commit -m "chore(release): bump to ${newVersion} [prerelease]"`);
   run('git push origin main');
   console.log(`📦 Committed version bumps for ${newVersion} (no tag)`);
 } else {
-  const changedFiles = [...PACKAGES, 'apps/demo'].map((p) => `${p}/package.json`).join(' ');
+  const changedFiles = PACKAGES.map((p) => `${p}/package.json`).join(' ');
   exec('npm install --legacy-peer-deps');
   run(`git add ${changedFiles} CHANGELOG.md package-lock.json`);
   run(`git commit -m "chore(release): publish ${newVersion}"`);
