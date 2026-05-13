@@ -1,5 +1,9 @@
 import React from 'react';
-import type { FieldComponentProps, SelectedOption } from '@esheet/core';
+import type {
+  FieldComponentProps,
+  SelectedOption,
+  SingleMatrixFieldDefinition,
+} from '@esheet/core';
 import { RadioGroup, Radio } from '@mieweb/ui';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 
@@ -13,7 +17,7 @@ export const SingleMatrixField = React.memo(function SingleMatrixField({
   onUpdate,
   onResponse,
 }: FieldComponentProps) {
-  const def = field.definition;
+  const def = field.definition as SingleMatrixFieldDefinition;
   const instanceId = form.getState().instanceId;
   const rows = def.rows || [];
   const columns = def.columns || [];

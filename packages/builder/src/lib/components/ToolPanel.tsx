@@ -91,7 +91,9 @@ export const ToolPanel = React.memo(function ToolPanel({
       ? selectedFieldId
       : undefined;
   const selectedSectionLabel = selectedSectionId
-    ? selectedField?.definition.title ||
+    ? ('title' in selectedField!.definition
+        ? selectedField!.definition.title
+        : undefined) ||
       selectedField?.definition.id ||
       selectedSectionId
     : null;

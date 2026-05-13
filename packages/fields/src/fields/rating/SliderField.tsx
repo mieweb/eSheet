@@ -1,5 +1,9 @@
 import React from 'react';
-import type { FieldComponentProps, SelectedOption } from '@esheet/core';
+import type {
+  FieldComponentProps,
+  SelectedOption,
+  SliderFieldDefinition,
+} from '@esheet/core';
 import { Slider } from '@mieweb/ui';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 
@@ -13,7 +17,7 @@ export const SliderField = React.memo(function SliderField({
   onUpdate,
   onResponse,
 }: FieldComponentProps) {
-  const def = field.definition;
+  const def = field.definition as SliderFieldDefinition;
   const instanceId = form.getState().instanceId;
   const options = def.options || [];
   const selectedId =

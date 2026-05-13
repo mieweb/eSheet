@@ -131,7 +131,7 @@ function collectImportWarnings(fields: FieldDefinition[]): string[] {
     const { field, path } = entry;
 
     if (optionRequiredTypes.has(field.fieldType)) {
-      if (!field.options || field.options.length === 0) {
+      if (!('options' in field) || !field.options || field.options.length === 0) {
         warnings.push(
           `${field.id}: ${path} has no options for fieldType '${field.fieldType}'.`
         );
@@ -142,10 +142,10 @@ function collectImportWarnings(fields: FieldDefinition[]): string[] {
       field.fieldType === 'singlematrix' ||
       field.fieldType === 'multimatrix'
     ) {
-      if (!field.rows || field.rows.length === 0) {
+      if (!('rows' in field) || !field.rows || field.rows.length === 0) {
         warnings.push(`${field.id}: ${path} has no rows.`);
       }
-      if (!field.columns || field.columns.length === 0) {
+      if (!('columns' in field) || !field.columns || field.columns.length === 0) {
         warnings.push(`${field.id}: ${path} has no columns.`);
       }
     }

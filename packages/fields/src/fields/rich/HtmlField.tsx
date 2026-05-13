@@ -1,5 +1,5 @@
 import React from 'react';
-import type { FieldComponentProps } from '@esheet/core';
+import type { FieldComponentProps, HtmlFieldDefinition } from '@esheet/core';
 
 const clamp = (v: number, lo: number, hi: number) =>
   Math.max(lo, Math.min(hi, v));
@@ -144,7 +144,7 @@ export const HtmlField = React.memo(function HtmlField({
   isPreview,
   onUpdate,
 }: FieldComponentProps) {
-  const def = field.definition;
+  const def = field.definition as HtmlFieldDefinition;
   const instanceId = form.getState().instanceId;
 
   const frameHeight = clamp(def.iframeHeight ?? 300, 50, 800);
