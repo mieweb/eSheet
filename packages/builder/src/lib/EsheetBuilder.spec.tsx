@@ -65,6 +65,7 @@ describe('EsheetBuilder', () => {
     );
 
     act(() => {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       form!.getState().loadDefinition({
         id: 'change-form',
         fields: [{ id: 'f1', fieldType: 'text' }],
