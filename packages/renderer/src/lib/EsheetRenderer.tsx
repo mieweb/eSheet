@@ -10,7 +10,7 @@ import {
 } from '@esheet/core';
 import { FormStoreContext, UIContext, ZodIssuesPanel } from '@esheet/fields';
 import { ensureDefaultFieldComponentsRegistered } from './register-defaults.js';
-import { useRendererInit } from './hooks/useRendererInit.js';
+import { useRendererInit } from '../../../../hooks/useRendererInit.js';
 import { RendererBody } from './components/RendererBody.js';
 
 export interface EsheetRendererProps {
