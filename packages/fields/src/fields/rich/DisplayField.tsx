@@ -1,5 +1,9 @@
 import React from 'react';
-import { evaluateExpression, type FieldComponentProps } from '@esheet/core';
+import {
+  evaluateExpression,
+  type DisplayFieldDefinition,
+  type FieldComponentProps,
+} from '@esheet/core';
 
 function formatComputedValue(value: unknown): string {
   if (value == null) return '';
@@ -214,7 +218,7 @@ export const DisplayField = React.memo(function DisplayField({
   isPreview,
   onUpdate,
 }: FieldComponentProps) {
-  const def = field.definition;
+  const def = field.definition as DisplayFieldDefinition;
   const instanceId = form.getState().instanceId;
   const { normalized, responses } = React.useSyncExternalStore(
     (cb) => form.subscribe(cb),

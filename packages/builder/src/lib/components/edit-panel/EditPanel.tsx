@@ -5,6 +5,7 @@ import {
   type FormStore,
   type UIStore,
   type EditTab,
+  type SectionFieldDefinition,
 } from '@esheet/core';
 import { useInstanceId } from '../../EsheetBuilder.js';
 import { EditIcon, LogicIcon } from '../../icons.js';
@@ -85,12 +86,13 @@ export function EditPanel({ form, ui }: EditPanelProps) {
   const meta = getFieldTypeMeta(def.fieldType);
   const logicTargetLabel = logicField
     ? logicField.definition.fieldType === 'section'
-      ? logicField.definition.title || logicField.definition.id
+      ? (logicField.definition as SectionFieldDefinition).title ||
+        logicField.definition.id
       : logicField.definition.question || logicField.definition.id
     : '';
   const logicTargetQuestion = logicField
     ? logicField.definition.fieldType === 'section'
-      ? logicField.definition.title || ''
+      ? (logicField.definition as SectionFieldDefinition).title || ''
       : logicField.definition.question || ''
     : '';
   const logicTargetQuestionShort = logicTargetQuestion
@@ -236,21 +238,33 @@ function EditTabContent({
       )}
 
       {/* Options (radio, check, dropdown, multitext, rating, ranking, slider, boolean) */}
-      {meta?.hasOptions && def.options && (
-        <OptionListEditor
-          fieldId={fieldId}
-          fieldType={def.fieldType}
-          options={def.options}
-          form={form}
-        />
-      )}
+      {meta?.hasOptions &&
+        'options' in def &&
+        (def as { options?: readonly { id: string; value: string }[] })
+          .options && (
+          <OptionListEditor
+            fieldId={fieldId}
+            fieldType={def.fieldType}
+            options={
+              (def as { options: readonly { id: string; value: string }[] })
+                .options
+            }
+            form={form}
+          />
+        )}
 
       {/* Matrix (singlematrix, multimatrix) */}
-      {meta?.hasMatrix && (
+      {meta?.hasMatrix && 'rows' in def && 'columns' in def && (
         <MatrixEditor
           fieldId={fieldId}
-          rows={def.rows ?? []}
-          columns={def.columns ?? []}
+          rows={
+            (def as { rows?: readonly { id: string; value: string }[] })
+              .rows ?? []
+          }
+          columns={
+            (def as { columns?: readonly { id: string; value: string }[] })
+              .columns ?? []
+          }
           form={form}
         />
       )}
@@ -393,8 +407,16 @@ function SectionEditContent({
         <input
           id={`${instanceId}-editor-title-${fieldId}`}
           type="text"
-          value={def.title ?? ''}
-          onChange={(e) => onUpdate({ title: e.currentTarget.value })}
+          value={
+            'title' in def
+              ? ((def as { title?: string }).title ?? '')
+              : ''
+          }
+          onChange={(e) =>
+            onUpdate({ title: e.currentTarget.value } as Partial<
+              Omit<FieldDefinition, 'fields'>
+            >)
+          }
           placeholder="Enter section title..."
           className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:placeholder:text-mstextmuted ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
         />
@@ -427,7 +449,8 @@ function SectionEditContent({
               const childMeta = getFieldTypeMeta(node.definition.fieldType);
               const label =
                 node.definition.fieldType === 'section'
-                  ? node.definition.title || node.definition.id
+                  ? (node.definition as SectionFieldDefinition).title ||
+                    node.definition.id
                   : node.definition.question || node.definition.id;
               return (
                 <option key={node.definition.id} value={node.definition.id}>
@@ -481,9 +504,13 @@ function SectionEditContent({
                 <input
                   id={`${instanceId}-editor-active-section-title-${activeChildDef.id}`}
                   type="text"
-                  value={activeChildDef.title ?? ''}
+                  value={
+                    (activeChildDef as SectionFieldDefinition).title ?? ''
+                  }
                   onChange={(e) =>
-                    handleUpdateChild({ title: e.currentTarget.value })
+                    handleUpdateChild({
+                      title: e.currentTarget.value,
+                    } as Partial<Omit<FieldDefinition, 'fields'>>)
                   }
                   placeholder="Enter section title..."
                   className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:placeholder:text-mstextmuted ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
@@ -503,23 +530,27 @@ function SectionEditContent({
             <hr className="ms:border-msborder" />
           )}
 
-          {activeChildMeta?.hasOptions && activeChildDef.options && (
-            <OptionListEditor
-              fieldId={activeChildDef.id}
-              fieldType={activeChildDef.fieldType}
-              options={activeChildDef.options}
-              form={form}
-            />
-          )}
+          {activeChildMeta?.hasOptions &&
+            'options' in activeChildDef &&
+            activeChildDef.options && (
+              <OptionListEditor
+                fieldId={activeChildDef.id}
+                fieldType={activeChildDef.fieldType}
+                options={activeChildDef.options}
+                form={form}
+              />
+            )}
 
-          {activeChildMeta?.hasMatrix && (
-            <MatrixEditor
-              fieldId={activeChildDef.id}
-              rows={activeChildDef.rows ?? []}
-              columns={activeChildDef.columns ?? []}
-              form={form}
-            />
-          )}
+          {activeChildMeta?.hasMatrix &&
+            'rows' in activeChildDef &&
+            'columns' in activeChildDef && (
+              <MatrixEditor
+                fieldId={activeChildDef.id}
+                rows={activeChildDef.rows ?? []}
+                columns={activeChildDef.columns ?? []}
+                form={form}
+              />
+            )}
         </div>
       )}
     </div>

@@ -1,5 +1,9 @@
 import React from 'react';
-import type { FieldComponentProps, SelectedOption } from '@esheet/core';
+import type {
+  FieldComponentProps,
+  MultiMatrixFieldDefinition,
+  SelectedOption,
+} from '@esheet/core';
 import { Checkbox } from '@mieweb/ui';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 
@@ -13,7 +17,7 @@ export const MultiMatrixField = React.memo(function MultiMatrixField({
   onUpdate,
   onResponse,
 }: FieldComponentProps) {
-  const def = field.definition;
+  const def = field.definition as MultiMatrixFieldDefinition;
   const instanceId = form.getState().instanceId;
   const rows = def.rows || [];
   const columns = def.columns || [];
