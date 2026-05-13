@@ -73,7 +73,7 @@ export function FieldWrapper({
   dragHandleRef,
   isSelectedOverride,
   onSelectOverride,
-  selectedVariant = 'default',
+  selectedVariant: _selectedVariant = 'default',
   forceExpandVersion,
   forceCollapseVersion,
   children,

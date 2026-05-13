@@ -997,6 +997,7 @@ function validateExpressionLocally(
     const id = match[1].trim();
     const field = fieldMap.get(id);
     if (!field || field.supportsNumericCompare) continue;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const start = match.index!;
     const end = start + match[0].length;
     const before = stripped.slice(Math.max(0, start - 4), start);

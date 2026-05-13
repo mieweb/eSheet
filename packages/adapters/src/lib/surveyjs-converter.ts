@@ -17,6 +17,20 @@ import type {
 } from '@esheet/core';
 
 // ---------------------------------------------------------------------------
+// Local type helpers (work around zod-mini type inference in project refs)
+// ---------------------------------------------------------------------------
+
+/** FieldOption with explicit score property for type assertions */
+interface ScoredFieldOption extends FieldOption {
+  score?: number;
+}
+
+/** MatrixColumn with explicit score property for type assertions */
+interface ScoredMatrixColumn extends MatrixColumn {
+  score?: number;
+}
+
+// ---------------------------------------------------------------------------
 // SurveyJS Types (minimal subset we support)
 // ---------------------------------------------------------------------------
 
@@ -240,15 +254,12 @@ function convertChoice(
   if (typeof choice === 'string') {
     return { id: toKebabCase(choice) || `opt-${index}`, value: choice };
   }
-  const opt: FieldOption = {
+  return {
     id: toKebabCase(choice.value) || `opt-${index}`,
     value: choice.value,
     text: choice.text,
-  };
-  if (choice.score !== undefined) {
-    opt.score = choice.score;
-  }
-  return opt;
+    score: choice.score,
+  } as ScoredFieldOption;
 }
 
 function convertMatrixRow(
@@ -271,14 +282,11 @@ function convertMatrixColumn(
   if (typeof item === 'string') {
     return { id: toKebabCase(item) || `item-${index}`, value: item };
   }
-  const col: MatrixColumn = {
+  return {
     id: toKebabCase(item.value) || `item-${index}`,
     value: item.text ?? item.value,
-  };
-  if (item.score !== undefined) {
-    col.score = item.score;
-  }
-  return col;
+    score: item.score,
+  } as ScoredMatrixColumn;
 }
 
 /**
@@ -526,7 +534,7 @@ function convertElement(
       const rows = (element.rows ?? []).map(convertMatrixRow);
       const columns = (element.columns ?? []).map(convertMatrixColumn);
       // Check if any column has an explicit score
-      const hasScores = columns.some((col) => col.score !== undefined);
+      const hasScores = columns.some((col) => (col as ScoredMatrixColumn).score !== undefined);
       return {
         ...base,
         fieldType,
@@ -815,7 +823,7 @@ function fieldToSurveyElement(field: FieldDefinition): SurveyJSElement {
           ? {
               value: o.value,
               text: o.text,
-              ...(o.score !== undefined ? { score: o.score } : {}),
+              ...((o as ScoredFieldOption).score !== undefined ? { score: (o as ScoredFieldOption).score } : {}),
             }
           : o.value
       );
@@ -826,7 +834,7 @@ function fieldToSurveyElement(field: FieldDefinition): SurveyJSElement {
       el.columns = (field.columns ?? []).map((c) => ({
         value: c.id,
         text: c.value,
-        ...(c.score !== undefined ? { score: c.score } : {}),
+        ...((c as ScoredMatrixColumn).score !== undefined ? { score: (c as ScoredMatrixColumn).score } : {}),
       }));
       break;
     case 'image':

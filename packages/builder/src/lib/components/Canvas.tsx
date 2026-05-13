@@ -24,7 +24,7 @@ function DraggableFieldItem({
   form,
   ui,
   parentId,
-  dragEnabled,
+  dragEnabled: _dragEnabled,
   isSelected = false,
   isActiveChild = false,
   forceExpandVersion,
@@ -75,6 +75,7 @@ function DraggableFieldItem({
         selectedVariant={parentId ? 'nested' : 'default'}
       >
         {(props) => {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           const Component = getFieldComponent(
             props.field.definition.fieldType
           )!;
