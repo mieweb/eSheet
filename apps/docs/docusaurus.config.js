@@ -37,10 +37,46 @@ const config = {
   },
 
   // Ozwell chat widget — CDN embed approach.
-  // ozwell-config.js sets window.OzwellChatConfig synchronously before the
-  // loader runs, so no headTags trick is needed and it works in dev + prod.
+  // The API key is injected at build time from OZWELL_API_KEY env var so it
+  // is never committed to source. Set it in .env.local or CI secrets.
+  headTags: [
+    {
+      tagName: 'script',
+      innerHTML: `window.OzwellChatConfig = ${JSON.stringify({
+        apiKey: process.env.OZWELL_API_KEY ?? '',
+        endpoint:
+          'https://ozwellapi.opensource.mieweb.org/v1/chat/completions',
+        system:
+          'You are a documentation assistant for eSheet, a modular questionnaire/form builder and renderer for React. You have one tool: search_docs. To answer ANY question, invoke search_docs with a short plain-text keyword query string — for example, to answer "how many field types?" call search_docs with query="field types". NEVER output JSON, NEVER write a function call as text. Just invoke the tool silently, then answer using only the content it returns. If the content does not confirm the answer, say "I could not find that in the eSheet docs".',
+        welcomeMessage:
+          'Hi! Ask me anything about eSheet — the builder, renderer, fields, or any package.',
+        title: 'Schemie',
+        tools: [
+          {
+            type: 'function',
+            function: {
+              name: 'search_docs',
+              description:
+                'Search the eSheet documentation. Pass a short keyword query (e.g. "field types", "installation", "renderer responses") and receive the most relevant page content.',
+              parameters: {
+                type: 'object',
+                properties: {
+                  query: {
+                    type: 'string',
+                    description:
+                      'A short plain-text keyword query, e.g. "field types", "installation", "renderer responses". Must be a string — not a schema object.',
+                  },
+                },
+                required: ['query'],
+              },
+            },
+          },
+        ],
+      })};`,
+      attributes: {},
+    },
+  ],
   scripts: [
-    { src: '/js/ozwell-config.js' },
     {
       src: 'https://ozwell-dev-refserver.opensource.mieweb.org/embed/ozwell-loader.js',
       async: true,
@@ -80,6 +116,11 @@ const config = {
       },
       navbar: {
         title: 'eSheet',
+        logo: {
+          alt: 'eSheet logo',
+          src: 'img/eSheet-modern.svg',
+          style: { height: '20px', width: 'auto' },
+        },
         items: [
           {
             type: 'docSidebar',

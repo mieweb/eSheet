@@ -5,89 +5,11 @@
     <title>eSheet Demo</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   </head>
   <body>
     <div id="root"></div>
+    <!-- OzwellChatConfig and CDN widget are bootstrapped in src/ozwell-setup.ts, imported by main.tsx -->
     <script type="module" src="/src/main.tsx"></script>
-    <script>
-      window.OzwellChatConfig = {
-        apiKey: '%VITE_OZWELL_API_KEY%',
-        endpoint: 'https://ozwellapi.opensource.mieweb.org/v1/chat/completions',
-        title: 'Form Assistant',
-        welcomeMessage:
-          'Hi! Ask me to create, update, or remove fields — or describe a whole form and I will build it.',
-        system:
-          'You are an eSheet form builder assistant. RULES YOU MUST FOLLOW:\n1. To modify or delete a field you MUST identify it. Always pass either fieldId (the exact ID string) or fieldQuestion (the question text as written on the form) — never call update_field or delete_field without one of these.\n2. If you do not know the fieldId, pass fieldQuestion with the question text the user mentioned (e.g. fieldQuestion: "What is your name?").\n3. Only call get_form_summary if you need to see ALL fields. For a single known field, use fieldQuestion directly.\n4. After changes, briefly confirm what was done.',
-        tools: [
-          {
-            type: 'function',
-            function: {
-              name: 'get_form_summary',
-              description:
-                'Returns the current form structure including all field IDs, types, and questions. Call this first before making any changes.',
-              parameters: { type: 'object', properties: {} },
-            },
-          },
-          {
-            type: 'function',
-            function: {
-              name: 'create_field',
-              description: 'Add a new field to the form.',
-              parameters: {
-                type: 'object',
-                properties: {
-                  fieldType: {
-                    type: 'string',
-                    enum: ['text','longtext','radio','check','boolean','dropdown','multiselectdropdown','rating','ranking','slider','singlematrix','multimatrix','image','html','signature','display','section'],
-                    description: 'The type of field to create',
-                  },
-                  question: { type: 'string', description: 'The question/label text' },
-                  required: { type: 'boolean' },
-                  options: {
-                    type: 'array',
-                    items: { type: 'object', properties: { value: { type: 'string' } }, required: ['value'] },
-                    description: 'Options for choice fields (radio, check, dropdown)',
-                  },
-                  afterFieldId: { type: 'string', description: 'Insert after this field ID. Omit to append.' },
-                },
-                required: ['fieldType', 'question'],
-              },
-            },
-          },
-          {
-            type: 'function',
-            function: {
-              name: 'update_field',
-              description: 'Update an existing field. You MUST identify the field using fieldQuestion (the question text) or fieldId. Never omit both.',
-              parameters: {
-                type: 'object',
-                properties: {
-                  fieldQuestion: { type: 'string', description: 'The current question text of the field to update — use this when the user mentions the question by name (e.g. "What is your name?").' },
-                  fieldId: { type: 'string', description: 'The field ID from get_form_summary. Use fieldQuestion instead if you know the text.' },
-                  updates: { type: 'object', description: 'Properties to change, e.g. { "question": "How old are you?" }', additionalProperties: true },
-                },
-                required: ['fieldQuestion', 'updates'],
-              },
-            },
-          },
-          {
-            type: 'function',
-            function: {
-              name: 'delete_field',
-              description: 'Delete a field. You MUST identify the field using fieldQuestion (the question text) or fieldId. Never omit both.',
-              parameters: {
-                type: 'object',
-                properties: {
-                  fieldQuestion: { type: 'string', description: 'The current question text of the field to delete.' },
-                  fieldId: { type: 'string', description: 'The field ID from get_form_summary.' },
-                },
-              },
-            },
-          },
-        ],
-      };
-    </script>
-    <script src="https://ozwell-dev-refserver.opensource.mieweb.org/embed/ozwell-loader.js"></script>
   </body>
 </html>

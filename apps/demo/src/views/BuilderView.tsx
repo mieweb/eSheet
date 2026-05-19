@@ -1,9 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
-import { EsheetBuilder } from '@esheet/builder';
+import { EsheetBuilder, useBuilderMcpToolHandler } from '@esheet/builder';
 import type { FormDefinition } from '@esheet/core';
-import type { BuilderTools } from '@esheet/builder';
 import { Navbar } from '../components/Navbar.js';
-import { executeToolCall } from '../ai/tools.js';
 
 const INITIAL_DEF: FormDefinition = {
   id: 'demo-builder',
@@ -29,34 +26,7 @@ const INITIAL_DEF: FormDefinition = {
 };
 
 export function BuilderView() {
-  const [def, setDef] = useState<FormDefinition>(INITIAL_DEF);
-  const toolsRef = useRef<BuilderTools | null>(null);
-
-  function handleChange(next: FormDefinition) {
-    setDef(next);
-  }
-
-  useEffect(() => {
-    function onToolCall(e: Event) {
-      const { name, arguments: args, respond } = (e as CustomEvent).detail as {
-        name: string;
-        arguments: Record<string, unknown>;
-        respond: (result: unknown) => void;
-      };
-      if (!toolsRef.current) {
-        respond({ success: false, message: 'Builder not ready' });
-        return;
-      }
-      const result = executeToolCall(name, args, toolsRef.current);
-      if (typeof result === 'string') {
-        respond({ success: true, message: result });
-      } else {
-        respond(result);
-      }
-    }
-    document.addEventListener('ozwell-tool-call', onToolCall);
-    return () => document.removeEventListener('ozwell-tool-call', onToolCall);
-  }, []);
+  const onBuilderToolsReady = useBuilderMcpToolHandler({ eventName: 'ozwell-tool-call' });
 
   return (
     <div className="demo-builder-view w-full h-screen flex flex-col">
@@ -64,11 +34,8 @@ export function BuilderView() {
       <div className="flex-1 overflow-y-auto bg-gray-100">
         <div className="w-full flex justify-center px-2 pt-5">
           <EsheetBuilder
-            definition={def}
-            onChange={handleChange}
-            onBuilderToolsReady={(tools) => {
-              toolsRef.current = tools;
-            }}
+            definition={INITIAL_DEF}
+            onBuilderToolsReady={onBuilderToolsReady}
           />
         </div>
       </div>

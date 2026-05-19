@@ -7,6 +7,7 @@ import { resolve } from 'path';
 export default defineConfig(({ command }) => ({
   root: import.meta.dirname,
   envDir: resolve(import.meta.dirname, '../..'),
+  envPrefix: 'OZWELL_',
   cacheDir: '../../node_modules/.vite/apps/demo',
   // Keep local dev at / while producing /demo/ assets for canonical host routing.
   base: command === 'serve' ? '/' : '/demo/',

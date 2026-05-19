@@ -31,6 +31,7 @@ export function Navbar({ children }: { children?: ReactNode }) {
           href={landingUrl}
           className="inline-flex items-center gap-2 text-foreground hover:text-primary-600 text-base font-bold no-underline transition-colors shrink-0"
         >
+          <img src="/eSheet-modern.svg" alt="eSheet logo" className="ms:h-5 ms:w-auto ms:align-middle" />
           eSheet
         </a>
         <div className="demo-navbar-links hidden sm:flex items-center gap-4 ml-2">

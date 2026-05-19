@@ -718,6 +718,8 @@ export interface FieldResponse {
   markupData?: string;
   /** Base64 diagram image (diagram field). */
   markupImage?: string;
+  /** Set to true when the response was filled programmatically by an AI agent. */
+  _ai?: boolean;
 }
 
 // ---------------------------------------------------------------------------

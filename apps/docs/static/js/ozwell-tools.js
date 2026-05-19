@@ -2,16 +2,33 @@
   // Inject CSS overrides to match the eSheet docs site color scheme
   // and fix icon sizing/appearance.
   (function injectOzwellStyles() {
+    // Use the Docusaurus CSS variable so it respects light/dark mode.
+    var primary = getComputedStyle(document.documentElement).getPropertyValue('--ifm-color-primary').trim() || '#2563eb';
     var style = document.createElement('style');
     style.textContent =
-      /* Match docs primary blue (#2563eb) instead of default #0066ff */
-      '.ozwell-chat-button{background:#2563eb!important;box-shadow:0 4px 16px rgba(37,99,235,.35)!important;}' +
-      '.ozwell-chat-button:hover{box-shadow:0 6px 20px rgba(37,99,235,.5)!important;}' +
-      '.ozwell-chat-header{background:#2563eb!important;}' +
+      /* Match docs primary color instead of default #0066ff */
+      '.ozwell-chat-button{background:var(--ifm-color-primary,#2563eb)!important;box-shadow:0 4px 16px color-mix(in srgb,var(--ifm-color-primary,#2563eb) 35%,transparent)!important;}' +
+      '.ozwell-chat-button:hover{box-shadow:0 6px 20px color-mix(in srgb,var(--ifm-color-primary,#2563eb) 50%,transparent)!important;}' +
+      '.ozwell-chat-header{background:var(--ifm-color-primary,#2563eb)!important;}' +
       /* Replace the broken /favicon.ico img with the eSheet SVG logo */
       '.ozwell-chat-icon{display:none!important;}' +
-      '.ozwell-chat-button::after{content:"";display:block;width:32px;height:32px;background:url("/img/esheet-logo.svg") center/contain no-repeat;filter:brightness(0) invert(1);}';
+      ".ozwell-chat-button::after{content:'';display:block;width:32px;height:32px;background:url(\"data:image/svg+xml,%3Csvg width='512' height='512' viewBox='0 0 128 128' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='20' y='16' width='88' height='96' rx='14' stroke='white' stroke-width='8'/%3E%3Crect x='34' y='34' width='56' height='12' rx='6' fill='white'/%3E%3Crect x='34' y='58' width='40' height='12' rx='6' fill='white'/%3E%3Crect x='34' y='82' width='56' height='12' rx='6' fill='white'/%3E%3C/svg%3E\") center/contain no-repeat}";
     document.head.appendChild(style);
+
+    // Inject brand colors into the widget iframe (Send button, user messages, input focus).
+    // The iframe is same-origin (srcdoc + allow-same-origin) so we can access its document.
+    document.addEventListener('ozwell-chat-ready', function () {
+      var iframe = window.OzwellChat && window.OzwellChat.iframe;
+      if (!iframe || !iframe.contentDocument) return;
+      var s = iframe.contentDocument.createElement('style');
+      s.textContent =
+        '.chat-submit{background:' + primary + '!important}' +
+        '.chat-submit:hover{background:color-mix(in srgb,' + primary + ' 85%,black)!important}' +
+        '.message.user{background:' + primary + '!important}' +
+        '.message.queued{color:' + primary + '!important;border-color:' + primary + '!important}' +
+        '.chat-input:focus{border-color:' + primary + '!important;box-shadow:0 0 0 3px color-mix(in srgb,' + primary + ' 10%,transparent)!important}';
+      iframe.contentDocument.head.appendChild(s);
+    });
   })();
 
   // Load all doc content from the pre-built static bundle

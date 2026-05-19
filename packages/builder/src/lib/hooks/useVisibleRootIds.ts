@@ -16,6 +16,7 @@ export function useVisibleRootIds(): readonly string[] {
   const ui = useUI();
 
   const normalized = useStore(form, (s) => s.normalized);
+  const responses = useStore(form, (s) => s.responses);
   const mode = useStore(ui, (s) => s.mode);
 
   const cacheRef = React.useRef<readonly string[]>([]);
@@ -35,5 +36,5 @@ export function useVisibleRootIds(): readonly string[] {
     }
     cacheRef.current = rootIds;
     return rootIds;
-  }, [normalized.rootIds, mode, form]);
+  }, [normalized, responses, mode, form]);
 }

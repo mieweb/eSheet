@@ -48,4 +48,9 @@ export { useUiApi } from './lib/hooks/useUiApi.js';
 export type { UiApi } from './lib/hooks/useUiApi.js';
 export { useVisibleRootIds } from './lib/hooks/useVisibleRootIds.js';
 
-export type { BuilderTools, FieldSummary } from './lib/builder-tools.js';
+export {
+  executeToolCall,
+  BUILDER_TOOL_DEFINITIONS,
+  useBuilderMcpToolHandler,
+} from './lib/mcp/index.js';
+export type { ToolDefinition, UseBuilderMcpToolHandlerOptions } from './lib/mcp/index.js';

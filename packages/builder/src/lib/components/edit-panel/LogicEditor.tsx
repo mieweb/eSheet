@@ -775,6 +775,34 @@ function ExpectedValueInput({
   const operator = condition.operator ?? 'equals';
   const expected = condition.expected ?? '';
 
+  // Boolean fields always compare as true/false (the stored option id for the
+  // Yes option is "o1" / true-ish, but the condition engine compares the
+  // option id directly). Show a hardcoded Yes/No picker using the actual
+  // option ids from the field so the condition value is always correct.
+  if (target?.fieldType === 'boolean') {
+    if (operator === 'equals' || operator === 'notEquals') {
+      const yesOpt = target.options?.find(
+        (o) => o.value.toLowerCase() === 'yes',
+      );
+      const noOpt = target.options?.find(
+        (o) => o.value.toLowerCase() === 'no',
+      );
+      return (
+        <select
+          id={`${idPrefix}-expected`}
+          aria-label="Expected value"
+          value={expected}
+          onChange={(e) => onUpdate({ expected: e.currentTarget.value })}
+          className="condition-expected ms:w-full ms:min-w-0 ms:px-2 ms:py-1.5 ms:text-xs ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:cursor-pointer"
+        >
+          <option value="">Select a value…</option>
+          {yesOpt && <option value={yesOpt.id}>Yes</option>}
+          {noOpt && <option value={noOpt.id}>No</option>}
+        </select>
+      );
+    }
+  }
+
   // If target has options and we're using equals/notEquals/includes,
   // show a dropdown of option values
   if (target?.hasOptions && target.options && target.options.length > 0) {

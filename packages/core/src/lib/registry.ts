@@ -119,6 +119,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     answerType: 'selection',
     hasOptions: true,
     hasMatrix: false,
+    defaultOptionCount: 2,
     defaultProps: {},
     placeholder: { question: 'Enter your question...' },
   },
