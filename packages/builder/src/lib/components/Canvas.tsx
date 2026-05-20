@@ -119,6 +119,7 @@ export const Canvas = React.memo(function Canvas({
   const [collapseAllVersion, setCollapseAllVersion] = React.useState<
     number | undefined
   >(undefined);
+  const [allExpanded, setAllExpanded] = React.useState(true);
   const normalizedRef = React.useRef(normalized);
 
   React.useEffect(() => {
@@ -444,27 +445,24 @@ export const Canvas = React.memo(function Canvas({
             <div className="ms:flex ms:items-center ms:gap-1">
               <button
                 type="button"
-                title="Expand all"
-                className="ms:flex ms:items-center ms:gap-1 ms:px-2  ms:text-xs ms:text-mstextmuted ms:hover:text-mstext ms:rounded ms:hover:bg-msbackgroundhover ms:transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setExpandAllVersion((v) => (v ?? 0) + 1);
-                }}
-              >
-                <ViewBigIcon className="ms:w-3.5 ms:h-3.5" />
-                Expand all
-              </button>
-              <button
-                type="button"
-                title="Collapse all"
+                title={allExpanded ? 'Collapse all' : 'Expand all'}
                 className="ms:flex ms:items-center ms:gap-1 ms:px-2 ms:py-1 ms:text-xs ms:text-mstextmuted ms:hover:text-mstext ms:rounded ms:hover:bg-msbackgroundhover ms:transition-colors"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setCollapseAllVersion((v) => (v ?? 0) + 1);
+                  if (allExpanded) {
+                    setCollapseAllVersion((v) => (v ?? 0) + 1);
+                  } else {
+                    setExpandAllVersion((v) => (v ?? 0) + 1);
+                  }
+                  setAllExpanded((v) => !v);
                 }}
               >
-                <ViewSmallIcon className="ms:w-3.5 ms:h-3.5" />
-                Collapse all
+                {allExpanded ? (
+                  <ViewSmallIcon className="ms:w-3.5 ms:h-3.5" />
+                ) : (
+                  <ViewBigIcon className="ms:w-3.5 ms:h-3.5" />
+                )}
+                {allExpanded ? 'Collapse all' : 'Expand all'}
               </button>
             </div>
           )}
