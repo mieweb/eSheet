@@ -58,6 +58,12 @@ export function executeToolCall(
       return getFieldSpec(args, tools);
     case 'get_definition':
       return tools.getDefinition() as unknown as Record<string, unknown>;
+    case 'set_form_id': {
+      const id = String(args['id'] ?? '');
+      if (!id) return 'Error: id is required';
+      tools.setFormId(id);
+      return `Form ID set to "${id}"`;
+    }
     case 'add_field_rule':
       return addFieldRule(args, tools);
     case 'add_expression_rule':

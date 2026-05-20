@@ -73,10 +73,16 @@ export function FieldWrapper({
   forceCollapseVersion,
   children,
 }: FieldWrapperProps) {
-  const [isExpanded, setIsExpanded] = React.useState(true);
-  const lastForceExpandVersionRef = React.useRef<number | undefined>(undefined);
+  const [isExpanded, setIsExpanded] = React.useState(() => {
+    const collapseActive =
+      forceCollapseVersion !== undefined &&
+      (forceExpandVersion === undefined ||
+        forceCollapseVersion > forceExpandVersion);
+    return !collapseActive;
+  });
+  const lastForceExpandVersionRef = React.useRef<number | undefined>(forceExpandVersion);
   const lastForceCollapseVersionRef = React.useRef<number | undefined>(
-    undefined
+    forceCollapseVersion
   );
 
   const {

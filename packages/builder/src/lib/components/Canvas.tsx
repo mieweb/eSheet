@@ -119,7 +119,7 @@ export const Canvas = React.memo(function Canvas({
   const [collapseAllVersion, setCollapseAllVersion] = React.useState<
     number | undefined
   >(undefined);
-  const [allExpanded, setAllExpanded] = React.useState(true);
+  const [allExpanded, setAllExpanded] = React.useState(false);
   const normalizedRef = React.useRef(normalized);
 
   React.useEffect(() => {

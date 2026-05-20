@@ -116,6 +116,8 @@ export interface BuilderTools {
   getFieldSpec: (fieldType: string) => FieldTypeMeta | undefined;
   /** Export the full form definition tree (inverse of loadDefinition). */
   getDefinition: () => import('@esheet/core').FormDefinition;
+  /** Update the form's top-level ID without replacing fields. */
+  setFormId: (id: string) => void;
 }
 
 export function createBuilderTools(form: FormStore): BuilderTools {
@@ -288,6 +290,7 @@ export function createBuilderTools(form: FormStore): BuilderTools {
         fields: hydrateDefinition(normalized),
       } as FormDefinition;
     },
+    setFormId: (id) => form.getState().setFormId(id),
     getFormSummary: () => {
       const { normalized, formId } = form.getState();
 

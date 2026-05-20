@@ -360,6 +360,20 @@ export const BUILDER_TOOL_DEFINITIONS: readonly ToolDefinition[] = [
   {
     type: 'function',
     function: {
+      name: 'set_form_id',
+      description: 'Update the top-level form ID without replacing or modifying any fields.',
+      parameters: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', description: 'The new form ID.' },
+        },
+        required: ['id'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
       name: 'add_field_rule',
       description:
         'Add a conditional logic rule to a field based on another field\'s response. Controls whether this field is visible, enabled, or required. effect: "visible"|"enable"|"required". logic: "AND"|"OR". Each condition: { targetId, operator, expected }. For option-based fields (radio, check, dropdown, etc.), expected must be the option ID (e.g. "o1") — use get_field to look up IDs. Operators: equals|notEquals|contains|includes|empty|notEmpty|greaterThan|greaterThanOrEqual|lessThan|lessThanOrEqual. Use "includes" for multi-select fields (check, multiselectdropdown, ranking). Use "empty"/"notEmpty" with no expected value.',
