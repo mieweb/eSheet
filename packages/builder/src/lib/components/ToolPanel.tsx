@@ -16,9 +16,8 @@ import {
 import { useFormApi } from '../hooks/useFormApi.js';
 import { useUiApi } from '../hooks/useUiApi.js';
 
-export interface ToolPanelProps {
-  // intentionally empty — ToolPanel sources all state from useFormApi/useUiApi context hooks.
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-empty-interface
+export interface ToolPanelProps {}
 
 /** Category display labels. */
 const CATEGORY_LABELS: Record<string, string> = {

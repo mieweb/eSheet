@@ -1,9 +1,18 @@
 import nx from '@nx/eslint-plugin';
+import reactHooks from 'eslint-plugin-react-hooks';
 
 export default [
   ...nx.configs['flat/base'],
   ...nx.configs['flat/typescript'],
   ...nx.configs['flat/javascript'],
+  {
+    plugins: {
+      'react-hooks': reactHooks,
+    },
+    rules: {
+      ...reactHooks.configs.recommended.rules,
+    },
+  },
   {
     ignores: [
       '**/dist',
@@ -50,6 +59,10 @@ export default [
             },
             {
               sourceTag: 'scope:ai-gateway',
+              onlyDependOnLibsWithTags: ['scope:core'],
+            },
+            {
+              sourceTag: 'scope:adapters',
               onlyDependOnLibsWithTags: ['scope:core'],
             },
             {

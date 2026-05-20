@@ -32,9 +32,8 @@ import { FeedbackModal, type FeedbackModalVariant } from './FeedbackModal.js';
 import { useUiApi } from '../hooks/useUiApi.js';
 import { useFormApi } from '../hooks/useFormApi.js';
 
-export interface BuilderHeaderProps {
-  // intentionally empty — BuilderHeader sources all state from useFormApi/useUiApi context hooks.
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-empty-interface
+export interface BuilderHeaderProps {}
 
 interface FeedbackState {
   open: boolean;

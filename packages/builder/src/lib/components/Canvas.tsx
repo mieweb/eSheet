@@ -47,8 +47,6 @@ function DraggableFieldItem({
   const handleRef = React.useRef<HTMLDivElement | null>(null);
   const field = form.getState().getField(id);
 
-  if (!field) return null;
-
   const handleSelectOverride = React.useCallback(
     (e: React.MouseEvent) => {
       if (!parentId) return;
@@ -57,6 +55,8 @@ function DraggableFieldItem({
     },
     [id, parentId, ui]
   );
+
+  if (!field) return null;
 
   return (
     <div

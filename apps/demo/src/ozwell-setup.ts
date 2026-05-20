@@ -1,3 +1,4 @@
+// eslint-disable-next-line @nx/enforce-module-boundaries
 import { BUILDER_TOOL_DEFINITIONS } from '@esheet/builder';
 
 declare global {

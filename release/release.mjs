@@ -61,7 +61,11 @@ const newVersion = applyBump(currentVersion, bump);
 const IS_PRERELEASE = newVersion.includes('-');
 
 console.log(`\nBump:        ${bump}`);
-console.log(`New version: ${newVersion}${IS_PRERELEASE ? '  [PRERELEASE]' : ''}${DRY_RUN ? '  [DRY RUN]' : ''}\n`);
+console.log(
+  `New version: ${newVersion}${IS_PRERELEASE ? '  [PRERELEASE]' : ''}${
+    DRY_RUN ? '  [DRY RUN]' : ''
+  }\n`
+);
 
 // ---------------------------------------------------------------------------
 // 4. Bump all package.json versions
@@ -105,7 +109,11 @@ if (IS_PRERELEASE) {
 // ---------------------------------------------------------------------------
 
 if (DRY_RUN) {
-  console.log(`[DRY RUN] Would commit${IS_PRERELEASE ? '' : `, tag v${newVersion},`} and push`);
+  console.log(
+    `[DRY RUN] Would commit${
+      IS_PRERELEASE ? '' : `, tag v${newVersion},`
+    } and push`
+  );
 } else if (IS_PRERELEASE) {
   const changedFiles = PACKAGES.map((p) => `${p}/package.json`).join(' ');
   run(`git add ${changedFiles}`);
@@ -156,7 +164,9 @@ for (const pkgDir of PACKAGES) {
   }
   console.log(`\nPublishing ${pkg.name}@${newVersion}...`);
   const publishTag = IS_PRERELEASE ? '--tag next' : '';
-  exec(`npm publish --provenance --access public ${publishTag}`.trim(), { cwd: pkgDir });
+  exec(`npm publish --provenance --access public ${publishTag}`.trim(), {
+    cwd: pkgDir,
+  });
 }
 
 console.log(`\n✅  Released v${newVersion}`);

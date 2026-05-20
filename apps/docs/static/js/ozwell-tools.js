@@ -3,11 +3,11 @@
   // and fix icon sizing/appearance.
   (function injectOzwellStyles() {
     // Use the Docusaurus CSS variable so it respects light/dark mode.
-    var primary =
+    const primary =
       getComputedStyle(document.documentElement)
         .getPropertyValue('--ifm-color-primary')
         .trim() || '#2563eb';
-    var style = document.createElement('style');
+    const style = document.createElement('style');
     style.textContent =
       /* Match docs primary color instead of default #0066ff */
       '.ozwell-chat-button{background:var(--ifm-color-primary,#2563eb)!important;box-shadow:0 4px 16px color-mix(in srgb,var(--ifm-color-primary,#2563eb) 35%,transparent)!important;}' +
@@ -21,9 +21,9 @@
     // Inject brand colors into the widget iframe (Send button, user messages, input focus).
     // The iframe is same-origin (srcdoc + allow-same-origin) so we can access its document.
     document.addEventListener('ozwell-chat-ready', function () {
-      var iframe = window.OzwellChat && window.OzwellChat.iframe;
+      const iframe = window.OzwellChat && window.OzwellChat.iframe;
       if (!iframe || !iframe.contentDocument) return;
-      var s = iframe.contentDocument.createElement('style');
+      const s = iframe.contentDocument.createElement('style');
       s.textContent =
         '.chat-submit{background:' +
         primary +
@@ -49,7 +49,7 @@
   })();
 
   // Load all doc content from the pre-built static bundle
-  var docContentPromise = null;
+  let docContentPromise = null;
   function getDocContent() {
     if (!docContentPromise) {
       docContentPromise = fetch('/doc-content.json').then(function (res) {
@@ -76,13 +76,18 @@
       // If the object looks like a JSON schema the model accidentally sent, ignore it
       if (val.type === 'string' && val.description) return '';
       // Try common keys the model might use when it sends an object
-      var attempt =
+      const attempt =
         val.query || val.text || val.search || val.keywords || val.q;
       if (attempt && typeof attempt === 'string') return attempt;
       // Last resort: first string-valued property that isn't a schema key
-      var schemaKeys = { type: 1, description: 1, required: 1, properties: 1 };
-      var keys = Object.keys(val);
-      for (var i = 0; i < keys.length; i++) {
+      const schemaKeys = {
+        type: 1,
+        description: 1,
+        required: 1,
+        properties: 1,
+      };
+      const keys = Object.keys(val);
+      for (let i = 0; i < keys.length; i++) {
         if (!schemaKeys[keys[i]] && typeof val[keys[i]] === 'string')
           return val[keys[i]];
       }
@@ -92,11 +97,11 @@
 
   // Score a page (path + content) against query words
   function scorePage(path, content, queryWords) {
-    var pathLower = path.toLowerCase();
-    var contentLower = (content || '').toLowerCase();
-    var score = 0;
-    for (var i = 0; i < queryWords.length; i++) {
-      var word = queryWords[i];
+    const pathLower = path.toLowerCase();
+    const contentLower = (content || '').toLowerCase();
+    let score = 0;
+    for (let i = 0; i < queryWords.length; i++) {
+      const word = queryWords[i];
       if (pathLower.indexOf(word) !== -1) score += 3; // path match is a strong signal
       if (contentLower.indexOf(word) !== -1) score += 1;
     }
@@ -106,16 +111,16 @@
   // Find the best matching page and return its content in one shot
   function searchDocs(query) {
     return getDocContent().then(function (content) {
-      var queryWords = query
+      const queryWords = query
         .toLowerCase()
         .replace(/[^a-z0-9\s]/g, ' ')
         .split(/\s+/)
         .filter(Boolean);
-      var pages = Object.keys(content);
-      var bestPath = null;
-      var bestScore = -1;
-      for (var i = 0; i < pages.length; i++) {
-        var s = scorePage(pages[i], content[pages[i]], queryWords);
+      const pages = Object.keys(content);
+      let bestPath = null;
+      let bestScore = -1;
+      for (let i = 0; i < pages.length; i++) {
+        const s = scorePage(pages[i], content[pages[i]], queryWords);
         if (s > bestScore) {
           bestScore = s;
           bestPath = pages[i];
@@ -138,12 +143,12 @@
 
   // Handle tool calls from the AI
   document.addEventListener('ozwell-tool-call', function (e) {
-    var name = e.detail.name;
-    var args = e.detail.arguments;
-    var respond = e.detail.respond;
+    const name = e.detail.name;
+    const args = e.detail.arguments;
+    const respond = e.detail.respond;
 
     if (name === 'search_docs') {
-      var query = extractQueryString(args && args.query);
+      const query = extractQueryString(args && args.query);
       if (!query.trim()) {
         respond({ success: false, error: 'query parameter is required' });
         return;
@@ -165,7 +170,7 @@
 
   // Re-send context on Docusaurus SPA navigation
   window.addEventListener('popstate', sendContext);
-  var lastPath = location.pathname;
+  let lastPath = location.pathname;
   new MutationObserver(function () {
     if (location.pathname !== lastPath) {
       lastPath = location.pathname;
