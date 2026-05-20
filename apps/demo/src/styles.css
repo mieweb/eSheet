@@ -27,6 +27,36 @@ body {
   color-scheme: dark;
 }
 
+/* Scrollbars — always themed, arrows invisible (match track) */
+:root {
+  scrollbar-color: var(--mieweb-foreground) var(--mieweb-background);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--mieweb-background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--mieweb-foreground);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--mieweb-muted-foreground);
+}
+
+::-webkit-scrollbar-button {
+  background: var(--mieweb-background);
+  display: block;
+  height: 0;
+  width: 0;
+}
+
 #root {
   min-height: 100%;
 }

@@ -53,4 +53,7 @@ export {
   BUILDER_TOOL_DEFINITIONS,
   useBuilderMcpToolHandler,
 } from './lib/mcp/index.js';
-export type { ToolDefinition, UseBuilderMcpToolHandlerOptions } from './lib/mcp/index.js';
+export type {
+  ToolDefinition,
+  UseBuilderMcpToolHandlerOptions,
+} from './lib/mcp/index.js';

@@ -1,5 +1,5 @@
 import React from 'react';
-import type { FieldComponentProps } from '@esheet/core';
+import type { FieldComponentProps, SectionFieldDefinition } from '@esheet/core';
 
 type SectionFieldProps = FieldComponentProps & {
   nestedChildren?: React.ReactNode;
@@ -16,7 +16,7 @@ export const SectionField = React.memo(function SectionField({
   onUpdate,
   nestedChildren,
 }: SectionFieldProps) {
-  const def = field.definition;
+  const def = field.definition as SectionFieldDefinition;
   const title = def.title || 'Section';
 
   if (isPreview) {

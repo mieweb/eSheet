@@ -1,5 +1,9 @@
 import React from 'react';
-import type { FieldComponentProps, SelectedOption } from '@esheet/core';
+import type {
+  FieldComponentProps,
+  SelectedOption,
+  RatingFieldDefinition,
+} from '@esheet/core';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 
 export const RatingField = React.memo(function RatingField({
@@ -12,7 +16,7 @@ export const RatingField = React.memo(function RatingField({
   onUpdate,
   onResponse,
 }: FieldComponentProps) {
-  const def = field.definition;
+  const def = field.definition as RatingFieldDefinition;
   const instanceId = form.getState().instanceId;
   const options = def.options || [];
   const selectedId =

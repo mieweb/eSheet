@@ -3,7 +3,10 @@
   // and fix icon sizing/appearance.
   (function injectOzwellStyles() {
     // Use the Docusaurus CSS variable so it respects light/dark mode.
-    var primary = getComputedStyle(document.documentElement).getPropertyValue('--ifm-color-primary').trim() || '#2563eb';
+    var primary =
+      getComputedStyle(document.documentElement)
+        .getPropertyValue('--ifm-color-primary')
+        .trim() || '#2563eb';
     var style = document.createElement('style');
     style.textContent =
       /* Match docs primary color instead of default #0066ff */
@@ -22,11 +25,25 @@
       if (!iframe || !iframe.contentDocument) return;
       var s = iframe.contentDocument.createElement('style');
       s.textContent =
-        '.chat-submit{background:' + primary + '!important}' +
-        '.chat-submit:hover{background:color-mix(in srgb,' + primary + ' 85%,black)!important}' +
-        '.message.user{background:' + primary + '!important}' +
-        '.message.queued{color:' + primary + '!important;border-color:' + primary + '!important}' +
-        '.chat-input:focus{border-color:' + primary + '!important;box-shadow:0 0 0 3px color-mix(in srgb,' + primary + ' 10%,transparent)!important}';
+        '.chat-submit{background:' +
+        primary +
+        '!important}' +
+        '.chat-submit:hover{background:color-mix(in srgb,' +
+        primary +
+        ' 85%,black)!important}' +
+        '.message.user{background:' +
+        primary +
+        '!important}' +
+        '.message.queued{color:' +
+        primary +
+        '!important;border-color:' +
+        primary +
+        '!important}' +
+        '.chat-input:focus{border-color:' +
+        primary +
+        '!important;box-shadow:0 0 0 3px color-mix(in srgb,' +
+        primary +
+        ' 10%,transparent)!important}';
       iframe.contentDocument.head.appendChild(s);
     });
   })();
@@ -59,13 +76,15 @@
       // If the object looks like a JSON schema the model accidentally sent, ignore it
       if (val.type === 'string' && val.description) return '';
       // Try common keys the model might use when it sends an object
-      var attempt = val.query || val.text || val.search || val.keywords || val.q;
+      var attempt =
+        val.query || val.text || val.search || val.keywords || val.q;
       if (attempt && typeof attempt === 'string') return attempt;
       // Last resort: first string-valued property that isn't a schema key
       var schemaKeys = { type: 1, description: 1, required: 1, properties: 1 };
       var keys = Object.keys(val);
       for (var i = 0; i < keys.length; i++) {
-        if (!schemaKeys[keys[i]] && typeof val[keys[i]] === 'string') return val[keys[i]];
+        if (!schemaKeys[keys[i]] && typeof val[keys[i]] === 'string')
+          return val[keys[i]];
       }
     }
     return String(val || '');
@@ -87,18 +106,33 @@
   // Find the best matching page and return its content in one shot
   function searchDocs(query) {
     return getDocContent().then(function (content) {
-      var queryWords = query.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(Boolean);
+      var queryWords = query
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, ' ')
+        .split(/\s+/)
+        .filter(Boolean);
       var pages = Object.keys(content);
       var bestPath = null;
       var bestScore = -1;
       for (var i = 0; i < pages.length; i++) {
         var s = scorePage(pages[i], content[pages[i]], queryWords);
-        if (s > bestScore) { bestScore = s; bestPath = pages[i]; }
+        if (s > bestScore) {
+          bestScore = s;
+          bestPath = pages[i];
+        }
       }
       if (!bestPath || bestScore === 0) {
-        return { success: false, error: 'No matching page found for: ' + query, available_pages: pages };
+        return {
+          success: false,
+          error: 'No matching page found for: ' + query,
+          available_pages: pages,
+        };
       }
-      return { success: true, path: bestPath, content: content[bestPath].slice(0, 8000) };
+      return {
+        success: true,
+        path: bestPath,
+        content: content[bestPath].slice(0, 8000),
+      };
     });
   }
 
@@ -115,8 +149,12 @@
         return;
       }
       searchDocs(query)
-        .then(function (result) { respond(result); })
-        .catch(function (err) { respond({ success: false, error: err.message }); });
+        .then(function (result) {
+          respond(result);
+        })
+        .catch(function (err) {
+          respond({ success: false, error: err.message });
+        });
     } else {
       respond({ success: false, error: 'Unknown tool: ' + name });
     }

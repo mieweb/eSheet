@@ -38,6 +38,32 @@
 @layer base {
   .ms-builder-root {
     font-family: 'Titillium Web', ui-sans-serif, system-ui, sans-serif;
+    scrollbar-color: var(--mieweb-foreground) var(--mieweb-background);
+  }
+
+  .ms-builder-root ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .ms-builder-root ::-webkit-scrollbar-track {
+    background: var(--mieweb-background);
+  }
+
+  .ms-builder-root ::-webkit-scrollbar-thumb {
+    background: var(--mieweb-foreground);
+    border-radius: 4px;
+  }
+
+  .ms-builder-root ::-webkit-scrollbar-thumb:hover {
+    background: var(--mieweb-muted-foreground);
+  }
+
+  .ms-builder-root ::-webkit-scrollbar-button {
+    background: var(--mieweb-background);
+    display: block;
+    height: 0;
+    width: 0;
   }
 
   .ms-builder-root,

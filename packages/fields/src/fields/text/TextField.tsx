@@ -1,5 +1,9 @@
 import React from 'react';
-import type { FieldComponentProps } from '@esheet/core';
+import type {
+  FieldComponentProps,
+  TextFieldDefinition,
+  LongtextFieldDefinition,
+} from '@esheet/core';
 import { Input } from '@mieweb/ui';
 
 function formatPhoneNumber(value: string): string {
@@ -45,7 +49,7 @@ export const TextField = React.memo(function TextField({
   onUpdate,
   onResponse,
 }: FieldComponentProps) {
-  const def = field.definition;
+  const def = field.definition as TextFieldDefinition | LongtextFieldDefinition;
   const instanceId = form.getState().instanceId;
   const inputType = def.inputType || 'string';
   const unit = def.unit || '';

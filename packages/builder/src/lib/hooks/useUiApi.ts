@@ -48,6 +48,13 @@ export function useUiApi(): UiApi {
       clearDragState: () => ui.getState().clearDragState(),
       _ui: ui,
     }),
-    [mode, selectedFieldId, selectedFieldChildId, editTab, codeEditorHasError, ui],
+    [
+      mode,
+      selectedFieldId,
+      selectedFieldChildId,
+      editTab,
+      codeEditorHasError,
+      ui,
+    ]
   );
 }

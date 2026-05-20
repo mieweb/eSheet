@@ -1,5 +1,8 @@
 import React from 'react';
-import type { FieldComponentProps } from '@esheet/core';
+import type {
+  FieldComponentProps,
+  SignatureFieldDefinition,
+} from '@esheet/core';
 import { DrawingPad } from './DrawingPad.js';
 
 /** Detect dark mode from the document root and re-render on changes. */
@@ -34,7 +37,7 @@ export const SignatureField = React.memo(function SignatureField({
   onUpdate,
   onResponse,
 }: FieldComponentProps) {
-  const def = field.definition;
+  const def = field.definition as SignatureFieldDefinition;
   const instanceId = form.getState().instanceId;
 
   const handleChange = React.useCallback(

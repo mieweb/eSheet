@@ -13,7 +13,14 @@ import {
   type FieldSummary,
 } from './builder-tools.js';
 import { FormStoreContext, UIContext } from '@esheet/fields';
-import { convertSurveyJS, isSurveyJSSchema, importFromMcp, isMcpElicitationRequest, type McpElicitationRequest, type McpElicitationSchema } from '@esheet/adapters';
+import {
+  convertSurveyJS,
+  isSurveyJSSchema,
+  importFromMcp,
+  isMcpElicitationRequest,
+  type McpElicitationRequest,
+  type McpElicitationSchema,
+} from '@esheet/adapters';
 import { Canvas } from './components/Canvas.js';
 import { ToolPanel } from './components/ToolPanel.js';
 import { EditPanel } from './components/edit-panel/EditPanel.js';
@@ -86,7 +93,9 @@ export function EsheetBuilder({
   if (!formRef.current) {
     let resolved: FormDefinition | undefined;
     if (isSurveyJSSchema(definition)) {
-      resolved = convertSurveyJS(definition as Parameters<typeof convertSurveyJS>[0]);
+      resolved = convertSurveyJS(
+        definition as Parameters<typeof convertSurveyJS>[0]
+      );
     } else if (isMcpElicitationRequest(definition)) {
       const mcpReq = definition as McpElicitationRequest;
       if (mcpReq.params.mode !== 'url') {
@@ -168,11 +177,11 @@ export function EsheetBuilder({
             </div>
             {children}
             {mode === 'build' && (
-              <div className="builder-layout ms:grid ms:flex-1 ms:min-h-0 ms:min-w-0 ms:grid-cols-1 ms:lg:grid-cols-[18rem_minmax(0,1fr)_340px] ms:gap-3 ms:overflow-hidden">
+              <div className="builder-layout ms:grid ms:min-w-0 ms:grid-cols-1 ms:lg:grid-cols-[18rem_minmax(0,1fr)_340px] ms:gap-3">
                 <aside className="panel-tools-wrap panel-tools ms:hidden ms:lg:flex ms:self-start ms:min-h-0 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto ms:flex-col ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
                   <ToolPanel />
                 </aside>
-                <main className="panel-canvas ms:min-w-0 ms:min-h-0 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-hidden ms:flex ms:flex-col ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:px-4 ms:pb-4">
+                <main className="panel-canvas ms:min-w-0 ms:self-start ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-hidden ms:flex ms:flex-col ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
                   <Canvas form={form} ui={ui} dragEnabled={dragEnabled} />
                   <div className="ms:lg:hidden ms:sticky ms:bottom-0 ms:z-20 ms:pt-2 ms:pb-3 ms:flex ms:justify-center ms:pointer-events-none">
                     <button

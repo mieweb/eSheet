@@ -44,8 +44,7 @@ const config = {
       tagName: 'script',
       innerHTML: `window.OzwellChatConfig = ${JSON.stringify({
         apiKey: process.env.OZWELL_API_KEY ?? '',
-        endpoint:
-          'https://ozwellapi.opensource.mieweb.org/v1/chat/completions',
+        endpoint: 'https://ozwellapi.opensource.mieweb.org/v1/chat/completions',
         system:
           'You are a documentation assistant for eSheet, a modular questionnaire/form builder and renderer for React. You have one tool: search_docs. To answer ANY question, invoke search_docs with a short plain-text keyword query string — for example, to answer "how many field types?" call search_docs with query="field types". NEVER output JSON, NEVER write a function call as text. Just invoke the tool silently, then answer using only the content it returns. If the content does not confirm the answer, say "I could not find that in the eSheet docs".',
         welcomeMessage:

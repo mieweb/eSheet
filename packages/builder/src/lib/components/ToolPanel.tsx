@@ -67,12 +67,12 @@ function buildCategories(): Record<string, { type: string; label: string }[]> {
  * Clicking a button calls `form.addField(type)` and auto-selects
  * the new field. Groups field types by category from the registry.
  */
-export const ToolPanel = React.memo(function ToolPanel(
-  _props: ToolPanelProps,
-) {
+export const ToolPanel = React.memo(function ToolPanel(_props: ToolPanelProps) {
   const { normalized, form: formApi, _form } = useFormApi();
   const { selectedFieldId, selectField, selectFieldChild, _ui } = useUiApi();
-  const selectedField = selectedFieldId ? normalized.byId[selectedFieldId] : undefined;
+  const selectedField = selectedFieldId
+    ? normalized.byId[selectedFieldId]
+    : undefined;
   const selectedSectionId =
     selectedField?.definition.fieldType === 'section'
       ? selectedFieldId
@@ -142,7 +142,7 @@ export const ToolPanel = React.memo(function ToolPanel(
 
   return (
     <div className="tool-panel ms:flex ms:flex-1 ms:flex-col ms:min-h-0">
-      <h3 className="tool-panel-title ms:sticky ms:top-0 ms:z-10 ms:bg-mssurface ms:text-sm ms:font-semibold ms:text-mstext ms:py-2 ms:px-4 ms:border-b ms:border-msborder ms:flex ms:items-center ms:justify-between">
+      <h3 className="tool-panel-title ms:sticky ms:top-0 ms:z-10 ms:bg-mssurface ms:text-sm ms:font-semibold ms:text-mstext ms:py-4 ms:px-4 ms:border-b ms:border-msborder ms:flex ms:items-center ms:justify-between">
         <div className="ms:flex ms:min-w-0 ms:items-center ms:gap-2">
           <span>Tools</span>
           <span

@@ -17,13 +17,13 @@ function isFunction(value: unknown): value is (...args: unknown[]) => unknown {
 }
 
 function toRendererProps(data: unknown): EsheetRendererProps {
-  const fallback: EsheetRendererProps = { formData: '' };
+  const fallback: EsheetRendererProps = { formDataInput: '' };
   if (!isRecord(data)) {
     return fallback;
   }
 
-  const formData = data.formData;
-  if (typeof formData !== 'string' && !isRecord(formData)) {
+  const formDataInput = data.formDataInput;
+  if (typeof formDataInput !== 'string' && !isRecord(formDataInput)) {
     return fallback;
   }
 
@@ -34,7 +34,7 @@ function toRendererProps(data: unknown): EsheetRendererProps {
     : undefined;
 
   return {
-    formData: formData as EsheetRendererProps['formData'],
+    formDataInput: formDataInput as EsheetRendererProps['formDataInput'],
     className,
     initialResponses,
   };

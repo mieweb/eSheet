@@ -8,7 +8,7 @@ type ToolArgs = Record<string, unknown>;
 export function executeToolCall(
   toolName: string,
   args: ToolArgs,
-  tools: BuilderTools,
+  tools: BuilderTools
 ): string | Record<string, unknown> {
   switch (toolName) {
     case 'create_field':
@@ -74,10 +74,7 @@ const PLACEHOLDER_IDS = new Set(['q1', 'q2', 'q3']);
 function createField(args: ToolArgs, tools: BuilderTools): string {
   // Auto-clear placeholder fields on first AI-created field.
   const { fields } = tools.getFormSummary();
-  if (
-    fields.length > 0 &&
-    fields.every((f) => PLACEHOLDER_IDS.has(f.id))
-  ) {
+  if (fields.length > 0 && fields.every((f) => PLACEHOLDER_IDS.has(f.id))) {
     tools.resetForm({ id: 'form-1', fields: [] });
   }
 
@@ -120,7 +117,7 @@ function createField(args: ToolArgs, tools: BuilderTools): string {
 function fillField(args: ToolArgs, tools: BuilderTools): string {
   const fieldId = tools.resolveFieldId(
     args.fieldId as string | undefined,
-    args.fieldQuestion as string | undefined,
+    args.fieldQuestion as string | undefined
   );
   if (!fieldId)
     return `Field not found: ${(args.fieldId as string) ?? args.fieldQuestion}`;
@@ -155,7 +152,7 @@ function resetForm(_args: ToolArgs, tools: BuilderTools): string {
 function updateField(args: ToolArgs, tools: BuilderTools): string {
   const fieldId = tools.resolveFieldId(
     args.fieldId as string | undefined,
-    args.fieldQuestion as string | undefined,
+    args.fieldQuestion as string | undefined
   );
   if (!fieldId)
     return `Field not found: ${(args.fieldId as string) ?? args.fieldQuestion}`;
@@ -208,10 +205,8 @@ function updateField(args: ToolArgs, tools: BuilderTools): string {
     for (const existing of currentOptions) {
       const kept = newOptions.some(
         (o) =>
-          (typeof o === 'string'
-            ? o
-            : (o as { value?: string }).value) === existing.value ||
-          (o as { id?: string }).id === existing.id,
+          (typeof o === 'string' ? o : (o as { value?: string }).value) ===
+            existing.value || (o as { id?: string }).id === existing.id
       );
       if (!kept) tools.option.remove(fieldId, existing.id);
     }
@@ -240,7 +235,7 @@ function updateField(args: ToolArgs, tools: BuilderTools): string {
 function deleteField(args: ToolArgs, tools: BuilderTools): string {
   const fieldId = tools.resolveFieldId(
     args.fieldId as string | undefined,
-    args.fieldQuestion as string | undefined,
+    args.fieldQuestion as string | undefined
   );
   if (!fieldId)
     return `Field not found: ${(args.fieldId as string) ?? args.fieldQuestion}`;
@@ -251,39 +246,43 @@ function deleteField(args: ToolArgs, tools: BuilderTools): string {
 
 function getFieldDetail(
   args: ToolArgs,
-  tools: BuilderTools,
+  tools: BuilderTools
 ): Record<string, unknown> | string {
   const fieldId = tools.resolveFieldId(
     args.fieldId as string | undefined,
-    args.fieldQuestion as string | undefined,
+    args.fieldQuestion as string | undefined
   );
-  if (!fieldId) return `Field not found: ${(args.fieldId as string) ?? args.fieldQuestion}`;
+  if (!fieldId)
+    return `Field not found: ${(args.fieldId as string) ?? args.fieldQuestion}`;
   const node = tools.getField(fieldId);
   if (!node) return `Field not found: ${fieldId}`;
-  const def = node.definition as Record<string, unknown>;
+  const def = node.definition as unknown as Record<string, unknown>;
   return { id: fieldId, ...def };
 }
 
 function moveField(args: ToolArgs, tools: BuilderTools): string {
   const fieldId = tools.resolveFieldId(
     args.fieldId as string | undefined,
-    args.fieldQuestion as string | undefined,
+    args.fieldQuestion as string | undefined
   );
-  if (!fieldId) return `Field not found: ${(args.fieldId as string) ?? args.fieldQuestion}`;
+  if (!fieldId)
+    return `Field not found: ${(args.fieldId as string) ?? args.fieldQuestion}`;
   const toIndex = args.toIndex as number;
   if (typeof toIndex !== 'number') return `Missing 'toIndex' (number)`;
   const ok = tools.moveField(
     fieldId,
     toIndex,
-    (args.toParentId as string | null | undefined) ?? null,
+    (args.toParentId as string | null | undefined) ?? null
   );
-  return ok ? `Moved field ${fieldId} to index ${toIndex}` : `Failed to move field ${fieldId}`;
+  return ok
+    ? `Moved field ${fieldId} to index ${toIndex}`
+    : `Failed to move field ${fieldId}`;
 }
 
 function addRow(args: ToolArgs, tools: BuilderTools): string {
   const fieldId = tools.resolveFieldId(
     args.fieldId as string | undefined,
-    args.fieldQuestion as string | undefined,
+    args.fieldQuestion as string | undefined
   );
   if (!fieldId) return `Field not found`;
   const fieldType = getFieldType(fieldId, tools);
@@ -296,15 +295,18 @@ function addRow(args: ToolArgs, tools: BuilderTools): string {
 function updateRow(args: ToolArgs, tools: BuilderTools): string {
   const fieldId = tools.resolveFieldId(
     args.fieldId as string | undefined,
-    args.fieldQuestion as string | undefined,
+    args.fieldQuestion as string | undefined
   );
   if (!fieldId) return `Field not found`;
   let rowId = args.rowId as string | undefined;
   if (!rowId && args.value) {
     const node = tools.getField(fieldId);
     const rows =
-      (node?.definition as { rows?: { id: string; value: string }[] } | undefined)
-        ?.rows ?? [];
+      (
+        node?.definition as
+          | { rows?: { id: string; value: string }[] }
+          | undefined
+      )?.rows ?? [];
     const match = rows.find((r) => r.value === (args.currentValue as string));
     if (match) rowId = match.id;
   }
@@ -316,7 +318,7 @@ function updateRow(args: ToolArgs, tools: BuilderTools): string {
 function removeRow(args: ToolArgs, tools: BuilderTools): string {
   const fieldId = tools.resolveFieldId(
     args.fieldId as string | undefined,
-    args.fieldQuestion as string | undefined,
+    args.fieldQuestion as string | undefined
   );
   if (!fieldId) return `Field not found`;
   const ok = tools.row.remove(fieldId, args.rowId as string);
@@ -326,28 +328,33 @@ function removeRow(args: ToolArgs, tools: BuilderTools): string {
 function addColumn(args: ToolArgs, tools: BuilderTools): string {
   const fieldId = tools.resolveFieldId(
     args.fieldId as string | undefined,
-    args.fieldQuestion as string | undefined,
+    args.fieldQuestion as string | undefined
   );
   if (!fieldId) return `Field not found`;
   const fieldType = getFieldType(fieldId, tools);
   if (fieldType && !MATRIX_TYPES.has(fieldType))
     return `Field '${fieldId}' is a ${fieldType} field — columns only apply to singlematrix/multimatrix fields.`;
   const colId = tools.column.add(fieldId, args.value as string | undefined);
-  return colId ? `Added column ${colId}` : `Field not found or not a matrix field`;
+  return colId
+    ? `Added column ${colId}`
+    : `Field not found or not a matrix field`;
 }
 
 function updateColumn(args: ToolArgs, tools: BuilderTools): string {
   const fieldId = tools.resolveFieldId(
     args.fieldId as string | undefined,
-    args.fieldQuestion as string | undefined,
+    args.fieldQuestion as string | undefined
   );
   if (!fieldId) return `Field not found`;
   let columnId = args.columnId as string | undefined;
   if (!columnId && args.value) {
     const node = tools.getField(fieldId);
     const cols =
-      (node?.definition as { columns?: { id: string; value: string }[] } | undefined)
-        ?.columns ?? [];
+      (
+        node?.definition as
+          | { columns?: { id: string; value: string }[] }
+          | undefined
+      )?.columns ?? [];
     const match = cols.find((c) => c.value === (args.currentValue as string));
     if (match) columnId = match.id;
   }
@@ -359,7 +366,7 @@ function updateColumn(args: ToolArgs, tools: BuilderTools): string {
 function removeColumn(args: ToolArgs, tools: BuilderTools): string {
   const fieldId = tools.resolveFieldId(
     args.fieldId as string | undefined,
-    args.fieldQuestion as string | undefined,
+    args.fieldQuestion as string | undefined
   );
   if (!fieldId) return `Field not found`;
   const ok = tools.column.remove(fieldId, args.columnId as string);
@@ -368,7 +375,7 @@ function removeColumn(args: ToolArgs, tools: BuilderTools): string {
 
 function getFieldSpec(
   args: ToolArgs,
-  tools: BuilderTools,
+  tools: BuilderTools
 ): Record<string, unknown> | string {
   const fieldType = args.fieldType as string | undefined;
   if (!fieldType) return `Missing 'fieldType'`;
@@ -379,11 +386,21 @@ function getFieldSpec(
 
 const MATRIX_TYPES = new Set(['singlematrix', 'multimatrix']);
 const OPTION_TYPES = new Set([
-  'radio', 'check', 'boolean', 'dropdown', 'multiselectdropdown',
-  'rating', 'ranking', 'slider', 'multitext',
+  'radio',
+  'check',
+  'boolean',
+  'dropdown',
+  'multiselectdropdown',
+  'rating',
+  'ranking',
+  'slider',
+  'multitext',
 ]);
 
-function getFieldType(fieldId: string, tools: BuilderTools): string | undefined {
+function getFieldType(
+  fieldId: string,
+  tools: BuilderTools
+): string | undefined {
   const node = tools.getField(fieldId);
   return (node?.definition as { fieldType?: string } | undefined)?.fieldType;
 }
@@ -391,7 +408,7 @@ function getFieldType(fieldId: string, tools: BuilderTools): string | undefined 
 function addOption(args: ToolArgs, tools: BuilderTools): string {
   const fieldId = tools.resolveFieldId(
     args.fieldId as string | undefined,
-    args.fieldQuestion as string | undefined,
+    args.fieldQuestion as string | undefined
   );
   if (!fieldId) return `Field not found`;
   const fieldType = getFieldType(fieldId, tools);
@@ -400,13 +417,15 @@ function addOption(args: ToolArgs, tools: BuilderTools): string {
   if (fieldType && !OPTION_TYPES.has(fieldType))
     return `'${fieldId}' is a ${fieldType} field — it does not support options.`;
   const optId = tools.option.add(fieldId, args.value as string | undefined);
-  return optId ? `Added option ${optId}` : `Field not found or not an option field`;
+  return optId
+    ? `Added option ${optId}`
+    : `Field not found or not an option field`;
 }
 
 function updateOption(args: ToolArgs, tools: BuilderTools): string {
   const fieldId = tools.resolveFieldId(
     args.fieldId as string | undefined,
-    args.fieldQuestion as string | undefined,
+    args.fieldQuestion as string | undefined
   );
   if (!fieldId) return `Field not found`;
   let optionId = args.optionId as string | undefined;
@@ -414,12 +433,16 @@ function updateOption(args: ToolArgs, tools: BuilderTools): string {
   if (!optionId && args.currentValue) {
     const node = tools.getField(fieldId);
     const opts =
-      (node?.definition as { options?: { id: string; value: string }[] } | undefined)
-        ?.options ?? [];
+      (
+        node?.definition as
+          | { options?: { id: string; value: string }[] }
+          | undefined
+      )?.options ?? [];
     const match = opts.find((o) => o.value === (args.currentValue as string));
     if (match) optionId = match.id;
   }
-  if (!optionId) return `Missing 'optionId' or 'currentValue' to identify option`;
+  if (!optionId)
+    return `Missing 'optionId' or 'currentValue' to identify option`;
   const ok = tools.option.update(fieldId, optionId, args.value as string);
   return ok ? `Updated option ${optionId}` : `Option not found`;
 }
@@ -427,19 +450,23 @@ function updateOption(args: ToolArgs, tools: BuilderTools): string {
 function removeOption(args: ToolArgs, tools: BuilderTools): string {
   const fieldId = tools.resolveFieldId(
     args.fieldId as string | undefined,
-    args.fieldQuestion as string | undefined,
+    args.fieldQuestion as string | undefined
   );
   if (!fieldId) return `Field not found`;
   let optionId = args.optionId as string | undefined;
   if (!optionId && args.currentValue) {
     const node = tools.getField(fieldId);
     const opts =
-      (node?.definition as { options?: { id: string; value: string }[] } | undefined)
-        ?.options ?? [];
+      (
+        node?.definition as
+          | { options?: { id: string; value: string }[] }
+          | undefined
+      )?.options ?? [];
     const match = opts.find((o) => o.value === (args.currentValue as string));
     if (match) optionId = match.id;
   }
-  if (!optionId) return `Missing 'optionId' or 'currentValue' to identify option`;
+  if (!optionId)
+    return `Missing 'optionId' or 'currentValue' to identify option`;
   const ok = tools.option.remove(fieldId, optionId);
   return ok ? `Removed option ${optionId}` : `Option not found`;
 }
@@ -447,7 +474,7 @@ function removeOption(args: ToolArgs, tools: BuilderTools): string {
 function addFieldRule(args: ToolArgs, tools: BuilderTools): string {
   const fieldId = tools.resolveFieldId(
     args.fieldId as string | undefined,
-    args.fieldQuestion as string | undefined,
+    args.fieldQuestion as string | undefined
   );
   if (!fieldId) return `Field not found`;
 
@@ -462,13 +489,17 @@ function addFieldRule(args: ToolArgs, tools: BuilderTools): string {
   const node = tools.getField(fieldId);
   if (!node) return `Field not found: ${fieldId}`;
 
-  const mappedConditions = (conditions as Record<string, unknown>[]).map((c) => ({
-    conditionType: 'field' as const,
-    targetId: c['targetId'] as string,
-    operator: c['operator'] as string,
-    ...(c['expected'] !== undefined && { expected: c['expected'] as string }),
-    ...(c['propertyAccessor'] !== undefined && { propertyAccessor: c['propertyAccessor'] as string }),
-  }));
+  const mappedConditions = (conditions as Record<string, unknown>[]).map(
+    (c) => ({
+      conditionType: 'field' as const,
+      targetId: c['targetId'] as string,
+      operator: c['operator'] as string,
+      ...(c['expected'] !== undefined && { expected: c['expected'] as string }),
+      ...(c['propertyAccessor'] !== undefined && {
+        propertyAccessor: c['propertyAccessor'] as string,
+      }),
+    })
+  );
 
   const existing = (node.definition as { rules?: unknown[] }).rules ?? [];
   const newRule = { effect, logic, conditions: mappedConditions };
@@ -481,7 +512,7 @@ function addFieldRule(args: ToolArgs, tools: BuilderTools): string {
 function addExpressionRule(args: ToolArgs, tools: BuilderTools): string {
   const fieldId = tools.resolveFieldId(
     args.fieldId as string | undefined,
-    args.fieldQuestion as string | undefined,
+    args.fieldQuestion as string | undefined
   );
   if (!fieldId) return `Field not found`;
 
@@ -498,7 +529,9 @@ function addExpressionRule(args: ToolArgs, tools: BuilderTools): string {
   const newRule = {
     effect,
     logic: 'AND',
-    conditions: [{ conditionType: 'expression', expression: expression.trim() }],
+    conditions: [
+      { conditionType: 'expression', expression: expression.trim() },
+    ],
   };
   const ok = tools.updateField(fieldId, { rules: [...existing, newRule] });
   return ok
@@ -509,7 +542,7 @@ function addExpressionRule(args: ToolArgs, tools: BuilderTools): string {
 function removeRule(args: ToolArgs, tools: BuilderTools): string {
   const fieldId = tools.resolveFieldId(
     args.fieldId as string | undefined,
-    args.fieldQuestion as string | undefined,
+    args.fieldQuestion as string | undefined
   );
   if (!fieldId) return `Field not found`;
 
@@ -525,5 +558,7 @@ function removeRule(args: ToolArgs, tools: BuilderTools): string {
 
   const updated = existing.filter((_, i) => i !== ruleIndex);
   const ok = tools.updateField(fieldId, { rules: updated });
-  return ok ? `Removed rule ${ruleIndex} from field ${fieldId}` : `Failed to update field ${fieldId}`;
+  return ok
+    ? `Removed rule ${ruleIndex} from field ${fieldId}`
+    : `Failed to update field ${fieldId}`;
 }

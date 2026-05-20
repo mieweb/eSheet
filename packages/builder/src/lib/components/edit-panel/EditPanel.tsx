@@ -51,7 +51,9 @@ export function EditPanel(_props: EditPanelProps) {
     return normalized.byId[selectedFieldChildId] ?? parent;
   }, [normalized, selectedFieldId, selectedFieldChildId]);
 
-  const activeField = selectedFieldId ? normalized.byId[selectedFieldId] : undefined;
+  const activeField = selectedFieldId
+    ? normalized.byId[selectedFieldId]
+    : undefined;
 
   // No selection
   if (!selectedFieldId || !activeField) {
@@ -98,7 +100,7 @@ export function EditPanel(_props: EditPanelProps) {
   return (
     <div className="edit-panel ms:flex ms:flex-1 ms:flex-col ms:min-h-0">
       {/* Tab Bar — pill segment style */}
-      <div className="edit-panel-tabs ms:sticky ms:top-0 ms:z-10 ms:bg-mssurface ms:border-b ms:border-msborder ms:px-3 ms:pt-3 ms:pb-2 ms:shrink-0">
+      <div className="edit-panel-tabs ms:sticky ms:top-0 ms:z-10 ms:bg-mssurface ms:border-b ms:border-msborder ms:px-4 ms:py-2.5 ms:shrink-0">
         <div className="ms:flex ms:gap-1 ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackground ms:p-1">
           <button
             type="button"
@@ -208,11 +210,11 @@ function EditTabContent({
       )}
 
       {/* Options (radio, check, dropdown, multitext, rating, ranking, slider, boolean) */}
-      {meta?.hasOptions && def.options && (
+      {meta?.hasOptions && (def as { options?: FieldOption[] }).options && (
         <OptionListEditor
           fieldId={fieldId}
           fieldType={def.fieldType}
-          options={def.options}
+          options={(def as { options?: FieldOption[] }).options!}
         />
       )}
 
@@ -220,8 +222,8 @@ function EditTabContent({
       {meta?.hasMatrix && (
         <MatrixEditor
           fieldId={fieldId}
-          rows={def.rows ?? []}
-          columns={def.columns ?? []}
+          rows={(def as { rows?: MatrixRow[] }).rows ?? []}
+          columns={(def as { columns?: MatrixColumn[] }).columns ?? []}
         />
       )}
     </div>
@@ -290,7 +292,14 @@ function SectionEditContent({
         setEditTab('logic');
       }
     }
-  }, [activeChildId, editTab, fieldId, resolvedActiveChildId, selectFieldChild, setEditTab]);
+  }, [
+    activeChildId,
+    editTab,
+    fieldId,
+    resolvedActiveChildId,
+    selectFieldChild,
+    setEditTab,
+  ]);
 
   const handleSelectChild = (childId: string) => {
     selectFieldChild(fieldId, childId);
@@ -348,8 +357,12 @@ function SectionEditContent({
         <input
           id={`${instanceId}-editor-title-${fieldId}`}
           type="text"
-          value={def.title ?? ''}
-          onChange={(e) => onUpdate({ title: e.currentTarget.value })}
+          value={(def as { title?: string }).title ?? ''}
+          onChange={(e) =>
+            onUpdate({ title: e.currentTarget.value } as Parameters<
+              typeof onUpdate
+            >[0])
+          }
           placeholder="Enter section title..."
           className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:placeholder:text-mstextmuted ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
         />
@@ -438,7 +451,9 @@ function SectionEditContent({
                   type="text"
                   value={activeChildDef.title ?? ''}
                   onChange={(e) =>
-                    handleUpdateChild({ title: e.currentTarget.value })
+                    handleUpdateChild({
+                      title: e.currentTarget.value,
+                    } as Parameters<typeof handleUpdateChild>[0])
                   }
                   placeholder="Enter section title..."
                   className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:placeholder:text-mstextmuted ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
@@ -458,19 +473,24 @@ function SectionEditContent({
             <hr className="ms:border-msborder" />
           )}
 
-          {activeChildMeta?.hasOptions && (activeChildDef as { options?: FieldOption[] }).options && (
-            <OptionListEditor
-              fieldId={activeChildDef.id}
-              fieldType={activeChildDef.fieldType}
-              options={(activeChildDef as { options?: FieldOption[] }).options!}
-            />
-          )}
+          {activeChildMeta?.hasOptions &&
+            (activeChildDef as { options?: FieldOption[] }).options && (
+              <OptionListEditor
+                fieldId={activeChildDef.id}
+                fieldType={activeChildDef.fieldType}
+                options={
+                  (activeChildDef as { options?: FieldOption[] }).options!
+                }
+              />
+            )}
 
           {activeChildMeta?.hasMatrix && (
             <MatrixEditor
               fieldId={activeChildDef.id}
               rows={(activeChildDef as { rows?: MatrixRow[] }).rows ?? []}
-              columns={(activeChildDef as { columns?: MatrixColumn[] }).columns ?? []}
+              columns={
+                (activeChildDef as { columns?: MatrixColumn[] }).columns ?? []
+              }
             />
           )}
         </div>

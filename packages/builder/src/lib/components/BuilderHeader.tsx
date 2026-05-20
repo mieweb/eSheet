@@ -5,6 +5,7 @@ import {
   formDefinitionSchema,
   type Condition,
   isExpressionValid,
+  hasOptions,
   type FieldDefinition,
   type FormDefinition,
   type BuilderMode,
@@ -119,21 +120,10 @@ function collectImportWarnings(fields: FieldDefinition[]): string[] {
     }
   }
 
-  const optionRequiredTypes = new Set([
-    'radio',
-    'check',
-    'dropdown',
-    'multiselectdropdown',
-    'rating',
-    'ranking',
-    'slider',
-    'boolean',
-  ]);
-
   for (const entry of flat) {
     const { field, path } = entry;
 
-    if (optionRequiredTypes.has(field.fieldType)) {
+    if (hasOptions(field)) {
       if (!field.options || field.options.length === 0) {
         warnings.push(
           `${field.id}: ${path} has no options for fieldType '${field.fieldType}'.`
@@ -386,7 +376,8 @@ export function BuilderHeader(_props: BuilderHeaderProps) {
               mcpReq.params.requestedSchema as McpElicitationSchema,
               {
                 formId: form.getState().hydrateDefinition().id || 'mcp-form',
-                ...(typeof mcpReq.params.message === 'string' && mcpReq.params.message.length > 0
+                ...(typeof mcpReq.params.message === 'string' &&
+                mcpReq.params.message.length > 0
                   ? { description: mcpReq.params.message }
                   : {}),
                 mcpId: mcpReq.id,
@@ -405,9 +396,12 @@ export function BuilderHeader(_props: BuilderHeaderProps) {
           // Raw requestedSchema: { type: 'object', properties: {...} }
           const p = parsed as Record<string, unknown>;
           if (p?.type === 'object' && p?.properties) {
-            const formDef = importFromMcp(p as unknown as McpElicitationSchema, {
-              formId: form.getState().hydrateDefinition().id || 'mcp-form',
-            });
+            const formDef = importFromMcp(
+              p as unknown as McpElicitationSchema,
+              {
+                formId: form.getState().hydrateDefinition().id || 'mcp-form',
+              }
+            );
             form.getState().loadDefinition(formDef);
             showFeedback(
               'success',

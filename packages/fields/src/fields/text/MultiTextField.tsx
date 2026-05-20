@@ -1,5 +1,8 @@
 import React from 'react';
-import type { FieldComponentProps } from '@esheet/core';
+import type {
+  FieldComponentProps,
+  MultitextFieldDefinition,
+} from '@esheet/core';
 import { Input } from '@mieweb/ui';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 
@@ -13,7 +16,7 @@ export const MultiTextField = React.memo(function MultiTextField({
   onUpdate,
   onResponse,
 }: FieldComponentProps) {
-  const def = field.definition;
+  const def = field.definition as MultitextFieldDefinition;
   const instanceId = form.getState().instanceId;
   const options = def.options || [];
   const multitextAnswers = response?.multitextAnswers || {};

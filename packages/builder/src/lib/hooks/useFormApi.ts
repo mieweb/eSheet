@@ -76,19 +76,19 @@ export function useFormApi(fieldId?: string): FormApi {
 
   // --- Reactive field state ---
   const field = useStore(form, (s) =>
-    fieldId ? s.getField(fieldId) : undefined,
+    fieldId ? s.getField(fieldId) : undefined
   );
   const response = useStore(form, (s) =>
-    fieldId ? s.getResponse(fieldId) : undefined,
+    fieldId ? s.getResponse(fieldId) : undefined
   );
   const isVisible = useStore(form, (s) =>
-    fieldId ? s.isVisible(fieldId) : true,
+    fieldId ? s.isVisible(fieldId) : true
   );
   const isEnabled = useStore(form, (s) =>
-    fieldId ? s.isEnabled(fieldId) : true,
+    fieldId ? s.isEnabled(fieldId) : true
   );
   const isRequired = useStore(form, (s) =>
-    fieldId ? s.isRequired(fieldId) : false,
+    fieldId ? s.isRequired(fieldId) : false
   );
 
   // --- Reactive form-level state ---
@@ -120,8 +120,7 @@ export function useFormApi(fieldId?: string): FormApi {
       field_: {
         update: (patch: Partial<Omit<FieldDefinition, 'fields'>>) =>
           fieldId ? form.getState().updateField(fieldId, patch) : false,
-        remove: () =>
-          fieldId ? form.getState().removeField(fieldId) : false,
+        remove: () => (fieldId ? form.getState().removeField(fieldId) : false),
         move: (toIndex: number, toParentId?: string | null) =>
           fieldId
             ? form.getState().moveField(fieldId, toIndex, toParentId)
@@ -136,9 +135,7 @@ export function useFormApi(fieldId?: string): FormApi {
         add: (value?: string) =>
           fieldId ? form.getState().addOption(fieldId, value) : null,
         update: (optId: string, value: string) =>
-          fieldId
-            ? form.getState().updateOption(fieldId, optId, value)
-            : false,
+          fieldId ? form.getState().updateOption(fieldId, optId, value) : false,
         remove: (optId: string) =>
           fieldId ? form.getState().removeOption(fieldId, optId) : false,
       },
@@ -156,13 +153,9 @@ export function useFormApi(fieldId?: string): FormApi {
         add: (value?: string) =>
           fieldId ? form.getState().addColumn(fieldId, value) : null,
         update: (colId: string, value: string) =>
-          fieldId
-            ? form.getState().updateColumn(fieldId, colId, value)
-            : false,
+          fieldId ? form.getState().updateColumn(fieldId, colId, value) : false,
         remove: (colId: string) =>
-          fieldId
-            ? form.getState().removeColumn(fieldId, colId)
-            : false,
+          fieldId ? form.getState().removeColumn(fieldId, colId) : false,
       },
 
       _form: form,
@@ -179,6 +172,6 @@ export function useFormApi(fieldId?: string): FormApi {
       responses,
       instanceId,
       form,
-    ],
+    ]
   );
 }

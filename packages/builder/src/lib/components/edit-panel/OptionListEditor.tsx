@@ -53,9 +53,7 @@ export function OptionListEditor({
               aria-label={`Option ${idx + 1}`}
               type="text"
               value={opt.value}
-              onChange={(e) =>
-                option.update(opt.id, e.currentTarget.value)
-              }
+              onChange={(e) => option.update(opt.id, e.currentTarget.value)}
               placeholder={`Option ${idx + 1}`}
               className="ms:flex-1 ms:min-w-0 ms:outline-none ms:bg-transparent ms:text-mstext ms:placeholder:text-mstextmuted ms:border-0 ms:text-sm"
             />

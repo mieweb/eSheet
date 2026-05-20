@@ -1,5 +1,5 @@
 import React from 'react';
-import type { FieldComponentProps } from '@esheet/core';
+import type { FieldComponentProps, DiagramFieldDefinition } from '@esheet/core';
 import { DrawingPad } from './DrawingPad.js';
 
 function useIsDark(): boolean {
@@ -33,7 +33,7 @@ export const DiagramField = React.memo(function DiagramField({
   onUpdate,
   onResponse,
 }: FieldComponentProps) {
-  const def = field.definition;
+  const def = field.definition as DiagramFieldDefinition;
   const instanceId = form.getState().instanceId;
   const isDark = useIsDark();
   const fileInputRef = React.useRef<HTMLInputElement>(null);

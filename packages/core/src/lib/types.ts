@@ -369,6 +369,33 @@ export type FieldDefinition =
   // Organization
   | SectionFieldDefinition;
 
+/** Union of all field variants that carry an `options` array. */
+export type OptionBearingFieldDefinition =
+  | RadioFieldDefinition
+  | CheckFieldDefinition
+  | BooleanFieldDefinition
+  | DropdownFieldDefinition
+  | MultiselectDropdownFieldDefinition
+  | RatingFieldDefinition
+  | RankingFieldDefinition
+  | SliderFieldDefinition;
+
+/** Type predicate: narrows a FieldDefinition to the option-bearing variants. */
+export function hasOptions(
+  field: FieldDefinition
+): field is OptionBearingFieldDefinition {
+  return (
+    field.fieldType === 'radio' ||
+    field.fieldType === 'check' ||
+    field.fieldType === 'boolean' ||
+    field.fieldType === 'dropdown' ||
+    field.fieldType === 'multiselectdropdown' ||
+    field.fieldType === 'rating' ||
+    field.fieldType === 'ranking' ||
+    field.fieldType === 'slider'
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Field Normalization (strips irrelevant properties by fieldType)
 // ---------------------------------------------------------------------------

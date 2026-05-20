@@ -26,12 +26,14 @@ const INITIAL_DEF: FormDefinition = {
 };
 
 export function BuilderView() {
-  const onBuilderToolsReady = useBuilderMcpToolHandler({ eventName: 'ozwell-tool-call' });
+  const onBuilderToolsReady = useBuilderMcpToolHandler({
+    eventName: 'ozwell-tool-call',
+  });
 
   return (
     <div className="demo-builder-view w-full h-screen flex flex-col">
       <Navbar />
-      <div className="flex-1 overflow-y-auto bg-gray-100">
+      <div className="flex-1 overflow-y-auto ms:bg-msbackground">
         <div className="w-full flex justify-center px-2 pt-5">
           <EsheetBuilder
             definition={INITIAL_DEF}

@@ -34,6 +34,8 @@ export {
   type Condition,
   type ConditionalRule,
   type FieldDefinition,
+  type OptionBearingFieldDefinition,
+  hasOptions,
   // Per-field-type interfaces (discriminated union members)
   type TextFieldDefinition,
   type LongtextFieldDefinition,

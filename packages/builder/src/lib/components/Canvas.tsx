@@ -436,8 +436,8 @@ export const Canvas = React.memo(function Canvas({
   return (
     <div className="ms:flex ms:flex-col ms:flex-1 ms:min-h-0">
       {mode === 'build' && (
-        <div className="ms:bg-msbackground ms:border-b ms:border-msborder ms:px-3 ms:py-1.5 ms:flex ms:items-center ms:justify-between ms:gap-2 ms:py-2 ms:mb-2">
-          <span className="ms:text-xs ms:font-medium ms:text-mstextmuted ms:uppercase ms:tracking-wide ms:select-none ms:py-1">
+        <div className="ms:bg-mssurface ms:border-b ms:border-msborder ms:px-4 ms:py-4 ms:flex ms:items-center ms:justify-between ms:gap-2">
+          <span className="ms:text-sm ms:font-semibold ms:text-mstext ms:select-none">
             Fields
           </span>
           {items.length > 0 && (
@@ -477,7 +477,7 @@ export const Canvas = React.memo(function Canvas({
       ) : (
         <div
           ref={canvasRef}
-          className="canvas-fields ms:space-y-0 ms:flex-1 ms:min-h-0 ms:overflow-y-auto"
+          className="canvas-fields ms:space-y-0 ms:flex-1 ms:min-h-0 ms:overflow-y-auto ms:px-4 ms:pt-3 ms:pb-4"
           data-sortable-list={dragEnabled ? 'true' : undefined}
           data-parent-id=""
         >

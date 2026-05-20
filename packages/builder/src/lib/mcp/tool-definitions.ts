@@ -13,7 +13,7 @@ export const BUILDER_TOOL_DEFINITIONS: readonly ToolDefinition[] = [
     function: {
       name: 'get_form_summary',
       description:
-        'CALL THIS FIRST before any edits. Returns all field IDs, fieldTypes, and questions. You must know a field\'s fieldType before choosing which edit tool to use (add_option vs add_column/add_row depends on fieldType).',
+        "CALL THIS FIRST before any edits. Returns all field IDs, fieldTypes, and questions. You must know a field's fieldType before choosing which edit tool to use (add_option vs add_column/add_row depends on fieldType).",
       parameters: { type: 'object', properties: {} },
     },
   },
@@ -338,7 +338,11 @@ export const BUILDER_TOOL_DEFINITIONS: readonly ToolDefinition[] = [
       parameters: {
         type: 'object',
         properties: {
-          fieldType: { type: 'string', description: 'The field type key, e.g. "radio", "slider", "singlematrix"' },
+          fieldType: {
+            type: 'string',
+            description:
+              'The field type key, e.g. "radio", "slider", "singlematrix"',
+          },
         },
         required: ['fieldType'],
       },
@@ -377,9 +381,20 @@ export const BUILDER_TOOL_DEFINITIONS: readonly ToolDefinition[] = [
             items: {
               type: 'object',
               properties: {
-                targetId: { type: 'string', description: 'Field ID whose response is checked.' },
-                operator: { type: 'string', description: 'equals|notEquals|contains|includes|empty|notEmpty|greaterThan|greaterThanOrEqual|lessThan|lessThanOrEqual' },
-                expected: { type: 'string', description: 'For option-based fields use the option ID (e.g. "o1"), not the label. Omit for empty/notEmpty.' },
+                targetId: {
+                  type: 'string',
+                  description: 'Field ID whose response is checked.',
+                },
+                operator: {
+                  type: 'string',
+                  description:
+                    'equals|notEquals|contains|includes|empty|notEmpty|greaterThan|greaterThanOrEqual|lessThan|lessThanOrEqual',
+                },
+                expected: {
+                  type: 'string',
+                  description:
+                    'For option-based fields use the option ID (e.g. "o1"), not the label. Omit for empty/notEmpty.',
+                },
               },
               required: ['targetId', 'operator'],
             },
@@ -406,7 +421,8 @@ export const BUILDER_TOOL_DEFINITIONS: readonly ToolDefinition[] = [
           },
           expression: {
             type: 'string',
-            description: 'Expression string. Use field IDs as variable names. No method calls allowed.',
+            description:
+              'Expression string. Use field IDs as variable names. No method calls allowed.',
           },
         },
         required: ['effect', 'expression'],
@@ -424,7 +440,10 @@ export const BUILDER_TOOL_DEFINITIONS: readonly ToolDefinition[] = [
         properties: {
           fieldQuestion: { type: 'string' },
           fieldId: { type: 'string' },
-          ruleIndex: { type: 'number', description: '0-based index of the rule to remove.' },
+          ruleIndex: {
+            type: 'number',
+            description: '0-based index of the rule to remove.',
+          },
         },
         required: ['ruleIndex'],
       },

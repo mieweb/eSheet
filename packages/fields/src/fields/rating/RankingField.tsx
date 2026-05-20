@@ -1,5 +1,9 @@
 import React from 'react';
-import type { FieldComponentProps, SelectedOption } from '@esheet/core';
+import type {
+  FieldComponentProps,
+  SelectedOption,
+  RankingFieldDefinition,
+} from '@esheet/core';
 import Sortable from 'sortablejs';
 import {
   TrashIcon,
@@ -177,7 +181,7 @@ export const RankingField = React.memo(function RankingField({
   onUpdate,
   onResponse,
 }: FieldComponentProps) {
-  const def = field.definition;
+  const def = field.definition as RankingFieldDefinition;
   const instanceId = form.getState().instanceId;
   const options = def.options || [];
 

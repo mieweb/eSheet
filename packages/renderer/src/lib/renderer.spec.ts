@@ -1,4 +1,8 @@
-import { type FormDefinition, type FormResponse } from '@esheet/core';
+import {
+  type FormDefinition,
+  type FormResponse,
+  type SectionFieldDefinition,
+} from '@esheet/core';
 import { renderer } from './renderer.js';
 
 describe('renderer', () => {
@@ -58,7 +62,7 @@ describe('renderer', () => {
 
   it('hides section children by default when rules resolve invisible', () => {
     const definition = baseDefinition();
-    definition.fields[1].fields![0].rules = [
+    (definition.fields[1] as SectionFieldDefinition).fields![0].rules = [
       {
         effect: 'visible',
         logic: 'AND',

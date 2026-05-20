@@ -7,7 +7,13 @@ import {
   type FormStore,
   type UIStore,
 } from '@esheet/core';
-import { importFromMcp, convertSurveyJS, isSurveyJSSchema, isMcpElicitationRequest, type McpElicitationRequest } from '@esheet/adapters';
+import {
+  importFromMcp,
+  convertSurveyJS,
+  isSurveyJSSchema,
+  isMcpElicitationRequest,
+  type McpElicitationRequest,
+} from '@esheet/adapters';
 
 /**
  * Initialize renderer with form definition.
@@ -109,7 +115,3 @@ export function useRendererInit(
     }
   }, [form, ui, formData, initialResponses, onValidationError, strict]);
 }
-
-
-
-

@@ -17,11 +17,7 @@ export interface MatrixEditorProps {
  * MatrixEditor — add / edit / remove rows and columns for matrix fields.
  * Max 10 rows, max 10 columns.
  */
-export function MatrixEditor({
-  fieldId,
-  rows,
-  columns,
-}: MatrixEditorProps) {
+export function MatrixEditor({ fieldId, rows, columns }: MatrixEditorProps) {
   const instanceId = useInstanceId();
   const { row: rowApi, column: columnApi } = useFormApi(fieldId);
   const rowsRef = React.useRef<HTMLDivElement>(null);
@@ -69,9 +65,7 @@ export function MatrixEditor({
                 aria-label={`Row ${idx + 1}`}
                 type="text"
                 value={row.value}
-                onChange={(e) =>
-                  rowApi.update(row.id, e.currentTarget.value)
-                }
+                onChange={(e) => rowApi.update(row.id, e.currentTarget.value)}
                 placeholder={`Row ${idx + 1}`}
                 className="ms:flex-1 ms:min-w-0 ms:outline-none ms:bg-transparent ms:text-mstext ms:placeholder:text-mstextmuted ms:border-0 ms:text-sm"
               />

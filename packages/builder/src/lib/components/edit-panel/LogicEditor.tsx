@@ -3,6 +3,7 @@ import {
   CONDITION_OPERATORS,
   CONDITIONAL_EFFECTS,
   getFieldTypeMeta,
+  hasOptions,
   isExpressionValid,
   type Condition,
   type ConditionOperator,
@@ -782,11 +783,9 @@ function ExpectedValueInput({
   if (target?.fieldType === 'boolean') {
     if (operator === 'equals' || operator === 'notEquals') {
       const yesOpt = target.options?.find(
-        (o) => o.value.toLowerCase() === 'yes',
+        (o) => o.value.toLowerCase() === 'yes'
       );
-      const noOpt = target.options?.find(
-        (o) => o.value.toLowerCase() === 'no',
-      );
+      const noOpt = target.options?.find((o) => o.value.toLowerCase() === 'no');
       return (
         <select
           id={`${idPrefix}-expected`}
@@ -961,7 +960,9 @@ function buildOtherFields(
       label: node.definition.question || node.definition.id,
       fieldType: node.definition.fieldType,
       hasOptions: meta?.hasOptions ?? false,
-      options: node.definition.options,
+      options: hasOptions(node.definition)
+        ? node.definition.options
+        : undefined,
       answerType: meta?.answerType ?? 'none',
       supportsNumericCompare,
     });

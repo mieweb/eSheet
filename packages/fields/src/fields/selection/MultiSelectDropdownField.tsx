@@ -1,5 +1,9 @@
 import React from 'react';
-import type { FieldComponentProps, SelectedOption } from '@esheet/core';
+import type {
+  FieldComponentProps,
+  SelectedOption,
+  MultiselectDropdownFieldDefinition,
+} from '@esheet/core';
 import { CustomDropdown } from '../../controls/CustomDropdown.js';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 
@@ -14,7 +18,7 @@ export const MultiSelectDropdownField = React.memo(
     onUpdate,
     onResponse,
   }: FieldComponentProps) {
-    const def = field.definition;
+    const def = field.definition as MultiselectDropdownFieldDefinition;
     const instanceId = form.getState().instanceId;
     const options = def.options || [];
     const selectedArr =

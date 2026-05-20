@@ -79,9 +79,13 @@ export function CommonEditor({
       {showInputType && (
         <InputTypeEditor
           fieldId={fieldId}
-          inputType={(def.inputType as TextInputType) ?? 'string'}
-          unit={def.unit}
-          onChange={onUpdate}
+          inputType={
+            (def as { inputType?: TextInputType }).inputType ?? 'string'
+          }
+          unit={(def as { unit?: string }).unit}
+          onChange={(patch) =>
+            onUpdate(patch as Parameters<typeof onUpdate>[0])
+          }
         />
       )}
     </div>

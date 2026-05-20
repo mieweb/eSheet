@@ -32,7 +32,7 @@ export interface UseBuilderMcpToolHandlerOptions {
  * const onBuilderToolsReady = useBuilderMcpToolHandler({ eventName: 'my-ai-tool-call' });
  */
 export function useBuilderMcpToolHandler(
-  options: UseBuilderMcpToolHandlerOptions,
+  options: UseBuilderMcpToolHandlerOptions
 ): (tools: BuilderTools) => void {
   const { target, eventName } = options;
   const toolsRef = React.useRef<BuilderTools | null>(null);
@@ -45,7 +45,11 @@ export function useBuilderMcpToolHandler(
     const el: EventTarget = target ?? document;
 
     function onToolCall(e: Event) {
-      const { name, arguments: args, respond } = (e as CustomEvent).detail as {
+      const {
+        name,
+        arguments: args,
+        respond,
+      } = (e as CustomEvent).detail as {
         name: string;
         arguments: Record<string, unknown>;
         respond: (result: unknown) => void;

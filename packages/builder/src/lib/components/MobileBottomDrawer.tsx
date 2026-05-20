@@ -37,7 +37,9 @@ export function MobileBottomDrawer({
             Close
           </button>
         </div>
-        <div className="ms:h-[calc(50dvh-45px)] ms:overflow-y-auto">{children}</div>
+        <div className="ms:h-[calc(50dvh-45px)] ms:overflow-y-auto">
+          {children}
+        </div>
       </div>
     </>
   );
