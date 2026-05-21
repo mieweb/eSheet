@@ -18,7 +18,7 @@
     "build": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npx docusaurus clear && npx docusaurus build",
+        "command": "npx docusaurus build",
         "cwd": "apps/docs"
       },
       "outputs": ["{projectRoot}/build"]
