@@ -53,6 +53,15 @@ style.textContent =
   '.ozwell-chat-header{background:var(--mieweb-primary-500,#27aae1)!important;}';
 document.head.appendChild(style);
 
+/**
+ * Swap the active tool set and system prompt in the Ozwell widget.
+ * Call this on mount in each view so the AI uses the right tools for the current page.
+ */
+export function updateOzwellTools(tools: unknown[], system: string): void {
+  window.OzwellChatConfig = { ...window.OzwellChatConfig, tools, system };
+  window.OzwellChat?.configure({ tools, system });
+}
+
 // Inject brand colors into the widget iframe (Send button, user messages, input focus).
 // The iframe is same-origin (srcdoc + allow-same-origin) so we can access its document.
 document.addEventListener('ozwell-chat-ready', () => {

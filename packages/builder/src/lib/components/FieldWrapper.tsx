@@ -80,7 +80,9 @@ export function FieldWrapper({
         forceCollapseVersion > forceExpandVersion);
     return !collapseActive;
   });
-  const lastForceExpandVersionRef = React.useRef<number | undefined>(forceExpandVersion);
+  const lastForceExpandVersionRef = React.useRef<number | undefined>(
+    forceExpandVersion
+  );
   const lastForceCollapseVersionRef = React.useRef<number | undefined>(
     forceCollapseVersion
   );

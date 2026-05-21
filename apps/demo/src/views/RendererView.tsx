@@ -1,8 +1,40 @@
-import { useState, useCallback, useRef } from 'react';
-import { EsheetRenderer, type EsheetRendererHandle } from '@esheet/renderer';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import {
+  EsheetRenderer,
+  type EsheetRendererHandle,
+  useRendererMcpToolHandler,
+  RENDERER_TOOL_DEFINITIONS,
+} from '@esheet/renderer';
 import type { FormDefinition, FormResponseEnvelope } from '@esheet/core';
 import { Navbar } from '../components/Navbar';
 import { Button, Select } from '@mieweb/ui';
+import { updateOzwellTools } from '../ozwell-setup.js';
+
+const RENDERER_SYSTEM =
+  'Form renderer assistant. You can read the current form state, inspect field values, fill in responses, and clear answers.\n\n' +
+  'FILL WORKFLOW:\n' +
+  '1. Call get_form once to get the initial visible fields.\n' +
+  '2. Fill every field where hasValue is false using fill_field. Each response includes currentVisibleFields with updated hasValue flags.\n' +
+  '3. After each fill, check currentVisibleFields for any fields where hasValue is false — those are still empty. Fill them immediately.\n' +
+  '4. You are done only when every field in currentVisibleFields has hasValue true.\n' +
+  'NEVER skip a field because you are unsure of its value — generate a realistic mock value for every field including dates, times, and appointment times.\n' +
+  'NEVER plan all fills upfront — conditional logic reveals new fields dynamically and you must respond to currentVisibleFields after each fill.\n\n' +
+  'TEXT FIELD FORMAT RULES — each text field includes a valueFormat property; use it exactly:\n' +
+  '  valueFormat "YYYY-MM-DD"       → date, e.g. "2026-05-21"\n' +
+  '  valueFormat "YYYY-MM-DDTHH:mm" → datetime-local, e.g. "2026-05-21T14:30"\n' +
+  '  valueFormat "YYYY-MM"          → month, e.g. "2026-05"\n' +
+  '  valueFormat "HH:mm"            → time (24-hour), e.g. "14:30"\n' +
+  'Wrong formats are rejected with an error — always use the valueFormat from the field schema.\n\n' +
+  'OTHER FIELD RULES:\n' +
+  '  radio/dropdown/boolean/rating/slider → single string matching an option value\n' +
+  '  check/multiselectdropdown            → array of strings matching option values\n' +
+  '  ranking                              → ordered array of option value strings\n' +
+  '  multitext                            → array of strings, one per option slot\n' +
+  '  singlematrix                         → { "Row Label": "Column Label" }\n' +
+  '  multimatrix                          → { "Row Label": ["Col1", "Col2"] }\n\n' +
+  'Use get_form_raw to see ALL fields. Use get_form_tree for visibility/enabled/required state. ' +
+  'Use get_valid_response before submitting. Use clear_responses to reset. ' +
+  'For conversational questions reply in plain text without calling a tool.';
 
 interface SubmitResult {
   readonly kind: 'success' | 'error';
@@ -52,6 +84,14 @@ const TEST_SCHEMAS: readonly SchemaOption[] = Object.entries(schemaModules)
   .sort((a, b) => a!.label.localeCompare(b!.label));
 
 export function RendererView() {
+  useEffect(() => {
+    updateOzwellTools([...RENDERER_TOOL_DEFINITIONS], RENDERER_SYSTEM);
+  }, []);
+
+  const onRendererToolsReady = useRendererMcpToolHandler({
+    eventName: 'ozwell-tool-call',
+  });
+
   const [rawInput, setRawInput] = useState<unknown>(null);
   const [selectedSchema, setSelectedSchema] = useState<string>('');
   const [formKey, setFormKey] = useState(0);
@@ -246,6 +286,7 @@ export function RendererView() {
                 key={formKey}
                 formDataInput={rawInput}
                 ref={rendererRef}
+                onRendererToolsReady={onRendererToolsReady}
                 onReady={() => {
                   const def = rendererRef.current
                     ?.getFormStore()

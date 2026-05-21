@@ -120,20 +120,26 @@ function createField(args: ToolArgs, tools: BuilderTools): string {
   return `Created field "${args.question}" with ID: ${newId}`;
 }
 
-function fillField(args: ToolArgs, tools: BuilderTools): string {
+function fillField(
+  args: ToolArgs,
+  tools: BuilderTools
+): string | Record<string, unknown> {
   const fieldId = tools.resolveFieldId(
     args.fieldId as string | undefined,
     args.fieldQuestion as string | undefined
   );
   if (!fieldId)
     return `Field not found: ${(args.fieldId as string) ?? args.fieldQuestion}`;
-  const ok = tools.fillField(fieldId, args.value);
+  const result = tools.fillField(fieldId, args.value);
+  if (typeof result === 'string') return result; // format validation error
+  if (!result) return `Field not found: ${fieldId}`;
   const summary = tools.getFormSummary();
   const field = summary.fields.find((f) => f.id === fieldId);
   const label = field?.question ?? fieldId;
-  return ok
-    ? `Filled "${label}" with ${JSON.stringify(args.value)}`
-    : `Field not found: ${fieldId}`;
+  return {
+    result: `Filled "${label}" with ${JSON.stringify(args.value)}`,
+    currentVisibleFields: summary.fields,
+  };
 }
 
 function generateForm(args: ToolArgs, tools: BuilderTools): string {

@@ -31,6 +31,10 @@ export interface FieldSummary {
   editWith: string;
   /** True if this field has conditional logic rules attached. Use get_field to inspect them. */
   hasRules: boolean;
+  /** Required value format for structured input types (date, datetime-local, month, time). Use this exact format when calling fill_field. */
+  valueFormat?: string;
+  /** True if this field already has a response value. False means it is still empty and needs to be filled. */
+  hasValue: boolean;
   /** Section child fields (only present when fieldType === 'section'). */
   children?: FieldSummary[];
 }
@@ -72,8 +76,8 @@ export interface BuilderTools {
     fieldCount: number;
     fields: FieldSummary[];
   };
-  /** Set a response value for a field (for testing in preview mode). */
-  fillField: (fieldId: string, value: unknown) => boolean;
+  /** Set a response value for a field (for testing in preview mode). Returns true on success, false if field not found, or an error string if the value format is invalid. */
+  fillField: (fieldId: string, value: unknown) => boolean | string;
   /** Clear all responses. */
   clearResponses: () => void;
   /** Get current responses keyed by field ID. */
@@ -175,18 +179,55 @@ export function createBuilderTools(form: FormStore): BuilderTools {
       if (!node) return false;
       const def = node.definition as {
         fieldType: string;
+        inputType?: string;
         options?: { id: string; value: string }[];
         rows?: { id: string; value: string }[];
         columns?: { id: string; value: string }[];
       };
+
+      function normalizeTextValue(
+        v: string,
+        inputType?: string
+      ): string | null {
+        if (!v) return v;
+        switch (inputType) {
+          case 'date':
+            if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+            if (/^\d{4}-\d{2}$/.test(v)) return `${v}-01`;
+            if (/^\d{4}$/.test(v)) return `${v}-01-01`;
+            return null;
+          case 'month':
+            if (/^\d{4}-\d{2}$/.test(v)) return v;
+            if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v.slice(0, 7);
+            return null;
+          case 'datetime-local': {
+            const n = v.replace(' ', 'T');
+            if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(n)) return n;
+            if (/^\d{4}-\d{2}-\d{2}$/.test(n)) return `${n}T00:00`;
+            return null;
+          }
+          case 'time': {
+            if (/^\d{2}:\d{2}$/.test(v)) return v;
+            const m = v.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+            if (m) {
+              let h = parseInt(m[1], 10);
+              if (m[3].toUpperCase() === 'AM' && h === 12) h = 0;
+              if (m[3].toUpperCase() === 'PM' && h !== 12) h += 12;
+              return `${String(h).padStart(2, '0')}:${m[2]}`;
+            }
+            return null;
+          }
+          default:
+            return v;
+        }
+      }
+
       let response: FieldResponse;
       if (
         def.fieldType === 'singlematrix' &&
         value !== null &&
         typeof value === 'object'
       ) {
-        // value is Record<rowLabel, columnLabel|columnIndex> or array of columnLabel|columnIndex (one per row).
-        // Merge into existing selections so one-row-at-a-time calls accumulate correctly.
         const rows = def.rows ?? [];
         const columns = def.columns ?? [];
         const existing = (form.getState().responses[fieldId]?.selected ??
@@ -213,15 +254,60 @@ export function createBuilderTools(form: FormStore): BuilderTools {
           if (col) selected[row.id] = { id: col.id, value: col.value };
         }
         response = { selected };
-      } else if (['radio', 'dropdown', 'boolean'].includes(def.fieldType)) {
+      } else if (
+        def.fieldType === 'multimatrix' &&
+        value !== null &&
+        typeof value === 'object'
+      ) {
+        const rows = def.rows ?? [];
+        const columns = def.columns ?? [];
+        const existing = (form.getState().responses[fieldId]?.selected ??
+          {}) as Record<string, { id: string; value: string }[]>;
+        const selected: Record<string, { id: string; value: string }[]> = {
+          ...existing,
+        };
+        const entries: [string, unknown][] = Array.isArray(value)
+          ? (value as unknown[]).map((v, i) => [rows[i]?.value ?? String(i), v])
+          : Object.entries(value as Record<string, unknown>);
+        for (const [rowKey, colVals] of entries) {
+          const row = rows.find(
+            (r) =>
+              r.value.toLowerCase() === rowKey.toLowerCase() || r.id === rowKey
+          );
+          if (!row) continue;
+          const colValArr = Array.isArray(colVals)
+            ? (colVals as unknown[])
+            : [colVals];
+          const matched = colValArr
+            .map((v) => {
+              const s = String(v);
+              return columns.find(
+                (c) => c.value.toLowerCase() === s.toLowerCase() || c.id === s
+              );
+            })
+            .filter((c): c is { id: string; value: string } => c != null);
+          if (matched.length > 0) selected[row.id] = matched;
+        }
+        response = { selected };
+      } else if (
+        ['radio', 'dropdown', 'boolean', 'rating', 'slider'].includes(
+          def.fieldType
+        )
+      ) {
         const opts = def.options ?? [];
         const match = opts.find(
           (o) =>
             o.value.toLowerCase() === String(value).toLowerCase() ||
             o.id === value
         );
-        response = match
-          ? { selected: { id: match.id, value: match.value } }
+        const numVal = Number(value);
+        const numMatch =
+          !match && !isNaN(numVal)
+            ? opts[numVal - 1] ?? opts[numVal]
+            : undefined;
+        const resolved = match ?? numMatch;
+        response = resolved
+          ? { selected: { id: resolved.id, value: resolved.value } }
           : { selected: undefined };
       } else if (
         def.fieldType === 'check' ||
@@ -238,8 +324,51 @@ export function createBuilderTools(form: FormStore): BuilderTools {
         response = {
           selected: matches.map((o) => ({ id: o.id, value: o.value })),
         };
+      } else if (def.fieldType === 'ranking') {
+        const opts = def.options ?? [];
+        const vals = Array.isArray(value) ? (value as unknown[]) : [value];
+        const ordered = vals
+          .map((v) =>
+            opts.find(
+              (o) =>
+                o.value.toLowerCase() === String(v).toLowerCase() || o.id === v
+            )
+          )
+          .filter((o): o is { id: string; value: string } => o != null);
+        const mentioned = new Set(ordered.map((o) => o.id));
+        const remaining = opts.filter((o) => !mentioned.has(o.id));
+        response = { selected: [...ordered, ...remaining] };
+      } else if (def.fieldType === 'multitext') {
+        const opts = def.options ?? [];
+        const vals = Array.isArray(value)
+          ? (value as unknown[])
+          : typeof value === 'object' && value !== null
+          ? Object.values(value as Record<string, unknown>)
+          : [value];
+        const multitextAnswers: Record<string, string> = {};
+        opts.forEach((opt, i) => {
+          if (vals[i] != null) multitextAnswers[opt.id] = String(vals[i]);
+        });
+        response = { multitextAnswers };
       } else {
-        response = { answer: value as string | undefined };
+        if (value == null) {
+          response = { answer: undefined };
+        } else {
+          const normalized = normalizeTextValue(String(value), def.inputType);
+          if (normalized === null) {
+            const fmt: Record<string, string> = {
+              date: 'YYYY-MM-DD',
+              'datetime-local': 'YYYY-MM-DDTHH:mm',
+              month: 'YYYY-MM',
+              time: 'HH:mm',
+            };
+            const expected = fmt[def.inputType ?? ''];
+            return expected
+              ? `Error: invalid value for inputType "${def.inputType}" — expected format ${expected}`
+              : `Error: invalid value for field`;
+          }
+          response = { answer: normalized };
+        }
       }
       form
         .getState()
@@ -296,6 +425,7 @@ export function createBuilderTools(form: FormStore): BuilderTools {
 
       type FieldDef = {
         fieldType: string;
+        inputType?: string;
         question?: string;
         title?: string;
         required?: boolean;
@@ -303,6 +433,13 @@ export function createBuilderTools(form: FormStore): BuilderTools {
         rows?: { id: string; value: string }[];
         columns?: { id: string; value: string }[];
         rules?: unknown[];
+      };
+
+      const INPUT_TYPE_FORMAT: Record<string, string> = {
+        date: 'YYYY-MM-DD',
+        'datetime-local': 'YYYY-MM-DDTHH:mm',
+        month: 'YYYY-MM',
+        time: 'HH:mm',
       };
 
       function summarizeField(
@@ -313,7 +450,7 @@ export function createBuilderTools(form: FormStore): BuilderTools {
         const isMatrix =
           def.fieldType === 'singlematrix' || def.fieldType === 'multimatrix';
         const isSection = def.fieldType === 'section';
-        const base = {
+        const base: FieldSummary = {
           id,
           fieldType: def.fieldType,
           question: isSection
@@ -327,6 +464,26 @@ export function createBuilderTools(form: FormStore): BuilderTools {
             ? 'add_row / add_column (NOT add_option)'
             : 'add_option',
           hasRules: (def.rules?.length ?? 0) > 0,
+          hasValue: (() => {
+            const r = form.getState().responses[id];
+            return (
+              r != null &&
+              Object.values(r).some(
+                (v) =>
+                  v != null &&
+                  v !== '' &&
+                  !(Array.isArray(v) && v.length === 0) &&
+                  !(
+                    typeof v === 'object' &&
+                    !Array.isArray(v) &&
+                    Object.keys(v as object).length === 0
+                  )
+              )
+            );
+          })(),
+          ...(def.inputType && INPUT_TYPE_FORMAT[def.inputType]
+            ? { valueFormat: INPUT_TYPE_FORMAT[def.inputType] }
+            : {}),
         };
         if (isSection && node.childIds.length > 0) {
           return { ...base, children: node.childIds.map(summarizeField) };

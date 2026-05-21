@@ -8,6 +8,7 @@ import {
   type UIStore,
   type ValidationError,
 } from '@esheet/core';
+import { createRendererTools, type RendererTools } from './renderer-tools.js';
 import { FormStoreContext, UIContext, ZodIssuesPanel } from '@esheet/fields';
 import { ensureDefaultFieldComponentsRegistered } from './register-defaults.js';
 import { useRendererInit } from './hooks/useRendererInit.js';
@@ -27,6 +28,11 @@ export interface EsheetRendererProps {
   strict?: boolean;
   /** Called after the form definition has been parsed and loaded into the store. */
   onReady?: () => void;
+  /**
+   * Called once after the renderer mounts, providing a narrow `RendererTools`
+   * facade for MCP / AI tool integrations.
+   */
+  onRendererToolsReady?: (tools: RendererTools) => void;
 }
 
 export interface EsheetRendererHandle {
@@ -72,6 +78,12 @@ export const EsheetRenderer = React.forwardRef<
   const formStore = React.useMemo(() => createFormStore(), []);
   const uiStore = React.useMemo(() => createUIStore(), []);
 
+  React.useEffect(() => {
+    if (props.onRendererToolsReady)
+      props.onRendererToolsReady(createRendererTools(formStore));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formStore]);
+
   return (
     <FormStoreContext.Provider value={formStore}>
       <UIContext.Provider value={uiStore}>
@@ -86,7 +98,8 @@ export const EsheetRenderer = React.forwardRef<
   );
 });
 
-interface EsheetRendererInnerProps extends EsheetRendererProps {
+interface EsheetRendererInnerProps
+  extends Omit<EsheetRendererProps, 'onRendererToolsReady'> {
   formStore: FormStore;
   uiStore: UIStore;
 }

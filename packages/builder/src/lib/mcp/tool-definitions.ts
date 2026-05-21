@@ -22,7 +22,7 @@ export const BUILDER_TOOL_DEFINITIONS: readonly ToolDefinition[] = [
     function: {
       name: 'fill_field',
       description:
-        'Set a response in preview mode. For singlematrix fields, call once per row passing value as {"row label": "column label"} — do NOT pass all rows in one call.',
+        'Set a preview response for ONE field. Returns { result, currentVisibleFields } where each field includes a hasValue flag (true = filled, false = still empty). Always check currentVisibleFields for fields where hasValue is false and fill those before finishing.\n\nField type rules:\n- radio/dropdown/boolean/rating/slider: single string matching an option value\n- check/multiselectdropdown: array of strings matching option values\n- ranking: ordered array of option value strings\n- multitext: array of strings, one per option slot\n- singlematrix: { "Row Label": "Column Label" } — call once per row, calls accumulate\n- multimatrix: { "Row Label": ["Col1", "Col2"] }\n- text: use the valueFormat from the field schema (YYYY-MM-DD for date, YYYY-MM-DDTHH:mm for datetime-local, YYYY-MM for month, HH:mm for time). Wrong formats are rejected with an error.',
       parameters: {
         type: 'object',
         properties: {
@@ -361,7 +361,8 @@ export const BUILDER_TOOL_DEFINITIONS: readonly ToolDefinition[] = [
     type: 'function',
     function: {
       name: 'set_form_id',
-      description: 'Update the top-level form ID without replacing or modifying any fields.',
+      description:
+        'Update the top-level form ID without replacing or modifying any fields.',
       parameters: {
         type: 'object',
         properties: {

@@ -15,3 +15,15 @@ export { RendererBody, FieldNode } from './lib/components/index.js';
 
 // Hooks (for advanced use cases)
 export { useRendererInit } from './lib/hooks/index.js';
+
+// MCP tool integration
+export {
+  executeToolCall,
+  RENDERER_TOOL_DEFINITIONS,
+  useRendererMcpToolHandler,
+} from './lib/mcp/index.js';
+export type {
+  ToolDefinition,
+  UseRendererMcpToolHandlerOptions,
+} from './lib/mcp/index.js';
+export type { RendererTools } from './lib/renderer-tools.js';
