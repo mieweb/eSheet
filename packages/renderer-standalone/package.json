@@ -1,6 +1,6 @@
 {
   "name": "@esheet/renderer-standalone",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "repository": {
     "type": "git",
     "url": "https://github.com/mieweb/eSheet"
@@ -31,9 +31,11 @@
     ]
   },
   "dependencies": {
-    "@esheet/renderer": "0.0.2",
+    "@esheet/renderer": "0.0.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tslib": "^2.3.0"
   }
 }
+
+

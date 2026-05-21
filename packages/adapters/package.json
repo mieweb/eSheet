@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "@esheet/adapters",
   "version": "0.0.3",
   "description": "Convert external form schemas (SurveyJS, etc.) to eSheet FormDefinition",
@@ -37,3 +37,4 @@
   },
   "devDependencies": {}
 }
+
