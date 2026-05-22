@@ -19,7 +19,12 @@ declare global {
 
 const apiKey = import.meta.env['OZWELL_API_KEY'] as string | undefined;
 // eslint-disable-next-line no-console
-console.log('[Ozwell] apiKey present:', !!apiKey, '| prefix:', apiKey?.slice(0, 5));
+console.log(
+  '[Ozwell] apiKey present:',
+  !!apiKey,
+  '| prefix:',
+  apiKey?.slice(0, 5)
+);
 
 window.OzwellChatConfig = {
   apiKey: apiKey ?? '',
