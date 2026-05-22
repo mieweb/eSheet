@@ -43,7 +43,7 @@ export function useRendererMcpToolHandler(
 
     function onToolCall(e: Event) {
       const {
-        name,
+        name: rawName,
         arguments: args,
         respond,
       } = (e as CustomEvent).detail as {
@@ -51,6 +51,8 @@ export function useRendererMcpToolHandler(
         arguments: Record<string, unknown>;
         respond: (result: unknown) => void;
       };
+      // Strip 'postMessage:' prefix if present (added by Ozwell widget internally)
+      const name = rawName.replace(/^postMessage:/, '');
       if (!toolsRef.current) {
         respond({ success: false, message: 'Renderer not ready' });
         return;

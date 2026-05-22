@@ -22,7 +22,7 @@ export function executeToolCall(
     case 'generate_form':
       return generateForm(args, tools);
     case 'get_form_summary':
-      return tools.getFormSummary();
+      return getFormSummaryOptimized(tools);
     case 'fill_field':
       return fillField(args, tools);
     case 'clear_responses':
@@ -120,6 +120,31 @@ function createField(args: ToolArgs, tools: BuilderTools): string {
   return `Created field "${args.question}" with ID: ${newId}`;
 }
 
+/** Optimized get_form_summary: condenses options/rows/columns to counts to reduce token usage. */
+function getFormSummaryOptimized(tools: BuilderTools): Record<string, unknown> {
+  const summary = tools.getFormSummary();
+  // Condense field details: replace full option arrays with counts
+  const condensedFields = summary.fields.map((f) => ({
+    id: f.id,
+    fieldType: f.fieldType,
+    question: f.question,
+    required: f.required,
+    optionCount: f.options?.length ?? 0,
+    rowCount: f.rows?.length ?? 0,
+    columnCount: f.columns?.length ?? 0,
+    editWith: f.editWith,
+    hasRules: f.hasRules,
+    hasValue: f.hasValue,
+    ...(f.valueFormat ? { valueFormat: f.valueFormat } : {}),
+  }));
+  return {
+    formId: summary.formId,
+    fieldCount: summary.fieldCount,
+    fields: condensedFields,
+    hint: 'Use get_field for full option/row/column details',
+  };
+}
+
 function fillField(
   args: ToolArgs,
   tools: BuilderTools
@@ -136,9 +161,13 @@ function fillField(
   const summary = tools.getFormSummary();
   const field = summary.fields.find((f) => f.id === fieldId);
   const label = field?.question ?? fieldId;
+  // Return only unfilled fields with full details (token optimization)
+  const filledFields = summary.fields.filter((f) => f.hasValue);
+  const unfilledFields = summary.fields.filter((f) => !f.hasValue);
   return {
     result: `Filled "${label}" with ${JSON.stringify(args.value)}`,
-    currentVisibleFields: summary.fields,
+    filledCount: filledFields.length,
+    unfilledFields,
   };
 }
 

@@ -13,7 +13,7 @@ export const BUILDER_TOOL_DEFINITIONS: readonly ToolDefinition[] = [
     function: {
       name: 'get_form_summary',
       description:
-        "CALL THIS FIRST before any edits. Returns all field IDs, fieldTypes, and questions. You must know a field's fieldType before choosing which edit tool to use (add_option vs add_column/add_row depends on fieldType).",
+        'CALL THIS FIRST. Returns {formId, fieldCount, fields} where each field has: id, fieldType, question, required, optionCount, rowCount, columnCount, editWith, hasRules, hasValue. Use get_field for full option/row/column values when needed.',
       parameters: { type: 'object', properties: {} },
     },
   },
@@ -22,7 +22,7 @@ export const BUILDER_TOOL_DEFINITIONS: readonly ToolDefinition[] = [
     function: {
       name: 'fill_field',
       description:
-        'Set a preview response for ONE field. Returns { result, currentVisibleFields } where each field includes a hasValue flag (true = filled, false = still empty). Always check currentVisibleFields for fields where hasValue is false and fill those before finishing.\n\nField type rules:\n- radio/dropdown/boolean/rating/slider: single string matching an option value\n- check/multiselectdropdown: array of strings matching option values\n- ranking: ordered array of option value strings\n- multitext: array of strings, one per option slot\n- singlematrix: { "Row Label": "Column Label" } — call once per row, calls accumulate\n- multimatrix: { "Row Label": ["Col1", "Col2"] }\n- text: use the valueFormat from the field schema (YYYY-MM-DD for date, YYYY-MM-DDTHH:mm for datetime-local, YYYY-MM for month, HH:mm for time). Wrong formats are rejected with an error.',
+        'Set a preview response for ONE field. Returns { result, filledCount, unfilledFields } where unfilledFields contains ONLY the fields still needing values (with full details). You are done when unfilledFields is empty.\n\nField type rules:\n- radio/dropdown/boolean/rating/slider: single string matching an option value\n- check/multiselectdropdown: array of strings matching option values\n- ranking: ordered array of option value strings\n- multitext: array of strings, one per option slot\n- singlematrix: { "Row Label": "Column Label" } — call once per row, calls accumulate\n- multimatrix: { "Row Label": ["Col1", "Col2"] }\n- text: use the valueFormat from the field schema (YYYY-MM-DD for date, YYYY-MM-DDTHH:mm for datetime-local, YYYY-MM for month, HH:mm for time). Wrong formats are rejected with an error.',
       parameters: {
         type: 'object',
         properties: {

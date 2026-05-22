@@ -1,5 +1,5 @@
 // eslint-disable-next-line @nx/enforce-module-boundaries
-import { BUILDER_TOOL_DEFINITIONS } from '@esheet/builder';
+import { BUILDER_SYSTEM_PROMPT } from '@esheet/builder';
 
 declare global {
   interface Window {
@@ -18,29 +18,22 @@ declare global {
 }
 
 const apiKey = import.meta.env['OZWELL_API_KEY'] as string | undefined;
+// eslint-disable-next-line no-console
+console.log('[Ozwell] apiKey present:', !!apiKey, '| prefix:', apiKey?.slice(0, 7));
 
 window.OzwellChatConfig = {
   apiKey: apiKey ?? '',
-  endpoint: 'https://ozwellapi.opensource.mieweb.org/v1/chat/completions',
   title: 'Schemie',
   welcomeMessage:
     'Hi! Ask me to create, update, or remove fields — or describe a whole form and I will build it.',
-  system:
-    'Form builder assistant. Field types: text, longtext, multitext, radio, check, boolean, dropdown, multiselectdropdown, rating, ranking, slider, singlematrix, multimatrix, image, html, signature, diagram, display, section. ' +
-    'STRICT WORKFLOW: Before editing options/rows/columns on any field, call get_form_summary first to confirm the fieldType. ' +
-    'singlematrix and multimatrix fields are created empty (no default rows or columns) — after creating one, use add_row/add_column to populate it. Use update_row/remove_row for rows and update_column/remove_column for columns — NEVER use add_option on matrix fields. ' +
-    'add_option is ONLY for: radio, check, boolean, dropdown, multiselectdropdown, rating, ranking, slider, multitext. ' +
-    'IMPORTANT: When building a new form or questionnaire from scratch, ALWAYS call reset_form first to clear placeholder fields before adding new ones. ' +
-    'When using sections: first create the section field, then pass its ID as parentId on each subsequent create_field call to place fields inside it. ' +
-    'For conversational questions reply in plain text without calling a tool.',
-  tools: BUILDER_TOOL_DEFINITIONS,
-  max_tokens: 4096,
+  system: BUILDER_SYSTEM_PROMPT,
+  debug: true,
 };
 
 // Dynamically inject the CDN widget script so it reads the config set above.
 const script = document.createElement('script');
 script.src =
-  'https://ozwell-dev-refserver.opensource.mieweb.org/embed/ozwell-loader.js';
+  'https://ozwellapi.os.mieweb.org/embed/ozwell-loader.js';
 document.head.appendChild(script);
 
 // Inject custom chat bubble icon and apply app branding to the widget button/header.
@@ -64,7 +57,7 @@ export function updateOzwellTools(tools: unknown[], system: string): void {
 
 // Inject brand colors into the widget iframe (Send button, user messages, input focus).
 // The iframe is same-origin (srcdoc + allow-same-origin) so we can access its document.
-document.addEventListener('ozwell-chat-ready', () => {
+document.addEventListener('ozwell:ready', () => {
   const iframe = window.OzwellChat?.iframe;
   if (!iframe?.contentDocument) return;
   const primary =

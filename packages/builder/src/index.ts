@@ -52,6 +52,7 @@ export { useVisibleRootIds } from './lib/hooks/useVisibleRootIds.js';
 export {
   executeToolCall,
   BUILDER_TOOL_DEFINITIONS,
+  BUILDER_SYSTEM_PROMPT,
   useBuilderMcpToolHandler,
 } from './lib/mcp/index.js';
 export type {

@@ -9,7 +9,7 @@ export function executeToolCall(
 ): string | Record<string, unknown> {
   switch (toolName) {
     case 'get_form':
-      return tools.getForm();
+      return getFormOptimized(tools);
     case 'get_form_raw':
       return tools.getFormRaw();
     case 'get_responses':
@@ -28,6 +28,22 @@ export function executeToolCall(
   }
 }
 
+/** Optimized get_form: returns full details only for unfilled fields to reduce token usage. */
+function getFormOptimized(tools: RendererTools): Record<string, unknown> {
+  const form = tools.getForm();
+  const filledFields = form.fields.filter((f) => f.hasValue);
+  const unfilledFields = form.fields.filter((f) => !f.hasValue);
+  return {
+    formId: form.formId,
+    totalFields: form.fieldCount,
+    filledCount: filledFields.length,
+    // Only unfilled fields need full details (options, questions, etc.)
+    unfilledFields,
+    // Filled fields: just IDs for reference
+    filledFieldIds: filledFields.map((f) => f.id),
+  };
+}
+
 function fillField(
   args: ToolArgs,
   tools: RendererTools
@@ -43,8 +59,12 @@ function fillField(
   if (!result)
     return `Error: field "${fieldId}" is not currently visible — call get_form to see the current visible fields`;
   const form = tools.getForm();
+  // Return only unfilled fields with full details (token optimization)
+  const filledFields = form.fields.filter((f) => f.hasValue);
+  const unfilledFields = form.fields.filter((f) => !f.hasValue);
   return {
     result: `Field "${fieldId}" updated`,
-    currentVisibleFields: form.fields,
+    filledCount: filledFields.length,
+    unfilledFields,
   };
 }

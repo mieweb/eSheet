@@ -165,8 +165,36 @@
     }
   });
 
-  // Send page context when widget is ready
-  window.addEventListener('ozwell:ready', sendContext);
+  // Define the search_docs tool
+  var DOCS_TOOLS = [
+    {
+      type: 'function',
+      function: {
+        name: 'search_docs',
+        description:
+          'Search the eSheet documentation. Pass a short keyword query (e.g. "field types", "installation", "renderer responses") and receive the most relevant page content.',
+        parameters: {
+          type: 'object',
+          properties: {
+            query: {
+              type: 'string',
+              description:
+                'A short plain-text keyword query, e.g. "field types", "installation", "renderer responses". Must be a string — not a schema object.',
+            },
+          },
+          required: ['query'],
+        },
+      },
+    },
+  ];
+
+  // Add tools and send page context when widget is ready
+  window.addEventListener('ozwell:ready', function () {
+    if (window.OzwellChat && window.OzwellChat.configure) {
+      window.OzwellChat.configure({ tools: DOCS_TOOLS });
+    }
+    sendContext();
+  });
 
   // Re-send context on Docusaurus SPA navigation
   window.addEventListener('popstate', sendContext);

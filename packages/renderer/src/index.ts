@@ -20,6 +20,7 @@ export { useRendererInit } from './lib/hooks/index.js';
 export {
   executeToolCall,
   RENDERER_TOOL_DEFINITIONS,
+  RENDERER_SYSTEM_PROMPT,
   useRendererMcpToolHandler,
 } from './lib/mcp/index.js';
 export type {
