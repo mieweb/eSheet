@@ -50,7 +50,7 @@ function injectSetupCard(): void {
       return;
     }
     localStorage.setItem(STORAGE_KEY, key);
-    location.reload();
+    window.location.reload();
   };
 
   card.appendChild(title);
@@ -92,7 +92,7 @@ if (storedKey) {
 // Call ozwellResetKey() in the browser console to clear the stored key.
 (window as unknown as Record<string, unknown>).ozwellResetKey = () => {
   localStorage.removeItem(STORAGE_KEY);
-  location.reload();
+  window.location.reload();
 };
 
 /**
@@ -105,4 +105,3 @@ export function updateOzwellTools(tools: unknown[], system: string): void {
   window.OzwellChatConfig = { ...window.OzwellChatConfig, tools, system };
   window.OzwellChat?.configure({ tools, system });
 }
-
