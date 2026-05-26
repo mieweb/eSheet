@@ -1,8 +1,8 @@
 import React from 'react';
 import type {
   FieldComponentProps,
-  RankingFieldDefinition,
   SelectedOption,
+  RankingFieldDefinition,
 } from '@esheet/core';
 import Sortable from 'sortablejs';
 import {

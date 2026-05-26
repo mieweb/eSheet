@@ -1,5 +1,5 @@
 import React from 'react';
-import type { DiagramFieldDefinition, FieldComponentProps } from '@esheet/core';
+import type { FieldComponentProps, DiagramFieldDefinition } from '@esheet/core';
 import { DrawingPad } from './DrawingPad.js';
 
 function useIsDark(): boolean {

@@ -9,7 +9,6 @@
 /* ------------------------------------------------------------------ */
 @theme {
   --color-msprimary: var(--mieweb-primary-500, #3b82f6);
-  --color-msprimary-active: var(--mieweb-primary-800, #1e40af);
   --color-mssecondary: var(--mieweb-muted-foreground, #6b7280);
   --color-msaccent: var(--mieweb-success, #10b981);
   --color-msdanger: var(--mieweb-destructive, #ef4444);
@@ -39,6 +38,28 @@
   .ms-builder-root {
     font-family: var(--mieweb-font-sans, 'Nunito'), ui-sans-serif, system-ui,
       sans-serif;
+    scrollbar-color: var(--mieweb-muted-foreground) var(--mieweb-background);
+  }
+
+  .ms-builder-root ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .ms-builder-root ::-webkit-scrollbar-track {
+    background: var(--mieweb-background);
+  }
+
+  .ms-builder-root ::-webkit-scrollbar-thumb {
+    background: var(--mieweb-muted-foreground);
+    border-radius: 4px;
+  }
+
+  .ms-builder-root ::-webkit-scrollbar-button {
+    background: var(--mieweb-background);
+    display: block;
+    height: 0;
+    width: 0;
   }
 
   .ms-builder-root,

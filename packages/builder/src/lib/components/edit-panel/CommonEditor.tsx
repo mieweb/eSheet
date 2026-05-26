@@ -1,9 +1,4 @@
-import type {
-  FieldDefinition,
-  TextInputType,
-  TextFieldDefinition,
-  LongtextFieldDefinition,
-} from '@esheet/core';
+import type { FieldDefinition, TextInputType } from '@esheet/core';
 import { CustomCheckbox } from '@esheet/fields';
 import { useInstanceId } from '../../EsheetBuilder.js';
 import { DraftIdEditor } from './DraftIdEditor.js';
@@ -85,15 +80,11 @@ export function CommonEditor({
         <InputTypeEditor
           fieldId={fieldId}
           inputType={
-            ((def as TextFieldDefinition | LongtextFieldDefinition)
-              .inputType as TextInputType) ?? 'string'
+            (def as { inputType?: TextInputType }).inputType ?? 'string'
           }
-          unit={(def as TextFieldDefinition | LongtextFieldDefinition).unit}
-          onChange={
-            onUpdate as (patch: {
-              inputType?: TextInputType;
-              unit?: string;
-            }) => void
+          unit={(def as { unit?: string }).unit}
+          onChange={(patch) =>
+            onUpdate(patch as Parameters<typeof onUpdate>[0])
           }
         />
       )}

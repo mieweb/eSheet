@@ -1,7 +1,8 @@
 import React from 'react';
-import type { FormStore, MatrixRow, MatrixColumn } from '@esheet/core';
+import type { MatrixRow, MatrixColumn } from '@esheet/core';
 import { TrashIcon } from '@esheet/fields';
 import { useInstanceId } from '../../EsheetBuilder.js';
+import { useFormApi } from '../../hooks/useFormApi.js';
 
 const MAX_ROWS = 10;
 const MAX_COLUMNS = 10;
@@ -10,25 +11,20 @@ export interface MatrixEditorProps {
   fieldId: string;
   rows: readonly MatrixRow[];
   columns: readonly MatrixColumn[];
-  form: FormStore;
 }
 
 /**
  * MatrixEditor — add / edit / remove rows and columns for matrix fields.
  * Max 10 rows, max 10 columns.
  */
-export function MatrixEditor({
-  fieldId,
-  rows,
-  columns,
-  form,
-}: MatrixEditorProps) {
+export function MatrixEditor({ fieldId, rows, columns }: MatrixEditorProps) {
   const instanceId = useInstanceId();
+  const { row: rowApi, column: columnApi } = useFormApi(fieldId);
   const rowsRef = React.useRef<HTMLDivElement>(null);
   const colsRef = React.useRef<HTMLDivElement>(null);
 
   const handleAddRow = () => {
-    form.getState().addRow(fieldId);
+    rowApi.add();
     requestAnimationFrame(() => {
       if (rowsRef.current)
         rowsRef.current.scrollTop = rowsRef.current.scrollHeight;
@@ -36,7 +32,7 @@ export function MatrixEditor({
   };
 
   const handleAddColumn = () => {
-    form.getState().addColumn(fieldId);
+    columnApi.add();
     requestAnimationFrame(() => {
       if (colsRef.current)
         colsRef.current.scrollTop = colsRef.current.scrollHeight;
@@ -69,17 +65,13 @@ export function MatrixEditor({
                 aria-label={`Row ${idx + 1}`}
                 type="text"
                 value={row.value}
-                onChange={(e) =>
-                  form
-                    .getState()
-                    .updateRow(fieldId, row.id, e.currentTarget.value)
-                }
+                onChange={(e) => rowApi.update(row.id, e.currentTarget.value)}
                 placeholder={`Row ${idx + 1}`}
                 className="ms:flex-1 ms:min-w-0 ms:outline-none ms:bg-transparent ms:text-mstext ms:placeholder:text-mstextmuted ms:border-0 ms:text-sm"
               />
               <button
                 type="button"
-                onClick={() => form.getState().removeRow(fieldId, row.id)}
+                onClick={() => rowApi.remove(row.id)}
                 aria-label={`Remove row ${idx + 1}`}
                 className="remove-row-btn ms:shrink-0 ms:p-0.5 ms:rounded ms:bg-transparent ms:text-mstextmuted ms:hover:text-msdanger ms:border-0 ms:outline-none ms:focus:outline-none ms:transition-colors ms:cursor-pointer"
               >
@@ -124,16 +116,14 @@ export function MatrixEditor({
                 type="text"
                 value={col.value}
                 onChange={(e) =>
-                  form
-                    .getState()
-                    .updateColumn(fieldId, col.id, e.currentTarget.value)
+                  columnApi.update(col.id, e.currentTarget.value)
                 }
                 placeholder={`Column ${idx + 1}`}
                 className="ms:flex-1 ms:min-w-0 ms:outline-none ms:bg-transparent ms:text-mstext ms:placeholder:text-mstextmuted ms:border-0 ms:text-sm"
               />
               <button
                 type="button"
-                onClick={() => form.getState().removeColumn(fieldId, col.id)}
+                onClick={() => columnApi.remove(col.id)}
                 aria-label={`Remove column ${idx + 1}`}
                 className="remove-col-btn ms:shrink-0 ms:p-0.5 ms:rounded ms:bg-transparent ms:text-mstextmuted ms:hover:text-msdanger ms:border-0 ms:outline-none ms:focus:outline-none ms:transition-colors ms:cursor-pointer"
               >

@@ -1,8 +1,8 @@
 import React from 'react';
 import type {
-  DropdownFieldDefinition,
   FieldComponentProps,
   SelectedOption,
+  DropdownFieldDefinition,
 } from '@esheet/core';
 import { Select } from '@mieweb/ui';
 import { TrashIcon, PlusIcon } from '../../icons.js';

@@ -22,7 +22,7 @@ export const SectionField = React.memo(function SectionField({
   if (isPreview) {
     return (
       <section className="section-field-preview ms:pb-0">
-        <div className="ms:bg-msprimary-active ms:text-mstextsecondary ms:text-xl ms:px-4 ms:py-2 ms:rounded-t-lg ms:break-words ms:overflow-hidden">
+        <div className="ms:bg-msprimary ms:text-mstextsecondary ms:text-xl ms:px-4 ms:py-2 ms:rounded-t-lg ms:break-words ms:overflow-hidden">
           {title}
           {isRequired && (
             <span className="ms:text-mstextsecondary ms:ml-1">*</span>

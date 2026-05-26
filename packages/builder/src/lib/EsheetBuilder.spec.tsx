@@ -10,9 +10,30 @@ import {
   createFormStore,
   createUIStore,
   type FormDefinition,
+  type FormStore,
+  type UIState,
 } from '@esheet/core';
-import { EsheetBuilder, useFormStore, useUI } from './EsheetBuilder.js';
+import {
+  EsheetBuilder,
+  useFormStore,
+  useUI,
+  FormStoreContext,
+  UIContext,
+} from './EsheetBuilder.js';
 import { BuilderHeader } from './components/BuilderHeader.js';
+import type { StoreApi } from 'zustand';
+
+function renderWithContexts(
+  form: FormStore,
+  ui: StoreApi<UIState>,
+  children: React.ReactNode
+) {
+  return render(
+    <FormStoreContext.Provider value={form}>
+      <UIContext.Provider value={ui}>{children}</UIContext.Provider>
+    </FormStoreContext.Provider>
+  );
+}
 
 afterEach(cleanup);
 
@@ -65,7 +86,6 @@ describe('EsheetBuilder', () => {
     );
 
     act(() => {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       form!.getState().loadDefinition({
         id: 'change-form',
         fields: [{ id: 'f1', fieldType: 'text' }],
@@ -126,7 +146,7 @@ describe('BuilderHeader import feedback', () => {
     const ui = createUIStore();
     mockFileContent = '{ invalid json';
 
-    render(<BuilderHeader form={form} ui={ui} />);
+    renderWithContexts(form, ui, <BuilderHeader />);
 
     const input = screen.getByLabelText(
       'Import form (JSON or YAML)'
@@ -153,7 +173,7 @@ describe('BuilderHeader import feedback', () => {
       fields: [{ fieldType: 'text' }],
     });
 
-    render(<BuilderHeader form={form} ui={ui} />);
+    renderWithContexts(form, ui, <BuilderHeader />);
 
     const input = screen.getByLabelText(
       'Import form (JSON or YAML)'
@@ -200,7 +220,7 @@ describe('BuilderHeader import feedback', () => {
       ],
     });
 
-    render(<BuilderHeader form={form} ui={ui} />);
+    renderWithContexts(form, ui, <BuilderHeader />);
 
     const input = screen.getByLabelText(
       'Import form (JSON or YAML)'
@@ -232,7 +252,7 @@ describe('BuilderHeader import feedback', () => {
       fields: [{ id: 'ok', fieldType: 'text', question: 'OK' }],
     });
 
-    render(<BuilderHeader form={form} ui={ui} />);
+    renderWithContexts(form, ui, <BuilderHeader />);
 
     const input = screen.getByLabelText(
       'Import form (JSON or YAML)'
@@ -275,7 +295,7 @@ describe('BuilderHeader dry run submit', () => {
       ui.getState().setMode('preview');
     });
 
-    render(<BuilderHeader form={form} ui={ui} />);
+    renderWithContexts(form, ui, <BuilderHeader />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Dry run submit' }));
 
@@ -311,7 +331,7 @@ describe('BuilderHeader dry run submit', () => {
       form.getState().setResponse('q1', { answer: 'Ada' });
     });
 
-    render(<BuilderHeader form={form} ui={ui} />);
+    renderWithContexts(form, ui, <BuilderHeader />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Dry run submit' }));
 
@@ -335,7 +355,7 @@ describe('BuilderHeader dry run submit', () => {
     const form = createFormStore(createRequiredTextDefinition());
     const ui = createUIStore();
 
-    render(<BuilderHeader form={form} ui={ui} />);
+    renderWithContexts(form, ui, <BuilderHeader />);
 
     expect(screen.queryByRole('button', { name: 'Dry run submit' })).toBeNull();
   });
@@ -378,7 +398,7 @@ describe('BuilderHeader dry run submit', () => {
       form.getState().setResponse('q1', { answer: 'Ada' });
     });
 
-    render(<BuilderHeader form={form} ui={ui} />);
+    renderWithContexts(form, ui, <BuilderHeader />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Dry run submit' }));
 

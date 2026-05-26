@@ -4,13 +4,11 @@
 
 import { importFromMcp, exportToMcp } from './mcp.js';
 import type { McpElicitationSchema, McpElicitationRequest } from './mcp.js';
-import type { FieldDefinition, FieldOption } from '@esheet/core';
-
-/** Helper type for fields with options */
-type FieldWithOptions = FieldDefinition & { options?: FieldOption[] };
-
-/** Helper type for text fields with inputType */
-type TextFieldWithInput = FieldDefinition & { inputType?: string };
+import type {
+  RadioFieldDefinition,
+  CheckFieldDefinition,
+  TextFieldDefinition,
+} from '@esheet/core';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -104,9 +102,9 @@ describe('importFromMcp', () => {
         },
       },
     });
-    const field = form.fields[0] as FieldWithOptions;
+    const field = form.fields[0] as RadioFieldDefinition;
     expect(field.fieldType).toBe('radio');
-    expect(field.options?.map((o: FieldOption) => o.value)).toEqual(['SaaS', 'Portfolio']);
+    expect(field.options?.map((o) => o.value)).toEqual(['SaaS', 'Portfolio']);
   });
 
   it('maps string oneOf enum to radio field with titles', () => {
@@ -123,10 +121,10 @@ describe('importFromMcp', () => {
         },
       },
     });
-    const field = form.fields[0] as FieldWithOptions;
+    const field = form.fields[0] as RadioFieldDefinition;
     expect(field.fieldType).toBe('radio');
-    expect(field.options?.map((o: FieldOption) => o.value)).toEqual(['#FF0000', '#00FF00']);
-    expect(field.options?.map((o: FieldOption) => o.text)).toEqual(['Red', 'Green']);
+    expect(field.options?.map((o) => o.value)).toEqual(['#FF0000', '#00FF00']);
+    expect(field.options?.map((o) => o.text)).toEqual(['Red', 'Green']);
   });
 
   it('maps array enum to check field', () => {
@@ -141,9 +139,9 @@ describe('importFromMcp', () => {
         },
       },
     });
-    const field = form.fields[0] as FieldWithOptions;
+    const field = form.fields[0] as CheckFieldDefinition;
     expect(field.fieldType).toBe('check');
-    expect(field.options?.map((o: FieldOption) => o.value)).toEqual(['A', 'B', 'C']);
+    expect(field.options?.map((o) => o.value)).toEqual(['A', 'B', 'C']);
   });
 
   it('preserves uniqueItems in _sourceData', () => {
@@ -183,7 +181,7 @@ describe('importFromMcp', () => {
         },
       },
     });
-    const field = form.fields[0] as TextFieldWithInput;
+    const field = form.fields[0] as TextFieldDefinition;
     expect(field.fieldType).toBe('text');
     expect(field.inputType).toBe('number');
     const meta = field._sourceData as {
@@ -201,7 +199,7 @@ describe('importFromMcp', () => {
       type: 'object',
       properties: { email: { type: 'string', format: 'email' } },
     });
-    expect((form.fields[0] as TextFieldWithInput).inputType).toBe('email');
+    expect((form.fields[0] as TextFieldDefinition).inputType).toBe('email');
   });
 
   it('preserves string constraints in _sourceData', () => {

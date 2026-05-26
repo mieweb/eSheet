@@ -17,20 +17,6 @@ import type {
 } from '@esheet/core';
 
 // ---------------------------------------------------------------------------
-// Local type helpers (work around zod-mini type inference in project refs)
-// ---------------------------------------------------------------------------
-
-/** FieldOption with explicit score property for type assertions */
-interface ScoredFieldOption extends FieldOption {
-  score?: number;
-}
-
-/** MatrixColumn with explicit score property for type assertions */
-interface ScoredMatrixColumn extends MatrixColumn {
-  score?: number;
-}
-
-// ---------------------------------------------------------------------------
 // SurveyJS Types (minimal subset we support)
 // ---------------------------------------------------------------------------
 
@@ -254,12 +240,15 @@ function convertChoice(
   if (typeof choice === 'string') {
     return { id: toKebabCase(choice) || `opt-${index}`, value: choice };
   }
-  return {
+  const opt: FieldOption = {
     id: toKebabCase(choice.value) || `opt-${index}`,
     value: choice.value,
     text: choice.text,
-    score: choice.score,
-  } as ScoredFieldOption;
+  };
+  if (choice.score !== undefined) {
+    opt.score = choice.score;
+  }
+  return opt;
 }
 
 function convertMatrixRow(
@@ -282,11 +271,14 @@ function convertMatrixColumn(
   if (typeof item === 'string') {
     return { id: toKebabCase(item) || `item-${index}`, value: item };
   }
-  return {
+  const col: MatrixColumn = {
     id: toKebabCase(item.value) || `item-${index}`,
     value: item.text ?? item.value,
-    score: item.score,
-  } as ScoredMatrixColumn;
+  };
+  if (item.score !== undefined) {
+    col.score = item.score;
+  }
+  return col;
 }
 
 /**
@@ -534,7 +526,7 @@ function convertElement(
       const rows = (element.rows ?? []).map(convertMatrixRow);
       const columns = (element.columns ?? []).map(convertMatrixColumn);
       // Check if any column has an explicit score
-      const hasScores = columns.some((col) => (col as ScoredMatrixColumn).score !== undefined);
+      const hasScores = columns.some((col) => col.score !== undefined);
       return {
         ...base,
         fieldType,
@@ -644,8 +636,10 @@ export function convertSurveyJSToESheet(
       if (survey.pages.length === 1) {
         fields.push(...page.elements.map((el) => convertElement(el)));
       } else {
-        // Multiple pages become sections
-        const sectionId = toKebabCase(page.name ?? page.title ?? 'page');
+        // Multiple pages become sections — prefix with "page-" to avoid
+        // collisions when a page name matches one of its element names.
+        const sectionId =
+          'page-' + toKebabCase(page.name ?? page.title ?? 'page');
         const sectionAncestors = new Set([sectionId]);
         fields.push({
           id: sectionId,
@@ -823,7 +817,7 @@ function fieldToSurveyElement(field: FieldDefinition): SurveyJSElement {
           ? {
               value: o.value,
               text: o.text,
-              ...((o as ScoredFieldOption).score !== undefined ? { score: (o as ScoredFieldOption).score } : {}),
+              ...(o.score !== undefined ? { score: o.score } : {}),
             }
           : o.value
       );
@@ -834,7 +828,7 @@ function fieldToSurveyElement(field: FieldDefinition): SurveyJSElement {
       el.columns = (field.columns ?? []).map((c) => ({
         value: c.id,
         text: c.value,
-        ...((c as ScoredMatrixColumn).score !== undefined ? { score: (c as ScoredMatrixColumn).score } : {}),
+        ...(c.score !== undefined ? { score: c.score } : {}),
       }));
       break;
     case 'image':
@@ -927,3 +921,24 @@ export const importFromSurveyJS = convertSurveyJSToESheet;
  * Alias for importFromSurveyJS / convertSurveyJSToESheet.
  */
 export const convertSurveyJS = convertSurveyJSToESheet;
+
+/** Minimal SurveyJS schema shape for detection. */
+export interface SurveyJSDetectionSchema {
+  pages?: unknown[];
+  elements?: unknown[];
+}
+
+/**
+ * Type guard — returns true if the value looks like a SurveyJS schema
+ * (has top-level `pages` or `elements` array but NOT eSheet's `fields` property).
+ */
+export function isSurveyJSSchema(
+  value: unknown
+): value is SurveyJSDetectionSchema {
+  if (typeof value !== 'object' || value === null) return false;
+  const v = value as Record<string, unknown>;
+  const hasPages = Array.isArray(v['pages']);
+  const hasElements = Array.isArray(v['elements']);
+  const hasESheetFields = typeof v['fields'] !== 'undefined';
+  return (hasPages || hasElements) && !hasESheetFields;
+}

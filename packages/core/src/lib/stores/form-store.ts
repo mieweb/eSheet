@@ -356,7 +356,7 @@ export function createFormStore(initial?: FormDefinition): FormStore {
       }
 
       if (meta.hasMatrix && count > 0) {
-        if (!(definition as { rows?: unknown[] }).rows?.length) {
+        if ((definition as { rows?: unknown[] }).rows === undefined) {
           const rows: MatrixRow[] = [];
           const rIds = new Set<string>();
           for (let i = 0; i < count; i++) {
@@ -366,7 +366,7 @@ export function createFormStore(initial?: FormDefinition): FormStore {
           }
           (definition as unknown as Record<string, unknown>).rows = rows;
         }
-        if (!(definition as { columns?: unknown[] }).columns?.length) {
+        if ((definition as { columns?: unknown[] }).columns === undefined) {
           const cols: MatrixColumn[] = [];
           const cIds = new Set<string>();
           for (let i = 0; i < count; i++) {

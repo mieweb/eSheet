@@ -106,7 +106,7 @@ export function FeedbackModal({
           <button
             type="button"
             onClick={onConfirm ?? onClose}
-            className="ms:px-4 ms:py-2 ms:rounded-lg ms:bg-msprimary-active ms:text-mstextsecondary ms:text-sm ms:font-medium ms:hover:bg-msprimary-active/90 ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer"
+            className="ms:px-4 ms:py-2 ms:rounded-lg ms:bg-msprimary ms:text-mstextsecondary ms:text-sm ms:font-medium ms:hover:bg-msprimary/90 ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer"
           >
             {confirmLabel}
           </button>
