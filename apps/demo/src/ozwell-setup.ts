@@ -15,7 +15,29 @@ declare global {
 }
 
 const STORAGE_KEY = 'ozwell_api_key';
-const storedKey = sessionStorage.getItem(STORAGE_KEY) ?? '';
+
+function getStoredKey(): string {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return '';
+    const parsed = JSON.parse(raw) as { key: string; date: string };
+    const today = new Date().toISOString().slice(0, 10);
+    return parsed.date === today ? parsed.key : '';
+  } catch {
+    return '';
+  }
+}
+
+function setStoredKey(key: string): void {
+  const today = new Date().toISOString().slice(0, 10);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ key, date: today }));
+}
+
+function clearStoredKey(): void {
+  localStorage.removeItem(STORAGE_KEY);
+}
+
+const storedKey = getStoredKey();
 window.OzwellChatConfig = {};
 
 function injectSetupCard(): void {
@@ -102,7 +124,7 @@ function injectSetupCard(): void {
         if (res.status === 401 || res.status === 403) {
           throw new Error('invalid');
         }
-        sessionStorage.setItem(STORAGE_KEY, key);
+        setStoredKey(key);
         window.location.reload();
       })
       .catch((err: unknown) => {
@@ -132,12 +154,22 @@ function injectWidget(): void {
   script.src = 'https://ozwellapi.os.mieweb.org/embed/ozwell-loader.js';
   document.head.appendChild(script);
 
-  // Swap the default Ozwell icon for the eSheet logo.
-  const style = document.createElement('style');
-  style.textContent =
-    '.ozwell-chat-icon{display:none!important;}' +
-    ".ozwell-chat-button::after{content:'';display:block;width:24px;height:24px;background:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath stroke='none' d='M0 0h24v24H0z' fill='none'/%3E%3Cpath d='M21 14l-3 -3h-7a1 1 0 0 1 -1 -1v-6a1 1 0 0 1 1 -1h9a1 1 0 0 1 1 1v10'/%3E%3Cpath d='M14 15v2a1 1 0 0 1 -1 1h-7l-3 3v-10a1 1 0 0 1 1 -1h2'/%3E%3C/svg%3E\") center/contain no-repeat}";
-  document.head.appendChild(style);
+  // Swap the default Ozwell icon for the messages SVG directly in the DOM.
+  // MutationObserver avoids CSP-blocked data: URIs in injected stylesheets.
+  const observer = new MutationObserver(() => {
+    const icon = document.querySelector<HTMLElement>('.ozwell-chat-icon');
+    if (icon && !icon.dataset['custom']) {
+      icon.dataset['custom'] = '1';
+      icon.innerHTML =
+        "<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>" +
+        "<path stroke='none' d='M0 0h24v24H0z' fill='none'/>" +
+        "<path d='M21 14l-3 -3h-7a1 1 0 0 1 -1 -1v-6a1 1 0 0 1 1 -1h9a1 1 0 0 1 1 1v10'/>" +
+        "<path d='M14 15v2a1 1 0 0 1 -1 1h-7l-3 3v-10a1 1 0 0 1 1 -1h2'/>" +
+        '</svg>';
+      observer.disconnect();
+    }
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
 }
 
 if (storedKey) {
@@ -170,7 +202,7 @@ if (storedKey) {
     })
     .catch(() => {
       // Key is invalid or server unreachable — clear it and show setup bubble.
-      sessionStorage.removeItem(STORAGE_KEY);
+      clearStoredKey();
       injectSetupCard();
     });
 } else {
@@ -184,7 +216,7 @@ if (storedKey) {
 
 // Call ozwellResetKey() in the browser console to clear the stored key.
 (window as unknown as Record<string, unknown>).ozwellResetKey = () => {
-  sessionStorage.removeItem(STORAGE_KEY);
+  clearStoredKey();
   window.location.reload();
 };
 

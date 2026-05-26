@@ -70,7 +70,7 @@ const config = {
             },
           },
         ],
-      })};_c.apiKey=sessionStorage.getItem('ozwell_api_key')||'';window.OzwellChatConfig=_c;})();`,
+      })};try{var _k=JSON.parse(localStorage.getItem('ozwell_api_key')||'{}');_c.apiKey=_k.date===new Date().toISOString().slice(0,10)?_k.key||'':'';}catch(_){_c.apiKey='';}window.OzwellChatConfig=_c;})();`,
       attributes: {},
     },
   ],

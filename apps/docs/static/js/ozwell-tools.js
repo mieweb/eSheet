@@ -201,6 +201,27 @@
   // --- Key management ---
   var STORAGE_KEY = 'ozwell_api_key';
 
+  function getStoredKey() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      var parsed = JSON.parse(raw);
+      var today = new Date().toISOString().slice(0, 10);
+      return parsed.date === today ? parsed.key : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function setStoredKey(key) {
+    var today = new Date().toISOString().slice(0, 10);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ key: key, date: today }));
+  }
+
+  function clearStoredKey() {
+    localStorage.removeItem(STORAGE_KEY);
+  }
+
   // Hide the widget button until the key is validated — prevents a broken
   // button showing when the CDN loads with an empty/stale apiKey.
   var hideStyle = document.createElement('style');
@@ -297,7 +318,7 @@
         .then(function (res) {
           if (res.status === 401 || res.status === 403)
             throw new Error('invalid');
-          sessionStorage.setItem(STORAGE_KEY, key);
+          setStoredKey(key);
           location.reload();
         })
         .catch(function (err) {
@@ -321,7 +342,7 @@
     document.body.appendChild(card);
   }
 
-  var storedKey = sessionStorage.getItem(STORAGE_KEY);
+  var storedKey = getStoredKey();
   if (storedKey) {
     // Validate stored key before revealing the widget button.
     fetch('https://ozwellapi.os.mieweb.org/v1/chat/completions', {
@@ -341,7 +362,7 @@
         showWidgetButton();
       })
       .catch(function () {
-        sessionStorage.removeItem(STORAGE_KEY);
+        clearStoredKey();
         if (window.OzwellChatConfig) window.OzwellChatConfig.apiKey = '';
         createSetupBubble();
       });
@@ -354,7 +375,7 @@
   }
 
   window.ozwellResetKey = function () {
-    sessionStorage.removeItem(STORAGE_KEY);
+    clearStoredKey();
     location.reload();
   };
 })();
