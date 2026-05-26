@@ -111,7 +111,8 @@
       }
     }
     // Boost intro/overview pages for general queries
-    if (/\/(intro|overview|index|readme)/.test(pathLower) || path === '/docs') score += 5;
+    if (/\/(intro|overview|index|readme)/.test(pathLower) || path === '/docs')
+      score += 5;
     return score;
   }
 
@@ -248,7 +249,8 @@
     title.textContent = '🔑 AI Assistant setup';
 
     var desc = document.createElement('p');
-    desc.style.cssText = 'margin:0 0 10px;color:#6b7280;font-size:12px;line-height:1.4;';
+    desc.style.cssText =
+      'margin:0 0 10px;color:#6b7280;font-size:12px;line-height:1.4;';
     desc.textContent =
       'Enter your Ozwell parent API key (ozw_…) to enable the AI chat widget.';
 
@@ -259,7 +261,8 @@
       'width:100%;box-sizing:border-box;border:1px solid #d1d5db;border-radius:6px;padding:6px 10px;font-size:13px;margin-bottom:8px;outline:none;font-family:inherit;';
 
     var errorMsg = document.createElement('p');
-    errorMsg.style.cssText = 'margin:0 0 8px;color:#ef4444;font-size:12px;display:none;';
+    errorMsg.style.cssText =
+      'margin:0 0 8px;color:#ef4444;font-size:12px;display:none;';
 
     var btn = document.createElement('button');
     btn.textContent = 'Enable AI assistant';
@@ -292,7 +295,8 @@
         }),
       })
         .then(function (res) {
-          if (res.status === 401 || res.status === 403) throw new Error('invalid');
+          if (res.status === 401 || res.status === 403)
+            throw new Error('invalid');
           sessionStorage.setItem(STORAGE_KEY, key);
           location.reload();
         })
@@ -332,7 +336,8 @@
       }),
     })
       .then(function (res) {
-        if (res.status === 401 || res.status === 403) throw new Error('invalid');
+        if (res.status === 401 || res.status === 403)
+          throw new Error('invalid');
         showWidgetButton();
       })
       .catch(function () {

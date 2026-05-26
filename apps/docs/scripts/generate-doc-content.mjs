@@ -74,7 +74,9 @@ function generate() {
   }
   writeFileSync(outFile, JSON.stringify(content, null, 2), 'utf8');
   console.log(
-    `[generate-doc-content] Wrote ${Object.keys(content).length} pages to ${outFile}`,
+    `[generate-doc-content] Wrote ${
+      Object.keys(content).length
+    } pages to ${outFile}`
   );
 }
 
@@ -85,7 +87,8 @@ if (process.argv.includes('--watch')) {
   console.log(`[generate-doc-content] Watching ${docsRoot} for changes…`);
   let debounce = null;
   watch(docsRoot, { recursive: true }, (_, filename) => {
-    if (!filename || !['.md', '.mdx'].some((ext) => filename.endsWith(ext))) return;
+    if (!filename || !['.md', '.mdx'].some((ext) => filename.endsWith(ext)))
+      return;
     clearTimeout(debounce);
     debounce = setTimeout(() => {
       console.log(`[generate-doc-content] ${filename} changed — regenerating…`);
