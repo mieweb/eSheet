@@ -32,7 +32,7 @@ export function Navbar({ children }: { children?: ReactNode }) {
           className="inline-flex items-center gap-2 text-foreground hover:text-primary-600 text-base font-bold no-underline transition-colors shrink-0"
         >
           <img
-            src="/eSheet-modern.svg"
+            src={`${import.meta.env.BASE_URL}eSheet-modern.svg`}
             alt="eSheet logo"
             className="ms:h-5 ms:w-auto ms:align-middle"
           />
