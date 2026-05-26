@@ -165,34 +165,8 @@
     }
   });
 
-  // Define the search_docs tool
-  var DOCS_TOOLS = [
-    {
-      type: 'function',
-      function: {
-        name: 'search_docs',
-        description:
-          'Search the eSheet documentation. Pass a short keyword query (e.g. "field types", "installation", "renderer responses") and receive the most relevant page content.',
-        parameters: {
-          type: 'object',
-          properties: {
-            query: {
-              type: 'string',
-              description:
-                'A short plain-text keyword query, e.g. "field types", "installation", "renderer responses". Must be a string — not a schema object.',
-            },
-          },
-          required: ['query'],
-        },
-      },
-    },
-  ];
-
   // Add tools and send page context when widget is ready
   window.addEventListener('ozwell:ready', function () {
-    if (window.OzwellChat && window.OzwellChat.configure) {
-      window.OzwellChat.configure({ tools: DOCS_TOOLS });
-    }
     sendContext();
   });
 
@@ -209,4 +183,67 @@
     characterData: true,
     childList: true,
   });
+
+  // --- Key management ---
+  var STORAGE_KEY = 'ozwell_api_key';
+
+  function createKeySetupUI() {
+    if (document.getElementById('ozwell-setup-card')) return;
+    var card = document.createElement('div');
+    card.id = 'ozwell-setup-card';
+    card.style.cssText =
+      'position:fixed;bottom:20px;right:20px;z-index:9998;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;box-shadow:0 4px 16px rgba(0,0,0,.15);width:280px;font-family:system-ui,sans-serif;font-size:14px;';
+
+    var title = document.createElement('p');
+    title.style.cssText = 'margin:0 0 6px;color:#111827;font-weight:600;';
+    title.textContent = '🔑 AI Assistant setup';
+
+    var desc = document.createElement('p');
+    desc.style.cssText =
+      'margin:0 0 10px;color:#6b7280;font-size:12px;line-height:1.4;';
+    desc.textContent =
+      'Enter your Ozwell parent API key (ozw_…) to enable the AI chat widget.';
+
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'ozw_...';
+    input.style.cssText =
+      'width:100%;box-sizing:border-box;border:1px solid #d1d5db;border-radius:6px;padding:6px 10px;font-size:13px;margin-bottom:8px;outline:none;font-family:inherit;';
+
+    var btn = document.createElement('button');
+    btn.textContent = 'Enable AI assistant';
+    btn.style.cssText =
+      'background:#2563eb;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:13px;cursor:pointer;width:100%;font-family:inherit;';
+    btn.onclick = function () {
+      var key = input.value.trim();
+      if (!key.startsWith('ozw_')) {
+        input.style.borderColor = '#ef4444';
+        return;
+      }
+      localStorage.setItem(STORAGE_KEY, key);
+      location.reload();
+    };
+
+    card.appendChild(title);
+    card.appendChild(desc);
+    card.appendChild(input);
+    card.appendChild(btn);
+    document.body.appendChild(card);
+  }
+
+  // Show setup card if no key is stored; skip loading the widget.
+  if (!localStorage.getItem(STORAGE_KEY)) {
+    // Prevent the CDN loader from being useful — config has empty apiKey already.
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', createKeySetupUI);
+    } else {
+      createKeySetupUI();
+    }
+  }
+
+  // ozwellResetKey() in browser console clears the stored key.
+  window.ozwellResetKey = function () {
+    localStorage.removeItem(STORAGE_KEY);
+    location.reload();
+  };
 })();

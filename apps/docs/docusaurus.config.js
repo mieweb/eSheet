@@ -36,21 +36,41 @@ const config = {
     demoUrl,
   },
 
-  // Ozwell chat widget — CDN embed approach.
-  // The API key is injected at build time from OZWELL_API_KEY env var so it
-  // is never committed to source. Set it in .env.local or CI secrets.
+  // Ozwell chat widget — parent key (ozw_...) approach.
+  // apiKey is read from localStorage at runtime (user-provided) so no key is
+  // baked into the build output. ozwell-tools.js shows a setup card if no key is stored.
   headTags: [
     {
       tagName: 'script',
-      innerHTML: `window.OzwellChatConfig = ${JSON.stringify({
-        apiKey: process.env.OZWELL_API_KEY ?? '',
+      innerHTML: `(function(){var _c=${JSON.stringify({
         system:
           'You are a documentation assistant for eSheet, a modular questionnaire/form builder and renderer for React. You have one tool: search_docs. To answer ANY question, invoke search_docs with a short plain-text keyword query string — for example, to answer "how many field types?" call search_docs with query="field types". NEVER output JSON, NEVER write a function call as text. Just invoke the tool silently, then answer using only the content it returns. If the content does not confirm the answer, say "I could not find that in the eSheet docs".',
+        title: 'Schemie',
         welcomeMessage:
           'Hi! Ask me anything about eSheet — the builder, renderer, fields, or any package.',
-        title: 'Schemie',
         debug: true,
-      })};`,
+        tools: [
+          {
+            type: 'function',
+            function: {
+              name: 'search_docs',
+              description:
+                'Search the eSheet documentation. Pass a short keyword query (e.g. "field types", "installation", "renderer responses") and receive the most relevant page content.',
+              parameters: {
+                type: 'object',
+                properties: {
+                  query: {
+                    type: 'string',
+                    description:
+                      'A short plain-text keyword query, e.g. "field types", "installation", "renderer responses". Must be a string — not a schema object.',
+                  },
+                },
+                required: ['query'],
+              },
+            },
+          },
+        ],
+      })};_c.apiKey=localStorage.getItem('ozwell_api_key')||'';window.OzwellChatConfig=_c;})();`,
       attributes: {},
     },
   ],
