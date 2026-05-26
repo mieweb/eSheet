@@ -1,11 +1,11 @@
-import React, { useSyncExternalStore } from 'react';
+import React from 'react';
 import {
   getFieldTypeMeta,
   type FieldDefinition,
-  type FormStore,
-  type UIStore,
+  type FieldOption,
+  type MatrixColumn,
+  type MatrixRow,
   type EditTab,
-  type SectionFieldDefinition,
 } from '@esheet/core';
 import { useInstanceId } from '../../EsheetBuilder.js';
 import { EditIcon, LogicIcon } from '../../icons.js';
@@ -14,11 +14,11 @@ import { CommonEditor } from './CommonEditor.js';
 import { OptionListEditor } from './OptionListEditor.js';
 import { MatrixEditor } from './MatrixEditor.js';
 import { LogicEditor } from './LogicEditor.js';
+import { useFormApi } from '../../hooks/useFormApi.js';
+import { useUiApi } from '../../hooks/useUiApi.js';
 
-export interface EditPanelProps {
-  form: FormStore;
-  ui: UIStore;
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-empty-interface
+export interface EditPanelProps {}
 
 /**
  * EditPanel — right panel for editing the selected field's properties.
@@ -26,55 +26,36 @@ export interface EditPanelProps {
  * Shows Edit tab (common + per-type editors) and Logic tab.
  * Renders nothing meaningful when no field is selected.
  */
-export function EditPanel({ form, ui }: EditPanelProps) {
-  // Subscribe to UI state for selected field + active tab
-  const selectedFieldId = useSyncExternalStore(
-    (cb) => ui.subscribe(cb),
-    () => ui.getState().selectedFieldId,
-    () => ui.getState().selectedFieldId
-  );
-  const selectedFieldChildId = useSyncExternalStore(
-    (cb) => ui.subscribe(cb),
-    () => ui.getState().selectedFieldChildId,
-    () => ui.getState().selectedFieldChildId
-  );
-  const editTab = useSyncExternalStore(
-    (cb) => ui.subscribe(cb),
-    () => ui.getState().editTab,
-    () => ui.getState().editTab
-  );
+export function EditPanel(_props: EditPanelProps) {
+  const {
+    selectedFieldId,
+    selectedFieldChildId,
+    editTab,
+    selectField,
+    setEditTab,
+  } = useUiApi();
+  const { normalized } = useFormApi(undefined);
 
-  // Subscribe to form so we re-render when the field definition changes
-  const field = useSyncExternalStore(
-    (cb) => form.subscribe(cb),
-    () =>
-      selectedFieldId ? form.getState().getField(selectedFieldId) : undefined,
-    () =>
-      selectedFieldId ? form.getState().getField(selectedFieldId) : undefined
-  );
+  // Bind field actions to the currently selected field
+  const { field_: selectedField_ } = useFormApi(selectedFieldId ?? undefined);
 
   // Logic tab target: when a section is selected, edit logic for the active child.
-  const logicField = useSyncExternalStore(
-    (cb) => form.subscribe(cb),
-    () => {
-      if (!selectedFieldId) return undefined;
-      const parent = form.getState().getField(selectedFieldId);
-      if (!parent) return undefined;
-
-      if (parent.definition.fieldType !== 'section' || !selectedFieldChildId) {
-        return parent;
-      }
-
-      return form.getState().getField(selectedFieldChildId) ?? parent;
-    },
-    () => {
-      if (!selectedFieldId) return undefined;
-      return form.getState().getField(selectedFieldId);
+  const logicField = React.useMemo(() => {
+    if (!selectedFieldId) return undefined;
+    const parent = normalized.byId[selectedFieldId];
+    if (!parent) return undefined;
+    if (parent.definition.fieldType !== 'section' || !selectedFieldChildId) {
+      return parent;
     }
-  );
+    return normalized.byId[selectedFieldChildId] ?? parent;
+  }, [normalized, selectedFieldId, selectedFieldChildId]);
+
+  const activeField = selectedFieldId
+    ? normalized.byId[selectedFieldId]
+    : undefined;
 
   // No selection
-  if (!selectedFieldId || !field) {
+  if (!selectedFieldId || !activeField) {
     return (
       <div className="edit-panel-empty ms:flex ms:flex-1 ms:min-h-0 ms:items-center ms:justify-center ms:text-mstextmuted ms:text-sm ms:p-4 ms:text-center">
         Select a field to edit its properties
@@ -82,17 +63,16 @@ export function EditPanel({ form, ui }: EditPanelProps) {
     );
   }
 
-  const def = field.definition;
+  const def = activeField.definition;
   const meta = getFieldTypeMeta(def.fieldType);
   const logicTargetLabel = logicField
     ? logicField.definition.fieldType === 'section'
-      ? (logicField.definition as SectionFieldDefinition).title ||
-        logicField.definition.id
+      ? logicField.definition.title || logicField.definition.id
       : logicField.definition.question || logicField.definition.id
     : '';
   const logicTargetQuestion = logicField
     ? logicField.definition.fieldType === 'section'
-      ? (logicField.definition as SectionFieldDefinition).title || ''
+      ? logicField.definition.title || ''
       : logicField.definition.question || ''
     : '';
   const logicTargetQuestionShort = logicTargetQuestion
@@ -103,30 +83,30 @@ export function EditPanel({ form, ui }: EditPanelProps) {
   const handleUpdate = (
     patch: Partial<Omit<import('@esheet/core').FieldDefinition, 'fields'>>
   ) => {
-    form.getState().updateField(selectedFieldId, patch);
+    selectedField_.update(patch);
   };
 
   const handleRenameId = (newId: string): boolean => {
-    const success = form.getState().updateField(selectedFieldId, { id: newId });
+    const success = selectedField_.update({ id: newId });
     if (success) {
-      ui.getState().selectField(newId);
+      selectField(newId);
     }
     return success;
   };
 
-  const setTab = (tab: EditTab) => ui.getState().setEditTab(tab);
+  const setTab = (tab: EditTab) => setEditTab(tab);
 
   return (
     <div className="edit-panel ms:flex ms:flex-1 ms:flex-col ms:min-h-0">
       {/* Tab Bar — pill segment style */}
-      <div className="edit-panel-tabs ms:sticky ms:top-0 ms:z-10 ms:bg-mssurface ms:border-b ms:border-msborder ms:px-3 ms:pt-3 ms:pb-2 ms:shrink-0">
+      <div className="edit-panel-tabs ms:sticky ms:top-0 ms:z-10 ms:bg-mssurface ms:border-b ms:border-msborder ms:px-4 ms:py-2.5 ms:shrink-0">
         <div className="ms:flex ms:gap-1 ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackground ms:p-1">
           <button
             type="button"
             onClick={() => setTab('edit')}
             className={`edit-tab-btn ms:flex-1 ms:flex ms:items-center ms:justify-center ms:gap-1.5 ms:px-3 ms:py-1.5 ms:rounded-md ms:text-xs ms:font-medium ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ${
               editTab === 'edit'
-                ? 'ms:bg-msprimary-active ms:text-mstextsecondary ms:shadow-sm'
+                ? 'ms:bg-msprimary ms:text-mstextsecondary ms:shadow-sm'
                 : 'ms:bg-transparent ms:text-mstextmuted ms:hover:text-mstext ms:hover:bg-mssurface'
             }`}
           >
@@ -138,7 +118,7 @@ export function EditPanel({ form, ui }: EditPanelProps) {
             onClick={() => setTab('logic')}
             className={`logic-tab-btn ms:flex-1 ms:flex ms:items-center ms:justify-center ms:gap-1.5 ms:px-3 ms:py-1.5 ms:rounded-md ms:text-xs ms:font-medium ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ${
               editTab === 'logic'
-                ? 'ms:bg-msprimary-active ms:text-mstextsecondary ms:shadow-sm'
+                ? 'ms:bg-msprimary ms:text-mstextsecondary ms:shadow-sm'
                 : 'ms:bg-transparent ms:text-mstextmuted ms:hover:text-mstext ms:hover:bg-mssurface'
             }`}
           >
@@ -155,8 +135,6 @@ export function EditPanel({ form, ui }: EditPanelProps) {
             fieldId={selectedFieldId}
             def={def}
             meta={meta}
-            form={form}
-            ui={ui}
             onUpdate={handleUpdate}
             onRenameId={handleRenameId}
           />
@@ -173,7 +151,6 @@ export function EditPanel({ form, ui }: EditPanelProps) {
             <LogicEditor
               fieldId={logicField.definition.id}
               rules={logicField.definition.rules ?? []}
-              form={form}
             />
           </div>
         ) : null}
@@ -190,8 +167,6 @@ interface EditTabContentProps {
   fieldId: string;
   def: Omit<import('@esheet/core').FieldDefinition, 'fields'>;
   meta: import('@esheet/core').FieldTypeMeta | undefined;
-  form: FormStore;
-  ui: UIStore;
   onUpdate: (
     patch: Partial<Omit<import('@esheet/core').FieldDefinition, 'fields'>>
   ) => void;
@@ -202,8 +177,6 @@ function EditTabContent({
   fieldId,
   def,
   meta,
-  form,
-  ui,
   onUpdate,
   onRenameId,
 }: EditTabContentProps) {
@@ -214,8 +187,6 @@ function EditTabContent({
       <SectionEditContent
         fieldId={fieldId}
         def={def}
-        form={form}
-        ui={ui}
         onUpdate={onUpdate}
         onRenameId={onRenameId}
       />
@@ -238,34 +209,20 @@ function EditTabContent({
       )}
 
       {/* Options (radio, check, dropdown, multitext, rating, ranking, slider, boolean) */}
-      {meta?.hasOptions &&
-        'options' in def &&
-        (def as { options?: readonly { id: string; value: string }[] })
-          .options && (
-          <OptionListEditor
-            fieldId={fieldId}
-            fieldType={def.fieldType}
-            options={
-              (def as { options: readonly { id: string; value: string }[] })
-                .options
-            }
-            form={form}
-          />
-        )}
+      {meta?.hasOptions && (def as { options?: FieldOption[] }).options && (
+        <OptionListEditor
+          fieldId={fieldId}
+          fieldType={def.fieldType}
+          options={(def as { options?: FieldOption[] }).options!}
+        />
+      )}
 
       {/* Matrix (singlematrix, multimatrix) */}
-      {meta?.hasMatrix && 'rows' in def && 'columns' in def && (
+      {meta?.hasMatrix && (
         <MatrixEditor
           fieldId={fieldId}
-          rows={
-            (def as { rows?: readonly { id: string; value: string }[] })
-              .rows ?? []
-          }
-          columns={
-            (def as { columns?: readonly { id: string; value: string }[] })
-              .columns ?? []
-          }
-          form={form}
+          rows={(def as { rows?: MatrixRow[] }).rows ?? []}
+          columns={(def as { columns?: MatrixColumn[] }).columns ?? []}
         />
       )}
     </div>
@@ -279,8 +236,6 @@ function EditTabContent({
 interface SectionEditContentProps {
   fieldId: string;
   def: Omit<import('@esheet/core').FieldDefinition, 'fields'>;
-  form: FormStore;
-  ui: UIStore;
   onUpdate: (
     patch: Partial<Omit<import('@esheet/core').FieldDefinition, 'fields'>>
   ) => void;
@@ -290,31 +245,22 @@ interface SectionEditContentProps {
 function SectionEditContent({
   fieldId,
   def,
-  form,
-  ui,
   onUpdate,
   onRenameId,
 }: SectionEditContentProps) {
   const instanceId = useInstanceId();
-  const normalized = useSyncExternalStore(
-    (cb) => form.subscribe(cb),
-    () => form.getState().normalized,
-    () => form.getState().normalized
-  );
-  const selectedFieldId = useSyncExternalStore(
-    (cb) => ui.subscribe(cb),
-    () => ui.getState().selectedFieldId,
-    () => ui.getState().selectedFieldId
-  );
-  const selectedFieldChildId = useSyncExternalStore(
-    (cb) => ui.subscribe(cb),
-    () => ui.getState().selectedFieldChildId,
-    () => ui.getState().selectedFieldChildId
-  );
-  const editTab = useSyncExternalStore(
-    (cb) => ui.subscribe(cb),
-    () => ui.getState().editTab,
-    () => ui.getState().editTab
+  const {
+    selectedFieldId,
+    selectedFieldChildId,
+    editTab,
+    selectFieldChild,
+    setEditTab,
+  } = useUiApi();
+  const { normalized } = useFormApi();
+  const { field_: activeChildField_ } = useFormApi(
+    selectedFieldId === fieldId && selectedFieldChildId
+      ? selectedFieldChildId
+      : undefined
   );
 
   const childIds = normalized.byId[fieldId]?.childIds ?? [];
@@ -339,30 +285,33 @@ function SectionEditContent({
     : undefined;
 
   React.useEffect(() => {
-    // Only heal stale non-null child IDs (e.g. deleted child). Do not auto-pick
-    // a new child when none is selected so section-level selection can persist.
     if (activeChildId !== null && resolvedActiveChildId !== activeChildId) {
-      ui.getState().selectFieldChild(fieldId, resolvedActiveChildId);
+      selectFieldChild(fieldId, resolvedActiveChildId);
       if (editTab === 'logic') {
-        ui.getState().setEditTab('logic');
+        setEditTab('logic');
       }
     }
-  }, [activeChildId, editTab, fieldId, resolvedActiveChildId, ui]);
+  }, [
+    activeChildId,
+    editTab,
+    fieldId,
+    resolvedActiveChildId,
+    selectFieldChild,
+    setEditTab,
+  ]);
 
   const handleSelectChild = (childId: string) => {
-    ui.getState().selectFieldChild(fieldId, childId);
+    selectFieldChild(fieldId, childId);
     if (editTab === 'logic') {
-      ui.getState().setEditTab('logic');
+      setEditTab('logic');
     }
   };
 
   const handleRenameChildId = (newId: string): boolean => {
     if (!activeChildDef) return false;
-    const success = form
-      .getState()
-      .updateField(activeChildDef.id, { id: newId });
+    const success = activeChildField_.update({ id: newId });
     if (success) {
-      ui.getState().selectFieldChild(fieldId, newId);
+      selectFieldChild(fieldId, newId);
     }
     return success;
   };
@@ -371,16 +320,16 @@ function SectionEditContent({
     patch: Partial<Omit<FieldDefinition, 'fields'>>
   ) => {
     if (!activeChildDef) return;
-    form.getState().updateField(activeChildDef.id, patch);
+    activeChildField_.update(patch);
   };
 
   const handleDeleteChild = () => {
     if (!activeChildDef) return;
-    form.getState().removeField(activeChildDef.id);
+    activeChildField_.remove();
     const nextChildId = childFields.find(
       (node) => node.definition.id !== activeChildDef.id
     )?.definition.id;
-    ui.getState().selectFieldChild(fieldId, nextChildId ?? null);
+    selectFieldChild(fieldId, nextChildId ?? null);
   };
 
   return (
@@ -407,15 +356,11 @@ function SectionEditContent({
         <input
           id={`${instanceId}-editor-title-${fieldId}`}
           type="text"
-          value={
-            'title' in def
-              ? ((def as { title?: string }).title ?? '')
-              : ''
-          }
+          value={(def as { title?: string }).title ?? ''}
           onChange={(e) =>
-            onUpdate({ title: e.currentTarget.value } as Partial<
-              Omit<FieldDefinition, 'fields'>
-            >)
+            onUpdate({ title: e.currentTarget.value } as Parameters<
+              typeof onUpdate
+            >[0])
           }
           placeholder="Enter section title..."
           className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:placeholder:text-mstextmuted ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
@@ -449,8 +394,7 @@ function SectionEditContent({
               const childMeta = getFieldTypeMeta(node.definition.fieldType);
               const label =
                 node.definition.fieldType === 'section'
-                  ? (node.definition as SectionFieldDefinition).title ||
-                    node.definition.id
+                  ? node.definition.title || node.definition.id
                   : node.definition.question || node.definition.id;
               return (
                 <option key={node.definition.id} value={node.definition.id}>
@@ -504,13 +448,11 @@ function SectionEditContent({
                 <input
                   id={`${instanceId}-editor-active-section-title-${activeChildDef.id}`}
                   type="text"
-                  value={
-                    (activeChildDef as SectionFieldDefinition).title ?? ''
-                  }
+                  value={activeChildDef.title ?? ''}
                   onChange={(e) =>
                     handleUpdateChild({
                       title: e.currentTarget.value,
-                    } as Partial<Omit<FieldDefinition, 'fields'>>)
+                    } as Parameters<typeof handleUpdateChild>[0])
                   }
                   placeholder="Enter section title..."
                   className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:placeholder:text-mstextmuted ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
@@ -531,26 +473,25 @@ function SectionEditContent({
           )}
 
           {activeChildMeta?.hasOptions &&
-            'options' in activeChildDef &&
-            activeChildDef.options && (
+            (activeChildDef as { options?: FieldOption[] }).options && (
               <OptionListEditor
                 fieldId={activeChildDef.id}
                 fieldType={activeChildDef.fieldType}
-                options={activeChildDef.options}
-                form={form}
+                options={
+                  (activeChildDef as { options?: FieldOption[] }).options!
+                }
               />
             )}
 
-          {activeChildMeta?.hasMatrix &&
-            'rows' in activeChildDef &&
-            'columns' in activeChildDef && (
-              <MatrixEditor
-                fieldId={activeChildDef.id}
-                rows={activeChildDef.rows ?? []}
-                columns={activeChildDef.columns ?? []}
-                form={form}
-              />
-            )}
+          {activeChildMeta?.hasMatrix && (
+            <MatrixEditor
+              fieldId={activeChildDef.id}
+              rows={(activeChildDef as { rows?: MatrixRow[] }).rows ?? []}
+              columns={
+                (activeChildDef as { columns?: MatrixColumn[] }).columns ?? []
+              }
+            />
+          )}
         </div>
       )}
     </div>

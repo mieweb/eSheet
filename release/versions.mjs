@@ -13,15 +13,16 @@ export function writePkg(dir, pkg) {
 }
 
 /**
- * Update the version field in every publishable package's package.json.
- * Cross-package deps use workspace:* protocol and don't need updating.
+ * Update the version field in every package's package.json.
  * @param {string} newVersion
  * @param {boolean} dryRun
  */
 export function bumpAll(newVersion, dryRun) {
   for (const pkgDir of PACKAGES) {
     if (dryRun) {
-      console.log(`[DRY RUN] Would update ${pkgDir}/package.json → ${newVersion}`);
+      console.log(
+        `[DRY RUN] Would update ${pkgDir}/package.json → ${newVersion}`
+      );
       continue;
     }
     const pkg = readPkg(pkgDir);

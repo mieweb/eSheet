@@ -17,6 +17,12 @@
     },
     "build": {
       "dependsOn": ["build:css", "^build"]
+    },
+    "typecheck": {
+      "dependsOn": [
+        "^typecheck",
+        { "projects": ["@esheet/fields"], "target": "build" }
+      ]
     }
   }
 }

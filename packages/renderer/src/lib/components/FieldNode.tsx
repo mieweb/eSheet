@@ -154,11 +154,7 @@ export const FieldNode = React.memo(function FieldNode({
     isChildOfSection
       ? ' ms:p-6 ms:border-b ms:border-msborder ms:last:border-b-0'
       : ''
-  }${!isEnabled ? ' ms:opacity-50 ms:pointer-events-none' : ''}${
-    isRequired && !isSection && !isChildOfSection
-      ? ' ms:border-l-2 ms:border-l-msdanger'
-      : ''
-  }`;
+  }${!isEnabled ? ' ms:opacity-50 ms:pointer-events-none' : ''}`;
 
   return (
     <div

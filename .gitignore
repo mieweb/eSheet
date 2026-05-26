@@ -82,3 +82,4 @@ vitest.config.*.timestamp*
 .tmp_ci_logs/
 .tmp-*.log
 .nx/self-healing
+apps/docs/static/doc-content.json

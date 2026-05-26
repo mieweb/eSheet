@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore — generated CSS asset, no type declarations needed
 import './index.output.css';
 
 // Re-export UIStore from core for backward compat
@@ -40,3 +42,20 @@ export {
 } from './lib/components/BuilderHeader.js';
 
 export { CodeView, type CodeViewProps } from './lib/components/CodeView.js';
+
+export { useFormApi } from './lib/hooks/useFormApi.js';
+export type { FormApi, FieldResponseMap } from './lib/hooks/useFormApi.js';
+export { useUiApi } from './lib/hooks/useUiApi.js';
+export type { UiApi } from './lib/hooks/useUiApi.js';
+export { useVisibleRootIds } from './lib/hooks/useVisibleRootIds.js';
+
+export {
+  executeToolCall,
+  BUILDER_TOOL_DEFINITIONS,
+  BUILDER_SYSTEM_PROMPT,
+  useBuilderMcpToolHandler,
+} from './lib/mcp/index.js';
+export type {
+  ToolDefinition,
+  UseBuilderMcpToolHandlerOptions,
+} from './lib/mcp/index.js';

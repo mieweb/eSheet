@@ -38,9 +38,9 @@
     ]
   },
   "dependencies": {
-    "@esheet/adapters": "*",
-    "@esheet/core": "*",
-    "@esheet/fields": "*",
+    "@esheet/adapters": "0.0.3",
+    "@esheet/core": "0.0.3",
+    "@esheet/fields": "0.0.3",
     "js-yaml": "^4.1.0"
   },
   "peerDependencies": {

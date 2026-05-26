@@ -1,8 +1,8 @@
 import React from 'react';
 import {
   evaluateExpression,
-  type DisplayFieldDefinition,
   type FieldComponentProps,
+  type DisplayFieldDefinition,
 } from '@esheet/core';
 
 function formatComputedValue(value: unknown): string {

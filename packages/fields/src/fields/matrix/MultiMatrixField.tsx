@@ -1,8 +1,8 @@
 import React from 'react';
 import type {
   FieldComponentProps,
-  MultiMatrixFieldDefinition,
   SelectedOption,
+  MultiMatrixFieldDefinition,
 } from '@esheet/core';
 import { Checkbox } from '@mieweb/ui';
 import { TrashIcon, PlusIcon } from '../../icons.js';

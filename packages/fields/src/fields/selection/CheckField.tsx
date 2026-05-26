@@ -1,9 +1,8 @@
 import React from 'react';
 import type {
-  CheckFieldDefinition,
   FieldComponentProps,
-  FieldOption,
   SelectedOption,
+  CheckFieldDefinition,
 } from '@esheet/core';
 import { Checkbox } from '@mieweb/ui';
 import { TrashIcon, PlusIcon } from '../../icons.js';
@@ -41,7 +40,7 @@ export const CheckField = React.memo(function CheckField({
           {isRequired && <span className="ms:text-msdanger ms:ml-0.5">*</span>}
         </div>
         <div className="ms:space-y-2">
-          {options.map((option: FieldOption) => (
+          {options.map((option) => (
             <Checkbox
               key={option.id}
               id={`${instanceId}-check-answer-${def.id}-${option.id}`}

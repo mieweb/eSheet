@@ -90,7 +90,7 @@ describe('field type registry', () => {
     expect(radio.defaultOptionCount).toBe(3);
 
     const boolean = getFieldTypeMeta('boolean')!;
-    expect(boolean.defaultOptionCount).toBeUndefined();
+    expect(boolean.defaultOptionCount).toBe(2);
 
     const rating = getFieldTypeMeta('rating')!;
     expect(rating.defaultOptionCount).toBe(5);

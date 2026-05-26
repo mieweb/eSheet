@@ -1,14 +1,13 @@
-import React, { useSyncExternalStore } from 'react';
+import React from 'react';
 import YAML from 'js-yaml';
 import {
   formatZodValidationError,
   formDefinitionSchema,
   type Condition,
   isExpressionValid,
+  hasOptions,
   type FieldDefinition,
   type FormDefinition,
-  type FormStore,
-  type UIStore,
   type BuilderMode,
   type ValidationError,
   type FormResponseEnvelope,
@@ -16,6 +15,10 @@ import {
 import {
   importFromMcp,
   exportToMcp,
+  convertSurveyJS,
+  isSurveyJSSchema,
+  isMcpElicitationRequest,
+  type McpElicitationRequest,
   type McpElicitationSchema,
 } from '@esheet/adapters';
 import {
@@ -26,11 +29,11 @@ import {
   DownloadIcon,
 } from '../icons.js';
 import { FeedbackModal, type FeedbackModalVariant } from './FeedbackModal.js';
+import { useUiApi } from '../hooks/useUiApi.js';
+import { useFormApi } from '../hooks/useFormApi.js';
 
-export interface BuilderHeaderProps {
-  form: FormStore;
-  ui: UIStore;
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-empty-interface
+export interface BuilderHeaderProps {}
 
 interface FeedbackState {
   open: boolean;
@@ -116,22 +119,11 @@ function collectImportWarnings(fields: FieldDefinition[]): string[] {
     }
   }
 
-  const optionRequiredTypes = new Set([
-    'radio',
-    'check',
-    'dropdown',
-    'multiselectdropdown',
-    'rating',
-    'ranking',
-    'slider',
-    'boolean',
-  ]);
-
   for (const entry of flat) {
     const { field, path } = entry;
 
-    if (optionRequiredTypes.has(field.fieldType)) {
-      if (!('options' in field) || !field.options || field.options.length === 0) {
+    if (hasOptions(field)) {
+      if (!field.options || field.options.length === 0) {
         warnings.push(
           `${field.id}: ${path} has no options for fieldType '${field.fieldType}'.`
         );
@@ -142,10 +134,10 @@ function collectImportWarnings(fields: FieldDefinition[]): string[] {
       field.fieldType === 'singlematrix' ||
       field.fieldType === 'multimatrix'
     ) {
-      if (!('rows' in field) || !field.rows || field.rows.length === 0) {
+      if (!field.rows || field.rows.length === 0) {
         warnings.push(`${field.id}: ${path} has no rows.`);
       }
-      if (!('columns' in field) || !field.columns || field.columns.length === 0) {
+      if (!field.columns || field.columns.length === 0) {
         warnings.push(`${field.id}: ${path} has no columns.`);
       }
     }
@@ -223,7 +215,7 @@ function formatDryRunDetails(result: DryRunResult): string {
 /**
  * BuilderHeader — top bar with Build/Code/Preview mode toggle and Import/Export actions.
  */
-export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
+export function BuilderHeader(_props: BuilderHeaderProps) {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [exportIdModalOpen, setExportIdModalOpen] = React.useState(false);
   const [exportIdInput, setExportIdInput] = React.useState('');
@@ -282,17 +274,8 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
     []
   );
 
-  const mode = useSyncExternalStore(
-    (cb) => ui.subscribe(cb),
-    () => ui.getState().mode,
-    () => ui.getState().mode
-  );
-
-  const codeHasError = useSyncExternalStore(
-    (cb) => ui.subscribe(cb),
-    () => ui.getState().codeEditorHasError,
-    () => ui.getState().codeEditorHasError
-  );
+  const { mode, codeEditorHasError: codeHasError, setMode } = useUiApi();
+  const { _form: form } = useFormApi();
 
   React.useEffect(() => {
     if (mode !== 'preview') {
@@ -376,46 +359,30 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
         const parsed = isYaml ? YAML.load(content) : JSON.parse(content);
 
         // Auto-detect MCP elicitation schema (JSON only).
-        // Accepts: full elicitation/create request, params object, or raw requestedSchema.
+        // Accepts: full elicitation/create envelope or raw requestedSchema object.
         if (!isYaml) {
-          const p = parsed as Record<string, unknown>;
-          const params = p?.params as Record<string, unknown> | undefined;
-
-          // URL mode — no requestedSchema, nothing to import as a form.
-          const mode = params?.mode ?? p?.mode;
-          if (mode === 'url') {
-            showFeedback(
-              'error',
-              'URL Mode Not Supported',
-              'This MCP elicitation uses URL mode (out-of-band). Only form mode schemas can be imported into the builder.'
+          if (isMcpElicitationRequest(parsed)) {
+            const mcpReq = parsed as McpElicitationRequest;
+            if (mcpReq.params.mode === 'url') {
+              showFeedback(
+                'error',
+                'URL Mode Not Supported',
+                'This MCP elicitation uses URL mode (out-of-band). Only form mode schemas can be imported into the builder.'
+              );
+              return;
+            }
+            const formDef = importFromMcp(
+              mcpReq.params.requestedSchema as McpElicitationSchema,
+              {
+                formId: form.getState().hydrateDefinition().id || 'mcp-form',
+                ...(typeof mcpReq.params.message === 'string' &&
+                mcpReq.params.message.length > 0
+                  ? { description: mcpReq.params.message }
+                  : {}),
+                mcpId: mcpReq.id,
+                mcpMessage: mcpReq.params.message,
+              }
             );
-            return;
-          }
-
-          let mcpSchema: McpElicitationSchema | undefined;
-          if (params?.requestedSchema) {
-            mcpSchema = params.requestedSchema as McpElicitationSchema;
-          } else if (p?.requestedSchema) {
-            mcpSchema = p.requestedSchema as McpElicitationSchema;
-          } else if (p?.type === 'object' && p?.properties) {
-            mcpSchema = p as unknown as McpElicitationSchema;
-          }
-
-          if (mcpSchema) {
-            const message = params?.message ?? p?.message;
-            const mcpId = p?.id ?? params?.id;
-            const mcpMeta = p?.meta;
-            const formDef = importFromMcp(mcpSchema, {
-              formId: form.getState().hydrateDefinition().id || 'mcp-form',
-              ...(typeof message === 'string' && message.length > 0
-                ? { description: message }
-                : {}),
-              ...(mcpId !== undefined
-                ? { mcpId: mcpId as string | number }
-                : {}),
-              ...(typeof message === 'string' ? { mcpMessage: message } : {}),
-              ...(mcpMeta !== undefined ? { mcpMeta } : {}),
-            });
             form.getState().loadDefinition(formDef);
             showFeedback(
               'success',
@@ -424,6 +391,37 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
             );
             return;
           }
+
+          // Raw requestedSchema: { type: 'object', properties: {...} }
+          const p = parsed as Record<string, unknown>;
+          if (p?.type === 'object' && p?.properties) {
+            const formDef = importFromMcp(
+              p as unknown as McpElicitationSchema,
+              {
+                formId: form.getState().hydrateDefinition().id || 'mcp-form',
+              }
+            );
+            form.getState().loadDefinition(formDef);
+            showFeedback(
+              'success',
+              'Import Successful',
+              `Loaded ${formDef.fields.length} field(s) from MCP elicitation schema.`
+            );
+            return;
+          }
+        }
+
+        if (!isYaml && isSurveyJSSchema(parsed)) {
+          const formDef = convertSurveyJS(
+            parsed as Parameters<typeof convertSurveyJS>[0]
+          );
+          form.getState().loadDefinition(formDef);
+          showFeedback(
+            'success',
+            'Import Successful',
+            `Loaded ${formDef.fields.length} field(s) from SurveyJS schema.`
+          );
+          return;
         }
 
         const validated = formDefinitionSchema.safeParse(parsed);
@@ -693,7 +691,7 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
               <button
                 key={value}
                 type="button"
-                onClick={() => ui.getState().setMode(value)}
+                onClick={() => setMode(value)}
                 disabled={codeHasError && value !== 'code'}
                 className={`mode-btn ms:flex ms:items-center ms:justify-center ms:gap-2 ms:px-2 ms:lg:px-4 ms:py-2 ms:rounded-lg ms:text-xs ms:lg:text-sm ms:font-medium ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none ${
                   codeHasError && value !== 'code'
@@ -701,8 +699,8 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
                     : 'ms:cursor-pointer'
                 } ${
                   mode === value
-                    ? 'ms:bg-msprimary-active ms:text-mstextsecondary ms:shadow-sm'
-                    : 'ms:bg-transparent ms:text-mstext/65 ms:hover:text-mstext ms:hover:bg-mssurface'
+                    ? 'ms:bg-msprimary ms:text-mstextsecondary ms:shadow-sm'
+                    : 'ms:bg-transparent ms:text-mstextmuted ms:hover:text-mstext ms:hover:bg-mssurface'
                 }`}
               >
                 <Icon className="ms:w-5 ms:h-5" />
@@ -713,7 +711,7 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
 
           {/* Right — Import / Export */}
           <div className="header-actions ms:flex ms:gap-1 ms:items-center">
-            <label className="header-import-label ms:group ms:px-2 ms:py-2 ms:lg:px-3 ms:lg:py-2 ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:hover:bg-msprimary-active ms:hover:text-mstextsecondary ms:hover:border-msprimary ms:cursor-pointer ms:text-xs ms:lg:text-sm ms:font-medium ms:transition-colors ms:flex ms:items-center ms:lg:gap-2 ms:gap-0 ms:text-mstext">
+            <label className="header-import-label ms:group ms:px-2 ms:py-2 ms:lg:px-3 ms:lg:py-2 ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:hover:bg-msprimary ms:hover:text-mstextsecondary ms:hover:border-msprimary ms:cursor-pointer ms:text-xs ms:lg:text-sm ms:font-medium ms:transition-colors ms:flex ms:items-center ms:lg:gap-2 ms:gap-0 ms:text-mstext">
               <UploadIcon className="ms:w-4 ms:h-4 ms:text-mstext ms:group-hover:text-mstextsecondary ms:transition-colors" />
               <span className="ms:hidden ms:sm:inline">Import</span>
               <input
@@ -729,7 +727,7 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
             <button
               type="button"
               onClick={handleExport}
-              className="export-btn ms:group ms:px-2 ms:py-2 ms:lg:px-3 ms:lg:py-2 ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:hover:bg-msprimary-active ms:hover:text-mstextsecondary ms:hover:border-msprimary ms:text-xs ms:lg:text-sm ms:font-medium ms:transition-colors ms:flex ms:items-center ms:lg:gap-2 ms:gap-0 ms:outline-none ms:focus:outline-none ms:text-mstext ms:cursor-pointer"
+              className="export-btn ms:group ms:px-2 ms:py-2 ms:lg:px-3 ms:lg:py-2 ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:hover:bg-msprimary ms:hover:text-mstextsecondary ms:hover:border-msprimary ms:text-xs ms:lg:text-sm ms:font-medium ms:transition-colors ms:flex ms:items-center ms:lg:gap-2 ms:gap-0 ms:outline-none ms:focus:outline-none ms:text-mstext ms:cursor-pointer"
               title="Export"
             >
               <DownloadIcon className="ms:w-4 ms:h-4 ms:text-mstext ms:group-hover:text-mstextsecondary ms:transition-colors" />
@@ -742,7 +740,7 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
                 onClick={handleDryRunSubmit}
                 aria-label="Dry run submit"
                 title="Dry Run Submit"
-                className="dry-run-submit-btn ms:group ms:px-2 ms:py-2 ms:lg:px-3 ms:lg:py-2 ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:hover:bg-msprimary-active ms:hover:text-mstextsecondary ms:hover:border-msprimary ms:text-xs ms:lg:text-sm ms:font-medium ms:transition-colors ms:flex ms:items-center ms:lg:gap-2 ms:gap-0 ms:outline-none ms:focus:outline-none ms:text-mstext ms:cursor-pointer"
+                className="dry-run-submit-btn ms:group ms:px-2 ms:py-2 ms:lg:px-3 ms:lg:py-2 ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:hover:bg-msprimary ms:hover:text-mstextsecondary ms:hover:border-msprimary ms:text-xs ms:lg:text-sm ms:font-medium ms:transition-colors ms:flex ms:items-center ms:lg:gap-2 ms:gap-0 ms:outline-none ms:focus:outline-none ms:text-mstext ms:cursor-pointer"
               >
                 <span className="ms:hidden ms:sm:inline">Dry Run Submit</span>
                 <span className="ms:sm:hidden">Dry Run</span>

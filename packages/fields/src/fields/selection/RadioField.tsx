@@ -1,9 +1,8 @@
 import React from 'react';
 import type {
   FieldComponentProps,
-  FieldOption,
-  RadioFieldDefinition,
   SelectedOption,
+  RadioFieldDefinition,
 } from '@esheet/core';
 import { RadioGroup, Radio } from '@mieweb/ui';
 import { TrashIcon, PlusIcon } from '../../icons.js';
@@ -40,7 +39,7 @@ export const RadioField = React.memo(function RadioField({
           disabled={!isEnabled}
           orientation="vertical"
         >
-          {options.map((option: FieldOption) => (
+          {options.map((option) => (
             <Radio
               key={option.id}
               id={`${instanceId}-radio-answer-${def.id}-${option.id}`}

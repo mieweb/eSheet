@@ -1,8 +1,8 @@
 import React from 'react';
 import type {
   FieldComponentProps,
-  MultiselectDropdownFieldDefinition,
   SelectedOption,
+  MultiselectDropdownFieldDefinition,
 } from '@esheet/core';
 import { CustomDropdown } from '../../controls/CustomDropdown.js';
 import { TrashIcon, PlusIcon } from '../../icons.js';

@@ -1,20 +1,20 @@
-import React, { useSyncExternalStore } from 'react';
+import React from 'react';
 import {
   CONDITION_OPERATORS,
   CONDITIONAL_EFFECTS,
   getFieldTypeMeta,
+  hasOptions,
   isExpressionValid,
   type Condition,
   type ConditionOperator,
   type ConditionalEffect,
   type ConditionalRule,
-  type FieldOption,
-  type FormStore,
   type LogicMode,
   type NormalizedDefinition,
 } from '@esheet/core';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 import { useInstanceId } from '../../EsheetBuilder.js';
+import { useFormApi } from '../../hooks/useFormApi.js';
 
 // ---------------------------------------------------------------------------
 // Public component
@@ -23,7 +23,6 @@ import { useInstanceId } from '../../EsheetBuilder.js';
 export interface LogicEditorProps {
   fieldId: string;
   rules: readonly ConditionalRule[];
-  form: FormStore;
 }
 
 /**
@@ -34,22 +33,17 @@ export interface LogicEditorProps {
  * use OR semantics (any rule can trigger the effect). Within a rule,
  * conditions combine with the rule's logic mode (AND / OR).
  */
-export function LogicEditor({ fieldId, rules, form }: LogicEditorProps) {
+export function LogicEditor({ fieldId, rules }: LogicEditorProps) {
   const instanceId = useInstanceId();
+  const { normalized, field_ } = useFormApi(fieldId);
 
-  // Subscribe to the stable normalized reference, then derive target fields
-  const normalized = useSyncExternalStore(
-    (cb) => form.subscribe(cb),
-    () => form.getState().normalized,
-    () => form.getState().normalized
-  );
   const otherFields = React.useMemo(
     () => buildOtherFields(normalized, fieldId),
     [normalized, fieldId]
   );
 
   const updateRules = (next: ConditionalRule[]) => {
-    form.getState().updateField(fieldId, { rules: next });
+    field_.update({ rules: next });
   };
 
   // ── Handlers ────────────────────────────────────────────────
@@ -170,7 +164,7 @@ interface TargetField {
   label: string;
   fieldType: string;
   hasOptions: boolean;
-  options?: readonly FieldOption[];
+  options?: readonly { id: string; value: string }[];
   answerType: string;
   supportsNumericCompare: boolean;
 }
@@ -395,7 +389,7 @@ function LogicToggle({
         onClick={() => onChange('AND')}
         className={`ms:px-2 ms:py-0.5 ms:text-xs ms:font-medium ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:transition-colors ${
           value === 'AND'
-            ? 'ms:bg-msprimary-active ms:text-mstextsecondary'
+            ? 'ms:bg-msprimary ms:text-mstextsecondary'
             : 'ms:bg-transparent ms:text-mstextmuted ms:hover:bg-msbackgroundhover'
         }`}
       >
@@ -408,7 +402,7 @@ function LogicToggle({
         onClick={() => onChange('OR')}
         className={`ms:px-2 ms:py-0.5 ms:text-xs ms:font-medium ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:transition-colors ${
           value === 'OR'
-            ? 'ms:bg-msprimary-active ms:text-mstextsecondary'
+            ? 'ms:bg-msprimary ms:text-mstextsecondary'
             : 'ms:bg-transparent ms:text-mstextmuted ms:hover:bg-msbackgroundhover'
         }`}
       >
@@ -572,7 +566,7 @@ function ConditionRow({
             }
             className={`ms:px-2 ms:py-0.5 ms:text-xs ms:font-medium ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:transition-colors ${
               conditionType === 'field'
-                ? 'ms:bg-msprimary-active ms:text-mstextsecondary'
+                ? 'ms:bg-msprimary ms:text-mstextsecondary'
                 : 'ms:bg-transparent ms:text-mstextmuted ms:hover:bg-msbackgroundhover'
             }`}
           >
@@ -592,7 +586,7 @@ function ConditionRow({
             }
             className={`ms:px-2 ms:py-0.5 ms:text-xs ms:font-medium ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:transition-colors ${
               conditionType === 'expression'
-                ? 'ms:bg-msprimary-active ms:text-mstextsecondary'
+                ? 'ms:bg-msprimary ms:text-mstextsecondary'
                 : 'ms:bg-transparent ms:text-mstextmuted ms:hover:bg-msbackgroundhover'
             }`}
           >
@@ -782,6 +776,32 @@ function ExpectedValueInput({
   const operator = condition.operator ?? 'equals';
   const expected = condition.expected ?? '';
 
+  // Boolean fields always compare as true/false (the stored option id for the
+  // Yes option is "o1" / true-ish, but the condition engine compares the
+  // option id directly). Show a hardcoded Yes/No picker using the actual
+  // option ids from the field so the condition value is always correct.
+  if (target?.fieldType === 'boolean') {
+    if (operator === 'equals' || operator === 'notEquals') {
+      const yesOpt = target.options?.find(
+        (o) => o.value.toLowerCase() === 'yes'
+      );
+      const noOpt = target.options?.find((o) => o.value.toLowerCase() === 'no');
+      return (
+        <select
+          id={`${idPrefix}-expected`}
+          aria-label="Expected value"
+          value={expected}
+          onChange={(e) => onUpdate({ expected: e.currentTarget.value })}
+          className="condition-expected ms:w-full ms:min-w-0 ms:px-2 ms:py-1.5 ms:text-xs ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:cursor-pointer"
+        >
+          <option value="">Select a value…</option>
+          {yesOpt && <option value={yesOpt.id}>Yes</option>}
+          {noOpt && <option value={noOpt.id}>No</option>}
+        </select>
+      );
+    }
+  }
+
   // If target has options and we're using equals/notEquals/includes,
   // show a dropdown of option values
   if (target?.hasOptions && target.options && target.options.length > 0) {
@@ -935,16 +955,14 @@ function buildOtherFields(
       node.definition.fieldType === 'slider' ||
       (node.definition.fieldType === 'text' &&
         node.definition.inputType === 'number');
-    // Extract options if field type supports them
-    const defWithOptions = node.definition as unknown as {
-      options?: FieldOption[];
-    };
     result.push({
       id,
       label: node.definition.question || node.definition.id,
       fieldType: node.definition.fieldType,
       hasOptions: meta?.hasOptions ?? false,
-      options: meta?.hasOptions ? defWithOptions.options : undefined,
+      options: hasOptions(node.definition)
+        ? node.definition.options
+        : undefined,
       answerType: meta?.answerType ?? 'none',
       supportsNumericCompare,
     });
@@ -1002,7 +1020,6 @@ function validateExpressionLocally(
     const id = match[1].trim();
     const field = fieldMap.get(id);
     if (!field || field.supportsNumericCompare) continue;
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const start = match.index!;
     const end = start + match[0].length;
     const before = stripped.slice(Math.max(0, start - 4), start);

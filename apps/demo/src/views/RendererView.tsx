@@ -1,8 +1,15 @@
-import { useState, useCallback, useRef } from 'react';
-import { EsheetRenderer, type EsheetRendererHandle } from '@esheet/renderer';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import {
+  EsheetRenderer,
+  type EsheetRendererHandle,
+  useRendererMcpToolHandler,
+  RENDERER_TOOL_DEFINITIONS,
+  RENDERER_SYSTEM_PROMPT,
+} from '@esheet/renderer';
 import type { FormDefinition, FormResponseEnvelope } from '@esheet/core';
 import { Navbar } from '../components/Navbar';
 import { Button, Select } from '@mieweb/ui';
+import { updateOzwellTools } from '../ozwell-setup.js';
 
 interface SubmitResult {
   readonly kind: 'success' | 'error';
@@ -52,6 +59,14 @@ const TEST_SCHEMAS: readonly SchemaOption[] = Object.entries(schemaModules)
   .sort((a, b) => a!.label.localeCompare(b!.label));
 
 export function RendererView() {
+  useEffect(() => {
+    updateOzwellTools([...RENDERER_TOOL_DEFINITIONS], RENDERER_SYSTEM_PROMPT);
+  }, []);
+
+  const onRendererToolsReady = useRendererMcpToolHandler({
+    eventName: 'ozwell-tool-call',
+  });
+
   const [rawInput, setRawInput] = useState<unknown>(null);
   const [selectedSchema, setSelectedSchema] = useState<string>('');
   const [formKey, setFormKey] = useState(0);
@@ -246,6 +261,7 @@ export function RendererView() {
                 key={formKey}
                 formDataInput={rawInput}
                 ref={rendererRef}
+                onRendererToolsReady={onRendererToolsReady}
                 onReady={() => {
                   const def = rendererRef.current
                     ?.getFormStore()

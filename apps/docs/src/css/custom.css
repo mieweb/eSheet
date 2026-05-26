@@ -86,6 +86,16 @@
   font-weight: 700;
 }
 
+.navbar__logo {
+  display: flex;
+  align-items: center;
+}
+
+.navbar__logo img {
+  height: 20px;
+  width: auto;
+}
+
 .theme-layout-navbar-left .navbar__brand {
   margin-left: 0.5rem;
 }
