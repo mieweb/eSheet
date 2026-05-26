@@ -15,7 +15,7 @@
       '.ozwell-chat-header{background:var(--ifm-color-primary,#2563eb)!important;}' +
       /* Replace the broken /favicon.ico img with the eSheet SVG logo */
       '.ozwell-chat-icon{display:none!important;}' +
-      ".ozwell-chat-button::after{content:'';display:block;width:32px;height:32px;background:url(\"data:image/svg+xml,%3Csvg width='512' height='512' viewBox='0 0 128 128' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='20' y='16' width='88' height='96' rx='14' stroke='white' stroke-width='8'/%3E%3Crect x='34' y='34' width='56' height='12' rx='6' fill='white'/%3E%3Crect x='34' y='58' width='40' height='12' rx='6' fill='white'/%3E%3Crect x='34' y='82' width='56' height='12' rx='6' fill='white'/%3E%3C/svg%3E\") center/contain no-repeat}";
+      ".ozwell-chat-button::after{content:'';display:block;width:24px;height:24px;background:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath stroke='none' d='M0 0h24v24H0z' fill='none'/%3E%3Cpath d='M21 14l-3 -3h-7a1 1 0 0 1 -1 -1v-6a1 1 0 0 1 1 -1h9a1 1 0 0 1 1 1v10'/%3E%3Cpath d='M14 15v2a1 1 0 0 1 -1 1h-7l-3 3v-10a1 1 0 0 1 1 -1h2'/%3E%3C/svg%3E\") center/contain no-repeat}";
     document.head.appendChild(style);
 
     // Inject brand colors into the widget iframe (Send button, user messages, input focus).
@@ -100,43 +100,56 @@
     const pathLower = path.toLowerCase();
     const contentLower = (content || '').toLowerCase();
     let score = 0;
-    for (let i = 0; i < queryWords.length; i++) {
-      const word = queryWords[i];
+    for (var i = 0; i < queryWords.length; i++) {
+      var word = queryWords[i];
       if (pathLower.indexOf(word) !== -1) score += 3; // path match is a strong signal
-      if (contentLower.indexOf(word) !== -1) score += 1;
+      // Count all occurrences in content (frequency beats presence)
+      var pos = 0;
+      while ((pos = contentLower.indexOf(word, pos)) !== -1) {
+        score += 1;
+        pos += word.length;
+      }
     }
+    // Boost intro/overview pages for general queries
+    if (/\/(intro|overview|index|readme)/.test(pathLower) || path === '/docs') score += 5;
     return score;
   }
 
-  // Find the best matching page and return its content in one shot
+  // Find the top matching pages and return their content
   function searchDocs(query) {
     return getDocContent().then(function (content) {
-      const queryWords = query
+      var queryWords = query
         .toLowerCase()
         .replace(/[^a-z0-9\s]/g, ' ')
         .split(/\s+/)
         .filter(Boolean);
-      const pages = Object.keys(content);
-      let bestPath = null;
-      let bestScore = -1;
-      for (let i = 0; i < pages.length; i++) {
-        const s = scorePage(pages[i], content[pages[i]], queryWords);
-        if (s > bestScore) {
-          bestScore = s;
-          bestPath = pages[i];
-        }
-      }
-      if (!bestPath || bestScore === 0) {
+      var pages = Object.keys(content);
+      var scored = pages
+        .map(function (p) {
+          return { path: p, score: scorePage(p, content[p], queryWords) };
+        })
+        .filter(function (p) {
+          return p.score > 0;
+        })
+        .sort(function (a, b) {
+          return b.score - a.score;
+        });
+      if (scored.length === 0) {
         return {
           success: false,
           error: 'No matching page found for: ' + query,
           available_pages: pages,
         };
       }
+      var top = scored.slice(0, 3);
       return {
         success: true,
-        path: bestPath,
-        content: content[bestPath].slice(0, 8000),
+        pages: top.map(function (p) {
+          return {
+            path: p.path,
+            content: content[p.path].slice(0, 4000),
+          };
+        }),
       };
     });
   }
@@ -187,20 +200,55 @@
   // --- Key management ---
   var STORAGE_KEY = 'ozwell_api_key';
 
-  function createKeySetupUI() {
-    if (document.getElementById('ozwell-setup-card')) return;
+  // Hide the widget button until the key is validated — prevents a broken
+  // button showing when the CDN loads with an empty/stale apiKey.
+  var hideStyle = document.createElement('style');
+  hideStyle.id = 'ozwell-hide-btn';
+  hideStyle.textContent = '.ozwell-chat-button{display:none!important;}';
+  document.head.appendChild(hideStyle);
+
+  function showWidgetButton() {
+    var s = document.getElementById('ozwell-hide-btn');
+    if (s) s.remove();
+  }
+
+  function createSetupBubble() {
+    if (document.getElementById('ozwell-setup-bubble')) return;
+
+    // Floating bubble — sits in the same bottom-right spot Schemie would occupy.
+    var bubble = document.createElement('button');
+    bubble.id = 'ozwell-setup-bubble';
+    bubble.title = 'Enable AI assistant';
+    bubble.style.cssText =
+      'position:fixed;bottom:20px;right:20px;z-index:9999;width:56px;height:56px;border-radius:50%;' +
+      'background:#2563eb;color:white;border:none;cursor:pointer;box-shadow:0 4px 14px rgba(37,99,235,.5);' +
+      'display:flex;align-items:center;justify-content:center;';
+    bubble.innerHTML =
+      "<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>" +
+      "<path stroke='none' d='M0 0h24v24H0z' fill='none'/>" +
+      "<path d='M3 3l18 18'/>" +
+      "<path d='M11 11a1 1 0 0 1 -1 -1m0 -3.968v-2.032a1 1 0 0 1 1 -1h9a1 1 0 0 1 1 1v10l-3 -3h-3'/>" +
+      "<path d='M14 15v2a1 1 0 0 1 -1 1h-7l-3 3v-10a1 1 0 0 1 1 -1h2'/>" +
+      '</svg>';
+
+    // Setup card — hidden until bubble is clicked.
     var card = document.createElement('div');
     card.id = 'ozwell-setup-card';
     card.style.cssText =
-      'position:fixed;bottom:20px;right:20px;z-index:9998;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;box-shadow:0 4px 16px rgba(0,0,0,.15);width:280px;font-family:system-ui,sans-serif;font-size:14px;';
+      'display:none;position:fixed;bottom:88px;right:20px;z-index:9998;background:#fff;' +
+      'border:1px solid #e5e7eb;border-radius:12px;padding:16px;box-shadow:0 4px 16px rgba(0,0,0,.15);' +
+      'width:280px;font-family:system-ui,sans-serif;font-size:14px;';
+
+    bubble.onclick = function () {
+      card.style.display = card.style.display === 'none' ? 'block' : 'none';
+    };
 
     var title = document.createElement('p');
     title.style.cssText = 'margin:0 0 6px;color:#111827;font-weight:600;';
     title.textContent = '🔑 AI Assistant setup';
 
     var desc = document.createElement('p');
-    desc.style.cssText =
-      'margin:0 0 10px;color:#6b7280;font-size:12px;line-height:1.4;';
+    desc.style.cssText = 'margin:0 0 10px;color:#6b7280;font-size:12px;line-height:1.4;';
     desc.textContent =
       'Enter your Ozwell parent API key (ozw_…) to enable the AI chat widget.';
 
@@ -210,40 +258,98 @@
     input.style.cssText =
       'width:100%;box-sizing:border-box;border:1px solid #d1d5db;border-radius:6px;padding:6px 10px;font-size:13px;margin-bottom:8px;outline:none;font-family:inherit;';
 
+    var errorMsg = document.createElement('p');
+    errorMsg.style.cssText = 'margin:0 0 8px;color:#ef4444;font-size:12px;display:none;';
+
     var btn = document.createElement('button');
     btn.textContent = 'Enable AI assistant';
     btn.style.cssText =
       'background:#2563eb;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:13px;cursor:pointer;width:100%;font-family:inherit;';
     btn.onclick = function () {
       var key = input.value.trim();
+      errorMsg.style.display = 'none';
+      input.style.borderColor = '#d1d5db';
+
       if (!key.startsWith('ozw_')) {
         input.style.borderColor = '#ef4444';
+        errorMsg.textContent = 'Key must start with ozw_';
+        errorMsg.style.display = 'block';
         return;
       }
-      localStorage.setItem(STORAGE_KEY, key);
-      location.reload();
+
+      btn.disabled = true;
+      btn.textContent = 'Validating…';
+
+      fetch('https://ozwellapi.os.mieweb.org/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + key,
+        },
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: 'hi' }],
+          max_tokens: 1,
+        }),
+      })
+        .then(function (res) {
+          if (res.status === 401 || res.status === 403) throw new Error('invalid');
+          sessionStorage.setItem(STORAGE_KEY, key);
+          location.reload();
+        })
+        .catch(function (err) {
+          btn.disabled = false;
+          btn.textContent = 'Enable AI assistant';
+          input.style.borderColor = '#ef4444';
+          errorMsg.textContent =
+            err.message === 'invalid'
+              ? 'Invalid API key — not authorized.'
+              : 'Could not reach Ozwell server. Check your connection.';
+          errorMsg.style.display = 'block';
+        });
     };
 
     card.appendChild(title);
     card.appendChild(desc);
     card.appendChild(input);
+    card.appendChild(errorMsg);
     card.appendChild(btn);
+    document.body.appendChild(bubble);
     document.body.appendChild(card);
   }
 
-  // Show setup card if no key is stored; skip loading the widget.
-  if (!localStorage.getItem(STORAGE_KEY)) {
-    // Prevent the CDN loader from being useful — config has empty apiKey already.
+  var storedKey = sessionStorage.getItem(STORAGE_KEY);
+  if (storedKey) {
+    // Validate stored key before revealing the widget button.
+    fetch('https://ozwellapi.os.mieweb.org/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + storedKey,
+      },
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: 'hi' }],
+        max_tokens: 1,
+      }),
+    })
+      .then(function (res) {
+        if (res.status === 401 || res.status === 403) throw new Error('invalid');
+        showWidgetButton();
+      })
+      .catch(function () {
+        sessionStorage.removeItem(STORAGE_KEY);
+        if (window.OzwellChatConfig) window.OzwellChatConfig.apiKey = '';
+        createSetupBubble();
+      });
+  } else {
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', createKeySetupUI);
+      document.addEventListener('DOMContentLoaded', createSetupBubble);
     } else {
-      createKeySetupUI();
+      createSetupBubble();
     }
   }
 
-  // ozwellResetKey() in browser console clears the stored key.
   window.ozwellResetKey = function () {
-    localStorage.removeItem(STORAGE_KEY);
+    sessionStorage.removeItem(STORAGE_KEY);
     location.reload();
   };
 })();
