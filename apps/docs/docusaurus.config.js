@@ -70,7 +70,7 @@ const config = {
             },
           },
         ],
-      })};_c.apiKey=localStorage.getItem('ozwell_api_key')||'';window.OzwellChatConfig=_c;})();`,
+      })};_c.apiKey=sessionStorage.getItem('ozwell_api_key')||'';window.OzwellChatConfig=_c;})();`,
       attributes: {},
     },
   ],
