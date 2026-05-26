@@ -215,7 +215,10 @@
 
   function setStoredKey(key) {
     var today = new Date().toISOString().slice(0, 10);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ key: key, date: today }));
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ key: key, date: today })
+    );
   }
 
   function clearStoredKey() {
