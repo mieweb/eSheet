@@ -44,7 +44,7 @@ import { EsheetBuilder } from '@esheet/builder';
 import type { FormDefinition } from '@esheet/core';
 
 const initialForm: FormDefinition = {
-  schemaType: 'mieforms-v1.0',
+  id: 'patient-intake',
   title: 'Patient Intake',
   description: 'Basic patient information form',
   fields: [
@@ -88,13 +88,14 @@ function App() {
 
 ## Props
 
-| Prop          | Type                            | Default     | Description                       |
-| ------------- | ------------------------------- | ----------- | --------------------------------- |
-| `definition`  | `FormDefinition`                | `undefined` | Initial form definition to load   |
-| `onChange`    | `(def: FormDefinition) => void` | --          | Called when the form changes      |
-| `dragEnabled` | `boolean`                       | `true`      | Enable drag-and-drop reordering   |
-| `className`   | `string`                        | `''`        | Additional CSS class              |
-| `children`    | `ReactNode`                     | --          | Content rendered below the header |
+| Prop                  | Type                            | Default     | Description                             |
+| --------------------- | ------------------------------- | ----------- | --------------------------------------- |
+| `definition`          | `FormDefinition`                | `undefined` | Initial form definition to load         |
+| `onChange`            | `(def: FormDefinition) => void` | --          | Called when the form changes            |
+| `dragEnabled`         | `boolean`                       | `true`      | Enable drag-and-drop reordering         |
+| `className`           | `string`                        | `''`        | Additional CSS class                    |
+| `children`            | `ReactNode`                     | --          | Content rendered below the header       |
+| `onBuilderToolsReady` | `(handler) => void`             | --          | Called with MCP tool handler when ready |
 
 ## Builder Modes
 

@@ -21,16 +21,18 @@ function MyForm() {
   const ref = useRef<EsheetRendererHandle>(null);
 
   const handleSubmit = () => {
-    const responses = ref.current?.getResponse();
-    if (!responses) return;
-
-    // responses is Record<string, FieldResponse>
-    console.log(responses);
+    const result = ref.current?.getValidResponse();
+    if (!result) return;
+    if (result.errors.length > 0) {
+      console.log('Validation errors:', result.errors);
+      return;
+    }
+    console.log('Valid responses:', result.response);
   };
 
   return (
     <>
-      <EsheetRenderer ref={ref} formData={myForm} />
+      <EsheetRenderer ref={ref} formDataInput={myForm} />
       <button onClick={handleSubmit}>Submit</button>
     </>
   );
@@ -98,7 +100,7 @@ const existingResponses = {
 
 <EsheetRenderer
   ref={ref}
-  formData={myForm}
+  formDataInput={myForm}
   initialResponses={existingResponses}
 />;
 ```
@@ -147,5 +149,5 @@ const isRequired = state.isRequired('field_id');
 ```
 
 :::warning
-Direct store access is an advanced API. The store's internal structure may change between versions. Prefer using `getResponse()` for standard response collection.
+Direct store access is an advanced API. The store's internal structure may change between versions. Prefer using `getRawResponse()` (or `getValidResponse()` for validated submission) for standard response collection.
 :::

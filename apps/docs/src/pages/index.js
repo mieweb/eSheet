@@ -4,21 +4,138 @@ import Layout from '@theme/Layout';
 
 const features = [
   {
+    icon: '🔧',
     title: 'Visual Builder',
     description:
       'Drag and drop field authoring with logic controls, schema editing, and live preview in one flow.',
   },
   {
+    icon: '⚡',
     title: 'Runtime Renderer',
     description:
       'Render dynamic forms with conditional interactions and response capture for production workflows.',
   },
   {
+    icon: '🧩',
     title: 'Extensible Core',
     description:
       'Compose package layers with a TypeScript core and React UI packages for custom field ecosystems.',
   },
 ];
+
+// ─── Shared primitives ───────────────────────────────────────────────────────
+
+function SectionLabel({ children }) {
+  return (
+    <p className="m-0 text-xs font-bold uppercase tracking-[0.14em] text-blue-600 dark:text-blue-400">
+      {children}
+    </p>
+  );
+}
+
+function SectionHeading({ children }) {
+  return (
+    <h2 className="m-0 mt-2 text-3xl font-black tracking-tight text-slate-900 dark:text-slate-50 sm:text-4xl">
+      {children}
+    </h2>
+  );
+}
+
+function SectionSubtext({ children }) {
+  return (
+    <p className="mt-4 max-w-2xl text-base leading-relaxed text-slate-600 dark:text-slate-400">
+      {children}
+    </p>
+  );
+}
+
+// ─── Hero code mockup ─────────────────────────────────────────────────────────
+
+function WindowChrome({ label }) {
+  return (
+    <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-4 py-2.5 dark:border-white/8 dark:bg-[#111113]">
+      <span className="h-2.5 w-2.5 rounded-full bg-red-400/80" />
+      <span className="h-2.5 w-2.5 rounded-full bg-amber-400/80" />
+      <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/80" />
+      <span className="ml-2 text-[11px] font-medium text-slate-400 dark:text-slate-500">
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function CodeMockup() {
+  return (
+    <div className="flex flex-col gap-3 lg:max-w-none">
+      {/* Schema window */}
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-md dark:border-white/10 dark:bg-[#2a2a2d]">
+        <WindowChrome label="esheet-schema.json" />
+        <pre className="m-0 overflow-x-auto bg-transparent p-4 text-[12.5px] leading-[1.7]">
+          <code className="font-mono text-slate-600 dark:text-slate-300">
+            {`{
+  "fields": [
+    {
+      "type": "text",
+      "label": "Full Name",
+      "required": true
+    },
+    {
+      "type": "radio",
+      "label": "Status",
+      "options": ["Active", "Inactive"]
+    }
+  ]
+}`}
+          </code>
+        </pre>
+      </div>
+
+      {/* Connector */}
+      <div className="flex items-center gap-3 px-1">
+        <div className="h-px flex-1 bg-slate-200 dark:bg-white/10" />
+        <code className="rounded-md border border-blue-200 bg-blue-50 px-3 py-1 text-[11px] font-semibold text-blue-700 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300">
+          {'<EsheetRenderer />'}
+        </code>
+        <div className="h-px flex-1 bg-slate-200 dark:bg-white/10" />
+      </div>
+
+      {/* Preview window */}
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-md dark:border-white/10 dark:bg-[#2a2a2d]">
+        <WindowChrome label="Preview" />
+        <div className="flex flex-col gap-4 p-4">
+          <div>
+            <p className="m-0 mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+              Full Name <span className="text-red-400">*</span>
+            </p>
+            <div className="h-8 w-full rounded-md border border-slate-200 bg-slate-50 dark:border-white/10 dark:bg-[#1b1b1d]" />
+          </div>
+          <div>
+            <p className="m-0 mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+              Status
+            </p>
+            <div className="flex gap-5">
+              <span className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+                <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border-2 border-blue-600 dark:border-blue-400">
+                  <span className="h-1.5 w-1.5 rounded-full bg-blue-600 dark:bg-blue-400" />
+                </span>
+                Active
+              </span>
+              <span className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
+                <span className="h-3.5 w-3.5 shrink-0 rounded-full border-2 border-slate-300 dark:border-slate-600" />
+                Inactive
+              </span>
+            </div>
+          </div>
+          <div className="flex justify-end border-t border-slate-100 pt-3 dark:border-white/5">
+            <span className="rounded-md bg-blue-600 px-4 py-1.5 text-[11px] font-semibold text-white dark:bg-blue-500">
+              Submit
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const quickStarts = [
   {
@@ -81,6 +198,13 @@ const packages = [
     url: 'https://www.npmjs.com/package/@esheet/fields',
   },
   {
+    name: '@esheet/adapters',
+    type: 'Adapters',
+    summary:
+      'Bidirectional converters between eSheet schemas and SurveyJS, MCP, and other formats.',
+    url: 'https://www.npmjs.com/package/@esheet/adapters',
+  },
+  {
     name: '@esheet/renderer-blaze',
     type: 'Runtime',
     summary: 'Blaze template runtime package for form rendering.',
@@ -130,285 +254,109 @@ function resolveDemoUrl(siteConfig) {
   return siteConfig.customFields?.demoUrl || '/demo/';
 }
 
+// ─── Sections ────────────────────────────────────────────────────────────────
+
 function HomepageHeader() {
   const { siteConfig } = useDocusaurusContext();
   const demoUrl = resolveDemoUrl(siteConfig);
   return (
-    <header className="relative overflow-hidden bg-gradient-to-b from-sky-50 via-blue-50 to-white text-slate-900 dark:from-sky-50 dark:via-blue-50 dark:to-white dark:text-slate-900">
-      <div className="pointer-events-none absolute inset-0 opacity-60">
-        <div className="absolute -left-24 top-12 h-64 w-64 rounded-full bg-blue-400/20 blur-3xl" />
-        <div className="absolute right-0 top-0 h-72 w-72 rounded-full bg-sky-300/20 blur-3xl" />
-        <div className="absolute bottom-8 right-24 h-40 w-40 rounded-full bg-indigo-300/15 blur-2xl" />
-      </div>
-
-      <div className="relative mx-auto max-w-6xl px-5 pb-16 pt-16 md:pt-20 lg:pb-20">
-        <div className="grid items-end gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+    <header className="bg-white pb-20 pt-16 dark:bg-[#1b1b1d]">
+      <div className="mx-auto max-w-6xl px-6">
+        <div className="grid items-center gap-14 lg:grid-cols-2">
+          {/* Left: content */}
           <div>
-            <p className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-blue-700 dark:text-blue-700">
-              Documentation
+            <p className="m-0 mb-3 text-xs font-bold uppercase tracking-[0.15em] text-blue-600 dark:text-blue-400">
+              Open Source · TypeScript · React
             </p>
-            <h1 className="m-0 text-5xl font-black leading-[0.95] tracking-[-0.04em] text-slate-950 dark:text-slate-950 sm:text-6xl lg:text-7xl">
+            <h1 className="m-0 text-5xl font-black leading-[1.05] tracking-[-0.04em] text-slate-900 dark:text-slate-50 sm:text-6xl">
               {siteConfig.title}
             </h1>
-            <p className="mt-4 max-w-xl text-xl leading-snug text-slate-700 dark:text-slate-700">
+            <p className="mt-5 text-xl leading-relaxed text-slate-600 dark:text-slate-400">
               {siteConfig.tagline}
             </p>
-            <p className="mt-4 max-w-2xl text-base leading-relaxed text-slate-600 dark:text-slate-600">
-              Build schema-driven forms with modular packages for authoring and
-              runtime rendering.
+            <p className="mt-3 max-w-lg text-base leading-relaxed text-slate-500 dark:text-slate-500">
+              Build schema-driven forms with modular packages for visual
+              authoring and runtime rendering.
             </p>
 
-            <div className="mt-7 flex flex-wrap gap-3">
+            <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link
-                className="inline-flex items-center rounded-full bg-blue-700 px-7 py-3 text-base font-bold text-white no-underline shadow-[0_12px_28px_rgba(29,78,216,0.35)] transition hover:-translate-y-0.5 hover:bg-blue-800 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white no-underline shadow-sm transition hover:-translate-y-px hover:bg-blue-700 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 dark:bg-blue-500 dark:hover:bg-blue-400"
                 to="/docs/intro"
               >
-                Get Started
+                Get Started{' '}
+                <span aria-hidden="true" className="opacity-70">
+                  →
+                </span>
               </Link>
               <a
-                className="inline-flex items-center rounded-full border border-blue-600/60 bg-blue-100/70 px-7 py-3 text-base font-bold text-blue-800 no-underline backdrop-blur transition hover:-translate-y-0.5 hover:bg-blue-200/80 hover:text-blue-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 dark:border-blue-600/60 dark:bg-blue-100/70 dark:text-blue-800 dark:hover:bg-blue-200/80"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 no-underline shadow-sm transition hover:-translate-y-px hover:border-slate-300 hover:text-slate-900 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:border-white/20 dark:hover:bg-white/8 dark:hover:text-slate-100"
                 href={demoUrl}
               >
                 Live Demo
               </a>
             </div>
 
-            <a
-              className="mt-5 inline-block font-semibold text-blue-700 no-underline transition hover:text-blue-800 hover:underline dark:text-blue-700 dark:hover:text-blue-800"
-              href="#docs-packages"
-            >
-              Explore Packages
-            </a>
-
-            <dl className="mt-8 grid gap-3 sm:grid-cols-3">
+            {/* Package trio */}
+            <div className="mt-10 grid grid-cols-3 divide-x divide-slate-200 overflow-hidden rounded-xl border border-slate-200 dark:divide-white/10 dark:border-white/10">
               {[
-                { value: 'Builder', label: 'authoring surface' },
+                { value: 'Builder', label: 'visual authoring' },
                 { value: 'Renderer', label: 'runtime delivery' },
-                { value: 'Core', label: 'shared schema model' },
+                { value: 'Core', label: 'shared schema' },
               ].map((entry) => (
                 <div
                   key={entry.value}
-                  className="rounded-2xl border border-blue-300/50 bg-white/70 p-4 backdrop-blur dark:border-blue-300/50 dark:bg-white/70"
+                  className="bg-slate-50 px-4 py-3 dark:bg-white/5"
                 >
-                  <dt className="text-sm font-bold text-slate-900 dark:text-slate-900">
+                  <p className="m-0 text-sm font-bold text-slate-800 dark:text-slate-100">
                     {entry.value}
-                  </dt>
-                  <dd className="mt-1 text-xs text-slate-600 dark:text-slate-600">
+                  </p>
+                  <p className="m-0 mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                     {entry.label}
-                  </dd>
+                  </p>
                 </div>
               ))}
-            </dl>
-          </div>
-
-          <div className="relative min-h-[24rem]">
-            <div className="absolute left-0 top-4 w-[78%] rounded-3xl border border-blue-300/60 bg-white/75 p-5 shadow-xl backdrop-blur dark:border-blue-300/60 dark:bg-white/75">
-              <p className="text-xs font-bold uppercase tracking-[0.1em] text-blue-700 dark:text-blue-700">
-                System Flow
-              </p>
-              <div className="mt-3 grid gap-2">
-                {['authoring', 'schema', 'runtime'].map((item) => (
-                  <span
-                    key={item}
-                    className="inline-flex w-fit min-w-36 items-center rounded-full bg-blue-100/90 px-4 py-2 text-sm font-semibold text-slate-900 dark:bg-blue-100/90 dark:text-slate-900"
-                  >
-                    {item}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div className="absolute right-0 top-24 w-[82%] rounded-3xl border border-blue-300/60 bg-white/80 p-5 shadow-xl backdrop-blur dark:border-blue-300/60 dark:bg-white/80">
-              <p className="text-xs font-bold uppercase tracking-[0.1em] text-blue-700 dark:text-blue-700">
-                Package Map
-              </p>
-              <pre className="mt-3 overflow-x-auto rounded-xl bg-slate-100/90 p-3 text-sm leading-7 text-slate-700 dark:bg-slate-100/90 dark:text-slate-700">
-                <code>
-                  {
-                    'schema -> builder -> renderer\nlogic -> response -> export\nmodular packages -> practical docs'
-                  }
-                </code>
-              </pre>
-            </div>
-
-            <div className="absolute bottom-0 left-6 w-[72%] rounded-3xl border border-blue-300/60 bg-gradient-to-br from-blue-100/80 to-sky-100/70 p-5 shadow-xl backdrop-blur dark:border-blue-300/60 dark:from-blue-100/80 dark:to-sky-100/70 dark:bg-transparent">
-              <p className="text-xs font-bold uppercase tracking-[0.1em] text-blue-700 dark:text-blue-700">
-                Focus
-              </p>
-              <p className="mt-3 text-sm leading-relaxed text-slate-700 dark:text-slate-700">
-                Builder and renderer lead the path, while supporting packages
-                stay visible as implementation detail.
-              </p>
             </div>
           </div>
+
+          {/* Right: code mockup */}
+          <CodeMockup />
         </div>
       </div>
     </header>
   );
 }
 
-function Feature({ title, description }) {
-  return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-lg dark:border-slate-200 dark:bg-white">
-      <h3 className="m-0 text-lg font-bold text-slate-900 dark:text-slate-900">
-        {title}
-      </h3>
-      <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-600">
-        {description}
-      </p>
-    </article>
-  );
-}
-
-function QuickStartSection() {
-  return (
-    <section className="bg-white py-14 dark:bg-white">
-      <div className="mx-auto max-w-6xl px-5">
-        <p className="text-xs font-bold uppercase tracking-[0.12em] text-blue-700 dark:text-blue-700">
-          Install
-        </p>
-        <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-900 dark:text-slate-900">
-          Quick Start
-        </h2>
-        <p className="mt-3 max-w-2xl text-slate-600 dark:text-slate-600">
-          Start with builder and renderer first, then add runtime variants when
-          needed.
-        </p>
-
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
-          {quickStarts.map((entry, index) => (
-            <Link
-              key={entry.title}
-              to={entry.href}
-              className={`group relative block rounded-2xl border p-5 no-underline transition hover:-translate-y-0.5 hover:shadow-lg ${
-                index < 2
-                  ? 'border-blue-300 bg-gradient-to-br from-blue-50 to-white dark:border-blue-300 dark:from-blue-50 dark:to-white'
-                  : 'border-slate-200 bg-slate-50 dark:border-slate-200 dark:bg-slate-50'
-              }`}
-            >
-              <p className="m-0 text-xs font-bold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-500">
-                {entry.level}
-              </p>
-              <h3 className="mt-2 text-lg font-bold text-slate-900 dark:text-slate-900">
-                {entry.title}
-              </h3>
-              <pre className="mt-3 overflow-x-auto rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 dark:border-slate-200 dark:bg-white dark:text-slate-700">
-                <code>{entry.install}</code>
-              </pre>
-              <p className="mt-3 text-sm text-slate-600 dark:text-slate-600">
-                {entry.description}
-              </p>
-              <span className="absolute right-4 top-4 text-blue-700 opacity-0 transition group-hover:translate-x-0.5 group-hover:opacity-100 dark:text-blue-700">
-                →
-              </span>
-            </Link>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function HomepageFeatures() {
   return (
-    <section className="bg-slate-50 py-14 dark:bg-slate-50">
-      <div className="mx-auto max-w-6xl px-5">
-        <p className="text-xs font-bold uppercase tracking-[0.12em] text-blue-700 dark:text-blue-700">
-          Overview
-        </p>
-        <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-900 dark:text-slate-900">
-          Key Features
-        </h2>
-        <p className="mt-3 max-w-2xl text-slate-600 dark:text-slate-600">
-          Everything needed to design, integrate, and run forms in modern app
-          flows.
-        </p>
-        <div className="mt-6 grid gap-4 md:grid-cols-3">
-          {features.map((props) => (
-            <Feature key={props.title} {...props} />
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
+    <section className="bg-slate-50 py-16 dark:bg-[#242526]">
+      <div className="mx-auto max-w-6xl px-6">
+        <SectionLabel>Overview</SectionLabel>
+        <SectionHeading>Key Features</SectionHeading>
+        <SectionSubtext>
+          Everything needed to design, integrate, and run forms in modern
+          application workflows.
+        </SectionSubtext>
 
-function PackagesSection() {
-  return (
-    <section id="docs-packages" className="bg-white py-14 dark:bg-white">
-      <div className="mx-auto max-w-6xl px-5">
-        <p className="text-xs font-bold uppercase tracking-[0.12em] text-blue-700 dark:text-blue-700">
-          Modules
-        </p>
-        <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-900 dark:text-slate-900">
-          NPM Packages
-        </h2>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {packages.map((entry) => (
-            <a
-              key={entry.name}
-              href={entry.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group rounded-2xl border border-slate-200 bg-white p-5 no-underline transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-lg dark:border-slate-200 dark:bg-white"
-            >
-              <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-500 group-hover:text-blue-700">
-                {entry.type}
-              </p>
-              <h3 className="mt-2 text-base font-bold text-slate-900 group-hover:text-blue-700 dark:text-slate-900">
-                {entry.name}
-              </h3>
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-600">
-                {entry.summary}
-              </p>
-              <span className="mt-3 inline-flex items-center font-semibold text-blue-700 opacity-0 transition group-hover:translate-x-0.5 group-hover:opacity-100 dark:text-blue-700">
-                View on npm →
-              </span>
-            </a>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ResourcesSection() {
-  return (
-    <section className="bg-slate-50 py-14 dark:bg-slate-50">
-      <div className="mx-auto max-w-6xl px-5">
-        <p className="text-xs font-bold uppercase tracking-[0.12em] text-blue-700 dark:text-blue-700">
-          Learn More
-        </p>
-        <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-900 dark:text-slate-900">
-          Resources
-        </h2>
-        <div className="mt-6 grid gap-4 md:grid-cols-3">
-          {resources.map((resource) => (
+        <div className="mt-8 grid gap-4 md:grid-cols-3">
+          {features.map((feature) => (
             <article
-              key={resource.label}
-              className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-200 dark:bg-white"
+              key={feature.title}
+              className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md dark:border-white/10 dark:bg-[#2a2a2d] dark:hover:border-blue-500/20"
             >
-              <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-500">
-                {resource.type}
-              </p>
-              <h3 className="mt-2 text-base font-bold text-slate-900 dark:text-slate-900">
-                {resource.label}
+              <span
+                className="text-2xl leading-none"
+                role="img"
+                aria-hidden="true"
+              >
+                {feature.icon}
+              </span>
+              <h3 className="m-0 text-base font-bold text-slate-900 dark:text-slate-100">
+                {feature.title}
               </h3>
-              {isExternalLink(resource.href) ? (
-                <a
-                  href={resource.href}
-                  className="mt-3 inline-block font-semibold text-blue-700 no-underline hover:underline dark:text-blue-700"
-                >
-                  Open Resource
-                </a>
-              ) : (
-                <Link
-                  to={resource.href}
-                  className="mt-3 inline-block font-semibold text-blue-700 no-underline hover:underline dark:text-blue-700"
-                >
-                  Open Resource
-                </Link>
-              )}
+              <p className="m-0 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                {feature.description}
+              </p>
             </article>
           ))}
         </div>
@@ -421,44 +369,72 @@ function TryLiveSection() {
   const { siteConfig } = useDocusaurusContext();
   const demoUrl = resolveDemoUrl(siteConfig);
   return (
-    <section className="bg-slate-50 py-14 dark:bg-slate-50">
-      <div className="mx-auto max-w-6xl px-5">
-        <div className="grid gap-6 rounded-3xl border border-blue-300/60 bg-gradient-to-br from-white to-blue-50 p-7 shadow-lg dark:border-blue-300/60 dark:from-white dark:to-blue-50 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.12em] text-blue-700 dark:text-blue-700">
-              Experience
-            </p>
-            <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-900 dark:text-slate-900">
-              Try It Live
-            </h2>
-            <p className="mt-3 max-w-2xl text-slate-600 dark:text-slate-600">
-              Open the live demo to test schema rendering, conditional behavior,
-              and response flow.
-            </p>
-            <a
-              className="mt-6 inline-flex items-center rounded-full bg-blue-700 px-7 py-3 text-base font-bold text-white no-underline shadow-[0_12px_28px_rgba(29,78,216,0.35)] transition hover:-translate-y-0.5 hover:bg-blue-800 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
-              href={demoUrl}
-            >
-              Try Live Demo
-            </a>
-          </div>
+    <section className="bg-white py-16 dark:bg-[#1b1b1d]">
+      <div className="mx-auto max-w-6xl px-6">
+        <div className="overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-slate-50 dark:border-blue-500/15 dark:from-blue-500/8 dark:to-transparent dark:bg-[#242526]">
+          <div className="grid gap-8 p-8 lg:grid-cols-[1fr_auto] lg:items-center lg:p-10">
+            <div>
+              <SectionLabel>Experience</SectionLabel>
+              <SectionHeading>Try It Live</SectionHeading>
+              <SectionSubtext>
+                Open the live demo to test schema rendering, conditional
+                behavior, and response flow without any setup.
+              </SectionSubtext>
 
-          <div className="grid gap-4">
-            <div className="min-h-[9rem] rounded-2xl border border-blue-300/60 bg-white/70 p-5 backdrop-blur dark:border-blue-300/60 dark:bg-white/70">
-              <strong className="text-base text-slate-900 dark:text-slate-900">
-                Build
-              </strong>
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-600">
-                Author visually, refine in code.
-              </p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <a
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white no-underline shadow-sm transition hover:-translate-y-px hover:bg-blue-700 hover:text-white dark:bg-blue-500 dark:hover:bg-blue-400"
+                  href={demoUrl}
+                >
+                  Open Live Demo{' '}
+                  <span aria-hidden="true" className="opacity-70">
+                    →
+                  </span>
+                </a>
+                <Link
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-white px-6 py-3 text-sm font-semibold text-blue-700 no-underline shadow-sm transition hover:-translate-y-px hover:border-blue-300 hover:text-blue-800 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/15 dark:hover:text-blue-200"
+                  to="/docs/intro"
+                >
+                  Read the Docs
+                </Link>
+              </div>
             </div>
-            <div className="min-h-[9rem] rounded-2xl border border-blue-300/60 bg-white/70 p-5 backdrop-blur dark:border-blue-300/60 dark:bg-white/70">
-              <strong className="text-base text-slate-900 dark:text-slate-900">
-                Render
-              </strong>
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-600">
-                Run conditional flows with response capture.
-              </p>
+
+            <div className="flex flex-col gap-3 lg:min-w-56">
+              {[
+                {
+                  step: '01',
+                  label: 'Author',
+                  desc: 'Build visually or in code',
+                },
+                {
+                  step: '02',
+                  label: 'Preview',
+                  desc: 'Test conditions live',
+                },
+                {
+                  step: '03',
+                  label: 'Collect',
+                  desc: 'Capture form responses',
+                },
+              ].map((item) => (
+                <div
+                  key={item.step}
+                  className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-white/10 dark:bg-[#2a2a2d]"
+                >
+                  <span className="text-xs font-bold tabular-nums text-blue-600 dark:text-blue-400">
+                    {item.step}
+                  </span>
+                  <div>
+                    <p className="m-0 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      {item.label}
+                    </p>
+                    <p className="m-0 text-xs text-slate-500 dark:text-slate-400">
+                      {item.desc}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -466,6 +442,191 @@ function TryLiveSection() {
     </section>
   );
 }
+
+function QuickStartSection() {
+  return (
+    <section className="bg-slate-50 py-16 dark:bg-[#242526]">
+      <div className="mx-auto max-w-6xl px-6">
+        <SectionLabel>Install</SectionLabel>
+        <SectionHeading>Quick Start</SectionHeading>
+        <SectionSubtext>
+          Start with builder and renderer first, then add runtime variants when
+          needed.
+        </SectionSubtext>
+
+        <div className="mt-8 grid gap-4 md:grid-cols-2">
+          {quickStarts.map((entry, index) => (
+            <Link
+              key={entry.title}
+              to={entry.href}
+              className={`group flex flex-col gap-3 rounded-xl border p-5 no-underline transition hover:-translate-y-0.5 hover:shadow-md ${
+                index < 2
+                  ? 'border-blue-200 bg-white hover:border-blue-400 dark:border-blue-500/20 dark:bg-[#2a2a2d] dark:hover:border-blue-500/40'
+                  : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/10 dark:bg-[#2a2a2d] dark:hover:border-white/20'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span
+                  className={`text-[10px] font-bold uppercase tracking-[0.12em] ${
+                    index < 2
+                      ? 'text-blue-600 dark:text-blue-400'
+                      : 'text-slate-400 dark:text-slate-500'
+                  }`}
+                >
+                  {entry.level}
+                </span>
+                <span className="text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-blue-600 dark:text-slate-600 dark:group-hover:text-blue-400">
+                  →
+                </span>
+              </div>
+
+              <h3 className="m-0 font-mono text-base font-bold text-slate-900 dark:text-slate-100">
+                {entry.title}
+              </h3>
+
+              <pre className="m-0 overflow-x-auto rounded-lg border border-slate-100 bg-slate-50 px-3 py-2.5 text-[12px] leading-none dark:border-white/8 dark:bg-[#1b1b1d]">
+                <code className="font-mono text-slate-600 dark:text-slate-300">
+                  {entry.install}
+                </code>
+              </pre>
+
+              <p className="m-0 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+                {entry.description}
+              </p>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function PackagesSection() {
+  const typeColors = {
+    Foundation:
+      'text-violet-700 bg-violet-50 dark:text-violet-300 dark:bg-violet-500/10',
+    Authoring:
+      'text-blue-700 bg-blue-50 dark:text-blue-300 dark:bg-blue-500/10',
+    Runtime:
+      'text-emerald-700 bg-emerald-50 dark:text-emerald-300 dark:bg-emerald-500/10',
+    'Field Layer':
+      'text-amber-700 bg-amber-50 dark:text-amber-300 dark:bg-amber-500/10',
+  };
+
+  return (
+    <section id="docs-packages" className="bg-white py-16 dark:bg-[#1b1b1d]">
+      <div className="mx-auto max-w-6xl px-6">
+        <SectionLabel>Modules</SectionLabel>
+        <SectionHeading>NPM Packages</SectionHeading>
+        <SectionSubtext>
+          Each package is independently installable and serves a distinct role
+          in the ecosystem.
+        </SectionSubtext>
+
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {packages.map((entry) => (
+            <a
+              key={entry.name}
+              href={entry.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-5 no-underline shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-white/10 dark:bg-[#2a2a2d] dark:hover:border-white/20"
+            >
+              <div className="flex items-center justify-between">
+                <span
+                  className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                    typeColors[entry.type] ??
+                    'text-slate-600 bg-slate-100 dark:text-slate-400 dark:bg-white/10'
+                  }`}
+                >
+                  {entry.type}
+                </span>
+                <span className="text-[11px] font-semibold text-blue-600 opacity-0 transition group-hover:translate-x-0.5 group-hover:opacity-100 dark:text-blue-400">
+                  npm →
+                </span>
+              </div>
+
+              <h3 className="m-0 font-mono text-sm font-bold text-slate-900 dark:text-slate-100">
+                {entry.name}
+              </h3>
+
+              <p className="m-0 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+                {entry.summary}
+              </p>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ResourcesSection() {
+  const typeColors = {
+    Community:
+      'text-blue-700 bg-blue-50 dark:text-blue-300 dark:bg-blue-500/10',
+    Docs: 'text-slate-700 bg-slate-100 dark:text-slate-300 dark:bg-white/8',
+  };
+
+  return (
+    <section className="bg-slate-50 py-16 dark:bg-[#242526]">
+      <div className="mx-auto max-w-6xl px-6">
+        <SectionLabel>Learn More</SectionLabel>
+        <SectionHeading>Resources</SectionHeading>
+        <SectionSubtext>
+          Documentation, community links, and quick references to get you
+          moving.
+        </SectionSubtext>
+
+        <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {resources.map((resource) => (
+            <article
+              key={resource.label}
+              className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-[#2a2a2d]"
+            >
+              <span
+                className={`w-fit rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                  typeColors[resource.type] ??
+                  'text-slate-600 bg-slate-100 dark:text-slate-400 dark:bg-white/10'
+                }`}
+              >
+                {resource.type}
+              </span>
+              <h3 className="m-0 text-sm font-bold text-slate-900 dark:text-slate-100">
+                {resource.label}
+              </h3>
+              {isExternalLink(resource.href) ? (
+                <a
+                  href={resource.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-sm font-semibold text-blue-600 no-underline transition hover:text-blue-700 hover:underline dark:text-blue-400 dark:hover:text-blue-300"
+                >
+                  Open{' '}
+                  <span aria-hidden="true" className="text-xs opacity-60">
+                    ↗
+                  </span>
+                </a>
+              ) : (
+                <Link
+                  to={resource.href}
+                  className="inline-flex items-center gap-1 text-sm font-semibold text-blue-600 no-underline transition hover:text-blue-700 hover:underline dark:text-blue-400 dark:hover:text-blue-300"
+                >
+                  Read{' '}
+                  <span aria-hidden="true" className="text-xs opacity-60">
+                    →
+                  </span>
+                </Link>
+              )}
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function Home() {
   const { siteConfig } = useDocusaurusContext();

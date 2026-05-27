@@ -66,6 +66,11 @@ body {
   @apply bg-neutral-50 text-neutral-800 dark:bg-neutral-900 dark:text-neutral-100;
 }
 
+/* Invert logo SVG in dark mode */
+[data-theme='dark'] .demo-navbar img[alt='eSheet logo'] {
+  filter: invert(1);
+}
+
 /* Override Chrome autofill background in dark mode */
 [data-theme='dark'] input:-webkit-autofill,
 [data-theme='dark'] input:-webkit-autofill:hover,

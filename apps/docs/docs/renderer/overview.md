@@ -31,13 +31,18 @@ function SurveyPage() {
   const ref = useRef<EsheetRendererHandle>(null);
 
   const handleSubmit = () => {
-    const responses = ref.current?.getResponse();
-    // Send responses to your API
+    const result = ref.current?.getValidResponse();
+    if (!result) return;
+    if (result.errors.length > 0) {
+      // show errors to user
+      return;
+    }
+    // Send result.response to your API
   };
 
   return (
     <div>
-      <EsheetRenderer ref={ref} formData={formDefinition} />
+      <EsheetRenderer ref={ref} formDataInput={formDefinition} />
       <button onClick={handleSubmit}>Submit</button>
     </div>
   );
@@ -48,18 +53,19 @@ function SurveyPage() {
 
 | Prop               | Type                        | Default    | Description                                                         |
 | ------------------ | --------------------------- | ---------- | ------------------------------------------------------------------- |
-| `formData`         | `FormDefinition \| string`  | _required_ | Form definition as a JavaScript object, JSON string, or YAML string |
+| `formDataInput`    | `FormDefinition \| string`  | _required_ | Form definition as a JavaScript object, JSON string, or YAML string |
 | `className`        | `string`                    | `''`       | Additional CSS class for the root container                         |
 | `initialResponses` | `FormResponse`              | --         | Pre-fill the form with existing response data                       |
 | `ref`              | `Ref<EsheetRendererHandle>` | --         | Imperative handle for accessing responses and stores                |
 
 ## Ref API (`EsheetRendererHandle`)
 
-| Method           | Returns        | Description                                    |
-| ---------------- | -------------- | ---------------------------------------------- |
-| `getResponse()`  | `FormResponse` | Get current response values for all fields     |
-| `getFormStore()` | `FormStore`    | Get the underlying form state store (advanced) |
-| `getUIStore()`   | `UIStore`      | Get the underlying UI state store (advanced)   |
+| Method               | Returns                                                         | Description                                    |
+| -------------------- | --------------------------------------------------------------- | ---------------------------------------------- |
+| `getRawResponse()`   | `FormResponse`                                                  | Get current response values for all fields     |
+| `getValidResponse()` | `{ response: FormResponse \| null, errors: ValidationError[] }` | Validate + get responses                       |
+| `getFormStore()`     | `FormStore`                                                     | Get the underlying form state store (advanced) |
+| `getUIStore()`       | `UIStore`                                                       | Get the underlying UI state store (advanced)   |
 
 ## Features
 
@@ -77,13 +83,13 @@ The `formData` prop accepts three formats:
 
 ```tsx
 // 1. JavaScript object
-<EsheetRenderer formData={formDefinitionObject} />
+<EsheetRenderer formDataInput={formDefinitionObject} />
 
 // 2. JSON string
-<EsheetRenderer formData='{"schemaType":"mieforms-v1.0","fields":[...]}' />
+<EsheetRenderer formDataInput='{"id":"my-form","fields":[...]}' />
 
 // 3. YAML string
-<EsheetRenderer formData={yamlString} />
+<EsheetRenderer formDataInput={yamlString} />
 ```
 
 The renderer auto-detects the format and parses accordingly.

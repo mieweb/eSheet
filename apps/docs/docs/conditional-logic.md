@@ -102,6 +102,82 @@ Access a specific property of the target field's response before comparing:
 }
 ```
 
+## Expression Syntax Reference
+
+Expression conditions (`conditionType: 'expression'`) support a JavaScript-like syntax for complex logic.
+
+### Field References
+
+Use `{fieldId}` to reference a field's answer value:
+
+```json
+{
+  "conditionType": "expression",
+  "expression": "{weight} > 100"
+}
+```
+
+### Property Accessors in Expressions
+
+Access properties on field values:
+
+- `{fieldId}.length` — Length of text or array
+- `{fieldId}.count` — Number of selected items (alias for length)
+
+```json
+{
+  "conditionType": "expression",
+  "expression": "{symptoms}.length >= 3"
+}
+```
+
+### Supported Operators
+
+| Category        | Operators                        | Example                            |
+| --------------- | -------------------------------- | ---------------------------------- |
+| Comparison      | `==`, `!=`, `>`, `>=`, `<`, `<=` | `{age} >= 18`                      |
+| Strict equality | `===`, `!==`                     | `{status} === "active"`            |
+| Logical         | `&&`, `\|\|`                     | `{a} > 0 && {b} > 0`               |
+| Negation        | `!`                              | `!{hasAllergies}`                  |
+| Arithmetic      | `+`, `-`, `*`, `/`, `%`          | `{weight} / ({height} * {height})` |
+| Grouping        | `()`                             | `({a} + {b}) * 2`                  |
+
+### Literal Values
+
+- Numbers: `123`, `3.14`, `-5`
+- Strings: `"text"` or `'text'`
+- Booleans: `true`, `false`
+- Null: `null`
+
+### Complex Expression Examples
+
+**BMI calculation check:**
+
+```json
+{
+  "conditionType": "expression",
+  "expression": "{weight} / (({height}/100) * ({height}/100)) > 25"
+}
+```
+
+**Multiple field check:**
+
+```json
+{
+  "conditionType": "expression",
+  "expression": "{field1} > 0 && {field2} > 0 && {field3} != null"
+}
+```
+
+**String comparison:**
+
+```json
+{
+  "conditionType": "expression",
+  "expression": "{status} == 'approved' || {override} == true"
+}
+```
+
 ## Examples
 
 ### Show a field when a specific option is selected

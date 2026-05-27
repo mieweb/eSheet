@@ -64,5 +64,5 @@ export {
   getRegisteredComponentKeys,
   registerFieldComponents,
   registerCustomFieldTypes,
-  resetComponentRegistry,
+  // NOTE: resetComponentRegistry intentionally not exported - internal/test-only
 } from './lib/component-registry.js';
