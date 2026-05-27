@@ -18,7 +18,6 @@ export {
   fieldDefinitionSchema,
   formDefinitionSchema,
   formDefinitionJSONSchema,
-  normalizeFormDefinition,
 
   // Types
   type FieldType,
@@ -73,8 +72,8 @@ export {
   registerFieldType,
   getFieldTypeMeta,
   getRegisteredFieldTypes,
-  resetFieldTypeRegistry,
   registerFieldElements,
+  // NOTE: resetFieldTypeRegistry intentionally not exported - internal/test-only
 } from './lib/registry.js';
 
 export {

@@ -21,6 +21,8 @@ export {
   useUI,
   useInstanceId,
   type EsheetBuilderProps,
+  type BuilderTools,
+  type FieldSummary,
 } from './lib/EsheetBuilder.js';
 
 export {
@@ -33,7 +35,6 @@ export {
   registerCustomFieldTypes,
   getFieldComponent,
   getRegisteredComponentKeys,
-  resetComponentRegistry,
 } from '@esheet/fields';
 
 export {
@@ -59,3 +60,6 @@ export type {
   ToolDefinition,
   UseBuilderMcpToolHandlerOptions,
 } from './lib/mcp/index.js';
+
+// Re-export core schema types for consumer convenience
+export type { FormDefinition, FieldDefinition } from '@esheet/core';

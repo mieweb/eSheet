@@ -30,7 +30,7 @@ You can paste a complete JSON form definition into Code View:
 
 ```json
 {
-  "schemaType": "mieforms-v1.0",
+  "id": "my-form",
   "title": "My Form",
   "fields": [
     {

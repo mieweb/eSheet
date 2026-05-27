@@ -9,7 +9,7 @@ slug: /intro
 
 ## 📦 Package Overview
 
-eSheet is organized as six focused, composable packages:
+eSheet is organized as seven focused, composable packages:
 
 ### ⚙️ @esheet/core
 
@@ -48,6 +48,15 @@ Lightweight form renderer for end-users. Perfect for surveys, questionnaires, an
 - Conditional logic evaluation and field visibility control
 - Response collection via API
 - Pre-fill support for partial responses
+
+### 🔌 @esheet/adapters
+
+Schema conversion utilities for interoperability with external systems:
+
+- Import/export SurveyJS schemas
+- Import/export MCP (Model Context Protocol) elicitation requests
+- System prompts for AI-assisted conversions
+- Auto-detection of schema formats
 
 ### 🧩 @esheet/renderer-standalone
 
@@ -96,6 +105,7 @@ Choose the scenario that matches your app:
 | React builder + renderer | `npm install @esheet/builder @esheet/renderer react react-dom` | `@esheet/core` only for direct core APIs/types                                                          |
 | Standalone renderer      | `npm install @esheet/renderer-standalone`                      | `@esheet/core` only if importing core types/APIs directly in host app code                              |
 | Blaze renderer           | `npm install @esheet/renderer-blaze`                           | `@esheet/core` only if importing core types/APIs directly in host app code                              |
+| Schema adapters          | `npm install @esheet/adapters`                                 | `@esheet/core` only if importing core types directly; typically used with renderer or builder           |
 
 `@esheet/renderer` and `@esheet/builder` include `@esheet/core` and `@esheet/fields` transitively — no need to install them separately for normal usage. Install them directly only when your app imports them directly.
 
@@ -108,6 +118,7 @@ Choose the scenario that matches your app:
 - ✏️ [Builder Quick Start](./getting-started/quickstart-builder)
 - 🧩 [Standalone Quick Start](./getting-started/quickstart-standalone)
 - 🔥 [Blaze Quick Start](./getting-started/quickstart-blaze)
-- 📋 [Schema Format](./schema-format)
+- � [Schema Adapters](./adapters)
+- �📋 [Schema Format](./schema-format)
 - 🧩 [Field Types](./field-types)
 - 🔀 [Conditional Logic](./conditional-logic)

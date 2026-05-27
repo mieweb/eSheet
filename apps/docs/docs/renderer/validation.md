@@ -18,19 +18,15 @@ import { validateForm, validateField } from '@esheet/core';
 
 ```tsx
 const handleSubmit = () => {
-  const formStore = ref.current?.getFormStore();
-  if (!formStore) return;
+  const result = ref.current?.getValidResponse();
+  if (!result) return;
 
-  const errors = formStore.getState().getErrors();
-
-  if (errors.length > 0) {
-    console.log('Validation errors:', errors);
+  if (result.errors.length > 0) {
+    console.log('Validation errors:', result.errors);
     return;
   }
 
-  // Form is valid -- proceed with submission
-  const responses = ref.current.getResponse();
-  submitToServer(responses);
+  submitToServer(result.response!);
 };
 ```
 
@@ -72,7 +68,11 @@ This means users are never blocked by fields they can't see or interact with.
 Validation errors are returned as an array:
 
 ```typescript
-interface FieldError {
+// Import from @esheet/renderer or @esheet/core:
+import type { ValidationError } from '@esheet/renderer';
+
+// Shape:
+interface ValidationError {
   fieldId: string;
   message: string;
 }
@@ -99,24 +99,22 @@ function ValidatedForm({ formData }) {
   const [errors, setErrors] = useState([]);
 
   const handleSubmit = () => {
-    const formStore = ref.current?.getFormStore();
-    if (!formStore) return;
+    const result = ref.current?.getValidResponse();
+    if (!result) return;
 
-    const validationErrors = formStore.getState().getErrors();
-
-    if (validationErrors.length > 0) {
-      setErrors(validationErrors);
+    if (result.errors.length > 0) {
+      setErrors(result.errors);
       return;
     }
 
     setErrors([]);
-    const responses = ref.current.getResponse();
+    submitToServer(result.response!);
     // Submit responses...
   };
 
   return (
     <div>
-      <EsheetRenderer ref={ref} formData={formData} />
+      <EsheetRenderer ref={ref} formDataInput={formData} />
       {errors.length > 0 && (
         <div style={{ color: 'red', margin: '1rem 0' }}>
           <p>Please fix the following errors:</p>

@@ -47,7 +47,7 @@ The primary data store holding the form definition, normalized field index, and 
 | `hydrateDefinition()`     | Export as nested FormDefinition tree   |
 | `hydrateResponse()`       | Export responses joined with questions |
 
-## Normalized State
+## UIStore
 
 Manages UI state for the builder (mode, selection, tabs).
 

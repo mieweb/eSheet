@@ -4,8 +4,8 @@ import {
   useBuilderMcpToolHandler,
   BUILDER_TOOL_DEFINITIONS,
   BUILDER_SYSTEM_PROMPT,
+  type FormDefinition,
 } from '@esheet/builder';
-import type { FormDefinition } from '@esheet/core';
 import { Navbar } from '../components/Navbar.js';
 import { updateOzwellTools } from '../ozwell-setup.js';
 
@@ -44,7 +44,7 @@ export function BuilderView() {
   return (
     <div className="demo-builder-view w-full h-screen flex flex-col">
       <Navbar />
-      <div className="flex-1 overflow-y-auto ms:bg-msbackground">
+      <div className="flex-1 overflow-y-auto bg-background">
         <div className="w-full flex justify-center px-2 pt-5">
           <EsheetBuilder
             definition={INITIAL_DEF}
