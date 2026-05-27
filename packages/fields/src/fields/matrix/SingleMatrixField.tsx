@@ -66,9 +66,14 @@ export const SingleMatrixField = React.memo(function SingleMatrixField({
                     {columns.map((col, colIndex) => {
                       const inputId = `${instanceId}-singlematrix-answer-${def.id}-${rowIndex}-${colIndex}-m`;
                       return (
-                        <div
+                        <label
                           key={col.id}
-                          className="ms:flex ms:items-center ms:gap-2 ms:py-1"
+                          htmlFor={inputId}
+                          className={`ms:flex ms:items-center ms:gap-2 ms:py-1 ms:rounded ms:px-1 ms:transition-colors ${
+                            isEnabled
+                              ? 'ms:cursor-pointer ms:hover:bg-msprimary/5'
+                              : 'ms:cursor-not-allowed'
+                          }`}
                         >
                           <Radio
                             id={inputId}
@@ -85,13 +90,10 @@ export const SingleMatrixField = React.memo(function SingleMatrixField({
                               }
                             }}
                           />
-                          <label
-                            htmlFor={inputId}
-                            className="ms:text-sm ms:text-mstext ms:cursor-pointer"
-                          >
+                          <span className="ms:text-sm ms:text-mstext">
                             {col.value}
-                          </label>
-                        </div>
+                          </span>
+                        </label>
                       );
                     })}
                   </RadioGroup>
@@ -145,9 +147,14 @@ export const SingleMatrixField = React.memo(function SingleMatrixField({
                     {columns.map((col, colIndex) => {
                       const inputId = `${instanceId}-singlematrix-answer-${def.id}-${rowIndex}-${colIndex}`;
                       return (
-                        <div
+                        <label
                           key={col.id}
-                          className="ms:flex ms:justify-center ms:py-2"
+                          htmlFor={inputId}
+                          className={`ms:flex ms:justify-center ms:py-2 ms:rounded ms:transition-colors ${
+                            isEnabled
+                              ? 'ms:cursor-pointer ms:hover:bg-msprimary/5'
+                              : 'ms:cursor-not-allowed'
+                          }`}
                         >
                           <Radio
                             id={inputId}
@@ -164,7 +171,7 @@ export const SingleMatrixField = React.memo(function SingleMatrixField({
                               }
                             }}
                           />
-                        </div>
+                        </label>
                       );
                     })}
                   </RadioGroup>

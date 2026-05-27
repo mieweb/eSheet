@@ -236,9 +236,9 @@ export function FieldWrapper({
             {field.definition.fieldType}
           </span>
           {/* ID chip — explicit label for quick scanning */}
-          <span className="id-chip ms:inline-flex ms:items-center ms:gap-1 ms:shrink-0 ms:text-xs ms:font-mono ms:text-mssecondary ms:bg-mssecondary/10 ms:px-2 ms:py-0.5 ms:rounded">
-            <span className="ms:opacity-70">id:</span>
-            <span className="ms:font-semibold">{field.definition.id}</span>
+          <span className="id-chip ms:inline-flex ms:items-center ms:gap-1 ms:min-w-0 ms:shrink ms:text-xs ms:font-mono ms:text-mssecondary ms:bg-mssecondary/10 ms:px-2 ms:py-0.5 ms:rounded">
+            <span className="ms:opacity-70 ms:shrink-0">id:</span>
+            <span className="ms:font-semibold ms:truncate">{field.definition.id}</span>
           </span>
           {/* Question — plain muted text */}
           <span className="question-label ms:text-xs ms:text-mstextmuted ms:truncate ms:min-w-0">
