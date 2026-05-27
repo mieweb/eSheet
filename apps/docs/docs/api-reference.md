@@ -257,24 +257,24 @@ All 19 field components: `TextField`, `LongTextField`, `MultiTextField`, `RadioF
 
 ### Types
 
-| Export                             | Description                                                      |
-| ---------------------------------- | ---------------------------------------------------------------- |
-| `EsheetRendererProps`              | Renderer component props                                         |
+| Export                             | Description                                                                          |
+| ---------------------------------- | ------------------------------------------------------------------------------------ |
+| `EsheetRendererProps`              | Renderer component props                                                             |
 | `EsheetRendererHandle`             | Ref handle type (`getRawResponse`, `getValidResponse`, `getFormStore`, `getUIStore`) |
-| `RendererTools`                    | Type for renderer MCP tool names                                 |
-| `ToolDefinition`                   | MCP tool definition type                                         |
-| `UseRendererMcpToolHandlerOptions` | Options for `useRendererMcpToolHandler`                          |
+| `RendererTools`                    | Type for renderer MCP tool names                                                     |
+| `ToolDefinition`                   | MCP tool definition type                                                             |
+| `UseRendererMcpToolHandlerOptions` | Options for `useRendererMcpToolHandler`                                              |
 
 ### EsheetRendererProps
 
-| Prop                   | Type                                    | Default    | Description                                                                        |
-| ---------------------- | --------------------------------------- | ---------- | ---------------------------------------------------------------------------------- |
-| `formDataInput`        | `unknown`                               | _required_ | Form definition (object, JSON string, YAML string, MCP, SurveyJS)                 |
-| `className`            | `string`                                | `''`        | Additional CSS class for the root container                                        |
-| `initialResponses`     | `FormResponse`                          | --         | Pre-fill response data                                                             |
-| `strict`               | `boolean`                               | `false`    | Disable auto-detection, require a valid FormDefinition                             |
-| `onReady`              | `() => void`                            | --         | Called when the renderer is initialized                                            |
-| `onRendererToolsReady` | `(tools: RendererTools) => void`        | --         | Called with MCP tool handler when ready                                            |
+| Prop                   | Type                             | Default    | Description                                                       |
+| ---------------------- | -------------------------------- | ---------- | ----------------------------------------------------------------- |
+| `formDataInput`        | `unknown`                        | _required_ | Form definition (object, JSON string, YAML string, MCP, SurveyJS) |
+| `className`            | `string`                         | `''`       | Additional CSS class for the root container                       |
+| `initialResponses`     | `FormResponse`                   | --         | Pre-fill response data                                            |
+| `strict`               | `boolean`                        | `false`    | Disable auto-detection, require a valid FormDefinition            |
+| `onReady`              | `() => void`                     | --         | Called when the renderer is initialized                           |
+| `onRendererToolsReady` | `(tools: RendererTools) => void` | --         | Called with MCP tool handler when ready                           |
 
 ---
 
