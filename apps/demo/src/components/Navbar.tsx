@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Button,
   Modal,
@@ -18,7 +18,7 @@ const landingUrl = isDev ? 'http://localhost:3000/' : '/';
 const docsUrl = isDev ? 'http://localhost:3000/docs/intro' : '/docs/intro';
 const demoUrl = isDev ? 'http://localhost:3001/' : '/demo/';
 
-export function Navbar({ children }: { children?: ReactNode }) {
+export function Navbar() {
   const { theme, setTheme } = useTheme();
   const { brand, setBrand, brands } = useBrand();
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -53,7 +53,7 @@ export function Navbar({ children }: { children?: ReactNode }) {
             href={demoUrl}
             className="text-sm text-muted-foreground hover:text-primary-600 no-underline transition-colors"
           >
-            Demo
+            Playground
           </a>
         </div>
         <div className="ml-auto flex items-center">
@@ -68,13 +68,6 @@ export function Navbar({ children }: { children?: ReactNode }) {
           </Button>
         </div>
       </div>
-
-      {/* Actions row — children from page (Select, buttons, etc.) */}
-      {children && (
-        <div className="demo-navbar-actions flex flex-wrap items-center gap-2 px-4 py-2 border-t border-border sm:border-t-0 sm:py-0 sm:absolute sm:top-0 sm:left-1/2 sm:-translate-x-1/2 sm:h-14 sm:flex-nowrap sm:max-w-2xl sm:w-full">
-          {children}
-        </div>
-      )}
 
       <Modal open={settingsOpen} onOpenChange={setSettingsOpen}>
         <ModalHeader>

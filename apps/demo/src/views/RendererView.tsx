@@ -9,7 +9,22 @@ import {
   type FormResponseEnvelope,
 } from '@esheet/renderer';
 import { Navbar } from '../components/Navbar';
-import { Button, Select } from '@mieweb/ui';
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Select,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@mieweb/ui';
+import { ClipboardList } from 'lucide-react';
 import { updateOzwellTools } from '../ozwell-setup.js';
 
 interface SubmitResult {
@@ -75,7 +90,7 @@ export function RendererView() {
   const [definition, setDefinition] = useState<unknown>(null);
   const rendererRef = useRef<EsheetRendererHandle>(null);
 
-  const [showDefinition, setShowDefinition] = useState(false);
+  const [activeTab, setActiveTab] = useState<'form' | 'definition'>('form');
 
   const resetFormKey = useCallback(() => {
     setFormKey((prev) => prev + 1);
@@ -147,7 +162,147 @@ export function RendererView() {
 
   return (
     <>
-      <Navbar>
+      <Navbar />
+
+      <input
+        id="renderer-file-import"
+        type="file"
+        accept=".json"
+        onChange={handleFileImport}
+        className="hidden"
+      />
+
+      {submitResult && (
+        <div className="bg-muted py-4 px-4">
+          <Alert
+            variant={submitResult.kind === 'success' ? 'success' : 'danger'}
+            className="max-w-4xl mx-auto"
+          >
+            <AlertTitle>{submitResult.title}</AlertTitle>
+            <AlertDescription>
+              <p>{submitResult.message}</p>
+              {submitResult.items && submitResult.items.length > 0 && (
+                <ul className="mt-3 list-disc space-y-1 pl-5 text-sm">
+                  {submitResult.items.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              )}
+              {submitResult.detail && (
+                <p className="mt-3 text-sm">{submitResult.detail}</p>
+              )}
+              {submitResult.data && (
+                <pre className="mt-3 p-3 bg-background/50 rounded-lg text-xs overflow-auto max-h-96 border border-border">
+                  {JSON.stringify(submitResult.data, null, 2)}
+                </pre>
+              )}
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
+
+      <div className="demo-renderer-content bg-background pt-6 pb-20 min-h-[calc(100vh-3.5rem)]">
+        {rawInput == null ? (
+          <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] gap-6">
+            <div className="text-center max-w-md">
+              <ClipboardList
+                className="mx-auto mb-4 text-muted-foreground"
+                size={48}
+                strokeWidth={1.5}
+              />
+              <h2 className="text-2xl font-semibold text-foreground mb-3">
+                No Form Loaded
+              </h2>
+              <p className="text-muted-foreground mb-6">
+                Select an example from the dropdown, or import your own JSON
+                definition.
+              </p>
+              <div className="flex flex-wrap justify-center gap-2">
+                {TEST_SCHEMAS.slice(0, 3).map((s) => (
+                  <Button
+                    key={s.value}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleLoadSchema(s.value)}
+                  >
+                    {s.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <Tabs
+            value={activeTab}
+            onValueChange={(v) => setActiveTab(v as 'form' | 'definition')}
+          >
+            <div className="sticky top-14 z-30 bg-card border-b border-border">
+              <div className="max-w-4xl mx-auto px-4 flex items-center gap-2 h-11">
+                <TabsList>
+                  <TabsTrigger value="form">Form</TabsTrigger>
+                  <TabsTrigger value="definition">Definition</TabsTrigger>
+                </TabsList>
+                <div className="ml-auto flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      document.getElementById('renderer-file-import')?.click()
+                    }
+                  >
+                    Import JSON
+                  </Button>
+                  {rawInput != null && (
+                    <Button onClick={handleSubmit} variant="primary" size="sm">
+                      Submit
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <TabsContent value="form">
+              <div className="max-w-4xl mx-auto px-4 pt-6">
+                <EsheetRenderer
+                  key={formKey}
+                  formDataInput={rawInput}
+                  ref={rendererRef}
+                  onRendererToolsReady={onRendererToolsReady}
+                  onReady={() => {
+                    const def = rendererRef.current
+                      ?.getFormStore()
+                      .getState()
+                      .hydrateDefinition();
+                    if (def) setDefinition(def);
+                  }}
+                />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="definition">
+              <div className="max-w-4xl mx-auto px-4 pt-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm font-semibold">
+                      eSheet FormDefinition
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <pre className="text-xs overflow-auto max-h-[60vh]">
+                      {definition
+                        ? JSON.stringify(definition, null, 2)
+                        : '(loading…)'}
+                    </pre>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+          </Tabs>
+        )}
+      </div>
+
+      {/* Sticky bottom bar — preset select only */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border px-4 py-2 flex items-center gap-2">
         <Select
           value={selectedSchema}
           onValueChange={(val: string) => {
@@ -160,136 +315,6 @@ export function RendererView() {
           placeholder="Load example…"
           className="w-48"
         />
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() =>
-            document.getElementById('renderer-file-import')?.click()
-          }
-        >
-          Import JSON
-        </Button>
-        <input
-          id="renderer-file-import"
-          type="file"
-          accept=".json"
-          onChange={handleFileImport}
-          className="hidden"
-        />
-
-        {rawInput != null && (
-          <button
-            onClick={() => setShowDefinition((prev) => !prev)}
-            className="px-3 py-1.5 text-sm font-medium bg-slate-500 hover:bg-slate-600 text-white rounded-lg transition-colors whitespace-nowrap"
-          >
-            {showDefinition ? 'Hide' : 'Show'} Definition
-          </button>
-        )}
-
-        {rawInput != null && (
-          <Button
-            onClick={handleSubmit}
-            variant="primary"
-            size="sm"
-            className="ml-auto"
-          >
-            Submit
-          </Button>
-        )}
-      </Navbar>
-
-      {submitResult && (
-        <div className="bg-muted pt-4">
-          <div
-            role={submitResult.kind === 'success' ? 'status' : 'alert'}
-            aria-live={submitResult.kind === 'success' ? 'polite' : undefined}
-            aria-atomic="true"
-            className={[
-              'max-w-4xl mx-auto rounded-2xl border px-4 py-4 shadow-sm',
-              submitResult.kind === 'success'
-                ? 'border-emerald-200 bg-emerald-50 text-emerald-950 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-100'
-                : 'border-rose-200 bg-rose-50 text-rose-950 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-100',
-            ].join(' ')}
-          >
-            <h2 className="text-base font-semibold">{submitResult.title}</h2>
-            <p className="mt-1 text-sm">{submitResult.message}</p>
-            {submitResult.items && submitResult.items.length > 0 && (
-              <ul className="mt-3 list-disc space-y-1 pl-5 text-sm">
-                {submitResult.items.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            )}
-            {submitResult.detail && (
-              <p className="mt-3 text-sm text-slate-700 dark:text-slate-300">
-                {submitResult.detail}
-              </p>
-            )}
-            {submitResult.data && (
-              <pre className="mt-3 p-3 bg-white/50 dark:bg-white/10 rounded-lg text-xs overflow-auto max-h-96 border border-emerald-200 dark:border-emerald-800">
-                {JSON.stringify(submitResult.data, null, 2)}
-              </pre>
-            )}
-          </div>
-        </div>
-      )}
-
-      <div className="demo-renderer-content bg-gray-100 dark:bg-neutral-900 pt-6 pb-20 min-h-[calc(100vh-3.5rem)]">
-        {/* SurveyJS conversion errors removed */}
-        {rawInput == null ? (
-          <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] gap-6">
-            <div className="text-center max-w-md">
-              <h2 className="text-2xl font-semibold text-foreground mb-3">
-                No Form Loaded
-              </h2>
-              <p className="text-muted-foreground mb-6">
-                Select an example from the dropdown above, or import your own
-                JSON form definition.
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div
-            className={
-              showDefinition
-                ? 'grid grid-cols-1 lg:grid-cols-2 gap-4 max-w-7xl mx-auto px-4'
-                : 'max-w-4xl mx-auto px-4'
-            }
-          >
-            <div>
-              <EsheetRenderer
-                key={formKey}
-                formDataInput={rawInput}
-                ref={rendererRef}
-                onRendererToolsReady={onRendererToolsReady}
-                onReady={() => {
-                  const def = rendererRef.current
-                    ?.getFormStore()
-                    .getState()
-                    .hydrateDefinition();
-                  if (def) setDefinition(def);
-                }}
-              />
-            </div>
-            {showDefinition && (
-              <div className="lg:sticky lg:top-20 lg:self-start space-y-4">
-                <div className="bg-white dark:bg-neutral-800 rounded-lg border border-slate-200 dark:border-neutral-700 shadow-sm">
-                  <div className="px-4 py-2 border-b border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-900 rounded-t-lg">
-                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                      eSheet FormDefinition
-                    </h3>
-                  </div>
-                  <pre className="p-4 text-xs overflow-auto max-h-[40vh] text-slate-800 dark:text-slate-200">
-                    {definition
-                      ? JSON.stringify(definition, null, 2)
-                      : '(loading…)'}
-                  </pre>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </>
   );
