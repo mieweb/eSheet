@@ -5,8 +5,9 @@ import {
   useRendererMcpToolHandler,
   RENDERER_TOOL_DEFINITIONS,
   RENDERER_SYSTEM_PROMPT,
+  type FormDefinition,
+  type FormResponseEnvelope,
 } from '@esheet/renderer';
-import type { FormDefinition, FormResponseEnvelope } from '@esheet/core';
 import { Navbar } from '../components/Navbar';
 import { Button, Select } from '@mieweb/ui';
 import { updateOzwellTools } from '../ozwell-setup.js';

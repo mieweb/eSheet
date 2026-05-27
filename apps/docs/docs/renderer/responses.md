@@ -21,7 +21,7 @@ function MyForm() {
   const ref = useRef<EsheetRendererHandle>(null);
 
   const handleSubmit = () => {
-    const responses = ref.current?.getResponse();
+    const responses = ref.current?.getRawResponse();
     if (!responses) return;
 
     // responses is Record<string, FieldResponse>
@@ -30,7 +30,7 @@ function MyForm() {
 
   return (
     <>
-      <EsheetRenderer ref={ref} formData={myForm} />
+      <EsheetRenderer ref={ref} formDataInput={myForm} />
       <button onClick={handleSubmit}>Submit</button>
     </>
   );
@@ -98,7 +98,7 @@ const existingResponses = {
 
 <EsheetRenderer
   ref={ref}
-  formData={myForm}
+  formDataInput={myForm}
   initialResponses={existingResponses}
 />;
 ```

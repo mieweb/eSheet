@@ -37,11 +37,17 @@ const sidebars = {
     },
     {
       type: 'category',
+      label: 'Adapters',
+      items: ['adapters/overview', 'adapters/surveyjs', 'adapters/mcp'],
+    },
+    {
+      type: 'category',
       label: 'Advanced',
       items: [
         'advanced/custom-field-types',
         'advanced/store-architecture',
         'advanced/expression-system',
+        'advanced/mcp-integration',
       ],
     },
     'api-reference',

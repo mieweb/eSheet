@@ -29,7 +29,7 @@ const handleSubmit = () => {
   }
 
   // Form is valid -- proceed with submission
-  const responses = ref.current.getResponse();
+  const responses = ref.current.getRawResponse();
   submitToServer(responses);
 };
 ```
@@ -110,13 +110,13 @@ function ValidatedForm({ formData }) {
     }
 
     setErrors([]);
-    const responses = ref.current.getResponse();
+    const responses = ref.current.getRawResponse();
     // Submit responses...
   };
 
   return (
     <div>
-      <EsheetRenderer ref={ref} formData={formData} />
+      <EsheetRenderer ref={ref} formDataInput={formData} />
       {errors.length > 0 && (
         <div style={{ color: 'red', margin: '1rem 0' }}>
           <p>Please fix the following errors:</p>

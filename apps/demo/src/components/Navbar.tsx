@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import {
   Button,
   Modal,
@@ -22,6 +22,10 @@ export function Navbar({ children }: { children?: ReactNode }) {
   const { theme, setTheme } = useTheme();
   const { brand, setBrand, brands } = useBrand();
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  useEffect(() => {
+    if (theme === 'system') setTheme('light');
+  }, [theme, setTheme]);
 
   return (
     <nav className="demo-navbar bg-card border-b border-border sticky top-0 z-50">
@@ -81,13 +85,10 @@ export function Navbar({ children }: { children?: ReactNode }) {
           <Select
             label="Theme"
             value={theme}
-            onValueChange={(val) =>
-              setTheme(val as 'light' | 'dark' | 'system')
-            }
+            onValueChange={(val) => setTheme(val as 'light' | 'dark')}
             options={[
               { value: 'light', label: 'Light' },
               { value: 'dark', label: 'Dark' },
-              { value: 'system', label: 'System' },
             ]}
           />
           <Select

@@ -4,7 +4,7 @@ sidebar_position: 5
 
 # Schema Format
 
-eSheet uses a JSON schema format identified by `schemaType: 'mieforms-v1.0'`. This page documents the complete structure.
+eSheet uses a JSON schema format identified by the `id` field. This page documents the complete structure.
 
 ## Form Definition
 
@@ -12,8 +12,8 @@ The top-level object that describes an entire form:
 
 ```typescript
 interface FormDefinition {
-  /** Schema version -- always 'mieforms-v1.0' */
-  schemaType: 'mieforms-v1.0';
+  /** Unique form identifier */
+  id: string;
   /** Optional form title */
   title?: string;
   /** Optional form description */
@@ -27,7 +27,7 @@ interface FormDefinition {
 
 ```json
 {
-  "schemaType": "mieforms-v1.0",
+  "id": "patient-intake-form",
   "title": "Patient Intake Form",
   "description": "Please fill out all required fields",
   "fields": [

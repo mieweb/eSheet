@@ -21,7 +21,7 @@ import { mountStandaloneRenderer } from '@esheet/renderer-standalone';
 import type { FormDefinition } from '@esheet/core';
 
 const demoForm: FormDefinition = {
-  schemaType: 'mieforms-v1.0',
+  id: 'standalone-demo',
   title: 'Standalone Renderer Demo',
   fields: [
     {

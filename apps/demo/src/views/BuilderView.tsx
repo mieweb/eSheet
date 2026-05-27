@@ -4,8 +4,8 @@ import {
   useBuilderMcpToolHandler,
   BUILDER_TOOL_DEFINITIONS,
   BUILDER_SYSTEM_PROMPT,
+  type FormDefinition,
 } from '@esheet/builder';
-import type { FormDefinition } from '@esheet/core';
 import { Navbar } from '../components/Navbar.js';
 import { updateOzwellTools } from '../ozwell-setup.js';
 

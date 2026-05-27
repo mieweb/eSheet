@@ -25,7 +25,7 @@ import type { EsheetRendererHandle } from '@esheet/renderer';
 import type { FormDefinition } from '@esheet/core';
 
 const myForm: FormDefinition = {
-  schemaType: 'mieforms-v1.0',
+  id: 'feedback-survey',
   title: 'Feedback Survey',
   fields: [
     {
@@ -59,13 +59,13 @@ function App() {
   const rendererRef = useRef<EsheetRendererHandle>(null);
 
   const handleSubmit = () => {
-    const responses = rendererRef.current?.getResponse();
+    const responses = rendererRef.current?.getRawResponse();
     console.log('Form responses:', responses);
   };
 
   return (
     <div>
-      <EsheetRenderer ref={rendererRef} formData={myForm} />
+      <EsheetRenderer ref={rendererRef} formDataInput={myForm} />
       <button onClick={handleSubmit}>Submit</button>
     </div>
   );
@@ -80,7 +80,7 @@ The renderer exposes an imperative API via `ref`:
 const ref = useRef<EsheetRendererHandle>(null);
 
 // Get all responses
-const responses = ref.current?.getResponse();
+const responses = ref.current?.getRawResponse();
 // => { name: { answer: 'John' }, rating: { selected: { id: 'r4', value: '4' } }, ... }
 
 // Access the underlying stores (advanced)
@@ -114,7 +114,7 @@ Pass `initialResponses` to pre-populate the form:
 ```tsx
 <EsheetRenderer
   ref={rendererRef}
-  formData={myForm}
+  formDataInput={myForm}
   initialResponses={{
     name: { answer: 'Jane Doe' },
     rating: { selected: { id: 'r4', value: '4' } },
@@ -128,28 +128,28 @@ The renderer accepts form definitions as objects, JSON strings, or YAML strings:
 
 ```tsx
 // JSON string
-<EsheetRenderer formData='{"schemaType":"mieforms-v1.0","fields":[...]}' />
+<EsheetRenderer formDataInput='{"id":"my-form","fields":[...]}' />
 
 // YAML string
-<EsheetRenderer formData={yamlString} />
+<EsheetRenderer formDataInput={yamlString} />
 ```
 
 ## Props
 
 | Prop               | Type                        | Default    | Description                               |
 | ------------------ | --------------------------- | ---------- | ----------------------------------------- |
-| `formData`         | `FormDefinition \| string`  | _required_ | Form definition (object, JSON, or YAML)   |
+| `formDataInput`    | `FormDefinition \| string`  | _required_ | Form definition (object, JSON, or YAML)   |
 | `className`        | `string`                    | `''`       | Additional CSS class for the root         |
 | `initialResponses` | `FormResponse`              | --         | Pre-fill response data                    |
 | `ref`              | `Ref<EsheetRendererHandle>` | --         | Imperative handle for response collection |
 
 ## Ref API (`EsheetRendererHandle`)
 
-| Method           | Returns        | Description                            |
-| ---------------- | -------------- | -------------------------------------- |
-| `getResponse()`  | `FormResponse` | Current response values for all fields |
-| `getFormStore()` | `FormStore`    | The underlying form state store        |
-| `getUIStore()`   | `UIStore`      | The underlying UI state store          |
+| Method             | Returns        | Description                            |
+| ------------------ | -------------- | -------------------------------------- |
+| `getRawResponse()` | `FormResponse` | Current response values for all fields |
+| `getFormStore()`   | `FormStore`    | The underlying form state store        |
+| `getUIStore()`     | `UIStore`      | The underlying UI state store          |
 
 ## What's Next
 

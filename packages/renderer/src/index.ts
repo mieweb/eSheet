@@ -7,8 +7,12 @@ export {
   type EsheetRendererHandle,
 } from './lib/EsheetRenderer.js';
 
-// Core types
-export type { ValidationError } from '@esheet/core';
+// Core types (re-exported for consumer convenience)
+export type {
+  FormDefinition,
+  FormResponseEnvelope,
+  ValidationError,
+} from '@esheet/core';
 
 // Components (for advanced use cases)
 export { RendererBody, FieldNode } from './lib/components/index.js';

@@ -10,37 +10,62 @@ Quick reference of all public exports from each eSheet package.
 
 ### Types
 
-| Export                       | Kind       | Description                                                                      |
-| ---------------------------- | ---------- | -------------------------------------------------------------------------------- |
-| `FormDefinition`             | Interface  | Top-level form structure                                                         |
-| `FieldDefinition`            | Interface  | Single field structure                                                           |
-| `FieldResponse`              | Interface  | Response values for a field                                                      |
-| `FormResponse`               | Type alias | `Record<string, FieldResponse>`                                                  |
-| `SelectedOption`             | Interface  | `{ id, value }` for selected options                                             |
-| `FieldType`                  | Type       | Union of 19 field type strings                                                   |
-| `TextInputType`              | Type       | Union of 9 text input variants                                                   |
-| `FieldOption`                | Interface  | Option in a choice field                                                         |
-| `MatrixRow` / `MatrixColumn` | Interface  | Matrix dimensions                                                                |
-| `ConditionalRule`            | Interface  | Conditional rule structure                                                       |
-| `Condition`                  | Interface  | Single condition                                                                 |
-| `ConditionOperator`          | Type       | Union of 10 operators                                                            |
-| `ConditionalEffect`          | Type       | `'visible' \| 'enable' \| 'required'`                                            |
-| `LogicMode`                  | Type       | `'AND' \| 'OR'`                                                                  |
-| `FieldCategory`              | Type       | Field grouping category                                                          |
-| `AnswerType`                 | Type       | How a field stores its answer                                                    |
-| `FieldTypeMeta`              | Interface  | Field type metadata                                                              |
-| `FieldTypeRegistry`          | Type       | Registry map                                                                     |
-| `FieldComponentProps`        | Interface  | Props contract for field components                                              |
-| `HydratedResponseItem`       | Interface  | `{ id, text, answer }` — one per answerable field, returned by `hydrateResponse` |
-| `FieldNode`                  | Interface  | Node in normalized definition tree                                               |
-| `NormalizedDefinition`       | Interface  | Flat normalized representation of a form                                         |
-| `AddFieldOptions`            | Interface  | Options for `FormStore.addField()`                                               |
+| Export                               | Kind       | Description                                                                      |
+| ------------------------------------ | ---------- | -------------------------------------------------------------------------------- |
+| `FormDefinition`                     | Interface  | Top-level form structure                                                         |
+| `FieldDefinition`                    | Interface  | Single field structure                                                           |
+| `FieldResponse`                      | Interface  | Response values for a field                                                      |
+| `FormResponse`                       | Type alias | `Record<string, FieldResponse>`                                                  |
+| `SelectedOption`                     | Interface  | `{ id, value }` for selected options                                             |
+| `FieldType`                          | Type       | Union of 19 field type strings                                                   |
+| `TextInputType`                      | Type       | Union of 9 text input variants                                                   |
+| `FieldOption`                        | Interface  | Option in a choice field                                                         |
+| `MatrixRow` / `MatrixColumn`         | Interface  | Matrix dimensions                                                                |
+| `ConditionalRule`                    | Interface  | Conditional rule structure                                                       |
+| `Condition`                          | Interface  | Single condition                                                                 |
+| `ConditionOperator`                  | Type       | Union of 10 operators                                                            |
+| `ConditionalEffect`                  | Type       | `'visible' \| 'enable' \| 'required'`                                            |
+| `LogicMode`                          | Type       | `'AND' \| 'OR'`                                                                  |
+| `FieldCategory`                      | Type       | Field grouping category                                                          |
+| `AnswerType`                         | Type       | How a field stores its answer                                                    |
+| `FieldTypeMeta`                      | Interface  | Field type metadata                                                              |
+| `FieldTypeRegistry`                  | Type       | Registry map                                                                     |
+| `FieldComponentProps`                | Interface  | Props contract for field components                                              |
+| `ResponseItem`                       | Interface  | `{ id, text, answer }` — one per answerable field, returned by `hydrateResponse` |
+| `FieldNode`                          | Interface  | Node in normalized definition tree                                               |
+| `OptionBearingFieldDefinition`       | Type       | Union of field definitions that have `options`                                   |
+| `NormalizedDefinition`               | Interface  | Flat normalized representation of a form                                         |
+| `AddFieldOptions`                    | Interface  | Options for `FormStore.addField()`                                               |
+| `TextFieldDefinition`                | Interface  | Definition for text fields                                                       |
+| `LongtextFieldDefinition`            | Interface  | Definition for longtext fields                                                   |
+| `MultitextFieldDefinition`           | Interface  | Definition for multitext fields                                                  |
+| `RadioFieldDefinition`               | Interface  | Definition for radio fields                                                      |
+| `CheckFieldDefinition`               | Interface  | Definition for check fields                                                      |
+| `BooleanFieldDefinition`             | Interface  | Definition for boolean fields                                                    |
+| `DropdownFieldDefinition`            | Interface  | Definition for dropdown fields                                                   |
+| `MultiselectDropdownFieldDefinition` | Interface  | Definition for multiselect dropdown fields                                       |
+| `RatingFieldDefinition`              | Interface  | Definition for rating fields                                                     |
+| `RankingFieldDefinition`             | Interface  | Definition for ranking fields                                                    |
+| `SliderFieldDefinition`              | Interface  | Definition for slider fields                                                     |
+| `SingleMatrixFieldDefinition`        | Interface  | Definition for single-select matrix fields                                       |
+| `MultiMatrixFieldDefinition`         | Interface  | Definition for multi-select matrix fields                                        |
+| `ImageFieldDefinition`               | Interface  | Definition for image fields                                                      |
+| `HtmlFieldDefinition`                | Interface  | Definition for HTML fields                                                       |
+| `SignatureFieldDefinition`           | Interface  | Definition for signature fields                                                  |
+| `DiagramFieldDefinition`             | Interface  | Definition for diagram fields                                                    |
+| `DisplayFieldDefinition`             | Interface  | Definition for display fields                                                    |
+| `SectionFieldDefinition`             | Interface  | Definition for section fields                                                    |
+
+### Type Predicates
+
+| Export       | Description                                       |
+| ------------ | ------------------------------------------------- |
+| `hasOptions` | Type predicate for fields with `options` property |
 
 ### Constants
 
 | Export                | Description                        |
 | --------------------- | ---------------------------------- |
-| `SCHEMA_TYPE`         | `'mieforms-v1.0'`                  |
 | `FIELD_TYPES`         | Array of 19 field type strings     |
 | `TEXT_INPUT_TYPES`    | Array of 9 text input type strings |
 | `CONDITION_OPERATORS` | Array of 10 operator strings       |
@@ -78,15 +103,16 @@ Quick reference of all public exports from each eSheet package.
 
 ### Utilities
 
-| Export                                   | Description                                                                          |
-| ---------------------------------------- | ------------------------------------------------------------------------------------ |
-| `normalizeDefinition(def)`               | Convert tree → flat normalized state                                                 |
-| `hydrateDefinition(normalized)`          | Convert flat → nested tree                                                           |
-| `hydrateResponse(normalized, responses)` | Walk normalized definition and return `HydratedResponseItem[]` for export/submission |
-| `generateFieldId(fieldType)`             | Generate a unique field ID                                                           |
-| `generateOptionId()`                     | Generate a unique option ID                                                          |
-| `generateRowId()`                        | Generate a unique matrix row ID                                                      |
-| `generateColumnId()`                     | Generate a unique matrix column ID                                                   |
+| Export                                   | Description                                                                  |
+| ---------------------------------------- | ---------------------------------------------------------------------------- |
+| `normalizeDefinition(def)`               | Convert tree → flat normalized state                                         |
+| `hydrateDefinition(normalized)`          | Convert flat → nested tree                                                   |
+| `hydrateResponse(normalized, responses)` | Walk normalized definition and return `ResponseItem[]` for export/submission |
+| `generateFieldId(fieldType)`             | Generate a unique field ID                                                   |
+| `generateOptionId()`                     | Generate a unique option ID                                                  |
+| `generateRowId()`                        | Generate a unique matrix row ID                                              |
+| `generateColumnId()`                     | Generate a unique matrix column ID                                           |
+| `formatZodValidationError(error)`        | Format Zod validation errors into readable strings                           |
 
 ### Registry
 
@@ -96,7 +122,6 @@ Quick reference of all public exports from each eSheet package.
 | `registerFieldElements(elements)` | Batch-register UI element classes for field types |
 | `getFieldTypeMeta(key)`           | Get field type metadata                           |
 | `getRegisteredFieldTypes()`       | List all registered types                         |
-| `resetFieldTypeRegistry()`        | Reset to built-in types                           |
 
 ---
 
@@ -137,13 +162,12 @@ All 19 field components: `TextField`, `LongTextField`, `MultiTextField`, `RadioF
 
 ### Registry
 
-| Export                            | Description                                       |
-| --------------------------------- | ------------------------------------------------- |
-| `registerCustomFieldTypes(types)` | Register custom field types with components       |
-| `registerFieldComponents(map)`    | Register a map of field type -> React component   |
-| `getFieldComponent(fieldType)`    | Get the React component for a field type          |
-| `getRegisteredComponentKeys()`    | List all registered field component keys          |
-| `resetComponentRegistry()`        | Reset the component registry to built-in defaults |
+| Export                            | Description                                     |
+| --------------------------------- | ----------------------------------------------- |
+| `registerCustomFieldTypes(types)` | Register custom field types with components     |
+| `registerFieldComponents(map)`    | Register a map of field type -> React component |
+| `getFieldComponent(fieldType)`    | Get the React component for a field type        |
+| `getRegisteredComponentKeys()`    | List all registered field component keys        |
 
 ### Context
 
@@ -169,23 +193,40 @@ All 19 field components: `TextField`, `LongTextField`, `MultiTextField`, `RadioF
 
 ### Hooks & Context
 
-| Export              | Description                   |
-| ------------------- | ----------------------------- |
-| `useFormStore()`    | Access FormStore from context |
-| `useUI()`           | Access UIStore from context   |
-| `useInstanceId()`   | Get unique instance ID        |
-| `FormStoreContext`  | FormStore React context       |
-| `UIContext`         | UIStore React context         |
-| `InstanceIdContext` | Instance ID React context     |
+| Export                | Description                           |
+| --------------------- | ------------------------------------- |
+| `useFormStore()`      | Access FormStore from context         |
+| `useUI()`             | Access UIStore from context           |
+| `useInstanceId()`     | Get unique instance ID                |
+| `FormStoreContext`    | FormStore React context               |
+| `UIContext`           | UIStore React context                 |
+| `InstanceIdContext`   | Instance ID React context             |
+| `useFormApi()`        | Hook returning imperative form API    |
+| `useUiApi()`          | Hook returning imperative UI API      |
+| `useVisibleRootIds()` | Hook returning visible root field IDs |
+
+### MCP Integration
+
+| Export                     | Description                               |
+| -------------------------- | ----------------------------------------- |
+| `executeToolCall`          | Execute a builder tool call               |
+| `BUILDER_TOOL_DEFINITIONS` | Array of MCP tool definitions for builder |
+| `BUILDER_SYSTEM_PROMPT`    | System prompt describing builder tools    |
+| `useBuilderMcpToolHandler` | Hook for handling MCP tool calls in React |
 
 ### Types
 
-| Export                    | Description                                    |
-| ------------------------- | ---------------------------------------------- |
-| `EsheetBuilderProps`      | Builder component props                        |
-| `CodeViewProps`           | Props for `CodeView`                           |
-| `FieldWrapperProps`       | Props for `FieldWrapper`                       |
-| `FieldWrapperRenderProps` | Render props passed to `FieldWrapper` children |
+| Export                            | Description                                    |
+| --------------------------------- | ---------------------------------------------- |
+| `EsheetBuilderProps`              | Builder component props                        |
+| `CodeViewProps`                   | Props for `CodeView`                           |
+| `FieldWrapperProps`               | Props for `FieldWrapper`                       |
+| `FieldWrapperRenderProps`         | Render props passed to `FieldWrapper` children |
+| `FormApi`                         | Imperative form API interface                  |
+| `FieldResponseMap`                | Map of field IDs to responses                  |
+| `UiApi`                           | Imperative UI API interface                    |
+| `ToolDefinition`                  | MCP tool definition type                       |
+| `UseBuilderMcpToolHandlerOptions` | Options for `useBuilderMcpToolHandler`         |
 
 ---
 
@@ -205,12 +246,34 @@ All 19 field components: `TextField`, `LongTextField`, `MultiTextField`, `RadioF
 | ------------------- | --------------------------------------------- |
 | `useRendererInit()` | Initialize renderer with form data (advanced) |
 
+### MCP Integration
+
+| Export                      | Description                                |
+| --------------------------- | ------------------------------------------ |
+| `executeToolCall`           | Execute a renderer tool call               |
+| `RENDERER_TOOL_DEFINITIONS` | Array of MCP tool definitions for renderer |
+| `RENDERER_SYSTEM_PROMPT`    | System prompt describing renderer tools    |
+| `useRendererMcpToolHandler` | Hook for handling MCP tool calls in React  |
+
 ### Types
 
-| Export                 | Description                                                   |
-| ---------------------- | ------------------------------------------------------------- |
-| `EsheetRendererProps`  | Renderer component props                                      |
-| `EsheetRendererHandle` | Ref handle type (`getResponse`, `getFormStore`, `getUIStore`) |
+| Export                             | Description                                                      |
+| ---------------------------------- | ---------------------------------------------------------------- |
+| `EsheetRendererProps`              | Renderer component props                                         |
+| `EsheetRendererHandle`             | Ref handle type (`getRawResponse`, `getFormStore`, `getUIStore`) |
+| `RendererTools`                    | Type for renderer MCP tool names                                 |
+| `ToolDefinition`                   | MCP tool definition type                                         |
+| `UseRendererMcpToolHandlerOptions` | Options for `useRendererMcpToolHandler`                          |
+
+### EsheetRendererProps
+
+| Prop                   | Type                | Default | Description                             |
+| ---------------------- | ------------------- | ------- | --------------------------------------- |
+| `definition`           | `FormDefinition`    | --      | Form definition to render               |
+| `responses`            | `FormResponse`      | `{}`    | Initial response values                 |
+| `strict`               | `boolean`           | `false` | Enable strict validation mode           |
+| `onReady`              | `() => void`        | --      | Called when renderer is initialized     |
+| `onRendererToolsReady` | `(handler) => void` | --      | Called with MCP tool handler when ready |
 
 ---
 
@@ -239,3 +302,15 @@ All 19 field components: `TextField`, `LongTextField`, `MultiTextField`, `RadioF
 | `registerBlazeTemplate(templateName?)` | Register a Blaze template wrapper for the renderer. Returns `false` when required Blaze globals are not available, otherwise `true`. |
 
 `registerBlazeTemplate` uses `esheetRenderer` as the default template name when no argument is provided.
+
+---
+
+## @esheet/adapters
+
+Bidirectional converters for SurveyJS and MCP elicitation formats.
+
+See the **[Adapters](/docs/adapters/overview)** section in the sidebar for detailed documentation including:
+
+- [Adapters Overview](/docs/adapters/overview) — Installation, auto-detection, and all exports
+- [SurveyJS Adapter](/docs/adapters/surveyjs) — Import/export, type mapping, conditional logic
+- [MCP Adapter](/docs/adapters/mcp) — Import/export, constraints, type mapping
