@@ -143,7 +143,8 @@ SurveyJS conditional properties convert to eSheet `rules`:
 // Converts to eSheet rule:
 {
   effect: 'visible',
-  conditions: [{ fieldId: 'country', operator: 'equals', value: 'USA' }]
+  logic: 'AND',
+  conditions: [{ conditionType: 'field', targetId: 'country', operator: 'equals', expected: 'USA' }]
 }
 ```
 
@@ -156,6 +157,7 @@ Expressions with arithmetic or multiple fields convert to expression conditions:
 // Converts to eSheet rule:
 {
   effect: 'visible',
+  logic: 'AND',
   conditions: [{
     conditionType: 'expression',
     expression: '{price} * {quantity} > 100'

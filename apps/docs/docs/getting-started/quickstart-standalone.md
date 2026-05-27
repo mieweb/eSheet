@@ -37,7 +37,7 @@ const mountElement = document.getElementById('renderer-mount');
 
 if (mountElement) {
   const standalone = mountStandaloneRenderer(mountElement, {
-    formData: demoForm,
+    formDataInput: demoForm,
   });
 
   console.log('Current response:', standalone.getResponse());

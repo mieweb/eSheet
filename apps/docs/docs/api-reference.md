@@ -260,20 +260,21 @@ All 19 field components: `TextField`, `LongTextField`, `MultiTextField`, `RadioF
 | Export                             | Description                                                      |
 | ---------------------------------- | ---------------------------------------------------------------- |
 | `EsheetRendererProps`              | Renderer component props                                         |
-| `EsheetRendererHandle`             | Ref handle type (`getRawResponse`, `getFormStore`, `getUIStore`) |
+| `EsheetRendererHandle`             | Ref handle type (`getRawResponse`, `getValidResponse`, `getFormStore`, `getUIStore`) |
 | `RendererTools`                    | Type for renderer MCP tool names                                 |
 | `ToolDefinition`                   | MCP tool definition type                                         |
 | `UseRendererMcpToolHandlerOptions` | Options for `useRendererMcpToolHandler`                          |
 
 ### EsheetRendererProps
 
-| Prop                   | Type                | Default | Description                             |
-| ---------------------- | ------------------- | ------- | --------------------------------------- |
-| `definition`           | `FormDefinition`    | --      | Form definition to render               |
-| `responses`            | `FormResponse`      | `{}`    | Initial response values                 |
-| `strict`               | `boolean`           | `false` | Enable strict validation mode           |
-| `onReady`              | `() => void`        | --      | Called when renderer is initialized     |
-| `onRendererToolsReady` | `(handler) => void` | --      | Called with MCP tool handler when ready |
+| Prop                   | Type                                    | Default    | Description                                                                        |
+| ---------------------- | --------------------------------------- | ---------- | ---------------------------------------------------------------------------------- |
+| `formDataInput`        | `unknown`                               | _required_ | Form definition (object, JSON string, YAML string, MCP, SurveyJS)                 |
+| `className`            | `string`                                | `''`        | Additional CSS class for the root container                                        |
+| `initialResponses`     | `FormResponse`                          | --         | Pre-fill response data                                                             |
+| `strict`               | `boolean`                               | `false`    | Disable auto-detection, require a valid FormDefinition                             |
+| `onReady`              | `() => void`                            | --         | Called when the renderer is initialized                                            |
+| `onRendererToolsReady` | `(tools: RendererTools) => void`        | --         | Called with MCP tool handler when ready                                            |
 
 ---
 

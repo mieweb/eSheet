@@ -59,8 +59,15 @@ function App() {
   const rendererRef = useRef<EsheetRendererHandle>(null);
 
   const handleSubmit = () => {
-    const responses = rendererRef.current?.getRawResponse();
-    console.log('Form responses:', responses);
+    const result = rendererRef.current?.getValidResponse();
+    if (!result) return;
+
+    if (result.errors.length > 0) {
+      console.log('Validation errors:', result.errors);
+      return;
+    }
+
+    console.log('Valid form responses:', result.response);
   };
 
   return (
@@ -145,11 +152,12 @@ The renderer accepts form definitions as objects, JSON strings, or YAML strings:
 
 ## Ref API (`EsheetRendererHandle`)
 
-| Method             | Returns        | Description                            |
-| ------------------ | -------------- | -------------------------------------- |
-| `getRawResponse()` | `FormResponse` | Current response values for all fields |
-| `getFormStore()`   | `FormStore`    | The underlying form state store        |
-| `getUIStore()`     | `UIStore`      | The underlying UI state store          |
+| Method               | Returns                                                         | Description                            |
+| -------------------- | --------------------------------------------------------------- | -------------------------------------- |
+| `getRawResponse()`   | `FormResponse`                                                  | Current response values for all fields |
+| `getValidResponse()` | `{ response: FormResponse \| null, errors: ValidationError[] }` | Validate + get responses               |
+| `getFormStore()`     | `FormStore`                                                     | The underlying form state store        |
+| `getUIStore()`       | `UIStore`                                                       | The underlying UI state store          |
 
 ## What's Next
 

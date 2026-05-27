@@ -31,8 +31,13 @@ function SurveyPage() {
   const ref = useRef<EsheetRendererHandle>(null);
 
   const handleSubmit = () => {
-    const responses = ref.current?.getRawResponse();
-    // Send responses to your API
+    const result = ref.current?.getValidResponse();
+    if (!result) return;
+    if (result.errors.length > 0) {
+      // show errors to user
+      return;
+    }
+    // Send result.response to your API
   };
 
   return (
@@ -55,11 +60,12 @@ function SurveyPage() {
 
 ## Ref API (`EsheetRendererHandle`)
 
-| Method             | Returns        | Description                                    |
-| ------------------ | -------------- | ---------------------------------------------- |
-| `getRawResponse()` | `FormResponse` | Get current response values for all fields     |
-| `getFormStore()`   | `FormStore`    | Get the underlying form state store (advanced) |
-| `getUIStore()`     | `UIStore`      | Get the underlying UI state store (advanced)   |
+| Method               | Returns                                                         | Description                                    |
+| -------------------- | --------------------------------------------------------------- | ---------------------------------------------- |
+| `getRawResponse()`   | `FormResponse`                                                  | Get current response values for all fields     |
+| `getValidResponse()` | `{ response: FormResponse \| null, errors: ValidationError[] }` | Validate + get responses                       |
+| `getFormStore()`     | `FormStore`                                                     | Get the underlying form state store (advanced) |
+| `getUIStore()`       | `UIStore`                                                       | Get the underlying UI state store (advanced)   |
 
 ## Features
 

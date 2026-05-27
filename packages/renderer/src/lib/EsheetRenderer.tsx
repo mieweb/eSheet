@@ -55,7 +55,7 @@ export interface EsheetRendererHandle {
  * Renders a form in fill-out mode with conditional visibility logic.
  * Reuses all field components from @esheet/fields.
  *
- * @example
+* @example
  * ```tsx
  * const rendererRef = useRef<EsheetRendererHandle>(null);
  *

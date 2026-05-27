@@ -179,7 +179,7 @@ function App() {
 
   return (
     <EsheetRenderer
-      definition={definition}
+      formDataInput={definition}
       onRendererToolsReady={onRendererToolsReady}
     />
   );
