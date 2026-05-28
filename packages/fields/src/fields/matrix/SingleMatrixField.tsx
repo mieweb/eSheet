@@ -66,13 +66,19 @@ export const SingleMatrixField = React.memo(function SingleMatrixField({
                     {columns.map((col, colIndex) => {
                       const inputId = `${instanceId}-singlematrix-answer-${def.id}-${rowIndex}-${colIndex}-m`;
                       return (
-                        <div
+                        <label
                           key={col.id}
-                          className="ms:flex ms:items-center ms:gap-2 ms:py-1"
+                          htmlFor={inputId}
+                          className={`ms:flex ms:items-center ms:gap-2 ms:rounded ms:transition-colors ms:py-1 ms:px-1 ${
+                            isEnabled
+                              ? 'ms:cursor-pointer ms:hover:bg-msprimary/5'
+                              : 'ms:cursor-not-allowed'
+                          }`}
                         >
                           <Radio
                             id={inputId}
                             value={col.id}
+                            size="lg"
                             onClick={() => {
                               if (selected[row.id]?.id === col.id) {
                                 const updated: Record<string, SelectedOption> =
@@ -85,13 +91,10 @@ export const SingleMatrixField = React.memo(function SingleMatrixField({
                               }
                             }}
                           />
-                          <label
-                            htmlFor={inputId}
-                            className="ms:text-sm ms:text-mstext ms:cursor-pointer"
-                          >
+                          <span className="ms:text-sm ms:text-mstext">
                             {col.value}
-                          </label>
-                        </div>
+                          </span>
+                        </label>
                       );
                     })}
                   </RadioGroup>
@@ -145,13 +148,19 @@ export const SingleMatrixField = React.memo(function SingleMatrixField({
                     {columns.map((col, colIndex) => {
                       const inputId = `${instanceId}-singlematrix-answer-${def.id}-${rowIndex}-${colIndex}`;
                       return (
-                        <div
+                        <label
                           key={col.id}
-                          className="ms:flex ms:justify-center ms:py-2"
+                          htmlFor={inputId}
+                          className={`ms:flex ms:justify-center ms:rounded ms:transition-colors ms:py-2 ${
+                            isEnabled
+                              ? 'ms:cursor-pointer ms:hover:bg-msprimary/5'
+                              : 'ms:cursor-not-allowed'
+                          }`}
                         >
                           <Radio
                             id={inputId}
                             value={col.id}
+                            size="lg"
                             onClick={() => {
                               if (selected[row.id]?.id === col.id) {
                                 const updated: Record<string, SelectedOption> =
@@ -164,7 +173,7 @@ export const SingleMatrixField = React.memo(function SingleMatrixField({
                               }
                             }}
                           />
-                        </div>
+                        </label>
                       );
                     })}
                   </RadioGroup>

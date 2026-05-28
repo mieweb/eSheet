@@ -40,17 +40,26 @@ export const RadioField = React.memo(function RadioField({
           orientation="vertical"
         >
           {options.map((option) => (
-            <Radio
+            <label
               key={option.id}
-              id={`${instanceId}-radio-answer-${def.id}-${option.id}`}
-              value={option.id}
-              label={option.value}
-              onClick={() => {
-                if (selectedId === option.id) {
-                  onResponse({ selected: undefined });
-                }
-              }}
-            />
+              htmlFor={`${instanceId}-radio-answer-${def.id}-${option.id}`}
+              className={`ms:flex ms:items-center ms:gap-2 ms:rounded ms:transition-colors ms:py-1 ms:px-1 ${
+                isEnabled
+                  ? 'ms:cursor-pointer ms:hover:bg-msprimary/5'
+                  : 'ms:cursor-not-allowed'
+              }`}
+            >
+              <Radio
+                id={`${instanceId}-radio-answer-${def.id}-${option.id}`}
+                value={option.id}
+                onClick={() => {
+                  if (selectedId === option.id) {
+                    onResponse({ selected: undefined });
+                  }
+                }}
+              />
+              <span className="ms:text-sm ms:text-mstext">{option.value}</span>
+            </label>
           ))}
         </RadioGroup>
       </div>

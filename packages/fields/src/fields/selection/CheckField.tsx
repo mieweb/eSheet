@@ -39,16 +39,25 @@ export const CheckField = React.memo(function CheckField({
           {def.question || 'Question'}
           {isRequired && <span className="ms:text-msdanger ms:ml-0.5">*</span>}
         </div>
-        <div className="ms:space-y-2">
+        <div className="ms:space-y-1">
           {options.map((option) => (
-            <Checkbox
+            <label
               key={option.id}
-              id={`${instanceId}-check-answer-${def.id}-${option.id}`}
-              checked={selectedIds.includes(option.id)}
-              onChange={() => toggleOption(option.id, option.value)}
-              disabled={!isEnabled}
-              label={option.value}
-            />
+              htmlFor={`${instanceId}-check-answer-${def.id}-${option.id}`}
+              className={`ms:flex ms:items-center ms:gap-2 ms:rounded ms:transition-colors ms:py-1 ms:px-1 ${
+                isEnabled
+                  ? 'ms:cursor-pointer ms:hover:bg-msprimary/5'
+                  : 'ms:cursor-not-allowed'
+              }`}
+            >
+              <Checkbox
+                id={`${instanceId}-check-answer-${def.id}-${option.id}`}
+                checked={selectedIds.includes(option.id)}
+                onChange={() => toggleOption(option.id, option.value)}
+                disabled={!isEnabled}
+              />
+              <span className="ms:text-sm ms:text-mstext">{option.value}</span>
+            </label>
           ))}
         </div>
       </div>
