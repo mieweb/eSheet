@@ -24,10 +24,11 @@ export const DropdownField = React.memo(function DropdownField({
     (response?.selected as SelectedOption | undefined)?.id ?? null;
 
   if (isPreview) {
-    const selectOptions = options.map((o) => ({
-      value: o.id,
-      label: o.value,
-    }));
+    const clearOption = { value: '__clear__', label: '— None —' };
+    const selectOptions = [
+      ...(selectedId ? [clearOption] : []),
+      ...options.map((o) => ({ value: o.id, label: o.value })),
+    ];
 
     return (
       <div className="dropdown-field-preview ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
@@ -39,7 +40,7 @@ export const DropdownField = React.memo(function DropdownField({
           options={selectOptions}
           value={selectedId || ''}
           onValueChange={(val) => {
-            if (!val) {
+            if (!val || val === '__clear__') {
               onResponse({ selected: undefined });
             } else {
               const opt = options.find((o) => o.id === val);

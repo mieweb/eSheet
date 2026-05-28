@@ -31,6 +31,7 @@ export const LongTextField = React.memo(function LongTextField({
           onChange={(e) => onResponse({ answer: e.target.value })}
           placeholder="Type your answer"
           rows={4}
+          className="ms:max-h-56 ms:resize-y"
         />
       </div>
     );
