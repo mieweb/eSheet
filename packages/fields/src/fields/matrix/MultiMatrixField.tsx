@@ -76,7 +76,7 @@ export const MultiMatrixField = React.memo(function MultiMatrixField({
                           <label
                             key={col.id}
                             htmlFor={inputId}
-                            className={`ms:flex ms:items-center ms:gap-2 ms:py-1 ms:rounded ms:px-1 ms:transition-colors ${
+                            className={`ms:flex ms:items-center ms:gap-2 ms:rounded ms:transition-colors ms:py-1 ms:px-1 ${
                               isEnabled
                                 ? 'ms:cursor-pointer ms:hover:bg-msprimary/5'
                                 : 'ms:cursor-not-allowed'
@@ -89,6 +89,7 @@ export const MultiMatrixField = React.memo(function MultiMatrixField({
                                 toggleSelection(row.id, col.id, col.value)
                               }
                               disabled={!isEnabled}
+                              size="lg"
                             />
                             <span className="ms:text-sm ms:text-mstext">
                               {col.value}
@@ -138,7 +139,7 @@ export const MultiMatrixField = React.memo(function MultiMatrixField({
                           <label
                             key={col.id}
                             htmlFor={inputId}
-                            className={`ms:flex ms:justify-center ms:py-2 ms:rounded ms:transition-colors ${
+                            className={`ms:flex ms:justify-center ms:rounded ms:transition-colors ms:py-2 ${
                               isEnabled
                                 ? 'ms:cursor-pointer ms:hover:bg-msprimary/5'
                                 : 'ms:cursor-not-allowed'
@@ -151,6 +152,7 @@ export const MultiMatrixField = React.memo(function MultiMatrixField({
                                 toggleSelection(row.id, col.id, col.value)
                               }
                               disabled={!isEnabled}
+                              size="lg"
                             />
                           </label>
                         );

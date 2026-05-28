@@ -69,7 +69,7 @@ export const SingleMatrixField = React.memo(function SingleMatrixField({
                         <label
                           key={col.id}
                           htmlFor={inputId}
-                          className={`ms:flex ms:items-center ms:gap-2 ms:py-1 ms:rounded ms:px-1 ms:transition-colors ${
+                          className={`ms:flex ms:items-center ms:gap-2 ms:rounded ms:transition-colors ms:py-1 ms:px-1 ${
                             isEnabled
                               ? 'ms:cursor-pointer ms:hover:bg-msprimary/5'
                               : 'ms:cursor-not-allowed'
@@ -78,6 +78,7 @@ export const SingleMatrixField = React.memo(function SingleMatrixField({
                           <Radio
                             id={inputId}
                             value={col.id}
+                            size="lg"
                             onClick={() => {
                               if (selected[row.id]?.id === col.id) {
                                 const updated: Record<string, SelectedOption> =
@@ -150,7 +151,7 @@ export const SingleMatrixField = React.memo(function SingleMatrixField({
                         <label
                           key={col.id}
                           htmlFor={inputId}
-                          className={`ms:flex ms:justify-center ms:py-2 ms:rounded ms:transition-colors ${
+                          className={`ms:flex ms:justify-center ms:rounded ms:transition-colors ms:py-2 ${
                             isEnabled
                               ? 'ms:cursor-pointer ms:hover:bg-msprimary/5'
                               : 'ms:cursor-not-allowed'
@@ -159,6 +160,7 @@ export const SingleMatrixField = React.memo(function SingleMatrixField({
                           <Radio
                             id={inputId}
                             value={col.id}
+                            size="lg"
                             onClick={() => {
                               if (selected[row.id]?.id === col.id) {
                                 const updated: Record<string, SelectedOption> =
