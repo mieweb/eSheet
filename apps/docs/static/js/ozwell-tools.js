@@ -100,11 +100,11 @@
     const pathLower = path.toLowerCase();
     const contentLower = (content || '').toLowerCase();
     let score = 0;
-    for (var i = 0; i < queryWords.length; i++) {
-      var word = queryWords[i];
+    for (let i = 0; i < queryWords.length; i++) {
+      const word = queryWords[i];
       if (pathLower.indexOf(word) !== -1) score += 3; // path match is a strong signal
       // Count all occurrences in content (frequency beats presence)
-      var pos = 0;
+      let pos = 0;
       while ((pos = contentLower.indexOf(word, pos)) !== -1) {
         score += 1;
         pos += word.length;
@@ -119,13 +119,13 @@
   // Find the top matching pages and return their content
   function searchDocs(query) {
     return getDocContent().then(function (content) {
-      var queryWords = query
+      const queryWords = query
         .toLowerCase()
         .replace(/[^a-z0-9\s]/g, ' ')
         .split(/\s+/)
         .filter(Boolean);
-      var pages = Object.keys(content);
-      var scored = pages
+      const pages = Object.keys(content);
+      const scored = pages
         .map(function (p) {
           return { path: p, score: scorePage(p, content[p], queryWords) };
         })
@@ -142,7 +142,7 @@
           available_pages: pages,
         };
       }
-      var top = scored.slice(0, 3);
+      const top = scored.slice(0, 3);
       return {
         success: true,
         pages: top.map(function (p) {
@@ -199,14 +199,14 @@
   });
 
   // --- Key management ---
-  var STORAGE_KEY = 'ozwell_api_key';
+  const STORAGE_KEY = 'ozwell_api_key';
 
   function getStoredKey() {
     try {
-      var raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return null;
-      var parsed = JSON.parse(raw);
-      var today = new Date().toISOString().slice(0, 10);
+      const parsed = JSON.parse(raw);
+      const today = new Date().toISOString().slice(0, 10);
       return parsed.date === today ? parsed.key : null;
     } catch (e) {
       return null;
@@ -214,7 +214,7 @@
   }
 
   function setStoredKey(key) {
-    var today = new Date().toISOString().slice(0, 10);
+    const today = new Date().toISOString().slice(0, 10);
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({ key: key, date: today })
@@ -227,13 +227,13 @@
 
   // Hide the widget button until the key is validated — prevents a broken
   // button showing when the CDN loads with an empty/stale apiKey.
-  var hideStyle = document.createElement('style');
+  const hideStyle = document.createElement('style');
   hideStyle.id = 'ozwell-hide-btn';
   hideStyle.textContent = '.ozwell-chat-button{display:none!important;}';
   document.head.appendChild(hideStyle);
 
   function showWidgetButton() {
-    var s = document.getElementById('ozwell-hide-btn');
+    const s = document.getElementById('ozwell-hide-btn');
     if (s) s.remove();
   }
 
@@ -241,7 +241,7 @@
     if (document.getElementById('ozwell-setup-bubble')) return;
 
     // Floating bubble — sits in the same bottom-right spot Schemie would occupy.
-    var bubble = document.createElement('button');
+    const bubble = document.createElement('button');
     bubble.id = 'ozwell-setup-bubble';
     bubble.title = 'Enable AI assistant';
     bubble.style.cssText =
@@ -257,7 +257,7 @@
       '</svg>';
 
     // Setup card — hidden until bubble is clicked.
-    var card = document.createElement('div');
+    const card = document.createElement('div');
     card.id = 'ozwell-setup-card';
     card.style.cssText =
       'display:none;position:fixed;bottom:88px;right:20px;z-index:9998;background:#fff;' +
@@ -268,32 +268,32 @@
       card.style.display = card.style.display === 'none' ? 'block' : 'none';
     };
 
-    var title = document.createElement('p');
+    const title = document.createElement('p');
     title.style.cssText = 'margin:0 0 6px;color:#111827;font-weight:600;';
     title.textContent = '🔑 AI Assistant setup';
 
-    var desc = document.createElement('p');
+    const desc = document.createElement('p');
     desc.style.cssText =
       'margin:0 0 10px;color:#6b7280;font-size:12px;line-height:1.4;';
     desc.textContent =
       'Enter your Ozwell parent API key (ozw_…) to enable the AI chat widget.';
 
-    var input = document.createElement('input');
+    const input = document.createElement('input');
     input.type = 'text';
     input.placeholder = 'ozw_...';
     input.style.cssText =
       'width:100%;box-sizing:border-box;border:1px solid #d1d5db;border-radius:6px;padding:6px 10px;font-size:13px;margin-bottom:8px;outline:none;font-family:inherit;';
 
-    var errorMsg = document.createElement('p');
+    const errorMsg = document.createElement('p');
     errorMsg.style.cssText =
       'margin:0 0 8px;color:#ef4444;font-size:12px;display:none;';
 
-    var btn = document.createElement('button');
+    const btn = document.createElement('button');
     btn.textContent = 'Enable AI assistant';
     btn.style.cssText =
       'background:#2563eb;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:13px;cursor:pointer;width:100%;font-family:inherit;';
     btn.onclick = function () {
-      var key = input.value.trim();
+      const key = input.value.trim();
       errorMsg.style.display = 'none';
       input.style.borderColor = '#d1d5db';
 
@@ -345,7 +345,7 @@
     document.body.appendChild(card);
   }
 
-  var storedKey = getStoredKey();
+  const storedKey = getStoredKey();
   if (storedKey) {
     // Validate stored key before revealing the widget button.
     fetch('https://ozwellapi.os.mieweb.org/v1/chat/completions', {

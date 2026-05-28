@@ -49,8 +49,8 @@ function DraggableRankItem({
         isDragging
           ? 'ms:border-msprimary ms:bg-msprimary/10 ms:shadow-md'
           : anyDragging
-            ? 'ms:border-msborder'
-            : 'ms:border-msborder ms:hover:border-msprimary/50 ms:hover:bg-msprimary/10'
+          ? 'ms:border-msborder'
+          : 'ms:border-msborder ms:hover:border-msprimary/50 ms:hover:bg-msprimary/10'
       }`}
     >
       <div
