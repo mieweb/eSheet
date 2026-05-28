@@ -1,11 +1,6 @@
 import { useEffect } from 'react';
-import {
-  EsheetBuilder,
-  useBuilderMcpToolHandler,
-  BUILDER_TOOL_DEFINITIONS,
-  BUILDER_SYSTEM_PROMPT,
-  type FormDefinition,
-} from '@esheet/builder';
+import { EsheetBuilder } from '@esheet/builder';
+import type { FormDefinition } from '@esheet/core';
 import { Navbar } from '../components/Navbar.js';
 import { updateOzwellTools } from '../ozwell-setup.js';
 
@@ -34,22 +29,15 @@ const INITIAL_DEF: FormDefinition = {
 
 export function BuilderView() {
   useEffect(() => {
-    updateOzwellTools([...BUILDER_TOOL_DEFINITIONS], BUILDER_SYSTEM_PROMPT);
+    updateOzwellTools([], '');
   }, []);
-
-  const onBuilderToolsReady = useBuilderMcpToolHandler({
-    eventName: 'ozwell-tool-call',
-  });
 
   return (
     <div className="demo-builder-view w-full h-screen flex flex-col">
       <Navbar />
       <div className="flex-1 overflow-y-auto bg-background">
         <div className="w-full flex justify-center px-2 pt-5">
-          <EsheetBuilder
-            definition={INITIAL_DEF}
-            onBuilderToolsReady={onBuilderToolsReady}
-          />
+          <EsheetBuilder definition={INITIAL_DEF} />
         </div>
       </div>
     </div>

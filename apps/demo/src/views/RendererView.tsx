@@ -1,13 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import {
-  EsheetRenderer,
-  type EsheetRendererHandle,
-  useRendererMcpToolHandler,
-  RENDERER_TOOL_DEFINITIONS,
-  RENDERER_SYSTEM_PROMPT,
-  type FormDefinition,
-  type FormResponseEnvelope,
-} from '@esheet/renderer';
+import { EsheetRenderer, type EsheetRendererHandle } from '@esheet/renderer';
+import type { FormDefinition, FormResponseEnvelope } from '@esheet/core';
 import { Navbar } from '../components/Navbar';
 import {
   Alert,
@@ -76,12 +69,8 @@ const TEST_SCHEMAS: readonly SchemaOption[] = Object.entries(schemaModules)
 
 export function RendererView() {
   useEffect(() => {
-    updateOzwellTools([...RENDERER_TOOL_DEFINITIONS], RENDERER_SYSTEM_PROMPT);
+    updateOzwellTools([], '');
   }, []);
-
-  const onRendererToolsReady = useRendererMcpToolHandler({
-    eventName: 'ozwell-tool-call',
-  });
 
   const [rawInput, setRawInput] = useState<unknown>(null);
   const [selectedSchema, setSelectedSchema] = useState<string>('');
@@ -267,7 +256,6 @@ export function RendererView() {
                   key={formKey}
                   formDataInput={rawInput}
                   ref={rendererRef}
-                  onRendererToolsReady={onRendererToolsReady}
                   onReady={() => {
                     const def = rendererRef.current
                       ?.getFormStore()
