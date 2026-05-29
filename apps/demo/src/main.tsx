@@ -14,6 +14,9 @@ if (import.meta.env.DEV) {
   await import('../../../packages/renderer/src/index.output.css');
 }
 
+// Must load LAST so !important overrides @mieweb/ui utility classes
+await import('./mobile-touch.css');
+
 function App() {
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>

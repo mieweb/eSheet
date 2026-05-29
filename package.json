@@ -70,7 +70,7 @@
     }
   },
   "dependencies": {
-    "@mieweb/ui": "0.3.0-dev.107",
+    "@mieweb/ui": "^0.6.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
