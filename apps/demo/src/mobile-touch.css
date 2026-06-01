@@ -1,0 +1,184 @@
+/* ------------------------------------------------------------------ */
+/* Mobile Touch Mode — larger touch targets for form fields            */
+/* ------------------------------------------------------------------ */
+/*                                                                     */
+/* ACTIVATION:                                                         */
+/*   1. AUTOMATIC: Activates via @media (max-width: 979px)             */
+/*   2. MANUAL: Add class `mobile-touch-enabled` to any ancestor of    */
+/*      the form fields to force touch-sized controls at any viewport. */
+/*                                                                     */
+/* USAGE (consuming apps):                                             */
+/*   <div className={touchMode ? 'mobile-touch-enabled' : ''}>        */
+/*     <EsheetRenderer ... />                                          */
+/*   </div>                                                            */
+/*                                                                     */
+/* WHAT IT DOES:                                                       */
+/*   - Inputs/textareas/selects: 48px min-height, 16px font, 0.75rem  */
+/*     padding (prevents iOS zoom on focus)                            */
+/*   - Radio/checkbox indicators: scaled 1.75x via transform           */
+/*   - Labels with radio/checkbox: 44px min-height with flex alignment */
+/*   - Custom radio/checkbox controls: 36px hit area                   */
+/*   - Buttons inside field wrappers: 44px min-height                  */
+/*                                                                     */
+/* IMPORT ORDER:                                                       */
+/*   Must load AFTER @mieweb/ui/styles.css and Tailwind so !important  */
+/*   overrides utility classes (h-10, py-2, etc). Use dynamic import:  */
+/*     await import('./mobile-touch.css');                              */
+/*                                                                     */
+/* ------------------------------------------------------------------ */
+
+/* --- Media query: auto-enable on small viewports --- */
+@media (max-width: 979px) {
+  [data-slot='input'],
+  .field-wrapper textarea,
+  .field-wrapper select,
+  .esheet-renderer-root input[type='text'],
+  .esheet-renderer-root input[type='number'],
+  .esheet-renderer-root input[type='date'],
+  .esheet-renderer-root input[type='email'],
+  .esheet-renderer-root input[type='tel'],
+  .esheet-renderer-root input:not([type]),
+  .esheet-renderer-root textarea,
+  .esheet-renderer-root select {
+    font-size: 16px !important;
+    min-height: 48px !important;
+    height: auto !important;
+    padding: 0.75rem !important;
+    border-radius: 8px !important;
+  }
+
+  [data-slot='radio-indicator'] {
+    transform: scale(1.75) !important;
+    margin: 6px 8px !important;
+  }
+
+  [data-slot='checkbox-indicator'] {
+    transform: scale(1.75) !important;
+    margin: 8px 12px !important;
+  }
+
+  label:has(input[type='radio']),
+  label:has(input[type='checkbox']) {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    min-height: 44px !important;
+  }
+
+  .custom-radio-display {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .custom-radio-dot {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  .custom-checkbox-display {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+  }
+
+  .custom-checkbox-checkmark {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  .custom-radio-wrapper,
+  .custom-checkbox-wrapper {
+    min-height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+  }
+
+  .field-wrapper label,
+  .esheet-renderer-root label {
+    font-size: 1rem !important;
+    line-height: 1.4 !important;
+  }
+
+  .field-wrapper button,
+  .esheet-renderer-root button {
+    min-height: 44px !important;
+    font-size: 1rem !important;
+  }
+}
+
+/* --- Toggle: manually enable via .mobile-touch-enabled class --- */
+.mobile-touch-enabled .field-wrapper [data-slot='input'],
+.mobile-touch-enabled .field-wrapper textarea,
+.mobile-touch-enabled .field-wrapper select,
+.mobile-touch-enabled .esheet-renderer-root input[type='text'],
+.mobile-touch-enabled .esheet-renderer-root input[type='number'],
+.mobile-touch-enabled .esheet-renderer-root input[type='date'],
+.mobile-touch-enabled .esheet-renderer-root input[type='email'],
+.mobile-touch-enabled .esheet-renderer-root input[type='tel'],
+.mobile-touch-enabled .esheet-renderer-root input:not([type]),
+.mobile-touch-enabled .esheet-renderer-root textarea,
+.mobile-touch-enabled .esheet-renderer-root select {
+  font-size: 16px !important;
+  min-height: 48px !important;
+  height: auto !important;
+  padding: 0.75rem !important;
+  border-radius: 8px !important;
+}
+
+.mobile-touch-enabled [data-slot='radio-indicator'] {
+  transform: scale(1.75) !important;
+  margin: 6px 8px !important;
+}
+
+.mobile-touch-enabled [data-slot='checkbox-indicator'] {
+  transform: scale(1.75) !important;
+  margin: 8px 12px !important;
+}
+
+.mobile-touch-enabled label:has(input[type='radio']),
+.mobile-touch-enabled label:has(input[type='checkbox']) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  min-height: 44px !important;
+}
+
+.mobile-touch-enabled .custom-radio-display {
+  width: 36px !important;
+  height: 36px !important;
+}
+
+.mobile-touch-enabled .custom-radio-dot {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.mobile-touch-enabled .custom-checkbox-display {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+}
+
+.mobile-touch-enabled .custom-checkbox-checkmark {
+  width: 24px !important;
+  height: 24px !important;
+}
+
+.mobile-touch-enabled .custom-radio-wrapper,
+.mobile-touch-enabled .custom-checkbox-wrapper {
+  min-height: 44px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+.mobile-touch-enabled .field-wrapper label {
+  font-size: 1rem !important;
+  line-height: 1.4 !important;
+}
+
+.mobile-touch-enabled .field-wrapper button {
+  min-height: 44px !important;
+  font-size: 1rem !important;
+}
