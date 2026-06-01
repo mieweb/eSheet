@@ -164,6 +164,7 @@ export const EsheetBuilder = React.forwardRef<
     () => ui.getState().editModalOpen
   );
   const [toolsModalOpen, setToolsModalOpen] = React.useState(false);
+  const [touchMode, setTouchMode] = React.useState(false);
 
   // Touch mode state using shared hook
   const { isTouchEnabled, isManualOverride, setTouchMode, resetTouchMode } =
@@ -277,11 +278,15 @@ export const EsheetBuilder = React.forwardRef<
               </div>
             )}
             {mode === 'preview' && (
-              <div className="preview-layout ms:flex-1 ms:min-h-0 ms:min-w-0 ms:w-full ms:max-w-2xl ms:mx-auto ms:p-4 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto">
+              <div
+                className={`preview-layout ms:flex-1 ms:min-h-0 ms:min-w-0 ms:w-full ms:max-w-2xl ms:mx-auto ms:p-4 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto${
+                  touchMode ? ' mobile-touch-enabled' : ''
+                }`}
+              >
                 <div className="ms:flex ms:items-center ms:justify-end ms:mb-3">
                   <Switch
                     size="sm"
-                    checked={isTouchEnabled}
+                    checked={touchMode}
                     onCheckedChange={setTouchMode}
                     label="Touch Mode"
                   />
