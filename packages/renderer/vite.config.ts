@@ -62,6 +62,7 @@ export default defineConfig(() => ({
     },
     cssCodeSplit: false,
     sourcemap: false,
+    emptyOutDir: false,
   },
   test: {
     name: '@esheet/renderer',
