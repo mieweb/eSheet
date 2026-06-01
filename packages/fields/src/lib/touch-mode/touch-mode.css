@@ -1,0 +1,265 @@
+/* ------------------------------------------------------------------ */
+/* Touch Mode — larger touch targets for form fields                  */
+/* ------------------------------------------------------------------ */
+/*                                                                     */
+/* ACTIVATION:                                                         */
+/*   1. AUTOMATIC: Activates via @media (max-width: 979px)             */
+/*   2. MANUAL: Add `touchMode={true}` prop to EsheetRenderer/Builder, */
+/*      or `touchMode="auto"` for media-query-based detection.         */
+/*                                                                     */
+/* WHAT IT DOES:                                                       */
+/*   - Inputs/textareas/selects: 48px min-height, 16px font, 0.75rem   */
+/*     padding (prevents iOS zoom on focus)                            */
+/*   - Radio/checkbox indicators: scaled 1.75x via transform           */
+/*   - Labels with radio/checkbox: 44px min-height with flex alignment */
+/*   - Custom radio/checkbox controls: 36px hit area                   */
+/*   - Buttons inside field wrappers: 44px min-height                  */
+/*                                                                     */
+/* SCOPING:                                                            */
+/*   - Renderer: applies to entire .esheet-renderer-root               */
+/*   - Builder: only applies inside .preview-layout (preview mode)     */
+/*     (excludes build mode canvas, tool panel, edit panel, header)    */
+/*                                                                     */
+/* IMPORT ORDER:                                                       */
+/*   This file is imported after the main renderer CSS, ensuring       */
+/*   !important overrides utility classes (h-10, py-2, etc).           */
+/*                                                                     */
+/* ------------------------------------------------------------------ */
+
+/* Helper: scoped selectors for touch mode */
+/* Renderer: whole root. Builder: only preview mode */
+
+/* --- Media query: auto-enable on small viewports (unless explicitly disabled) --- */
+@media (max-width: 979px) {
+  /* Renderer - full scope */
+  .esheet-renderer-root:not(.touch-mode-disabled) [data-slot='input'],
+  .esheet-renderer-root:not(.touch-mode-disabled) textarea,
+  .esheet-renderer-root:not(.touch-mode-disabled) select,
+  .esheet-renderer-root:not(.touch-mode-disabled) input[type='text'],
+  .esheet-renderer-root:not(.touch-mode-disabled) input[type='number'],
+  .esheet-renderer-root:not(.touch-mode-disabled) input[type='date'],
+  .esheet-renderer-root:not(.touch-mode-disabled) input[type='email'],
+  .esheet-renderer-root:not(.touch-mode-disabled) input[type='tel'],
+  .esheet-renderer-root:not(.touch-mode-disabled) input:not([type]),
+  /* Builder - only preview mode */
+  .ms-builder-root:not(.touch-mode-disabled) .preview-layout [data-slot='input'],
+  .ms-builder-root:not(.touch-mode-disabled) .preview-layout textarea,
+  .ms-builder-root:not(.touch-mode-disabled) .preview-layout select,
+  .ms-builder-root:not(.touch-mode-disabled) .preview-layout input[type='text'],
+  .ms-builder-root:not(.touch-mode-disabled) .preview-layout input[type='number'],
+  .ms-builder-root:not(.touch-mode-disabled) .preview-layout input[type='date'],
+  .ms-builder-root:not(.touch-mode-disabled) .preview-layout input[type='email'],
+  .ms-builder-root:not(.touch-mode-disabled) .preview-layout input[type='tel'],
+  .ms-builder-root:not(.touch-mode-disabled) .preview-layout input:not([type]) {
+    font-size: 16px !important;
+    min-height: 48px !important;
+    height: auto !important;
+    padding: 0.75rem !important;
+    border-radius: 8px !important;
+  }
+
+  .esheet-renderer-root:not(.touch-mode-disabled) [data-slot='radio-indicator'],
+  .ms-builder-root:not(.touch-mode-disabled)
+    .preview-layout
+    [data-slot='radio-indicator'] {
+    transform: scale(1.75) !important;
+    margin: 6px 8px !important;
+  }
+
+  .esheet-renderer-root:not(.touch-mode-disabled)
+    [data-slot='checkbox-indicator'],
+  .ms-builder-root:not(.touch-mode-disabled)
+    .preview-layout
+    [data-slot='checkbox-indicator'] {
+    transform: scale(1.75) !important;
+    margin: 8px 12px !important;
+  }
+
+  .esheet-renderer-root:not(.touch-mode-disabled)
+    label:has(input[type='radio']),
+  .esheet-renderer-root:not(.touch-mode-disabled)
+    label:has(input[type='checkbox']),
+  .ms-builder-root:not(.touch-mode-disabled)
+    .preview-layout
+    label:has(input[type='radio']),
+  .ms-builder-root:not(.touch-mode-disabled)
+    .preview-layout
+    label:has(input[type='checkbox']) {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    min-height: 44px !important;
+  }
+
+  .esheet-renderer-root:not(.touch-mode-disabled) .custom-radio-display,
+  .ms-builder-root:not(.touch-mode-disabled)
+    .preview-layout
+    .custom-radio-display {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .esheet-renderer-root:not(.touch-mode-disabled) .custom-radio-dot,
+  .ms-builder-root:not(.touch-mode-disabled) .preview-layout .custom-radio-dot {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  .esheet-renderer-root:not(.touch-mode-disabled) .custom-checkbox-display,
+  .ms-builder-root:not(.touch-mode-disabled)
+    .preview-layout
+    .custom-checkbox-display {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+  }
+
+  .esheet-renderer-root:not(.touch-mode-disabled) .custom-checkbox-checkmark,
+  .ms-builder-root:not(.touch-mode-disabled)
+    .preview-layout
+    .custom-checkbox-checkmark {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  .esheet-renderer-root:not(.touch-mode-disabled) .custom-radio-wrapper,
+  .esheet-renderer-root:not(.touch-mode-disabled) .custom-checkbox-wrapper,
+  .ms-builder-root:not(.touch-mode-disabled)
+    .preview-layout
+    .custom-radio-wrapper,
+  .ms-builder-root:not(.touch-mode-disabled)
+    .preview-layout
+    .custom-checkbox-wrapper {
+    min-height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+  }
+
+  /* Only target field labels, not UI control labels (exclude Switch and other @mieweb/ui components) */
+  .esheet-renderer-root:not(.touch-mode-disabled) label:not([data-slot]),
+  .ms-builder-root:not(.touch-mode-disabled)
+    .preview-layout
+    [class*='-field-preview']
+    label {
+    font-size: 1rem !important;
+    line-height: 1.4 !important;
+  }
+
+  /* Note: buttons are NOT touched in builder to avoid affecting UI buttons */
+  .esheet-renderer-root:not(.touch-mode-disabled) button {
+    min-height: 44px !important;
+    font-size: 1rem !important;
+  }
+}
+
+/* --- Manual toggle: enable via .esheet-touch-active class on root --- */
+/* Renderer - full scope */
+.esheet-renderer-root.esheet-touch-active [data-slot='input'],
+.esheet-renderer-root.esheet-touch-active textarea,
+.esheet-renderer-root.esheet-touch-active select,
+.esheet-renderer-root.esheet-touch-active input[type='text'],
+.esheet-renderer-root.esheet-touch-active input[type='number'],
+.esheet-renderer-root.esheet-touch-active input[type='date'],
+.esheet-renderer-root.esheet-touch-active input[type='email'],
+.esheet-renderer-root.esheet-touch-active input[type='tel'],
+.esheet-renderer-root.esheet-touch-active input:not([type]),
+/* Builder - only preview mode */
+.ms-builder-root.esheet-touch-active .preview-layout [data-slot='input'],
+.ms-builder-root.esheet-touch-active .preview-layout textarea,
+.ms-builder-root.esheet-touch-active .preview-layout select,
+.ms-builder-root.esheet-touch-active .preview-layout input[type='text'],
+.ms-builder-root.esheet-touch-active .preview-layout input[type='number'],
+.ms-builder-root.esheet-touch-active .preview-layout input[type='date'],
+.ms-builder-root.esheet-touch-active .preview-layout input[type='email'],
+.ms-builder-root.esheet-touch-active .preview-layout input[type='tel'],
+.ms-builder-root.esheet-touch-active .preview-layout input:not([type]) {
+  font-size: 16px !important;
+  min-height: 48px !important;
+  height: auto !important;
+  padding: 0.75rem !important;
+  border-radius: 8px !important;
+}
+
+.esheet-renderer-root.esheet-touch-active [data-slot='radio-indicator'],
+.ms-builder-root.esheet-touch-active
+  .preview-layout
+  [data-slot='radio-indicator'] {
+  transform: scale(1.75) !important;
+  margin: 6px 8px !important;
+}
+
+.esheet-renderer-root.esheet-touch-active [data-slot='checkbox-indicator'],
+.ms-builder-root.esheet-touch-active
+  .preview-layout
+  [data-slot='checkbox-indicator'] {
+  transform: scale(1.75) !important;
+  margin: 8px 12px !important;
+}
+
+.esheet-renderer-root.esheet-touch-active label:has(input[type='radio']),
+.esheet-renderer-root.esheet-touch-active label:has(input[type='checkbox']),
+.ms-builder-root.esheet-touch-active
+  .preview-layout
+  label:has(input[type='radio']),
+.ms-builder-root.esheet-touch-active
+  .preview-layout
+  label:has(input[type='checkbox']) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  min-height: 44px !important;
+}
+
+.esheet-renderer-root.esheet-touch-active .custom-radio-display,
+.ms-builder-root.esheet-touch-active .preview-layout .custom-radio-display {
+  width: 36px !important;
+  height: 36px !important;
+}
+
+.esheet-renderer-root.esheet-touch-active .custom-radio-dot,
+.ms-builder-root.esheet-touch-active .preview-layout .custom-radio-dot {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.esheet-renderer-root.esheet-touch-active .custom-checkbox-display,
+.ms-builder-root.esheet-touch-active .preview-layout .custom-checkbox-display {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+}
+
+.esheet-renderer-root.esheet-touch-active .custom-checkbox-checkmark,
+.ms-builder-root.esheet-touch-active
+  .preview-layout
+  .custom-checkbox-checkmark {
+  width: 24px !important;
+  height: 24px !important;
+}
+
+.esheet-renderer-root.esheet-touch-active .custom-radio-wrapper,
+.esheet-renderer-root.esheet-touch-active .custom-checkbox-wrapper,
+.ms-builder-root.esheet-touch-active .preview-layout .custom-radio-wrapper,
+.ms-builder-root.esheet-touch-active .preview-layout .custom-checkbox-wrapper {
+  min-height: 44px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+/* Only target field labels, not UI control labels (exclude Switch and other @mieweb/ui components) */
+.esheet-renderer-root.esheet-touch-active label:not([data-slot]),
+.ms-builder-root.esheet-touch-active
+  .preview-layout
+  [class*='-field-preview']
+  label {
+  font-size: 1rem !important;
+  line-height: 1.4 !important;
+}
+
+/* Note: buttons are NOT touched in builder to avoid affecting UI buttons */
+.esheet-renderer-root.esheet-touch-active button {
+  min-height: 44px !important;
+  font-size: 1rem !important;
+}
