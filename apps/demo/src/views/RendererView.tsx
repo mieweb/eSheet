@@ -24,7 +24,7 @@ import {
   TabsList,
   TabsTrigger,
 } from '@mieweb/ui';
-import { ClipboardList } from 'lucide-react';
+import { ClipboardList, Smartphone } from 'lucide-react';
 import { updateOzwellTools } from '../ozwell-setup.js';
 
 interface SubmitResult {
@@ -90,6 +90,7 @@ export function RendererView() {
   const [definition, setDefinition] = useState<unknown>(null);
   const rendererRef = useRef<EsheetRendererHandle>(null);
 
+  const [touchMode, setTouchMode] = useState(false);
   const [activeTab, setActiveTab] = useState<'form' | 'definition'>('form');
 
   const resetFormKey = useCallback(() => {
@@ -242,6 +243,16 @@ export function RendererView() {
                   <TabsTrigger value="form">Form</TabsTrigger>
                   <TabsTrigger value="definition">Definition</TabsTrigger>
                 </TabsList>
+                <Button
+                  variant={touchMode ? 'primary' : 'outline'}
+                  size="sm"
+                  onClick={() => rendererRef.current?.setTouchMode(!touchMode)}
+                  title={touchMode ? 'Disable touch mode' : 'Enable touch mode'}
+                  className="ml-2"
+                >
+                  <Smartphone size={14} />
+                  <span className="hidden sm:inline ml-1">Touch</span>
+                </Button>
                 <div className="ml-auto flex items-center gap-2">
                   <Button
                     variant="outline"
@@ -267,6 +278,8 @@ export function RendererView() {
                   key={formKey}
                   formDataInput={rawInput}
                   ref={rendererRef}
+                  touchMode="auto"
+                  onTouchModeChange={setTouchMode}
                   onRendererToolsReady={onRendererToolsReady}
                   onReady={() => {
                     const def = rendererRef.current

@@ -28,12 +28,18 @@ const sidebars = {
         'builder/editing',
         'builder/code-view',
         'builder/exporting',
+        'builder/touch-mode',
       ],
     },
     {
       type: 'category',
       label: 'Renderer',
-      items: ['renderer/overview', 'renderer/responses', 'renderer/validation'],
+      items: [
+        'renderer/overview',
+        'renderer/responses',
+        'renderer/validation',
+        'renderer/touch-mode',
+      ],
     },
     {
       type: 'category',
