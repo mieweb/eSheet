@@ -66,3 +66,6 @@ export {
   registerCustomFieldTypes,
   // NOTE: resetComponentRegistry intentionally not exported - internal/test-only
 } from './lib/component-registry.js';
+
+// Touch mode
+export * from './lib/touch-mode/index.js';

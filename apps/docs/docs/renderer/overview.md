@@ -51,23 +51,32 @@ function SurveyPage() {
 
 ## Props Reference
 
-| Prop               | Type                        | Default    | Description                                                         |
-| ------------------ | --------------------------- | ---------- | ------------------------------------------------------------------- |
-| `formDataInput`    | `FormDefinition \| string`  | _required_ | Form definition as a JavaScript object, JSON string, or YAML string |
-| `className`        | `string`                    | `''`       | Additional CSS class for the root container                         |
-| `initialResponses` | `FormResponse`              | --         | Pre-fill the form with existing response data                       |
-| `ref`              | `Ref<EsheetRendererHandle>` | --         | Imperative handle for accessing responses and stores                |
+| Prop                | Type                         | Default    | Description                                                         |
+| ------------------- | ---------------------------- | ---------- | ------------------------------------------------------------------- |
+| `formDataInput`     | `FormDefinition \| string`   | _required_ | Form definition as a JavaScript object, JSON string, or YAML string |
+| `className`         | `string`                     | `''`       | Additional CSS class for the root container                         |
+| `initialResponses`  | `FormResponse`               | --         | Pre-fill the form with existing response data                       |
+| `touchMode`         | `boolean \| 'auto'`          | --         | Touch mode: `true`, `false`, `'auto'`, or omit for CSS-only         |
+| `onTouchModeChange` | `(enabled: boolean) => void` | --         | Callback when touch mode changes                                    |
+| `ref`               | `Ref<EsheetRendererHandle>`  | --         | Imperative handle for accessing responses and stores                |
 
 ## Ref API (`EsheetRendererHandle`)
 
-| Method               | Returns                                                         | Description                                    |
-| -------------------- | --------------------------------------------------------------- | ---------------------------------------------- |
-| `getRawResponse()`   | `FormResponse`                                                  | Get current response values for all fields     |
-| `getValidResponse()` | `{ response: FormResponse \| null, errors: ValidationError[] }` | Validate + get responses                       |
-| `getFormStore()`     | `FormStore`                                                     | Get the underlying form state store (advanced) |
-| `getUIStore()`       | `UIStore`                                                       | Get the underlying UI state store (advanced)   |
+| Method                  | Returns                                                         | Description                                       |
+| ----------------------- | --------------------------------------------------------------- | ------------------------------------------------- |
+| `getRawResponse()`      | `FormResponse`                                                  | Get current response values for all fields        |
+| `getValidResponse()`    | `{ response: FormResponse \| null, errors: ValidationError[] }` | Validate + get responses                          |
+| `getFormStore()`        | `FormStore`                                                     | Get the underlying form state store (advanced)    |
+| `getUIStore()`          | `UIStore`                                                       | Get the underlying UI state store (advanced)      |
+| `isTouchModeEnabled()`  | `boolean`                                                       | Check if touch mode is currently enabled          |
+| `setTouchMode(enabled)` | `void`                                                          | Manually enable/disable touch mode                |
+| `resetTouchMode()`      | `void`                                                          | Reset to auto-detection (when `touchMode="auto"`) |
 
 ## Features
+
+## Touch Mode
+
+The renderer supports touch-friendly sizing for mobile devices. See [Touch Mode](./touch-mode) for details.
 
 ## Conditional Logic
 

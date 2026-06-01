@@ -12,7 +12,7 @@ import {
   type BuilderTools,
   type FieldSummary,
 } from './builder-tools.js';
-import { FormStoreContext, UIContext } from '@esheet/fields';
+import { FormStoreContext, UIContext, useTouchMode } from '@esheet/fields';
 import {
   convertSurveyJS,
   isSurveyJSSchema,
@@ -72,20 +72,47 @@ export interface EsheetBuilderProps {
   className?: string;
   /** Optional content rendered below the header (e.g. custom status/debug panels). */
   children?: React.ReactNode;
+  /**
+   * Enable touch-optimized mode with larger touch targets in preview mode.
+   * - `true`: Always enable touch mode
+   * - `false`: Never enable touch mode (CSS media query still applies)
+   * - `'auto'`: Enable based on viewport width (<980px) via JavaScript
+   * - `undefined`: Rely on CSS media query only (default)
+   */
+  touchMode?: boolean | 'auto';
+  /** Called when touch mode changes (via auto-detection or programmatic toggle). */
+  onTouchModeChange?: (enabled: boolean) => void;
+}
+
+export interface EsheetBuilderHandle {
+  /** Returns true if touch mode is currently enabled */
+  isTouchModeEnabled: () => boolean;
+  /** Toggle touch mode on/off. Only works when touchMode prop is 'auto' or undefined. */
+  setTouchMode: (enabled: boolean) => void;
+  /** Reset to auto-detection mode (clears manual override). Only works when touchMode='auto'. */
+  resetTouchMode: () => void;
 }
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-export function EsheetBuilder({
-  definition,
-  onChange,
-  onBuilderToolsReady,
-  dragEnabled = true,
-  className = '',
-  children,
-}: EsheetBuilderProps) {
+export const EsheetBuilder = React.forwardRef<
+  EsheetBuilderHandle,
+  EsheetBuilderProps
+>(function EsheetBuilder(
+  {
+    definition,
+    onChange,
+    onBuilderToolsReady,
+    dragEnabled = true,
+    className = '',
+    children,
+    touchMode: touchModeProp,
+    onTouchModeChange,
+  },
+  ref
+) {
   ensureDefaultFieldComponentsRegistered();
 
   const formRef = React.useRef<FormStore | null>(null);
@@ -137,7 +164,21 @@ export function EsheetBuilder({
     () => ui.getState().editModalOpen
   );
   const [toolsModalOpen, setToolsModalOpen] = React.useState(false);
-  const [touchMode, setTouchMode] = React.useState(false);
+
+  // Touch mode state using shared hook
+  const { isTouchEnabled, isManualOverride, setTouchMode, resetTouchMode } =
+    useTouchMode({ mode: touchModeProp, onChange: onTouchModeChange });
+
+  // Expose ref API for touch mode
+  React.useImperativeHandle(
+    ref,
+    () => ({
+      isTouchModeEnabled: () => isTouchEnabled,
+      setTouchMode,
+      resetTouchMode,
+    }),
+    [isTouchEnabled, setTouchMode, resetTouchMode]
+  );
 
   React.useEffect(() => {
     if (mode !== 'build') {
@@ -166,14 +207,26 @@ export function EsheetBuilder({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form]);
 
+  // Apply disabled class when user explicitly disabled touch mode (prevents CSS media query)
+  const applyTouchDisabledClass = isManualOverride && !isTouchEnabled;
+
+  // Build root class string
+  const rootClasses = [
+    'ms-builder-root',
+    isTouchEnabled && 'esheet-touch-active',
+    applyTouchDisabledClass && 'touch-mode-disabled',
+    'ms:flex ms:h-full ms:flex-1 ms:min-h-0 ms:max-h-full ms:w-full ms:min-w-0 ms:max-w-[1440px] ms:mx-auto ms:flex-col ms:gap-2',
+    'ms:overflow-x-hidden ms:bg-msbackground ms:text-mstext',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
     <FormStoreContext.Provider value={form}>
       <UIContext.Provider value={ui}>
         <InstanceIdContext.Provider value={instanceId}>
-          <div
-            className={`ms-builder-root ms:flex ms:h-full ms:flex-1 ms:min-h-0 ms:max-h-full ms:w-full ms:min-w-0 ms:max-w-[1440px] ms:mx-auto ms:flex-col ms:gap-2 
-                        ms:overflow-x-hidden ms:bg-msbackground ms:text-mstext ${className}`.trim()}
-          >
+          <div className={rootClasses}>
             <div className="ms:sticky ms:top-0 ms:z-40 ms:bg-msbackground">
               <BuilderHeader />
             </div>
@@ -224,15 +277,11 @@ export function EsheetBuilder({
               </div>
             )}
             {mode === 'preview' && (
-              <div
-                className={`preview-layout ms:flex-1 ms:min-h-0 ms:min-w-0 ms:w-full ms:max-w-2xl ms:mx-auto ms:p-4 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto${
-                  touchMode ? ' mobile-touch-enabled' : ''
-                }`}
-              >
+              <div className="preview-layout ms:flex-1 ms:min-h-0 ms:min-w-0 ms:w-full ms:max-w-2xl ms:mx-auto ms:p-4 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto">
                 <div className="ms:flex ms:items-center ms:justify-end ms:mb-3">
                   <Switch
                     size="sm"
-                    checked={touchMode}
+                    checked={isTouchEnabled}
                     onCheckedChange={setTouchMode}
                     label="Touch Mode"
                   />
@@ -245,4 +294,4 @@ export function EsheetBuilder({
       </UIContext.Provider>
     </FormStoreContext.Provider>
   );
-}
+});

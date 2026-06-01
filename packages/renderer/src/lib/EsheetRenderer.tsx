@@ -9,7 +9,12 @@ import {
   type ValidationError,
 } from '@esheet/core';
 import { createRendererTools, type RendererTools } from './renderer-tools.js';
-import { FormStoreContext, UIContext, ZodIssuesPanel } from '@esheet/fields';
+import {
+  FormStoreContext,
+  UIContext,
+  ZodIssuesPanel,
+  useTouchMode,
+} from '@esheet/fields';
 import { ensureDefaultFieldComponentsRegistered } from './register-defaults.js';
 import { useRendererInit } from './hooks/useRendererInit.js';
 import { RendererBody } from './components/RendererBody.js';
@@ -33,6 +38,19 @@ export interface EsheetRendererProps {
    * facade for MCP / AI tool integrations.
    */
   onRendererToolsReady?: (tools: RendererTools) => void;
+  /**
+   * Enable touch-optimized mode with larger touch targets.
+   * - `true`: Always enable touch mode
+   * - `false`: Never enable touch mode (CSS media query still applies)
+   * - `'auto'`: Enable based on viewport width (<980px) via JavaScript
+   * - `undefined`: Rely on CSS media query only (default)
+   */
+  touchMode?: boolean | 'auto';
+  /**
+   * Called when touch mode changes (via auto-detection or programmatic toggle).
+   * Useful for syncing external UI with the renderer's touch state.
+   */
+  onTouchModeChange?: (enabled: boolean) => void;
 }
 
 export interface EsheetRendererHandle {
@@ -47,6 +65,12 @@ export interface EsheetRendererHandle {
     response: FormResponse | null;
     errors: ValidationError[];
   };
+  /** Returns true if touch mode is currently enabled */
+  isTouchModeEnabled: () => boolean;
+  /** Toggle touch mode on/off. Only works when touchMode prop is 'auto' or undefined. Overrides auto-detection. */
+  setTouchMode: (enabled: boolean) => void;
+  /** Reset to auto-detection mode (clears manual override). Only works when touchMode='auto'. */
+  resetTouchMode: () => void;
 }
 
 /**
@@ -116,10 +140,20 @@ const EsheetRendererInner = React.forwardRef<
     onReady,
     formStore,
     uiStore,
+    touchMode,
+    onTouchModeChange,
   },
   ref
 ) {
   const [validationErrors, setValidationErrors] = React.useState<string[]>([]);
+
+  // Touch mode state using shared hook
+  const {
+    isTouchEnabled,
+    isManualOverride,
+    setTouchMode: setTouchModeInternal,
+    resetTouchMode: resetTouchModeInternal,
+  } = useTouchMode({ mode: touchMode, onChange: onTouchModeChange });
 
   // Initialize form definition and set preview mode
   useRendererInit(
@@ -147,12 +181,32 @@ const EsheetRendererInner = React.forwardRef<
           errors,
         };
       },
+      isTouchModeEnabled: () => isTouchEnabled,
+      setTouchMode: setTouchModeInternal,
+      resetTouchMode: resetTouchModeInternal,
     }),
-    [formStore, uiStore]
+    [
+      formStore,
+      uiStore,
+      isTouchEnabled,
+      setTouchModeInternal,
+      resetTouchModeInternal,
+    ]
   );
+
+  // Determine if touch mode class should be applied
+  // true: always apply, 'auto'/undefined: apply based on isTouchEnabled state, false: never apply (CSS only)
+  const applyTouchClass =
+    touchMode === true ||
+    ((touchMode === 'auto' || touchMode === undefined) && isTouchEnabled);
+
+  // Apply disabled class when user explicitly disabled touch mode (prevents CSS media query)
+  const applyDisabledClass = isManualOverride && !isTouchEnabled;
 
   const rootClasses = [
     'esheet-renderer-root',
+    applyTouchClass && 'esheet-touch-active',
+    applyDisabledClass && 'touch-mode-disabled',
     'ms:w-full ms:max-w-2xl ms:mx-auto ms:p-4 ms:text-mstext',
     className,
   ]
