@@ -40,7 +40,8 @@ export function useTouchMode(config: TouchModeConfig = {}): TouchModeState {
   const [isTouchEnabled, setIsTouchEnabled] = useState(() => {
     if (mode === true) return true;
     if (mode === false) return false;
-    if (mode === 'auto' && typeof window !== 'undefined') {
+    // Auto-detect for 'auto' mode or undefined (default)
+    if (typeof window !== 'undefined') {
       return window.matchMedia(TOUCH_MODE_MEDIA_QUERY).matches;
     }
     return false;
@@ -48,9 +49,10 @@ export function useTouchMode(config: TouchModeConfig = {}): TouchModeState {
 
   const [isManualOverride, setIsManualOverride] = useState(false);
 
-  // Listen for viewport changes when mode is 'auto' (but not if manually overridden)
+  // Listen for viewport changes when mode is 'auto' or undefined (but not if manually overridden)
   useEffect(() => {
-    if (mode !== 'auto' || typeof window === 'undefined') return;
+    if (mode === true || mode === false) return;
+    if (typeof window === 'undefined') return;
     if (isManualOverride) return;
 
     const mediaQuery = window.matchMedia(TOUCH_MODE_MEDIA_QUERY);
@@ -76,7 +78,8 @@ export function useTouchMode(config: TouchModeConfig = {}): TouchModeState {
   );
 
   const resetTouchMode = useCallback(() => {
-    if (mode !== 'auto') return;
+    // Reset only works for 'auto' or undefined mode
+    if (mode === true || mode === false) return;
     setIsManualOverride(false);
     if (typeof window !== 'undefined') {
       setIsTouchEnabled(window.matchMedia(TOUCH_MODE_MEDIA_QUERY).matches);
