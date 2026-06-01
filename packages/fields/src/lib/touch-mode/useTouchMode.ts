@@ -2,6 +2,17 @@ import { useState, useEffect, useCallback } from 'react';
 
 const TOUCH_MODE_MEDIA_QUERY = '(max-width: 979px)';
 
+/** Check if matchMedia is available (not in SSR or jsdom test environment) */
+function getMediaQueryMatches(): boolean {
+  if (
+    typeof window === 'undefined' ||
+    typeof window.matchMedia !== 'function'
+  ) {
+    return false;
+  }
+  return window.matchMedia(TOUCH_MODE_MEDIA_QUERY).matches;
+}
+
 export interface TouchModeConfig {
   /** Touch mode setting: true = always on, false = always off, 'auto' = media query based */
   mode?: boolean | 'auto';
@@ -41,10 +52,7 @@ export function useTouchMode(config: TouchModeConfig = {}): TouchModeState {
     if (mode === true) return true;
     if (mode === false) return false;
     // Auto-detect for 'auto' mode or undefined (default)
-    if (typeof window !== 'undefined') {
-      return window.matchMedia(TOUCH_MODE_MEDIA_QUERY).matches;
-    }
-    return false;
+    return getMediaQueryMatches();
   });
 
   const [isManualOverride, setIsManualOverride] = useState(false);
@@ -52,7 +60,11 @@ export function useTouchMode(config: TouchModeConfig = {}): TouchModeState {
   // Listen for viewport changes when mode is 'auto' or undefined (but not if manually overridden)
   useEffect(() => {
     if (mode === true || mode === false) return;
-    if (typeof window === 'undefined') return;
+    if (
+      typeof window === 'undefined' ||
+      typeof window.matchMedia !== 'function'
+    )
+      return;
     if (isManualOverride) return;
 
     const mediaQuery = window.matchMedia(TOUCH_MODE_MEDIA_QUERY);
@@ -81,9 +93,7 @@ export function useTouchMode(config: TouchModeConfig = {}): TouchModeState {
     // Reset only works for 'auto' or undefined mode
     if (mode === true || mode === false) return;
     setIsManualOverride(false);
-    if (typeof window !== 'undefined') {
-      setIsTouchEnabled(window.matchMedia(TOUCH_MODE_MEDIA_QUERY).matches);
-    }
+    setIsTouchEnabled(getMediaQueryMatches());
   }, [mode]);
 
   return {
