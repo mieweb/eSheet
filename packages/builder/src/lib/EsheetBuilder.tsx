@@ -29,6 +29,7 @@ import { CodeView } from './components/CodeView.js';
 import { PlusIcon } from './icons.js';
 import { ensureDefaultFieldComponentsRegistered } from './register-defaults.js';
 import { MobileBottomDrawer } from './components/MobileBottomDrawer.js';
+import { Switch } from '@mieweb/ui';
 
 // ---------------------------------------------------------------------------
 // Contexts
@@ -136,6 +137,7 @@ export function EsheetBuilder({
     () => ui.getState().editModalOpen
   );
   const [toolsModalOpen, setToolsModalOpen] = React.useState(false);
+  const [touchMode, setTouchMode] = React.useState(false);
 
   React.useEffect(() => {
     if (mode !== 'build') {
@@ -222,7 +224,19 @@ export function EsheetBuilder({
               </div>
             )}
             {mode === 'preview' && (
-              <div className="preview-layout ms:flex-1 ms:min-h-0 ms:min-w-0 ms:w-full ms:max-w-2xl ms:mx-auto ms:p-4 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto">
+              <div
+                className={`preview-layout ms:flex-1 ms:min-h-0 ms:min-w-0 ms:w-full ms:max-w-2xl ms:mx-auto ms:p-4 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto${
+                  touchMode ? ' mobile-touch-enabled' : ''
+                }`}
+              >
+                <div className="ms:flex ms:items-center ms:justify-end ms:mb-3">
+                  <Switch
+                    size="sm"
+                    checked={touchMode}
+                    onCheckedChange={setTouchMode}
+                    label="Touch Mode"
+                  />
+                </div>
                 <Canvas form={form} ui={ui} dragEnabled={false} />
               </div>
             )}

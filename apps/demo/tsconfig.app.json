@@ -15,7 +15,15 @@
     ],
     "rootDir": "src",
     "module": "esnext",
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    "customConditions": ["@esheet/source"],
+    "paths": {
+      "@esheet/builder": ["../../packages/builder/src/index.ts"],
+      "@esheet/renderer": ["../../packages/renderer/src/index.ts"],
+      "@esheet/core": ["../../packages/core/src/index.ts"],
+      "@esheet/fields": ["../../packages/fields/src/index.ts"],
+      "@esheet/adapters": ["../../packages/adapters/src/index.ts"]
+    }
   },
   "exclude": [
     "out-tsc",
