@@ -1,5 +1,6 @@
 @import 'tailwindcss/theme' prefix(ms);
 @import 'tailwindcss/utilities' prefix(ms);
+@import './lib/touch-mode/touch-mode.css';
 
 @source "../**/*.{ts,tsx}";
 

@@ -1,3 +1,6 @@
+// Side-effect: inject compiled CSS (Tailwind utilities + touch-mode styles)
+import './index.output.css';
+
 // Controls
 export { CustomRadio } from './controls/CustomRadio.js';
 export { CustomCheckbox } from './controls/CustomCheckbox.js';
