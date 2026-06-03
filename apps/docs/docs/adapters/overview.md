@@ -34,6 +34,26 @@ const formDefinition = importFromSurveyJS(surveyJSSchema);
 const surveyJSSchema = exportToSurveyJS(formDefinition);
 ```
 
+## Built-in Auto-Detection (Components)
+
+You rarely need to call adapter functions directly. Both `EsheetRenderer` and `EsheetBuilder` automatically detect and convert foreign schemas at input — just pass the schema straight through:
+
+```tsx
+// All of these work without any manual adapter calls
+<EsheetRenderer formDataInput={fhirQuestionnaire} />
+<EsheetRenderer formDataInput={surveyJSSchema} />
+<EsheetRenderer formDataInput={mcpElicitationEnvelope} />
+
+<EsheetBuilder definition={fhirQuestionnaire} />
+<EsheetBuilder definition={surveyJSSchema} />
+```
+
+The detection order is: **FHIR → MCP → SurveyJS → native eSheet**.
+
+> **Renderer only:** Pass `strict={true}` to disable auto-detection and require a native `FormDefinition`. The Builder always auto-detects with no bypass option.
+
+Call the adapter functions directly only when you need to transform schemas outside of these components (e.g. in a server-side pipeline or before persisting to a database).
+
 ## Auto-Detection
 
 Use type guards to detect the schema format when handling unknown input:

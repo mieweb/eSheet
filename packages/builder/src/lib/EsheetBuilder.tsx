@@ -69,7 +69,7 @@ export interface EsheetBuilderProps {
    * everything a developer needs is available through the builder's own UI and props.
    */
   onBuilderToolsReady?: (tools: BuilderTools) => void;
-  /** Whether drag-and-drop reordering is enabled (default: true). Disable for better performance on slow devices. */
+  /** Whether drag-and-drop reordering is enabled (default: true). When false, field reordering is disabled entirely — no fallback UI (e.g. arrow buttons) is shown. */
   dragEnabled?: boolean;
   /** Additional CSS class name. */
   className?: string;
