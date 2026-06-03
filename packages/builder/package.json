@@ -38,9 +38,9 @@
     ]
   },
   "dependencies": {
-    "@esheet/adapters": "*",
-    "@esheet/core": "*",
-    "@esheet/fields": "*",
+    "@esheet/adapters": "0.0.4-0",
+    "@esheet/core": "0.0.4-0",
+    "@esheet/fields": "0.0.4-0",
     "@mieweb/ui": "^0.6.1",
     "@monaco-editor/react": "^4.7.0",
     "js-yaml": "^4.1.1",
