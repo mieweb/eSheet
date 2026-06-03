@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "build:cf": "bash deploy/scripts/cf-build.sh"
+    "build:cf": "bash deploy/scripts/cf-build.sh",
+    "postinstall": "node -e \"const fs=require('fs'),path=require('path'),g=d=>fs.readdirSync(d,{withFileTypes:true}).forEach(e=>{const p=path.join(d,e.name);if(e.isDirectory())g(p);else if(e.name.endsWith('.d.cts')){const t=p.replace('.d.cts','.d.ts');if(!fs.existsSync(t))fs.copyFileSync(p,t);}});g('node_modules/@mieweb/ui/dist');\""
   },
   "private": true,
   "devDependencies": {
