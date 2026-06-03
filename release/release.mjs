@@ -117,12 +117,7 @@ if (DRY_RUN) {
 } else if (IS_PRERELEASE) {
   const changedFiles = PACKAGES.map((p) => `${p}/package.json`).join(' ');
   run(`git add ${changedFiles} package-lock.json`);
-  const committed = tryRun(
-    `git commit -m "chore(release): bump to ${newVersion} [prerelease]"`
-  );
-  if (!committed) {
-    console.log(`⚠️  Nothing to commit — version ${newVersion} already in tree.`);
-  }
+  run(`git commit -m "chore(release): bump to ${newVersion} [prerelease]"`);
   run('git push origin main');
   console.log(`📦 Committed version bumps for ${newVersion} (no tag)`);
 } else {
