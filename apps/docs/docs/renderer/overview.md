@@ -51,26 +51,28 @@ function SurveyPage() {
 
 ## Props Reference
 
-| Prop                | Type                         | Default    | Description                                                         |
-| ------------------- | ---------------------------- | ---------- | ------------------------------------------------------------------- |
-| `formDataInput`     | `FormDefinition \| string`   | _required_ | Form definition as a JavaScript object, JSON string, or YAML string |
-| `className`         | `string`                     | `''`       | Additional CSS class for the root container                         |
-| `initialResponses`  | `FormResponse`               | --         | Pre-fill the form with existing response data                       |
-| `touchMode`         | `boolean \| 'auto'`          | --         | Touch mode: `true`, `false`, `'auto'`, or omit for CSS-only         |
-| `onTouchModeChange` | `(enabled: boolean) => void` | --         | Callback when touch mode changes                                    |
-| `ref`               | `Ref<EsheetRendererHandle>`  | --         | Imperative handle for accessing responses and stores                |
+| Prop                | Type                         | Default    | Description                                                                                                                                                                                |
+| ------------------- | ---------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `formDataInput`     | `FormDefinition \| string`   | _required_ | Form definition — accepts eSheet `FormDefinition`, FHIR R4 Questionnaire, SurveyJS schema, MCP elicitation envelope, or any as a JSON/YAML string. Auto-detected and converted internally. |
+| `className`         | `string`                     | `''`       | Additional CSS class for the root container                                                                                                                                                |
+| `initialResponses`  | `FormResponse`               | --         | Pre-fill the form with existing response data                                                                                                                                              |
+| `strict`            | `boolean`                    | `false`    | Disable auto-detection — requires a native eSheet `FormDefinition`. Fires `onValidationError` if the input does not conform.                                                               |
+| `touchMode`         | `boolean \| 'auto'`          | --         | Touch mode: `true`, `false`, `'auto'`, or omit for CSS-only                                                                                                                                |
+| `onTouchModeChange` | `(enabled: boolean) => void` | --         | Callback when touch mode changes                                                                                                                                                           |
+| `ref`               | `Ref<EsheetRendererHandle>`  | --         | Imperative handle for accessing responses and stores                                                                                                                                       |
 
 ## Ref API (`EsheetRendererHandle`)
 
-| Method                  | Returns                                                         | Description                                       |
-| ----------------------- | --------------------------------------------------------------- | ------------------------------------------------- |
-| `getRawResponse()`      | `FormResponse`                                                  | Get current response values for all fields        |
-| `getValidResponse()`    | `{ response: FormResponse \| null, errors: ValidationError[] }` | Validate + get responses                          |
-| `getFormStore()`        | `FormStore`                                                     | Get the underlying form state store (advanced)    |
-| `getUIStore()`          | `UIStore`                                                       | Get the underlying UI state store (advanced)      |
-| `isTouchModeEnabled()`  | `boolean`                                                       | Check if touch mode is currently enabled          |
-| `setTouchMode(enabled)` | `void`                                                          | Manually enable/disable touch mode                |
-| `resetTouchMode()`      | `void`                                                          | Reset to auto-detection (when `touchMode="auto"`) |
+| Method                  | Returns                                                         | Description                                                                                                                            |
+| ----------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `getRawResponse()`      | `FormResponse`                                                  | Get current response values for all fields                                                                                             |
+| `getResponse(options?)` | `FormResponse \| FhirQuestionnaireResponse`                     | Get responses in native or FHIR format. Pass `{ format: 'fhir' }` to get a FHIR `QuestionnaireResponse`. See [Responses](./responses). |
+| `getValidResponse()`    | `{ response: FormResponse \| null, errors: ValidationError[] }` | Validate + get responses                                                                                                               |
+| `getFormStore()`        | `FormStore`                                                     | Get the underlying form state store (advanced)                                                                                         |
+| `getUIStore()`          | `UIStore`                                                       | Get the underlying UI state store (advanced)                                                                                           |
+| `isTouchModeEnabled()`  | `boolean`                                                       | Check if touch mode is currently enabled                                                                                               |
+| `setTouchMode(enabled)` | `void`                                                          | Manually enable/disable touch mode                                                                                                     |
+| `resetTouchMode()`      | `void`                                                          | Reset to auto-detection (when `touchMode="auto"`)                                                                                      |
 
 ## Features
 

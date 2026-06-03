@@ -59,6 +59,7 @@ export {
 export {
   ZodIssuesPanel,
   type ZodIssuesPanelProps,
+  type ZodIssuesPanelVariant,
 } from './lib/ZodIssuesPanel.js';
 
 // Field component registry

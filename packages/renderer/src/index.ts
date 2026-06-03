@@ -5,6 +5,9 @@ export {
   EsheetRenderer,
   type EsheetRendererProps,
   type EsheetRendererHandle,
+  type GetResponseOptions,
+  type GetResponseResult,
+  type ResponseFormat,
 } from './lib/EsheetRenderer.js';
 
 // Core types (re-exported for consumer convenience)

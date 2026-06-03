@@ -12,7 +12,10 @@ import {
   convertSurveyJS,
   isSurveyJSSchema,
   isMcpElicitationRequest,
+  importFromFhir,
+  isFhirQuestionnaire,
   type McpElicitationRequest,
+  type FhirQuestionnaire,
 } from '@esheet/adapters';
 
 /**
@@ -20,6 +23,7 @@ import {
  *
  * Auto-detects and converts the following input formats:
  * - eSheet FormDefinition (object or JSON/YAML string)
+ * - FHIR R4 Questionnaire resource
  * - MCP elicitation/create envelope
  * - SurveyJS schema (has top-level `pages` or `elements` array)
  */
@@ -49,8 +53,10 @@ export function useRendererInit(
         parsed = formData;
       }
 
-      // Auto-detect and convert MCP or SurveyJS input (skipped in strict mode)
-      if (!strict && isMcpElicitationRequest(parsed)) {
+      // Auto-detect and convert FHIR, MCP or SurveyJS input (skipped in strict mode)
+      if (!strict && isFhirQuestionnaire(parsed)) {
+        parsed = importFromFhir(parsed as FhirQuestionnaire);
+      } else if (!strict && isMcpElicitationRequest(parsed)) {
         const mcpReq = parsed as McpElicitationRequest;
         if (mcpReq.params.mode !== 'url') {
           parsed = importFromMcp(

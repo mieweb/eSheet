@@ -18,6 +18,7 @@ npm install @esheet/adapters
 | -------- | -------------------- | ------------------ | ------------------------- | ---------------------------------------- |
 | SurveyJS | `importFromSurveyJS` | `exportToSurveyJS` | `isSurveyJSSchema`        | Convert to/from SurveyJS form schemas    |
 | MCP      | `importFromMcp`      | `exportToMcp`      | `isMcpElicitationRequest` | Convert to/from MCP elicitation requests |
+| FHIR     | `importFromFhir`     | `exportToFhir`     | `isFhirQuestionnaire`     | Convert to/from FHIR R4 Questionnaires   |
 
 ## Common Pattern
 
@@ -33,6 +34,26 @@ const formDefinition = importFromSurveyJS(surveyJSSchema);
 const surveyJSSchema = exportToSurveyJS(formDefinition);
 ```
 
+## Built-in Auto-Detection (Components)
+
+You rarely need to call adapter functions directly. Both `EsheetRenderer` and `EsheetBuilder` automatically detect and convert foreign schemas at input — just pass the schema straight through:
+
+```tsx
+// All of these work without any manual adapter calls
+<EsheetRenderer formDataInput={fhirQuestionnaire} />
+<EsheetRenderer formDataInput={surveyJSSchema} />
+<EsheetRenderer formDataInput={mcpElicitationEnvelope} />
+
+<EsheetBuilder definition={fhirQuestionnaire} />
+<EsheetBuilder definition={surveyJSSchema} />
+```
+
+The detection order is: **FHIR → MCP → SurveyJS → native eSheet**.
+
+> **Renderer only:** Pass `strict={true}` to disable auto-detection and require a native `FormDefinition`. The Builder always auto-detects with no bypass option.
+
+Call the adapter functions directly only when you need to transform schemas outside of these components (e.g. in a server-side pipeline or before persisting to a database).
+
 ## Auto-Detection
 
 Use type guards to detect the schema format when handling unknown input:
@@ -41,8 +62,10 @@ Use type guards to detect the schema format when handling unknown input:
 import {
   isSurveyJSSchema,
   isMcpElicitationRequest,
+  isFhirQuestionnaire,
   importFromSurveyJS,
   importFromMcp,
+  importFromFhir,
 } from '@esheet/adapters';
 import type { FormDefinition } from '@esheet/core';
 
@@ -52,6 +75,9 @@ function detectAndConvert(unknownSchema: unknown): FormDefinition | null {
   }
   if (isMcpElicitationRequest(unknownSchema)) {
     return importFromMcp(unknownSchema.params.requestedSchema);
+  }
+  if (isFhirQuestionnaire(unknownSchema)) {
+    return importFromFhir(unknownSchema);
   }
   return null;
 }
@@ -86,6 +112,17 @@ import {
   exportToMcp,
   isMcpElicitationRequest,
 
+  // FHIR Adapter
+  importFromFhir,
+  exportToFhir,
+  importResponseFromFhir,
+  exportResponseToFhir,
+  isFhirQuestionnaire,
+  isFhirQuestionnaireResponse,
+  mapFhirTypeToEsheet,
+  mapEsheetTypeToFhir,
+  FHIR_EXT,
+
   // Types
   type SurveyJSDetectionSchema,
   type McpElicitationSchema,
@@ -96,7 +133,13 @@ import {
   type McpBooleanProp,
   type McpArrayProp,
   type McpConstOption,
+  type FhirQuestionnaire,
+  type FhirQuestionnaireResponse,
+  type FhirImportOptions,
+  type FhirExportOptions,
+  type FhirFieldMeta,
+  type FhirFormMeta,
 } from '@esheet/adapters';
 ```
 
-See the [SurveyJS Adapter](./surveyjs.md) and [MCP Adapter](./mcp.md) pages for detailed documentation.
+See the [SurveyJS Adapter](./surveyjs.md), [MCP Adapter](./mcp.md), and [FHIR Adapter](./fhir.md) pages for detailed documentation.

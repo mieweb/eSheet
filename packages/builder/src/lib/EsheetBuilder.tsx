@@ -18,8 +18,11 @@ import {
   isSurveyJSSchema,
   importFromMcp,
   isMcpElicitationRequest,
+  importFromFhir,
+  isFhirQuestionnaire,
   type McpElicitationRequest,
   type McpElicitationSchema,
+  type FhirQuestionnaire,
 } from '@esheet/adapters';
 import { Canvas } from './components/Canvas.js';
 import { ToolPanel } from './components/ToolPanel.js';
@@ -56,7 +59,7 @@ export type { BuilderTools, FieldSummary };
 // ---------------------------------------------------------------------------
 
 export interface EsheetBuilderProps {
-  /** Initial form definition to load. Also accepts SurveyJS or MCP elicitation schemas, which are auto-converted. */
+  /** Initial form definition to load. Also accepts SurveyJS, MCP elicitation, or FHIR Questionnaire schemas, which are auto-converted. */
   definition?: FormDefinition | Record<string, unknown>;
   /** Callback fired when the form definition changes. */
   onChange?: (definition: FormDefinition) => void;
@@ -66,7 +69,7 @@ export interface EsheetBuilderProps {
    * everything a developer needs is available through the builder's own UI and props.
    */
   onBuilderToolsReady?: (tools: BuilderTools) => void;
-  /** Whether drag-and-drop reordering is enabled (default: true). Disable for better performance on slow devices. */
+  /** Whether drag-and-drop reordering is enabled (default: true). When false, field reordering is disabled entirely — no fallback UI (e.g. arrow buttons) is shown. */
   dragEnabled?: boolean;
   /** Additional CSS class name. */
   className?: string;
@@ -120,7 +123,9 @@ export const EsheetBuilder = React.forwardRef<
 
   if (!formRef.current) {
     let resolved: FormDefinition | undefined;
-    if (isSurveyJSSchema(definition)) {
+    if (isFhirQuestionnaire(definition)) {
+      resolved = importFromFhir(definition as FhirQuestionnaire);
+    } else if (isSurveyJSSchema(definition)) {
       resolved = convertSurveyJS(
         definition as Parameters<typeof convertSurveyJS>[0]
       );

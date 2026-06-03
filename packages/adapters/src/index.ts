@@ -24,3 +24,4 @@ export {
   type McpArrayProp,
   type McpConstOption,
 } from './lib/mcp.js';
+export * from './fhir/index.js';

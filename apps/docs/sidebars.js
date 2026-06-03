@@ -44,7 +44,12 @@ const sidebars = {
     {
       type: 'category',
       label: 'Adapters',
-      items: ['adapters/overview', 'adapters/surveyjs', 'adapters/mcp'],
+      items: [
+        'adapters/overview',
+        'adapters/surveyjs',
+        'adapters/mcp',
+        'adapters/fhir',
+      ],
     },
     {
       type: 'category',

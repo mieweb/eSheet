@@ -18,8 +18,12 @@ import {
   convertSurveyJS,
   isSurveyJSSchema,
   isMcpElicitationRequest,
+  importFromFhir,
+  exportToFhir,
+  isFhirQuestionnaire,
   type McpElicitationRequest,
   type McpElicitationSchema,
+  type FhirQuestionnaire,
 } from '@esheet/adapters';
 import {
   VEditorIcon,
@@ -220,9 +224,9 @@ export function BuilderHeader(_props: BuilderHeaderProps) {
   const [exportIdModalOpen, setExportIdModalOpen] = React.useState(false);
   const [exportIdInput, setExportIdInput] = React.useState('');
   const [exportIdError, setExportIdError] = React.useState('');
-  const [exportFormat, setExportFormat] = React.useState<'esheet' | 'mcp'>(
-    'esheet'
-  );
+  const [exportFormat, setExportFormat] = React.useState<
+    'esheet' | 'mcp' | 'fhir'
+  >('esheet');
   const [feedback, setFeedback] = React.useState<FeedbackState>({
     open: false,
     title: '',
@@ -307,6 +311,23 @@ export function BuilderHeader(_props: BuilderHeaderProps) {
       const schema = exportToMcp(definition);
       const filename = (definition.id || 'form') + '-mcp-schema.json';
       const blob = new Blob([JSON.stringify(schema, null, 2)], {
+        type: 'application/json',
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      setExportIdModalOpen(false);
+      return;
+    }
+
+    if (exportFormat === 'fhir') {
+      const definition = form.getState().hydrateDefinition();
+      const fhirQuestionnaire = exportToFhir(definition);
+      const filename = (definition.id || 'form') + '-fhir-questionnaire.json';
+      const blob = new Blob([JSON.stringify(fhirQuestionnaire, null, 2)], {
         type: 'application/json',
       });
       const url = URL.createObjectURL(blob);
@@ -409,6 +430,53 @@ export function BuilderHeader(_props: BuilderHeaderProps) {
             );
             return;
           }
+        }
+
+        if (!isYaml && isFhirQuestionnaire(parsed)) {
+          const formDef = importFromFhir(parsed as FhirQuestionnaire);
+          form.getState().loadDefinition(formDef);
+          // Check for conversion warnings in _sourceData
+          type ConversionWarning = {
+            code: string;
+            itemLinkId?: string;
+            message: string;
+            severity?: 'info' | 'warning' | 'error';
+          };
+          const meta = formDef._sourceData as
+            | { _conversionWarnings?: ConversionWarning[] }
+            | undefined;
+          const allWarnings = meta?._conversionWarnings ?? [];
+          // Split by severity: info vs warning/error
+          const infoItems = allWarnings.filter((w) => w.severity === 'info');
+          const warnItems = allWarnings.filter((w) => w.severity !== 'info');
+          const hasActualWarnings = warnItems.length > 0;
+
+          if (allWarnings.length > 0) {
+            const items = hasActualWarnings ? warnItems : infoItems;
+            const prefix = hasActualWarnings ? '⚠️' : 'ℹ️';
+            showFeedback(
+              hasActualWarnings ? 'warning' : 'success',
+              hasActualWarnings
+                ? 'Import Successful (with warnings)'
+                : 'Import Successful',
+              `Loaded ${formDef.fields.length} field(s) from FHIR Questionnaire.`,
+              undefined,
+              items.map(
+                (w) =>
+                  `${prefix} [${w.code}] ${w.itemLinkId ?? 'form'}: ${
+                    w.message
+                  }`
+              ),
+              hasActualWarnings ? 'Import Warnings' : 'Import Notes'
+            );
+          } else {
+            showFeedback(
+              'success',
+              'Import Successful',
+              `Loaded ${formDef.fields.length} field(s) from FHIR Questionnaire.`
+            );
+          }
+          return;
         }
 
         if (!isYaml && isSurveyJSSchema(parsed)) {
@@ -522,7 +590,7 @@ export function BuilderHeader(_props: BuilderHeaderProps) {
         open={exportIdModalOpen}
         title="Export Form"
         message={
-          exportFormat === 'mcp'
+          exportFormat === 'mcp' || exportFormat === 'fhir'
             ? 'Choose a format to export your form.'
             : `Do you want to use '${
                 sanitizeFormId(exportIdInput) || exportIdInput
@@ -550,6 +618,16 @@ export function BuilderHeader(_props: BuilderHeaderProps) {
                   onChange={() => setExportFormat('mcp')}
                 />
                 MCP Elicitation Schema
+              </label>
+              <label className="ms:flex ms:items-center ms:gap-2 ms:text-sm ms:text-mstext ms:cursor-pointer">
+                <input
+                  type="radio"
+                  name="export-format"
+                  value="fhir"
+                  checked={exportFormat === 'fhir'}
+                  onChange={() => setExportFormat('fhir')}
+                />
+                FHIR R4 Questionnaire
               </label>
             </div>
             {exportFormat === 'esheet' && (
@@ -588,11 +666,25 @@ export function BuilderHeader(_props: BuilderHeaderProps) {
                 omitted.
               </p>
             )}
+            {exportFormat === 'fhir' && (
+              <p className="ms:text-sm ms:text-mstextmuted">
+                Exports as a FHIR R4{' '}
+                <code className="ms:font-mono ms:text-xs ms:bg-msbackground ms:px-1 ms:py-0.5 ms:rounded">
+                  Questionnaire
+                </code>{' '}
+                resource. Supports standard item types, enableWhen logic, and
+                common extensions. DTR profiles are applied when applicable.
+              </p>
+            )}
           </div>
         }
         variant="info"
         confirmLabel={
-          exportFormat === 'mcp' ? 'Export MCP Schema' : 'Use This ID & Export'
+          exportFormat === 'mcp'
+            ? 'Export MCP Schema'
+            : exportFormat === 'fhir'
+            ? 'Export FHIR Questionnaire'
+            : 'Use This ID & Export'
         }
         cancelLabel="Cancel"
         showCancel

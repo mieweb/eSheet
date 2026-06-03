@@ -6,7 +6,7 @@ import {
   RENDERER_TOOL_DEFINITIONS,
   RENDERER_SYSTEM_PROMPT,
   type FormDefinition,
-  type FormResponseEnvelope,
+  type ResponseFormat,
 } from '@esheet/renderer';
 import { Navbar } from '../components/Navbar';
 import {
@@ -33,7 +33,7 @@ interface SubmitResult {
   readonly message: string;
   readonly items?: readonly string[];
   readonly detail?: string;
-  readonly data?: FormResponseEnvelope;
+  readonly data?: unknown;
 }
 
 interface SchemaOption {
@@ -92,6 +92,8 @@ export function RendererView() {
 
   const [touchMode, setTouchMode] = useState(false);
   const [activeTab, setActiveTab] = useState<'form' | 'definition'>('form');
+  const [responseFormat, setResponseFormat] =
+    useState<ResponseFormat>('native');
 
   const resetFormKey = useCallback(() => {
     setFormKey((prev) => prev + 1);
@@ -147,17 +149,28 @@ export function RendererView() {
       return;
     }
 
-    const hydrated = renderer.getFormStore().getState().hydrateResponse();
+    // Get response in selected format
+    const response = renderer.getResponse({
+      format: responseFormat,
+      fhir:
+        responseFormat === 'fhir'
+          ? {
+              status: 'completed',
+            }
+          : undefined,
+    });
+
     console.log(
-      'Validated Form Response:',
-      JSON.stringify(result.response, null, 2)
+      `${responseFormat.toUpperCase()} Response:`,
+      JSON.stringify(response, null, 2)
     );
-    console.log('Hydrated Submit Payload:', JSON.stringify(hydrated, null, 2));
     setSubmitResult({
       kind: 'success',
-      title: 'Submit successful',
+      title: `Submit successful (${
+        responseFormat === 'fhir' ? 'FHIR QuestionnaireResponse' : 'Native'
+      })`,
       message: 'Validation passed. Form response data:',
-      data: hydrated,
+      data: response,
     });
   };
 
@@ -192,7 +205,7 @@ export function RendererView() {
               {submitResult.detail && (
                 <p className="mt-3 text-sm">{submitResult.detail}</p>
               )}
-              {submitResult.data && (
+              {submitResult.data != null && (
                 <pre className="mt-3 p-3 bg-background/50 rounded-lg text-xs overflow-auto max-h-96 border border-border">
                   {JSON.stringify(submitResult.data, null, 2)}
                 </pre>
@@ -254,6 +267,17 @@ export function RendererView() {
                   <span className="hidden sm:inline ml-1">Touch</span>
                 </Button>
                 <div className="ml-auto flex items-center gap-2">
+                  <Select
+                    value={responseFormat}
+                    onValueChange={(v: string) =>
+                      setResponseFormat(v as ResponseFormat)
+                    }
+                    options={[
+                      { value: 'native', label: 'Native' },
+                      { value: 'fhir', label: 'FHIR' },
+                    ]}
+                    className="w-28"
+                  />
                   <Button
                     variant="outline"
                     size="sm"
