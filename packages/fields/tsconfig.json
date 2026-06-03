@@ -3,9 +3,6 @@
   "include": ["../../types/**/*.d.ts"],
   "references": [
     {
-      "path": "../core"
-    },
-    {
       "path": "./tsconfig.lib.json"
     },
     {

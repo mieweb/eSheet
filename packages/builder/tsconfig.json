@@ -7,9 +7,6 @@
       "path": "../fields"
     },
     {
-      "path": "../core"
-    },
-    {
       "path": "../adapters"
     },
     {
