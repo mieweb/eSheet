@@ -2,9 +2,9 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig(() => ({
   root: __dirname,
-  cacheDir: '../../node_modules/.vite/packages/ai-gateway',
+  cacheDir: '../../node_modules/.vite/packages/adapters',
   test: {
-    name: '@esheet/ai-gateway',
+    name: '@esheet/adapters',
     watch: false,
     globals: true,
     environment: 'node',

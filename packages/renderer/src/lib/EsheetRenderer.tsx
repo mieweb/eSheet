@@ -2,12 +2,20 @@ import React from 'react';
 import {
   createFormStore,
   createUIStore,
+  normalizeResponses,
+  hydrateDefinition,
   validateForm,
   type FormResponse,
   type FormStore,
   type UIStore,
   type ValidationError,
 } from '@esheet/core';
+import {
+  exportResponseToFhir,
+  type FhirFormMeta,
+  type FhirQuestionnaireResponse,
+  type ResponseExportOptions,
+} from '@esheet/adapters';
 import { createRendererTools, type RendererTools } from './renderer-tools.js';
 import {
   FormStoreContext,
@@ -53,9 +61,55 @@ export interface EsheetRendererProps {
   onTouchModeChange?: (enabled: boolean) => void;
 }
 
+// ---------------------------------------------------------------------------
+// Response Format Options
+// ---------------------------------------------------------------------------
+
+/** Response format options for getResponse() */
+export type ResponseFormat = 'native' | 'fhir';
+
+/** Options for getResponse() */
+export interface GetResponseOptions {
+  /** Output format: 'native' (default) or 'fhir' (FHIR QuestionnaireResponse) */
+  format?: ResponseFormat;
+  /** FHIR export options (required when format is 'fhir') */
+  fhir?: Omit<ResponseExportOptions, 'questionnaireUrl'> & {
+    /** Canonical URL of the questionnaire. Falls back to form._sourceData metadata if available. */
+    questionnaireUrl?: string;
+  };
+}
+
+/** Return type for getResponse() — varies by format */
+export type GetResponseResult<T extends ResponseFormat = 'native'> =
+  T extends 'fhir' ? FhirQuestionnaireResponse : FormResponse;
+
 export interface EsheetRendererHandle {
   /** Get current form responses */
   getRawResponse: () => FormResponse;
+  /**
+   * Get form responses in the specified format.
+   *
+   * @param options - Format and export options
+   * @returns Native FormResponse or FHIR QuestionnaireResponse
+   *
+   * @example
+   * ```ts
+   * // Native format (default)
+   * const native = ref.current.getResponse();
+   *
+   * // FHIR QuestionnaireResponse
+   * const fhir = ref.current.getResponse({
+   *   format: 'fhir',
+   *   fhir: {
+   *     questionnaireUrl: 'http://example.org/Questionnaire/my-form',
+   *     status: 'completed',
+   *   }
+   * });
+   * ```
+   */
+  getResponse: <T extends ResponseFormat = 'native'>(
+    options?: GetResponseOptions & { format?: T }
+  ) => GetResponseResult<T>;
   /** Get form store instance */
   getFormStore: () => FormStore;
   /** Get UI store instance */
@@ -171,6 +225,48 @@ const EsheetRendererInner = React.forwardRef<
     ref,
     () => ({
       getRawResponse: () => formStore.getState().responses,
+      getResponse: <T extends ResponseFormat = 'native'>(
+        options?: GetResponseOptions & { format?: T }
+      ): GetResponseResult<T> => {
+        const state = formStore.getState();
+        const responses = state.responses;
+
+        if (options?.format === 'fhir') {
+          // Build FHIR QuestionnaireResponse
+          const normalizedAnswers = normalizeResponses(responses);
+
+          // Try to get questionnaire URL from options or formSourceData
+          const fhirMeta = state.formSourceData as FhirFormMeta | undefined;
+          const questionnaireUrl =
+            options.fhir?.questionnaireUrl ??
+            fhirMeta?.url ??
+            `urn:uuid:${state.formId}`;
+
+          const exportOptions: ResponseExportOptions = {
+            questionnaireUrl,
+            status: options.fhir?.status ?? 'completed',
+            subject: options.fhir?.subject,
+            author: options.fhir?.author,
+            resourceId: options.fhir?.resourceId,
+          };
+
+          // Rebuild form definition from normalized state
+          const formDefinition = {
+            id: state.formId,
+            fields: hydrateDefinition(state.normalized),
+            _sourceData: state.formSourceData,
+          };
+
+          return exportResponseToFhir(
+            formDefinition,
+            normalizedAnswers,
+            exportOptions
+          ) as GetResponseResult<T>;
+        }
+
+        // Native format (default)
+        return responses as GetResponseResult<T>;
+      },
       getFormStore: () => formStore,
       getUIStore: () => uiStore,
       getValidResponse: () => {
