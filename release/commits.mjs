@@ -85,6 +85,10 @@ export function applyBump(current, bump) {
     case 'patch':
       return `${maj}.${min}.${pat + 1}`;
     case 'prerelease':
+      if (current.includes('-')) {
+        const pre = current.split('-')[1];
+        return `${maj}.${min}.${pat}-${Number(pre) + 1}`;
+      }
       return `${maj}.${min}.${pat + 1}-0`;
     default:
       throw new Error(`Unknown bump level: ${bump}`);
