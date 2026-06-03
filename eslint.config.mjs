@@ -58,10 +58,6 @@ export default [
               onlyDependOnLibsWithTags: ['scope:core'],
             },
             {
-              sourceTag: 'scope:ai-gateway',
-              onlyDependOnLibsWithTags: ['scope:core'],
-            },
-            {
               sourceTag: 'scope:adapters',
               onlyDependOnLibsWithTags: ['scope:core'],
             },
@@ -73,7 +69,7 @@ export default [
                 'scope:fields',
                 'scope:builder',
                 'scope:renderer',
-                'scope:ai-gateway',
+                'scope:adapters',
               ],
             },
           ],

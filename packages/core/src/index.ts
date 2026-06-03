@@ -93,6 +93,11 @@ export {
 export { hydrateResponse } from './lib/functions/hydrate-response.js';
 
 export {
+  normalizeResponses,
+  extractResponseValue,
+} from './lib/functions/normalize-responses.js';
+
+export {
   evaluateCondition,
   evaluateRule,
   isExpressionValid,

@@ -82,6 +82,15 @@ export function FeedbackModal({
             issues={issues}
             hint={issuesHint ?? 'Please resolve these issues and try again.'}
             className="ms:mb-3 ms:p-4"
+            variant={
+              variant === 'error'
+                ? 'error'
+                : variant === 'warning'
+                ? 'warning'
+                : variant === 'success'
+                ? 'success'
+                : 'info'
+            }
           />
         )}
 

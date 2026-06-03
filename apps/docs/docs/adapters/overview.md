@@ -18,6 +18,7 @@ npm install @esheet/adapters
 | -------- | -------------------- | ------------------ | ------------------------- | ---------------------------------------- |
 | SurveyJS | `importFromSurveyJS` | `exportToSurveyJS` | `isSurveyJSSchema`        | Convert to/from SurveyJS form schemas    |
 | MCP      | `importFromMcp`      | `exportToMcp`      | `isMcpElicitationRequest` | Convert to/from MCP elicitation requests |
+| FHIR     | `importFromFhir`     | `exportToFhir`     | `isFhirQuestionnaire`     | Convert to/from FHIR R4 Questionnaires   |
 
 ## Common Pattern
 
@@ -41,8 +42,10 @@ Use type guards to detect the schema format when handling unknown input:
 import {
   isSurveyJSSchema,
   isMcpElicitationRequest,
+  isFhirQuestionnaire,
   importFromSurveyJS,
   importFromMcp,
+  importFromFhir,
 } from '@esheet/adapters';
 import type { FormDefinition } from '@esheet/core';
 
@@ -52,6 +55,9 @@ function detectAndConvert(unknownSchema: unknown): FormDefinition | null {
   }
   if (isMcpElicitationRequest(unknownSchema)) {
     return importFromMcp(unknownSchema.params.requestedSchema);
+  }
+  if (isFhirQuestionnaire(unknownSchema)) {
+    return importFromFhir(unknownSchema);
   }
   return null;
 }
@@ -86,6 +92,17 @@ import {
   exportToMcp,
   isMcpElicitationRequest,
 
+  // FHIR Adapter
+  importFromFhir,
+  exportToFhir,
+  importResponseFromFhir,
+  exportResponseToFhir,
+  isFhirQuestionnaire,
+  isFhirQuestionnaireResponse,
+  mapFhirTypeToEsheet,
+  mapEsheetTypeToFhir,
+  FHIR_EXT,
+
   // Types
   type SurveyJSDetectionSchema,
   type McpElicitationSchema,
@@ -96,7 +113,13 @@ import {
   type McpBooleanProp,
   type McpArrayProp,
   type McpConstOption,
+  type FhirQuestionnaire,
+  type FhirQuestionnaireResponse,
+  type FhirImportOptions,
+  type FhirExportOptions,
+  type FhirFieldMeta,
+  type FhirFormMeta,
 } from '@esheet/adapters';
 ```
 
-See the [SurveyJS Adapter](./surveyjs.md) and [MCP Adapter](./mcp.md) pages for detailed documentation.
+See the [SurveyJS Adapter](./surveyjs.md), [MCP Adapter](./mcp.md), and [FHIR Adapter](./fhir.md) pages for detailed documentation.
