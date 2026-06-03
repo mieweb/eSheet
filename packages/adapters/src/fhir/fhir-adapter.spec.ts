@@ -413,6 +413,32 @@ describe('importFromFhir', () => {
     }
   });
 
+  it('imports display fields with content (not question)', () => {
+    const fhir: FhirQuestionnaire = {
+      resourceType: 'Questionnaire',
+      status: 'draft',
+      item: [
+        {
+          linkId: 'intro',
+          type: 'display',
+          text: 'Over the last 2 weeks, how often have you been bothered?',
+        },
+      ],
+    };
+
+    const form = importFromFhir(fhir);
+    const field = form.fields[0];
+
+    expect(field.id).toBe('intro');
+    expect(field.fieldType).toBe('display');
+    expect('question' in field).toBe(false);
+    if (field.fieldType === 'display') {
+      expect(field.content).toBe(
+        'Over the last 2 weeks, how often have you been bothered?'
+      );
+    }
+  });
+
   it('imports choice fields with options', () => {
     const fhir: FhirQuestionnaire = {
       resourceType: 'Questionnaire',

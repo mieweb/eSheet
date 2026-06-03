@@ -188,8 +188,17 @@ function convertItemToField(
         ...(typeResult.inputType ? { inputType: typeResult.inputType } : {}),
       };
 
-    case 'boolean':
     case 'display':
+      // Display fields have no question — FHIR item.text maps to content (the displayed text)
+      return {
+        id: base.id,
+        ...(hasFieldMeta ? { _sourceData: fieldMeta } : {}),
+        ...rulesSpread,
+        fieldType: 'display',
+        content: item.text,
+      };
+
+    case 'boolean':
     case 'signature':
     case 'diagram':
       return {
