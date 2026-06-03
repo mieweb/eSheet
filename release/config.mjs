@@ -6,6 +6,7 @@ export const REPO = 'mieweb/eSheet';
 export const PACKAGES = [
   'packages/core',
   'packages/fields',
+  'packages/adapters',
   'packages/renderer',
   'packages/builder',
   'packages/renderer-blaze',
