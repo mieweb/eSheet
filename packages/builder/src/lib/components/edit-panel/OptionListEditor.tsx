@@ -25,6 +25,8 @@ export function OptionListEditor({
   const { option } = useFormApi(fieldId);
   const listRef = React.useRef<HTMLDivElement>(null);
   const isBoolean = fieldType === 'boolean';
+  const canScore = fieldType !== 'multitext' && fieldType !== 'ranking';
+  const isScored = canScore && options.some((o) => o.score != null);
   const label = fieldType === 'multitext' ? 'Text Inputs' : 'Options';
 
   const handleAdd = () => {
@@ -36,11 +38,37 @@ export function OptionListEditor({
     });
   };
 
+  const handleToggleScore = () => {
+    if (isScored) {
+      options.forEach((o) => option.setScore(o.id, undefined));
+    } else {
+      options.forEach((o) => {
+        if (o.score == null) option.setScore(o.id, 0);
+      });
+    }
+  };
+
   return (
     <div className="option-list-editor ms:space-y-2">
-      <span className="edit-label ms:block ms:text-sm ms:font-medium ms:text-mstext">
-        {label}
-      </span>
+      <div className="ms:flex ms:items-center ms:justify-between">
+        <span className="edit-label ms:block ms:text-sm ms:font-medium ms:text-mstext">
+          {label}
+        </span>
+        {canScore && !isBoolean && (
+          <button
+            type="button"
+            onClick={handleToggleScore}
+            aria-pressed={isScored}
+            className={`score-toggle ms:px-2 ms:py-0.5 ms:text-xs ms:font-medium ms:rounded ms:border ms:transition-colors ms:outline-none ms:focus:outline-none ms:cursor-pointer ${
+              isScored
+                ? 'ms:bg-msprimary ms:text-white ms:border-msprimary'
+                : 'ms:bg-mssurface ms:text-mstextmuted ms:border-msborder ms:hover:text-msprimary ms:hover:border-msprimary/50'
+            }`}
+          >
+            Score
+          </button>
+        )}
+      </div>
 
       <div ref={listRef} className="option-list ms:space-y-2">
         {options.map((opt, idx) => (
@@ -57,6 +85,19 @@ export function OptionListEditor({
               placeholder={`Option ${idx + 1}`}
               className="ms:flex-1 ms:min-w-0 ms:outline-none ms:bg-transparent ms:text-mstext ms:placeholder:text-mstextmuted ms:border-0 ms:text-sm"
             />
+            {isScored && (
+              <input
+                id={`${instanceId}-editor-option-score-${fieldId}-${opt.id}`}
+                aria-label={`Option ${idx + 1} score`}
+                type="number"
+                value={opt.score ?? 0}
+                onChange={(e) => {
+                  const v = parseFloat(e.currentTarget.value);
+                  option.setScore(opt.id, Number.isNaN(v) ? 0 : v);
+                }}
+                className="ms:w-16 ms:shrink-0 ms:outline-none ms:bg-transparent ms:text-mstext ms:border ms:border-msborder ms:rounded ms:px-1 ms:py-0.5 ms:text-sm ms:text-right"
+              />
+            )}
             {!isBoolean && (
               <button
                 type="button"

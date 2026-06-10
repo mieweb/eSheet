@@ -22,6 +22,7 @@ export function MatrixEditor({ fieldId, rows, columns }: MatrixEditorProps) {
   const { row: rowApi, column: columnApi } = useFormApi(fieldId);
   const rowsRef = React.useRef<HTMLDivElement>(null);
   const colsRef = React.useRef<HTMLDivElement>(null);
+  const isColumnScored = columns.some((c) => c.score != null);
 
   const handleAddRow = () => {
     rowApi.add();
@@ -37,6 +38,16 @@ export function MatrixEditor({ fieldId, rows, columns }: MatrixEditorProps) {
       if (colsRef.current)
         colsRef.current.scrollTop = colsRef.current.scrollHeight;
     });
+  };
+
+  const handleToggleColumnScore = () => {
+    if (isColumnScored) {
+      columns.forEach((c) => columnApi.setScore(c.id, undefined));
+    } else {
+      columns.forEach((c) => {
+        if (c.score == null) columnApi.setScore(c.id, 0);
+      });
+    }
   };
 
   return (
@@ -93,9 +104,23 @@ export function MatrixEditor({ fieldId, rows, columns }: MatrixEditorProps) {
 
       {/* Columns */}
       <div className="matrix-columns ms:space-y-2">
-        <span className="edit-label ms:block ms:text-sm ms:font-medium ms:text-mstext">
-          Columns
-        </span>
+        <div className="ms:flex ms:items-center ms:justify-between">
+          <span className="edit-label ms:block ms:text-sm ms:font-medium ms:text-mstext">
+            Columns
+          </span>
+          <button
+            type="button"
+            onClick={handleToggleColumnScore}
+            aria-pressed={isColumnScored}
+            className={`score-toggle ms:px-2 ms:py-0.5 ms:text-xs ms:font-medium ms:rounded ms:border ms:transition-colors ms:outline-none ms:focus:outline-none ms:cursor-pointer ${
+              isColumnScored
+                ? 'ms:bg-msprimary ms:text-white ms:border-msprimary'
+                : 'ms:bg-mssurface ms:text-mstextmuted ms:border-msborder ms:hover:text-msprimary ms:hover:border-msprimary/50'
+            }`}
+          >
+            Score
+          </button>
+        </div>
         {columns.length >= MAX_COLUMNS && (
           <div className="ms:text-xs ms:text-mstextmuted ms:italic">
             Maximum {MAX_COLUMNS} columns
@@ -121,6 +146,19 @@ export function MatrixEditor({ fieldId, rows, columns }: MatrixEditorProps) {
                 placeholder={`Column ${idx + 1}`}
                 className="ms:flex-1 ms:min-w-0 ms:outline-none ms:bg-transparent ms:text-mstext ms:placeholder:text-mstextmuted ms:border-0 ms:text-sm"
               />
+              {isColumnScored && (
+                <input
+                  id={`${instanceId}-editor-col-score-${fieldId}-${col.id}`}
+                  aria-label={`Column ${idx + 1} score`}
+                  type="number"
+                  value={col.score ?? 0}
+                  onChange={(e) => {
+                    const v = parseFloat(e.currentTarget.value);
+                    columnApi.setScore(col.id, Number.isNaN(v) ? 0 : v);
+                  }}
+                  className="ms:w-16 ms:shrink-0 ms:outline-none ms:bg-transparent ms:text-mstext ms:border ms:border-msborder ms:rounded ms:px-1 ms:py-0.5 ms:text-sm ms:text-right"
+                />
+              )}
               <button
                 type="button"
                 onClick={() => columnApi.remove(col.id)}

@@ -77,4 +77,33 @@ export const RENDERER_TOOL_DEFINITIONS: readonly ToolDefinition[] = [
       parameters: { type: 'object', properties: {} },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'bulk_fill',
+      description:
+        'Fill multiple fields in a single call. Pass an array of { fieldId?, fieldQuestion?, value } entries. Returns per-field results and the remaining unfilledFields. Use instead of calling fill_field repeatedly.',
+      parameters: {
+        type: 'object',
+        properties: {
+          fields: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                fieldQuestion: { type: 'string' },
+                fieldId: { type: 'string' },
+                value: {
+                  description:
+                    'Same value format as fill_field — see fill_field for per-type rules.',
+                },
+              },
+              required: ['value'],
+            },
+          },
+        },
+        required: ['fields'],
+      },
+    },
+  },
 ];

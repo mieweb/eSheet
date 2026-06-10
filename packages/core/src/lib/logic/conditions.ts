@@ -699,11 +699,22 @@ function evaluateExpressionAst(
       return toNumber(left) < toNumber(right);
     case '<=':
       return toNumber(left) <= toNumber(right);
-    case '+':
-      if (typeof left === 'string' || typeof right === 'string') {
+    case '+': {
+      // Only do string concatenation when a side is a non-empty, non-numeric string.
+      // Empty string (unanswered field) and numeric strings both coerce to numbers.
+      const leftIsText =
+        typeof left === 'string' &&
+        left !== '' &&
+        Number.isNaN(parseFloat(left));
+      const rightIsText =
+        typeof right === 'string' &&
+        right !== '' &&
+        Number.isNaN(parseFloat(right));
+      if (leftIsText || rightIsText) {
         return String(left ?? '') + String(right ?? '');
       }
       return toNumber(left) + toNumber(right);
+    }
     case '-':
       return toNumber(left) - toNumber(right);
     case '*':
@@ -775,6 +786,7 @@ function getExpressionFieldValue(
     ) {
       const selectedId = (selected as SelectedOption).id;
       const opt = definition.options?.find((o) => o.id === selectedId);
+      if (opt?.score != null) return opt.score;
       const raw = opt?.value ?? selectedId;
       const parsed = parseFloat(raw);
       return Number.isNaN(parsed) ? raw : parsed;
@@ -784,14 +796,30 @@ function getExpressionFieldValue(
 
   if (
     definition.fieldType === 'check' ||
-    definition.fieldType === 'multiselectdropdown' ||
-    definition.fieldType === 'ranking'
+    definition.fieldType === 'multiselectdropdown'
   ) {
     if (!Array.isArray(response.selected)) return [];
-    return (response.selected as SelectedOption[]).map((s) => {
+    const selected = response.selected as SelectedOption[];
+    // If any option has a score, sum the scores of selected options.
+    const anyScored = definition.options?.some((o) => o.score != null);
+    if (anyScored) {
+      return selected.reduce((sum, s) => {
+        const opt = definition.options?.find((o) => o.id === s.id);
+        return sum + (opt?.score ?? 0);
+      }, 0);
+    }
+    return selected.map((s) => {
       const mapped = definition.options?.find((o) => o.id === s.id);
       return mapped?.value ?? s.id;
     });
+  }
+
+  if (definition.fieldType === 'ranking') {
+    if (!Array.isArray(response.selected)) return 0;
+    const ranked = response.selected as SelectedOption[];
+    // Position-based scoring: 1st = k pts, 2nd = k-1 pts, ..., last = 1 pt.
+    const k = ranked.length;
+    return ranked.reduce((sum, _item, i) => sum + (k - i), 0);
   }
 
   return getActualValue(definition, response);

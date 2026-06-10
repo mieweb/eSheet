@@ -63,7 +63,7 @@ export const BUILDER_TOOL_DEFINITIONS: readonly ToolDefinition[] = [
     function: {
       name: 'create_field',
       description:
-        'Add one field. fieldType: text|longtext|radio|check|boolean|dropdown|multiselectdropdown|rating|ranking|slider|section|html|display|image|signature|diagram. properties: {inputType,unit,min,max,step}. Pass parentId to place the field directly inside a section. For "html" fields: set properties.htmlContent to a raw HTML string (e.g. "<p>Your message</p>") — do NOT use "question". For "display" fields: set properties.content to a markdown/formula string that may embed field values using {fieldId} syntax (e.g. "Your score is **{score-field}**") — do NOT use "question". For "section" fields: use properties.title instead of question.',
+        'Add one field. fieldType: text|longtext|radio|check|boolean|dropdown|multiselectdropdown|rating|ranking|slider|section|html|display|image|signature|diagram. properties: {inputType,unit,min,max,step}. Pass parentId to place the field directly inside a section. IMPORTANT: section fields cannot be placed inside another section — sections are always at the root level. For "html" fields: set properties.htmlContent to a raw HTML string (e.g. "<p>Your message</p>") — do NOT use "question". For "display" fields: set properties.content to a markdown/formula string that may embed field values using {fieldId} syntax (e.g. "Your score is **{score-field}**") — do NOT use "question". For "section" fields: use properties.title instead of question.',
       parameters: {
         type: 'object',
         properties: {
@@ -81,7 +81,7 @@ export const BUILDER_TOOL_DEFINITIONS: readonly ToolDefinition[] = [
           afterFieldId: { type: 'string' },
           parentId: {
             type: 'string',
-            description: 'ID of a section field to place this field inside.',
+            description: 'ID of a section field to place this field inside. Never use parentId when fieldType is "section" — sections are always root-level.',
           },
           properties: { type: 'object', additionalProperties: true },
         },
@@ -94,7 +94,7 @@ export const BUILDER_TOOL_DEFINITIONS: readonly ToolDefinition[] = [
     function: {
       name: 'update_field',
       description:
-        'Change scalar field properties (question, required, inputType, min, max, step, placeholder). Do NOT pass rows or columns here — use add_row/add_column instead. Identify by fieldQuestion or fieldId.',
+        'Change scalar field properties. For most fields: question, required, inputType, min, max, step, placeholder. For display fields: content (the markdown/expression string). For html fields: htmlContent. Do NOT pass rows or columns here — use add_row/add_column instead. Identify by fieldQuestion or fieldId.',
       parameters: {
         type: 'object',
         properties: {
@@ -175,6 +175,32 @@ export const BUILDER_TOOL_DEFINITIONS: readonly ToolDefinition[] = [
             description: 'Current label to match if optionId unknown',
           },
         },
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'set_option_score',
+      description:
+        'Set a numeric score on an existing option for scored questionnaires (e.g. PHQ-9: 0–3, GAD-7: 0–3, custom surveys). The score is used in display field arithmetic: <{fieldId}> returns the sum of selected scores. Use this after creating the field and its options. Identify the option by optionId (from get_field) or currentValue. Pass score: null to clear a score.',
+      parameters: {
+        type: 'object',
+        properties: {
+          fieldQuestion: { type: 'string' },
+          fieldId: { type: 'string' },
+          optionId: { type: 'string' },
+          currentValue: {
+            type: 'string',
+            description: 'Option label to match if optionId unknown',
+          },
+          score: {
+            type: 'number',
+            description:
+              'Numeric score value (e.g. 0, 1, 2, 3). Pass null to remove.',
+          },
+        },
+        required: ['score'],
       },
     },
   },
@@ -301,6 +327,31 @@ export const BUILDER_TOOL_DEFINITIONS: readonly ToolDefinition[] = [
           value: { type: 'string' },
         },
         required: ['value'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'set_column_score',
+      description:
+        'Set a numeric score on a matrix column for scored questionnaires. The score is stored on the column and can be referenced in display field expressions. Identify the column by columnId (from get_field) or currentValue. Pass score: null to clear.',
+      parameters: {
+        type: 'object',
+        properties: {
+          fieldQuestion: { type: 'string' },
+          fieldId: { type: 'string' },
+          columnId: { type: 'string' },
+          currentValue: {
+            type: 'string',
+            description: 'Column label to match if columnId unknown',
+          },
+          score: {
+            type: 'number',
+            description: 'Numeric score value. Pass null to remove.',
+          },
+        },
+        required: ['score'],
       },
     },
   },
@@ -461,6 +512,84 @@ export const BUILDER_TOOL_DEFINITIONS: readonly ToolDefinition[] = [
           },
         },
         required: ['ruleIndex'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'bulk_fill',
+      description:
+        'Fill multiple fields in a single call. Pass an array of { fieldId?, fieldQuestion?, value } entries. Returns per-field results and the remaining unfilledFields. Use instead of calling fill_field repeatedly.',
+      parameters: {
+        type: 'object',
+        properties: {
+          fields: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                fieldQuestion: { type: 'string' },
+                fieldId: { type: 'string' },
+                value: {
+                  description:
+                    'Same value format as fill_field — see fill_field for per-type rules.',
+                },
+              },
+              required: ['value'],
+            },
+          },
+        },
+        required: ['fields'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'bulk_build',
+      description:
+        'Create multiple fields in a single call. Each entry is a field definition matching create_field parameters, plus optional inline rows/columns arrays for matrix fields. Returns the list of created fields and the new total field count.',
+      parameters: {
+        type: 'object',
+        properties: {
+          fields: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                fieldType: { type: 'string' },
+                question: { type: 'string' },
+                required: { type: 'boolean' },
+                parentId: {
+                  type: 'string',
+                  description: 'ID of a section field to place this field inside.',
+                },
+                options: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: { value: { type: 'string' } },
+                    required: ['value'],
+                  },
+                },
+                rows: {
+                  type: 'array',
+                  items: { type: 'string' },
+                  description: 'Row labels for singlematrix/multimatrix fields.',
+                },
+                columns: {
+                  type: 'array',
+                  items: { type: 'string' },
+                  description: 'Column labels for singlematrix/multimatrix fields.',
+                },
+                properties: { type: 'object', additionalProperties: true },
+              },
+              required: ['fieldType'],
+            },
+          },
+        },
+        required: ['fields'],
       },
     },
   },
