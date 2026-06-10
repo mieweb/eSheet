@@ -222,8 +222,14 @@
           "fieldQuestion": { "type": "string" },
           "fieldId": { "type": "string" },
           "optionId": { "type": "string" },
-          "currentValue": { "type": "string", "description": "Option label to match if optionId unknown" },
-          "score": { "type": "number", "description": "Numeric score value. Pass null to remove." }
+          "currentValue": {
+            "type": "string",
+            "description": "Option label to match if optionId unknown"
+          },
+          "score": {
+            "type": "number",
+            "description": "Numeric score value. Pass null to remove."
+          }
         },
         "required": ["score"]
       }
@@ -335,8 +341,14 @@
           "fieldQuestion": { "type": "string" },
           "fieldId": { "type": "string" },
           "columnId": { "type": "string" },
-          "currentValue": { "type": "string", "description": "Column label to match if columnId unknown" },
-          "score": { "type": "number", "description": "Numeric score value. Pass null to remove." }
+          "currentValue": {
+            "type": "string",
+            "description": "Column label to match if columnId unknown"
+          },
+          "score": {
+            "type": "number",
+            "description": "Numeric score value. Pass null to remove."
+          }
         },
         "required": ["score"]
       }

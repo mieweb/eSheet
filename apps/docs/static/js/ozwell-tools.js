@@ -197,5 +197,4 @@
     characterData: true,
     childList: true,
   });
-
 })();

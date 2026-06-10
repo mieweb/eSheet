@@ -149,7 +149,9 @@ type CondensedField = {
   children?: CondensedField[];
 };
 
-function condenseField(f: ReturnType<BuilderTools['getFormSummary']>['fields'][number]): CondensedField {
+function condenseField(
+  f: ReturnType<BuilderTools['getFormSummary']>['fields'][number]
+): CondensedField {
   const base: CondensedField = {
     id: f.id,
     fieldType: f.fieldType,
@@ -241,10 +243,7 @@ function bulkFill(
 
   const results: { field: string; status: string }[] = [];
   for (const entry of entries) {
-    const fieldId = tools.resolveFieldId(
-      entry.fieldId,
-      entry.fieldQuestion
-    );
+    const fieldId = tools.resolveFieldId(entry.fieldId, entry.fieldQuestion);
     if (!fieldId) {
       results.push({
         field: entry.fieldId ?? entry.fieldQuestion ?? '?',
@@ -626,7 +625,8 @@ function setColumnScore(args: ToolArgs, tools: BuilderTools): string {
     const match = cols.find((c) => c.value === (args.currentValue as string));
     if (match) columnId = match.id;
   }
-  if (!columnId) return `Missing 'columnId' or 'currentValue' to identify column`;
+  if (!columnId)
+    return `Missing 'columnId' or 'currentValue' to identify column`;
   const score =
     args.score === null || args.score === undefined
       ? undefined

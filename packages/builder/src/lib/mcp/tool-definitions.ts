@@ -81,7 +81,8 @@ export const BUILDER_TOOL_DEFINITIONS: readonly ToolDefinition[] = [
           afterFieldId: { type: 'string' },
           parentId: {
             type: 'string',
-            description: 'ID of a section field to place this field inside. Never use parentId when fieldType is "section" — sections are always root-level.',
+            description:
+              'ID of a section field to place this field inside. Never use parentId when fieldType is "section" — sections are always root-level.',
           },
           properties: { type: 'object', additionalProperties: true },
         },
@@ -563,7 +564,8 @@ export const BUILDER_TOOL_DEFINITIONS: readonly ToolDefinition[] = [
                 required: { type: 'boolean' },
                 parentId: {
                   type: 'string',
-                  description: 'ID of a section field to place this field inside.',
+                  description:
+                    'ID of a section field to place this field inside.',
                 },
                 options: {
                   type: 'array',
@@ -576,12 +578,14 @@ export const BUILDER_TOOL_DEFINITIONS: readonly ToolDefinition[] = [
                 rows: {
                   type: 'array',
                   items: { type: 'string' },
-                  description: 'Row labels for singlematrix/multimatrix fields.',
+                  description:
+                    'Row labels for singlematrix/multimatrix fields.',
                 },
                 columns: {
                   type: 'array',
                   items: { type: 'string' },
-                  description: 'Column labels for singlematrix/multimatrix fields.',
+                  description:
+                    'Column labels for singlematrix/multimatrix fields.',
                 },
                 properties: { type: 'object', additionalProperties: true },
               },
