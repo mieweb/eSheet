@@ -157,6 +157,9 @@ interface FieldOption {
   value: string;
   /** Optional tooltip or auxiliary text */
   text?: string;
+  /** Optional numeric score for scored surveys (e.g. PHQ-9, GAD-7). When present on
+   * any option, the field's answer value is the sum of scores for all selected options. */
+  score?: number;
 }
 ```
 
@@ -173,6 +176,8 @@ interface MatrixRow {
 interface MatrixColumn {
   id: string;
   value: string; // Column header
+  /** Optional numeric score for this column. Overrides auto-scoring when `scored` is enabled. */
+  score?: number;
 }
 ```
 

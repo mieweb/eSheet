@@ -112,7 +112,7 @@ Single-select radio buttons. Supports deselection (clicking the selected option 
 
 **Properties:**
 
-- `options` -- Array of `FieldOption`
+- `options` -- Array of `FieldOption` (each option may have an optional `score`)
 
 **Answer format:** `{ selected: SelectedOption }` where `SelectedOption = { id, value }`
 
@@ -129,13 +129,29 @@ Single-select radio buttons. Supports deselection (clicking the selected option 
 }
 ```
 
+With option scoring (e.g. a scored survey):
+
+```json
+{
+  "id": "phq_interest",
+  "fieldType": "radio",
+  "question": "Little interest or pleasure in doing things?",
+  "options": [
+    { "id": "a0", "value": "Not at all", "score": 0 },
+    { "id": "a1", "value": "Several days", "score": 1 },
+    { "id": "a2", "value": "More than half the days", "score": 2 },
+    { "id": "a3", "value": "Nearly every day", "score": 3 }
+  ]
+}
+```
+
 ### check
 
 Multi-select checkboxes. Users can select any combination of options.
 
 **Properties:**
 
-- `options` -- Array of `FieldOption`
+- `options` -- Array of `FieldOption` (each option may have an optional `score`; the field score is the sum of scores of all selected options)
 
 **Answer format:** `{ selected: SelectedOption[] }`
 
@@ -177,7 +193,7 @@ Single-select dropdown menu.
 
 **Properties:**
 
-- `options` -- Array of `FieldOption`
+- `options` -- Array of `FieldOption` (each option may have an optional `score`)
 
 **Answer format:** `{ selected: SelectedOption }`
 
@@ -200,7 +216,7 @@ Multi-select dropdown with tag-style selected items.
 
 **Properties:**
 
-- `options` -- Array of `FieldOption`
+- `options` -- Array of `FieldOption` (each option may have an optional `score`; the field score is the sum of scores of all selected options)
 
 **Answer format:** `{ selected: SelectedOption[] }`
 
@@ -228,7 +244,7 @@ Numeric scale displayed as selectable pills (e.g. 1-5 or 1-10).
 
 **Properties:**
 
-- `options` -- Array of `FieldOption` representing scale values
+- `options` -- Array of `FieldOption` representing scale values (each option may have an optional `score`; defaults to the option's numeric `value` if no `score` is set)
 
 **Answer format:** `{ selected: SelectedOption }`
 
@@ -262,6 +278,10 @@ Drag-to-order items. Users arrange options in their preferred order.
 
 **Answer format:** `{ selected: SelectedOption[] }` -- ordered by user's ranking (first = highest)
 
+:::note
+Ranking uses **position-based scoring** automatically: 1st place = k points, 2nd = k-1, ..., last = 1 (where k is the total number of options). Individual `score` values on options are not used for ranking fields.
+:::
+
 ```json
 {
   "id": "priorities",
@@ -282,7 +302,7 @@ Range slider with numeric selection.
 
 **Properties:**
 
-- `options` -- Array of `FieldOption` defining the range (first = min, last = max)
+- `options` -- Array of `FieldOption` defining the range (first = min, last = max; each option may have an optional `score` to override the default numeric `value`)
 
 **Answer format:** `{ selected: SelectedOption }`
 
@@ -312,7 +332,9 @@ Grid where each row allows exactly one column selection (radio-per-row).
 **Properties:**
 
 - `rows` -- Array of `MatrixRow`
-- `columns` -- Array of `MatrixColumn`
+- `columns` -- Array of `MatrixColumn` (each column may have an optional `score`)
+- `scored` -- _(optional)_ Enable auto-scoring: columns are assigned scores `0, 1, 2, ...` left to right. Individual `column.score` values override the auto-assigned score.
+- `scoreStart` -- _(optional)_ Starting value for auto-scoring when `scored: true` (default: `0`)
 
 **Answer format:** `{ selected: Record<rowId, SelectedOption> }`
 
@@ -321,6 +343,8 @@ Grid where each row allows exactly one column selection (radio-per-row).
   "id": "symptom_severity",
   "fieldType": "singlematrix",
   "question": "Rate each symptom's severity",
+  "scored": true,
+  "scoreStart": 0,
   "rows": [
     { "id": "r_head", "value": "Headache" },
     { "id": "r_back", "value": "Back Pain" },
@@ -356,7 +380,9 @@ Grid where each row allows multiple column selections (checkboxes-per-row).
 **Properties:**
 
 - `rows` -- Array of `MatrixRow`
-- `columns` -- Array of `MatrixColumn`
+- `columns` -- Array of `MatrixColumn` (each column may have an optional `score`)
+- `scored` -- _(optional)_ Enable auto-scoring: columns are assigned scores `0, 1, 2, ...` left to right. Individual `column.score` values override the auto-assigned score.
+- `scoreStart` -- _(optional)_ Starting value for auto-scoring when `scored: true` (default: `0`)
 
 **Answer format:** `{ selected: Record<rowId, SelectedOption[]> }`
 

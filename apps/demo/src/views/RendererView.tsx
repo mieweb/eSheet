@@ -3,8 +3,6 @@ import {
   EsheetRenderer,
   type EsheetRendererHandle,
   useRendererMcpToolHandler,
-  RENDERER_TOOL_DEFINITIONS,
-  RENDERER_SYSTEM_PROMPT,
   type FormDefinition,
   type ResponseFormat,
 } from '@esheet/renderer';
@@ -25,7 +23,7 @@ import {
   TabsTrigger,
 } from '@mieweb/ui';
 import { ClipboardList, Smartphone } from 'lucide-react';
-import { updateOzwellTools } from '../ozwell-setup.js';
+import { updateOzwellTools, FLOWIE_KEY } from '../ozwell-setup.js';
 
 interface SubmitResult {
   readonly kind: 'success' | 'error';
@@ -76,7 +74,7 @@ const TEST_SCHEMAS: readonly SchemaOption[] = Object.entries(schemaModules)
 
 export function RendererView() {
   useEffect(() => {
-    updateOzwellTools([...RENDERER_TOOL_DEFINITIONS], RENDERER_SYSTEM_PROMPT);
+    updateOzwellTools(FLOWIE_KEY);
   }, []);
 
   const onRendererToolsReady = useRendererMcpToolHandler({

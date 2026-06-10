@@ -2,12 +2,10 @@ import { useEffect } from 'react';
 import {
   EsheetBuilder,
   useBuilderMcpToolHandler,
-  BUILDER_TOOL_DEFINITIONS,
-  BUILDER_SYSTEM_PROMPT,
   type FormDefinition,
 } from '@esheet/builder';
 import { Navbar } from '../components/Navbar.js';
-import { updateOzwellTools } from '../ozwell-setup.js';
+import { updateOzwellTools, FORMIE_KEY } from '../ozwell-setup.js';
 
 const INITIAL_DEF: FormDefinition = {
   id: 'demo-builder',
@@ -34,7 +32,7 @@ const INITIAL_DEF: FormDefinition = {
 
 export function BuilderView() {
   useEffect(() => {
-    updateOzwellTools([...BUILDER_TOOL_DEFINITIONS], BUILDER_SYSTEM_PROMPT);
+    updateOzwellTools(FORMIE_KEY);
   }, []);
 
   const onBuilderToolsReady = useBuilderMcpToolHandler({

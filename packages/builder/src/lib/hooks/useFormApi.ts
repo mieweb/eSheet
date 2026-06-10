@@ -48,6 +48,7 @@ export interface FormApi {
   option: {
     add: (value?: string) => string | null;
     update: (optId: string, value: string) => boolean;
+    setScore: (optId: string, score: number | undefined) => boolean;
     remove: (optId: string) => boolean;
   };
   row: {
@@ -58,6 +59,7 @@ export interface FormApi {
   column: {
     add: (value?: string) => string | null;
     update: (colId: string, value: string) => boolean;
+    setScore: (colId: string, score: number | undefined) => boolean;
     remove: (colId: string) => boolean;
   };
   _form: FormStore;
@@ -136,6 +138,10 @@ export function useFormApi(fieldId?: string): FormApi {
           fieldId ? form.getState().addOption(fieldId, value) : null,
         update: (optId: string, value: string) =>
           fieldId ? form.getState().updateOption(fieldId, optId, value) : false,
+        setScore: (optId: string, score: number | undefined) =>
+          fieldId
+            ? form.getState().setOptionScore(fieldId, optId, score)
+            : false,
         remove: (optId: string) =>
           fieldId ? form.getState().removeOption(fieldId, optId) : false,
       },
@@ -154,6 +160,10 @@ export function useFormApi(fieldId?: string): FormApi {
           fieldId ? form.getState().addColumn(fieldId, value) : null,
         update: (colId: string, value: string) =>
           fieldId ? form.getState().updateColumn(fieldId, colId, value) : false,
+        setScore: (colId: string, score: number | undefined) =>
+          fieldId
+            ? form.getState().setColumnScore(fieldId, colId, score)
+            : false,
         remove: (colId: string) =>
           fieldId ? form.getState().removeColumn(fieldId, colId) : false,
       },

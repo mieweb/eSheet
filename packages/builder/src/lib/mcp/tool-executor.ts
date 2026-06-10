@@ -34,6 +34,8 @@ export function executeToolCall(
       return addOption(args, tools);
     case 'update_option':
       return updateOption(args, tools);
+    case 'set_option_score':
+      return setOptionScore(args, tools);
     case 'remove_option':
       return removeOption(args, tools);
     case 'get_field':
@@ -50,6 +52,8 @@ export function executeToolCall(
       return addColumn(args, tools);
     case 'update_column':
       return updateColumn(args, tools);
+    case 'set_column_score':
+      return setColumnScore(args, tools);
     case 'remove_column':
       return removeColumn(args, tools);
     case 'get_field_types':
@@ -70,6 +74,10 @@ export function executeToolCall(
       return addExpressionRule(args, tools);
     case 'remove_rule':
       return removeRule(args, tools);
+    case 'bulk_fill':
+      return bulkFill(args, tools);
+    case 'bulk_build':
+      return bulkBuild(args, tools);
     default:
       return `Unknown tool: ${toolName}`;
   }
@@ -85,6 +93,10 @@ function createField(args: ToolArgs, tools: BuilderTools): string {
   }
 
   const fieldType = args.fieldType as FieldType;
+  // Sections cannot be nested inside other sections.
+  if (fieldType === 'section' && args.parentId) {
+    return 'Error: sections cannot be placed inside another section. Create sections at the root level only.';
+  }
   const patch: Record<string, unknown> = { question: args.question as string };
   if (args.required !== undefined) patch.required = args.required;
   // Suppress auto-generated placeholder rows/columns on matrix fields so the
@@ -97,13 +109,15 @@ function createField(args: ToolArgs, tools: BuilderTools): string {
     const opts = args.options as unknown[];
     patch.options = opts.map((o, i) => {
       if (typeof o === 'string') return { id: `o${i + 1}`, value: o };
-      const obj = o as { id?: string; value?: string };
-      return { id: obj.id ?? `o${i + 1}`, value: obj.value ?? '' };
+      const obj = o as { id?: string; value?: string; score?: number };
+      const opt: Record<string, unknown> = {
+        id: obj.id ?? `o${i + 1}`,
+        value: obj.value ?? '',
+      };
+      if (obj.score != null) opt.score = obj.score;
+      return opt;
     });
   }
-
-  if (args.properties && typeof args.properties === 'object')
-    Object.assign(patch, args.properties as Record<string, unknown>);
 
   let opts: AddFieldOptions = { patch };
   if (args.parentId) {
@@ -120,14 +134,28 @@ function createField(args: ToolArgs, tools: BuilderTools): string {
   return `Created field "${args.question}" with ID: ${newId}`;
 }
 
-/** Optimized get_form_summary: condenses options/rows/columns to counts to reduce token usage. */
-function getFormSummaryOptimized(tools: BuilderTools): Record<string, unknown> {
-  const summary = tools.getFormSummary();
-  // Condense field details: replace full option arrays with counts
-  const condensedFields = summary.fields.map((f) => ({
+type CondensedField = {
+  id: string;
+  fieldType: string;
+  question: string;
+  required: boolean;
+  optionCount: number;
+  rowCount: number;
+  columnCount: number;
+  editWith: string;
+  hasRules: boolean;
+  hasValue: boolean;
+  valueFormat?: string;
+  children?: CondensedField[];
+};
+
+function condenseField(
+  f: ReturnType<BuilderTools['getFormSummary']>['fields'][number]
+): CondensedField {
+  const base: CondensedField = {
     id: f.id,
     fieldType: f.fieldType,
-    question: f.question,
+    question: f.question ?? '',
     required: f.required,
     optionCount: f.options?.length ?? 0,
     rowCount: f.rows?.length ?? 0,
@@ -136,7 +164,34 @@ function getFormSummaryOptimized(tools: BuilderTools): Record<string, unknown> {
     hasRules: f.hasRules,
     hasValue: f.hasValue,
     ...(f.valueFormat ? { valueFormat: f.valueFormat } : {}),
-  }));
+  };
+  if (f.children && f.children.length > 0) {
+    base.children = f.children.map(condenseField);
+  }
+  return base;
+}
+
+function flattenCondensed(fields: CondensedField[]): CondensedField[] {
+  const result: CondensedField[] = [];
+  for (const f of fields) {
+    // Skip section containers — they are layout wrappers, not fillable fields.
+    // Their children are still included.
+    if (f.fieldType === 'section') {
+      if (f.children && f.children.length > 0) {
+        result.push(...flattenCondensed(f.children));
+      }
+    } else {
+      result.push(f);
+    }
+  }
+  return result;
+}
+
+/** Optimized get_form_summary: condenses options/rows/columns to counts to reduce token usage. */
+function getFormSummaryOptimized(tools: BuilderTools): Record<string, unknown> {
+  const summary = tools.getFormSummary();
+  // Condense field details: replace full option arrays with counts, preserve section children
+  const condensedFields = summary.fields.map(condenseField);
   return {
     formId: summary.formId,
     fieldCount: summary.fieldCount,
@@ -159,15 +214,161 @@ function fillField(
   if (typeof result === 'string') return result; // format validation error
   if (!result) return `Field not found: ${fieldId}`;
   const summary = tools.getFormSummary();
-  const field = summary.fields.find((f) => f.id === fieldId);
+  const allCondensed = flattenCondensed(summary.fields.map(condenseField));
+  const field = allCondensed.find((f) => f.id === fieldId);
   const label = field?.question ?? fieldId;
-  // Return only unfilled fields with full details (token optimization)
-  const filledFields = summary.fields.filter((f) => f.hasValue);
-  const unfilledFields = summary.fields.filter((f) => !f.hasValue);
+  const filledFields = allCondensed.filter((f) => f.hasValue);
+  const allUnfilled = allCondensed.filter((f) => !f.hasValue);
+  // Split unfilled into fillable (no rules) vs conditionally hidden (has rules).
+  // Fields with rules may be hidden by conditional logic — do not loop on them.
+  const unfilledFields = allUnfilled.filter((f) => !f.hasRules);
+  const conditionallyHiddenCount = allUnfilled.filter((f) => f.hasRules).length;
   return {
     result: `Filled "${label}" with ${JSON.stringify(args.value)}`,
     filledCount: filledFields.length,
     unfilledFields,
+    ...(conditionallyHiddenCount > 0 ? { conditionallyHiddenCount } : {}),
+  };
+}
+
+function bulkFill(
+  args: ToolArgs,
+  tools: BuilderTools
+): Record<string, unknown> {
+  const entries = args.fields as
+    | { fieldId?: string; fieldQuestion?: string; value: unknown }[]
+    | undefined;
+  if (!Array.isArray(entries) || entries.length === 0)
+    return { error: "Missing 'fields' array" };
+
+  const results: { field: string; status: string }[] = [];
+  for (const entry of entries) {
+    const fieldId = tools.resolveFieldId(entry.fieldId, entry.fieldQuestion);
+    if (!fieldId) {
+      results.push({
+        field: entry.fieldId ?? entry.fieldQuestion ?? '?',
+        status: 'not found',
+      });
+      continue;
+    }
+    const result = tools.fillField(fieldId, entry.value);
+    if (typeof result === 'string') {
+      results.push({ field: fieldId, status: result });
+    } else if (!result) {
+      results.push({ field: fieldId, status: 'not found' });
+    } else {
+      results.push({ field: fieldId, status: 'filled' });
+    }
+  }
+
+  const summary = tools.getFormSummary();
+  const allCondensed = flattenCondensed(summary.fields.map(condenseField));
+  const allUnfilled = allCondensed.filter((f) => !f.hasValue);
+  // Split unfilled into fillable (no rules) vs conditionally hidden (has rules).
+  const unfilledFields = allUnfilled.filter((f) => !f.hasRules);
+  const conditionallyHiddenCount = allUnfilled.filter((f) => f.hasRules).length;
+  return {
+    results,
+    filledCount: allCondensed.filter((f) => f.hasValue).length,
+    unfilledFields,
+    ...(conditionallyHiddenCount > 0 ? { conditionallyHiddenCount } : {}),
+  };
+}
+
+function bulkBuild(
+  args: ToolArgs,
+  tools: BuilderTools
+): Record<string, unknown> {
+  const entries = args.fields as
+    | {
+        fieldType: string;
+        question?: string;
+        required?: boolean;
+        options?: unknown[];
+        rows?: string[];
+        columns?: string[];
+        parentId?: string;
+        properties?: Record<string, unknown>;
+      }[]
+    | undefined;
+  if (!Array.isArray(entries) || entries.length === 0)
+    return { error: "Missing 'fields' array" };
+
+  // Auto-clear placeholder fields before bulk build
+  const { fields } = tools.getFormSummary();
+  if (fields.length > 0 && fields.every((f) => PLACEHOLDER_IDS.has(f.id))) {
+    tools.resetForm({ id: 'form-1', fields: [] });
+  }
+
+  const created: { question: string; id: string; fieldType: string }[] = [];
+  const errors: { question: string; error: string }[] = [];
+
+  for (const entry of entries) {
+    const fieldType = entry.fieldType as FieldType;
+    // Sections cannot be nested inside other sections.
+    if (fieldType === 'section' && entry.parentId) {
+      errors.push({
+        question: entry.question ?? fieldType,
+        error: 'sections cannot be placed inside another section',
+      });
+      continue;
+    }
+    const patch: Record<string, unknown> = {
+      question: entry.question ?? '',
+    };
+    if (entry.required !== undefined) patch.required = entry.required;
+    if (fieldType === 'singlematrix' || fieldType === 'multimatrix') {
+      patch.rows = [];
+      patch.columns = [];
+    }
+    if (entry.options) {
+      patch.options = entry.options.map((o, i) => {
+        if (typeof o === 'string') return { id: `o${i + 1}`, value: o };
+        const obj = o as { id?: string; value?: string; score?: number };
+        const opt: Record<string, unknown> = {
+          id: obj.id ?? `o${i + 1}`,
+          value: obj.value ?? '',
+        };
+        if (obj.score != null) opt.score = obj.score;
+        return opt;
+      });
+    }
+    if (entry.properties) Object.assign(patch, entry.properties);
+
+    const opts: AddFieldOptions = {
+      patch,
+      ...(entry.parentId ? { parentId: entry.parentId } : {}),
+    };
+
+    const newId = tools.addField(fieldType, opts);
+    if (!newId) {
+      errors.push({
+        question: entry.question ?? fieldType,
+        error: `Unknown field type: ${fieldType}`,
+      });
+      continue;
+    }
+
+    // Add rows and columns for matrix fields
+    if (entry.rows) {
+      for (const row of entry.rows) tools.row.add(newId, row);
+    }
+    if (entry.columns) {
+      for (const col of entry.columns) tools.column.add(newId, col);
+    }
+
+    created.push({
+      question: entry.question ?? fieldType,
+      id: newId,
+      fieldType,
+    });
+  }
+
+  const summary = tools.getFormSummary();
+  return {
+    created,
+    ...(errors.length > 0 ? { errors } : {}),
+    totalFields: summary.fieldCount,
   };
 }
 
@@ -212,6 +413,8 @@ function updateField(args: ToolArgs, tools: BuilderTools): string {
       'step',
       'options',
       'placeholder',
+      'content',
+      'htmlContent',
     ];
     const collected: Record<string, unknown> = {};
     for (const key of FIELD_PROPS) {
@@ -404,6 +607,38 @@ function updateColumn(args: ToolArgs, tools: BuilderTools): string {
   return ok ? `Updated column ${columnId}` : `Column not found`;
 }
 
+function setColumnScore(args: ToolArgs, tools: BuilderTools): string {
+  const fieldId = tools.resolveFieldId(
+    args.fieldId as string | undefined,
+    args.fieldQuestion as string | undefined
+  );
+  if (!fieldId) return `Field not found`;
+  let columnId = args.columnId as string | undefined;
+  if (!columnId && args.currentValue) {
+    const node = tools.getField(fieldId);
+    const cols =
+      (
+        node?.definition as
+          | { columns?: { id: string; value: string }[] }
+          | undefined
+      )?.columns ?? [];
+    const match = cols.find((c) => c.value === (args.currentValue as string));
+    if (match) columnId = match.id;
+  }
+  if (!columnId)
+    return `Missing 'columnId' or 'currentValue' to identify column`;
+  const score =
+    args.score === null || args.score === undefined
+      ? undefined
+      : Number(args.score);
+  const ok = tools.column.setScore(fieldId, columnId, score);
+  return ok
+    ? score === undefined
+      ? `Cleared score for column ${columnId}`
+      : `Set score ${score} for column ${columnId}`
+    : `Column not found`;
+}
+
 function removeColumn(args: ToolArgs, tools: BuilderTools): string {
   const fieldId = tools.resolveFieldId(
     args.fieldId as string | undefined,
@@ -510,6 +745,38 @@ function removeOption(args: ToolArgs, tools: BuilderTools): string {
     return `Missing 'optionId' or 'currentValue' to identify option`;
   const ok = tools.option.remove(fieldId, optionId);
   return ok ? `Removed option ${optionId}` : `Option not found`;
+}
+
+function setOptionScore(args: ToolArgs, tools: BuilderTools): string {
+  const fieldId = tools.resolveFieldId(
+    args.fieldId as string | undefined,
+    args.fieldQuestion as string | undefined
+  );
+  if (!fieldId) return `Field not found`;
+  let optionId = args.optionId as string | undefined;
+  if (!optionId && args.currentValue) {
+    const node = tools.getField(fieldId);
+    const opts =
+      (
+        node?.definition as
+          | { options?: { id: string; value: string }[] }
+          | undefined
+      )?.options ?? [];
+    const match = opts.find((o) => o.value === (args.currentValue as string));
+    if (match) optionId = match.id;
+  }
+  if (!optionId)
+    return `Missing 'optionId' or 'currentValue' to identify option`;
+  const score =
+    args.score === null || args.score === undefined
+      ? undefined
+      : Number(args.score);
+  const ok = tools.option.setScore(fieldId, optionId, score);
+  return ok
+    ? score === undefined
+      ? `Cleared score for option ${optionId}`
+      : `Set score ${score} for option ${optionId}`
+    : `Option not found`;
 }
 
 function addFieldRule(args: ToolArgs, tools: BuilderTools): string {

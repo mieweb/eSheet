@@ -36,42 +36,13 @@ const config = {
     demoUrl,
   },
 
-  // Ozwell chat widget — parent key (ozw_...) approach.
-  // apiKey is read from localStorage at runtime (user-provided) so no key is
-  // baked into the build output. ozwell-tools.js shows a setup card if no key is stored.
+  // Ozwell chat widget — Schemie agent key (agnt_key- prefix, safe to embed publicly).
+  // System prompt and tools are managed server-side via the agent definition.
   headTags: [
     {
       tagName: 'script',
-      innerHTML: `(function(){var _c=${JSON.stringify({
-        system:
-          'You are a documentation assistant for eSheet, a modular questionnaire/form builder and renderer for React. You have one tool: search_docs. To answer ANY question, invoke search_docs with a short plain-text keyword query string — for example, to answer "how many field types?" call search_docs with query="field types". NEVER output JSON, NEVER write a function call as text. Just invoke the tool silently, then answer using only the content it returns. If the content does not confirm the answer, say "I could not find that in the eSheet docs".',
-        title: 'Schemie',
-        welcomeMessage:
-          'Hi! Ask me anything about eSheet — the builder, renderer, fields, or any package.',
-        debug: true,
-        tools: [
-          {
-            type: 'function',
-            function: {
-              name: 'search_docs',
-              description:
-                'Search the eSheet documentation. Pass a short keyword query (e.g. "field types", "installation", "renderer responses") and receive the most relevant page content.',
-              parameters: {
-                type: 'object',
-                properties: {
-                  query: {
-                    type: 'string',
-                    description:
-                      'A short plain-text keyword query, e.g. "field types", "installation", "renderer responses". Must be a string — not a schema object.',
-                  },
-                },
-                required: ['query'],
-              },
-            },
-          },
-        ],
-      })};try{var _k=JSON.parse(localStorage.getItem('ozwell_api_key')||'{}');_c.apiKey=_k.date===new Date().toISOString().slice(0,10)?_k.key||'':'';}catch(_){_c.apiKey='';}window.OzwellChatConfig=_c;})();`,
-      attributes: {},
+      innerHTML: `window.OzwellChatConfig={apiKey:'agnt_key-mq5nmgl81f6785d0d6da3dd0',title:'Schemie',welcomeMessage:'Hi! Ask me anything about eSheet \u2014 the builder, renderer, fields, or any package.',debug:true};`,
+      attributes: { type: 'text/javascript' },
     },
   ],
   scripts: [
