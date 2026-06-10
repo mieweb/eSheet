@@ -92,6 +92,12 @@ export interface FormState {
   addOption: (fieldId: string, value?: string) => string | null;
   /** Update an option's value. */
   updateOption: (fieldId: string, optionId: string, value: string) => boolean;
+  /** Set or clear an option's numeric score. Pass `undefined` to remove. */
+  setOptionScore: (
+    fieldId: string,
+    optionId: string,
+    score: number | undefined
+  ) => boolean;
   /** Remove an option. */
   removeOption: (fieldId: string, optionId: string) => boolean;
   /** Add a matrix row. Returns the generated row ID. */
@@ -104,6 +110,12 @@ export interface FormState {
   addColumn: (fieldId: string, value?: string) => string | null;
   /** Update a column's value. */
   updateColumn: (fieldId: string, columnId: string, value: string) => boolean;
+  /** Set or clear a column's numeric score. Pass `undefined` to remove. */
+  setColumnScore: (
+    fieldId: string,
+    columnId: string,
+    score: number | undefined
+  ) => boolean;
   /** Remove a matrix column. */
   removeColumn: (fieldId: string, columnId: string) => boolean;
 
@@ -582,6 +594,30 @@ export function createFormStore(initial?: FormDefinition): FormStore {
       return true;
     },
 
+    setOptionScore: (fieldId, optionId, score) => {
+      const result = patchField(get().normalized, fieldId, (def) => {
+        const opts = (def as unknown as { options?: FieldOption[] }).options;
+        if (!opts) return null;
+        let changed = false;
+        const next = opts.map((o) => {
+          if (o.id !== optionId) return o;
+          if (o.score === score) return o;
+          changed = true;
+          if (score === undefined) {
+            const { score: _s, ...rest } = o;
+            return rest;
+          }
+          return { ...o, score };
+        });
+        return changed
+          ? ({ ...def, options: next } as unknown as FieldDefinition)
+          : null;
+      });
+      if (!result) return false;
+      set({ normalized: result });
+      return true;
+    },
+
     removeOption: (fieldId, optionId) => {
       const result = patchField(get().normalized, fieldId, (def) => {
         const opts = (def as unknown as { options?: FieldOption[] }).options;
@@ -694,6 +730,30 @@ export function createFormStore(initial?: FormDefinition): FormStore {
           if (c.value === value) return c;
           changed = true;
           return { ...c, value };
+        });
+        return changed
+          ? ({ ...def, columns: next } as unknown as FieldDefinition)
+          : null;
+      });
+      if (!result) return false;
+      set({ normalized: result });
+      return true;
+    },
+
+    setColumnScore: (fieldId, columnId, score) => {
+      const result = patchField(get().normalized, fieldId, (def) => {
+        const cols = (def as unknown as { columns?: MatrixColumn[] }).columns;
+        if (!cols) return null;
+        let changed = false;
+        const next = cols.map((c) => {
+          if (c.id !== columnId) return c;
+          if (c.score === score) return c;
+          changed = true;
+          if (score === undefined) {
+            const { score: _s, ...rest } = c;
+            return rest;
+          }
+          return { ...c, score };
         });
         return changed
           ? ({ ...def, columns: next } as unknown as FieldDefinition)

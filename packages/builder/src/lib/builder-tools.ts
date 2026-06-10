@@ -86,6 +86,11 @@ export interface BuilderTools {
   option: {
     add: (fieldId: string, value?: string) => string | null;
     update: (fieldId: string, optionId: string, value: string) => boolean;
+    setScore: (
+      fieldId: string,
+      optionId: string,
+      score: number | undefined
+    ) => boolean;
     remove: (fieldId: string, optionId: string) => boolean;
   };
   /** Granular row mutations (matrix fields). */
@@ -98,6 +103,11 @@ export interface BuilderTools {
   column: {
     add: (fieldId: string, value?: string) => string | null;
     update: (fieldId: string, columnId: string, value: string) => boolean;
+    setScore: (
+      fieldId: string,
+      columnId: string,
+      score: number | undefined
+    ) => boolean;
     remove: (fieldId: string, columnId: string) => boolean;
   };
   /** Move a field to a new index. */
@@ -381,6 +391,8 @@ export function createBuilderTools(form: FormStore): BuilderTools {
       add: (fieldId, value) => form.getState().addOption(fieldId, value),
       update: (fieldId, optionId, value) =>
         form.getState().updateOption(fieldId, optionId, value),
+      setScore: (fieldId, optionId, score) =>
+        form.getState().setOptionScore(fieldId, optionId, score),
       remove: (fieldId, optionId) =>
         form.getState().removeOption(fieldId, optionId),
     },
@@ -394,6 +406,8 @@ export function createBuilderTools(form: FormStore): BuilderTools {
       add: (fieldId, value) => form.getState().addColumn(fieldId, value),
       update: (fieldId, columnId, value) =>
         form.getState().updateColumn(fieldId, columnId, value),
+      setScore: (fieldId, columnId, score) =>
+        form.getState().setColumnScore(fieldId, columnId, score),
       remove: (fieldId, columnId) =>
         form.getState().removeColumn(fieldId, columnId),
     },

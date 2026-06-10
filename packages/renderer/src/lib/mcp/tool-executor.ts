@@ -23,6 +23,8 @@ export function executeToolCall(
       return 'Responses cleared';
     case 'get_form_tree':
       return { fields: tools.getFormTree() };
+    case 'bulk_fill':
+      return bulkFill(args, tools);
     default:
       return `Unknown tool: ${toolName}`;
   }
@@ -41,6 +43,46 @@ function getFormOptimized(tools: RendererTools): Record<string, unknown> {
     unfilledFields,
     // Filled fields: just IDs for reference
     filledFieldIds: filledFields.map((f) => f.id),
+  };
+}
+
+function bulkFill(
+  args: ToolArgs,
+  tools: RendererTools
+): Record<string, unknown> {
+  const entries = args.fields as
+    | { fieldId?: string; fieldQuestion?: string; value: unknown }[]
+    | undefined;
+  if (!Array.isArray(entries) || entries.length === 0)
+    return { error: "Missing 'fields' array" };
+
+  const results: { field: string; status: string }[] = [];
+  for (const entry of entries) {
+    const fieldId = tools.resolveFieldId(entry.fieldId, entry.fieldQuestion);
+    if (!fieldId) {
+      results.push({
+        field: entry.fieldId ?? entry.fieldQuestion ?? '?',
+        status: 'not found',
+      });
+      continue;
+    }
+    const result = tools.fillField(fieldId, entry.value);
+    if (typeof result === 'string') {
+      results.push({ field: fieldId, status: result });
+    } else if (!result) {
+      results.push({ field: fieldId, status: 'not visible' });
+    } else {
+      results.push({ field: fieldId, status: 'filled' });
+    }
+  }
+
+  const form = tools.getForm();
+  const filledFields = form.fields.filter((f) => f.hasValue);
+  const unfilledFields = form.fields.filter((f) => !f.hasValue);
+  return {
+    results,
+    filledCount: filledFields.length,
+    unfilledFields,
   };
 }
 
