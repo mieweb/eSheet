@@ -21,7 +21,16 @@ const config = {
   favicon: 'img/favicon.ico',
 
   future: {
-    v4: true,
+    v4: {
+      removeLegacyPostBuildHeadAttribute: true,
+      useCssCascadeLayers: true,
+      siteStorageNamespacing: true,
+      // fasterByDefault: false — @swc/html native Linux binary not in lockfile (generated on
+      // Windows). Disabling prevents @docusaurus/faster from being auto-enabled, which would
+      // trigger require('@swc/html') and fail on Linux CI with MODULE_NOT_FOUND.
+      fasterByDefault: false,
+      mdx1CompatDisabledByDefault: true,
+    },
   },
 
   url: siteOrigin,
