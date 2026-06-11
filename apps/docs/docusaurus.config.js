@@ -41,6 +41,20 @@ const config = {
   // baked into the build output. ozwell-tools.js shows a setup card if no key is stored.
   headTags: [
     {
+      tagName: 'style',
+      innerHTML: '#loco-lang-widget { bottom: 88px !important; z-index: 9997 !important; }',
+      attributes: {},
+    },
+    {
+      tagName: 'script',
+      attributes: { src: '/loco.min.js' },
+    },
+    {
+      tagName: 'script',
+      innerHTML: `Loco.init({ apiUrl: 'https://loco.os.mieweb.org', apiKey: '202337e52dff4fb69e97857d' }); Loco.widget({ position: 'bottom-right' });`,
+      attributes: {},
+    },
+    {
       tagName: 'script',
       innerHTML: `(function(){var _c=${JSON.stringify({
         system:
