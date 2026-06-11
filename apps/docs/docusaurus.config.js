@@ -42,7 +42,8 @@ const config = {
   headTags: [
     {
       tagName: 'style',
-      innerHTML: '#loco-lang-widget { bottom: 88px !important; z-index: 9997 !important; }',
+      innerHTML:
+        '#loco-lang-widget { bottom: 88px !important; z-index: 9997 !important; }',
       attributes: {},
     },
     {
