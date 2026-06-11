@@ -20,6 +20,7 @@ export default [
       '**/.docusaurus',
       '**/vite.config.*.timestamp*',
       '**/vitest.config.*.timestamp*',
+      'apps/demo/public/**',
     ],
   },
   {

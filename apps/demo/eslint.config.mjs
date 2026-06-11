@@ -3,6 +3,7 @@ import baseConfig from '../../eslint.config.mjs';
 
 export default [
   ...baseConfig,
+  { ignores: ['public/**'] },
   ...nx.configs['flat/react'],
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
