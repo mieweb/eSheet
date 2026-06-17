@@ -3,6 +3,7 @@ import type { FieldComponentProps } from '@esheet/core';
 import { CoreEditor } from '@kerebron/editor';
 import { AdvancedEditorKit } from '@kerebron/editor-kits/AdvancedEditorKit';
 import { ExtensionHistory } from '@kerebron/extension-basic-editor/ExtensionHistory';
+import { getAssetLoad } from './asset-load.js';
 // Core editor styles (--kb-* variables + base/ProseMirror styles).
 // index-light.css pins the light theme so the editor matches the host app
 // regardless of OS dark-mode preference.
@@ -78,79 +79,115 @@ export function RichTextEditorField({
   onResponse,
 }: FieldComponentProps) {
   const def = field.definition as unknown as RichTextFieldDefinition;
-  const initialContent = response?.answer ?? def.defaultContent ?? '';
 
-  const editorRef = React.useRef<HTMLDivElement>(null);
-  const editorInstance = React.useRef<CoreEditor | null>(null);
-  // Keep a stable ref to onResponse so the transaction handler never goes stale
+  const hostRef = React.useRef<HTMLDivElement>(null);
+  const editorRef = React.useRef<CoreEditor | null>(null);
   const onResponseRef = React.useRef(onResponse);
   React.useEffect(() => {
     onResponseRef.current = onResponse;
   }, [onResponse]);
 
+  // The content we want the editor to display. Matches DrawingPad's existingData pattern:
+  // response takes priority, then defaultContent.
+  const externalContent =
+    (response?.answer as string | undefined) || def.defaultContent || '';
+
+  // Suppress the transaction handler while we are programmatically loading
+  // content so the load doesn't echo back into the response store.
+  const isLoadingRef = React.useRef(false);
+
+  // --- Mount / unmount the Kerebron editor (runs once in preview mode) ---
   React.useEffect(() => {
-    const host = editorRef.current;
+    const host = hostRef.current;
     if (!isPreview || !host) return;
 
-    // Kerebron's destroy() replaces its mount element with an inert DOM clone,
-    // which breaks React refs under StrictMode remounts. Mount into a fresh
-    // child node each run and clear the host on cleanup instead.
+    // Mount into a fresh child node so Kerebron's destroy() can't corrupt the
+    // host ref (destroy() replaces its own mount node with an inert clone).
     const mount = document.createElement('div');
     host.appendChild(mount);
 
     const editor = CoreEditor.create({
       element: mount,
       uri: 'file:///untitled.md',
+      assetLoad: getAssetLoad(),
       editorKits: [
         new AdvancedEditorKit(),
         { getExtensions: () => [new ExtensionHistory()] },
       ],
     });
-
-    editorInstance.current = editor;
+    editorRef.current = editor;
 
     const handler = async () => {
-      if (!editorInstance.current) return;
+      // Ignore transactions fired by our own programmatic loads
+      if (isLoadingRef.current) return;
       try {
-        const buf = await editorInstance.current.saveDocument(
-          'text/x-markdown'
-        );
+        const buf = await editor.saveDocument('text/x-markdown');
         onResponseRef.current({ answer: new TextDecoder().decode(buf) });
       } catch {
         // ignore
       }
     };
 
-    // Attach the listener only after initial content is loaded, so mounting
-    // never emits a phantom response for an untouched field.
-    const ready = initialContent
-      ? editor
-          .loadDocument(
-            'text/x-markdown',
-            new TextEncoder().encode(initialContent)
-          )
-          .catch(() => {
-            // ignore load errors
-          })
-      : Promise.resolve();
-
+    // Load initial content then attach the transaction listener so the load
+    // itself never emits a phantom response for an untouched field.
     let listening = false;
-    ready.then(() => {
-      if (editorInstance.current !== editor) return; // unmounted during load
+    let destroyed = false;
+
+    const loadInitial = async () => {
+      if (externalContent) {
+        isLoadingRef.current = true;
+        try {
+          await editor.loadDocument(
+            'text/x-markdown',
+            new TextEncoder().encode(externalContent)
+          );
+        } catch (err) {
+          console.error('[RichTextEditorField] loadDocument failed:', err);
+        } finally {
+          isLoadingRef.current = false;
+        }
+      }
+      if (destroyed) return;
       editor.addEventListener('transaction', handler);
       listening = true;
-    });
+    };
+
+    loadInitial();
 
     return () => {
+      destroyed = true;
       if (listening) editor.removeEventListener('transaction', handler);
       editor.destroy();
-      editorInstance.current = null;
-      // Remove the (now-cloned/inert) mount node left behind by destroy()
+      editorRef.current = null;
       host.replaceChildren();
     };
-    // initialContent is intentionally read once at mount only
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPreview]);
+
+  // --- React to external response changes (AI fill, clear, etc.) ---
+  // Skip the first run — the mount effect handles initial content.
+  // Subsequent runs mean an external caller changed the response (e.g. AI fill).
+  const skipFirstExternalRef = React.useRef(true);
+  React.useEffect(() => {
+    if (skipFirstExternalRef.current) {
+      skipFirstExternalRef.current = false;
+      return;
+    }
+    const editor = editorRef.current;
+    if (!editor) return;
+    isLoadingRef.current = true;
+    editor
+      .loadDocument(
+        'text/x-markdown',
+        new TextEncoder().encode(externalContent)
+      )
+      .then(() => {
+        isLoadingRef.current = false;
+      })
+      .catch(() => {
+        isLoadingRef.current = false;
+      });
+  }, [externalContent]); // fires whenever the response store value changes
 
   // Builder canvas: static placeholder, no editor instance
   if (!isPreview) {
@@ -184,9 +221,11 @@ export function RichTextEditorField({
       style={{ isolation: 'isolate' } as React.CSSProperties}
     >
       {def.question && (
-        <div className="richtext-field-question">{def.question}</div>
+        <div className="richtext-field-question" style={{ marginBottom: 8 }}>
+          {def.question}
+        </div>
       )}
-      <div ref={editorRef} className="kb-component" />
+      <div ref={hostRef} className="kb-component" />
     </div>
   );
 }
