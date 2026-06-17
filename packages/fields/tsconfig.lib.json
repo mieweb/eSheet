@@ -44,5 +44,9 @@
     "src/**/*.tsx",
     "../../types/**/*.d.ts"
   ],
-  "references": []
+  "references": [
+    {
+      "path": "../core/tsconfig.lib.json"
+    }
+  ]
 }

@@ -1,5 +1,7 @@
 import './styles.css';
 import './ozwell-setup.js';
+import { registerFieldComponents } from '@esheet/fields';
+import { RichTextEditorField } from '@esheet/field-kerebron';
 import { StrictMode } from 'react';
 import * as ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
@@ -8,6 +10,9 @@ import { BuilderView } from './views/BuilderView';
 import { RendererView } from './views/RendererView';
 import { Navbar } from './components/Navbar';
 import { BrandInitializer } from './components/BrandInitializer';
+
+// Register plugin fields (imports also self-register metadata + Zod schema)
+registerFieldComponents({ richtext: RichTextEditorField });
 
 if (import.meta.env.DEV) {
   await import('../../../packages/builder/src/index.output.css');
