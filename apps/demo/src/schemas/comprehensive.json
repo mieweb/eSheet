@@ -8,7 +8,6 @@
       "htmlContent": "<h2 style='margin:0 0 8px'>Comprehensive Field Showcase</h2><p>This form demonstrates <strong>every supported field type</strong> in a realistic clinical/business context. Use it to explore rendering, validation, and conditional logic.</p><p><em>Sections:</em> Demographics &rarr; Choices &rarr; Scales &rarr; Matrix &rarr; Free Text &rarr; Media &rarr; Summary</p>",
       "iframeHeight": 130
     },
-
     {
       "id": "section-demographics",
       "fieldType": "section",
@@ -72,7 +71,6 @@
         }
       ]
     },
-
     {
       "id": "section-choices",
       "fieldType": "section",
@@ -83,9 +81,21 @@
           "fieldType": "radio",
           "question": "Gender identity",
           "options": [
-            { "id": "comp-g-m", "value": "male", "text": "Male" },
-            { "id": "comp-g-f", "value": "female", "text": "Female" },
-            { "id": "comp-g-nb", "value": "non-binary", "text": "Non-binary" },
+            {
+              "id": "comp-g-m",
+              "value": "male",
+              "text": "Male"
+            },
+            {
+              "id": "comp-g-f",
+              "value": "female",
+              "text": "Female"
+            },
+            {
+              "id": "comp-g-nb",
+              "value": "non-binary",
+              "text": "Non-binary"
+            },
             {
               "id": "comp-g-pnts",
               "value": "prefer-not",
@@ -108,13 +118,21 @@
               "value": "hypertension",
               "text": "Hypertension"
             },
-            { "id": "comp-c-asthma", "value": "asthma", "text": "Asthma" },
+            {
+              "id": "comp-c-asthma",
+              "value": "asthma",
+              "text": "Asthma"
+            },
             {
               "id": "comp-c-arthritis",
               "value": "arthritis",
               "text": "Arthritis"
             },
-            { "id": "comp-c-none", "value": "none", "text": "None" }
+            {
+              "id": "comp-c-none",
+              "value": "none",
+              "text": "None"
+            }
           ]
         },
         {
@@ -123,8 +141,16 @@
           "question": "Do you consent to data being used for research purposes?",
           "required": true,
           "options": [
-            { "id": "comp-con-yes", "value": "yes", "text": "Yes, I consent" },
-            { "id": "comp-con-no", "value": "no", "text": "No" }
+            {
+              "id": "comp-con-yes",
+              "value": "yes",
+              "text": "Yes, I consent"
+            },
+            {
+              "id": "comp-con-no",
+              "value": "no",
+              "text": "No"
+            }
           ]
         },
         {
@@ -132,7 +158,11 @@
           "fieldType": "dropdown",
           "question": "Primary care setting",
           "options": [
-            { "id": "comp-pc-gp", "value": "gp", "text": "General practice" },
+            {
+              "id": "comp-pc-gp",
+              "value": "gp",
+              "text": "General practice"
+            },
             {
               "id": "comp-pc-urgent",
               "value": "urgent-care",
@@ -160,17 +190,40 @@
           "fieldType": "multiselectdropdown",
           "question": "Languages spoken (select all that apply)",
           "options": [
-            { "id": "comp-lang-en", "value": "english", "text": "English" },
-            { "id": "comp-lang-es", "value": "spanish", "text": "Spanish" },
-            { "id": "comp-lang-fr", "value": "french", "text": "French" },
-            { "id": "comp-lang-zh", "value": "mandarin", "text": "Mandarin" },
-            { "id": "comp-lang-ar", "value": "arabic", "text": "Arabic" },
-            { "id": "comp-lang-other", "value": "other", "text": "Other" }
+            {
+              "id": "comp-lang-en",
+              "value": "english",
+              "text": "English"
+            },
+            {
+              "id": "comp-lang-es",
+              "value": "spanish",
+              "text": "Spanish"
+            },
+            {
+              "id": "comp-lang-fr",
+              "value": "french",
+              "text": "French"
+            },
+            {
+              "id": "comp-lang-zh",
+              "value": "mandarin",
+              "text": "Mandarin"
+            },
+            {
+              "id": "comp-lang-ar",
+              "value": "arabic",
+              "text": "Arabic"
+            },
+            {
+              "id": "comp-lang-other",
+              "value": "other",
+              "text": "Other"
+            }
           ]
         }
       ]
     },
-
     {
       "id": "section-scales",
       "fieldType": "section",
@@ -181,17 +234,61 @@
           "fieldType": "slider",
           "question": "Current pain level (0 = none, 10 = severe)",
           "options": [
-            { "id": "comp-pain-0", "value": "0", "text": "0" },
-            { "id": "comp-pain-1", "value": "1", "text": "1" },
-            { "id": "comp-pain-2", "value": "2", "text": "2" },
-            { "id": "comp-pain-3", "value": "3", "text": "3" },
-            { "id": "comp-pain-4", "value": "4", "text": "4" },
-            { "id": "comp-pain-5", "value": "5", "text": "5" },
-            { "id": "comp-pain-6", "value": "6", "text": "6" },
-            { "id": "comp-pain-7", "value": "7", "text": "7" },
-            { "id": "comp-pain-8", "value": "8", "text": "8" },
-            { "id": "comp-pain-9", "value": "9", "text": "9" },
-            { "id": "comp-pain-10", "value": "10", "text": "10" }
+            {
+              "id": "comp-pain-0",
+              "value": "0",
+              "text": "0"
+            },
+            {
+              "id": "comp-pain-1",
+              "value": "1",
+              "text": "1"
+            },
+            {
+              "id": "comp-pain-2",
+              "value": "2",
+              "text": "2"
+            },
+            {
+              "id": "comp-pain-3",
+              "value": "3",
+              "text": "3"
+            },
+            {
+              "id": "comp-pain-4",
+              "value": "4",
+              "text": "4"
+            },
+            {
+              "id": "comp-pain-5",
+              "value": "5",
+              "text": "5"
+            },
+            {
+              "id": "comp-pain-6",
+              "value": "6",
+              "text": "6"
+            },
+            {
+              "id": "comp-pain-7",
+              "value": "7",
+              "text": "7"
+            },
+            {
+              "id": "comp-pain-8",
+              "value": "8",
+              "text": "8"
+            },
+            {
+              "id": "comp-pain-9",
+              "value": "9",
+              "text": "9"
+            },
+            {
+              "id": "comp-pain-10",
+              "value": "10",
+              "text": "10"
+            }
           ]
         },
         {
@@ -199,11 +296,31 @@
           "fieldType": "rating",
           "question": "Overall satisfaction with your care team (1 = very dissatisfied, 5 = very satisfied)",
           "options": [
-            { "id": "comp-sat-1", "value": "1", "text": "1" },
-            { "id": "comp-sat-2", "value": "2", "text": "2" },
-            { "id": "comp-sat-3", "value": "3", "text": "3" },
-            { "id": "comp-sat-4", "value": "4", "text": "4" },
-            { "id": "comp-sat-5", "value": "5", "text": "5" }
+            {
+              "id": "comp-sat-1",
+              "value": "1",
+              "text": "1"
+            },
+            {
+              "id": "comp-sat-2",
+              "value": "2",
+              "text": "2"
+            },
+            {
+              "id": "comp-sat-3",
+              "value": "3",
+              "text": "3"
+            },
+            {
+              "id": "comp-sat-4",
+              "value": "4",
+              "text": "4"
+            },
+            {
+              "id": "comp-sat-5",
+              "value": "5",
+              "text": "5"
+            }
           ]
         },
         {
@@ -240,7 +357,6 @@
         }
       ]
     },
-
     {
       "id": "section-matrix",
       "fieldType": "section",
@@ -251,17 +367,44 @@
           "fieldType": "singlematrix",
           "question": "How often have you experienced each symptom in the past month?",
           "rows": [
-            { "id": "comp-sf-r1", "value": "Fatigue" },
-            { "id": "comp-sf-r2", "value": "Headache" },
-            { "id": "comp-sf-r3", "value": "Dizziness" },
-            { "id": "comp-sf-r4", "value": "Shortness of breath" }
+            {
+              "id": "comp-sf-r1",
+              "value": "Fatigue"
+            },
+            {
+              "id": "comp-sf-r2",
+              "value": "Headache"
+            },
+            {
+              "id": "comp-sf-r3",
+              "value": "Dizziness"
+            },
+            {
+              "id": "comp-sf-r4",
+              "value": "Shortness of breath"
+            }
           ],
           "columns": [
-            { "id": "comp-sf-c1", "value": "Never" },
-            { "id": "comp-sf-c2", "value": "Rarely" },
-            { "id": "comp-sf-c3", "value": "Sometimes" },
-            { "id": "comp-sf-c4", "value": "Often" },
-            { "id": "comp-sf-c5", "value": "Daily" }
+            {
+              "id": "comp-sf-c1",
+              "value": "Never"
+            },
+            {
+              "id": "comp-sf-c2",
+              "value": "Rarely"
+            },
+            {
+              "id": "comp-sf-c3",
+              "value": "Sometimes"
+            },
+            {
+              "id": "comp-sf-c4",
+              "value": "Often"
+            },
+            {
+              "id": "comp-sf-c5",
+              "value": "Daily"
+            }
           ]
         },
         {
@@ -269,20 +412,40 @@
           "fieldType": "multimatrix",
           "question": "Which of the following apply to your current lifestyle? (select all that apply per row)",
           "rows": [
-            { "id": "comp-ls-r1", "value": "Diet" },
-            { "id": "comp-ls-r2", "value": "Exercise" },
-            { "id": "comp-ls-r3", "value": "Sleep" }
+            {
+              "id": "comp-ls-r1",
+              "value": "Diet"
+            },
+            {
+              "id": "comp-ls-r2",
+              "value": "Exercise"
+            },
+            {
+              "id": "comp-ls-r3",
+              "value": "Sleep"
+            }
           ],
           "columns": [
-            { "id": "comp-ls-c1", "value": "Consistent" },
-            { "id": "comp-ls-c2", "value": "Improving" },
-            { "id": "comp-ls-c3", "value": "Struggling" },
-            { "id": "comp-ls-c4", "value": "Seeking help" }
+            {
+              "id": "comp-ls-c1",
+              "value": "Consistent"
+            },
+            {
+              "id": "comp-ls-c2",
+              "value": "Improving"
+            },
+            {
+              "id": "comp-ls-c3",
+              "value": "Struggling"
+            },
+            {
+              "id": "comp-ls-c4",
+              "value": "Seeking help"
+            }
           ]
         }
       ]
     },
-
     {
       "id": "section-freetext",
       "fieldType": "section",
@@ -299,14 +462,22 @@
           "fieldType": "multitext",
           "question": "Current medications (name, dose, frequency)",
           "options": [
-            { "id": "comp-med-1", "value": "Medication 1" },
-            { "id": "comp-med-2", "value": "Medication 2" },
-            { "id": "comp-med-3", "value": "Medication 3" }
+            {
+              "id": "comp-med-1",
+              "value": "Medication 1"
+            },
+            {
+              "id": "comp-med-2",
+              "value": "Medication 2"
+            },
+            {
+              "id": "comp-med-3",
+              "value": "Medication 3"
+            }
           ]
         }
       ]
     },
-
     {
       "id": "section-media",
       "fieldType": "section",
@@ -335,7 +506,6 @@
         }
       ]
     },
-
     {
       "id": "section-summary",
       "fieldType": "section",
@@ -353,6 +523,12 @@
           "question": "Anything else you'd like us to know?"
         }
       ]
+    },
+    {
+      "id": "comp-richtext-test",
+      "fieldType": "richtext",
+      "question": "Notes (Rich Text Test)",
+      "required": false
     }
   ]
 }

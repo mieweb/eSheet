@@ -670,8 +670,8 @@ const sectionFieldSchema = z.strictObject({
   ),
 });
 
-/** Zod schema for FieldDefinition discriminated union. */
-export const fieldDefinitionSchema = z.discriminatedUnion('fieldType', [
+/** Core (built-in) discriminated union — sealed, never mutated. */
+const _coreFieldSchema = z.discriminatedUnion('fieldType', [
   // Text
   textFieldSchema,
   longtextFieldSchema,
@@ -698,6 +698,44 @@ export const fieldDefinitionSchema = z.discriminatedUnion('fieldType', [
   // Organization
   sectionFieldSchema,
 ]);
+
+/** Plugin field schemas registered at runtime via {@link registerFieldSchema}. */
+const _extraFieldSchemas: z.ZodMiniType[] = [];
+
+/**
+ * Register a Zod schema for a plugin field type.
+ * Call this when importing a plugin field package so form validation
+ * accepts that field type.
+ *
+ * @example
+ * ```ts
+ * registerFieldSchema(
+ *   z.object({ fieldType: z.literal('richtext'), id: z.string(), defaultContent: z.optional(z.string()) })
+ * );
+ * ```
+ */
+export function registerFieldSchema(schema: z.ZodMiniType): void {
+  _extraFieldSchemas.push(schema);
+}
+
+/**
+ * Zod schema for FieldDefinition.
+ *
+ * The core built-in types use a discriminated union for precise validation.
+ * Plugin types registered via {@link registerFieldSchema} are tried after.
+ * Uses `z.lazy` so plugin schemas added after module load are always included.
+ */
+export const fieldDefinitionSchema: z.ZodMiniType<FieldDefinition> = z.lazy(
+  (): z.ZodMiniType<FieldDefinition> => {
+    if (_extraFieldSchemas.length === 0) {
+      return _coreFieldSchema as unknown as z.ZodMiniType<FieldDefinition>;
+    }
+    return z.union([
+      _coreFieldSchema,
+      ..._extraFieldSchemas,
+    ]) as unknown as z.ZodMiniType<FieldDefinition>;
+  }
+);
 
 // ---------------------------------------------------------------------------
 // Field Response Values (answers only)
@@ -758,7 +796,7 @@ export const formDefinitionSchema = z.strictObject({
   id: z.string(),
   title: z.optional(z.string()),
   description: z.optional(z.string()),
-  fields: z.array(fieldDefinitionSchema),
+  fields: z.array(z.lazy(() => fieldDefinitionSchema)),
   _sourceData: z.optional(z.unknown()),
 });
 export type FormDefinition = z.infer<typeof formDefinitionSchema>;

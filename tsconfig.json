@@ -26,6 +26,9 @@
     },
     {
       "path": "./packages/adapters"
+    },
+    {
+      "path": "./packages/field-kerebron"
     }
   ]
 }

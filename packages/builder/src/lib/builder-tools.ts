@@ -464,6 +464,7 @@ export function createBuilderTools(form: FormStore): BuilderTools {
         const isMatrix =
           def.fieldType === 'singlematrix' || def.fieldType === 'multimatrix';
         const isSection = def.fieldType === 'section';
+        const isRichText = def.fieldType === 'richtext';
         const base: FieldSummary = {
           id,
           fieldType: def.fieldType,
@@ -476,6 +477,8 @@ export function createBuilderTools(form: FormStore): BuilderTools {
           columns: def.columns ?? [],
           editWith: isMatrix
             ? 'add_row / add_column (NOT add_option)'
+            : isRichText
+            ? 'fill_field with a Markdown string'
             : 'add_option',
           hasRules: (def.rules?.length ?? 0) > 0,
           hasValue: (() => {

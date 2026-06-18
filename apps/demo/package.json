@@ -9,6 +9,7 @@
     "@esheet/adapters": "*",
     "@esheet/builder": "*",
     "@esheet/core": "*",
+    "@esheet/field-kerebron": "*",
     "@esheet/fields": "*",
     "@esheet/renderer": "*",
     "@mieweb/ui": "^0.6.1",

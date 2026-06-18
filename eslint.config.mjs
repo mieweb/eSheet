@@ -59,6 +59,10 @@ export default [
               onlyDependOnLibsWithTags: ['scope:core'],
             },
             {
+              sourceTag: 'scope:field-kerebron',
+              onlyDependOnLibsWithTags: ['scope:core'],
+            },
+            {
               sourceTag: 'scope:adapters',
               onlyDependOnLibsWithTags: ['scope:core'],
             },
@@ -68,6 +72,7 @@ export default [
               onlyDependOnLibsWithTags: [
                 'scope:core',
                 'scope:fields',
+                'scope:field-kerebron',
                 'scope:builder',
                 'scope:renderer',
                 'scope:adapters',
