@@ -1,0 +1,51 @@
+{
+  "name": "@esheet/field-kerebron",
+  "version": "0.0.4-1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mieweb/eSheet"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "@esheet/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "!**/*.tsbuildinfo"
+  ],
+  "nx": {
+    "tags": [
+      "scope:field-kerebron"
+    ]
+  },
+  "dependencies": {
+    "@esheet/core": "0.0.4-1",
+    "@kerebron/editor": "^0.7.9",
+    "@kerebron/editor-kits": "^0.7.9",
+    "@kerebron/editor-react": "^0.7.9",
+    "@kerebron/extension-basic-editor": "^0.7.9",
+    "@kerebron/extension-menu": "^0.7.9",
+    "react": "^19.2.4",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@vitejs/plugin-react": "^5.1.4",
+    "vite-plugin-dts": "^4.5.4"
+  },
+  "peerDependencies": {
+    "react": "^19.2.4"
+  }
+}

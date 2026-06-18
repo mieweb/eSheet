@@ -4,6 +4,7 @@ import {
   useBuilderMcpToolHandler,
   type FormDefinition,
 } from '@esheet/builder';
+import type { RichTextFieldDefinition } from '@esheet/field-kerebron';
 import { Navbar } from '../components/Navbar.js';
 import { updateOzwellTools, FORMIE_KEY } from '../ozwell-setup.js';
 
@@ -27,7 +28,12 @@ const INITIAL_DEF: FormDefinition = {
         { id: 'o3', value: 'Green' },
       ],
     },
-  ],
+    {
+      id: 'q4',
+      fieldType: 'richtext',
+      question: 'Tell us more (rich text):',
+    } as unknown as RichTextFieldDefinition,
+  ] as FormDefinition['fields'],
 };
 
 export function BuilderView() {
