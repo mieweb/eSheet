@@ -74,11 +74,14 @@ export interface RichTextFieldDefinition {
  */
 export function RichTextEditorField({
   field,
+  form,
   response,
   isPreview,
+  onUpdate,
   onResponse,
 }: FieldComponentProps) {
   const def = field.definition as unknown as RichTextFieldDefinition;
+  const instanceId = form.getState().instanceId;
 
   const hostRef = React.useRef<HTMLDivElement>(null);
   const editorRef = React.useRef<CoreEditor | null>(null);
@@ -189,13 +192,27 @@ export function RichTextEditorField({
       });
   }, [externalContent]); // fires whenever the response store value changes
 
-  // Builder canvas: static placeholder, no editor instance
+  // Builder canvas: editable question input + static placeholder
   if (!isPreview) {
     return (
-      <div className="richtext-field richtext-field--builder">
-        {def.question && (
-          <div className="richtext-field-question">{def.question}</div>
-        )}
+      <div className="richtext-field richtext-field--builder ms:space-y-2">
+        <div>
+          <label
+            htmlFor={`${instanceId}-canvas-question-${def.id}`}
+            className="ms:block ms:text-sm ms:font-medium ms:text-mstextmuted ms:mb-1"
+          >
+            Question
+          </label>
+          <input
+            id={`${instanceId}-canvas-question-${def.id}`}
+            aria-label="Question"
+            type="text"
+            value={def.question || ''}
+            onChange={(e) => onUpdate({ question: e.target.value })}
+            placeholder="Enter question"
+            className="ms:px-3 ms:py-2 ms:h-10 ms:w-full ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:rounded-lg ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary/30 ms:outline-none ms:transition-colors"
+          />
+        </div>
         <div
           className="richtext-field-placeholder"
           style={{
