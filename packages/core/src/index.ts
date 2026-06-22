@@ -103,6 +103,7 @@ export {
   evaluateRule,
   isExpressionValid,
   evaluateExpression,
+  evaluateJsExpression,
 } from './lib/logic/conditions.js';
 
 export { resolveEffect } from './lib/logic/resolve.js';

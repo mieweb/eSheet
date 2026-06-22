@@ -143,21 +143,31 @@ The renderer accepts form definitions as objects, JSON strings, or YAML strings:
 
 ## Props
 
-| Prop               | Type                        | Default    | Description                               |
-| ------------------ | --------------------------- | ---------- | ----------------------------------------- |
-| `formDataInput`    | `FormDefinition \| string`  | _required_ | Form definition (object, JSON, or YAML)   |
-| `className`        | `string`                    | `''`       | Additional CSS class for the root         |
-| `initialResponses` | `FormResponse`              | --         | Pre-fill response data                    |
-| `ref`              | `Ref<EsheetRendererHandle>` | --         | Imperative handle for response collection |
+| Prop                   | Type                             | Default    | Description                                                 |
+| ---------------------- | -------------------------------- | ---------- | ----------------------------------------------------------- |
+| `formDataInput`        | `FormDefinition \| string`       | _required_ | Form definition (object, JSON, YAML, FHIR, MCP, SurveyJS)   |
+| `className`            | `string`                         | `''`       | Additional CSS class for the root                           |
+| `initialResponses`     | `FormResponse`                   | --         | Pre-fill response data                                      |
+| `allowDangerousJS`     | `boolean`                        | `false`    | Allow JS calculations and `conditionType: 'js'`             |
+| `strict`               | `boolean`                        | `false`    | Require a native eSheet FormDefinition; skip auto-detection |
+| `onReady`              | `() => void`                     | --         | Called when the form definition is loaded                   |
+| `touchMode`            | `boolean \| 'auto'`              | --         | Touch mode: `true`, `false`, `'auto'`, or omit for CSS      |
+| `onTouchModeChange`    | `(enabled: boolean) => void`     | --         | Callback when touch mode changes                            |
+| `onRendererToolsReady` | `(tools: RendererTools) => void` | --         | Called with MCP tool handler when ready                     |
+| `ref`                  | `Ref<EsheetRendererHandle>`      | --         | Imperative handle for response collection                   |
 
 ## Ref API (`EsheetRendererHandle`)
 
-| Method               | Returns                                                         | Description                            |
-| -------------------- | --------------------------------------------------------------- | -------------------------------------- |
-| `getRawResponse()`   | `FormResponse`                                                  | Current response values for all fields |
-| `getValidResponse()` | `{ response: FormResponse \| null, errors: ValidationError[] }` | Validate + get responses               |
-| `getFormStore()`     | `FormStore`                                                     | The underlying form state store        |
-| `getUIStore()`       | `UIStore`                                                       | The underlying UI state store          |
+| Method                  | Returns                                                         | Description                                       |
+| ----------------------- | --------------------------------------------------------------- | ------------------------------------------------- |
+| `getRawResponse()`      | `FormResponse`                                                  | Current response values for all fields            |
+| `getResponse(options?)` | `FormResponse \| FhirQuestionnaireResponse`                     | Responses in native or FHIR format                |
+| `getValidResponse()`    | `{ response: FormResponse \| null, errors: ValidationError[] }` | Validate + get responses                          |
+| `getFormStore()`        | `FormStore`                                                     | The underlying form state store                   |
+| `getUIStore()`          | `UIStore`                                                       | The underlying UI state store                     |
+| `isTouchModeEnabled()`  | `boolean`                                                       | Check if touch mode is currently enabled          |
+| `setTouchMode(enabled)` | `void`                                                          | Manually enable/disable touch mode                |
+| `resetTouchMode()`      | `void`                                                          | Reset to auto-detection (when `touchMode="auto"`) |
 
 ## What's Next
 

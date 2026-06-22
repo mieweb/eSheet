@@ -134,7 +134,7 @@ export const CONDITION_OPERATORS = [
 export const conditionOperatorSchema = z.enum(CONDITION_OPERATORS);
 export type ConditionOperator = z.infer<typeof conditionOperatorSchema>;
 
-export const CONDITION_TYPES = ['field', 'expression'] as const;
+export const CONDITION_TYPES = ['field', 'expression', 'js'] as const;
 export const conditionTypeSchema = z.enum(CONDITION_TYPES);
 export type ConditionType = z.infer<typeof conditionTypeSchema>;
 
@@ -180,9 +180,7 @@ export type ConditionalRule = z.infer<typeof conditionalRuleSchema>;
 // ---------------------------------------------------------------------------
 
 /**
- * Properties shared by ALL field types.
- * Includes `question` and `required` for backward compatibility, even though
- * some field types (html, display) don't semantically use them.
+ * Properties shared by ALL answer-bearing field types.
  */
 interface BaseFieldDefinition {
   /** Unique identifier within the form. */
@@ -193,6 +191,8 @@ interface BaseFieldDefinition {
   required?: boolean;
   /** Conditional rules that control visibility, enabled state, or required state. */
   rules?: ConditionalRule[];
+  /** JS expression that auto-computes this field's value. Requires dangerouslyAllowJS on form. */
+  calculation?: string;
   /** Adapter metadata — original source data before conversion. */
   _sourceData?: unknown;
   /** Adapter metadata — warnings generated during conversion. */
@@ -321,10 +321,19 @@ export interface DiagramFieldDefinition extends BaseFieldDefinition {
   padPlaceholder?: string;
 }
 
-export interface DisplayFieldDefinition extends BaseFieldDefinition {
+export interface DisplayFieldDefinition {
+  id: string;
   fieldType: 'display';
   /** Markdown-like content with inline expression placeholders. */
   content?: string;
+  /** Display fields are never required. */
+  required?: never;
+  /** Conditional rules controlling visibility. */
+  rules?: ConditionalRule[];
+  /** @deprecated Display fields do not accept answers; calculation has no effect. */
+  calculation?: never;
+  _sourceData?: unknown;
+  _conversionWarnings?: unknown[];
 }
 
 // ---------------------------------------------------------------------------
@@ -456,6 +465,12 @@ function normalizeFieldDefinition(
     ...BASE_PROPERTIES,
     ...FIELD_TYPE_PROPERTIES[fieldType],
   ]);
+  // Display fields have no question — strip it if present.
+  if (fieldType === 'display') {
+    allowedProps.delete('question');
+    allowedProps.delete('required');
+    allowedProps.delete('calculation');
+  }
 
   const normalized: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(field)) {
@@ -532,6 +547,8 @@ const baseFieldProps = {
   question: z.optional(z.string()),
   required: z.optional(z.boolean()),
   rules: z.optional(z.array(conditionalRuleSchema)),
+  /** JS expression that auto-computes this field's value (requires dangerouslyAllowJS on form). */
+  calculation: z.optional(z.string()),
   _sourceData: z.optional(z.unknown()),
   _conversionWarnings: z.optional(z.array(z.unknown())),
 };
@@ -651,8 +668,15 @@ const diagramFieldSchema = z.strictObject({
   padPlaceholder: z.optional(z.string()),
 });
 
+const displayBaseFieldProps = {
+  id: z.string(),
+  rules: z.optional(z.array(conditionalRuleSchema)),
+  _sourceData: z.optional(z.unknown()),
+  _conversionWarnings: z.optional(z.array(z.unknown())),
+};
+
 const displayFieldSchema = z.strictObject({
-  ...baseFieldProps,
+  ...displayBaseFieldProps,
   fieldType: z.literal('display'),
   content: z.optional(z.string()),
 });
@@ -796,6 +820,8 @@ export const formDefinitionSchema = z.strictObject({
   id: z.string(),
   title: z.optional(z.string()),
   description: z.optional(z.string()),
+  /** When true, enables dangerously embedded JS — calculations on fields and conditionType 'js'. */
+  dangerouslyAllowJS: z.optional(z.boolean()),
   fields: z.array(z.lazy(() => fieldDefinitionSchema)),
   _sourceData: z.optional(z.unknown()),
 });

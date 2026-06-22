@@ -44,7 +44,8 @@ export function resolveEffect(
   effect: ConditionalEffect,
   field: Pick<FieldDefinition, 'rules' | 'required'>,
   normalized: NormalizedDefinition,
-  responses: FieldResponseMap
+  responses: FieldResponseMap,
+  dangerouslyAllowJS?: boolean
 ): boolean {
   const rules = field.rules?.filter((r) => r.effect === effect);
 
@@ -54,7 +55,9 @@ export function resolveEffect(
       : EFFECT_DEFAULTS[effect];
   }
 
-  return rules.some((rule) => evaluateRule(rule, normalized, responses));
+  return rules.some((rule) =>
+    evaluateRule(rule, normalized, responses, dangerouslyAllowJS)
+  );
 }
 
 /**
@@ -64,7 +67,8 @@ export function resolveEffect(
 export function isFieldEffectivelyActive(
   fieldId: string,
   normalized: NormalizedDefinition,
-  responses: FieldResponseMap
+  responses: FieldResponseMap,
+  dangerouslyAllowJS?: boolean
 ): boolean {
   let currentId: string | null = fieldId;
 
@@ -73,11 +77,27 @@ export function isFieldEffectivelyActive(
       normalized.byId[currentId];
     if (!node) return false;
 
-    if (!resolveEffect('visible', node.definition, normalized, responses)) {
+    if (
+      !resolveEffect(
+        'visible',
+        node.definition,
+        normalized,
+        responses,
+        dangerouslyAllowJS
+      )
+    ) {
       return false;
     }
 
-    if (!resolveEffect('enable', node.definition, normalized, responses)) {
+    if (
+      !resolveEffect(
+        'enable',
+        node.definition,
+        normalized,
+        responses,
+        dangerouslyAllowJS
+      )
+    ) {
       return false;
     }
 

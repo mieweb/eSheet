@@ -36,11 +36,14 @@ export interface ValidationError {
  */
 export function validateForm(
   normalized: NormalizedDefinition,
-  responses: FieldResponseMap
+  responses: FieldResponseMap,
+  dangerouslyAllowJS?: boolean
 ): ValidationError[] {
   const errors: ValidationError[] = [];
   for (const fieldId of Object.keys(normalized.byId)) {
-    errors.push(...validateField(fieldId, normalized, responses));
+    errors.push(
+      ...validateField(fieldId, normalized, responses, dangerouslyAllowJS)
+    );
   }
   return errors;
 }
@@ -67,7 +70,8 @@ export function validateForm(
 export function validateField(
   fieldId: string,
   normalized: NormalizedDefinition,
-  responses: FieldResponseMap
+  responses: FieldResponseMap,
+  dangerouslyAllowJS?: boolean
 ): ValidationError[] {
   const node = normalized.byId[fieldId];
   if (!node) return [];
@@ -79,14 +83,28 @@ export function validateField(
 
   // Hidden or disabled fields, including those inside hidden/disabled sections,
   // shouldn't produce errors.
-  if (!isFieldEffectivelyActive(fieldId, normalized, responses)) return [];
+  if (
+    !isFieldEffectivelyActive(
+      fieldId,
+      normalized,
+      responses,
+      dangerouslyAllowJS
+    )
+  )
+    return [];
 
   const errors: ValidationError[] = [];
   const response = responses[fieldId];
 
   // --- Required check ---
   if (
-    resolveEffect('required', definition, normalized, responses) &&
+    resolveEffect(
+      'required',
+      definition,
+      normalized,
+      responses,
+      dangerouslyAllowJS
+    ) &&
     isResponseEmpty(response)
   ) {
     errors.push({

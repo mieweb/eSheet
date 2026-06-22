@@ -36,6 +36,11 @@ export interface EsheetRendererProps {
   className?: string;
   /** Initial form responses (pre-fill data) */
   initialResponses?: FormResponse;
+  /** When true, allows `dangerouslyAllowJS: true` in the loaded schema to take effect —
+   *  enabling field calculations and `conditionType: 'js'` conditions.
+   *  When `false` (default), dangerous JS never executes regardless of schema content.
+   *  Only set to `true` when you fully control and trust the form schemas being rendered. */
+  allowDangerousJS?: boolean;
   /** When true, disables auto-detection of MCP/SurveyJS formats.
    *  Only accepts a valid eSheet FormDefinition (or JSON/YAML string thereof). */
   strict?: boolean;
@@ -153,7 +158,11 @@ export const EsheetRenderer = React.forwardRef<
 >(function EsheetRenderer(props, ref) {
   ensureDefaultFieldComponentsRegistered();
 
-  const formStore = React.useMemo(() => createFormStore(), []);
+  const formStore = React.useMemo(
+    () => createFormStore(undefined, props.allowDangerousJS ?? false),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
   const uiStore = React.useMemo(() => createUIStore(), []);
 
   React.useEffect(() => {
@@ -196,6 +205,7 @@ const EsheetRendererInner = React.forwardRef<
     uiStore,
     touchMode,
     onTouchModeChange,
+    allowDangerousJS = false,
   },
   ref
 ) {
@@ -217,7 +227,8 @@ const EsheetRendererInner = React.forwardRef<
     initialResponses,
     setValidationErrors,
     strict,
-    onReady
+    onReady,
+    allowDangerousJS
   );
 
   // Expose ref API

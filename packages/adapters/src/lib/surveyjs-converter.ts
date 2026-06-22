@@ -750,7 +750,8 @@ function fieldToSurveyElement(field: FieldDefinition): SurveyJSElement {
     meta?.surveyType ?? FIELD_TYPE_TO_SURVEY[field.fieldType] ?? 'text';
 
   const el: SurveyJSElement = { type, name };
-  if (field.question !== undefined) el.title = field.question;
+  const q = (field as { question?: string }).question;
+  if (q !== undefined) el.title = q;
   if (field.required) el.isRequired = true;
 
   // Restore conditional expressions verbatim from _sourceData for lossless round-trip.

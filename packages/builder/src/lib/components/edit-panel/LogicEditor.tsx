@@ -1,4 +1,5 @@
 import React from 'react';
+import { useStore } from 'zustand';
 import {
   CONDITION_OPERATORS,
   CONDITIONAL_EFFECTS,
@@ -15,6 +16,7 @@ import {
 import { TrashIcon, PlusIcon } from '../../icons.js';
 import { useInstanceId } from '../../EsheetBuilder.js';
 import { useFormApi } from '../../hooks/useFormApi.js';
+import { useFormStore } from '@esheet/fields';
 
 // ---------------------------------------------------------------------------
 // Public component
@@ -36,6 +38,8 @@ export interface LogicEditorProps {
 export function LogicEditor({ fieldId, rules }: LogicEditorProps) {
   const instanceId = useInstanceId();
   const { normalized, field_ } = useFormApi(fieldId);
+  const formStore = useFormStore();
+  const dangerouslyAllowJS = useStore(formStore, (s) => s.dangerouslyAllowJS);
 
   const otherFields = React.useMemo(
     () => buildOtherFields(normalized, fieldId),
@@ -143,6 +147,7 @@ export function LogicEditor({ fieldId, rules }: LogicEditorProps) {
           effect={effect}
           ruleEntries={grouped[effect]}
           otherFields={otherFields}
+          dangerouslyAllowJS={dangerouslyAllowJS}
           onAddRule={() => handleAddRule(effect)}
           onRemoveRule={handleRemoveRule}
           onUpdateRule={handleUpdateRule}
@@ -175,6 +180,7 @@ interface EffectSectionProps {
   effect: ConditionalEffect;
   ruleEntries: { rule: ConditionalRule; globalIdx: number }[];
   otherFields: readonly TargetField[];
+  dangerouslyAllowJS: boolean;
   onAddRule: () => void;
   onRemoveRule: (ruleIdx: number) => void;
   onUpdateRule: (ruleIdx: number, patch: Partial<ConditionalRule>) => void;
@@ -205,6 +211,7 @@ function EffectSection({
   effect,
   ruleEntries,
   otherFields,
+  dangerouslyAllowJS,
   onAddRule,
   onRemoveRule,
   onUpdateRule,
@@ -253,6 +260,7 @@ function EffectSection({
             rule={rule}
             globalIdx={globalIdx}
             otherFields={otherFields}
+            dangerouslyAllowJS={dangerouslyAllowJS}
             onRemove={() => onRemoveRule(globalIdx)}
             onUpdate={(patch) => onUpdateRule(globalIdx, patch)}
             onAddCondition={() => onAddCondition(globalIdx)}
@@ -286,6 +294,7 @@ interface RuleCardProps {
   rule: ConditionalRule;
   globalIdx: number;
   otherFields: readonly TargetField[];
+  dangerouslyAllowJS: boolean;
   onRemove: () => void;
   onUpdate: (patch: Partial<ConditionalRule>) => void;
   onAddCondition: () => void;
@@ -299,6 +308,7 @@ function RuleCard({
   rule,
   globalIdx,
   otherFields,
+  dangerouslyAllowJS,
   onRemove,
   onUpdate,
   onAddCondition,
@@ -343,6 +353,7 @@ function RuleCard({
             condIdx={condIdx}
             condition={cond}
             otherFields={otherFields}
+            dangerouslyAllowJS={dangerouslyAllowJS}
             onUpdate={(patch) => onUpdateCondition(condIdx, patch)}
             onRemove={() => onRemoveCondition(condIdx)}
             canRemove={rule.conditions.length > 1}
@@ -423,6 +434,7 @@ interface ConditionRowProps {
   condIdx: number;
   condition: Condition;
   otherFields: readonly TargetField[];
+  dangerouslyAllowJS: boolean;
   onUpdate: (patch: Partial<Condition>) => void;
   onRemove: () => void;
   canRemove: boolean;
@@ -476,6 +488,7 @@ function ConditionRow({
   condIdx,
   condition,
   otherFields,
+  dangerouslyAllowJS,
   onUpdate,
   onRemove,
   canRemove,
@@ -592,6 +605,28 @@ function ConditionRow({
           >
             Expression
           </button>
+          {dangerouslyAllowJS && (
+            <button
+              type="button"
+              onClick={() =>
+                onUpdate({
+                  conditionType: 'js',
+                  expression: condition.expression ?? '',
+                  targetId: undefined,
+                  propertyAccessor: undefined,
+                  operator: undefined,
+                  expected: undefined,
+                })
+              }
+              className={`ms:px-2 ms:py-0.5 ms:text-xs ms:font-medium ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:transition-colors ${
+                conditionType === 'js'
+                  ? 'ms:bg-msdanger ms:text-mstextsecondary'
+                  : 'ms:bg-transparent ms:text-mstextmuted ms:hover:bg-msbackgroundhover'
+              }`}
+            >
+              JS
+            </button>
+          )}
         </div>
         {canRemove && (
           <button
@@ -626,7 +661,7 @@ function ConditionRow({
             </option>
           ))}
         </select>
-      ) : (
+      ) : conditionType === 'expression' ? (
         <div className="ms:flex ms:flex-col ms:gap-1.5">
           <input
             ref={inputRef}
@@ -697,7 +732,24 @@ function ConditionRow({
             </ul>
           )}
         </div>
-      )}
+      ) : conditionType === 'js' ? (
+        /* JS mode — arbitrary JavaScript expression */
+        <div className="ms:flex ms:flex-col ms:gap-1">
+          <textarea
+            id={`${idPrefix}-js-expression`}
+            aria-label="JS condition expression"
+            value={condition.expression ?? ''}
+            onChange={(e) => onUpdate({ expression: e.currentTarget.value })}
+            placeholder={`responses['fieldId'] > 0`}
+            rows={3}
+            className="condition-js-input ms:w-full ms:min-w-0 ms:px-2 ms:py-1.5 ms:text-xs ms:bg-mssurface ms:border ms:border-msdanger/50 ms:rounded ms:text-mstext ms:font-mono ms:placeholder:text-mstextmuted ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msdanger ms:resize-y"
+          />
+          <p className="ms:text-xs ms:text-mstextmuted">
+            Arbitrary JS. Use <code>{"responses['fieldId']"}</code> to read
+            field values.
+          </p>
+        </div>
+      ) : null}
 
       {/* Row 2+3: Operator, accessor, expected — only in field mode */}
       {conditionType === 'field' && (
@@ -957,7 +1009,9 @@ function buildOtherFields(
         node.definition.inputType === 'number');
     result.push({
       id,
-      label: node.definition.question || node.definition.id,
+      label:
+        (node.definition as { question?: string }).question ||
+        node.definition.id,
       fieldType: node.definition.fieldType,
       hasOptions: meta?.hasOptions ?? false,
       options: hasOptions(node.definition)

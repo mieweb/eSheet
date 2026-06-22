@@ -23,11 +23,16 @@ Quick reference of all public exports from each eSheet package.
 | `MatrixRow` / `MatrixColumn`         | Interface  | Matrix dimensions                                                                |
 | `ConditionalRule`                    | Interface  | Conditional rule structure                                                       |
 | `Condition`                          | Interface  | Single condition                                                                 |
+| `ConditionType`                      | Type       | `'field' \| 'expression' \| 'js'`                                                |
 | `ConditionOperator`                  | Type       | Union of 10 operators                                                            |
 | `ConditionalEffect`                  | Type       | `'visible' \| 'enable' \| 'required'`                                            |
 | `LogicMode`                          | Type       | `'AND' \| 'OR'`                                                                  |
 | `FieldCategory`                      | Type       | Field grouping category                                                          |
 | `AnswerType`                         | Type       | How a field stores its answer                                                    |
+| `RankedAnswer`                       | Interface  | Ranked answer item                                                               |
+| `AttachmentAnswer`                   | Interface  | Attachment answer item                                                           |
+| `AnswerValue`                        | Type       | Union of all possible answer value types                                         |
+| `FormResponseEnvelope`               | Interface  | Envelope wrapping `FormResponse` with metadata                                   |
 | `FieldTypeMeta`                      | Interface  | Field type metadata                                                              |
 | `FieldTypeRegistry`                  | Type       | Registry map                                                                     |
 | `FieldComponentProps`                | Interface  | Props contract for field components                                              |
@@ -64,23 +69,30 @@ Quick reference of all public exports from each eSheet package.
 
 ### Constants
 
-| Export                | Description                        |
-| --------------------- | ---------------------------------- |
-| `FIELD_TYPES`         | Array of 19 field type strings     |
-| `TEXT_INPUT_TYPES`    | Array of 9 text input type strings |
-| `CONDITION_OPERATORS` | Array of 10 operator strings       |
-| `CONDITIONAL_EFFECTS` | Array of 3 effect strings          |
+| Export                | Description                              |
+| --------------------- | ---------------------------------------- |
+| `FIELD_TYPES`         | Array of 19 field type strings           |
+| `TEXT_INPUT_TYPES`    | Array of 9 text input type strings       |
+| `CONDITION_OPERATORS` | Array of 10 operator strings             |
+| `CONDITIONAL_EFFECTS` | Array of 3 effect strings                |
+| `CONDITION_TYPES`     | `['field', 'expression', 'js']` as const |
 
 ### Zod Schemas
 
-| Export                     | Validates                         |
-| -------------------------- | --------------------------------- |
-| `formDefinitionSchema`     | `FormDefinition`                  |
-| `fieldDefinitionSchema`    | `FieldDefinition`                 |
-| `fieldTypeSchema`          | `FieldType`                       |
-| `conditionSchema`          | `Condition`                       |
-| `conditionalRuleSchema`    | `ConditionalRule`                 |
-| `formDefinitionJSONSchema` | JSON Schema (Draft-07) for Monaco |
+| Export                     | Validates                                     |
+| -------------------------- | --------------------------------------------- |
+| `formDefinitionSchema`     | `FormDefinition`                              |
+| `fieldDefinitionSchema`    | `FieldDefinition`                             |
+| `fieldTypeSchema`          | `FieldType`                                   |
+| `conditionSchema`          | `Condition`                                   |
+| `conditionalRuleSchema`    | `ConditionalRule`                             |
+| `conditionOperatorSchema`  | `ConditionOperator`                           |
+| `conditionTypeSchema`      | `ConditionType`                               |
+| `fieldOptionSchema`        | `FieldOption`                                 |
+| `matrixRowSchema`          | `MatrixRow`                                   |
+| `matrixColumnSchema`       | `MatrixColumn`                                |
+| `formDefinitionJSONSchema` | JSON Schema (Draft-07) for Monaco             |
+| `registerFieldSchema()`    | Register a Zod schema for a custom field type |
 
 ### Store Factories
 
@@ -91,28 +103,31 @@ Quick reference of all public exports from each eSheet package.
 
 ### Logic & Validation
 
-| Export                                                  | Description                   |
-| ------------------------------------------------------- | ----------------------------- |
-| `evaluateRule(rule, normalized, responses)`             | Evaluate a conditional rule   |
-| `evaluateCondition(condition, definition, response)`    | Evaluate a single condition   |
-| `evaluateExpression(expression, normalized, responses)` | Evaluate an expression string |
-| `isExpressionValid(expr)`                               | Validate expression syntax    |
-| `resolveEffect(effect, field, normalized, responses)`   | Resolve a conditional effect  |
-| `validateField(fieldId, normalized, responses)`         | Validate a single field       |
-| `validateForm(normalized, responses)`                   | Validate all fields           |
+| Export                                                    | Description                                                   |
+| --------------------------------------------------------- | ------------------------------------------------------------- |
+| `evaluateRule(rule, normalized, responses)`               | Evaluate a conditional rule                                   |
+| `evaluateCondition(condition, definition, response)`      | Evaluate a single condition                                   |
+| `evaluateExpression(expression, normalized, responses)`   | Evaluate a safe expression string                             |
+| `evaluateJsExpression(expression, normalized, responses)` | Evaluate an arbitrary JS expression (dangerous — host opt-in) |
+| `isExpressionValid(expr)`                                 | Validate safe expression syntax                               |
+| `resolveEffect(effect, field, normalized, responses)`     | Resolve a conditional effect for a field                      |
+| `validateField(fieldId, normalized, responses)`           | Validate a single field                                       |
+| `validateForm(normalized, responses)`                     | Validate all fields                                           |
 
 ### Utilities
 
-| Export                                   | Description                                                                  |
-| ---------------------------------------- | ---------------------------------------------------------------------------- |
-| `normalizeDefinition(def)`               | Convert tree → flat normalized state                                         |
-| `hydrateDefinition(normalized)`          | Convert flat → nested tree                                                   |
-| `hydrateResponse(normalized, responses)` | Walk normalized definition and return `ResponseItem[]` for export/submission |
-| `generateFieldId(fieldType)`             | Generate a unique field ID                                                   |
-| `generateOptionId()`                     | Generate a unique option ID                                                  |
-| `generateRowId()`                        | Generate a unique matrix row ID                                              |
-| `generateColumnId()`                     | Generate a unique matrix column ID                                           |
-| `formatZodValidationError(error)`        | Format Zod validation errors into readable strings                           |
+| Export                                     | Description                                                                  |
+| ------------------------------------------ | ---------------------------------------------------------------------------- |
+| `normalizeDefinition(def)`                 | Convert tree → flat normalized state                                         |
+| `hydrateDefinition(normalized)`            | Convert flat → nested tree                                                   |
+| `hydrateResponse(normalized, responses)`   | Walk normalized definition and return `ResponseItem[]` for export/submission |
+| `normalizeResponses(responses)`            | Normalize raw form responses to resolved values                              |
+| `extractResponseValue(fieldDef, response)` | Extract the primary answer value from a field response                       |
+| `generateFieldId(fieldType)`               | Generate a unique field ID                                                   |
+| `generateOptionId()`                       | Generate a unique option ID                                                  |
+| `generateRowId()`                          | Generate a unique matrix row ID                                              |
+| `generateColumnId()`                       | Generate a unique matrix column ID                                           |
+| `formatZodValidationError(error)`          | Format Zod validation errors into readable strings                           |
 
 ### Registry
 
@@ -169,6 +184,18 @@ All 19 field components: `TextField`, `LongTextField`, `MultiTextField`, `RadioF
 | `getFieldComponent(fieldType)`    | Get the React component for a field type        |
 | `getRegisteredComponentKeys()`    | List all registered field component keys        |
 
+### Validation UI
+
+| Export           | Description                                    |
+| ---------------- | ---------------------------------------------- |
+| `ZodIssuesPanel` | Panel component for displaying Zod error lists |
+
+### Touch Mode
+
+| Export           | Description                               |
+| ---------------- | ----------------------------------------- |
+| `useTouchMode()` | Hook for auto/manual touch mode detection |
+
 ### Context
 
 | Export             | Description                 |
@@ -216,17 +243,20 @@ All 19 field components: `TextField`, `LongTextField`, `MultiTextField`, `RadioF
 
 ### Types
 
-| Export                            | Description                                    |
-| --------------------------------- | ---------------------------------------------- |
-| `EsheetBuilderProps`              | Builder component props                        |
-| `CodeViewProps`                   | Props for `CodeView`                           |
-| `FieldWrapperProps`               | Props for `FieldWrapper`                       |
-| `FieldWrapperRenderProps`         | Render props passed to `FieldWrapper` children |
-| `FormApi`                         | Imperative form API interface                  |
-| `FieldResponseMap`                | Map of field IDs to responses                  |
-| `UiApi`                           | Imperative UI API interface                    |
-| `ToolDefinition`                  | MCP tool definition type                       |
-| `UseBuilderMcpToolHandlerOptions` | Options for `useBuilderMcpToolHandler`         |
+| Export                            | Description                                                         |
+| --------------------------------- | ------------------------------------------------------------------- |
+| `EsheetBuilderProps`              | Builder component props                                             |
+| `EsheetBuilderHandle`             | Ref handle (`isTouchModeEnabled`, `setTouchMode`, `resetTouchMode`) |
+| `BuilderTools`                    | MCP tool facade returned by `onBuilderToolsReady`                   |
+| `FieldSummary`                    | Summary of a field in the builder                                   |
+| `CodeViewProps`                   | Props for `CodeView`                                                |
+| `FieldWrapperProps`               | Props for `FieldWrapper`                                            |
+| `FieldWrapperRenderProps`         | Render props passed to `FieldWrapper` children                      |
+| `FormApi`                         | Imperative form API interface                                       |
+| `FieldResponseMap`                | Map of field IDs to responses                                       |
+| `UiApi`                           | Imperative UI API interface                                         |
+| `ToolDefinition`                  | MCP tool definition type                                            |
+| `UseBuilderMcpToolHandlerOptions` | Options for `useBuilderMcpToolHandler`                              |
 
 ---
 
@@ -257,24 +287,30 @@ All 19 field components: `TextField`, `LongTextField`, `MultiTextField`, `RadioF
 
 ### Types
 
-| Export                             | Description                                                                          |
-| ---------------------------------- | ------------------------------------------------------------------------------------ |
-| `EsheetRendererProps`              | Renderer component props                                                             |
-| `EsheetRendererHandle`             | Ref handle type (`getRawResponse`, `getValidResponse`, `getFormStore`, `getUIStore`) |
-| `RendererTools`                    | Type for renderer MCP tool names                                                     |
-| `ToolDefinition`                   | MCP tool definition type                                                             |
-| `UseRendererMcpToolHandlerOptions` | Options for `useRendererMcpToolHandler`                                              |
+| Export                             | Description                                                                                           |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `EsheetRendererProps`              | Renderer component props                                                                              |
+| `EsheetRendererHandle`             | Ref handle (`getRawResponse`, `getResponse`, `getValidResponse`, `getFormStore`, `getUIStore`, touch) |
+| `ResponseFormat`                   | `'native' \| 'fhir'`                                                                                  |
+| `GetResponseOptions`               | Options for `getResponse()` (format, FHIR metadata)                                                   |
+| `GetResponseResult`                | Generic return type for `getResponse()` — narrows to format                                           |
+| `RendererTools`                    | Type for renderer MCP tool names                                                                      |
+| `ToolDefinition`                   | MCP tool definition type                                                                              |
+| `UseRendererMcpToolHandlerOptions` | Options for `useRendererMcpToolHandler`                                                               |
 
 ### EsheetRendererProps
 
-| Prop                   | Type                             | Default    | Description                                                       |
-| ---------------------- | -------------------------------- | ---------- | ----------------------------------------------------------------- |
-| `formDataInput`        | `unknown`                        | _required_ | Form definition (object, JSON string, YAML string, MCP, SurveyJS) |
-| `className`            | `string`                         | `''`       | Additional CSS class for the root container                       |
-| `initialResponses`     | `FormResponse`                   | --         | Pre-fill response data                                            |
-| `strict`               | `boolean`                        | `false`    | Disable auto-detection, require a valid FormDefinition            |
-| `onReady`              | `() => void`                     | --         | Called when the renderer is initialized                           |
-| `onRendererToolsReady` | `(tools: RendererTools) => void` | --         | Called with MCP tool handler when ready                           |
+| Prop                   | Type                             | Default    | Description                                                             |
+| ---------------------- | -------------------------------- | ---------- | ----------------------------------------------------------------------- |
+| `formDataInput`        | `unknown`                        | _required_ | Form definition (object, JSON string, YAML string, FHIR, MCP, SurveyJS) |
+| `className`            | `string`                         | `''`       | Additional CSS class for the root container                             |
+| `initialResponses`     | `FormResponse`                   | --         | Pre-fill response data                                                  |
+| `allowDangerousJS`     | `boolean`                        | `false`    | Opt-in to allow JS calculations and `conditionType: 'js'`               |
+| `strict`               | `boolean`                        | `false`    | Disable auto-detection, require a valid FormDefinition                  |
+| `onReady`              | `() => void`                     | --         | Called when the renderer is initialized                                 |
+| `onRendererToolsReady` | `(tools: RendererTools) => void` | --         | Called with MCP tool handler when ready                                 |
+| `touchMode`            | `boolean \| 'auto'`              | --         | Touch mode: `true`, `false`, `'auto'`, or omit for CSS-only             |
+| `onTouchModeChange`    | `(enabled: boolean) => void`     | --         | Callback when touch mode changes                                        |
 
 ---
 
@@ -308,10 +344,37 @@ All 19 field components: `TextField`, `LongTextField`, `MultiTextField`, `RadioF
 
 ## @esheet/adapters
 
-Bidirectional converters for SurveyJS and MCP elicitation formats.
+Bidirectional converters for external schema formats.
 
 See the **[Adapters](/docs/adapters/overview)** section in the sidebar for detailed documentation including:
 
 - [Adapters Overview](/docs/adapters/overview) — Installation, auto-detection, and all exports
 - [SurveyJS Adapter](/docs/adapters/surveyjs) — Import/export, type mapping, conditional logic
 - [MCP Adapter](/docs/adapters/mcp) — Import/export, constraints, type mapping
+- [FHIR Adapter](/docs/adapters/fhir) — Import/export FHIR R4 Questionnaire resources and QuestionnaireResponse
+
+---
+
+## @esheet/field-kerebron
+
+Optional rich text editor field. Install separately; not included in `@esheet/fields` by default.
+
+### Functions
+
+| Export                            | Description                                                                                                               |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `configureRichTextField(options)` | Initialize the Kerebron editor. Call once at app startup before rendering any `richtext` fields. Accepts `{ assetLoad }`. |
+
+### Components
+
+| Export                | Description                                   |
+| --------------------- | --------------------------------------------- |
+| `RichTextEditorField` | Field component for the `richtext` field type |
+
+### Types
+
+| Export                    | Description                          |
+| ------------------------- | ------------------------------------ |
+| `RichTextFieldDefinition` | Field definition type for `richtext` |
+
+See [kerebron](./field-types/custom/kerebron) for full setup instructions.

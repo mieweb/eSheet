@@ -1330,7 +1330,6 @@ describe('comprehensive conditions integration', () => {
       const f: FieldDefinition = {
         id: 'rc-display-conditional',
         fieldType: 'display',
-        question: 'Display',
         content: 'Content with {drv-slider}',
         rules: [exprRule('visible', '{drv-slider} > 5 && {drv-rating} > 3')],
       };
@@ -1597,7 +1596,6 @@ describe('comprehensive conditions integration', () => {
       {
         id: 'ft-display',
         fieldType: 'display',
-        question: 'T',
         content: 'text',
       },
       { id: 'ft-signature', fieldType: 'signature', question: 'T' },

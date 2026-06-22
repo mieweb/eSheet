@@ -64,6 +64,13 @@ export interface EsheetBuilderProps {
   /** Callback fired when the form definition changes. */
   onChange?: (definition: FormDefinition) => void;
   /**
+   * Opt-in to allow dangerously embedded JavaScript in this builder instance.
+   * When `false` (default), the JS toggle is hidden and any `dangerouslyAllowJS: true`
+   * flag in the loaded schema is suppressed — JS never executes regardless of schema content.
+   * Only set to `true` when you fully control and trust the form schemas being authored.
+   */
+  allowDangerousJS?: boolean;
+  /**
    * Called once after the builder mounts, providing a narrow `BuilderTools`
    * facade for MCP / AI tool integrations. Not intended for general developer use —
    * everything a developer needs is available through the builder's own UI and props.
@@ -113,6 +120,7 @@ export const EsheetBuilder = React.forwardRef<
     children,
     touchMode: touchModeProp,
     onTouchModeChange,
+    allowDangerousJS = false,
   },
   ref
 ) {
@@ -140,7 +148,7 @@ export const EsheetBuilder = React.forwardRef<
     } else {
       resolved = definition as FormDefinition | undefined;
     }
-    formRef.current = createFormStore(resolved);
+    formRef.current = createFormStore(resolved, allowDangerousJS);
   }
   if (!uiRef.current) {
     uiRef.current = createUIStore();
@@ -233,7 +241,7 @@ export const EsheetBuilder = React.forwardRef<
         <InstanceIdContext.Provider value={instanceId}>
           <div className={rootClasses}>
             <div className="ms:sticky ms:top-0 ms:z-40 ms:bg-msbackground">
-              <BuilderHeader />
+              <BuilderHeader allowDangerousJS={allowDangerousJS} />
             </div>
             {children}
             {mode === 'build' && (

@@ -428,7 +428,7 @@ function convertFieldToItem(field: FieldDefinition): FhirQuestionnaireItem {
 
   // For sections, use title if question is not set
   const text =
-    field.question ??
+    (field as { question?: string }).question ??
     (field.fieldType === 'section' && 'title' in field
       ? field.title
       : undefined);
@@ -672,7 +672,7 @@ function convertFieldToResponseItem(
 
     return {
       linkId: field.id,
-      text: field.question,
+      text: (field as { question?: string }).question,
       item: nestedItems,
     };
   }
@@ -684,7 +684,7 @@ function convertFieldToResponseItem(
 
   const item: FhirQuestionnaireResponseItem = {
     linkId: field.id,
-    text: field.question,
+    text: (field as { question?: string }).question,
     answer: convertValueToAnswers(field, value),
   };
 

@@ -17,7 +17,74 @@ const sidebars = {
       ],
     },
     'schema-format',
-    'field-types',
+    {
+      type: 'category',
+      label: 'Field Types',
+      items: [
+        'field-types/overview',
+        {
+          type: 'category',
+          label: 'Custom',
+          items: [
+            'field-types/custom',
+            'field-types/custom/kerebron',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Text',
+          items: [
+            'field-types/text/text',
+            'field-types/text/longtext',
+            'field-types/text/multitext',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Selection',
+          items: [
+            'field-types/selection/radio',
+            'field-types/selection/check',
+            'field-types/selection/boolean',
+            'field-types/selection/dropdown',
+            'field-types/selection/multiselectdropdown',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Rating',
+          items: [
+            'field-types/rating/rating',
+            'field-types/rating/ranking',
+            'field-types/rating/slider',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Matrix',
+          items: [
+            'field-types/matrix/singlematrix',
+            'field-types/matrix/multimatrix',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Organization',
+          items: ['field-types/organization/section'],
+        },
+        {
+          type: 'category',
+          label: 'Rich',
+          items: [
+            'field-types/rich/display',
+            'field-types/rich/html',
+            'field-types/rich/image',
+            'field-types/rich/signature',
+            'field-types/rich/diagram',
+          ],
+        },
+      ],
+    },
     'conditional-logic',
     {
       type: 'category',
@@ -58,6 +125,7 @@ const sidebars = {
         'advanced/custom-field-types',
         'advanced/store-architecture',
         'advanced/expression-system',
+        'advanced/dangerous-js',
         'advanced/mcp-integration',
       ],
     },
