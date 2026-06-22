@@ -324,6 +324,8 @@ export interface DiagramFieldDefinition extends BaseFieldDefinition {
 export interface DisplayFieldDefinition {
   id: string;
   fieldType: 'display';
+  /** Display fields have no question text. */
+  question?: never;
   /** Markdown-like content with inline expression placeholders. */
   content?: string;
   /** Display fields are never required. */

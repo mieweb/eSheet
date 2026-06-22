@@ -25,10 +25,7 @@ const sidebars = {
         {
           type: 'category',
           label: 'Custom',
-          items: [
-            'field-types/custom',
-            'field-types/custom/kerebron',
-          ],
+          items: ['field-types/custom', 'field-types/custom/kerebron'],
         },
         {
           type: 'category',

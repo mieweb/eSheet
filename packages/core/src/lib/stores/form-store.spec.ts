@@ -9,6 +9,7 @@ import type {
   SectionFieldDefinition,
   RadioFieldDefinition,
   SingleMatrixFieldDefinition,
+  TextFieldDefinition,
 } from '../types.js';
 
 // ---------------------------------------------------------------------------
@@ -207,9 +208,12 @@ describe('createFormStore', () => {
         const id = store.getState().addField('text', {
           patch: { question: 'Hello' },
         });
-        expect(store.getState().normalized.byId[id!].definition.question).toBe(
-          'Hello'
-        );
+        expect(
+          (
+            store.getState().normalized.byId[id!]
+              .definition as TextFieldDefinition
+          ).question
+        ).toBe('Hello');
       });
 
       it('returns null for unknown field type', () => {
@@ -237,11 +241,14 @@ describe('createFormStore', () => {
       it('prefills question and option values for choice fields', () => {
         store = createFormStore(form([]));
         const id = store.getState().addField('radio');
-        const def = store.getState().normalized.byId[id!].definition;
+        const def = store.getState().normalized.byId[id!]
+          .definition as RadioFieldDefinition;
         expect(def.question).toBe('Radio question');
-        expect(
-          (def as RadioFieldDefinition).options?.map((o) => o.value)
-        ).toEqual(['Option 1', 'Option 2', 'Option 3']);
+        expect(def.options?.map((o) => o.value)).toEqual([
+          'Option 1',
+          'Option 2',
+          'Option 3',
+        ]);
       });
 
       it('uses type-specific option defaults for boolean fields', () => {
@@ -264,11 +271,10 @@ describe('createFormStore', () => {
             ],
           },
         });
-        const def = store.getState().normalized.byId[id!].definition;
+        const def = store.getState().normalized.byId[id!]
+          .definition as RadioFieldDefinition;
         expect(def.question).toBe('Preferred color?');
-        expect(
-          (def as RadioFieldDefinition).options?.map((o) => o.value)
-        ).toEqual(['Red', 'Blue']);
+        expect(def.options?.map((o) => o.value)).toEqual(['Red', 'Blue']);
       });
 
       it('auto-generates rows and columns for matrix fields', () => {
@@ -302,9 +308,12 @@ describe('createFormStore', () => {
         expect(store.getState().updateField('q1', { question: 'New' })).toBe(
           true
         );
-        expect(store.getState().normalized.byId['q1'].definition.question).toBe(
-          'New'
-        );
+        expect(
+          (
+            store.getState().normalized.byId['q1']
+              .definition as TextFieldDefinition
+          ).question
+        ).toBe('New');
       });
 
       it('renames field ID', () => {

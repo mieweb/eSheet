@@ -1,5 +1,8 @@
 import React from 'react';
-import type { FieldComponentProps } from '@esheet/core';
+import type {
+  FieldComponentProps,
+  LongtextFieldDefinition,
+} from '@esheet/core';
 import { Textarea } from '@mieweb/ui';
 
 export const LongTextField = React.memo(function LongTextField({
@@ -12,7 +15,7 @@ export const LongTextField = React.memo(function LongTextField({
   onUpdate,
   onResponse,
 }: FieldComponentProps) {
-  const def = field.definition;
+  const def = field.definition as LongtextFieldDefinition;
   const instanceId = form.getState().instanceId;
 
   if (isPreview) {
