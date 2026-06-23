@@ -332,14 +332,25 @@ function RuleCard({
             {rule.logic === 'AND' ? 'all conditions' : 'any condition'}
           </span>
         </div>
-        <button
-          type="button"
-          onClick={onRemove}
-          aria-label="Remove rule"
-          className="remove-rule-btn ms:p-1 ms:rounded ms:bg-transparent ms:text-mstextmuted ms:hover:text-msdanger ms:border-0 ms:outline-none ms:focus:outline-none ms:transition-colors ms:cursor-pointer"
-        >
-          <TrashIcon className="ms:w-3.5 ms:h-3.5" />
-        </button>
+        <div className="ms:flex ms:items-center ms:gap-2">
+          {rule.effect === 'required' && (
+            <SeverityToggle
+              instanceId={instanceId}
+              fieldId={fieldId}
+              ruleIdx={globalIdx}
+              value={rule.severity ?? 'hard'}
+              onChange={(severity) => onUpdate({ severity })}
+            />
+          )}
+          <button
+            type="button"
+            onClick={onRemove}
+            aria-label="Remove rule"
+            className="remove-rule-btn ms:p-1 ms:rounded ms:bg-transparent ms:text-mstextmuted ms:hover:text-msdanger ms:border-0 ms:outline-none ms:focus:outline-none ms:transition-colors ms:cursor-pointer"
+          >
+            <TrashIcon className="ms:w-3.5 ms:h-3.5" />
+          </button>
+        </div>
       </div>
 
       {/* Conditions list */}
@@ -418,6 +429,61 @@ function LogicToggle({
         }`}
       >
         OR
+      </button>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Severity toggle — Hard / Soft (required rules only)
+// ---------------------------------------------------------------------------
+
+interface SeverityToggleProps {
+  instanceId: string;
+  fieldId: string;
+  ruleIdx: number;
+  value: 'hard' | 'soft';
+  onChange: (value: 'hard' | 'soft') => void;
+}
+
+function SeverityToggle({
+  instanceId,
+  fieldId,
+  ruleIdx,
+  value,
+  onChange,
+}: SeverityToggleProps) {
+  const id = `${instanceId}-severity-toggle-${fieldId}-${ruleIdx}`;
+  return (
+    <div
+      className="severity-toggle ms:flex ms:rounded ms:border ms:border-msborder ms:overflow-hidden"
+      title="Severity: Hard blocks submission; Soft warns but allows bypass"
+    >
+      <button
+        type="button"
+        id={`${id}-hard`}
+        aria-label="Hard required (blocks submission)"
+        onClick={() => onChange('hard')}
+        className={`ms:px-2 ms:py-0.5 ms:text-xs ms:font-medium ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:transition-colors ${
+          value === 'hard'
+            ? 'ms:bg-msdanger ms:text-white'
+            : 'ms:bg-transparent ms:text-mstextmuted ms:hover:bg-msbackgroundhover'
+        }`}
+      >
+        Hard
+      </button>
+      <button
+        type="button"
+        id={`${id}-soft`}
+        aria-label="Soft required (warns, can bypass)"
+        onClick={() => onChange('soft')}
+        className={`ms:px-2 ms:py-0.5 ms:text-xs ms:font-medium ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:transition-colors ${
+          value === 'soft'
+            ? 'ms:bg-mswarning ms:text-white'
+            : 'ms:bg-transparent ms:text-mstextmuted ms:hover:bg-msbackgroundhover'
+        }`}
+      >
+        Soft
       </button>
     </div>
   );

@@ -514,7 +514,6 @@
         {
           "id": "comp-display-summary",
           "fieldType": "display",
-          "question": "Submission preview",
           "content": "**Name:** {comp-full-name}\n\n**Date of birth:** {comp-dob}\n\n**Pain level:** {comp-pain}\n\n**Satisfaction:** {comp-satisfaction}\n\n*Please review the above before submitting.*"
         },
         {

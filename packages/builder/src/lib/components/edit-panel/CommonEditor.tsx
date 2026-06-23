@@ -86,6 +86,29 @@ export function CommonEditor({
         </label>
       </div>
 
+      {/* Soft Required */}
+      <div className="soft-required-toggle ms:flex ms:items-center ms:gap-2 ms:text-sm ms:text-mstext">
+        <CustomCheckbox
+          id={`${instanceId}-editor-soft-required-${fieldId}`}
+          checked={(def as { softRequired?: boolean }).softRequired ?? false}
+          onChange={(checked: boolean) =>
+            onUpdate({ softRequired: checked } as Parameters<
+              typeof onUpdate
+            >[0])
+          }
+          size="sm"
+        />
+        <label
+          htmlFor={`${instanceId}-editor-soft-required-${fieldId}`}
+          className="ms:cursor-pointer ms:select-none"
+        >
+          Soft Required
+          <span className="ms:ml-1 ms:text-xs ms:text-mstextmuted">
+            (warns, can bypass)
+          </span>
+        </label>
+      </div>
+
       {/* Input Type (text/longtext only) */}
       {showInputType && (
         <InputTypeEditor

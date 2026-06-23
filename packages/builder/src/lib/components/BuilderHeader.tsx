@@ -556,38 +556,49 @@ export function BuilderHeader({
   const handleDryRunSubmit = () => {
     const state = form.getState();
     const errors = state.getErrors();
+    const hardErrors = errors.filter((e) => e.severity !== 'soft');
 
-    if (errors.length > 0) {
+    if (hardErrors.length > 0) {
       const result: DryRunResult = {
         wouldSubmit: false,
-        errorCount: errors.length,
-        errors,
+        errorCount: hardErrors.length,
+        errors: hardErrors,
         response: null,
       };
 
       showDryRunFeedback(
         'warning',
         'Dry Run Submit Failed',
-        `Submit would fail validation with ${errors.length} error(s).`,
+        `Submit would fail validation with ${hardErrors.length} error(s).`,
         formatDryRunDetails(result)
       );
       return;
     }
 
     const response = state.hydrateResponse({ status: 'draft' });
+    const softErrors = errors.filter((e) => e.severity === 'soft');
     const result: DryRunResult = {
       wouldSubmit: true,
-      errorCount: 0,
-      errors: [],
+      errorCount: softErrors.length,
+      errors: softErrors,
       response,
     };
 
-    showDryRunFeedback(
-      'success',
-      'Dry Run Submit Passed',
-      'Submit would pass validation.',
-      formatDryRunDetails(result)
-    );
+    if (softErrors.length > 0) {
+      showDryRunFeedback(
+        'warning',
+        'Dry Run Submit Passed (with warnings)',
+        `Submit would pass, but ${softErrors.length} recommended field(s) are unanswered.`,
+        formatDryRunDetails(result)
+      );
+    } else {
+      showDryRunFeedback(
+        'success',
+        'Dry Run Submit Passed',
+        'Submit would pass validation.',
+        formatDryRunDetails(result)
+      );
+    }
   };
 
   return (

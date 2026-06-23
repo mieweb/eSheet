@@ -21,6 +21,7 @@ import {
   FormStoreContext,
   UIContext,
   ZodIssuesPanel,
+  FeedbackModal,
   useTouchMode,
 } from '@esheet/fields';
 import { ensureDefaultFieldComponentsRegistered } from './register-defaults.js';
@@ -51,6 +52,14 @@ export interface EsheetRendererProps {
    * facade for MCP / AI tool integrations.
    */
   onRendererToolsReady?: (tools: RendererTools) => void;
+  /**
+   * When provided, a submit button is rendered at the bottom of the form.
+   * Called with the form response after all hard errors pass.
+   * If soft-required fields are unanswered, a bypass popup is shown first.
+   */
+  onSubmit?: (response: FormResponse) => void;
+  /** Label for the submit button. Defaults to `'Submit'`. */
+  submitLabel?: string;
   /**
    * Enable touch-optimized mode with larger touch targets.
    * - `true`: Always enable touch mode
@@ -201,6 +210,8 @@ const EsheetRendererInner = React.forwardRef<
     initialResponses,
     strict = false,
     onReady,
+    onSubmit,
+    submitLabel = 'Submit',
     formStore,
     uiStore,
     touchMode,
@@ -210,6 +221,27 @@ const EsheetRendererInner = React.forwardRef<
   ref
 ) {
   const [validationErrors, setValidationErrors] = React.useState<string[]>([]);
+  const [softBypassOpen, setSoftBypassOpen] = React.useState(false);
+  const [pendingResponse, setPendingResponse] =
+    React.useState<FormResponse | null>(null);
+
+  const handleSubmitClick = () => {
+    const state = formStore.getState();
+    const errors = validateForm(
+      state.normalized,
+      state.responses,
+      state.dangerouslyAllowJS
+    );
+    const hardErrors = errors.filter((e) => e.severity !== 'soft');
+    if (hardErrors.length > 0) return; // hard errors — field-level UI handles display
+    const softErrors = errors.filter((e) => e.severity === 'soft');
+    if (softErrors.length > 0) {
+      setPendingResponse(state.responses);
+      setSoftBypassOpen(true);
+    } else {
+      onSubmit?.(state.responses);
+    }
+  };
 
   // Touch mode state using shared hook
   const {
@@ -324,6 +356,35 @@ const EsheetRendererInner = React.forwardRef<
     <div className={rootClasses}>
       <ZodIssuesPanel issues={validationErrors} />
       <RendererBody form={formStore} ui={uiStore} />
+      {onSubmit && (
+        <div className="renderer-submit ms:mt-6 ms:flex ms:justify-end">
+          <button
+            type="button"
+            onClick={handleSubmitClick}
+            className="ms:px-6 ms:py-2 ms:rounded-lg ms:bg-msprimary ms:text-mstextsecondary ms:text-sm ms:font-medium ms:hover:bg-msprimary/90 ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer"
+          >
+            {submitLabel}
+          </button>
+        </div>
+      )}
+      <FeedbackModal
+        open={softBypassOpen}
+        variant="warning"
+        title="Recommended fields unanswered"
+        message="Some recommended fields are unanswered. You can still submit, or go back to fill them in."
+        confirmLabel="Submit anyway"
+        cancelLabel="Go back"
+        showCancel
+        onConfirm={() => {
+          setSoftBypassOpen(false);
+          if (pendingResponse) onSubmit?.(pendingResponse);
+          setPendingResponse(null);
+        }}
+        onClose={() => {
+          setSoftBypassOpen(false);
+          setPendingResponse(null);
+        }}
+      />
     </div>
   );
 });

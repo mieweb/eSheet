@@ -106,3 +106,28 @@ export function isFieldEffectivelyActive(
 
   return true;
 }
+
+/**
+ * Resolve the severity of the `required` effect for a field.
+ *
+ * Iterates the field's `required` rules in order and returns the severity
+ * of the **first rule that passes**. Falls back to `'hard'` when no
+ * conditional rule fires (i.e., the static `required: true` flag applies).
+ *
+ * Only meaningful to call after confirming the field is actually required
+ * (via {@link resolveEffect}).
+ */
+export function resolveRequiredSeverity(
+  field: Pick<FieldDefinition, 'rules' | 'required'>,
+  normalized: NormalizedDefinition,
+  responses: FieldResponseMap,
+  dangerouslyAllowJS?: boolean
+): 'hard' | 'soft' {
+  const rules = field.rules?.filter((r) => r.effect === 'required') ?? [];
+  for (const rule of rules) {
+    if (evaluateRule(rule, normalized, responses, dangerouslyAllowJS)) {
+      return rule.severity ?? 'hard';
+    }
+  }
+  return 'hard';
+}

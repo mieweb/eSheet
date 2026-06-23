@@ -103,6 +103,7 @@ export function RendererView() {
     setSelectedSchema(fileName);
     setRawInput(schema.data);
     setSubmitResult(null);
+    setActiveTab('form');
     resetFormKey();
   };
 
@@ -115,6 +116,7 @@ export function RendererView() {
         const data = JSON.parse(ev.target?.result as string);
         setRawInput(data);
         setSubmitResult(null);
+        setActiveTab('form');
         resetFormKey();
       } catch (err) {
         setSubmitResult({
@@ -172,6 +174,8 @@ export function RendererView() {
     });
   };
 
+  const hasForm = rawInput != null;
+
   return (
     <>
       <Navbar />
@@ -184,157 +188,173 @@ export function RendererView() {
         className="hidden"
       />
 
-      {submitResult && (
-        <div className="bg-muted py-4 px-4">
-          <Alert
-            variant={submitResult.kind === 'success' ? 'success' : 'danger'}
-            className="max-w-4xl mx-auto"
-          >
-            <AlertTitle>{submitResult.title}</AlertTitle>
-            <AlertDescription>
-              <p>{submitResult.message}</p>
-              {submitResult.items && submitResult.items.length > 0 && (
-                <ul className="mt-3 list-disc space-y-1 pl-5 text-sm">
-                  {submitResult.items.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              )}
-              {submitResult.detail && (
-                <p className="mt-3 text-sm">{submitResult.detail}</p>
-              )}
-              {submitResult.data != null && (
-                <pre className="mt-3 p-3 bg-background/50 rounded-lg text-xs overflow-auto max-h-96 border border-border">
-                  {JSON.stringify(submitResult.data, null, 2)}
-                </pre>
-              )}
-            </AlertDescription>
-          </Alert>
-        </div>
-      )}
-
-      <div className="demo-renderer-content bg-background pt-6 pb-20 min-h-[calc(100vh-3.5rem)]">
-        {rawInput == null ? (
-          <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] gap-6">
-            <div className="text-center max-w-md">
-              <ClipboardList
-                className="mx-auto mb-4 text-muted-foreground"
-                size={48}
-                strokeWidth={1.5}
+      <Tabs
+        value={activeTab}
+        onValueChange={(v) => setActiveTab(v as 'form' | 'definition')}
+      >
+        <div className="sticky top-14 z-30 bg-card border-b border-border">
+          <div className="max-w-4xl mx-auto px-3 py-1.5 flex flex-col sm:flex-row sm:items-center sm:h-11 gap-1.5 sm:gap-2">
+            {/* Left: tab triggers + touch mode */}
+            <div className="flex items-center gap-2">
+              <TabsList>
+                <TabsTrigger value="form" disabled={!hasForm}>
+                  Form
+                </TabsTrigger>
+                <TabsTrigger value="definition" disabled={!hasForm}>
+                  Definition
+                </TabsTrigger>
+              </TabsList>
+              <Button
+                variant={touchMode ? 'primary' : 'outline'}
+                size="sm"
+                disabled={!hasForm}
+                onClick={() => rendererRef.current?.setTouchMode(!touchMode)}
+                title={touchMode ? 'Disable touch mode' : 'Enable touch mode'}
+              >
+                <Smartphone size={14} />
+                <span className="hidden sm:inline ml-1">Touch</span>
+              </Button>
+            </div>
+            {/* Right: format select + import + submit */}
+            <div className="flex items-center gap-2 sm:ml-auto">
+              <Select
+                value={responseFormat}
+                onValueChange={(v: string) =>
+                  setResponseFormat(v as ResponseFormat)
+                }
+                options={[
+                  { value: 'native', label: 'Native' },
+                  { value: 'fhir', label: 'FHIR' },
+                ]}
+                className="w-24 shrink-0"
+                disabled={!hasForm}
               />
-              <h2 className="text-2xl font-semibold text-foreground mb-3">
-                No Form Loaded
-              </h2>
-              <p className="text-muted-foreground mb-6">
-                Select an example from the dropdown, or import your own JSON
-                definition.
-              </p>
-              <div className="flex flex-wrap justify-center gap-2">
-                {TEST_SCHEMAS.slice(0, 3).map((s) => (
-                  <Button
-                    key={s.value}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleLoadSchema(s.value)}
-                  >
-                    {s.label}
-                  </Button>
-                ))}
-              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="shrink-0"
+                onClick={() =>
+                  document.getElementById('renderer-file-import')?.click()
+                }
+              >
+                Import JSON
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                variant="primary"
+                size="sm"
+                className="shrink-0"
+                disabled={!hasForm}
+              >
+                Submit
+              </Button>
             </div>
           </div>
-        ) : (
-          <Tabs
-            value={activeTab}
-            onValueChange={(v) => setActiveTab(v as 'form' | 'definition')}
-          >
-            <div className="sticky top-14 z-30 bg-card border-b border-border">
-              <div className="max-w-4xl mx-auto px-4 flex items-center gap-2 h-11">
-                <TabsList>
-                  <TabsTrigger value="form">Form</TabsTrigger>
-                  <TabsTrigger value="definition">Definition</TabsTrigger>
-                </TabsList>
-                <Button
-                  variant={touchMode ? 'primary' : 'outline'}
-                  size="sm"
-                  onClick={() => rendererRef.current?.setTouchMode(!touchMode)}
-                  title={touchMode ? 'Disable touch mode' : 'Enable touch mode'}
-                  className="ml-2"
-                >
-                  <Smartphone size={14} />
-                  <span className="hidden sm:inline ml-1">Touch</span>
-                </Button>
-                <div className="ml-auto flex items-center gap-2">
-                  <Select
-                    value={responseFormat}
-                    onValueChange={(v: string) =>
-                      setResponseFormat(v as ResponseFormat)
-                    }
-                    options={[
-                      { value: 'native', label: 'Native' },
-                      { value: 'fhir', label: 'FHIR' },
-                    ]}
-                    className="w-28"
-                  />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      document.getElementById('renderer-file-import')?.click()
-                    }
-                  >
-                    Import JSON
-                  </Button>
-                  {rawInput != null && (
-                    <Button onClick={handleSubmit} variant="primary" size="sm">
-                      Submit
+        </div>
+
+        {submitResult && (
+          <div className="bg-muted py-4 px-4">
+            <Alert
+              variant={submitResult.kind === 'success' ? 'success' : 'danger'}
+              className="max-w-4xl mx-auto"
+            >
+              <AlertTitle>{submitResult.title}</AlertTitle>
+              <AlertDescription>
+                <p>{submitResult.message}</p>
+                {submitResult.items && submitResult.items.length > 0 && (
+                  <ul className="mt-3 list-disc space-y-1 pl-5 text-sm">
+                    {submitResult.items.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                )}
+                {submitResult.detail && (
+                  <p className="mt-3 text-sm">{submitResult.detail}</p>
+                )}
+                {submitResult.data != null && (
+                  <pre className="mt-3 p-3 bg-background/50 rounded-lg text-xs overflow-auto max-h-96 border border-border">
+                    {JSON.stringify(submitResult.data, null, 2)}
+                  </pre>
+                )}
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+
+        <div className="demo-renderer-content bg-background pt-6 pb-20 min-h-[calc(100vh-3.5rem)]">
+          {!hasForm ? (
+            <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] gap-6">
+              <div className="text-center max-w-md">
+                <ClipboardList
+                  className="mx-auto mb-4 text-muted-foreground"
+                  size={48}
+                  strokeWidth={1.5}
+                />
+                <h2 className="text-2xl font-semibold text-foreground mb-3">
+                  No Form Loaded
+                </h2>
+                <p className="text-muted-foreground mb-6">
+                  Select an example from the dropdown, or import your own JSON
+                  definition.
+                </p>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {TEST_SCHEMAS.slice(0, 3).map((s) => (
+                    <Button
+                      key={s.value}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleLoadSchema(s.value)}
+                    >
+                      {s.label}
                     </Button>
-                  )}
+                  ))}
                 </div>
               </div>
             </div>
+          ) : (
+            <>
+              <TabsContent value="form">
+                <div className="max-w-4xl mx-auto px-4 pt-6">
+                  <EsheetRenderer
+                    key={formKey}
+                    formDataInput={rawInput}
+                    ref={rendererRef}
+                    touchMode="auto"
+                    onTouchModeChange={setTouchMode}
+                    onRendererToolsReady={onRendererToolsReady}
+                    onReady={() => {
+                      const def = rendererRef.current
+                        ?.getFormStore()
+                        .getState()
+                        .hydrateDefinition();
+                      if (def) setDefinition(def);
+                    }}
+                  />
+                </div>
+              </TabsContent>
 
-            <TabsContent value="form">
-              <div className="max-w-4xl mx-auto px-4 pt-6">
-                <EsheetRenderer
-                  key={formKey}
-                  formDataInput={rawInput}
-                  ref={rendererRef}
-                  touchMode="auto"
-                  onTouchModeChange={setTouchMode}
-                  onRendererToolsReady={onRendererToolsReady}
-                  onReady={() => {
-                    const def = rendererRef.current
-                      ?.getFormStore()
-                      .getState()
-                      .hydrateDefinition();
-                    if (def) setDefinition(def);
-                  }}
-                />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="definition">
-              <div className="max-w-4xl mx-auto px-4 pt-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-sm font-semibold">
-                      eSheet FormDefinition
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <pre className="text-xs overflow-auto max-h-[60vh]">
-                      {definition
-                        ? JSON.stringify(definition, null, 2)
-                        : '(loading…)'}
-                    </pre>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-          </Tabs>
-        )}
-      </div>
+              <TabsContent value="definition">
+                <div className="max-w-4xl mx-auto px-4 pt-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-sm font-semibold">
+                        eSheet FormDefinition
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <pre className="text-xs overflow-auto max-h-[60vh]">
+                        {definition
+                          ? JSON.stringify(definition, null, 2)
+                          : '(loading…)'}
+                      </pre>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+            </>
+          )}
+        </div>
+      </Tabs>
 
       {/* Sticky bottom bar — preset select only */}
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border px-4 py-2 flex items-center gap-2">

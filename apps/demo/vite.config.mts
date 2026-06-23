@@ -1,8 +1,41 @@
 /// <reference types='vitest' />
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
-import { resolve } from 'path';
+import { copyFileSync, mkdirSync, readdirSync } from 'fs';
+import { dirname, join, resolve } from 'path';
+
+/**
+ * Copies all .wasm files from @kerebron/wasm/assets (nested) into
+ * public/kerebron-wasm/ (flat) so createAssetLoad('/kerebron-wasm') can fetch
+ * them. Runs on every dev server start and production build.
+ */
+function kerebronWasmPlugin(): Plugin {
+  const assetsDir = resolve(
+    import.meta.dirname,
+    '../../node_modules/@kerebron/wasm/assets'
+  );
+  const destDir = resolve(import.meta.dirname, 'public/kerebron-wasm');
+
+  function syncWasm() {
+    mkdirSync(destDir, { recursive: true });
+    function walk(dir: string, relPath: string) {
+      for (const ent of readdirSync(dir, { withFileTypes: true })) {
+        const full = join(dir, ent.name);
+        const rel = relPath ? `${relPath}/${ent.name}` : ent.name;
+        if (ent.isDirectory()) walk(full, rel);
+        else if (ent.name.endsWith('.wasm')) {
+          const dest = join(destDir, rel);
+          mkdirSync(dirname(dest), { recursive: true });
+          copyFileSync(full, dest);
+        }
+      }
+    }
+    walk(assetsDir, '');
+  }
+
+  return { name: 'kerebron-wasm', buildStart: syncWasm };
+}
 
 export default defineConfig(({ command }) => ({
   root: import.meta.dirname,
@@ -50,7 +83,7 @@ export default defineConfig(({ command }) => ({
     port: 3001,
     host: 'localhost',
   },
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), kerebronWasmPlugin()],
   // Uncomment this if you are using workers.
   // worker: {
   //  plugins: [],

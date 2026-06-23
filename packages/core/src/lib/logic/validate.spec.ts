@@ -58,7 +58,12 @@ describe('validateField', () => {
       const normalized = norm([field]);
       const errors = validateField('q1', normalized, {});
       expect(errors).toEqual([
-        { fieldId: 'q1', rule: 'required', message: 'This field is required' },
+        {
+          fieldId: 'q1',
+          rule: 'required',
+          message: 'This field is required',
+          severity: 'hard',
+        },
       ]);
     });
 
@@ -67,7 +72,12 @@ describe('validateField', () => {
       const normalized = norm([field]);
       const errors = validateField('q1', normalized, { q1: {} });
       expect(errors).toEqual([
-        { fieldId: 'q1', rule: 'required', message: 'This field is required' },
+        {
+          fieldId: 'q1',
+          rule: 'required',
+          message: 'This field is required',
+          severity: 'hard',
+        },
       ]);
     });
 
