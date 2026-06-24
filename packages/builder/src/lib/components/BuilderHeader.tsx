@@ -1,5 +1,4 @@
 import React from 'react';
-import { useStore } from 'zustand';
 import YAML from 'js-yaml';
 import {
   formatZodValidationError,
@@ -285,7 +284,6 @@ export function BuilderHeader({
 
   const { mode, codeEditorHasError: codeHasError, setMode } = useUiApi();
   const { _form: form } = useFormApi();
-  const dangerouslyAllowJS = useStore(form, (s) => s.dangerouslyAllowJS);
 
   React.useEffect(() => {
     if (mode !== 'preview') {
@@ -820,29 +818,15 @@ export function BuilderHeader({
 
           {/* Right — Import / Export */}
           <div className="header-actions ms:flex ms:gap-1 ms:items-center">
-            {/* Dangerous JS toggle — only shown when the host has opted in via allowDangerousJS prop */}
+            {/* Dangerous JS indicator — read-only, only shown when the host has opted in via allowDangerousJS prop */}
             {allowDangerousJS && (
-              <button
-                type="button"
-                title={
-                  dangerouslyAllowJS
-                    ? 'Dangerous JS enabled (calculations & JS conditions) — click to disable'
-                    : 'Enable dangerous JS: field calculations and conditionType "js"'
-                }
-                onClick={() =>
-                  form.getState().setDangerouslyAllowJS(!dangerouslyAllowJS)
-                }
-                className={`dangerous-js-toggle ms:px-2 ms:py-2 ms:lg:px-3 ms:lg:py-2 ms:rounded-lg ms:border ms:text-xs ms:lg:text-sm ms:font-medium ms:transition-colors ms:flex ms:items-center ms:gap-1 ms:outline-none ms:focus:outline-none ms:cursor-pointer ${
-                  dangerouslyAllowJS
-                    ? 'ms:bg-msdanger/10 ms:border-msdanger ms:text-msdanger'
-                    : 'ms:border-msborder ms:bg-mssurface ms:text-mstextmuted ms:hover:text-mstext'
-                }`}
+              <span
+                title="Dangerous JS enabled (calculations & JS conditions) — controlled via allowDangerousJS prop"
+                className="dangerous-js-indicator ms:px-2 ms:py-2 ms:lg:px-3 ms:lg:py-2 ms:rounded-lg ms:border ms:border-msdanger ms:bg-msdanger/10 ms:text-msdanger ms:text-xs ms:lg:text-sm ms:font-medium ms:flex ms:items-center ms:gap-1"
               >
                 <span>⚠</span>
-                <span className="ms:hidden ms:sm:inline">
-                  {dangerouslyAllowJS ? 'JS On' : 'JS Off'}
-                </span>
-              </button>
+                <span className="ms:hidden ms:sm:inline">JS On</span>
+              </span>
             )}
             <label className="header-import-label ms:group ms:px-2 ms:py-2 ms:lg:px-3 ms:lg:py-2 ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:hover:bg-msprimary ms:hover:text-mstextsecondary ms:hover:border-msprimary ms:cursor-pointer ms:text-xs ms:lg:text-sm ms:font-medium ms:transition-colors ms:flex ms:items-center ms:lg:gap-2 ms:gap-0 ms:text-mstext">
               <UploadIcon className="ms:w-4 ms:h-4 ms:text-mstext ms:group-hover:text-mstextsecondary ms:transition-colors" />
