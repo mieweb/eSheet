@@ -45,7 +45,8 @@ export function resolveEffect(
   field: Pick<FieldDefinition, 'rules' | 'required'>,
   normalized: NormalizedDefinition,
   responses: FieldResponseMap,
-  dangerouslyAllowJS?: boolean
+  dangerouslyAllowJS?: boolean,
+  contextData?: Record<string, unknown>
 ): boolean {
   const rules = field.rules?.filter((r) => r.effect === effect);
 
@@ -56,7 +57,7 @@ export function resolveEffect(
   }
 
   return rules.some((rule) =>
-    evaluateRule(rule, normalized, responses, dangerouslyAllowJS)
+    evaluateRule(rule, normalized, responses, dangerouslyAllowJS, contextData)
   );
 }
 
@@ -68,7 +69,8 @@ export function isFieldEffectivelyActive(
   fieldId: string,
   normalized: NormalizedDefinition,
   responses: FieldResponseMap,
-  dangerouslyAllowJS?: boolean
+  dangerouslyAllowJS?: boolean,
+  contextData?: Record<string, unknown>
 ): boolean {
   let currentId: string | null = fieldId;
 
@@ -83,7 +85,8 @@ export function isFieldEffectivelyActive(
         node.definition,
         normalized,
         responses,
-        dangerouslyAllowJS
+        dangerouslyAllowJS,
+        contextData
       )
     ) {
       return false;
@@ -95,7 +98,8 @@ export function isFieldEffectivelyActive(
         node.definition,
         normalized,
         responses,
-        dangerouslyAllowJS
+        dangerouslyAllowJS,
+        contextData
       )
     ) {
       return false;
@@ -121,11 +125,14 @@ export function resolveRequiredSeverity(
   field: Pick<FieldDefinition, 'rules' | 'required'>,
   normalized: NormalizedDefinition,
   responses: FieldResponseMap,
-  dangerouslyAllowJS?: boolean
+  dangerouslyAllowJS?: boolean,
+  contextData?: Record<string, unknown>
 ): 'hard' | 'soft' {
   const rules = field.rules?.filter((r) => r.effect === 'required') ?? [];
   for (const rule of rules) {
-    if (evaluateRule(rule, normalized, responses, dangerouslyAllowJS)) {
+    if (
+      evaluateRule(rule, normalized, responses, dangerouslyAllowJS, contextData)
+    ) {
       return rule.severity ?? 'hard';
     }
   }

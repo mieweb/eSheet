@@ -61,6 +61,19 @@ export interface EsheetRendererProps {
   /** Label for the submit button. Defaults to `'Submit'`. */
   submitLabel?: string;
   /**
+   * Host-supplied context data exposed as `context` inside JS expressions
+   * (requires `allowDangerousJS` to take effect).
+   *
+   * Use this to inject named observations, EHR discrete values, and patient
+   * demographics so that legacy patterns can be expressed as:
+   * - `context['HPI Pain Assessment'] === 'Yes'`
+   * - `context.patient.sex === 'M'`
+   * - `Number(context['Travel duration risk factor'] ?? 0)`
+   *
+   * The value is synced into the store on every render cycle when it changes.
+   */
+  contextData?: Record<string, unknown>;
+  /**
    * Enable touch-optimized mode with larger touch targets.
    * - `true`: Always enable touch mode
    * - `false`: Never enable touch mode (CSS media query still applies)
@@ -212,6 +225,7 @@ const EsheetRendererInner = React.forwardRef<
     onReady,
     onSubmit,
     submitLabel = 'Submit',
+    contextData,
     formStore,
     uiStore,
     touchMode,
@@ -225,12 +239,18 @@ const EsheetRendererInner = React.forwardRef<
   const [pendingResponse, setPendingResponse] =
     React.useState<FormResponse | null>(null);
 
+  // Sync host-supplied context data into the store whenever it changes.
+  React.useEffect(() => {
+    formStore.getState().setContextData(contextData ?? {});
+  }, [formStore, contextData]);
+
   const handleSubmitClick = () => {
     const state = formStore.getState();
     const errors = validateForm(
       state.normalized,
       state.responses,
-      state.dangerouslyAllowJS
+      state.dangerouslyAllowJS,
+      state.contextData
     );
     const hardErrors = errors.filter((e) => e.severity !== 'soft');
     if (hardErrors.length > 0) return; // hard errors — field-level UI handles display

@@ -122,7 +122,15 @@ const sidebars = {
         'advanced/custom-field-types',
         'advanced/store-architecture',
         'advanced/expression-system',
-        'advanced/dangerous-js',
+        {
+          type: 'category',
+          label: 'Dangerous JS',
+          link: { type: 'doc', id: 'advanced/dangerous-js' },
+          items: [
+            'advanced/dangerous-js-calculations',
+            'advanced/dangerous-js-conditions',
+          ],
+        },
         'advanced/mcp-integration',
       ],
     },

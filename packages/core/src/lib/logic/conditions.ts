@@ -35,7 +35,8 @@ export function evaluateRule(
   rule: ConditionalRule,
   normalized: NormalizedDefinition,
   responses: FieldResponseMap,
-  dangerouslyAllowJS?: boolean
+  dangerouslyAllowJS?: boolean,
+  contextData?: Record<string, unknown>
 ): boolean {
   if (rule.conditions.length === 0) return true;
 
@@ -46,7 +47,8 @@ export function evaluateRule(
       const result = evaluateJsExpression(
         cond.expression,
         normalized,
-        responses
+        responses,
+        contextData
       );
       return Boolean(result);
     }
@@ -262,8 +264,10 @@ export function evaluateExpression(
 /**
  * Evaluate an arbitrary JS expression string with field response data as context.
  *
- * The expression receives a single `responses` argument — a flat map of field IDs
- * to their resolved values (same data used by the safe expression engine).
+ * The expression receives two arguments:
+ * - `responses` — a flat map of field IDs to their resolved values.
+ * - `context`   — an optional host-supplied map (named observations, discrete
+ *                 values, patient demographics, etc.) injected via `setContextData`.
  *
  * Only call this when `dangerouslyAllowJS` is confirmed true on the form.
  * Returns `null` on any evaluation error.
@@ -271,12 +275,17 @@ export function evaluateExpression(
 export function evaluateJsExpression(
   expression: string,
   normalized: NormalizedDefinition,
-  responses: FieldResponseMap
+  responses: FieldResponseMap,
+  contextData?: Record<string, unknown>
 ): unknown {
   try {
     const data = buildExpressionData(normalized, responses);
+    const ctx = contextData ?? {};
     // eslint-disable-next-line no-new-func
-    return new Function('responses', 'return ' + expression)(data);
+    return new Function('responses', 'context', 'return ' + expression)(
+      data,
+      ctx
+    );
   } catch {
     return null;
   }

@@ -61,6 +61,14 @@ export interface FormState {
   readonly formSourceData?: unknown;
   /** When true, enables dangerously embedded JS — field calculations and conditionType 'js'. */
   readonly dangerouslyAllowJS: boolean;
+  /**
+   * Host-supplied context data exposed as `context` inside JS expressions.
+   * Use this to inject named observations, discrete values, and patient
+   * demographics so that legacy patterns like `observationValueByName()` or
+   * `dashjs_patient.sex` can be expressed via `context['name']` or
+   * `context.patient.sex`. Only evaluated when `dangerouslyAllowJS` is true.
+   */
+  readonly contextData: Record<string, unknown>;
   /** Flat-indexed map — the source of truth for field structure. */
   readonly normalized: NormalizedDefinition;
   /** Current responses keyed by field ID. */
@@ -73,6 +81,12 @@ export interface FormState {
   setFormId: (id: string) => void;
   /** Enable or disable dangerously embedded JS for this form. */
   setDangerouslyAllowJS: (enabled: boolean) => void;
+  /**
+   * Replace the host-supplied context data available as `context` inside JS
+   * expressions. Triggers a re-render of any fields whose visibility,
+   * enabled state, or required state depends on a `conditionType: 'js'` rule.
+   */
+  setContextData: (data: Record<string, unknown>) => void;
   /** Set (or replace) a single field's response. */
   setResponse: (fieldId: string, response: FieldResponse) => void;
   /** Remove a single field's response. */
@@ -292,6 +306,7 @@ export function createFormStore(
     formId: initialFormId,
     formSourceData: initial?._sourceData,
     dangerouslyAllowJS: (initial?.dangerouslyAllowJS ?? false) && _hostAllowsJS,
+    contextData: {},
     normalized: initial
       ? normalizeDefinition(initial.fields)
       : EMPTY_NORMALIZED,
@@ -317,6 +332,8 @@ export function createFormStore(
     setDangerouslyAllowJS: (enabled) =>
       set({ dangerouslyAllowJS: enabled && _hostAllowsJS }),
 
+    setContextData: (data) => set({ contextData: data }),
+
     setResponse: (fieldId, response) =>
       set((state) => {
         const updated = { ...state.responses, [fieldId]: response };
@@ -330,7 +347,8 @@ export function createFormStore(
           const result = evaluateJsExpression(
             calc,
             state.normalized,
-            calcResponses
+            calcResponses,
+            state.contextData
           );
           if (result !== null && result !== undefined) {
             calcResponses[calcId] = { answer: String(result) };
@@ -817,7 +835,7 @@ export function createFormStore(
     getResponse: (fieldId) => get().responses[fieldId],
 
     isVisible: (fieldId) => {
-      const { normalized, responses, dangerouslyAllowJS } = get();
+      const { normalized, responses, dangerouslyAllowJS, contextData } = get();
       const node = normalized.byId[fieldId];
       if (!node) return false;
       return resolveEffect(
@@ -825,12 +843,13 @@ export function createFormStore(
         node.definition,
         normalized,
         responses,
-        dangerouslyAllowJS
+        dangerouslyAllowJS,
+        contextData
       );
     },
 
     isEnabled: (fieldId) => {
-      const { normalized, responses, dangerouslyAllowJS } = get();
+      const { normalized, responses, dangerouslyAllowJS, contextData } = get();
       const node = normalized.byId[fieldId];
       if (!node) return false;
       return resolveEffect(
@@ -838,12 +857,13 @@ export function createFormStore(
         node.definition,
         normalized,
         responses,
-        dangerouslyAllowJS
+        dangerouslyAllowJS,
+        contextData
       );
     },
 
     isRequired: (fieldId) => {
-      const { normalized, responses, dangerouslyAllowJS } = get();
+      const { normalized, responses, dangerouslyAllowJS, contextData } = get();
       const node = normalized.byId[fieldId];
       if (!node) return false;
       return resolveEffect(
@@ -851,18 +871,30 @@ export function createFormStore(
         node.definition,
         normalized,
         responses,
-        dangerouslyAllowJS
+        dangerouslyAllowJS,
+        contextData
       );
     },
 
     getFieldErrors: (fieldId) => {
-      const { normalized, responses, dangerouslyAllowJS } = get();
-      return validateField(fieldId, normalized, responses, dangerouslyAllowJS);
+      const { normalized, responses, dangerouslyAllowJS, contextData } = get();
+      return validateField(
+        fieldId,
+        normalized,
+        responses,
+        dangerouslyAllowJS,
+        contextData
+      );
     },
 
     getErrors: () => {
-      const { normalized, responses, dangerouslyAllowJS } = get();
-      return validateForm(normalized, responses, dangerouslyAllowJS);
+      const { normalized, responses, dangerouslyAllowJS, contextData } = get();
+      return validateForm(
+        normalized,
+        responses,
+        dangerouslyAllowJS,
+        contextData
+      );
     },
 
     hydrateDefinition: () => {

@@ -2,7 +2,137 @@
 sidebar_position: 4
 ---
 
-# Dangerous JS (Calculations & JS Conditions)
+# Dangerous JS
+
+eSheet includes an optional advanced mode that enables runtime JavaScript for:
+
+- Field `calculation` expressions — derive a field's value from other fields
+- Rule conditions with `conditionType: 'js'` — drive visibility, enable, and required state with arbitrary JS
+
+Both features share the same security gate and the same execution context. They are documented on separate pages:
+
+- [**Calculations**](./dangerous-js-calculations) — auto-computed field values
+- [**Conditions**](./dangerous-js-conditions) — JS-driven conditional rules
+
+---
+
+## The Dual Opt-In Gate
+
+Dangerous JS executes **only when both layers are enabled**. Either layer missing is sufficient to prevent execution.
+
+### 1. Host opt-in
+
+Pass `allowDangerousJS={true}` to the host component:
+
+```tsx
+// Renderer
+<EsheetRenderer formDataInput={def} allowDangerousJS={true} />
+
+// Builder
+<EsheetBuilder definition={def} allowDangerousJS={true} />
+
+// Standalone renderer function
+renderTree(definition, responses, { allowDangerousJS: true });
+```
+
+### 2. Schema opt-in
+
+Set `dangerouslyAllowJS: true` at the top level of the `FormDefinition`:
+
+```json
+{
+  "id": "my-form",
+  "dangerouslyAllowJS": true,
+  "fields": []
+}
+```
+
+If either is absent or `false`:
+
+- `calculation` expressions do not run
+- `conditionType: 'js'` always evaluates as `false`
+- Safe `conditionType: 'expression'` and `conditionType: 'field'` continue to work normally
+
+:::info Cannot be bypassed at runtime
+Host permission is sealed when the form store is created. `store.setState({ dangerouslyAllowJS: true })` is intercepted and clamped by the host-level flag — a rogue schema cannot self-authorize JS execution.
+:::
+
+---
+
+## Execution Scope
+
+JS expressions run via `new Function`. They are **not sandboxed** — code has access to the browser's global scope:
+
+| Always in scope                                  | Requires host injection                                                                                                                   |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `responses` — within-form field values           | `context` — host-supplied EHR data, named observations, patient demographics (see [contextData](./dangerous-js-calculations#contextdata)) |
+| `Date`, `Math`, `JSON`, `parseInt`, `parseFloat` | —                                                                                                                                         |
+| All `window` / `globalThis` properties           | —                                                                                                                                         |
+
+:::danger Security Warning
+These features execute arbitrary JavaScript at runtime. Enable dangerous JS only when all schema content is fully trusted and controlled by your organization. Do not enable it for user-authored or externally supplied schemas.
+:::
+
+---
+
+## Security Guidance
+
+**Prefer expression conditions first.** Use `conditionType: 'expression'` whenever possible — it is safer and handles the majority of business rules without JS.
+
+**Restrict where dangerous JS is enabled.** Enable it only in trusted environments with controlled schema sources (internal tools, EHR integrations, developer tooling).
+
+**Keep untrusted schema paths on safe mode.** For any runtime import, external integration, or user-authored schema flow, leave `allowDangerousJS` disabled.
+
+**Add host-side controls in production:**
+
+- Trusted schema source checks
+- Integrity verification (signatures / checksums)
+- Environment-specific kill switch to force-disable dangerous JS
+
+---
+
+## Runtime Notes
+
+**Calculation failures are non-fatal.** If a calculation throws, the result is ignored and the previous field value is preserved.
+
+**Calculated fields are still editable.** There is no automatic `readonly` enforcement on calculated fields.
+
+**Calculations run on each response update.** Every `setResponse` triggers a full pass over all fields with a `calculation` string. Keep expressions cheap — avoid network calls, DOM access, or heavy computation.
+
+**JS conditions do not fall back.** `conditionType: 'js'` does not fall through to the safe expression engine. If `dangerouslyAllowJS` is `false`, the condition evaluates as `false` (field hidden / disabled / not required). Design forms so the default state is safe when JS is off.
+
+**No sandboxing.** `new Function` is not sandboxed. Do not use this feature with schema content you do not control.
+
+---
+
+## Choosing The Right Mode
+
+| Use case                                           | Recommended feature                                                                                        |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Compute a derived value from other fields          | [Calculation](./dangerous-js-calculations)                                                                 |
+| Reference EHR observations or patient data         | [Calculation](./dangerous-js-calculations) or [JS Condition](./dangerous-js-conditions) with `contextData` |
+| Simple arithmetic / field comparisons              | [Expression Condition](./dangerous-js-conditions#expression-conditions-conditiontype-expression)           |
+| Complex rule unsupported by expression syntax      | [JS Condition](./dangerous-js-conditions)                                                                  |
+| Field-to-field comparison without helper functions | [Field Condition](../conditional-logic)                                                                    |
+
+---
+
+## Implementation Reference
+
+| Symbol                                   | Package            | Description                                                           |
+| ---------------------------------------- | ------------------ | --------------------------------------------------------------------- |
+| `EsheetRenderer` prop `allowDangerousJS` | `@esheet/renderer` | **Host gate** — must be `true` for JS to run in the renderer          |
+| `EsheetBuilder` prop `allowDangerousJS`  | `@esheet/builder`  | **Host gate** — must be `true` for JS to run in the builder           |
+| `RenderTreeOptions.allowDangerousJS`     | `@esheet/renderer` | **Host gate** for the standalone `renderTree()` function              |
+| `EsheetRenderer` prop `contextData`      | `@esheet/renderer` | Host-supplied map exposed as `context` inside JS expressions          |
+| `FormDefinition.dangerouslyAllowJS`      | `@esheet/core`     | Schema-level opt-in — required alongside host opt-in                  |
+| `BaseFieldDefinition.calculation`        | `@esheet/core`     | JS expression string that auto-sets a field's value                   |
+| `conditionType: 'js'`                    | `@esheet/core`     | Condition type for arbitrary JS rules                                 |
+| `evaluateJsExpression()`                 | `@esheet/core`     | Internal evaluator — runs expression with `responses` and `context`   |
+| `FormState.dangerouslyAllowJS`           | `@esheet/core`     | Reactive state — reflects `schema.dangerouslyAllowJS && hostAllowsJS` |
+| `FormState.contextData`                  | `@esheet/core`     | Reactive state — current host-supplied context map                    |
+| `FormState.setContextData()`             | `@esheet/core`     | Action — replaces the context map and triggers re-evaluation          |
+| `FormState.setDangerouslyAllowJS()`      | `@esheet/core`     | Toggle the flag — clamped by host permission                          |
 
 eSheet includes an optional advanced mode that allows runtime JavaScript for:
 
