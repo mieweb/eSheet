@@ -134,6 +134,8 @@ export const FieldNode = React.memo(function FieldNode({
   const isVisible = form.getState().isVisible(field.definition.id);
   const isEnabled = form.getState().isEnabled(field.definition.id);
   const isRequired = form.getState().isRequired(field.definition.id);
+  const isSoftRequired = form.getState().isSoftRequired(field.definition.id);
+  const isReadOnly = form.getState().isReadOnly(field.definition.id);
   const response = form.getState().getResponse(field.definition.id);
 
   if (!isVisible) return null;
@@ -146,6 +148,8 @@ export const FieldNode = React.memo(function FieldNode({
     isPreview: true,
     isEnabled,
     isRequired,
+    isSoftRequired,
+    isReadOnly,
     response,
     onRemove: () => undefined, // No-op in renderer
     onUpdate: () => undefined, // No-op in renderer

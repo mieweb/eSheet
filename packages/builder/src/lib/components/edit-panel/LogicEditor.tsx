@@ -25,6 +25,8 @@ import { useFormStore } from '@esheet/fields';
 export interface LogicEditorProps {
   fieldId: string;
   rules: readonly ConditionalRule[];
+  def?: { required?: boolean | 'soft'; readOnly?: boolean };
+  onUpdateDef?: (patch: Record<string, unknown>) => void;
 }
 
 /**
@@ -35,7 +37,12 @@ export interface LogicEditorProps {
  * use OR semantics (any rule can trigger the effect). Within a rule,
  * conditions combine with the rule's logic mode (AND / OR).
  */
-export function LogicEditor({ fieldId, rules }: LogicEditorProps) {
+export function LogicEditor({
+  fieldId,
+  rules,
+  def,
+  onUpdateDef,
+}: LogicEditorProps) {
   const instanceId = useInstanceId();
   const { normalized, field_ } = useFormApi(fieldId);
   const formStore = useFormStore();
@@ -129,39 +136,212 @@ export function LogicEditor({ fieldId, rules }: LogicEditorProps) {
   // ── Group rules by effect ──────────────────────────────────
   const grouped = groupByEffect(rules);
 
-  if (otherFields.length === 0) {
-    return (
-      <div className="logic-editor-empty ms:text-sm ms:text-mstextmuted ms:text-center ms:py-6">
-        Add more fields to the form to create logic rules.
-      </div>
-    );
-  }
+  const handleSetRequiredState = (state: 'off' | 'required' | 'soft') => {
+    if (!onUpdateDef) return;
+    if (state === 'off') onUpdateDef({ required: false });
+    else if (state === 'required') onUpdateDef({ required: true });
+    else onUpdateDef({ required: 'soft' });
+  };
 
   return (
-    <div className="logic-editor ms:space-y-5">
-      {CONDITIONAL_EFFECTS.map((effect) => (
-        <EffectSection
-          key={effect}
-          instanceId={instanceId}
-          fieldId={fieldId}
-          effect={effect}
-          ruleEntries={grouped[effect]}
-          otherFields={otherFields}
-          dangerouslyAllowJS={dangerouslyAllowJS}
-          onAddRule={() => handleAddRule(effect)}
-          onRemoveRule={handleRemoveRule}
-          onUpdateRule={handleUpdateRule}
-          onAddCondition={handleAddCondition}
-          onRemoveCondition={handleRemoveCondition}
-          onUpdateCondition={handleUpdateCondition}
-        />
-      ))}
+    <div className="logic-editor ms:space-y-2">
+      {otherFields.length === 0 && (
+        <div className="ms:text-xs ms:text-mstextmuted ms:italic ms:pb-1">
+          Add more fields to create logic rules.
+        </div>
+      )}
+      {CONDITIONAL_EFFECTS.map((effect) => {
+        if (effect === 'required') {
+          const reqState: 'off' | 'required' | 'soft' =
+            def?.required === true
+              ? 'required'
+              : def?.required === 'soft'
+              ? 'soft'
+              : 'off';
+          return (
+            <RequiredEffectSection
+              key="required-group"
+              instanceId={instanceId}
+              fieldId={fieldId}
+              ruleEntries={grouped['required']}
+              otherFields={otherFields}
+              dangerouslyAllowJS={dangerouslyAllowJS}
+              reqState={reqState}
+              onSetRequiredState={handleSetRequiredState}
+              onAddRule={() => handleAddRule('required')}
+              onRemoveRule={handleRemoveRule}
+              onUpdateRule={handleUpdateRule}
+              onAddCondition={handleAddCondition}
+              onRemoveCondition={handleRemoveCondition}
+              onUpdateCondition={handleUpdateCondition}
+            />
+          );
+        }
+
+        const staticDefault =
+          effect === 'readOnly' ? def?.readOnly ?? false : undefined;
+        const onToggleStaticDefault =
+          staticDefault !== undefined && onUpdateDef
+            ? () => onUpdateDef({ [effect]: !staticDefault })
+            : undefined;
+        return (
+          <EffectSection
+            key={effect}
+            instanceId={instanceId}
+            fieldId={fieldId}
+            effect={effect}
+            ruleEntries={grouped[effect]}
+            otherFields={otherFields}
+            dangerouslyAllowJS={dangerouslyAllowJS}
+            staticDefault={staticDefault}
+            onToggleStaticDefault={onToggleStaticDefault}
+            onAddRule={() => handleAddRule(effect)}
+            onRemoveRule={handleRemoveRule}
+            onUpdateRule={handleUpdateRule}
+            onAddCondition={handleAddCondition}
+            onRemoveCondition={handleRemoveCondition}
+            onUpdateCondition={handleUpdateCondition}
+          />
+        );
+      })}
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Effect section — one collapsible group per effect (visible / enable / required)
+// Required effect section — 3-state toggle: Off / Required / Soft Required
+// ---------------------------------------------------------------------------
+
+interface RequiredEffectSectionProps {
+  instanceId: string;
+  fieldId: string;
+  ruleEntries: { rule: ConditionalRule; globalIdx: number }[];
+  otherFields: readonly TargetField[];
+  dangerouslyAllowJS: boolean;
+  reqState: 'off' | 'required' | 'soft';
+  onSetRequiredState: (state: 'off' | 'required' | 'soft') => void;
+  onAddRule: () => void;
+  onRemoveRule: (ruleIdx: number) => void;
+  onUpdateRule: (ruleIdx: number, patch: Partial<ConditionalRule>) => void;
+  onAddCondition: (ruleIdx: number) => void;
+  onRemoveCondition: (ruleIdx: number, condIdx: number) => void;
+  onUpdateCondition: (
+    ruleIdx: number,
+    condIdx: number,
+    patch: Partial<Condition>
+  ) => void;
+}
+
+function RequiredEffectSection({
+  instanceId,
+  fieldId,
+  ruleEntries,
+  otherFields,
+  dangerouslyAllowJS,
+  reqState,
+  onSetRequiredState,
+  onAddRule,
+  onRemoveRule,
+  onUpdateRule,
+  onAddCondition,
+  onRemoveCondition,
+  onUpdateCondition,
+}: RequiredEffectSectionProps) {
+  const STATE_OPTIONS: { value: 'off' | 'required' | 'soft'; label: string }[] =
+    [
+      { value: 'off', label: 'Off' },
+      { value: 'soft', label: 'Soft' },
+      { value: 'required', label: 'Required' },
+    ];
+
+  const totalRules = ruleEntries.length;
+
+  const renderRuleGroup = (
+    entries: { rule: ConditionalRule; globalIdx: number }[]
+  ) =>
+    entries.map(({ rule, globalIdx }, localIdx) => (
+      <React.Fragment key={globalIdx}>
+        {localIdx > 0 && (
+          <div className="or-divider ms:text-xs ms:text-mstextmuted ms:text-center ms:py-0.5">
+            — OR —
+          </div>
+        )}
+        <RuleCard
+          instanceId={instanceId}
+          fieldId={fieldId}
+          rule={rule}
+          globalIdx={globalIdx}
+          otherFields={otherFields}
+          dangerouslyAllowJS={dangerouslyAllowJS}
+          onRemove={() => onRemoveRule(globalIdx)}
+          onUpdate={(patch) => onUpdateRule(globalIdx, patch)}
+          onAddCondition={() => onAddCondition(globalIdx)}
+          onRemoveCondition={(condIdx) => onRemoveCondition(globalIdx, condIdx)}
+          onUpdateCondition={(condIdx, patch) =>
+            onUpdateCondition(globalIdx, condIdx, patch)
+          }
+        />
+      </React.Fragment>
+    ));
+
+  return (
+    <div className="required-effect-section ms:space-y-2 ms:border ms:border-msborder ms:rounded ms:p-3">
+      {/* Row 1: label + toggle + Rule button */}
+      <div className="ms:flex ms:items-center ms:justify-between">
+        <div className="ms:flex ms:items-center ms:gap-2">
+          <span className="ms:text-sm ms:font-medium ms:text-mstext">
+            Required
+          </span>
+          {/* 3-state toggle: Off | Soft | Required */}
+          <div className="ms:flex ms:rounded ms:border ms:border-msborder ms:overflow-hidden ms:shrink-0">
+            {STATE_OPTIONS.map(({ value, label }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => onSetRequiredState(value)}
+                aria-pressed={reqState === value}
+                className={`ms:px-2.5 ms:py-0.5 ms:text-xs ms:font-medium ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:transition-colors ${
+                  reqState === value
+                    ? 'ms:bg-msprimary ms:text-mstextsecondary'
+                    : 'ms:bg-transparent ms:text-mstextmuted ms:hover:bg-msbackgroundhover'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+        {/* + Rule button */}
+        {otherFields.length > 0 && (
+          <button
+            type="button"
+            onClick={onAddRule}
+            aria-label={`Add ${reqState} rule`}
+            className="add-rule-btn ms:flex ms:items-center ms:gap-1 ms:px-2 ms:py-1 ms:text-xs ms:font-medium ms:bg-transparent ms:text-msprimary ms:border ms:border-msprimary/40 ms:rounded ms:hover:bg-msprimary/10 ms:transition-colors ms:outline-none ms:focus:outline-none ms:cursor-pointer"
+          >
+            <PlusIcon className="ms:w-3 ms:h-3" />
+            <span>Rule</span>
+          </button>
+        )}
+      </div>
+
+      {/* Row 2: rule count (only when rules exist) */}
+      {totalRules > 0 && (
+        <div className="ms:text-xs ms:text-mstextmuted">
+          {totalRules} rule{totalRules > 1 ? 's' : ''}
+        </div>
+      )}
+
+      {/* Rule list */}
+      {totalRules > 0 && (
+        <div className="ms:space-y-2">{renderRuleGroup(ruleEntries)}</div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Effect section — one collapsible group per effect (visible / enable / readOnly)
 // ---------------------------------------------------------------------------
 
 interface TargetField {
@@ -181,6 +361,10 @@ interface EffectSectionProps {
   ruleEntries: { rule: ConditionalRule; globalIdx: number }[];
   otherFields: readonly TargetField[];
   dangerouslyAllowJS: boolean;
+  /** Static default value for effects that have one (required/softRequired/readOnly). */
+  staticDefault?: boolean;
+  /** Callback to flip the static default boolean on the field definition. */
+  onToggleStaticDefault?: () => void;
   onAddRule: () => void;
   onRemoveRule: (ruleIdx: number) => void;
   onUpdateRule: (ruleIdx: number, patch: Partial<ConditionalRule>) => void;
@@ -197,12 +381,14 @@ const EFFECT_LABELS: Record<ConditionalEffect, string> = {
   visible: 'Visible',
   enable: 'Enable',
   required: 'Required',
+  readOnly: 'Read Only',
 };
 
 const EFFECT_DESCRIPTIONS: Record<ConditionalEffect, string> = {
   visible: 'Show this field when…',
   enable: 'Enable this field when…',
   required: 'Require this field when…',
+  readOnly: 'Make this field read-only when…',
 };
 
 function EffectSection({
@@ -212,6 +398,8 @@ function EffectSection({
   ruleEntries,
   otherFields,
   dangerouslyAllowJS,
+  staticDefault,
+  onToggleStaticDefault,
   onAddRule,
   onRemoveRule,
   onUpdateRule,
@@ -220,30 +408,61 @@ function EffectSection({
   onUpdateCondition,
 }: EffectSectionProps) {
   const hasRules = ruleEntries.length > 0;
+  const hasStaticToggle = staticDefault !== undefined;
 
   return (
-    <div className="effect-section ms:space-y-2">
+    <div className="effect-section ms:space-y-2 ms:border ms:border-msborder ms:rounded ms:p-3">
       {/* Header */}
       <div className="effect-header ms:flex ms:items-center ms:justify-between">
-        <div>
+        <div className="ms:flex ms:items-center ms:gap-2">
           <span className="ms:text-sm ms:font-medium ms:text-mstext">
             {EFFECT_LABELS[effect]}
           </span>
-          <span className="ms:text-xs ms:text-mstextmuted ms:ml-2">
-            {hasRules
-              ? `${ruleEntries.length} rule${ruleEntries.length > 1 ? 's' : ''}`
-              : 'Always'}
-          </span>
+          {hasStaticToggle ? (
+            <button
+              type="button"
+              onClick={onToggleStaticDefault}
+              aria-pressed={staticDefault}
+              aria-label={`Always ${EFFECT_LABELS[effect].toLowerCase()}`}
+              className={`ms:inline-flex ms:items-center ms:gap-1 ms:px-2 ms:py-0.5 ms:text-xs ms:rounded ms:border ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:transition-colors ${
+                staticDefault
+                  ? 'ms:bg-msprimary/15 ms:text-msprimary ms:font-medium'
+                  : 'ms:bg-transparent ms:text-mstextmuted'
+              }`}
+            >
+              <span
+                className={`ms:inline-block ms:w-2 ms:h-2 ms:rounded-full ms:transition-colors ${
+                  staticDefault ? 'ms:bg-msprimary' : 'ms:bg-mstextmuted/40'
+                }`}
+              />
+              {staticDefault ? 'Always on' : 'Always off'}
+            </button>
+          ) : (
+            <span className="ms:text-xs ms:text-mstextmuted">
+              {hasRules
+                ? `${ruleEntries.length} rule${
+                    ruleEntries.length > 1 ? 's' : ''
+                  }`
+                : 'Always'}
+            </span>
+          )}
+          {hasStaticToggle && hasRules && (
+            <span className="ms:text-xs ms:text-mstextmuted">
+              {ruleEntries.length} rule{ruleEntries.length > 1 ? 's' : ''}
+            </span>
+          )}
         </div>
-        <button
-          type="button"
-          onClick={onAddRule}
-          aria-label={`Add ${effect} rule`}
-          className="add-rule-btn ms:flex ms:items-center ms:gap-1 ms:px-2 ms:py-1 ms:text-xs ms:font-medium ms:bg-transparent ms:text-msprimary ms:border ms:border-msprimary/40 ms:rounded ms:hover:bg-msprimary/10 ms:transition-colors ms:outline-none ms:focus:outline-none ms:cursor-pointer"
-        >
-          <PlusIcon className="ms:w-3 ms:h-3" />
-          <span>Rule</span>
-        </button>
+        {otherFields.length > 0 && (
+          <button
+            type="button"
+            onClick={onAddRule}
+            aria-label={`Add ${effect} rule`}
+            className="add-rule-btn ms:flex ms:items-center ms:gap-1 ms:px-2 ms:py-1 ms:text-xs ms:font-medium ms:bg-transparent ms:text-msprimary ms:border ms:border-msprimary/40 ms:rounded ms:hover:bg-msprimary/10 ms:transition-colors ms:outline-none ms:focus:outline-none ms:cursor-pointer"
+          >
+            <PlusIcon className="ms:w-3 ms:h-3" />
+            <span>Rule</span>
+          </button>
+        )}
       </div>
 
       {/* Rules */}
@@ -333,15 +552,6 @@ function RuleCard({
           </span>
         </div>
         <div className="ms:flex ms:items-center ms:gap-2">
-          {rule.effect === 'required' && (
-            <SeverityToggle
-              instanceId={instanceId}
-              fieldId={fieldId}
-              ruleIdx={globalIdx}
-              value={rule.severity ?? 'hard'}
-              onChange={(severity) => onUpdate({ severity })}
-            />
-          )}
           <button
             type="button"
             onClick={onRemove}
@@ -429,61 +639,6 @@ function LogicToggle({
         }`}
       >
         OR
-      </button>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Severity toggle — Hard / Soft (required rules only)
-// ---------------------------------------------------------------------------
-
-interface SeverityToggleProps {
-  instanceId: string;
-  fieldId: string;
-  ruleIdx: number;
-  value: 'hard' | 'soft';
-  onChange: (value: 'hard' | 'soft') => void;
-}
-
-function SeverityToggle({
-  instanceId,
-  fieldId,
-  ruleIdx,
-  value,
-  onChange,
-}: SeverityToggleProps) {
-  const id = `${instanceId}-severity-toggle-${fieldId}-${ruleIdx}`;
-  return (
-    <div
-      className="severity-toggle ms:flex ms:rounded ms:border ms:border-msborder ms:overflow-hidden"
-      title="Severity: Hard blocks submission; Soft warns but allows bypass"
-    >
-      <button
-        type="button"
-        id={`${id}-hard`}
-        aria-label="Hard required (blocks submission)"
-        onClick={() => onChange('hard')}
-        className={`ms:px-2 ms:py-0.5 ms:text-xs ms:font-medium ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:transition-colors ${
-          value === 'hard'
-            ? 'ms:bg-msdanger ms:text-white'
-            : 'ms:bg-transparent ms:text-mstextmuted ms:hover:bg-msbackgroundhover'
-        }`}
-      >
-        Hard
-      </button>
-      <button
-        type="button"
-        id={`${id}-soft`}
-        aria-label="Soft required (warns, can bypass)"
-        onClick={() => onChange('soft')}
-        className={`ms:px-2 ms:py-0.5 ms:text-xs ms:font-medium ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:transition-colors ${
-          value === 'soft'
-            ? 'ms:bg-mswarning ms:text-white'
-            : 'ms:bg-transparent ms:text-mstextmuted ms:hover:bg-msbackgroundhover'
-        }`}
-      >
-        Soft
       </button>
     </div>
   );
@@ -1101,6 +1256,7 @@ function groupByEffect(
     visible: [],
     enable: [],
     required: [],
+    readOnly: [],
   };
   rules.forEach((rule, idx) => {
     if (result[rule.effect]) {

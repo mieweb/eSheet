@@ -73,6 +73,8 @@ export interface FormState {
   readonly normalized: NormalizedDefinition;
   /** Current responses keyed by field ID. */
   readonly responses: FieldResponseMap;
+  /** Field IDs that have been explicitly edited by the user (not auto-calculated). */
+  readonly userEditedFields: ReadonlySet<string>;
 
   // --- Lifecycle Actions ---
   /** Load a form definition (tree), normalizing it into the flat index. */
@@ -147,8 +149,12 @@ export interface FormState {
   isVisible: (fieldId: string) => boolean;
   /** Whether a field is currently enabled. */
   isEnabled: (fieldId: string) => boolean;
-  /** Whether a field is currently required. */
+  /** Whether a field is currently hard-required. */
   isRequired: (fieldId: string) => boolean;
+  /** Whether a field is currently soft-required (warns but allows bypass). */
+  isSoftRequired: (fieldId: string) => boolean;
+  /** Whether a field is currently read-only. */
+  isReadOnly: (fieldId: string) => boolean;
   /** Validate a single field and return its errors. */
   getFieldErrors: (fieldId: string) => ValidationError[];
   /** Validate all fields and return all errors. */
@@ -311,6 +317,7 @@ export function createFormStore(
       ? normalizeDefinition(initial.fields)
       : EMPTY_NORMALIZED,
     responses: {},
+    userEditedFields: new Set<string>(),
 
     // --- Actions ---
     loadDefinition: (definition) =>
@@ -321,6 +328,7 @@ export function createFormStore(
           (definition.dangerouslyAllowJS ?? false) && _hostAllowsJS,
         normalized: normalizeDefinition(definition.fields),
         responses: {},
+        userEditedFields: new Set<string>(),
       }),
 
     setFormId: (id) => {
@@ -332,18 +340,68 @@ export function createFormStore(
     setDangerouslyAllowJS: (enabled) =>
       set({ dangerouslyAllowJS: enabled && _hostAllowsJS }),
 
-    setContextData: (data) => set({ contextData: data }),
+    setContextData: (data) =>
+      set((state) => {
+        if (!state.dangerouslyAllowJS) return { contextData: data };
+        // Re-run calculations with the new context so context-derived fields
+        // populate immediately (same pass as setResponse).
+        const calcResponses = { ...state.responses };
+        for (const [calcId, node] of Object.entries(state.normalized.byId)) {
+          const calc = (node.definition as { calculation?: string })
+            .calculation;
+          if (!calc?.trim()) continue;
+          // Skip fields the user has manually edited unless they are readOnly
+          if (state.userEditedFields.has(calcId)) {
+            const isRO = resolveEffect(
+              'readOnly',
+              node.definition,
+              state.normalized,
+              state.responses,
+              state.dangerouslyAllowJS,
+              data
+            );
+            if (!isRO) continue;
+          }
+          const result = evaluateJsExpression(
+            calc,
+            state.normalized,
+            calcResponses,
+            data
+          );
+          if (result !== null && result !== undefined) {
+            calcResponses[calcId] = { answer: String(result) };
+          }
+        }
+        return { contextData: data, responses: calcResponses };
+      }),
 
     setResponse: (fieldId, response) =>
       set((state) => {
         const updated = { ...state.responses, [fieldId]: response };
-        if (!state.dangerouslyAllowJS) return { responses: updated };
+        // Mark this field as user-edited so calculations won't overwrite it
+        // (unless the field is explicitly readOnly).
+        const nextEdited = new Set(state.userEditedFields);
+        nextEdited.add(fieldId);
+        if (!state.dangerouslyAllowJS)
+          return { responses: updated, userEditedFields: nextEdited };
         // Apply calculations for all fields that have a calculation string
         const calcResponses = { ...updated };
         for (const [calcId, node] of Object.entries(state.normalized.byId)) {
           const calc = (node.definition as { calculation?: string })
             .calculation;
           if (!calc?.trim()) continue;
+          // Skip fields the user has manually edited unless they are readOnly
+          if (nextEdited.has(calcId)) {
+            const isRO = resolveEffect(
+              'readOnly',
+              node.definition,
+              state.normalized,
+              state.responses,
+              state.dangerouslyAllowJS,
+              state.contextData
+            );
+            if (!isRO) continue;
+          }
           const result = evaluateJsExpression(
             calc,
             state.normalized,
@@ -354,7 +412,7 @@ export function createFormStore(
             calcResponses[calcId] = { answer: String(result) };
           }
         }
-        return { responses: calcResponses };
+        return { responses: calcResponses, userEditedFields: nextEdited };
       }),
 
     clearResponse: (fieldId) =>
@@ -364,7 +422,8 @@ export function createFormStore(
         return { responses: rest };
       }),
 
-    resetResponses: () => set({ responses: {} }),
+    resetResponses: () =>
+      set({ responses: {}, userEditedFields: new Set<string>() }),
 
     // --- Builder Actions ---
     addField: (fieldType, options) => {
@@ -866,8 +925,38 @@ export function createFormStore(
       const { normalized, responses, dangerouslyAllowJS, contextData } = get();
       const node = normalized.byId[fieldId];
       if (!node) return false;
+      if (node.definition.required !== true) return false; // only hard required
       return resolveEffect(
         'required',
+        node.definition,
+        normalized,
+        responses,
+        dangerouslyAllowJS,
+        contextData
+      );
+    },
+
+    isSoftRequired: (fieldId) => {
+      const { normalized, responses, dangerouslyAllowJS, contextData } = get();
+      const node = normalized.byId[fieldId];
+      if (!node) return false;
+      if (node.definition.required !== 'soft') return false;
+      return resolveEffect(
+        'required',
+        node.definition,
+        normalized,
+        responses,
+        dangerouslyAllowJS,
+        contextData
+      );
+    },
+
+    isReadOnly: (fieldId) => {
+      const { normalized, responses, dangerouslyAllowJS, contextData } = get();
+      const node = normalized.byId[fieldId];
+      if (!node) return false;
+      return resolveEffect(
+        'readOnly',
         node.definition,
         normalized,
         responses,

@@ -139,7 +139,12 @@ export const conditionTypeSchema = z.enum(CONDITION_TYPES);
 export type ConditionType = z.infer<typeof conditionTypeSchema>;
 
 /** What effect a conditional rule has on the field. */
-export const CONDITIONAL_EFFECTS = ['visible', 'enable', 'required'] as const;
+export const CONDITIONAL_EFFECTS = [
+  'required',
+  'visible',
+  'enable',
+  'readOnly',
+] as const;
 export const conditionalEffectSchema = z.enum(CONDITIONAL_EFFECTS);
 export type ConditionalEffect = z.infer<typeof conditionalEffectSchema>;
 
@@ -249,10 +254,15 @@ interface BaseFieldDefinition {
   id: string;
   /** The question / label shown to the user. */
   question?: string;
-  /** Whether a response is required (hard block). */
-  required?: boolean;
-  /** Whether a response is softly required (warns but allows bypass). */
-  softRequired?: boolean;
+  /**
+   * Required state for this field.
+   * - `true`    — hard required (blocks submission).
+   * - `'soft'`  — soft required (warns but allows bypass).
+   * - `false` / omitted — not required.
+   */
+  required?: boolean | 'soft';
+  /** Whether this field is read-only (user cannot edit; calculated value always wins). */
+  readOnly?: boolean;
   /** Validation rules applied to the field's response. */
   validators?: FieldValidator[];
   /** Conditional rules that control visibility, enabled state, or required state. */
@@ -613,8 +623,8 @@ export function normalizeFormDefinition(
 const baseFieldProps = {
   id: z.string(),
   question: z.optional(z.string()),
-  required: z.optional(z.boolean()),
-  softRequired: z.optional(z.boolean()),
+  required: z.optional(z.union([z.boolean(), z.literal('soft')])),
+  readOnly: z.optional(z.boolean()),
   validators: z.optional(z.array(fieldValidatorSchema)),
   rules: z.optional(z.array(conditionalRuleSchema)),
   /** JS expression that auto-computes this field's value (requires dangerouslyAllowJS on form). */

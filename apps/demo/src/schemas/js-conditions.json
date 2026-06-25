@@ -1,0 +1,663 @@
+{
+  "id": "js-conditions",
+  "dangerouslyAllowJS": true,
+  "title": "JS Conditions Test Suite",
+  "fields": [
+    {
+      "id": "intro",
+      "fieldType": "html",
+      "htmlContent": "<h2 style='margin:0 0 8px'>JS Conditions Test Suite</h2><p>Tests every <code>conditionType: 'js'</code> pattern: comparisons, logical operators, string methods, regex, array checks, cross-field comparisons, null guards, and context data. Fields in each section only appear when the JS condition passes.</p>",
+      "iframeHeight": 100
+    },
+
+    {
+      "id": "section-comparisons",
+      "fieldType": "section",
+      "title": "1 — Simple Comparisons",
+      "fields": [
+        {
+          "id": "cmp-number",
+          "fieldType": "text",
+          "question": "Enter a number (try values above/below 10, 18, 100)",
+          "inputType": "number"
+        },
+        {
+          "id": "cmp-gt10",
+          "fieldType": "text",
+          "question": "✓ Visible when number > 10",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "responses['cmp-number'] > 10"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "cmp-gte18",
+          "fieldType": "text",
+          "question": "✓ Visible when number >= 18 (adult check)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "responses['cmp-number'] >= 18"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "cmp-range",
+          "fieldType": "text",
+          "question": "✓ Visible when number is between 10 and 20 inclusive",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "responses['cmp-number'] >= 10 && responses['cmp-number'] <= 20"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "cmp-not100",
+          "fieldType": "text",
+          "question": "✓ Visible when number !== 100 (negation)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "responses['cmp-number'] !== 100 && responses['cmp-number'] !== ''"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "cmp-abs",
+          "fieldType": "text",
+          "question": "✓ Visible when |number| > 50 (Math.abs check)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "Math.abs(responses['cmp-number'] || 0) > 50"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "section-strings",
+      "fieldType": "section",
+      "title": "2 — String Method Conditions",
+      "fields": [
+        {
+          "id": "str-input",
+          "fieldType": "text",
+          "question": "Enter some text (try 'hello world', 'test@email.com', 'MR SMITH')",
+          "inputType": "string"
+        },
+        {
+          "id": "str-includes",
+          "fieldType": "text",
+          "question": "✓ Visible when input includes 'world'",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "typeof responses['str-input'] === 'string' && responses['str-input'].includes('world')"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "str-startswith",
+          "fieldType": "text",
+          "question": "✓ Visible when input starts with 'hello'",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "typeof responses['str-input'] === 'string' && responses['str-input'].toLowerCase().startsWith('hello')"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "str-endswith",
+          "fieldType": "text",
+          "question": "✓ Visible when input ends with '.com'",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "typeof responses['str-input'] === 'string' && responses['str-input'].endsWith('.com')"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "str-length",
+          "fieldType": "text",
+          "question": "✓ Visible when input is longer than 10 characters",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "typeof responses['str-input'] === 'string' && responses['str-input'].length > 10"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "str-upper",
+          "fieldType": "text",
+          "question": "✓ Visible when input is ALL UPPERCASE",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "typeof responses['str-input'] === 'string' && responses['str-input'].trim().length > 0 && responses['str-input'] === responses['str-input'].toUpperCase()"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "str-regex-email",
+          "fieldType": "text",
+          "question": "✓ Visible when input looks like an email (regex)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(responses['str-input'] || '')"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "str-regex-zip",
+          "fieldType": "text",
+          "question": "✓ Visible when input is a 5-digit US ZIP code",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "/^[0-9]{5}$/.test(responses['str-input'] || '')"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "section-logic",
+      "fieldType": "section",
+      "title": "3 — Logical Operators (AND / OR / NOT)",
+      "fields": [
+        {
+          "id": "logic-p",
+          "fieldType": "text",
+          "question": "Value P (number)",
+          "inputType": "number"
+        },
+        {
+          "id": "logic-q",
+          "fieldType": "text",
+          "question": "Value Q (number)",
+          "inputType": "number"
+        },
+        {
+          "id": "logic-and",
+          "fieldType": "text",
+          "question": "✓ Visible when P > 5 AND Q > 5",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "responses['logic-p'] > 5 && responses['logic-q'] > 5"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "logic-or",
+          "fieldType": "text",
+          "question": "✓ Visible when P > 5 OR Q > 5",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "responses['logic-p'] > 5 || responses['logic-q'] > 5"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "logic-not",
+          "fieldType": "text",
+          "question": "✓ Visible when NOT (P === Q)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "!(responses['logic-p'] === responses['logic-q']) && (responses['logic-p'] !== '' && responses['logic-q'] !== '')"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "logic-xor",
+          "fieldType": "text",
+          "question": "✓ Visible when exactly one of P, Q is > 5 (XOR)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "(responses['logic-p'] > 5) !== (responses['logic-q'] > 5)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "logic-complex",
+          "fieldType": "text",
+          "question": "✓ Visible when (P > 0 AND Q > 0) AND P + Q > 20",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "responses['logic-p'] > 0 && responses['logic-q'] > 0 && (responses['logic-p'] + responses['logic-q']) > 20"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "section-crossfield",
+      "fieldType": "section",
+      "title": "4 — Cross-Field Comparisons",
+      "fields": [
+        {
+          "id": "cf-start",
+          "fieldType": "text",
+          "question": "Start value",
+          "inputType": "number"
+        },
+        {
+          "id": "cf-end",
+          "fieldType": "text",
+          "question": "End value",
+          "inputType": "number"
+        },
+        {
+          "id": "cf-valid-range",
+          "fieldType": "text",
+          "question": "✓ Visible when start < end (valid range)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "responses['cf-start'] !== '' && responses['cf-end'] !== '' && Number(responses['cf-start']) < Number(responses['cf-end'])"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "cf-equal",
+          "fieldType": "text",
+          "question": "✓ Visible when start === end",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "responses['cf-start'] !== '' && responses['cf-end'] !== '' && Number(responses['cf-start']) === Number(responses['cf-end'])"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "cf-diff-big",
+          "fieldType": "text",
+          "question": "✓ Visible when |end − start| > 100",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "Math.abs((responses['cf-end'] || 0) - (responses['cf-start'] || 0)) > 100"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "section-nullguard",
+      "fieldType": "section",
+      "title": "5 — Null / Empty Guards",
+      "fields": [
+        {
+          "id": "ng-optional",
+          "fieldType": "text",
+          "question": "Optional field (leave blank to test null guard paths)",
+          "inputType": "string"
+        },
+        {
+          "id": "ng-truthy",
+          "fieldType": "text",
+          "question": "✓ Visible when optional field is truthy (non-empty)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "!!responses['ng-optional']"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ng-empty",
+          "fieldType": "text",
+          "question": "✓ Visible when optional field IS empty",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "!responses['ng-optional'] || responses['ng-optional'] === ''"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ng-bad-js",
+          "fieldType": "text",
+          "question": "✓ This field has BROKEN JS condition — should stay hidden (graceful fail)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "undefined_object.property.nested"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ng-throw",
+          "fieldType": "text",
+          "question": "✓ This field throws inside JS — should stay hidden (graceful fail)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "(function(){ throw new Error('deliberate'); })()"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "section-array",
+      "fieldType": "section",
+      "title": "6 — Array / Inclusion Checks",
+      "fields": [
+        {
+          "id": "arr-choice",
+          "fieldType": "radio",
+          "question": "Choose a category",
+          "options": [
+            { "id": "arr-c-alpha", "value": "alpha", "text": "Alpha" },
+            { "id": "arr-c-beta", "value": "beta", "text": "Beta" },
+            { "id": "arr-c-gamma", "value": "gamma", "text": "Gamma" },
+            { "id": "arr-c-delta", "value": "delta", "text": "Delta" }
+          ]
+        },
+        {
+          "id": "arr-in-set",
+          "fieldType": "text",
+          "question": "✓ Visible when choice is Alpha or Beta (Array.includes)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "['alpha', 'beta'].includes(responses['arr-choice'])"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "arr-not-in-set",
+          "fieldType": "text",
+          "question": "✓ Visible when choice is NOT in [alpha, gamma]",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "!['alpha', 'gamma'].includes(responses['arr-choice'])"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "section-effects",
+      "fieldType": "section",
+      "title": "7 — All Three Effects (visible / enable / required)",
+      "fields": [
+        {
+          "id": "eff-gate",
+          "fieldType": "slider",
+          "question": "Gate value (0–10)",
+
+          "options": [
+            { "id": "eff-g-0", "value": "0", "score": 0 },
+            { "id": "eff-g-1", "value": "1", "score": 1 },
+            { "id": "eff-g-2", "value": "2", "score": 2 },
+            { "id": "eff-g-3", "value": "3", "score": 3 },
+            { "id": "eff-g-4", "value": "4", "score": 4 },
+            { "id": "eff-g-5", "value": "5", "score": 5 },
+            { "id": "eff-g-6", "value": "6", "score": 6 },
+            { "id": "eff-g-7", "value": "7", "score": 7 },
+            { "id": "eff-g-8", "value": "8", "score": 8 },
+            { "id": "eff-g-9", "value": "9", "score": 9 },
+            { "id": "eff-g-10", "value": "10", "score": 10 }
+          ]
+        },
+        {
+          "id": "eff-visible",
+          "fieldType": "text",
+          "question": "effect: visible — shown only when gate > 3",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "responses['eff-gate'] > 3"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "eff-enabled",
+          "fieldType": "text",
+          "question": "effect: enable — interactive only when gate > 6 (otherwise disabled)",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "enable",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "responses['eff-gate'] > 6"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "eff-required",
+          "fieldType": "text",
+          "question": "effect: required — mandatory when gate === 10",
+          "inputType": "string",
+          "rules": [
+            {
+              "effect": "required",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "responses['eff-gate'] === 10"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,6 +1,5 @@
 import { useStore } from 'zustand';
 import type { FieldDefinition, TextInputType } from '@esheet/core';
-import { CustomCheckbox } from '@esheet/fields';
 import { useFormStore } from '@esheet/fields';
 import { useInstanceId } from '../../EsheetBuilder.js';
 import { DraftIdEditor } from './DraftIdEditor.js';
@@ -69,45 +68,6 @@ export function CommonEditor({
           />
         </div>
       )}
-
-      {/* Required */}
-      <div className="required-toggle ms:flex ms:items-center ms:gap-2 ms:text-sm ms:text-mstext">
-        <CustomCheckbox
-          id={`${instanceId}-editor-required-${fieldId}`}
-          checked={def.required ?? false}
-          onChange={(checked: boolean) => onUpdate({ required: checked })}
-          size="sm"
-        />
-        <label
-          htmlFor={`${instanceId}-editor-required-${fieldId}`}
-          className="ms:cursor-pointer ms:select-none"
-        >
-          Required
-        </label>
-      </div>
-
-      {/* Soft Required */}
-      <div className="soft-required-toggle ms:flex ms:items-center ms:gap-2 ms:text-sm ms:text-mstext">
-        <CustomCheckbox
-          id={`${instanceId}-editor-soft-required-${fieldId}`}
-          checked={(def as { softRequired?: boolean }).softRequired ?? false}
-          onChange={(checked: boolean) =>
-            onUpdate({ softRequired: checked } as Parameters<
-              typeof onUpdate
-            >[0])
-          }
-          size="sm"
-        />
-        <label
-          htmlFor={`${instanceId}-editor-soft-required-${fieldId}`}
-          className="ms:cursor-pointer ms:select-none"
-        >
-          Soft Required
-          <span className="ms:ml-1 ms:text-xs ms:text-mstextmuted">
-            (warns, can bypass)
-          </span>
-        </label>
-      </div>
 
       {/* Input Type (text/longtext only) */}
       {showInputType && (

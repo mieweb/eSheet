@@ -19,6 +19,8 @@ export interface FormApi {
   isVisible: boolean;
   isEnabled: boolean;
   isRequired: boolean;
+  isReadOnly: boolean;
+  isSoftRequired: boolean;
   normalized: NormalizedDefinition;
   responses: FieldResponseMap;
   instanceId: string;
@@ -92,6 +94,12 @@ export function useFormApi(fieldId?: string): FormApi {
   const isRequired = useStore(form, (s) =>
     fieldId ? s.isRequired(fieldId) : false
   );
+  const isReadOnly = useStore(form, (s) =>
+    fieldId ? s.isReadOnly(fieldId) : false
+  );
+  const isSoftRequired = useStore(form, (s) =>
+    fieldId ? s.isSoftRequired(fieldId) : false
+  );
 
   // --- Reactive form-level state ---
   const normalized = useStore(form, (s) => s.normalized);
@@ -105,6 +113,8 @@ export function useFormApi(fieldId?: string): FormApi {
       isVisible,
       isEnabled,
       isRequired,
+      isReadOnly,
+      isSoftRequired,
       normalized,
       responses,
       instanceId,
@@ -178,6 +188,8 @@ export function useFormApi(fieldId?: string): FormApi {
       isVisible,
       isEnabled,
       isRequired,
+      isReadOnly,
+      isSoftRequired,
       normalized,
       responses,
       instanceId,

@@ -134,13 +134,7 @@ export function validateField(
     ) &&
     isResponseEmpty(response)
   ) {
-    const severity = resolveRequiredSeverity(
-      definition,
-      normalized,
-      responses,
-      dangerouslyAllowJS,
-      contextData
-    );
+    const severity = resolveRequiredSeverity(definition);
     errors.push({
       fieldId,
       rule: 'required',
