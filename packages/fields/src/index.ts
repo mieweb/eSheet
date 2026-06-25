@@ -35,6 +35,7 @@ export {
   DrawingPad,
   DiagramField,
   DisplayField,
+  ActionField,
   HtmlField,
   ImageField,
   SignatureField,
@@ -53,7 +54,10 @@ export {
   UIContext,
   useFormStore,
   useUI,
+  ActionContext,
+  useActionHandler,
 } from './lib/context.js';
+export type { ActionEvent, ActionHandler } from './lib/context.js';
 
 // Shared validation UI
 export {

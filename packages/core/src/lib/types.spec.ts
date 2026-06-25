@@ -15,7 +15,7 @@ describe('schema types', () => {
     expect(FIELD_TYPES).toContain('text');
     expect(FIELD_TYPES).toContain('section');
     expect(FIELD_TYPES).toContain('display');
-    expect(FIELD_TYPES).toHaveLength(19);
+    expect(FIELD_TYPES).toHaveLength(20);
   });
 
   it('should allow constructing a valid FormDefinition', () => {

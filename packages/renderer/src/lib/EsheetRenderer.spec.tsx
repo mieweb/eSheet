@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { render, act, cleanup } from '@testing-library/react';
+import { render, act, cleanup, fireEvent } from '@testing-library/react';
 import { EsheetRenderer, type EsheetRendererHandle } from './EsheetRenderer.js';
 
 afterEach(cleanup);
@@ -214,5 +214,49 @@ describe('EsheetRenderer', () => {
 
     expect(result.errors).toEqual([]);
     expect(result.response).toEqual({ trigger: { answer: 'disabled' } });
+  });
+});
+
+describe('EsheetRenderer action fields', () => {
+  it('invokes onAction with actionId, fieldId, and response snapshot on click', async () => {
+    const onAction = vi.fn();
+    await act(async () => {
+      render(
+        <EsheetRenderer
+          onAction={onAction}
+          formDataInput={{
+            id: 'action-form',
+            title: 'Test',
+            fields: [
+              { id: 'name', fieldType: 'text', question: 'Name?' },
+              {
+                id: 'close',
+                fieldType: 'action',
+                label: 'Close Case',
+                actionId: 'close-case',
+              },
+            ],
+          }}
+          initialResponses={{ name: { answer: 'Alice' } }}
+        />
+      );
+    });
+
+    const button = document.querySelector('.action-field-button');
+    expect(button).not.toBeNull();
+    expect(button?.textContent).toBe('Close Case');
+
+    await act(async () => {
+      fireEvent.click(button as Element);
+    });
+
+    expect(onAction).toHaveBeenCalledTimes(1);
+    expect(onAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actionId: 'close-case',
+        fieldId: 'close',
+        responses: expect.objectContaining({ name: { answer: 'Alice' } }),
+      }),
+    );
   });
 });

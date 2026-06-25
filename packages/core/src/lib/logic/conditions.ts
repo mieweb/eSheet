@@ -257,6 +257,7 @@ type ExprTokenType =
   | 'lparen'
   | 'rparen'
   | 'dot'
+  | 'comma'
   | 'identifier';
 
 interface ExprToken {
@@ -268,6 +269,7 @@ type ExprNode =
   | { type: 'literal'; value: unknown }
   | { type: 'field'; id: string }
   | { type: 'member'; object: ExprNode; property: 'length' | 'count' }
+  | { type: 'call'; name: string; args: ExprNode[] }
   | { type: 'unary'; operator: '!' | '-'; right: ExprNode }
   | {
       type: 'binary';
@@ -377,6 +379,11 @@ function tokenizeExpression(source: string): ExprToken[] | null {
       i += 1;
       continue;
     }
+    if (ch === ',') {
+      tokens.push({ type: 'comma', value: ch });
+      i += 1;
+      continue;
+    }
 
     const three = source.slice(i, i + 3);
     if (three === '===') {
@@ -478,10 +485,30 @@ function parseExpression(tokens: ExprToken[]): ExprNode | null {
       return { type: 'field', id: String(t.value) };
     }
 
-    // Bare identifiers (e.g. q3 in display interpolation) resolve as field refs.
+    // Identifiers are either function calls (when followed by `(`) or, for
+    // backward compatibility, bare field refs (e.g. q3 in display interpolation).
     if (t.type === 'identifier') {
       consume();
-      return { type: 'field', id: String(t.value) };
+      const name = String(t.value);
+      if (peek()?.type === 'lparen') {
+        consume(); // (
+        const args: ExprNode[] = [];
+        if (peek()?.type !== 'rparen') {
+          for (;;) {
+            const arg = parseOr();
+            if (!arg) return null;
+            args.push(arg);
+            if (peek()?.type === 'comma') {
+              consume();
+              continue;
+            }
+            break;
+          }
+        }
+        if (consume()?.type !== 'rparen') return null;
+        return { type: 'call', name, args };
+      }
+      return { type: 'field', id: name };
     }
 
     if (t.type === 'lparen') {
@@ -664,6 +691,20 @@ function evaluateExpressionAst(
     return null;
   }
 
+  if (node.type === 'call') {
+    // `if` is lazy: only the taken branch is evaluated.
+    if (node.name === 'if') {
+      const cond = evaluateExpressionAst(node.args[0], data);
+      return cond
+        ? evaluateExpressionAst(node.args[1], data)
+        : evaluateExpressionAst(node.args[2], data);
+    }
+    const fn = EXPRESSION_FUNCTIONS[node.name];
+    if (!fn) return null;
+    const args = node.args.map((arg) => evaluateExpressionAst(arg, data));
+    return fn(args);
+  }
+
   if (node.operator === '&&') {
     const left = evaluateExpressionAst(node.left, data);
     if (!left) return left;
@@ -735,6 +776,87 @@ function toNumber(value: unknown): number {
   return Number.isNaN(parsed) ? 0 : parsed;
 }
 
+// ---------------------------------------------------------------------------
+// Expression built-in functions
+// ---------------------------------------------------------------------------
+
+const MS_PER_DAY = 86_400_000;
+
+/** Text input types that carry date/time values (kept as strings, never coerced). */
+const DATE_INPUT_TYPES = new Set([
+  'date',
+  'datetime-local',
+  'month',
+  'time',
+]);
+
+/**
+ * Parse a value into a UTC-anchored Date. Accepts `YYYY-MM-DD`,
+ * `YYYY-MM-DDTHH:mm` (and other ISO-8601 strings), or an epoch number.
+ * Returns `null` when the value can't be interpreted as a date.
+ */
+function toDate(value: unknown): Date | null {
+  if (value instanceof Date)
+    return Number.isNaN(value.getTime()) ? null : value;
+  if (typeof value === 'number') {
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  const str = String(value ?? '').trim();
+  if (!str) return null;
+  // Date-only strings are parsed as UTC midnight to avoid timezone drift.
+  const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(str);
+  const d = new Date(dateOnly ? `${str}T00:00:00Z` : str);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/** Format a Date as a `YYYY-MM-DD` string in UTC. */
+function formatISODate(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+/**
+ * Built-in functions usable in expressions and `display` interpolation.
+ * Each receives already-evaluated argument values. `if` is handled separately
+ * (lazily) in the evaluator and is intentionally not listed here.
+ */
+const EXPRESSION_FUNCTIONS: Record<string, (args: unknown[]) => unknown> = {
+  // --- Date arithmetic (all date math is UTC-anchored) ---
+  /** addDays(date, n) → `YYYY-MM-DD` n days after date (n may be negative). */
+  addDays: (args) => {
+    const date = toDate(args[0]);
+    if (!date) return '';
+    return formatISODate(new Date(date.getTime() + toNumber(args[1]) * MS_PER_DAY));
+  },
+  /** subDays(date, n) → `YYYY-MM-DD` n days before date. */
+  subDays: (args) => {
+    const date = toDate(args[0]);
+    if (!date) return '';
+    return formatISODate(new Date(date.getTime() - toNumber(args[1]) * MS_PER_DAY));
+  },
+  /** diffDays(a, b) → whole days from b to a (a − b). */
+  diffDays: (args) => {
+    const a = toDate(args[0]);
+    const b = toDate(args[1]);
+    if (!a || !b) return null;
+    return Math.round((a.getTime() - b.getTime()) / MS_PER_DAY);
+  },
+  /** today() → current date as `YYYY-MM-DD` (UTC). */
+  today: () => formatISODate(new Date()),
+  /** year(date) → 4-digit year, or null. */
+  year: (args) => {
+    const d = toDate(args[0]);
+    return d ? d.getUTCFullYear() : null;
+  },
+  // --- Numeric helpers ---
+  min: (args) => Math.min(...args.map(toNumber)),
+  max: (args) => Math.max(...args.map(toNumber)),
+  round: (args) => Math.round(toNumber(args[0])),
+  floor: (args) => Math.floor(toNumber(args[0])),
+  ceil: (args) => Math.ceil(toNumber(args[0])),
+  abs: (args) => Math.abs(toNumber(args[0])),
+};
+
 function parseBoolean(value: string): boolean {
   const normalized = value.trim().toLowerCase();
   if (normalized === 'true' || normalized === '1' || normalized === 'yes')
@@ -766,6 +888,11 @@ function getExpressionFieldValue(
 
   if (definition.fieldType === 'text' || definition.fieldType === 'longtext') {
     const raw = response.answer ?? '';
+    // Date/time input types must stay as strings so date functions (addDays,
+    // diffDays, …) can parse them; numeric coercion would turn '2026-01-01'
+    // into 2026 via parseFloat's leading-number behavior.
+    const inputType = (definition as { inputType?: string }).inputType;
+    if (inputType && DATE_INPUT_TYPES.has(inputType)) return raw;
     const parsed = parseFloat(String(raw));
     return Number.isNaN(parsed) ? raw : parsed;
   }

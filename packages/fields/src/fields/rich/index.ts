@@ -9,6 +9,7 @@ export type {
 } from './DrawingPad.js';
 export { DiagramField } from './DiagramField.js';
 export { DisplayField } from './DisplayField.js';
+export { ActionField } from './ActionField.js';
 export { HtmlField } from './HtmlField.js';
 export { ImageField } from './ImageField.js';
 export { SignatureField } from './SignatureField.js';

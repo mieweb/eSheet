@@ -21,7 +21,9 @@ import {
   FormStoreContext,
   UIContext,
   ZodIssuesPanel,
+  ActionContext,
   useTouchMode,
+  type ActionHandler,
 } from '@esheet/fields';
 import { ensureDefaultFieldComponentsRegistered } from './register-defaults.js';
 import { useRendererInit } from './hooks/useRendererInit.js';
@@ -46,6 +48,12 @@ export interface EsheetRendererProps {
    * facade for MCP / AI tool integrations.
    */
   onRendererToolsReady?: (tools: RendererTools) => void;
+  /**
+   * Called when an `action` field (button) is triggered. Receives the action's
+   * `actionId`, originating `fieldId`, and a snapshot of the current responses.
+   * Use this to run host-defined side effects such as closing a case.
+   */
+  onAction?: ActionHandler;
   /**
    * Enable touch-optimized mode with larger touch targets.
    * - `true`: Always enable touch mode
@@ -196,6 +204,7 @@ const EsheetRendererInner = React.forwardRef<
     uiStore,
     touchMode,
     onTouchModeChange,
+    onAction,
   },
   ref
 ) {
@@ -312,7 +321,9 @@ const EsheetRendererInner = React.forwardRef<
   return (
     <div className={rootClasses}>
       <ZodIssuesPanel issues={validationErrors} />
-      <RendererBody form={formStore} ui={uiStore} />
+      <ActionContext.Provider value={onAction ?? null}>
+        <RendererBody form={formStore} ui={uiStore} />
+      </ActionContext.Provider>
     </div>
   );
 });
