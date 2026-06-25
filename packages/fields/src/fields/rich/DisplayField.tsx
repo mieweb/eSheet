@@ -62,8 +62,10 @@ function renderInlineNode(text: string, key: string): React.ReactNode {
       </React.Fragment>
     );
   }
-  // Italic — -text- (no leading/trailing space to avoid conflicting with bullet `- `)
-  const italic = text.match(/^(.*?)-([^\s-][^-]*[^\s-]|[^\s-])-(.*)$/s);
+  // Italic — -text- (no leading/trailing space to avoid conflicting with bullet `- `).
+  // Digit-flanked hyphens are skipped so ISO dates (2026-01-31), ranges, and
+  // negative numbers from computed expressions are not mangled into <em>.
+  const italic = text.match(/^(.*?)(?<!\d)-([^\s-][^-]*[^\s-]|[^\s-])-(?!\d)(.*)$/s);
   if (italic) {
     return (
       <React.Fragment key={key}>
