@@ -63,15 +63,14 @@ export function resolveEffect(
   // Use resolveRequiredSeverity() to distinguish hard vs soft.
   //
   if (effect === 'required' || effect === 'readOnly') {
-    const staticOn =
+    const staticValue =
       effect === 'required'
         ? !!field.required // true for both `true` and `'soft'`
         : field.readOnly ?? false;
 
-    if (!staticOn) return false;
-
     const rules = field.rules?.filter((r) => r.effect === effect);
-    if (!rules || rules.length === 0) return true;
+    if (!rules || rules.length === 0) return staticValue;
+    // When rules exist, they take over — static value is ignored.
     return rules.some((rule) =>
       evaluateRule(rule, normalized, responses, dangerouslyAllowJS, contextData)
     );

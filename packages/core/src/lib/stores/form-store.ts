@@ -925,7 +925,7 @@ export function createFormStore(
       const { normalized, responses, dangerouslyAllowJS, contextData } = get();
       const node = normalized.byId[fieldId];
       if (!node) return false;
-      if (node.definition.required !== true) return false; // only hard required
+      if (node.definition.required === 'soft') return false; // soft is handled by isSoftRequired
       return resolveEffect(
         'required',
         node.definition,
