@@ -72,14 +72,6 @@ export interface EsheetRendererProps {
    *
    * The value is synced into the store on every render cycle when it changes.
    */
-  contextData?: Record<string, unknown>;
-  /**
-   * Enable touch-optimized mode with larger touch targets.
-   * - `true`: Always enable touch mode
-   * - `false`: Never enable touch mode (CSS media query still applies)
-   * - `'auto'`: Enable based on viewport width (<980px) via JavaScript
-   * - `undefined`: Rely on CSS media query only (default)
-   */
   touchMode?: boolean | 'auto';
   /**
    * Called when touch mode changes (via auto-detection or programmatic toggle).
@@ -225,7 +217,6 @@ const EsheetRendererInner = React.forwardRef<
     onReady,
     onSubmit,
     submitLabel = 'Submit',
-    contextData,
     formStore,
     uiStore,
     touchMode,
@@ -239,18 +230,12 @@ const EsheetRendererInner = React.forwardRef<
   const [pendingResponse, setPendingResponse] =
     React.useState<FormResponse | null>(null);
 
-  // Sync host-supplied context data into the store whenever it changes.
-  React.useEffect(() => {
-    formStore.getState().setContextData(contextData ?? {});
-  }, [formStore, contextData]);
-
   const handleSubmitClick = () => {
     const state = formStore.getState();
     const errors = validateForm(
       state.normalized,
       state.responses,
-      state.dangerouslyAllowJS,
-      state.contextData
+      state.dangerouslyAllowJS
     );
     const hardErrors = errors.filter((e) => e.severity !== 'soft');
     if (hardErrors.length > 0) return; // hard errors — field-level UI handles display

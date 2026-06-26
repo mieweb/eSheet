@@ -784,5 +784,57 @@ describe('createFormStore', () => {
       const def = store.getState().hydrateDefinition();
       expect(def.fields).toEqual([]);
     });
+
+    it('round-trips title and description', () => {
+      store = createFormStore({
+        id: 'test-form',
+        title: 'My Form',
+        description: 'A test form',
+        fields: [],
+      });
+      const def = store.getState().hydrateDefinition();
+      expect(def.title).toBe('My Form');
+      expect(def.description).toBe('A test form');
+    });
+
+    it('preserves title and description after loadDefinition', () => {
+      store = createFormStore();
+      store.getState().loadDefinition({
+        id: 'test-form',
+        title: 'Loaded Title',
+        description: 'Loaded Desc',
+        fields: [],
+      });
+      const def = store.getState().hydrateDefinition();
+      expect(def.title).toBe('Loaded Title');
+      expect(def.description).toBe('Loaded Desc');
+    });
+
+    it('omits title and description when undefined', () => {
+      store = createFormStore(form([]));
+      const def = store.getState().hydrateDefinition();
+      expect('title' in def).toBe(false);
+      expect('description' in def).toBe(false);
+    });
+
+    it('setFormTitle and setFormDescription update state', () => {
+      store = createFormStore(form([]));
+      store.getState().setFormTitle('Updated');
+      store.getState().setFormDescription('Updated desc');
+      const def = store.getState().hydrateDefinition();
+      expect(def.title).toBe('Updated');
+      expect(def.description).toBe('Updated desc');
+    });
+
+    it('setFormTitle with undefined clears title from output', () => {
+      store = createFormStore({
+        id: 'test-form',
+        title: 'To Remove',
+        fields: [],
+      });
+      store.getState().setFormTitle(undefined);
+      const def = store.getState().hydrateDefinition();
+      expect('title' in def).toBe(false);
+    });
   });
 });

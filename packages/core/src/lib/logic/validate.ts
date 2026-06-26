@@ -50,19 +50,12 @@ export interface ValidationError {
 export function validateForm(
   normalized: NormalizedDefinition,
   responses: FieldResponseMap,
-  dangerouslyAllowJS?: boolean,
-  contextData?: Record<string, unknown>
+  dangerouslyAllowJS?: boolean
 ): ValidationError[] {
   const errors: ValidationError[] = [];
   for (const fieldId of Object.keys(normalized.byId)) {
     errors.push(
-      ...validateField(
-        fieldId,
-        normalized,
-        responses,
-        dangerouslyAllowJS,
-        contextData
-      )
+      ...validateField(fieldId, normalized, responses, dangerouslyAllowJS)
     );
   }
   return errors;
@@ -91,8 +84,7 @@ export function validateField(
   fieldId: string,
   normalized: NormalizedDefinition,
   responses: FieldResponseMap,
-  dangerouslyAllowJS?: boolean,
-  contextData?: Record<string, unknown>
+  dangerouslyAllowJS?: boolean
 ): ValidationError[] {
   const node = normalized.byId[fieldId];
   if (!node) return [];
@@ -109,8 +101,7 @@ export function validateField(
       fieldId,
       normalized,
       responses,
-      dangerouslyAllowJS,
-      contextData
+      dangerouslyAllowJS
     )
   )
     return [];
@@ -129,8 +120,7 @@ export function validateField(
       definition,
       normalized,
       responses,
-      dangerouslyAllowJS,
-      contextData
+      dangerouslyAllowJS
     ) &&
     isResponseEmpty(response)
   ) {

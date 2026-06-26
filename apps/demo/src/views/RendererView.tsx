@@ -53,32 +53,6 @@ const schemaModules = import.meta.glob('../schemas/*.json', {
   eager: true,
 }) as Record<string, { default?: FormDefinition } | FormDefinition>;
 
-const contextModules = import.meta.glob('../schemas/*.context.json', {
-  eager: true,
-}) as Record<
-  string,
-  { default?: Record<string, unknown> } | Record<string, unknown>
->;
-
-/** Map of schema filename → injected context data, e.g. 'js-context.json' → { patient: {...}, ... } */
-const CONTEXT_BY_SCHEMA: Readonly<Record<string, Record<string, unknown>>> =
-  Object.fromEntries(
-    Object.entries(contextModules).map(
-      ([path, mod]): [string, Record<string, unknown>] => {
-        const contextFileName = path.split('/').pop() ?? path; // e.g. 'js-context.context.json'
-        const schemaFileName = contextFileName.replace(
-          /\.context\.json$/i,
-          '.json'
-        ); // 'js-context.json'
-        const data =
-          typeof mod === 'object' && mod !== null && 'default' in mod
-            ? mod.default
-            : (mod as Record<string, unknown>);
-        return [schemaFileName, (data ?? {}) as Record<string, unknown>];
-      }
-    )
-  );
-
 const TEST_SCHEMAS: readonly SchemaOption[] = Object.entries(schemaModules)
   .filter(([path]) => !path.endsWith('.context.json'))
   .map(([path, mod]) => {
@@ -202,9 +176,6 @@ export function RendererView() {
   };
 
   const hasForm = rawInput != null;
-  const activeContext = selectedSchema
-    ? CONTEXT_BY_SCHEMA[selectedSchema] ?? null
-    : null;
 
   return (
     <>
@@ -344,13 +315,7 @@ export function RendererView() {
           ) : (
             <>
               <TabsContent value="form">
-                <div
-                  className={`pt-6 px-4 ${
-                    activeContext
-                      ? 'max-w-7xl mx-auto flex gap-6 items-start'
-                      : 'max-w-4xl mx-auto'
-                  }`}
-                >
+                <div className="pt-6 px-4 max-w-4xl mx-auto">
                   <div className="flex-1 min-w-0">
                     <EsheetRenderer
                       key={formKey}
@@ -358,7 +323,6 @@ export function RendererView() {
                       ref={rendererRef}
                       allowDangerousJS={true}
                       touchMode="auto"
-                      contextData={activeContext ?? undefined}
                       onTouchModeChange={setTouchMode}
                       onRendererToolsReady={onRendererToolsReady}
                       onReady={() => {
@@ -370,23 +334,6 @@ export function RendererView() {
                       }}
                     />
                   </div>
-
-                  {activeContext && (
-                    <div className="max-w-96 shrink-0 sticky top-28 self-start">
-                      <Card>
-                        <CardHeader className="py-3 px-4">
-                          <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                            Injected Context
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="px-4 pb-4 pt-0">
-                          <pre className="text-xs overflow-auto max-h-[70vh] leading-relaxed">
-                            {JSON.stringify(activeContext, null, 2)}
-                          </pre>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  )}
                 </div>
               </TabsContent>
 

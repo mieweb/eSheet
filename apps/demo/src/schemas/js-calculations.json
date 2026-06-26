@@ -6,7 +6,7 @@
     {
       "id": "intro",
       "fieldType": "html",
-      "htmlContent": "<h2 style='margin:0 0 8px'>JS Calculations Test Suite</h2><p>Tests every <code>calculation</code> pattern: arithmetic, strings, ternary, Math helpers, aggregates, date math, null-safety, and context data. All derived fields are <em>read-only output</em> — fill in the input fields and watch them update live.</p>",
+      "htmlContent": "<h2 style='margin:0 0 8px'>JS Calculations Test Suite</h2><p>Tests every <code>calculation</code> pattern: arithmetic, strings, ternary, Math helpers, aggregates, date math, and null-safety. All derived fields are <em>read-only output</em> — fill in the input fields and watch them update live.</p>",
       "iframeHeight": 100
     },
     {

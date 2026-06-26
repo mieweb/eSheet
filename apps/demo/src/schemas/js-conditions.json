@@ -6,7 +6,7 @@
     {
       "id": "intro",
       "fieldType": "html",
-      "htmlContent": "<h2 style='margin:0 0 8px'>JS Conditions Test Suite</h2><p>Tests every <code>conditionType: 'js'</code> pattern: comparisons, logical operators, string methods, regex, array checks, cross-field comparisons, null guards, and context data. Fields in each section only appear when the JS condition passes.</p>",
+      "htmlContent": "<h2 style='margin:0 0 8px'>JS Conditions Test Suite</h2><p>Tests every <code>conditionType: 'js'</code> pattern: comparisons, logical operators, string methods, regex, array checks, cross-field comparisons, and null guards. Fields in each section only appear when the JS condition passes.</p>",
       "iframeHeight": 100
     },
 

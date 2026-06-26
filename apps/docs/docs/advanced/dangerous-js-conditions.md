@@ -11,11 +11,11 @@ eSheet supports three condition modes for driving field visibility, enabled stat
 
 ## Condition Modes Overview
 
-| Mode       | `conditionType` | Requires dangerous JS? | When to use                                              |
-| ---------- | --------------- | ---------------------- | -------------------------------------------------------- |
-| Field      | `'field'`       | No                     | Direct comparison against another field's value          |
-| Expression | `'expression'`  | No                     | Arithmetic or boolean logic across multiple fields       |
-| JS         | `'js'`          | **Yes**                | Complex logic, date windows, external data via `context` |
+| Mode       | `conditionType` | Requires dangerous JS? | When to use                                        |
+| ---------- | --------------- | ---------------------- | -------------------------------------------------- |
+| Field      | `'field'`       | No                     | Direct comparison against another field's value    |
+| Expression | `'expression'`  | No                     | Arithmetic or boolean logic across multiple fields |
+| JS         | `'js'`          | **Yes**                | Complex logic, date windows, arbitrary JavaScript  |
 
 All three modes are evaluated inside a `ConditionalRule`:
 
@@ -150,111 +150,15 @@ A flat `Record<string, unknown>` — same shape as [calculations](./dangerous-js
 | `boolean`                       | Option value string (`'Yes'` / `'No'` by default)    |
 | All others                      | Raw `answer` string                                  |
 
-#### `context`
-
-A `Record<string, unknown>` populated by the host app via the `contextData` prop. Defaults to `{}`.
-
-```js
-// Inside a JS condition expression:
-context['HPI Pain Assessment'] === 'Yes';
-context.patient.sex === 'M';
-Number(context['Risk score total'] ?? 0) > 5;
-```
-
 The internal call signature is:
 
 ```js
-new Function('responses', 'context', 'return ' + expression)(data, ctx);
+new Function('responses', 'return ' + expression)(data);
 ```
-
----
-
-## `contextData` Prop
-
-Pass `contextData` to `<EsheetRenderer>` to populate the `context` variable inside all JS conditions:
-
-```tsx
-<EsheetRenderer
-  formDataInput={schema}
-  allowDangerousJS={true}
-  contextData={{
-    // Named EHR observations (replaces observationValueByName / observationDisplay)
-    'HPI Pain Assessment': 'Yes',
-    'DOT Have you ever had surgery': 'No',
-    'Risk assessment total': 7,
-    // Patient chart context (replaces dashjs_patient.sex, etc.)
-    patient: {
-      sex: 'M',
-      dob: '1985-03-12',
-    },
-  }}
-/>
-```
-
-`contextData` is synced into the store on every render. Any condition that references `context` re-evaluates automatically when `contextData` changes.
-
-:::note Only evaluated when `dangerouslyAllowJS` is active
-`context` is always passed as an argument, but it has no effect unless both `allowDangerousJS={true}` (host) and `dangerouslyAllowJS: true` (schema) are set.
-:::
 
 ---
 
 ## Examples
-
-### Show a field if another named observation equals a value
-
-Replaces legacy `observationDisplay('DOT Have you ever had surgery', 'Yes')`:
-
-```json
-{
-  "conditionType": "js",
-  "expression": "context['DOT Have you ever had surgery'] === 'Yes'"
-}
-```
-
-### Show if a value is in a set
-
-Replaces legacy `jQuery.inArray(observationValueByName('HPI Pain Assessment'), ['Yes','Unknown','High']) > -1` and `miearray.inSet(...)`:
-
-```json
-{
-  "conditionType": "js",
-  "expression": "['Yes', 'Unknown', 'High', 'Low', 'Medium'].includes(context['HPI Pain Assessment'])"
-}
-```
-
-### Show based on patient demographics
-
-Replaces legacy `dashjs_patient.sex == 'M'`:
-
-```json
-{
-  "conditionType": "js",
-  "expression": "context.patient?.sex === 'M'"
-}
-```
-
-### Show if a numeric observation is between two values
-
-Replaces legacy `obsNameValBetween('Risk assessment total', 3, 10)`:
-
-```json
-{
-  "conditionType": "js",
-  "expression": "Number(context['Risk assessment total'] ?? 0) >= 3 && Number(context['Risk assessment total'] ?? 0) <= 10"
-}
-```
-
-### Show if a numeric observation is in a set
-
-Replaces legacy `obsNameValInSet('Risk assessment total', 1, 3, 5, 7, 9)`:
-
-```json
-{
-  "conditionType": "js",
-  "expression": "[1, 3, 5, 7, 9].includes(Number(context['Risk assessment total']))"
-}
-```
 
 ### Date window — PPD read date
 
@@ -335,20 +239,16 @@ Replaces legacy `observationValueByName('name') && observationValueByName('name'
 
 ## Legacy Migration Reference
 
-| Legacy function / pattern             | eSheet equivalent                                                                     |
-| ------------------------------------- | ------------------------------------------------------------------------------------- |
-| `observationDisplay('name', 'value')` | `context['name'] === 'value'` (inject via `contextData`)                              |
-| `observationValueByName('name')`      | `context['name']` (inject via `contextData`) or `responses['field-id']` (within-form) |
-| `jQuery.inArray(val, arr) > -1`       | `arr.includes(val)` in JS condition                                                   |
-| `miearray.inSet(val, arr)`            | `arr.includes(val)` in JS condition                                                   |
-| `obsNameValBetween('name', lo, hi)`   | `Number(context['name'] ?? 0) >= lo && Number(context['name'] ?? 0) <= hi`            |
-| `obsNameValInSet('name', ...vals)`    | `[...vals].includes(Number(context['name']))`                                         |
-| `dashjs_patient.sex == 'M'`           | `context.patient?.sex === 'M'` (inject `patient` via `contextData`)                   |
-| `todayIsAfter('date')`                | `new Date() > new Date('date')`                                                       |
-| `todayIsBefore('date')`               | `new Date() < new Date('date')`                                                       |
-| `todayIsBetween('d1', 'd2')`          | `new Date() >= new Date('d1') && new Date() <= new Date('d2')`                        |
-| `todayIsDate('date')`                 | `new Date().toDateString() === new Date('date').toDateString()`                       |
-| Moment.js `isBetween`                 | Native `Date` arithmetic — see PPD date window example above                          |
+| Legacy function / pattern        | eSheet equivalent                                               |
+| -------------------------------- | --------------------------------------------------------------- |
+| `observationValueByName('name')` | `responses['field-id']` (within-form field reference)           |
+| `jQuery.inArray(val, arr) > -1`  | `arr.includes(val)` in JS condition                             |
+| `miearray.inSet(val, arr)`       | `arr.includes(val)` in JS condition                             |
+| `todayIsAfter('date')`           | `new Date() > new Date('date')`                                 |
+| `todayIsBefore('date')`          | `new Date() < new Date('date')`                                 |
+| `todayIsBetween('d1', 'd2')`     | `new Date() >= new Date('d1') && new Date() <= new Date('d2')`  |
+| `todayIsDate('date')`            | `new Date().toDateString() === new Date('date').toDateString()` |
+| Moment.js `isBetween`            | Native `Date` arithmetic — see PPD date window example above    |
 
 ---
 

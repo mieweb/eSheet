@@ -49,8 +49,7 @@ export function resolveEffect(
   },
   normalized: NormalizedDefinition,
   responses: FieldResponseMap,
-  dangerouslyAllowJS?: boolean,
-  contextData?: Record<string, unknown>
+  dangerouslyAllowJS?: boolean
 ): boolean {
   // For effects backed by a static value on the field definition
   // (required, readOnly), the static value is the gatekeeper:
@@ -72,7 +71,7 @@ export function resolveEffect(
     if (!rules || rules.length === 0 || !staticValue) return staticValue;
     // When toggle is ON and rules exist, rules narrow down when effect applies.
     return rules.some((rule) =>
-      evaluateRule(rule, normalized, responses, dangerouslyAllowJS, contextData)
+      evaluateRule(rule, normalized, responses, dangerouslyAllowJS)
     );
   }
 
@@ -80,7 +79,7 @@ export function resolveEffect(
   const rules = field.rules?.filter((r) => r.effect === effect);
   if (!rules || rules.length === 0) return EFFECT_DEFAULTS[effect];
   return rules.some((rule) =>
-    evaluateRule(rule, normalized, responses, dangerouslyAllowJS, contextData)
+    evaluateRule(rule, normalized, responses, dangerouslyAllowJS)
   );
 }
 
@@ -92,8 +91,7 @@ export function isFieldEffectivelyActive(
   fieldId: string,
   normalized: NormalizedDefinition,
   responses: FieldResponseMap,
-  dangerouslyAllowJS?: boolean,
-  contextData?: Record<string, unknown>
+  dangerouslyAllowJS?: boolean
 ): boolean {
   let currentId: string | null = fieldId;
 
@@ -108,8 +106,7 @@ export function isFieldEffectivelyActive(
         node.definition,
         normalized,
         responses,
-        dangerouslyAllowJS,
-        contextData
+        dangerouslyAllowJS
       )
     ) {
       return false;
@@ -121,8 +118,7 @@ export function isFieldEffectivelyActive(
         node.definition,
         normalized,
         responses,
-        dangerouslyAllowJS,
-        contextData
+        dangerouslyAllowJS
       )
     ) {
       return false;

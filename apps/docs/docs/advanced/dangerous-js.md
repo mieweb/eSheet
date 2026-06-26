@@ -63,11 +63,11 @@ Host permission is sealed when the form store is created. `store.setState({ dang
 
 JS expressions run via `new Function`. They are **not sandboxed** — code has access to the browser's global scope:
 
-| Always in scope                                  | Requires host injection                                                                                                                   |
-| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `responses` — within-form field values           | `context` — host-supplied EHR data, named observations, patient demographics (see [contextData](./dangerous-js-calculations#contextdata)) |
-| `Date`, `Math`, `JSON`, `parseInt`, `parseFloat` | —                                                                                                                                         |
-| All `window` / `globalThis` properties           | —                                                                                                                                         |
+| In scope                                         |
+| ------------------------------------------------ |
+| `responses` — within-form field values           |
+| `Date`, `Math`, `JSON`, `parseInt`, `parseFloat` |
+| All `window` / `globalThis` properties           |
 
 :::danger Security Warning
 These features execute arbitrary JavaScript at runtime. Enable dangerous JS only when all schema content is fully trusted and controlled by your organization. Do not enable it for user-authored or externally supplied schemas.
@@ -107,13 +107,12 @@ These features execute arbitrary JavaScript at runtime. Enable dangerous JS only
 
 ## Choosing The Right Mode
 
-| Use case                                           | Recommended feature                                                                                        |
-| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Compute a derived value from other fields          | [Calculation](./dangerous-js-calculations)                                                                 |
-| Reference EHR observations or patient data         | [Calculation](./dangerous-js-calculations) or [JS Condition](./dangerous-js-conditions) with `contextData` |
-| Simple arithmetic / field comparisons              | [Expression Condition](./dangerous-js-conditions#expression-conditions-conditiontype-expression)           |
-| Complex rule unsupported by expression syntax      | [JS Condition](./dangerous-js-conditions)                                                                  |
-| Field-to-field comparison without helper functions | [Field Condition](../conditional-logic)                                                                    |
+| Use case                                           | Recommended feature                                                                              |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Compute a derived value from other fields          | [Calculation](./dangerous-js-calculations)                                                       |
+| Simple arithmetic / field comparisons              | [Expression Condition](./dangerous-js-conditions#expression-conditions-conditiontype-expression) |
+| Complex rule unsupported by expression syntax      | [JS Condition](./dangerous-js-conditions)                                                        |
+| Field-to-field comparison without helper functions | [Field Condition](../conditional-logic)                                                          |
 
 ---
 
@@ -124,14 +123,11 @@ These features execute arbitrary JavaScript at runtime. Enable dangerous JS only
 | `EsheetRenderer` prop `allowDangerousJS` | `@esheet/renderer` | **Host gate** — must be `true` for JS to run in the renderer          |
 | `EsheetBuilder` prop `allowDangerousJS`  | `@esheet/builder`  | **Host gate** — must be `true` for JS to run in the builder           |
 | `RenderTreeOptions.allowDangerousJS`     | `@esheet/renderer` | **Host gate** for the standalone `renderTree()` function              |
-| `EsheetRenderer` prop `contextData`      | `@esheet/renderer` | Host-supplied map exposed as `context` inside JS expressions          |
 | `FormDefinition.dangerouslyAllowJS`      | `@esheet/core`     | Schema-level opt-in — required alongside host opt-in                  |
 | `BaseFieldDefinition.calculation`        | `@esheet/core`     | JS expression string that auto-sets a field's value                   |
 | `conditionType: 'js'`                    | `@esheet/core`     | Condition type for arbitrary JS rules                                 |
-| `evaluateJsExpression()`                 | `@esheet/core`     | Internal evaluator — runs expression with `responses` and `context`   |
+| `evaluateJsExpression()`                 | `@esheet/core`     | Internal evaluator — runs expression with `responses`                 |
 | `FormState.dangerouslyAllowJS`           | `@esheet/core`     | Reactive state — reflects `schema.dangerouslyAllowJS && hostAllowsJS` |
-| `FormState.contextData`                  | `@esheet/core`     | Reactive state — current host-supplied context map                    |
-| `FormState.setContextData()`             | `@esheet/core`     | Action — replaces the context map and triggers re-evaluation          |
 | `FormState.setDangerouslyAllowJS()`      | `@esheet/core`     | Toggle the flag — clamped by host permission                          |
 
 eSheet includes an optional advanced mode that allows runtime JavaScript for:
