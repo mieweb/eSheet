@@ -3,7 +3,7 @@ import { Editor, type Monaco } from '@monaco-editor/react';
 import YAML from 'js-yaml';
 import {
   formatZodValidationError,
-  formDefinitionJSONSchema,
+  getFormDefinitionJSONSchema,
   formDefinitionSchema,
   type FormStore,
   type UIStore,
@@ -143,7 +143,7 @@ export function CodeView({ form, ui }: CodeViewProps) {
         {
           uri: FORM_SCHEMA_URI,
           fileMatch: ['*'],
-          schema: formDefinitionJSONSchema,
+          schema: getFormDefinitionJSONSchema(),
         },
       ],
     });

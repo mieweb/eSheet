@@ -1015,6 +1015,7 @@ describe('comprehensive conditions integration', () => {
         id: 'target',
         fieldType: 'text',
         question: 'T',
+        required: true,
         rules: [fieldRule('required', 'drv-boolean', 'equals', 'drv-bool-y')],
       };
       const { normalized, field } = setup(f);
@@ -1027,6 +1028,7 @@ describe('comprehensive conditions integration', () => {
         id: 'target',
         fieldType: 'text',
         question: 'T',
+        required: true,
         rules: [
           fieldRule('visible', 'drv-radio', 'notEmpty'),
           exprRule('required', '{drv-slider} > 5'),
@@ -1330,7 +1332,6 @@ describe('comprehensive conditions integration', () => {
       const f: FieldDefinition = {
         id: 'rc-display-conditional',
         fieldType: 'display',
-        question: 'Display',
         content: 'Content with {drv-slider}',
         rules: [exprRule('visible', '{drv-slider} > 5 && {drv-rating} > 3')],
       };
@@ -1597,7 +1598,6 @@ describe('comprehensive conditions integration', () => {
       {
         id: 'ft-display',
         fieldType: 'display',
-        question: 'T',
         content: 'text',
       },
       { id: 'ft-signature', fieldType: 'signature', question: 'T' },

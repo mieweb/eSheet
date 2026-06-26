@@ -128,6 +128,7 @@ describe('EsheetRenderer', () => {
         fieldId: 'q1',
         rule: 'required',
         message: 'This field is required',
+        severity: 'hard',
       },
     ]);
     expect(result.response).toBeNull();

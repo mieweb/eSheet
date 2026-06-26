@@ -9,6 +9,7 @@ import type {
   SectionFieldDefinition,
   RadioFieldDefinition,
   SingleMatrixFieldDefinition,
+  TextFieldDefinition,
 } from '../types.js';
 
 // ---------------------------------------------------------------------------
@@ -207,9 +208,12 @@ describe('createFormStore', () => {
         const id = store.getState().addField('text', {
           patch: { question: 'Hello' },
         });
-        expect(store.getState().normalized.byId[id!].definition.question).toBe(
-          'Hello'
-        );
+        expect(
+          (
+            store.getState().normalized.byId[id!]
+              .definition as TextFieldDefinition
+          ).question
+        ).toBe('Hello');
       });
 
       it('returns null for unknown field type', () => {
@@ -237,11 +241,14 @@ describe('createFormStore', () => {
       it('prefills question and option values for choice fields', () => {
         store = createFormStore(form([]));
         const id = store.getState().addField('radio');
-        const def = store.getState().normalized.byId[id!].definition;
+        const def = store.getState().normalized.byId[id!]
+          .definition as RadioFieldDefinition;
         expect(def.question).toBe('Radio question');
-        expect(
-          (def as RadioFieldDefinition).options?.map((o) => o.value)
-        ).toEqual(['Option 1', 'Option 2', 'Option 3']);
+        expect(def.options?.map((o) => o.value)).toEqual([
+          'Option 1',
+          'Option 2',
+          'Option 3',
+        ]);
       });
 
       it('uses type-specific option defaults for boolean fields', () => {
@@ -264,11 +271,10 @@ describe('createFormStore', () => {
             ],
           },
         });
-        const def = store.getState().normalized.byId[id!].definition;
+        const def = store.getState().normalized.byId[id!]
+          .definition as RadioFieldDefinition;
         expect(def.question).toBe('Preferred color?');
-        expect(
-          (def as RadioFieldDefinition).options?.map((o) => o.value)
-        ).toEqual(['Red', 'Blue']);
+        expect(def.options?.map((o) => o.value)).toEqual(['Red', 'Blue']);
       });
 
       it('auto-generates rows and columns for matrix fields', () => {
@@ -302,9 +308,12 @@ describe('createFormStore', () => {
         expect(store.getState().updateField('q1', { question: 'New' })).toBe(
           true
         );
-        expect(store.getState().normalized.byId['q1'].definition.question).toBe(
-          'New'
-        );
+        expect(
+          (
+            store.getState().normalized.byId['q1']
+              .definition as TextFieldDefinition
+          ).question
+        ).toBe('New');
       });
 
       it('renames field ID', () => {
@@ -609,6 +618,7 @@ describe('createFormStore', () => {
             rules: [enableRule('trigger', 'yes')],
           }),
           field('q3', 'text', {
+            required: true,
             rules: [requiredRule('trigger', 'yes')],
           }),
         ])
@@ -773,6 +783,58 @@ describe('createFormStore', () => {
       store = createFormStore();
       const def = store.getState().hydrateDefinition();
       expect(def.fields).toEqual([]);
+    });
+
+    it('round-trips title and description', () => {
+      store = createFormStore({
+        id: 'test-form',
+        title: 'My Form',
+        description: 'A test form',
+        fields: [],
+      });
+      const def = store.getState().hydrateDefinition();
+      expect(def.title).toBe('My Form');
+      expect(def.description).toBe('A test form');
+    });
+
+    it('preserves title and description after loadDefinition', () => {
+      store = createFormStore();
+      store.getState().loadDefinition({
+        id: 'test-form',
+        title: 'Loaded Title',
+        description: 'Loaded Desc',
+        fields: [],
+      });
+      const def = store.getState().hydrateDefinition();
+      expect(def.title).toBe('Loaded Title');
+      expect(def.description).toBe('Loaded Desc');
+    });
+
+    it('omits title and description when undefined', () => {
+      store = createFormStore(form([]));
+      const def = store.getState().hydrateDefinition();
+      expect('title' in def).toBe(false);
+      expect('description' in def).toBe(false);
+    });
+
+    it('setFormTitle and setFormDescription update state', () => {
+      store = createFormStore(form([]));
+      store.getState().setFormTitle('Updated');
+      store.getState().setFormDescription('Updated desc');
+      const def = store.getState().hydrateDefinition();
+      expect(def.title).toBe('Updated');
+      expect(def.description).toBe('Updated desc');
+    });
+
+    it('setFormTitle with undefined clears title from output', () => {
+      store = createFormStore({
+        id: 'test-form',
+        title: 'To Remove',
+        fields: [],
+      });
+      store.getState().setFormTitle(undefined);
+      const def = store.getState().hydrateDefinition();
+      expect('title' in def).toBe(false);
     });
   });
 });

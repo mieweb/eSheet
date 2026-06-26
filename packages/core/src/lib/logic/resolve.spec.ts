@@ -198,7 +198,8 @@ describe('resolveEffect', () => {
     const target = def('target');
     const normalized = norm([def('q1'), target]);
 
-    it('overrides static required=false when rule passes', () => {
+    it('returns false when required=false regardless of rule result', () => {
+      // Toggle OFF → rules are ignored; static false is the gate.
       const field = def('q1', {
         required: false,
         rules: [makeRule('required', 'target', 'yes')],
@@ -207,7 +208,7 @@ describe('resolveEffect', () => {
         resolveEffect('required', field, normalized, {
           target: { answer: 'yes' },
         })
-      ).toBe(true);
+      ).toBe(false);
     });
 
     it('returns false when static required=true but required rule fails', () => {

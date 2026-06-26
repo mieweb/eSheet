@@ -12,6 +12,7 @@ export const MultiTextField = React.memo(function MultiTextField({
   isPreview,
   isEnabled,
   isRequired,
+  isSoftRequired,
   response,
   onUpdate,
   onResponse,
@@ -24,11 +25,17 @@ export const MultiTextField = React.memo(function MultiTextField({
   if (isPreview) {
     return (
       <div className="multitext-field-preview ms:text-mstext ms:space-y-3 ms:pb-4">
-        {(def.question || isRequired) && (
+        {(def.question || isRequired || isSoftRequired) && (
           <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
             {def.question || 'Question'}
-            {isRequired && (
-              <span className="ms:text-msdanger ms:ml-0.5">*</span>
+            {(isRequired || isSoftRequired) && (
+              <span
+                className={`ms:ml-0.5 ${
+                  isSoftRequired ? 'ms:text-mswarning' : 'ms:text-msdanger'
+                }`}
+              >
+                *
+              </span>
             )}
           </div>
         )}

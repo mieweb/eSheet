@@ -19,6 +19,7 @@ const EFFECT_DEFAULTS: Record<ConditionalEffect, boolean> = {
   visible: true,
   enable: true,
   required: false,
+  readOnly: false,
 };
 
 /**
@@ -42,19 +43,44 @@ const EFFECT_DEFAULTS: Record<ConditionalEffect, boolean> = {
  */
 export function resolveEffect(
   effect: ConditionalEffect,
-  field: Pick<FieldDefinition, 'rules' | 'required'>,
+  field: Pick<FieldDefinition, 'rules'> & {
+    required?: boolean | 'soft';
+    readOnly?: boolean;
+  },
   normalized: NormalizedDefinition,
-  responses: FieldResponseMap
+  responses: FieldResponseMap,
+  dangerouslyAllowJS?: boolean
 ): boolean {
-  const rules = field.rules?.filter((r) => r.effect === effect);
+  // For effects backed by a static value on the field definition
+  // (required, readOnly), the static value is the gatekeeper:
+  //
+  //   toggle OFF  → effect never applies, rules are ignored
+  //   toggle ON + no rules → effect always applies
+  //   toggle ON + rules    → effect applies only when any rule matches
+  //
+  // Note: for 'required', both true (hard) and 'soft' count as ON.
+  // Use resolveRequiredSeverity() to distinguish hard vs soft.
+  //
+  if (effect === 'required' || effect === 'readOnly') {
+    const staticValue =
+      effect === 'required'
+        ? !!field.required // true for both `true` and `'soft'`
+        : field.readOnly ?? false;
 
-  if (!rules || rules.length === 0) {
-    return effect === 'required'
-      ? field.required ?? false
-      : EFFECT_DEFAULTS[effect];
+    const rules = field.rules?.filter((r) => r.effect === effect);
+    if (!rules || rules.length === 0 || !staticValue) return staticValue;
+    // When toggle is ON and rules exist, rules narrow down when effect applies.
+    return rules.some((rule) =>
+      evaluateRule(rule, normalized, responses, dangerouslyAllowJS)
+    );
   }
 
-  return rules.some((rule) => evaluateRule(rule, normalized, responses));
+  // visible / enable — no static field property; rules fully control, default from EFFECT_DEFAULTS
+  const rules = field.rules?.filter((r) => r.effect === effect);
+  if (!rules || rules.length === 0) return EFFECT_DEFAULTS[effect];
+  return rules.some((rule) =>
+    evaluateRule(rule, normalized, responses, dangerouslyAllowJS)
+  );
 }
 
 /**
@@ -64,7 +90,8 @@ export function resolveEffect(
 export function isFieldEffectivelyActive(
   fieldId: string,
   normalized: NormalizedDefinition,
-  responses: FieldResponseMap
+  responses: FieldResponseMap,
+  dangerouslyAllowJS?: boolean
 ): boolean {
   let currentId: string | null = fieldId;
 
@@ -73,11 +100,27 @@ export function isFieldEffectivelyActive(
       normalized.byId[currentId];
     if (!node) return false;
 
-    if (!resolveEffect('visible', node.definition, normalized, responses)) {
+    if (
+      !resolveEffect(
+        'visible',
+        node.definition,
+        normalized,
+        responses,
+        dangerouslyAllowJS
+      )
+    ) {
       return false;
     }
 
-    if (!resolveEffect('enable', node.definition, normalized, responses)) {
+    if (
+      !resolveEffect(
+        'enable',
+        node.definition,
+        normalized,
+        responses,
+        dangerouslyAllowJS
+      )
+    ) {
       return false;
     }
 
@@ -85,4 +128,19 @@ export function isFieldEffectivelyActive(
   }
 
   return true;
+}
+
+/**
+ * Resolve the severity of the `required` effect for a field.
+ *
+ * Returns `'soft'` when `field.required === 'soft'`, otherwise `'hard'`.
+ * Only meaningful to call after confirming the field is actually required
+ * (via {@link resolveEffect}).
+ */
+export function resolveRequiredSeverity(
+  field: Pick<FieldDefinition, 'required'>
+): 'hard' | 'soft' {
+  return (field as { required?: boolean | 'soft' }).required === 'soft'
+    ? 'soft'
+    : 'hard';
 }
