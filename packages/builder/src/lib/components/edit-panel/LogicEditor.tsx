@@ -312,7 +312,7 @@ function RequiredEffectSection({
           </div>
         </div>
         {/* + Rule button */}
-        {otherFields.length > 0 && (
+        {otherFields.length > 0 && reqState !== 'off' && (
           <button
             type="button"
             onClick={onAddRule}

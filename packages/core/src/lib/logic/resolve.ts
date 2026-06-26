@@ -69,8 +69,8 @@ export function resolveEffect(
         : field.readOnly ?? false;
 
     const rules = field.rules?.filter((r) => r.effect === effect);
-    if (!rules || rules.length === 0) return staticValue;
-    // When rules exist, they take over — static value is ignored.
+    if (!rules || rules.length === 0 || !staticValue) return staticValue;
+    // When toggle is ON and rules exist, rules narrow down when effect applies.
     return rules.some((rule) =>
       evaluateRule(rule, normalized, responses, dangerouslyAllowJS, contextData)
     );

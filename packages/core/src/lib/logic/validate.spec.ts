@@ -305,6 +305,7 @@ describe('validateField', () => {
     it('required when rule passes and response is empty', () => {
       const trigger = def('trigger', 'text');
       const field = def('q1', 'text', {
+        required: true,
         rules: [requiredRule('trigger', 'yes')],
       });
       const normalized = norm([trigger, field]);
@@ -317,6 +318,7 @@ describe('validateField', () => {
     it('not required when rule fails', () => {
       const trigger = def('trigger', 'text');
       const field = def('q1', 'text', {
+        required: true,
         rules: [requiredRule('trigger', 'yes')],
       });
       const normalized = norm([trigger, field]);

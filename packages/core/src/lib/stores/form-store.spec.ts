@@ -618,6 +618,7 @@ describe('createFormStore', () => {
             rules: [enableRule('trigger', 'yes')],
           }),
           field('q3', 'text', {
+            required: true,
             rules: [requiredRule('trigger', 'yes')],
           }),
         ])

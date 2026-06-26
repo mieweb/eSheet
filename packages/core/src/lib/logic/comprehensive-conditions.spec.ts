@@ -1015,6 +1015,7 @@ describe('comprehensive conditions integration', () => {
         id: 'target',
         fieldType: 'text',
         question: 'T',
+        required: true,
         rules: [fieldRule('required', 'drv-boolean', 'equals', 'drv-bool-y')],
       };
       const { normalized, field } = setup(f);
@@ -1027,6 +1028,7 @@ describe('comprehensive conditions integration', () => {
         id: 'target',
         fieldType: 'text',
         question: 'T',
+        required: true,
         rules: [
           fieldRule('visible', 'drv-radio', 'notEmpty'),
           exprRule('required', '{drv-slider} > 5'),
