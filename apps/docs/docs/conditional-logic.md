@@ -59,7 +59,7 @@ interface Condition {
 
 ### Expression Conditions
 
-Evaluate a custom JavaScript-like expression:
+Evaluate a custom JavaScript-like expression using eSheet's safe evaluator. No `new Function` — works even when dangerous JS is disabled.
 
 ```typescript
 interface Condition {
@@ -68,20 +68,37 @@ interface Condition {
 }
 ```
 
+### JS Conditions
+
+Evaluate arbitrary JavaScript. Requires both the host and schema to opt in via `allowDangerousJS` and `dangerouslyAllowJS`. When not opted in, JS conditions evaluate as `false`.
+
+```typescript
+interface Condition {
+  conditionType: 'js';
+  expression: string; // arbitrary JS, receives `responses` argument
+}
+```
+
+See [Dangerous JS](./advanced/dangerous-js) for full setup requirements and security guidance.
+
 ## Operators
 
-| Operator             | Description             | Works with                    |
-| -------------------- | ----------------------- | ----------------------------- |
-| `equals`             | Exact match             | Text, selection value         |
-| `notEquals`          | Not equal               | Text, selection value         |
-| `contains`           | Text contains substring | Text answers                  |
-| `includes`           | Array includes value    | Multi-select (check, ranking) |
-| `empty`              | Field has no answer     | All field types               |
-| `notEmpty`           | Field has an answer     | All field types               |
-| `greaterThan`        | Numeric greater than    | Numeric text, rating values   |
-| `greaterThanOrEqual` | Numeric >=              | Numeric text, rating values   |
-| `lessThan`           | Numeric less than       | Numeric text, rating values   |
-| `lessThanOrEqual`    | Numeric &lt;=           | Numeric text, rating values   |
+| Operator             | Description                                         | Works with                    |
+| -------------------- | --------------------------------------------------- | ----------------------------- |
+| `equals`             | Exact match                                         | Text, selection value         |
+| `notEquals`          | Not equal                                           | Text, selection value         |
+| `contains`           | Word-boundary match (whole words, case-insensitive) | Text answers                  |
+| `includes`           | Array includes value                                | Multi-select (check, ranking) |
+| `empty`              | Field has no answer                                 | All field types               |
+| `notEmpty`           | Field has an answer                                 | All field types               |
+| `greaterThan`        | Numeric greater than                                | Numeric text, rating values   |
+| `greaterThanOrEqual` | Numeric >=                                          | Numeric text, rating values   |
+| `lessThan`           | Numeric less than                                   | Numeric text, rating values   |
+| `lessThanOrEqual`    | Numeric &lt;=                                       | Numeric text, rating values   |
+
+:::note contains behaviour
+`contains` matches on word boundaries, not arbitrary substrings. `"one two"` will match `"one two three"` but not `"onetwo"`. Use an expression condition for arbitrary substring matching.
+:::
 
 ## Property Accessors
 
@@ -356,3 +373,4 @@ Show a field only when BOTH conditions are met:
 4. Hidden fields (visibility = false) are excluded from validation
 5. Disabled fields are excluded from validation
 6. Rules are evaluated in real-time as users fill out the form
+7. `conditionType: 'js'` evaluates as `false` when dangerous JS is not enabled — see [Dangerous JS](./advanced/dangerous-js)

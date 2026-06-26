@@ -9,7 +9,7 @@ slug: /intro
 
 ## 📦 Package Overview
 
-eSheet is organized as seven focused, composable packages:
+eSheet is organized as eight focused, composable packages:
 
 ### ⚙️ @esheet/core
 
@@ -74,6 +74,14 @@ Meteor Blaze integration layer:
 - Exposes response helpers on the Blaze template instance
 - Supports default and custom template names
 
+### ✍️ @esheet/field-kerebron
+
+Optional rich text editor field:
+
+- Adds a `richtext` field type backed by the Kerebron editor
+- Requires one-time asset configuration with `configureRichTextField()`
+- Install only when your form needs rich text authoring
+
 ## 🚀 Quick Start
 
 Choose your starting point based on your needs:
@@ -106,6 +114,7 @@ Choose the scenario that matches your app:
 | Standalone renderer      | `npm install @esheet/renderer-standalone`                      | `@esheet/core` only if importing core types/APIs directly in host app code                              |
 | Blaze renderer           | `npm install @esheet/renderer-blaze`                           | `@esheet/core` only if importing core types/APIs directly in host app code                              |
 | Schema adapters          | `npm install @esheet/adapters`                                 | `@esheet/core` only if importing core types directly; typically used with renderer or builder           |
+| Rich text field          | `npm install @esheet/field-kerebron`                           | Used alongside `@esheet/builder` or `@esheet/renderer`; requires `configureRichTextField()` at startup  |
 
 `@esheet/renderer` and `@esheet/builder` include `@esheet/core` and `@esheet/fields` transitively — no need to install them separately for normal usage. Install them directly only when your app imports them directly.
 
@@ -118,7 +127,8 @@ Choose the scenario that matches your app:
 - ✏️ [Builder Quick Start](./getting-started/quickstart-builder)
 - 🧩 [Standalone Quick Start](./getting-started/quickstart-standalone)
 - 🔥 [Blaze Quick Start](./getting-started/quickstart-blaze)
-- � [Schema Adapters](./adapters)
-- �📋 [Schema Format](./schema-format)
+- ✍️ [kerebron](./field-types/custom/kerebron)
+- 🔌 [Schema Adapters](./adapters/overview)
+- 📋 [Schema Format](./schema-format)
 - 🧩 [Field Types](./field-types)
 - 🔀 [Conditional Logic](./conditional-logic)

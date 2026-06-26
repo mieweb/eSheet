@@ -21,6 +21,7 @@ import {
   FormStoreContext,
   UIContext,
   ZodIssuesPanel,
+  FeedbackModal,
   useTouchMode,
 } from '@esheet/fields';
 import { ensureDefaultFieldComponentsRegistered } from './register-defaults.js';
@@ -36,6 +37,11 @@ export interface EsheetRendererProps {
   className?: string;
   /** Initial form responses (pre-fill data) */
   initialResponses?: FormResponse;
+  /** When true, allows `dangerouslyAllowJS: true` in the loaded schema to take effect —
+   *  enabling field calculations and `conditionType: 'js'` conditions.
+   *  When `false` (default), dangerous JS never executes regardless of schema content.
+   *  Only set to `true` when you fully control and trust the form schemas being rendered. */
+  allowDangerousJS?: boolean;
   /** When true, disables auto-detection of MCP/SurveyJS formats.
    *  Only accepts a valid eSheet FormDefinition (or JSON/YAML string thereof). */
   strict?: boolean;
@@ -47,11 +53,24 @@ export interface EsheetRendererProps {
    */
   onRendererToolsReady?: (tools: RendererTools) => void;
   /**
-   * Enable touch-optimized mode with larger touch targets.
-   * - `true`: Always enable touch mode
-   * - `false`: Never enable touch mode (CSS media query still applies)
-   * - `'auto'`: Enable based on viewport width (<980px) via JavaScript
-   * - `undefined`: Rely on CSS media query only (default)
+   * When provided, a submit button is rendered at the bottom of the form.
+   * Called with the form response after all hard errors pass.
+   * If soft-required fields are unanswered, a bypass popup is shown first.
+   */
+  onSubmit?: (response: FormResponse) => void;
+  /** Label for the submit button. Defaults to `'Submit'`. */
+  submitLabel?: string;
+  /**
+   * Host-supplied context data exposed as `context` inside JS expressions
+   * (requires `allowDangerousJS` to take effect).
+   *
+   * Use this to inject named observations, EHR discrete values, and patient
+   * demographics so that legacy patterns can be expressed as:
+   * - `context['HPI Pain Assessment'] === 'Yes'`
+   * - `context.patient.sex === 'M'`
+   * - `Number(context['Travel duration risk factor'] ?? 0)`
+   *
+   * The value is synced into the store on every render cycle when it changes.
    */
   touchMode?: boolean | 'auto';
   /**
@@ -153,7 +172,11 @@ export const EsheetRenderer = React.forwardRef<
 >(function EsheetRenderer(props, ref) {
   ensureDefaultFieldComponentsRegistered();
 
-  const formStore = React.useMemo(() => createFormStore(), []);
+  const formStore = React.useMemo(
+    () => createFormStore(undefined, props.allowDangerousJS ?? false),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
   const uiStore = React.useMemo(() => createUIStore(), []);
 
   React.useEffect(() => {
@@ -192,14 +215,38 @@ const EsheetRendererInner = React.forwardRef<
     initialResponses,
     strict = false,
     onReady,
+    onSubmit,
+    submitLabel = 'Submit',
     formStore,
     uiStore,
     touchMode,
     onTouchModeChange,
+    allowDangerousJS = false,
   },
   ref
 ) {
   const [validationErrors, setValidationErrors] = React.useState<string[]>([]);
+  const [softBypassOpen, setSoftBypassOpen] = React.useState(false);
+  const [pendingResponse, setPendingResponse] =
+    React.useState<FormResponse | null>(null);
+
+  const handleSubmitClick = () => {
+    const state = formStore.getState();
+    const errors = validateForm(
+      state.normalized,
+      state.responses,
+      state.dangerouslyAllowJS
+    );
+    const hardErrors = errors.filter((e) => e.severity !== 'soft');
+    if (hardErrors.length > 0) return; // hard errors — field-level UI handles display
+    const softErrors = errors.filter((e) => e.severity === 'soft');
+    if (softErrors.length > 0) {
+      setPendingResponse(state.responses);
+      setSoftBypassOpen(true);
+    } else {
+      onSubmit?.(state.responses);
+    }
+  };
 
   // Touch mode state using shared hook
   const {
@@ -217,7 +264,8 @@ const EsheetRendererInner = React.forwardRef<
     initialResponses,
     setValidationErrors,
     strict,
-    onReady
+    onReady,
+    allowDangerousJS
   );
 
   // Expose ref API
@@ -313,6 +361,35 @@ const EsheetRendererInner = React.forwardRef<
     <div className={rootClasses}>
       <ZodIssuesPanel issues={validationErrors} />
       <RendererBody form={formStore} ui={uiStore} />
+      {onSubmit && (
+        <div className="renderer-submit ms:mt-6 ms:flex ms:justify-end">
+          <button
+            type="button"
+            onClick={handleSubmitClick}
+            className="ms:px-6 ms:py-2 ms:rounded-lg ms:bg-msprimary ms:text-mstextsecondary ms:text-sm ms:font-medium ms:hover:bg-msprimary/90 ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer"
+          >
+            {submitLabel}
+          </button>
+        </div>
+      )}
+      <FeedbackModal
+        open={softBypassOpen}
+        variant="warning"
+        title="Recommended fields unanswered"
+        message="Some recommended fields are unanswered. You can still submit, or go back to fill them in."
+        confirmLabel="Submit anyway"
+        cancelLabel="Go back"
+        showCancel
+        onConfirm={() => {
+          setSoftBypassOpen(false);
+          if (pendingResponse) onSubmit?.(pendingResponse);
+          setPendingResponse(null);
+        }}
+        onClose={() => {
+          setSoftBypassOpen(false);
+          setPendingResponse(null);
+        }}
+      />
     </div>
   );
 });

@@ -113,12 +113,29 @@ export const FieldNode = React.memo(function FieldNode({
 
   if (!field) return null;
 
-  const Component = getFieldComponent(field.definition.fieldType)!;
+  const Component = getFieldComponent(field.definition.fieldType);
+
+  if (!Component) {
+    return (
+      <div
+        className="ms:p-4 ms:border ms:border-msborder ms:rounded ms:bg-mssurface ms:mb-2"
+        data-field-type={field.definition.fieldType}
+        data-field-id={field.definition.id}
+      >
+        <p className="ms:text-sm ms:text-mstextmuted">
+          Unknown field type:{' '}
+          <code className="ms:font-mono">{field.definition.fieldType}</code>
+        </p>
+      </div>
+    );
+  }
 
   // Check if field is enabled/required via conditional logic
   const isVisible = form.getState().isVisible(field.definition.id);
   const isEnabled = form.getState().isEnabled(field.definition.id);
   const isRequired = form.getState().isRequired(field.definition.id);
+  const isSoftRequired = form.getState().isSoftRequired(field.definition.id);
+  const isReadOnly = form.getState().isReadOnly(field.definition.id);
   const response = form.getState().getResponse(field.definition.id);
 
   if (!isVisible) return null;
@@ -131,6 +148,8 @@ export const FieldNode = React.memo(function FieldNode({
     isPreview: true,
     isEnabled,
     isRequired,
+    isSoftRequired,
+    isReadOnly,
     response,
     onRemove: () => undefined, // No-op in renderer
     onUpdate: () => undefined, // No-op in renderer

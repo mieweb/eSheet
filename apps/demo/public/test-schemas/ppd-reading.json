@@ -1,0 +1,152 @@
+{
+  "id": "ppd-reading",
+  "title": "PPD (TB Skin Test) Reading",
+  "dangerouslyAllowJS": true,
+  "fields": [
+    {
+      "id": "ppd-date-tested",
+      "fieldType": "text",
+      "question": "Date PPD was placed (YYYY-MM-DD)",
+      "required": false
+    },
+    {
+      "id": "reading-window-open",
+      "fieldType": "display",
+      "content": "✅ Reading window is open — the PPD can be read today (48–72 hours after placement).",
+      "rules": [
+        {
+          "effect": "visible",
+          "logic": "AND",
+          "conditions": [
+            {
+              "conditionType": "js",
+              "expression": "(function(){ var d = responses['ppd-date-tested']; if (!d || typeof d !== 'string') return false; var placed = new Date(d); if (isNaN(placed.getTime())) return false; var now = new Date(); var diffHours = (now - placed) / 3600000; return diffHours >= 48 && diffHours <= 72; })()"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "reading-window-closed",
+      "fieldType": "display",
+      "content": "⚠️ Outside the reading window — the PPD should be read between 48 and 72 hours after placement. Please contact your clinic.",
+      "rules": [
+        {
+          "effect": "visible",
+          "logic": "AND",
+          "conditions": [
+            {
+              "conditionType": "js",
+              "expression": "(function(){ var d = responses['ppd-date-tested']; if (!d || typeof d !== 'string' || d.trim() === '') return false; var placed = new Date(d); if (isNaN(placed.getTime())) return false; var diffHours = (new Date() - placed) / 3600000; return diffHours < 48 || diffHours > 72; })()"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "induration-mm",
+      "fieldType": "text",
+      "question": "Induration size (mm)",
+      "required": false,
+      "rules": [
+        {
+          "effect": "visible",
+          "logic": "AND",
+          "conditions": [
+            {
+              "conditionType": "js",
+              "expression": "(function(){ var d = responses['ppd-date-tested']; if (!d || typeof d !== 'string') return false; var placed = new Date(d); if (isNaN(placed.getTime())) return false; var diffHours = (new Date() - placed) / 3600000; return diffHours >= 48 && diffHours <= 72; })()"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "immune-status",
+      "fieldType": "radio",
+      "question": "Patient immune status",
+      "required": false,
+      "options": [
+        {
+          "id": "immune-normal",
+          "value": "normal",
+          "text": "Immunocompetent (healthy)"
+        },
+        {
+          "id": "immune-hiv-low",
+          "value": "hiv-low",
+          "text": "HIV positive, CD4 ≥ 200"
+        },
+        {
+          "id": "immune-hiv-high",
+          "value": "hiv-high",
+          "text": "HIV positive, CD4 < 200 or unknown"
+        },
+        {
+          "id": "immune-transplant",
+          "value": "transplant",
+          "text": "Organ transplant / TNF blocker / steroids"
+        },
+        {
+          "id": "immune-close-contact",
+          "value": "close-contact",
+          "text": "Recent close TB contact or abnormal CXR"
+        }
+      ],
+      "rules": [
+        {
+          "effect": "visible",
+          "logic": "AND",
+          "conditions": [
+            {
+              "conditionType": "js",
+              "expression": "responses['induration-mm'] !== '' && responses['induration-mm'] !== undefined"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ppd-result",
+      "fieldType": "text",
+      "question": "Result (calculated)",
+      "required": false,
+      "calculation": "(function(){ var mm = responses['induration-mm']; var immune = responses['immune-status']; if (mm === '' || mm === undefined || mm === null) return ''; var n = parseFloat(mm); if (isNaN(n)) return 'Invalid measurement'; var threshold = 10; if (immune === 'hiv-high' || immune === 'transplant' || immune === 'close-contact') threshold = 5; else if (immune === 'hiv-low') threshold = 5; return n >= threshold ? 'POSITIVE (' + n + ' mm — threshold ' + threshold + ' mm)' : 'Negative (' + n + ' mm — threshold ' + threshold + ' mm)'; })()",
+      "rules": [
+        {
+          "effect": "visible",
+          "logic": "AND",
+          "conditions": [
+            {
+              "conditionType": "js",
+              "expression": "responses['induration-mm'] !== '' && responses['induration-mm'] !== undefined && responses['immune-status'] !== undefined"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "positive-followup",
+      "fieldType": "display",
+      "content": "🔴 Positive PPD — refer for chest X-ray and clinical evaluation per protocol.",
+      "rules": [
+        {
+          "effect": "visible",
+          "logic": "AND",
+          "conditions": [
+            {
+              "conditionType": "js",
+              "expression": "typeof responses['ppd-result'] === 'string' && responses['ppd-result'].startsWith('POSITIVE')"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "clinician-notes",
+      "fieldType": "longtext",
+      "question": "Clinician notes",
+      "required": false
+    }
+  ]
+}

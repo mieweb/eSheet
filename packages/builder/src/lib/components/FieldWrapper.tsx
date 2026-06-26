@@ -93,6 +93,8 @@ export function FieldWrapper({
     isVisible,
     isEnabled,
     isRequired,
+    isReadOnly,
+    isSoftRequired,
     instanceId,
     field_,
   } = useFormApi(fieldId);
@@ -171,6 +173,8 @@ export function FieldWrapper({
           isPreview: true,
           isEnabled,
           isRequired,
+          isSoftRequired,
+          isReadOnly,
           response,
           onRemove: field_.remove,
           onUpdate: field_.update,
@@ -248,7 +252,11 @@ export function FieldWrapper({
           </span>
           {field.definition.required && (
             <span
-              className="required-indicator ms:text-msdanger ms:text-xs ms:font-bold ms:shrink-0"
+              className={`required-indicator ms:text-xs ms:font-bold ms:shrink-0 ${
+                field.definition.required === 'soft'
+                  ? 'ms:text-mswarning'
+                  : 'ms:text-msdanger'
+              }`}
               aria-label="Required"
             >
               *
@@ -326,6 +334,8 @@ export function FieldWrapper({
           isPreview: false,
           isEnabled,
           isRequired,
+          isSoftRequired,
+          isReadOnly,
           response,
           onRemove: field_.remove,
           onUpdate: field_.update,

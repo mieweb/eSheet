@@ -34,7 +34,8 @@ export function useRendererInit(
   initialResponses?: FormResponse,
   onValidationError?: (errors: string[]) => void,
   strict = false,
-  onReady?: () => void
+  onReady?: () => void,
+  allowDangerousJS = false
 ): void {
   // Store onReady in a ref so it never causes the effect to re-run
   const onReadyRef = React.useRef(onReady);
@@ -98,6 +99,10 @@ export function useRendererInit(
 
       // Load validated definition
       form.getState().loadDefinition(validated.data);
+      // Host must explicitly opt in — suppress dangerouslyAllowJS from schema if not allowed.
+      if (!allowDangerousJS) {
+        form.getState().setDangerouslyAllowJS(false);
+      }
 
       // Apply initial responses if provided
       if (initialResponses && Object.keys(initialResponses).length > 0) {

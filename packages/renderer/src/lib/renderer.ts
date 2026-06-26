@@ -9,6 +9,12 @@ import {
 export interface RenderTreeOptions {
   /** Include fields that resolve to invisible (default: false). */
   includeHidden?: boolean;
+  /**
+   * Opt-in to allow dangerous JS execution. When `false` (default), any
+   * `dangerouslyAllowJS: true` in the schema is ignored — JS conditions always
+   * return `false`. Only set to `true` when you trust the schema content.
+   */
+  allowDangerousJS?: boolean;
 }
 
 export interface RenderFieldNode {
@@ -38,6 +44,9 @@ export function renderer(
 ): RenderFieldNode[] {
   const normalized = normalizeDefinition(definition.fields);
   const includeHidden = options.includeHidden === true;
+  // Both the host option AND the schema flag must be true.
+  const dangerouslyAllowJS =
+    options.allowDangerousJS === true && definition.dangerouslyAllowJS === true;
 
   function build(ids: readonly string[]): RenderFieldNode[] {
     const result: RenderFieldNode[] = [];
@@ -50,7 +59,8 @@ export function renderer(
         'visible',
         node.definition,
         normalized,
-        responses
+        responses,
+        dangerouslyAllowJS
       );
       if (!visible && !includeHidden) continue;
 
@@ -62,13 +72,15 @@ export function renderer(
           'enable',
           node.definition,
           normalized,
-          responses
+          responses,
+          dangerouslyAllowJS
         ),
         required: resolveEffect(
           'required',
           node.definition,
           normalized,
-          responses
+          responses,
+          dangerouslyAllowJS
         ),
         children: build(node.childIds),
       });

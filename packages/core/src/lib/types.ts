@@ -134,12 +134,17 @@ export const CONDITION_OPERATORS = [
 export const conditionOperatorSchema = z.enum(CONDITION_OPERATORS);
 export type ConditionOperator = z.infer<typeof conditionOperatorSchema>;
 
-export const CONDITION_TYPES = ['field', 'expression'] as const;
+export const CONDITION_TYPES = ['field', 'expression', 'js'] as const;
 export const conditionTypeSchema = z.enum(CONDITION_TYPES);
 export type ConditionType = z.infer<typeof conditionTypeSchema>;
 
 /** What effect a conditional rule has on the field. */
-export const CONDITIONAL_EFFECTS = ['visible', 'enable', 'required'] as const;
+export const CONDITIONAL_EFFECTS = [
+  'required',
+  'visible',
+  'enable',
+  'readOnly',
+] as const;
 export const conditionalEffectSchema = z.enum(CONDITIONAL_EFFECTS);
 export type ConditionalEffect = z.infer<typeof conditionalEffectSchema>;
 
@@ -168,8 +173,70 @@ export const conditionalRuleSchema = z.object({
   logic: z.enum(['AND', 'OR']),
   /** One or more conditions to evaluate. */
   conditions: z.array(conditionSchema),
+  /**
+   * Severity for `required` rules only.
+   * - `'hard'` (default) — blocks submission.
+   * - `'soft'` — warns but allows bypass.
+   */
+  severity: z.optional(z.enum(['hard', 'soft'])),
 });
 export type ConditionalRule = z.infer<typeof conditionalRuleSchema>;
+
+// ---------------------------------------------------------------------------
+// Field Validators
+// ---------------------------------------------------------------------------
+
+/** All supported validator type identifiers. */
+export const VALIDATOR_TYPES = [
+  // Number
+  'number',
+  'numberBetween',
+  'numberEquals',
+  'numberGreaterThan',
+  'numberLessThan',
+  // Date (MM-DD-YYYY)
+  'date',
+  'dateAfter',
+  'dateBefore',
+  'dateBetween',
+  'dateEquals',
+  'dateAfterToday',
+  'dateBeforeToday',
+  'dateIsToday',
+  // Datetime (MM-DD-YYYY HH:mm:ss)
+  'datetime',
+  'datetimeAfter',
+  'datetimeBefore',
+  'datetimeBetween',
+  'datetimeEquals',
+  'datetimeAfterToday',
+  'datetimeBeforeToday',
+  'datetimeIsToday',
+  // Time (HH:mm)
+  'time',
+  'timeAfter',
+  'timeBefore',
+  'timeBetween',
+  'timeEquals',
+  // Generic
+  'answerEquals',
+] as const;
+
+export const validatorTypeSchema = z.enum(VALIDATOR_TYPES);
+export type ValidatorType = z.infer<typeof validatorTypeSchema>;
+
+/** A validation rule applied to a field's response. */
+export const fieldValidatorSchema = z.object({
+  /** The type of validation to perform. */
+  type: validatorTypeSchema,
+  /** Parameters for the validator (e.g., boundary values, reference dates). */
+  params: z.optional(z.array(z.union([z.string(), z.number()]))),
+  /** Custom error message. Falls back to a built-in message when omitted. */
+  message: z.optional(z.string()),
+  /** Whether this validator is a hard block or soft warning. Defaults to 'hard'. */
+  severity: z.optional(z.enum(['hard', 'soft'])),
+});
+export type FieldValidator = z.infer<typeof fieldValidatorSchema>;
 
 // ---------------------------------------------------------------------------
 // Field Definition — Discriminated Union by fieldType
@@ -180,19 +247,28 @@ export type ConditionalRule = z.infer<typeof conditionalRuleSchema>;
 // ---------------------------------------------------------------------------
 
 /**
- * Properties shared by ALL field types.
- * Includes `question` and `required` for backward compatibility, even though
- * some field types (html, display) don't semantically use them.
+ * Properties shared by ALL answer-bearing field types.
  */
 interface BaseFieldDefinition {
   /** Unique identifier within the form. */
   id: string;
   /** The question / label shown to the user. */
   question?: string;
-  /** Whether a response is required. */
-  required?: boolean;
+  /**
+   * Required state for this field.
+   * - `true`    — hard required (blocks submission).
+   * - `'soft'`  — soft required (warns but allows bypass).
+   * - `false` / omitted — not required.
+   */
+  required?: boolean | 'soft';
+  /** Whether this field is read-only (user cannot edit; calculated value always wins). */
+  readOnly?: boolean;
+  /** Validation rules applied to the field's response. */
+  validators?: FieldValidator[];
   /** Conditional rules that control visibility, enabled state, or required state. */
   rules?: ConditionalRule[];
+  /** JS expression that auto-computes this field's value. Requires dangerouslyAllowJS on form. */
+  calculation?: string;
   /** Adapter metadata — original source data before conversion. */
   _sourceData?: unknown;
   /** Adapter metadata — warnings generated during conversion. */
@@ -321,10 +397,21 @@ export interface DiagramFieldDefinition extends BaseFieldDefinition {
   padPlaceholder?: string;
 }
 
-export interface DisplayFieldDefinition extends BaseFieldDefinition {
+export interface DisplayFieldDefinition {
+  id: string;
   fieldType: 'display';
+  /** Display fields have no question text. */
+  question?: never;
   /** Markdown-like content with inline expression placeholders. */
   content?: string;
+  /** Display fields are never required. */
+  required?: never;
+  /** Conditional rules controlling visibility. */
+  rules?: ConditionalRule[];
+  /** @deprecated Display fields do not accept answers; calculation has no effect. */
+  calculation?: never;
+  _sourceData?: unknown;
+  _conversionWarnings?: unknown[];
 }
 
 // ---------------------------------------------------------------------------
@@ -435,6 +522,9 @@ const BASE_PROPERTIES = [
   'fieldType',
   'question',
   'required',
+  'readOnly',
+  'validators',
+  'calculation',
   'rules',
   '_sourceData',
   '_conversionWarnings',
@@ -456,6 +546,12 @@ function normalizeFieldDefinition(
     ...BASE_PROPERTIES,
     ...FIELD_TYPE_PROPERTIES[fieldType],
   ]);
+  // Display fields have no question — strip it if present.
+  if (fieldType === 'display') {
+    allowedProps.delete('question');
+    allowedProps.delete('required');
+    allowedProps.delete('calculation');
+  }
 
   const normalized: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(field)) {
@@ -530,8 +626,12 @@ export function normalizeFormDefinition(
 const baseFieldProps = {
   id: z.string(),
   question: z.optional(z.string()),
-  required: z.optional(z.boolean()),
+  required: z.optional(z.union([z.boolean(), z.literal('soft')])),
+  readOnly: z.optional(z.boolean()),
+  validators: z.optional(z.array(fieldValidatorSchema)),
   rules: z.optional(z.array(conditionalRuleSchema)),
+  /** JS expression that auto-computes this field's value (requires dangerouslyAllowJS on form). */
+  calculation: z.optional(z.string()),
   _sourceData: z.optional(z.unknown()),
   _conversionWarnings: z.optional(z.array(z.unknown())),
 };
@@ -651,8 +751,15 @@ const diagramFieldSchema = z.strictObject({
   padPlaceholder: z.optional(z.string()),
 });
 
+const displayBaseFieldProps = {
+  id: z.string(),
+  rules: z.optional(z.array(conditionalRuleSchema)),
+  _sourceData: z.optional(z.unknown()),
+  _conversionWarnings: z.optional(z.array(z.unknown())),
+};
+
 const displayFieldSchema = z.strictObject({
-  ...baseFieldProps,
+  ...displayBaseFieldProps,
   fieldType: z.literal('display'),
   content: z.optional(z.string()),
 });
@@ -716,6 +823,17 @@ const _extraFieldSchemas: z.ZodMiniType[] = [];
  */
 export function registerFieldSchema(schema: z.ZodMiniType): void {
   _extraFieldSchemas.push(schema);
+  // Reset z.lazy's cached inner type so the next parse re-evaluates the union
+  // with the newly registered schema included. z.lazy stores its cache at
+  // `_zod.def._cachedInner` — clearing it forces the getter to run again.
+  const def = (
+    fieldDefinitionSchema as unknown as {
+      _zod: { def: { _cachedInner?: unknown } };
+    }
+  )._zod.def;
+  if (def) {
+    delete def._cachedInner;
+  }
 }
 
 /**
@@ -796,6 +914,8 @@ export const formDefinitionSchema = z.strictObject({
   id: z.string(),
   title: z.optional(z.string()),
   description: z.optional(z.string()),
+  /** When true, enables dangerously embedded JS — calculations on fields and conditionType 'js'. */
+  dangerouslyAllowJS: z.optional(z.boolean()),
   fields: z.array(z.lazy(() => fieldDefinitionSchema)),
   _sourceData: z.optional(z.unknown()),
 });
@@ -898,11 +1018,19 @@ function makeOpenAICompatible(schema: JsonSchemaObject): JsonSchemaObject {
   return result;
 }
 
-/** Pre-computed JSON Schema (Draft-07) for FormDefinition — used by builder's Monaco editor. */
-export const formDefinitionJSONSchema: Record<string, unknown> =
-  makeOpenAICompatible(
+/**
+ * Return the JSON Schema (Draft-07) for FormDefinition — used by builder's Monaco editor.
+ *
+ * Intentionally lazy (not computed at module load) so that plugin field schemas
+ * registered via {@link registerFieldSchema} are included when first called.
+ * Evaluating eagerly at module load would cache `fieldDefinitionSchema`'s lazy
+ * inner type before any plugins have a chance to call `registerFieldSchema`.
+ */
+export function getFormDefinitionJSONSchema(): Record<string, unknown> {
+  return makeOpenAICompatible(
     z.toJSONSchema(formDefinitionSchema) as JsonSchemaObject
   );
+}
 
 /** Response store — maps field IDs to their response values. */
 export type FieldResponseMap = Record<string, FieldResponse>;

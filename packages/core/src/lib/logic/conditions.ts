@@ -34,11 +34,23 @@ import type { NormalizedDefinition } from '../functions/normalize.js';
 export function evaluateRule(
   rule: ConditionalRule,
   normalized: NormalizedDefinition,
-  responses: FieldResponseMap
+  responses: FieldResponseMap,
+  dangerouslyAllowJS?: boolean
 ): boolean {
   if (rule.conditions.length === 0) return true;
 
   const results = rule.conditions.map((cond) => {
+    // JS condition — arbitrary JS, requires dangerouslyAllowJS
+    if (cond.conditionType === 'js') {
+      if (!dangerouslyAllowJS || !cond.expression?.trim()) return false;
+      const result = evaluateJsExpression(
+        cond.expression,
+        normalized,
+        responses
+      );
+      return Boolean(result);
+    }
+
     const isExpressionCondition =
       cond.conditionType === 'expression' ||
       (!!cond.expression && cond.expression.trim().length > 0);
@@ -245,6 +257,29 @@ export function evaluateExpression(
   responses: FieldResponseMap
 ): unknown {
   return evaluateExpressionToValue(expression, normalized, responses);
+}
+
+/**
+ * Evaluate an arbitrary JS expression string with field response data as context.
+ *
+ * The expression receives one argument:
+ * - `responses` — a flat map of field IDs to their resolved values.
+ *
+ * Only call this when `dangerouslyAllowJS` is confirmed true on the form.
+ * Returns `null` on any evaluation error.
+ */
+export function evaluateJsExpression(
+  expression: string,
+  normalized: NormalizedDefinition,
+  responses: FieldResponseMap
+): unknown {
+  try {
+    const data = buildExpressionData(normalized, responses);
+    // eslint-disable-next-line no-new-func
+    return new Function('responses', 'return ' + expression)(data);
+  } catch {
+    return null;
+  }
 }
 
 type ExprTokenType =

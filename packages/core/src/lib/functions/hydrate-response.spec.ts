@@ -13,7 +13,7 @@ import type { FieldDefinition, FieldResponseMap } from '../types.js';
 function mkField(
   override: Partial<FieldDefinition> & Pick<FieldDefinition, 'id' | 'fieldType'>
 ): FieldDefinition {
-  return { question: 'Q', ...override };
+  return { question: 'Q', ...override } as FieldDefinition;
 }
 
 function hydrate(fields: FieldDefinition[], responses: FieldResponseMap) {

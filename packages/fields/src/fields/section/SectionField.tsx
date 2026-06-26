@@ -13,6 +13,7 @@ export const SectionField = React.memo(function SectionField({
   field,
   isPreview,
   isRequired,
+  isSoftRequired,
   onUpdate,
   nestedChildren,
 }: SectionFieldProps) {
@@ -24,7 +25,7 @@ export const SectionField = React.memo(function SectionField({
       <section className="section-field-preview ms:pb-0">
         <div className="ms:bg-msprimary ms:text-mstextsecondary ms:text-xl ms:px-4 ms:py-2 ms:rounded-t-lg ms:break-words ms:overflow-hidden">
           {title}
-          {isRequired && (
+          {(isRequired || isSoftRequired) && (
             <span className="ms:text-mstextsecondary ms:ml-1">*</span>
           )}
         </div>

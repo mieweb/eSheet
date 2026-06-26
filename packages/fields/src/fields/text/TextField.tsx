@@ -45,6 +45,8 @@ export const TextField = React.memo(function TextField({
   isPreview,
   isEnabled,
   isRequired,
+  isSoftRequired,
+  isReadOnly,
   response,
   onUpdate,
   onResponse,
@@ -61,7 +63,15 @@ export const TextField = React.memo(function TextField({
       <div className="text-field-preview ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
         <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
           {def.question || 'Question'}
-          {isRequired && <span className="ms:text-msdanger ms:ml-0.5">*</span>}
+          {(isRequired || isSoftRequired) && (
+            <span
+              className={`ms:ml-0.5 ${
+                isSoftRequired ? 'ms:text-mswarning' : 'ms:text-msdanger'
+              }`}
+            >
+              *
+            </span>
+          )}
         </div>
         <div className="ms:relative">
           <Input
@@ -69,15 +79,17 @@ export const TextField = React.memo(function TextField({
             aria-label={def.question || 'Question'}
             type={inputType}
             disabled={!isEnabled}
+            readOnly={isReadOnly}
             aria-required={isRequired || undefined}
             value={response?.answer || ''}
             onChange={(e) => {
+              if (isReadOnly) return;
               const val = isTel
                 ? formatPhoneNumber(e.target.value)
                 : e.target.value;
               onResponse({ answer: val });
             }}
-            placeholder={placeholder}
+            placeholder={isReadOnly ? '—' : placeholder}
             className={unit ? 'pr-16' : ''}
           />
           {unit && (

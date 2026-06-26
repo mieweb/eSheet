@@ -1,0 +1,128 @@
+{
+  "id": "bmi-calculator",
+  "title": "BMI Calculator",
+  "dangerouslyAllowJS": true,
+  "fields": [
+    {
+      "id": "intro",
+      "fieldType": "display",
+      "content": "Enter your height and weight below. BMI and category will be calculated automatically."
+    },
+    {
+      "id": "height-cm",
+      "fieldType": "text",
+      "question": "Height (cm)",
+      "required": false
+    },
+    {
+      "id": "weight-kg",
+      "fieldType": "text",
+      "question": "Weight (kg)",
+      "required": false
+    },
+    {
+      "id": "bmi",
+      "fieldType": "text",
+      "question": "BMI (calculated)",
+      "required": false,
+      "calculation": "(responses['height-cm'] > 0 && responses['weight-kg'] > 0) ? String(Math.round((responses['weight-kg'] / Math.pow(responses['height-cm'] / 100, 2)) * 10) / 10) : ''",
+      "rules": [
+        {
+          "effect": "visible",
+          "logic": "AND",
+          "conditions": [
+            {
+              "conditionType": "js",
+              "expression": "responses['height-cm'] > 0 && responses['weight-kg'] > 0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bmi-category",
+      "fieldType": "display",
+      "content": "BMI Category",
+      "rules": [
+        {
+          "effect": "visible",
+          "logic": "AND",
+          "conditions": [
+            {
+              "conditionType": "js",
+              "expression": "responses['height-cm'] > 0 && responses['weight-kg'] > 0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bmi-underweight",
+      "fieldType": "display",
+      "content": "⚠️ Underweight (BMI < 18.5)",
+      "rules": [
+        {
+          "effect": "visible",
+          "logic": "AND",
+          "conditions": [
+            {
+              "conditionType": "js",
+              "expression": "responses['height-cm'] > 0 && responses['weight-kg'] > 0 && (responses['weight-kg'] / Math.pow(responses['height-cm'] / 100, 2)) < 18.5"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bmi-normal",
+      "fieldType": "display",
+      "content": "✅ Normal weight (BMI 18.5 – 24.9)",
+      "rules": [
+        {
+          "effect": "visible",
+          "logic": "AND",
+          "conditions": [
+            {
+              "conditionType": "js",
+              "expression": "(function(){ var bmi = responses['weight-kg'] / Math.pow(responses['height-cm'] / 100, 2); return bmi >= 18.5 && bmi < 25; })()"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bmi-overweight",
+      "fieldType": "display",
+      "content": "⚠️ Overweight (BMI 25 – 29.9)",
+      "rules": [
+        {
+          "effect": "visible",
+          "logic": "AND",
+          "conditions": [
+            {
+              "conditionType": "js",
+              "expression": "(function(){ var bmi = responses['weight-kg'] / Math.pow(responses['height-cm'] / 100, 2); return bmi >= 25 && bmi < 30; })()"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bmi-obese",
+      "fieldType": "display",
+      "content": "🔴 Obese (BMI ≥ 30)",
+      "rules": [
+        {
+          "effect": "visible",
+          "logic": "AND",
+          "conditions": [
+            {
+              "conditionType": "js",
+              "expression": "responses['height-cm'] > 0 && responses['weight-kg'] > 0 && (responses['weight-kg'] / Math.pow(responses['height-cm'] / 100, 2)) >= 30"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
