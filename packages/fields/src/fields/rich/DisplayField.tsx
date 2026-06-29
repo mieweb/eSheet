@@ -30,38 +30,78 @@ function interpolateExpressions(
   dangerouslyAllowJS: boolean
 ): string {
   if (!source) return '';
-  // {field-id}              — simple field value lookup
-  // <expression>            — safe AST expression ({ref} + arithmetic)
-  // [[js expression]]       — arbitrary JS (only when dangerouslyAllowJS is true)
-  return source.replace(
-    /\{([^{}]+)\}|<([^>]+)>|\[\[([^\]]+)\]\]/g,
-    (
-      _match,
-      fieldId: string | undefined,
-      expr: string | undefined,
-      jsExpr: string | undefined
-    ) => {
-      // [[js expression]] — dangerous JS, gated by dangerouslyAllowJS
-      if (jsExpr !== undefined) {
-        if (!dangerouslyAllowJS) return '';
-        const e = jsExpr.trim();
-        if (!e) return '';
-        return formatComputedValue(
-          evaluateJsExpression(e, normalized, responses)
+  // {field-id}        — simple field value lookup
+  // <expression>      — safe AST expression ({ref} + arithmetic/functions)
+  //                     closing > is paren-depth-aware so >= inside args works
+  // [[js expression]] — arbitrary JS (only when dangerouslyAllowJS is true)
+  let result = '';
+  let i = 0;
+
+  while (i < source.length) {
+    // [[js expression]]
+    if (source[i] === '[' && source[i + 1] === '[') {
+      const end = source.indexOf(']]', i + 2);
+      if (end === -1) {
+        result += source[i++];
+        continue;
+      }
+      const jsExpr = source.slice(i + 2, end).trim();
+      if (jsExpr && dangerouslyAllowJS) {
+        result += formatComputedValue(
+          evaluateJsExpression(jsExpr, normalized, responses)
         );
       }
-      if (fieldId !== undefined) {
-        const id = fieldId.trim();
-        if (!id) return '';
-        return formatComputedValue(
-          evaluateExpression(`{${id}}`, normalized, responses)
-        );
-      }
-      const e = expr?.trim();
-      if (!e) return '';
-      return formatComputedValue(evaluateExpression(e, normalized, responses));
+      i = end + 2;
+      continue;
     }
-  );
+
+    // {field-id}
+    if (source[i] === '{') {
+      const end = source.indexOf('}', i + 1);
+      if (end === -1) {
+        result += source[i++];
+        continue;
+      }
+      const fieldId = source.slice(i + 1, end).trim();
+      if (fieldId) {
+        result += formatComputedValue(
+          evaluateExpression(`{${fieldId}}`, normalized, responses)
+        );
+      }
+      i = end + 1;
+      continue;
+    }
+
+    // <expression> — scan for closing > at paren depth 0 so >= doesn't close early
+    if (source[i] === '<') {
+      let depth = 0;
+      let j = i + 1;
+      while (j < source.length) {
+        const ch = source[j];
+        if (ch === '(') depth++;
+        else if (ch === ')') depth--;
+        else if (ch === '>' && depth === 0) break;
+        j++;
+      }
+      if (j < source.length && source[j] === '>') {
+        const expr = source.slice(i + 1, j).trim();
+        if (expr) {
+          result += formatComputedValue(
+            evaluateExpression(expr, normalized, responses)
+          );
+        }
+        i = j + 1;
+        continue;
+      }
+      // No matching > found — emit literal <
+      result += source[i++];
+      continue;
+    }
+
+    result += source[i++];
+  }
+
+  return result;
 }
 
 // Renders inline markdown with recursive nesting so formats can combine.
