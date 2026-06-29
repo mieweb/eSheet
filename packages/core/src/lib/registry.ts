@@ -267,15 +267,6 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
         'Your BMI is **{weight-kg} / (({height-cm}/100) * ({height-cm}/100))**',
     },
   },
-  action: {
-    label: 'Action Button',
-    category: 'rich',
-    answerType: 'none',
-    hasOptions: false,
-    hasMatrix: false,
-    defaultProps: { label: 'Submit' },
-    placeholder: { label: 'Button label\u2026' },
-  },
   section: {
     label: 'Section',
     category: 'organization',

@@ -24,7 +24,6 @@ export {
   DrawingPad,
   DiagramField,
   DisplayField,
-  ActionField,
   HtmlField,
   ImageField,
   SignatureField,

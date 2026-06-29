@@ -24,7 +24,6 @@ export const FIELD_TYPES = [
   'signature',
   'diagram',
   'display',
-  'action',
   'section',
 ] as const;
 
@@ -471,7 +470,6 @@ export type FieldDefinition =
   | SignatureFieldDefinition
   | DiagramFieldDefinition
   | DisplayFieldDefinition
-  | ActionFieldDefinition
   // Organization
   | SectionFieldDefinition;
 
@@ -531,7 +529,6 @@ const FIELD_TYPE_PROPERTIES: Record<FieldType, readonly string[]> = {
   signature: ['padPlaceholder'],
   diagram: ['imageUri', 'padPlaceholder'],
   display: ['content'],
-  action: ['label', 'actionId', 'variant', 'confirm'],
   // Organization category
   section: ['title', 'fields'],
 };
@@ -784,15 +781,6 @@ const displayFieldSchema = z.strictObject({
   content: z.optional(z.string()),
 });
 
-const actionFieldSchema = z.strictObject({
-  ...baseFieldProps,
-  fieldType: z.literal('action'),
-  label: z.optional(z.string()),
-  actionId: z.optional(z.string()),
-  variant: z.optional(z.string()),
-  confirm: z.optional(z.string()),
-});
-
 // Section schema (recursive via z.lazy)
 // Note: We need to cast this to handle the recursive type reference
 const sectionFieldSchema = z.strictObject({
@@ -831,7 +819,6 @@ const _coreFieldSchema = z.discriminatedUnion('fieldType', [
   signatureFieldSchema,
   diagramFieldSchema,
   displayFieldSchema,
-  actionFieldSchema,
   // Organization
   sectionFieldSchema,
 ]);

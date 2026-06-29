@@ -26,7 +26,6 @@ import {
   ImageField,
   HtmlField,
   DisplayField,
-  ActionField,
 } from '@esheet/fields';
 
 let defaultsRegistered = false;
@@ -56,7 +55,6 @@ export function ensureDefaultFieldComponentsRegistered(): void {
     image: ImageField,
     html: HtmlField,
     display: DisplayField,
-    action: ActionField,
   });
 
   defaultsRegistered = true;

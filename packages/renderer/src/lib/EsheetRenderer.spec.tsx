@@ -218,50 +218,6 @@ describe('EsheetRenderer', () => {
   });
 });
 
-describe('EsheetRenderer action fields', () => {
-  it('invokes onAction with actionId, fieldId, and response snapshot on click', async () => {
-    const onAction = vi.fn();
-    await act(async () => {
-      render(
-        <EsheetRenderer
-          onAction={onAction}
-          formDataInput={{
-            id: 'action-form',
-            title: 'Test',
-            fields: [
-              { id: 'name', fieldType: 'text', question: 'Name?' },
-              {
-                id: 'close',
-                fieldType: 'action',
-                label: 'Close Case',
-                actionId: 'close-case',
-              },
-            ],
-          }}
-          initialResponses={{ name: { answer: 'Alice' } }}
-        />
-      );
-    });
-
-    const button = document.querySelector('.action-field-button');
-    expect(button).not.toBeNull();
-    expect(button?.textContent).toBe('Close Case');
-
-    await act(async () => {
-      fireEvent.click(button as Element);
-    });
-
-    expect(onAction).toHaveBeenCalledTimes(1);
-    expect(onAction).toHaveBeenCalledWith(
-      expect.objectContaining({
-        actionId: 'close-case',
-        fieldId: 'close',
-        responses: expect.objectContaining({ name: { answer: 'Alice' } }),
-      })
-    );
-  });
-});
-
 describe('EsheetRenderer display markdown', () => {
   async function renderDisplay(content: string) {
     await act(async () => {
@@ -275,9 +231,7 @@ describe('EsheetRenderer display markdown', () => {
         />
       );
     });
-    return document.querySelector('.action-field-button')
-      ? null
-      : (document.body as HTMLElement);
+    return document.body as HTMLElement;
   }
 
   it('does not italicize digit-flanked hyphens (ISO dates)', async () => {

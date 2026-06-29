@@ -21,10 +21,8 @@ import {
   FormStoreContext,
   UIContext,
   ZodIssuesPanel,
-  ActionContext,
   FeedbackModal,
   useTouchMode,
-  type ActionHandler,
 } from '@esheet/fields';
 import { ensureDefaultFieldComponentsRegistered } from './register-defaults.js';
 import { useRendererInit } from './hooks/useRendererInit.js';
@@ -54,12 +52,6 @@ export interface EsheetRendererProps {
    * facade for MCP / AI tool integrations.
    */
   onRendererToolsReady?: (tools: RendererTools) => void;
-  /**
-   * Called when an `action` field (button) is triggered. Receives the action's
-   * `actionId`, originating `fieldId`, and a snapshot of the current responses.
-   * Use this to run host-defined side effects such as closing a case.
-   */
-  onAction?: ActionHandler;
   /**
    * When provided, a submit button is rendered at the bottom of the form.
    * Called with the form response after all hard errors pass.
@@ -224,7 +216,6 @@ const EsheetRendererInner = React.forwardRef<
     uiStore,
     touchMode,
     onTouchModeChange,
-    onAction,
     allowDangerousJS = false,
   },
   ref
@@ -364,9 +355,7 @@ const EsheetRendererInner = React.forwardRef<
   return (
     <div className={rootClasses}>
       <ZodIssuesPanel issues={validationErrors} />
-      <ActionContext.Provider value={onAction ?? null}>
-        <RendererBody form={formStore} ui={uiStore} />
-      </ActionContext.Provider>
+      <RendererBody form={formStore} ui={uiStore} />
       {onSubmit && (
         <div className="renderer-submit ms:mt-6 ms:flex ms:justify-end">
           <button
