@@ -1,8 +1,5 @@
 import React from 'react';
-import type {
-  FieldComponentProps,
-  ActionFieldDefinition,
-} from '@esheet/core';
+import type { FieldComponentProps, ActionFieldDefinition } from '@esheet/core';
 import { useActionHandler } from '../../lib/context.js';
 
 // Visual emphasis → button classes. Unknown variants fall back to the default.

@@ -257,7 +257,7 @@ describe('EsheetRenderer action fields', () => {
         actionId: 'close-case',
         fieldId: 'close',
         responses: expect.objectContaining({ name: { answer: 'Alice' } }),
-      }),
+      })
     );
   });
 });

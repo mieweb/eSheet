@@ -818,12 +818,7 @@ function toNumber(value: unknown): number {
 const MS_PER_DAY = 86_400_000;
 
 /** Text input types that carry date/time values (kept as strings, never coerced). */
-const DATE_INPUT_TYPES = new Set([
-  'date',
-  'datetime-local',
-  'month',
-  'time',
-]);
+const DATE_INPUT_TYPES = new Set(['date', 'datetime-local', 'month', 'time']);
 
 /**
  * Parse a value into a UTC-anchored Date. Accepts `YYYY-MM-DD`,
@@ -861,13 +856,17 @@ const EXPRESSION_FUNCTIONS: Record<string, (args: unknown[]) => unknown> = {
   addDays: (args) => {
     const date = toDate(args[0]);
     if (!date) return '';
-    return formatISODate(new Date(date.getTime() + toNumber(args[1]) * MS_PER_DAY));
+    return formatISODate(
+      new Date(date.getTime() + toNumber(args[1]) * MS_PER_DAY)
+    );
   },
   /** subDays(date, n) → `YYYY-MM-DD` n days before date. */
   subDays: (args) => {
     const date = toDate(args[0]);
     if (!date) return '';
-    return formatISODate(new Date(date.getTime() - toNumber(args[1]) * MS_PER_DAY));
+    return formatISODate(
+      new Date(date.getTime() - toNumber(args[1]) * MS_PER_DAY)
+    );
   },
   /** diffDays(a, b) → whole days from b to a (a − b). */
   diffDays: (args) => {

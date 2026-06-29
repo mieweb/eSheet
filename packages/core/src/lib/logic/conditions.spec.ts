@@ -753,27 +753,27 @@ describe('evaluateExpression — built-in functions', () => {
   } as Record<string, FieldResponse>;
 
   it('addDays adds days and returns an ISO date string', () => {
-    expect(evaluateExpression('addDays({start}, {days})', fnNormalized, responses)).toBe(
-      '2026-01-11'
-    );
+    expect(
+      evaluateExpression('addDays({start}, {days})', fnNormalized, responses)
+    ).toBe('2026-01-11');
   });
 
   it('addDays supports negative offsets', () => {
-    expect(evaluateExpression('addDays({start}, -1)', fnNormalized, responses)).toBe(
-      '2025-12-31'
-    );
+    expect(
+      evaluateExpression('addDays({start}, -1)', fnNormalized, responses)
+    ).toBe('2025-12-31');
   });
 
   it('subDays subtracts days', () => {
-    expect(evaluateExpression('subDays({start}, 2)', fnNormalized, responses)).toBe(
-      '2025-12-30'
-    );
+    expect(
+      evaluateExpression('subDays({start}, 2)', fnNormalized, responses)
+    ).toBe('2025-12-30');
   });
 
   it('diffDays returns whole days between two dates (a - b)', () => {
-    expect(evaluateExpression('diffDays({other}, {start})', fnNormalized, responses)).toBe(
-      20
-    );
+    expect(
+      evaluateExpression('diffDays({other}, {start})', fnNormalized, responses)
+    ).toBe(20);
   });
 
   it('today returns a YYYY-MM-DD string', () => {
@@ -783,11 +783,15 @@ describe('evaluateExpression — built-in functions', () => {
   });
 
   it('year extracts the UTC year', () => {
-    expect(evaluateExpression('year({start})', fnNormalized, responses)).toBe(2026);
+    expect(evaluateExpression('year({start})', fnNormalized, responses)).toBe(
+      2026
+    );
   });
 
   it('addDays returns empty string when the date is missing', () => {
-    expect(evaluateExpression('addDays({missing}, 5)', fnNormalized, responses)).toBe('');
+    expect(
+      evaluateExpression('addDays({missing}, 5)', fnNormalized, responses)
+    ).toBe('');
   });
 
   it('supports nested date arithmetic in a comparison', () => {
@@ -810,14 +814,24 @@ describe('evaluateExpression — built-in functions', () => {
 
   it('if evaluates lazily and returns the taken branch', () => {
     expect(
-      evaluateExpression("if({flag} === 1, 'yes', 'no')", fnNormalized, responses)
+      evaluateExpression(
+        "if({flag} === 1, 'yes', 'no')",
+        fnNormalized,
+        responses
+      )
     ).toBe('yes');
     expect(
-      evaluateExpression("if({flag} === 2, 'yes', 'no')", fnNormalized, responses)
+      evaluateExpression(
+        "if({flag} === 2, 'yes', 'no')",
+        fnNormalized,
+        responses
+      )
     ).toBe('no');
   });
 
   it('returns null for unknown functions', () => {
-    expect(evaluateExpression('bogus(1, 2)', fnNormalized, responses)).toBeNull();
+    expect(
+      evaluateExpression('bogus(1, 2)', fnNormalized, responses)
+    ).toBeNull();
   });
 });
