@@ -77,9 +77,18 @@ function DraggableFieldItem({
         selectedVariant={parentId ? 'nested' : 'default'}
       >
         {(props) => {
-          const Component = getFieldComponent(
-            props.field.definition.fieldType
-          )!;
+          const Component = getFieldComponent(props.field.definition.fieldType);
+
+          if (!Component) {
+            return (
+              <p className="ms:text-sm ms:text-mstextmuted ms:p-2">
+                Unknown field type:{' '}
+                <code className="ms:font-mono">
+                  {props.field.definition.fieldType}
+                </code>
+              </p>
+            );
+          }
 
           if (props.field.definition.fieldType === 'section') {
             const SectionComponent = Component as React.ComponentType<

@@ -4,6 +4,7 @@ export {
   TEXT_INPUT_TYPES,
   CONDITION_OPERATORS,
   CONDITIONAL_EFFECTS,
+  VALIDATOR_TYPES,
 
   // Zod schemas
   fieldTypeSchema,
@@ -15,9 +16,10 @@ export {
   conditionalEffectSchema,
   conditionSchema,
   conditionalRuleSchema,
+  fieldValidatorSchema,
   fieldDefinitionSchema,
   formDefinitionSchema,
-  formDefinitionJSONSchema,
+  getFormDefinitionJSONSchema,
   registerFieldSchema,
 
   // Types
@@ -33,6 +35,8 @@ export {
   type ConditionalEffect,
   type Condition,
   type ConditionalRule,
+  type ValidatorType,
+  type FieldValidator,
   type FieldDefinition,
   type OptionBearingFieldDefinition,
   hasOptions,
@@ -105,9 +109,10 @@ export {
   evaluateRule,
   isExpressionValid,
   evaluateExpression,
+  evaluateJsExpression,
 } from './lib/logic/conditions.js';
 
-export { resolveEffect } from './lib/logic/resolve.js';
+export { resolveEffect, resolveRequiredSeverity } from './lib/logic/resolve.js';
 
 export {
   validateField,

@@ -436,7 +436,7 @@ function collectLeafFields(
 }
 
 function fieldToMcpProp(field: FieldDefinition): McpProperty | null {
-  const title = field.question;
+  const title = (field as { question?: string }).question;
   const meta = field._sourceData as McpFieldMeta | null | undefined;
   const description = meta?.description;
 

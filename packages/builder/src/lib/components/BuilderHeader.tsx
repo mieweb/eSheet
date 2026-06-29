@@ -36,8 +36,10 @@ import { FeedbackModal, type FeedbackModalVariant } from './FeedbackModal.js';
 import { useUiApi } from '../hooks/useUiApi.js';
 import { useFormApi } from '../hooks/useFormApi.js';
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-empty-interface
-export interface BuilderHeaderProps {}
+export interface BuilderHeaderProps {
+  /** When false (default), hides the JS toggle and prevents enabling dangerous JS. */
+  allowDangerousJS?: boolean;
+}
 
 interface FeedbackState {
   open: boolean;
@@ -219,7 +221,9 @@ function formatDryRunDetails(result: DryRunResult): string {
 /**
  * BuilderHeader — top bar with Build/Code/Preview mode toggle and Import/Export actions.
  */
-export function BuilderHeader(_props: BuilderHeaderProps) {
+export function BuilderHeader({
+  allowDangerousJS = false,
+}: BuilderHeaderProps) {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [exportIdModalOpen, setExportIdModalOpen] = React.useState(false);
   const [exportIdInput, setExportIdInput] = React.useState('');
@@ -550,38 +554,49 @@ export function BuilderHeader(_props: BuilderHeaderProps) {
   const handleDryRunSubmit = () => {
     const state = form.getState();
     const errors = state.getErrors();
+    const hardErrors = errors.filter((e) => e.severity !== 'soft');
 
-    if (errors.length > 0) {
+    if (hardErrors.length > 0) {
       const result: DryRunResult = {
         wouldSubmit: false,
-        errorCount: errors.length,
-        errors,
+        errorCount: hardErrors.length,
+        errors: hardErrors,
         response: null,
       };
 
       showDryRunFeedback(
         'warning',
         'Dry Run Submit Failed',
-        `Submit would fail validation with ${errors.length} error(s).`,
+        `Submit would fail validation with ${hardErrors.length} error(s).`,
         formatDryRunDetails(result)
       );
       return;
     }
 
     const response = state.hydrateResponse({ status: 'draft' });
+    const softErrors = errors.filter((e) => e.severity === 'soft');
     const result: DryRunResult = {
       wouldSubmit: true,
-      errorCount: 0,
-      errors: [],
+      errorCount: softErrors.length,
+      errors: softErrors,
       response,
     };
 
-    showDryRunFeedback(
-      'success',
-      'Dry Run Submit Passed',
-      'Submit would pass validation.',
-      formatDryRunDetails(result)
-    );
+    if (softErrors.length > 0) {
+      showDryRunFeedback(
+        'warning',
+        'Dry Run Submit Passed (with warnings)',
+        `Submit would pass, but ${softErrors.length} recommended field(s) are unanswered.`,
+        formatDryRunDetails(result)
+      );
+    } else {
+      showDryRunFeedback(
+        'success',
+        'Dry Run Submit Passed',
+        'Submit would pass validation.',
+        formatDryRunDetails(result)
+      );
+    }
   };
 
   return (
@@ -803,6 +818,16 @@ export function BuilderHeader(_props: BuilderHeaderProps) {
 
           {/* Right — Import / Export */}
           <div className="header-actions ms:flex ms:gap-1 ms:items-center">
+            {/* Dangerous JS indicator — read-only, only shown when the host has opted in via allowDangerousJS prop */}
+            {allowDangerousJS && (
+              <span
+                title="Dangerous JS enabled (calculations & JS conditions) — controlled via allowDangerousJS prop"
+                className="dangerous-js-indicator ms:px-2 ms:py-2 ms:lg:px-3 ms:lg:py-2 ms:rounded-lg ms:border ms:border-msdanger ms:bg-msdanger/10 ms:text-msdanger ms:text-xs ms:lg:text-sm ms:font-medium ms:flex ms:items-center ms:gap-1"
+              >
+                <span>⚠</span>
+                <span className="ms:hidden ms:sm:inline">JS On</span>
+              </span>
+            )}
             <label className="header-import-label ms:group ms:px-2 ms:py-2 ms:lg:px-3 ms:lg:py-2 ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:hover:bg-msprimary ms:hover:text-mstextsecondary ms:hover:border-msprimary ms:cursor-pointer ms:text-xs ms:lg:text-sm ms:font-medium ms:transition-colors ms:flex ms:items-center ms:lg:gap-2 ms:gap-0 ms:text-mstext">
               <UploadIcon className="ms:w-4 ms:h-4 ms:text-mstext ms:group-hover:text-mstextsecondary ms:transition-colors" />
               <span className="ms:hidden ms:sm:inline">Import</span>

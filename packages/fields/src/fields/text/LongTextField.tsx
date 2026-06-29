@@ -1,5 +1,8 @@
 import React from 'react';
-import type { FieldComponentProps } from '@esheet/core';
+import type {
+  FieldComponentProps,
+  LongtextFieldDefinition,
+} from '@esheet/core';
 import { Textarea } from '@mieweb/ui';
 
 export const LongTextField = React.memo(function LongTextField({
@@ -8,11 +11,12 @@ export const LongTextField = React.memo(function LongTextField({
   isPreview,
   isEnabled,
   isRequired,
+  isSoftRequired,
   response,
   onUpdate,
   onResponse,
 }: FieldComponentProps) {
-  const def = field.definition;
+  const def = field.definition as LongtextFieldDefinition;
   const instanceId = form.getState().instanceId;
 
   if (isPreview) {
@@ -20,7 +24,15 @@ export const LongTextField = React.memo(function LongTextField({
       <div className="longtext-field-preview ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
         <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
           {def.question || 'Question'}
-          {isRequired && <span className="ms:text-msdanger ms:ml-0.5">*</span>}
+          {(isRequired || isSoftRequired) && (
+            <span
+              className={`ms:ml-0.5 ${
+                isSoftRequired ? 'ms:text-mswarning' : 'ms:text-msdanger'
+              }`}
+            >
+              *
+            </span>
+          )}
         </div>
         <Textarea
           id={`${instanceId}-longtext-answer-${def.id}`}

@@ -140,6 +140,7 @@ describe('renderer', () => {
           id: 'target',
           fieldType: 'text',
           question: 'Target',
+          required: true,
           rules: [
             {
               effect: 'enable',

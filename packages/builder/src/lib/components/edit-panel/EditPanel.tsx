@@ -151,6 +151,15 @@ export function EditPanel(_props: EditPanelProps) {
             <LogicEditor
               fieldId={logicField.definition.id}
               rules={logicField.definition.rules ?? []}
+              def={{
+                required: logicField.definition.required as
+                  | boolean
+                  | 'soft'
+                  | undefined,
+                readOnly: (logicField.definition as { readOnly?: boolean })
+                  .readOnly,
+              }}
+              onUpdateDef={handleUpdate}
             />
           </div>
         ) : null}

@@ -53,6 +53,7 @@ export function BuilderView() {
           <EsheetBuilder
             definition={INITIAL_DEF}
             onBuilderToolsReady={onBuilderToolsReady}
+            allowDangerousJS={true}
           />
         </div>
       </div>

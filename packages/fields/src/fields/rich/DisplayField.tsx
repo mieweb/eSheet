@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   evaluateExpression,
+  evaluateJsExpression,
   type FieldComponentProps,
   type DisplayFieldDefinition,
 } from '@esheet/core';
@@ -25,14 +26,30 @@ function formatComputedValue(value: unknown): string {
 function interpolateExpressions(
   source: string,
   normalized: ReturnType<FieldComponentProps['form']['getState']>['normalized'],
-  responses: ReturnType<FieldComponentProps['form']['getState']>['responses']
+  responses: ReturnType<FieldComponentProps['form']['getState']>['responses'],
+  dangerouslyAllowJS: boolean
 ): string {
   if (!source) return '';
-  // {field-id}   — simple field value lookup (consistent with schema convention)
-  // <expression> — full expression, supports {ref} + arithmetic (e.g. <{a} * {b} + " pts">)
+  // {field-id}              — simple field value lookup
+  // <expression>            — safe AST expression ({ref} + arithmetic)
+  // [[js expression]]       — arbitrary JS (only when dangerouslyAllowJS is true)
   return source.replace(
-    /\{([^{}]+)\}|<([^>]+)>/g,
-    (_match, fieldId: string | undefined, expr: string | undefined) => {
+    /\{([^{}]+)\}|<([^>]+)>|\[\[([^\]]+)\]\]/g,
+    (
+      _match,
+      fieldId: string | undefined,
+      expr: string | undefined,
+      jsExpr: string | undefined
+    ) => {
+      // [[js expression]] — dangerous JS, gated by dangerouslyAllowJS
+      if (jsExpr !== undefined) {
+        if (!dangerouslyAllowJS) return '';
+        const e = jsExpr.trim();
+        if (!e) return '';
+        return formatComputedValue(
+          evaluateJsExpression(e, normalized, responses)
+        );
+      }
       if (fieldId !== undefined) {
         const id = fieldId.trim();
         if (!id) return '';
@@ -222,15 +239,21 @@ export const DisplayField = React.memo(function DisplayField({
 }: FieldComponentProps) {
   const def = field.definition as DisplayFieldDefinition;
   const instanceId = form.getState().instanceId;
-  const { normalized, responses } = React.useSyncExternalStore(
-    (cb) => form.subscribe(cb),
-    () => form.getState(),
-    () => form.getState()
-  );
+  const { normalized, responses, dangerouslyAllowJS } =
+    React.useSyncExternalStore(
+      (cb) => form.subscribe(cb),
+      () => form.getState(),
+      () => form.getState()
+    );
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
   const source = def.content ?? '';
-  const rendered = interpolateExpressions(source, normalized, responses);
+  const rendered = interpolateExpressions(
+    source,
+    normalized,
+    responses,
+    dangerouslyAllowJS
+  );
 
   if (isPreview) {
     return (

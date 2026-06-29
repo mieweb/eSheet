@@ -66,6 +66,13 @@ export {
   type ZodIssuesPanelVariant,
 } from './lib/ZodIssuesPanel.js';
 
+// Shared modal
+export {
+  FeedbackModal,
+  type FeedbackModalProps,
+  type FeedbackModalVariant,
+} from './lib/FeedbackModal.js';
+
 // Field component registry
 export {
   getFieldComponent,

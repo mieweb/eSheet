@@ -19,6 +19,30 @@
 /* 5. Define dark mode variant for Tailwind 4 */
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
+/* 6. Mobile nav sidebar — slide-in from left animation */
+@keyframes slide-in-left {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-out-left {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+@theme {
+  --animate-slide-in-left: slide-in-left 0.2s ease-out both;
+  --animate-slide-out-left: slide-out-left 0.2s ease-in both;
+}
+
 html,
 body {
   height: 100%;

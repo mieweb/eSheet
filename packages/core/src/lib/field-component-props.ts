@@ -26,8 +26,12 @@ export interface FieldComponentProps {
   isPreview: boolean;
   /** Computed conditional enabled state (`true` when no rules override). */
   isEnabled: boolean;
-  /** Computed conditional required state (static `required` OR conditional rules). */
+  /** Computed conditional required state — true only for hard-required fields. */
   isRequired: boolean;
+  /** Computed soft-required state (warns but allows bypass). */
+  isSoftRequired: boolean;
+  /** Computed read-only state (static `readOnly` OR conditional rules). */
+  isReadOnly: boolean;
   /** Current response data for this field (`undefined` if none yet). */
   response: FieldResponse | undefined;
   /** Remove this field from the form. */

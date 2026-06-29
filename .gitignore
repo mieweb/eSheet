@@ -72,6 +72,9 @@ deploy/authorized_keys.local
 apps/docs/build/
 apps/docs/.docusaurus/
 
+# Kerebron WASM binaries — generated at dev/build time by kerebronWasmPlugin in vite.config.mts
+apps/demo/public/kerebron-wasm/
+
 vite.config.*.timestamp*
 vitest.config.*.timestamp*
 .nx/polygraph

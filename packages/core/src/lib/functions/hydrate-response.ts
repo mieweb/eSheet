@@ -81,7 +81,7 @@ export function hydrateResponse(
         items.push({
           id,
           text:
-            definition.question ??
+            (definition as { question?: string }).question ??
             (definition as { title?: string }).title ??
             '',
           answer,
@@ -93,7 +93,9 @@ export function hydrateResponse(
       const item: ResponseItem = {
         id,
         text:
-          definition.question ?? (definition as { title?: string }).title ?? '',
+          (definition as { question?: string }).question ??
+          (definition as { title?: string }).title ??
+          '',
       };
       if (!isEmptyAnswer(answer))
         item.answer = answer as ResponseItem['answer'];
