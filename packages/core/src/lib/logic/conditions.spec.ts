@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { evaluateCondition, evaluateRule } from './conditions.js';
+import {
+  evaluateCondition,
+  evaluateRule,
+  evaluateExpression,
+} from './conditions.js';
 import type {
   Condition,
   ConditionalRule,
@@ -726,5 +730,108 @@ describe('evaluateRule', () => {
 
       expect(evaluateRule(rule, exprNormalized, {})).toBe(false);
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// evaluateExpression — built-in functions & date arithmetic
+// ---------------------------------------------------------------------------
+
+describe('evaluateExpression — built-in functions', () => {
+  const fnNormalized = norm({
+    start: node(textDef('start', 'date')),
+    days: node(numericTextDef('days'), 1),
+    other: node(textDef('other', 'date'), 2),
+    flag: node(numericTextDef('flag'), 3),
+  });
+
+  const responses = {
+    start: { answer: '2026-01-01' },
+    days: { answer: '10' },
+    other: { answer: '2026-01-21' },
+    flag: { answer: '1' },
+  } as Record<string, FieldResponse>;
+
+  it('addDays adds days and returns an ISO date string', () => {
+    expect(
+      evaluateExpression('addDays({start}, {days})', fnNormalized, responses)
+    ).toBe('2026-01-11');
+  });
+
+  it('addDays supports negative offsets', () => {
+    expect(
+      evaluateExpression('addDays({start}, -1)', fnNormalized, responses)
+    ).toBe('2025-12-31');
+  });
+
+  it('subDays subtracts days', () => {
+    expect(
+      evaluateExpression('subDays({start}, 2)', fnNormalized, responses)
+    ).toBe('2025-12-30');
+  });
+
+  it('diffDays returns whole days between two dates (a - b)', () => {
+    expect(
+      evaluateExpression('diffDays({other}, {start})', fnNormalized, responses)
+    ).toBe(20);
+  });
+
+  it('today returns a YYYY-MM-DD string', () => {
+    const result = evaluateExpression('today()', fnNormalized, responses);
+    expect(typeof result).toBe('string');
+    expect(result).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it('year extracts the UTC year', () => {
+    expect(evaluateExpression('year({start})', fnNormalized, responses)).toBe(
+      2026
+    );
+  });
+
+  it('addDays returns empty string when the date is missing', () => {
+    expect(
+      evaluateExpression('addDays({missing}, 5)', fnNormalized, responses)
+    ).toBe('');
+  });
+
+  it('supports nested date arithmetic in a comparison', () => {
+    // start + days = 2026-01-11, which is before other (2026-01-21)
+    expect(
+      evaluateExpression(
+        'diffDays({other}, addDays({start}, {days})) === 10',
+        fnNormalized,
+        responses
+      )
+    ).toBe(true);
+  });
+
+  it('min / max / round / abs operate on numbers', () => {
+    expect(evaluateExpression('min(3, 7, 2)', fnNormalized, responses)).toBe(2);
+    expect(evaluateExpression('max(3, 7, 2)', fnNormalized, responses)).toBe(7);
+    expect(evaluateExpression('round(2.6)', fnNormalized, responses)).toBe(3);
+    expect(evaluateExpression('abs(0 - 5)', fnNormalized, responses)).toBe(5);
+  });
+
+  it('if evaluates lazily and returns the taken branch', () => {
+    expect(
+      evaluateExpression(
+        "if({flag} === 1, 'yes', 'no')",
+        fnNormalized,
+        responses
+      )
+    ).toBe('yes');
+    expect(
+      evaluateExpression(
+        "if({flag} === 2, 'yes', 'no')",
+        fnNormalized,
+        responses
+      )
+    ).toBe('no');
+  });
+
+  it('returns null for unknown functions', () => {
+    expect(
+      evaluateExpression('bogus(1, 2)', fnNormalized, responses)
+    ).toBeNull();
   });
 });

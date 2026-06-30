@@ -80,6 +80,17 @@ Return: summary of changes made.
 
 ---
 
+## File Editing Rules
+
+- Prefer VS Code built-in file edits or patch-style edits over terminal commands.
+- Do not use PowerShell, CMD, Bash, Python, Node scripts, `sed`, `cat`, `echo`, `Set-Content`, or file rewrite commands to modify source files unless explicitly approved.
+- Never rewrite an entire file when a targeted edit is possible.
+- Make the smallest possible diff.
+- Preserve existing file encoding, line endings, formatting, and surrounding code.
+- For text replacement, edit only the affected lines directly.
+- Use the terminal only for read-only commands, tests, type checks, linting, builds, or Git status/diff inspection.
+- Before using a terminal command that writes to files, explain why it is necessary and ask for approval.
+
 ## Project Context
 
 This is an **Nx monorepo** for the **vNext** rewrite of the Questionnaire Builder packages, written in **TypeScript**.  

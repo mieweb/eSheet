@@ -61,16 +61,11 @@ export interface EsheetRendererProps {
   /** Label for the submit button. Defaults to `'Submit'`. */
   submitLabel?: string;
   /**
-   * Host-supplied context data exposed as `context` inside JS expressions
-   * (requires `allowDangerousJS` to take effect).
-   *
-   * Use this to inject named observations, EHR discrete values, and patient
-   * demographics so that legacy patterns can be expressed as:
-   * - `context['HPI Pain Assessment'] === 'Yes'`
-   * - `context.patient.sex === 'M'`
-   * - `Number(context['Travel duration risk factor'] ?? 0)`
-   *
-   * The value is synced into the store on every render cycle when it changes.
+   * Enable touch-optimized mode with larger touch targets.
+   * - `true`: Always enable touch mode
+   * - `false`: Never enable touch mode (CSS media query still applies)
+   * - `'auto'`: Enable based on viewport width (<980px) via JavaScript
+   * - `undefined`: Rely on CSS media query only (default)
    */
   touchMode?: boolean | 'auto';
   /**

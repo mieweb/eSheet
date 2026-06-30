@@ -5,6 +5,9 @@ dist
 tmp
 out-tsc
 
+# Kerebron WASM runtime assets (large binaries, not tracked in git)
+apps/demo/public/kerebron-wasm/
+
 # dependencies
 node_modules
 
