@@ -383,7 +383,9 @@ export function createFormStore(
       set((state) => {
         const { [fieldId]: _discarded, ...rest } = state.responses;
         void _discarded;
-        return { responses: rest };
+        const nextEdited = new Set(state.userEditedFields);
+        nextEdited.delete(fieldId);
+        return { responses: rest, userEditedFields: nextEdited };
       }),
 
     resetResponses: () =>

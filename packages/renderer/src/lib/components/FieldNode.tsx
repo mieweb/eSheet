@@ -41,6 +41,12 @@ export const FieldNode = React.memo(function FieldNode({
     () => form.getState().responses
   );
 
+  const userEditedFields = React.useSyncExternalStore(
+    (cb) => form.subscribe(cb),
+    () => form.getState().userEditedFields,
+    () => form.getState().userEditedFields
+  );
+
   // Get visible children for sections
   const visibleChildIds = React.useMemo(() => {
     if (!field || field.definition.fieldType !== 'section') return [];
@@ -138,6 +144,12 @@ export const FieldNode = React.memo(function FieldNode({
   const isReadOnly = form.getState().isReadOnly(field.definition.id);
   const response = form.getState().getResponse(field.definition.id);
 
+  const hasCalculation = !!(
+    field.definition as { calculation?: string }
+  ).calculation?.trim();
+  const isCalculationOverridden =
+    hasCalculation && userEditedFields.has(field.definition.id);
+
   if (!isVisible) return null;
 
   const props: FieldComponentProps = {
@@ -150,6 +162,7 @@ export const FieldNode = React.memo(function FieldNode({
     isRequired,
     isSoftRequired,
     isReadOnly,
+    isCalculationOverridden,
     response,
     onRemove: () => undefined, // No-op in renderer
     onUpdate: () => undefined, // No-op in renderer
@@ -163,7 +176,7 @@ export const FieldNode = React.memo(function FieldNode({
     : null;
   const isChildOfSection = parentNode?.definition.fieldType === 'section';
 
-  const wrapperClass = `field-wrapper ms:bg-mssurface${
+  const wrapperClass = `field-wrapper ms:relative ms:bg-mssurface${
     isSection ? ' ms:mb-2 ms:border ms:border-msborder ms:rounded' : ''
   }${
     !isSection && !isChildOfSection
@@ -182,6 +195,31 @@ export const FieldNode = React.memo(function FieldNode({
       data-field-id={field.definition.id}
       aria-disabled={!isEnabled || undefined}
     >
+      {isCalculationOverridden && (
+        <button
+          type="button"
+          onClick={() => form.getState().clearResponse(field.definition.id)}
+          className="calc-overridden-icon ms:absolute ms:top-2 ms:right-2 ms:p-1 ms:bg-transparent ms:border-0 ms:text-mswarning ms:hover:text-mswarning/70 ms:cursor-pointer ms:rounded ms:transition-colors"
+          title="Manually edited — click to reset to calculated value"
+          aria-label="Reset to calculated value"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            width="12"
+            height="12"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M7 7H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2v-1" />
+            <path d="M20.385 6.585a2.1 2.1 0 0 0-2.97-2.97L9 12v3h3zM16 5l3 3" />
+          </svg>
+        </button>
+      )}
       {field.definition.fieldType === 'section' ? (
         (() => {
           const SectionComponent = Component as React.ComponentType<

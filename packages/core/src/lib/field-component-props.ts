@@ -32,6 +32,8 @@ export interface FieldComponentProps {
   isSoftRequired: boolean;
   /** Computed read-only state (static `readOnly` OR conditional rules). */
   isReadOnly: boolean;
+  /** True when the field has a `calculation` string AND the user has manually typed over it. */
+  isCalculationOverridden: boolean;
   /** Current response data for this field (`undefined` if none yet). */
   response: FieldResponse | undefined;
   /** Remove this field from the form. */

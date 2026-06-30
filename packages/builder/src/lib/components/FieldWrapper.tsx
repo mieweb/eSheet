@@ -133,6 +133,17 @@ export function FieldWrapper({
     setIsExpanded(false);
   }, [forceCollapseVersion]);
 
+  const userEditedFields = React.useSyncExternalStore(
+    form.subscribe,
+    () => form.getState().userEditedFields,
+    () => form.getState().userEditedFields
+  );
+
+  const isCalculationOverridden =
+    !!field &&
+    userEditedFields.has(fieldId) &&
+    !!(field.definition as { calculation?: string }).calculation?.trim();
+
   if (!field) {
     return null;
   }
@@ -152,7 +163,7 @@ export function FieldWrapper({
 
     return (
       <div
-        className={`field-wrapper ms:bg-mssurface${
+        className={`field-wrapper ms:relative ms:bg-mssurface${
           isSection ? ' ms:mb-1 ms:border ms:border-msborder ms:rounded' : ''
         }${
           !isSection && !isChildOfSection
@@ -165,6 +176,17 @@ export function FieldWrapper({
         }${!isEnabled ? ' ms:opacity-50 ms:pointer-events-none' : ''}`}
         aria-disabled={!isEnabled || undefined}
       >
+        {isCalculationOverridden && (
+          <button
+            type="button"
+            onClick={() => field_.clearResponse()}
+            className="calc-overridden-icon ms:absolute ms:top-2 ms:right-2 ms:p-1 ms:bg-transparent ms:border-0 ms:text-mswarning ms:hover:text-mswarning/70 ms:cursor-pointer ms:rounded ms:transition-colors"
+            title="Manually edited — click to reset to calculated value"
+            aria-label="Reset to calculated value"
+          >
+            <EditIcon className="ms:w-3 ms:h-3" />
+          </button>
+        )}
         {children({
           field,
           form,
@@ -175,6 +197,7 @@ export function FieldWrapper({
           isRequired,
           isSoftRequired,
           isReadOnly,
+          isCalculationOverridden,
           response,
           onRemove: field_.remove,
           onUpdate: field_.update,
@@ -262,6 +285,11 @@ export function FieldWrapper({
               *
             </span>
           )}
+          {isCalculationOverridden && (
+            <span className="calc-overridden-chip ms:inline-flex ms:items-center ms:shrink-0 ms:text-mswarning ms:bg-mswarning/10 ms:p-0.5 ms:rounded" title="Manually edited">
+              <EditIcon className="ms:w-3 ms:h-3" />
+            </span>
+          )}
         </div>
 
         {/* Actions: Edit (mobile), Toggle (expand/collapse), Delete */}
@@ -336,6 +364,7 @@ export function FieldWrapper({
           isRequired,
           isSoftRequired,
           isReadOnly,
+          isCalculationOverridden,
           response,
           onRemove: field_.remove,
           onUpdate: field_.update,
