@@ -23,7 +23,7 @@ export function getRegisteredFieldTypes(): string[] {
   return Object.keys(registry);
 }
 
-/** Reset the registry to only the 19 built-in field types (useful for testing). */
+/** Reset the registry to only the built-in field types (useful for testing). */
 export function resetFieldTypeRegistry(): void {
   for (const key of Object.keys(registry)) {
     // eslint-disable-next-line @typescript-eslint/no-dynamic-delete

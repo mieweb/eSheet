@@ -42,15 +42,15 @@ export type FieldCategory =
 /**
  * How a field stores its answer value.
  *
- * - `text`           — single string (`field.answer`)
- * - `selection`      — single option id (`field.selected: string`)
- * - `multiselection` — multiple option ids (`field.selected: string[]`)
- * - `multitext`      — per-option text (`field.options[].answer`)
- * - `matrix`         — row→column mapping (`field.selected: Record`)
- * - `media`          — binary/base64 data
- * - `display`        — no answer (presentational only)
- * - `container`      — no own answer (children hold answers)
- * - `none`           — unsupported / no answer
+ * - `text`           - single string (`field.answer`)
+ * - `selection`      - single option id (`field.selected: string`)
+ * - `multiselection` - multiple option ids (`field.selected: string[]`)
+ * - `multitext`      - per-option text (`field.options[].answer`)
+ * - `matrix`         - row -> column mapping (`field.selected: Record`)
+ * - `media`          - binary/base64 data
+ * - `display`        - no answer (presentational only)
+ * - `container`      - no own answer (children hold answers)
+ * - `none`           - unsupported / no answer
  */
 export type AnswerType =
   | 'text'
@@ -175,8 +175,8 @@ export const conditionalRuleSchema = z.object({
   conditions: z.array(conditionSchema),
   /**
    * Severity for `required` rules only.
-   * - `'hard'` (default) — blocks submission.
-   * - `'soft'` — warns but allows bypass.
+   * - `'hard'` (default) - blocks submission.
+   * - `'soft'` - warns but allows bypass.
    */
   severity: z.optional(z.enum(['hard', 'soft'])),
 });
@@ -239,7 +239,7 @@ export const fieldValidatorSchema = z.object({
 export type FieldValidator = z.infer<typeof fieldValidatorSchema>;
 
 // ---------------------------------------------------------------------------
-// Field Definition — Discriminated Union by fieldType
+// Field Definition - Discriminated Union by fieldType
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
@@ -256,9 +256,9 @@ interface BaseFieldDefinition {
   question?: string;
   /**
    * Required state for this field.
-   * - `true`    — hard required (blocks submission).
-   * - `'soft'`  — soft required (warns but allows bypass).
-   * - `false` / omitted — not required.
+   * - `true`    - hard required (blocks submission).
+   * - `'soft'`  - soft required (warns but allows bypass).
+   * - `false` / omitted - not required.
    */
   required?: boolean | 'soft';
   /** Whether this field is read-only (user cannot edit; calculated value always wins). */
@@ -269,9 +269,9 @@ interface BaseFieldDefinition {
   rules?: ConditionalRule[];
   /** JS expression that auto-computes this field's value. Requires dangerouslyAllowJS on form. */
   calculation?: string;
-  /** Adapter metadata — original source data before conversion. */
+  /** Adapter metadata - original source data before conversion. */
   _sourceData?: unknown;
-  /** Adapter metadata — warnings generated during conversion. */
+  /** Adapter metadata - warnings generated during conversion. */
   _conversionWarnings?: unknown[];
 }
 
@@ -546,7 +546,7 @@ function normalizeFieldDefinition(
     ...BASE_PROPERTIES,
     ...FIELD_TYPE_PROPERTIES[fieldType],
   ]);
-  // Display fields have no question — strip it if present.
+  // Display fields have no question - strip it if present.
   if (fieldType === 'display') {
     allowedProps.delete('question');
     allowedProps.delete('required');
@@ -777,7 +777,7 @@ const sectionFieldSchema = z.strictObject({
   ),
 });
 
-/** Core (built-in) discriminated union — sealed, never mutated. */
+/** Core (built-in) discriminated union - sealed, never mutated. */
 const _coreFieldSchema = z.discriminatedUnion('fieldType', [
   // Text
   textFieldSchema,
@@ -825,7 +825,7 @@ export function registerFieldSchema(schema: z.ZodMiniType): void {
   _extraFieldSchemas.push(schema);
   // Reset z.lazy's cached inner type so the next parse re-evaluates the union
   // with the newly registered schema included. z.lazy stores its cache at
-  // `_zod.def._cachedInner` — clearing it forces the getter to run again.
+  // `_zod.def._cachedInner` - clearing it forces the getter to run again.
   const def = (
     fieldDefinitionSchema as unknown as {
       _zod: { def: { _cachedInner?: unknown } };
@@ -870,7 +870,7 @@ export interface SelectedOption {
 /**
  * Response values for a single field.
  *
- * The shape of the response depends on the field type — consumers
+ * The shape of the response depends on the field type - consumers
  * inspect which property is present (duck typing) rather than
  * checking `fieldType`.
  *
@@ -885,7 +885,7 @@ export interface FieldResponse {
    * Selected option(s).
    * - `SelectedOption` for single-select (radio, dropdown, boolean, rating, slider)
    * - `SelectedOption[]` for multi-select (check, multiselectdropdown, ranking)
-   * - `Record<string, SelectedOption | SelectedOption[]>` for matrix (rowId → column(s))
+   * - `Record<string, SelectedOption | SelectedOption[]>` for matrix (rowId -> column(s))
    */
   selected?:
     | SelectedOption
@@ -914,7 +914,7 @@ export const formDefinitionSchema = z.strictObject({
   id: z.string(),
   title: z.optional(z.string()),
   description: z.optional(z.string()),
-  /** When true, enables dangerously embedded JS — calculations on fields and conditionType 'js'. */
+  /** When true, enables dangerously embedded JS - calculations on fields and conditionType 'js'. */
   dangerouslyAllowJS: z.optional(z.boolean()),
   fields: z.array(z.lazy(() => fieldDefinitionSchema)),
   _sourceData: z.optional(z.unknown()),
@@ -1019,7 +1019,7 @@ function makeOpenAICompatible(schema: JsonSchemaObject): JsonSchemaObject {
 }
 
 /**
- * Return the JSON Schema (Draft-07) for FormDefinition — used by builder's Monaco editor.
+ * Return the JSON Schema (Draft-07) for FormDefinition - used by builder's Monaco editor.
  *
  * Intentionally lazy (not computed at module load) so that plugin field schemas
  * registered via {@link registerFieldSchema} are included when first called.
@@ -1032,7 +1032,7 @@ export function getFormDefinitionJSONSchema(): Record<string, unknown> {
   );
 }
 
-/** Response store — maps field IDs to their response values. */
+/** Response store - maps field IDs to their response values. */
 export type FieldResponseMap = Record<string, FieldResponse>;
 
 // ---------------------------------------------------------------------------
@@ -1067,7 +1067,7 @@ export type AnswerValue =
   | AttachmentAnswer
   | Record<string, SelectedOption | SelectedOption[]>;
 
-/** A single item in the submission payload — one per answerable field. */
+/** A single item in the submission payload - one per answerable field. */
 export interface ResponseItem {
   id: string;
   text?: string;
@@ -1131,7 +1131,7 @@ export interface FieldTypeMeta {
 }
 
 /**
- * The field type registry — maps field type keys to their metadata.
+ * The field type registry - maps field type keys to their metadata.
  *
  * Uses `string` keys so consumers can register custom field types
  * beyond the 19 built-in ones.

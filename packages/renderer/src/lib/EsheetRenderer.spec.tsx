@@ -217,3 +217,34 @@ describe('EsheetRenderer', () => {
     expect(result.response).toEqual({ trigger: { answer: 'disabled' } });
   });
 });
+
+describe('EsheetRenderer display markdown', () => {
+  async function renderDisplay(content: string) {
+    await act(async () => {
+      render(
+        <EsheetRenderer
+          formDataInput={{
+            id: 'display-form',
+            title: 'Test',
+            fields: [{ id: 'note', fieldType: 'display', content }],
+          }}
+        />
+      );
+    });
+    return document.body as HTMLElement;
+  }
+
+  it('does not italicize digit-flanked hyphens (ISO dates)', async () => {
+    const body = await renderDisplay('Return date: 2026-01-31');
+    expect(body?.textContent).toContain('Return date: 2026-01-31');
+    // The date must render as plain text, not split across an <em> element.
+    expect(body?.querySelector('em')).toBeNull();
+  });
+
+  it('still renders -word- as italic', async () => {
+    const body = await renderDisplay('this is -fancy- text');
+    const em = body?.querySelector('em');
+    expect(em).not.toBeNull();
+    expect(em?.textContent).toBe('fancy');
+  });
+});
