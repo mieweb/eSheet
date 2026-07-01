@@ -1,4 +1,25 @@
 # Co-Pilot Instructions — Clean, Simple, Consistent
+
+# Repository AI Instructions
+
+Use adaptive-codegraph MCP before grep, broad text search, or normal codebase search when the task involves repository understanding.
+
+Prefer adaptive-codegraph MCP for:
+- symbol lookup
+- dependency tracing
+- call graph analysis
+- impact analysis
+- finding related files
+- understanding how features connect across the repo
+
+Only use grep/text search first when:
+- the user asks for literal text search
+- the task is a simple string replacement
+- adaptive-codegraph MCP is unavailable
+- adaptive-codegraph MCP returns incomplete or irrelevant results
+
+Before making code edits, inspect the relevant graph context first, then make the smallest safe change.
+
 ## Project Context
 
 This is an **Nx monorepo** for the **vNext** rewrite of the Questionnaire Builder packages, written in **TypeScript**.  
@@ -430,20 +451,3 @@ No new deps/files: yes
 Tests/docs touched minimally: yes
 ```
 
-## graphify
-
-For any question about this repo's architecture, structure, components, or how to add/modify/find
-code, your first action should be `graphify query "<question>"` when `graphify-out/graph.json`
-exists. Use `graphify path "<A>" "<B>"` for relationship questions and `graphify explain "<concept>"`
-for focused-concept questions. These return a scoped subgraph, usually much smaller than the full
-report or raw grep output.
-
-Triggers: "how do I…", "where is…", "what does … do", "add/modify a <component>",
-"explain the architecture", or anything that depends on how files or classes relate.
-
-If `graphify-out/wiki/index.md` exists, use it for broad navigation. Read `graphify-out/GRAPH_REPORT.md`
-only for broad architecture review or when query/path/explain do not surface enough context. Only read
-source files when (a) modifying/debugging specific code, (b) the graph lacks the needed detail, or
-(c) the graph is missing or stale.
-
-Type `/graphify` in Copilot Chat to build or update the graph.
