@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import type {
   FieldComponentProps,
   SelectedOption,
@@ -25,13 +25,14 @@ export const OpenChoiceField = React.memo(function OpenChoiceField({
   const instanceId = form.getState().instanceId;
   const options = def.options || [];
   const otherLabel = def.otherLabel || 'Other, please Specify:';
+  const otherOptionId = `${def.id}-other`;
   const selected =
     (response?.selected as SelectedOption | undefined) ?? undefined;
   const selectedId = selected?.id ?? null;
-  const isOtherSelected = selectedId === '__other__';
+  const isOtherSelected = selectedId === otherOptionId;
 
   if (isPreview) {
-    const [otherText, setOtherText] = useState('');
+    const otherText = selectedId === otherOptionId && selected?.value ? selected.value : '';
 
     return (
       <div className="openchoice-field-preview ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
@@ -53,19 +54,17 @@ export const OpenChoiceField = React.memo(function OpenChoiceField({
             onValueChange={(val) => {
               if (!val) {
                 onResponse({ selected: undefined });
-                setOtherText('');
                 return;
               }
 
-              if (val === '__other__') {
-                onResponse({ selected: { id: '__other__', value: otherText } });
+              if (val === otherOptionId) {
+                onResponse({ selected: { id: otherOptionId, value: '' } });
                 return;
               }
 
               const opt = options.find((o) => o.id === val);
               if (opt) {
                 onResponse({ selected: { id: opt.id, value: opt.value } });
-                setOtherText('');
               }
             }}
             disabled={!isEnabled}
@@ -88,7 +87,6 @@ export const OpenChoiceField = React.memo(function OpenChoiceField({
                   onClick={() => {
                     if (selectedId === option.id) {
                       onResponse({ selected: undefined });
-                      setOtherText('');
                     }
                   }}
                 />
@@ -108,11 +106,10 @@ export const OpenChoiceField = React.memo(function OpenChoiceField({
             >
               <Radio
                 id={`${instanceId}-openchoice-answer-${def.id}-other`}
-                value="__other__"
+                value={otherOptionId}
                 onClick={() => {
                   if (isOtherSelected) {
                     onResponse({ selected: undefined });
-                    setOtherText('');
                   }
                 }}
               />
@@ -126,9 +123,7 @@ export const OpenChoiceField = React.memo(function OpenChoiceField({
               type="text"
               value={otherText}
               onChange={(e) => {
-                const txt = e.target.value;
-                setOtherText(txt);
-                onResponse({ selected: { id: '__other__', value: txt } });
+                onResponse({ selected: { id: otherOptionId, value: e.target.value } });
               }}
               disabled={!isOtherSelected}
               className={`ms:w-full ms:px-3 ms:py-2 ms:h-9 ms:rounded-lg ms:transition-all ${

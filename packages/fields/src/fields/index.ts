@@ -31,7 +31,7 @@ export {
 } from './rich/index.js';
 
 // File field (not part of rich content grouping)
-export { FileField } from './file/FileField.js';
+export { FileField } from './rich/FileField.js';
 export type {
   DrawingData,
   DrawingPadConfig,
