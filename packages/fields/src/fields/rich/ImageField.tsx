@@ -57,7 +57,7 @@ export const ImageField = React.memo(function ImageField({
   // --- Preview (display) mode ---
   if (isPreview) {
     return (
-      <div className="image-field-preview ms:pb-4">
+      <div className="image-field-preview">
         {def.question && (
           <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden ms:mb-2">
             {def.question}

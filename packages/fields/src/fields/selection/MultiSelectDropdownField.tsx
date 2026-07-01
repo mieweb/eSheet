@@ -38,8 +38,8 @@ export const MultiSelectDropdownField = React.memo(
 
     if (isPreview) {
       return (
-        <div className="multiselect-dropdown-preview ms:text-mstext ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
-          <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
+        <div className="multiselect-dropdown-preview ms:text-mstext ms:space-y-1.5">
+          <div className="ms:text-sm ms:font-medium ms:text-mstext ms:break-words ms:overflow-hidden">
             {def.question || 'Question'}
             {(isRequired || isSoftRequired) && (
               <span

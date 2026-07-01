@@ -24,7 +24,7 @@ export const MultiTextField = React.memo(function MultiTextField({
 
   if (isPreview) {
     return (
-      <div className="multitext-field-preview ms:text-mstext ms:space-y-3 ms:pb-4">
+      <div className="multitext-field-preview ms:text-mstext ms:space-y-3">
         {(def.question || isRequired || isSoftRequired) && (
           <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
             {def.question || 'Question'}

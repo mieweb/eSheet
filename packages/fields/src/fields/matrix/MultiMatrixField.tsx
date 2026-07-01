@@ -47,7 +47,7 @@ export const MultiMatrixField = React.memo(function MultiMatrixField({
 
   if (isPreview) {
     return (
-      <div className="multimatrix-field-preview ms:text-mstext ms:pb-4">
+      <div className="multimatrix-field-preview ms:text-mstext">
         <div className="ms:font-light ms:mb-3 ms:text-mstext ms:break-words ms:overflow-hidden">
           {def.question || 'Question'}
           {(isRequired || isSoftRequired) && (

@@ -156,11 +156,11 @@ export function FieldWrapper({
           isSection ? ' ms:mb-1 ms:border ms:border-msborder ms:rounded' : ''
         }${
           !isSection && !isChildOfSection
-            ? ' ms:mb-1 ms:p-6 ms:border ms:border-msborder ms:rounded'
+            ? ' ms:mb-1 ms:p-4 ms:border ms:border-msborder ms:rounded'
             : ''
         }${
           isChildOfSection
-            ? ' ms:p-6 ms:border-b ms:border-msborder ms:last:border-b-0'
+            ? ' ms:p-4 ms:border-b ms:border-msborder ms:last:border-b-0'
             : ''
         }${!isEnabled ? ' ms:opacity-50 ms:pointer-events-none' : ''}`}
         aria-disabled={!isEnabled || undefined}

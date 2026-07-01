@@ -28,7 +28,7 @@ export const SingleMatrixField = React.memo(function SingleMatrixField({
 
   if (isPreview) {
     return (
-      <div className="singlematrix-field-preview ms:text-mstext ms:pb-4">
+      <div className="singlematrix-field-preview ms:text-mstext">
         <div className="ms:font-light ms:mb-3 ms:text-mstext ms:break-words ms:overflow-hidden">
           {def.question || 'Question'}
           {(isRequired || isSoftRequired) && (

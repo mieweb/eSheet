@@ -92,7 +92,7 @@ export const DiagramField = React.memo(function DiagramField({
 
   if (isPreview) {
     return (
-      <div className="diagram-field-preview ms:space-y-2 ms:pb-4">
+      <div className="diagram-field-preview ms:space-y-2">
         <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
           {def.question || 'Diagram'}
           {(isRequired || isSoftRequired) && (
