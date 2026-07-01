@@ -12,6 +12,7 @@ import {
   MultiTextField,
   RadioField,
   CheckField,
+  OpenChoiceField,
   BooleanField,
   DropdownField,
   MultiSelectDropdownField,
@@ -26,6 +27,7 @@ import {
   ImageField,
   HtmlField,
   DisplayField,
+  FileField,
 } from '@esheet/fields';
 
 let defaultsRegistered = false;
@@ -41,6 +43,7 @@ export function ensureDefaultFieldComponentsRegistered(): void {
     multitext: MultiTextField,
     radio: RadioField,
     check: CheckField,
+    openchoice: OpenChoiceField,
     boolean: BooleanField,
     dropdown: DropdownField,
     multiselectdropdown: MultiSelectDropdownField,
@@ -53,6 +56,7 @@ export function ensureDefaultFieldComponentsRegistered(): void {
     signature: SignatureField,
     diagram: DiagramField,
     image: ImageField,
+    file: FileField,
     html: HtmlField,
     display: DisplayField,
   });

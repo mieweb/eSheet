@@ -1169,6 +1169,11 @@ function getOperatorsForTarget(target: TargetField): ConditionOperator[] {
     return ['empty', 'notEmpty'];
   }
 
+  // Media answers (file, signature, diagram) — only presence checks are meaningful.
+  if (answerType === 'media') {
+    return ['empty', 'notEmpty'];
+  }
+
   // Single-value selection fields (radio/dropdown/boolean etc.).
   if (answerType === 'selection') {
     const ops: ConditionOperator[] = [

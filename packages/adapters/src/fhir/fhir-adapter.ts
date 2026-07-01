@@ -611,7 +611,13 @@ function extractSingleAnswerValue(answer: FhirResponseAnswer): unknown {
   if (answer.valueUri !== undefined) return answer.valueUri;
   if (answer.valueCoding) return answer.valueCoding.code;
   if (answer.valueQuantity) return answer.valueQuantity.value;
-  if (answer.valueAttachment) return answer.valueAttachment.data;
+  if (answer.valueAttachment)
+    return {
+      data: answer.valueAttachment.data,
+      contentType: answer.valueAttachment.contentType,
+      title: answer.valueAttachment.title,
+      url: answer.valueAttachment.url,
+    };
   if (answer.valueReference) return answer.valueReference.reference;
 
   return undefined;
@@ -731,6 +737,47 @@ function convertValueToAnswers(
         },
       ];
 
+    case 'file': {
+      // value may be a string (base64) or an object with data/dataUrl/contentType/title
+      if (typeof value === 'string') {
+        return [
+          {
+            valueAttachment: {
+              contentType: 'application/octet-stream',
+              data: value,
+            },
+          },
+        ];
+      }
+
+      const v = value as {
+        data?: string;
+        dataUrl?: string;
+        contentType?: string;
+        title?: string;
+      };
+      let dataBase64: string | undefined = undefined;
+      let contentType = v.contentType ?? 'application/octet-stream';
+      if (v.data) dataBase64 = v.data;
+      else if (v.dataUrl) {
+        const comma = v.dataUrl.indexOf(',');
+        dataBase64 = comma >= 0 ? v.dataUrl.slice(comma + 1) : v.dataUrl;
+        const prefix = v.dataUrl.slice(0, comma);
+        const m = prefix.match(/data:([^;]+)/);
+        if (m && m[1]) contentType = m[1];
+      }
+
+      return [
+        {
+          valueAttachment: {
+            contentType,
+            data: dataBase64,
+            title: v.title,
+          },
+        },
+      ];
+    }
+
     default:
       return [{ valueString: String(value) }];
   }
@@ -758,15 +805,27 @@ function convertTextAnswer(
 
 function createCodingAnswer(
   field: FieldDefinition,
-  selectedId: string
+  selectedIdOrObj: string | { id?: string; value?: string }
 ): FhirResponseAnswer {
   const options = 'options' in field ? field.options : undefined;
+  const selectedId =
+    typeof selectedIdOrObj === 'string'
+      ? selectedIdOrObj
+      : selectedIdOrObj.id ?? String(selectedIdOrObj.value ?? '');
   const option = options?.find((o: FieldOption) => o.id === selectedId);
 
   return {
     valueCoding: {
-      code: option?.value ?? selectedId,
-      display: option?.text,
+      code:
+        option?.value ??
+        (typeof selectedIdOrObj === 'string'
+          ? selectedIdOrObj
+          : selectedIdOrObj.value ?? selectedId),
+      display:
+        option?.text ??
+        (typeof selectedIdOrObj === 'object'
+          ? selectedIdOrObj.value
+          : undefined),
     },
   };
 }

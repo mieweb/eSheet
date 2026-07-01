@@ -23,6 +23,8 @@ export const FIELD_TYPES = [
   'html',
   'signature',
   'diagram',
+  'file',
+  'openchoice',
   'display',
   'section',
 ] as const;
@@ -397,6 +399,26 @@ export interface DiagramFieldDefinition extends BaseFieldDefinition {
   padPlaceholder?: string;
 }
 
+export interface FileFieldDefinition extends BaseFieldDefinition {
+  fieldType: 'file';
+  /** Accept string for file input (MIME types or extensions), e.g. "image/*,.pdf" */
+  accept?: string;
+  /** Maximum allowed file size in bytes (optional). */
+  maxFileSize?: number;
+  /** Maximum number of files allowed to upload (optional). Default: 1. */
+  maxFiles?: number;
+}
+
+export interface OpenChoiceFieldDefinition extends BaseFieldDefinition {
+  fieldType: 'openchoice';
+  /** Predefined selectable options. */
+  options?: FieldOption[];
+  /** Maximum number of custom user-added options allowed at runtime (optional). */
+  maxCustomOptions?: number;
+  /** Label for the "Other, please specify" option (optional). */
+  otherLabel?: string;
+}
+
 export interface DisplayFieldDefinition {
   id: string;
   fieldType: 'display';
@@ -440,6 +462,7 @@ export type FieldDefinition =
   | BooleanFieldDefinition
   | DropdownFieldDefinition
   | MultiselectDropdownFieldDefinition
+  | OpenChoiceFieldDefinition
   // Rating
   | RatingFieldDefinition
   | RankingFieldDefinition
@@ -449,6 +472,7 @@ export type FieldDefinition =
   | MultiMatrixFieldDefinition
   // Rich
   | ImageFieldDefinition
+  | FileFieldDefinition
   | HtmlFieldDefinition
   | SignatureFieldDefinition
   | DiagramFieldDefinition
@@ -464,6 +488,7 @@ export type OptionBearingFieldDefinition =
   | DropdownFieldDefinition
   | MultiselectDropdownFieldDefinition
   | RatingFieldDefinition
+  | OpenChoiceFieldDefinition
   | RankingFieldDefinition
   | SliderFieldDefinition;
 
@@ -511,6 +536,8 @@ const FIELD_TYPE_PROPERTIES: Record<FieldType, readonly string[]> = {
   html: ['htmlContent', 'iframeHeight'],
   signature: ['padPlaceholder'],
   diagram: ['imageUri', 'padPlaceholder'],
+  file: ['accept', 'maxFileSize'],
+  openchoice: ['options', 'maxCustomOptions'],
   display: ['content'],
   // Organization category
   section: ['title', 'fields'],
@@ -751,6 +778,20 @@ const diagramFieldSchema = z.strictObject({
   padPlaceholder: z.optional(z.string()),
 });
 
+const fileFieldSchema = z.strictObject({
+  ...baseFieldProps,
+  fieldType: z.literal('file'),
+  accept: z.optional(z.string()),
+  maxFileSize: z.optional(z.number()),
+});
+
+const openChoiceFieldSchema = z.strictObject({
+  ...baseFieldProps,
+  fieldType: z.literal('openchoice'),
+  options: z.optional(z.array(fieldOptionSchema)),
+  maxCustomOptions: z.optional(z.number()),
+});
+
 const displayBaseFieldProps = {
   id: z.string(),
   rules: z.optional(z.array(conditionalRuleSchema)),
@@ -798,9 +839,11 @@ const _coreFieldSchema = z.discriminatedUnion('fieldType', [
   multiMatrixFieldSchema,
   // Rich
   imageFieldSchema,
+  fileFieldSchema,
   htmlFieldSchema,
   signatureFieldSchema,
   diagramFieldSchema,
+  openChoiceFieldSchema,
   displayFieldSchema,
   // Organization
   sectionFieldSchema,
@@ -901,6 +944,8 @@ export interface FieldResponse {
   markupData?: string;
   /** Base64 diagram image (diagram field). */
   markupImage?: string;
+  /** File/attachment(s) uploaded by user (file field). Supports single or multiple files. */
+  fileData?: AttachmentAnswer | AttachmentAnswer[];
   /** Set to true when the response was filled programmatically by an AI agent. */
   _ai?: boolean;
 }
@@ -1052,6 +1097,8 @@ export type AttachmentAnswer = {
   dataUrl?: string;
   url?: string;
   title?: string;
+  /** File size in bytes (optional). */
+  size?: number;
 };
 
 /** All possible answer value shapes in a submission payload. */

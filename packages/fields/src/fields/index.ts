@@ -5,6 +5,7 @@ export { TextField, LongTextField, MultiTextField } from './text/index.js';
 export {
   RadioField,
   CheckField,
+  OpenChoiceField,
   BooleanField,
   DropdownField,
   MultiSelectDropdownField,
@@ -28,6 +29,9 @@ export {
   ImageField,
   SignatureField,
 } from './rich/index.js';
+
+// File field (not part of rich content grouping)
+export { FileField } from './file/FileField.js';
 export type {
   DrawingData,
   DrawingPadConfig,

@@ -936,7 +936,8 @@ function getExpressionFieldValue(
     definition.fieldType === 'dropdown' ||
     definition.fieldType === 'boolean' ||
     definition.fieldType === 'slider' ||
-    definition.fieldType === 'rating'
+    definition.fieldType === 'rating' ||
+    definition.fieldType === 'openchoice'
   ) {
     const selected = response.selected;
     if (
@@ -948,11 +949,20 @@ function getExpressionFieldValue(
       const selectedId = (selected as SelectedOption).id;
       const opt = definition.options?.find((o) => o.id === selectedId);
       if (opt?.score != null) return opt.score;
-      const raw = opt?.value ?? selectedId;
+      // For openchoice __other__, prefer the stored value (user-typed text)
+      // over the option lookup since the definition won't have that entry.
+      const raw = opt?.value ?? (selected as SelectedOption).value ?? selectedId;
       const parsed = parseFloat(raw);
       return Number.isNaN(parsed) ? raw : parsed;
     }
     return definition.fieldType === 'rating' ? 0 : '';
+  }
+
+  if (definition.fieldType === 'file') {
+    const fd = response.fileData;
+    if (!fd) return 0;
+    const files = Array.isArray(fd) ? fd : [fd];
+    return files.length;
   }
 
   if (
@@ -1010,7 +1020,8 @@ function getActualValue(
     case 'dropdown':
     case 'boolean':
     case 'slider':
-    case 'rating': {
+    case 'rating':
+    case 'openchoice': {
       const sel = response.selected;
       if (
         sel != null &&
@@ -1040,6 +1051,13 @@ function getActualValue(
         return response.selected as Record<string, unknown>;
       }
       return {};
+
+    case 'file': {
+      const fd = response.fileData;
+      if (!fd) return null;
+      const files = Array.isArray(fd) ? fd : [fd];
+      return files.length === 0 ? null : files.map((f) => f.title ?? f.url ?? '');
+    }
 
     default:
       return null;
