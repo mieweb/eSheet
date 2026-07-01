@@ -89,3 +89,6 @@ vitest.config.*.timestamp*
 .tmp-*.log
 .nx/self-healing
 apps/docs/static/doc-content.json
+
+# Graphify artifacts
+graphify-out*
