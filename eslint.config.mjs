@@ -21,6 +21,7 @@ export default [
       '**/vite.config.*.timestamp*',
       '**/vitest.config.*.timestamp*',
       'apps/demo/public/**',
+      'apps/docs/static/**',
     ],
   },
   {

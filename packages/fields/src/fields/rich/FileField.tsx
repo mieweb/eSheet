@@ -28,6 +28,8 @@ const PREDEFINED_FILE_TYPES = [
   },
   { label: 'CSV', value: 'text/csv', accept: '.csv' },
   { label: 'Text', value: 'text/plain', accept: '.txt' },
+  { label: 'JSON', value: 'application/json', accept: '.json' },
+  { label: 'YAML', value: 'application/yaml', accept: '.yaml,.yml' },
   { label: 'ZIP', value: 'application/zip', accept: '.zip' },
   { label: 'MP4', value: 'video/mp4', accept: '.mp4' },
   { label: 'WebM', value: 'video/webm', accept: '.webm' },

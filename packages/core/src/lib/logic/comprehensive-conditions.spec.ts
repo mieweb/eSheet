@@ -2248,18 +2248,18 @@ describe('comprehensive conditions integration', () => {
       const resp: FieldResponse = {
         selected: { id: '__other__', value: 'custom text' },
       };
-      expect(resolveEffect('visible', field, normalized, { 'other-1': resp })).toBe(
-        true
-      );
+      expect(
+        resolveEffect('visible', field, normalized, { 'other-1': resp })
+      ).toBe(true);
     });
 
     it('notEquals — does not match different option', () => {
       const { normalized, field } = setup(openChoiceDef);
       field.rules = [fieldRule('visible', 'other-1', 'notEquals', 'other-1')];
       const resp: FieldResponse = { selected: sel('other-2', 'Beta') };
-      expect(resolveEffect('visible', field, normalized, { 'other-1': resp })).toBe(
-        true
-      );
+      expect(
+        resolveEffect('visible', field, normalized, { 'other-1': resp })
+      ).toBe(true);
     });
 
     it('empty — true when nothing selected', () => {
@@ -2272,9 +2272,9 @@ describe('comprehensive conditions integration', () => {
       const { normalized, field } = setup(openChoiceDef);
       field.rules = [fieldRule('visible', 'other-1', 'notEmpty')];
       const resp: FieldResponse = { selected: sel('other-1', 'Alpha') };
-      expect(resolveEffect('visible', field, normalized, { 'other-1': resp })).toBe(
-        true
-      );
+      expect(
+        resolveEffect('visible', field, normalized, { 'other-1': resp })
+      ).toBe(true);
     });
 
     it('expression — returns user-typed text for __other__', () => {
@@ -2319,9 +2319,9 @@ describe('comprehensive conditions integration', () => {
       const resp: FieldResponse = {
         fileData: { contentType: 'application/pdf', title: 'doc.pdf' },
       };
-      expect(resolveEffect('visible', field, normalized, { 'other-8': resp })).toBe(
-        true
-      );
+      expect(
+        resolveEffect('visible', field, normalized, { 'other-8': resp })
+      ).toBe(true);
     });
 
     it('notEmpty — true when fileData is an array with entries', () => {
@@ -2333,9 +2333,9 @@ describe('comprehensive conditions integration', () => {
           { contentType: 'image/png', title: 'b.png' },
         ],
       };
-      expect(resolveEffect('visible', field, normalized, { 'other-8': resp })).toBe(
-        true
-      );
+      expect(
+        resolveEffect('visible', field, normalized, { 'other-8': resp })
+      ).toBe(true);
     });
 
     it('expression — file count used for numeric comparison', () => {

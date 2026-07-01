@@ -32,7 +32,8 @@ export const OpenChoiceField = React.memo(function OpenChoiceField({
   const isOtherSelected = selectedId === otherOptionId;
 
   if (isPreview) {
-    const otherText = selectedId === otherOptionId && selected?.value ? selected.value : '';
+    const otherText =
+      selectedId === otherOptionId && selected?.value ? selected.value : '';
 
     return (
       <div className="openchoice-field-preview ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
@@ -123,7 +124,9 @@ export const OpenChoiceField = React.memo(function OpenChoiceField({
               type="text"
               value={otherText}
               onChange={(e) => {
-                onResponse({ selected: { id: otherOptionId, value: e.target.value } });
+                onResponse({
+                  selected: { id: otherOptionId, value: e.target.value },
+                });
               }}
               disabled={!isOtherSelected}
               className={`ms:w-full ms:px-3 ms:py-2 ms:h-9 ms:rounded-lg ms:transition-all ${

@@ -951,7 +951,8 @@ function getExpressionFieldValue(
       if (opt?.score != null) return opt.score;
       // For openchoice __other__, prefer the stored value (user-typed text)
       // over the option lookup since the definition won't have that entry.
-      const raw = opt?.value ?? (selected as SelectedOption).value ?? selectedId;
+      const raw =
+        opt?.value ?? (selected as SelectedOption).value ?? selectedId;
       const parsed = parseFloat(raw);
       return Number.isNaN(parsed) ? raw : parsed;
     }
@@ -1056,7 +1057,9 @@ function getActualValue(
       const fd = response.fileData;
       if (!fd) return null;
       const files = Array.isArray(fd) ? fd : [fd];
-      return files.length === 0 ? null : files.map((f) => f.title ?? f.url ?? '');
+      return files.length === 0
+        ? null
+        : files.map((f) => f.title ?? f.url ?? '');
     }
 
     default:
