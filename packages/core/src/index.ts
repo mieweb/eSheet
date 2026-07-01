@@ -38,6 +38,8 @@ export {
   type ValidatorType,
   type FieldValidator,
   type FieldDefinition,
+  type FieldWidth,
+  type OptionLayout,
   type OptionBearingFieldDefinition,
   hasOptions,
   // Per-field-type interfaces (discriminated union members)

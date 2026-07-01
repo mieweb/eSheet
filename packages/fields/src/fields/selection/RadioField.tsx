@@ -21,6 +21,7 @@ export const RadioField = React.memo(function RadioField({
   const def = field.definition as RadioFieldDefinition;
   const instanceId = form.getState().instanceId;
   const options = def.options || [];
+  const isWrap = def.optionLayout === 'wrap';
   const selectedId =
     (response?.selected as SelectedOption | undefined)?.id ?? null;
 
@@ -46,30 +47,39 @@ export const RadioField = React.memo(function RadioField({
             if (opt) onResponse({ selected: { id: opt.id, value: opt.value } });
           }}
           disabled={!isEnabled}
-          orientation="vertical"
         >
-          {options.map((option) => (
-            <label
-              key={option.id}
-              htmlFor={`${instanceId}-radio-answer-${def.id}-${option.id}`}
-              className={`ms:flex ms:items-center ms:gap-2 ms:rounded ms:transition-colors ms:py-1 ms:px-1 ${
-                isEnabled
-                  ? 'ms:cursor-pointer ms:hover:bg-msprimary/5'
-                  : 'ms:cursor-not-allowed'
-              }`}
-            >
-              <Radio
-                id={`${instanceId}-radio-answer-${def.id}-${option.id}`}
-                value={option.id}
-                onClick={() => {
-                  if (selectedId === option.id) {
-                    onResponse({ selected: undefined });
-                  }
-                }}
-              />
-              <span className="ms:text-sm ms:text-mstext">{option.value}</span>
-            </label>
-          ))}
+          <div
+            className={
+              isWrap
+                ? 'ms:flex ms:flex-wrap ms:gap-x-4 ms:gap-y-1'
+                : 'ms:flex ms:flex-col ms:gap-1.5'
+            }
+          >
+            {options.map((option) => (
+              <label
+                key={option.id}
+                htmlFor={`${instanceId}-radio-answer-${def.id}-${option.id}`}
+                className={`ms:flex ms:items-center ms:gap-2 ms:rounded ms:transition-colors ms:py-1 ms:px-1 ${
+                  isEnabled
+                    ? 'ms:cursor-pointer ms:hover:bg-msprimary/5'
+                    : 'ms:cursor-not-allowed'
+                }`}
+              >
+                <Radio
+                  id={`${instanceId}-radio-answer-${def.id}-${option.id}`}
+                  value={option.id}
+                  onClick={() => {
+                    if (selectedId === option.id) {
+                      onResponse({ selected: undefined });
+                    }
+                  }}
+                />
+                <span className="ms:text-sm ms:text-mstext">
+                  {option.value}
+                </span>
+              </label>
+            ))}
+          </div>
         </RadioGroup>
       </div>
     );

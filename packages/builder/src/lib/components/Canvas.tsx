@@ -8,6 +8,37 @@ import { FieldWrapper } from './FieldWrapper.js';
 import { getFieldComponent } from '@esheet/fields';
 import { ViewBigIcon, ViewSmallIcon } from '../icons.js';
 
+// ---------------------------------------------------------------------------
+// Preview row grid
+// ---------------------------------------------------------------------------
+// Preview lays fields out on a 6-column grid so fields can share rows. Each
+// field's `width` decides how many columns it spans; the grid packs them left
+// to right and wraps automatically. On narrow screens the grid collapses to a
+// single stacked column.
+//   full  -> 6 cols (whole row)   half -> 3 cols (2/row)   third -> 2 cols (3/row)
+// The 6-column track is applied via inline style because Tailwind's responsive
+// display utilities (`sm:grid`) are not reliably generated for these packages.
+const PREVIEW_GRID_CLASS = 'ms:gap-3';
+const PREVIEW_GRID_STYLE: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(6, minmax(0, 1fr))',
+  alignItems: 'start',
+};
+
+function previewColSpan(field: {
+  definition: { fieldType: string; width?: 'full' | 'half' | 'third' };
+}): number {
+  if (field.definition.fieldType === 'section') return 6;
+  switch (field.definition.width) {
+    case 'half':
+      return 3;
+    case 'third':
+      return 2;
+    default:
+      return 6;
+  }
+}
+
 export interface CanvasProps {
   /** The form store */
   form: FormStore;
@@ -32,6 +63,7 @@ function DraggableFieldItem({
   forceExpandVersion,
   forceCollapseVersion,
   nestedChildren,
+  previewGrid = false,
 }: {
   id: string;
   form: FormStore;
@@ -43,6 +75,7 @@ function DraggableFieldItem({
   forceExpandVersion?: number;
   forceCollapseVersion?: number;
   nestedChildren?: React.ReactNode;
+  previewGrid?: boolean;
 }) {
   const handleRef = React.useRef<HTMLDivElement | null>(null);
   const field = form.getState().getField(id);
@@ -58,9 +91,17 @@ function DraggableFieldItem({
 
   if (!field) return null;
 
+  const wrapperClass = previewGrid
+    ? 'field-canvas-wrapper ms:relative'
+    : 'field-canvas-wrapper ms:relative ms:pb-1 ms:last:pb-0';
+  const wrapperStyle = previewGrid
+    ? { gridColumn: `span ${previewColSpan(field)}` }
+    : undefined;
+
   return (
     <div
-      className="field-canvas-wrapper ms:relative ms:pb-1 ms:last:pb-0"
+      className={wrapperClass}
+      style={wrapperStyle}
       data-field-id={id}
       data-field-type={field.definition.fieldType}
       data-selected={isSelected ? 'true' : 'false'}
@@ -367,10 +408,12 @@ export const Canvas = React.memo(function Canvas({
       if (mode === 'preview' && childIds.length === 0) return null;
 
       const isEmpty = mode !== 'preview' && childIds.length === 0;
+      const previewGridClass =
+        mode === 'preview' ? ` ${PREVIEW_GRID_CLASS}` : '';
       const containerClass =
         depth === 1
-          ? 'section-children'
-          : 'section-children ms:border-l ms:border-msborder ms:pl-3';
+          ? `section-children${previewGridClass}`
+          : `section-children ms:border-l ms:border-msborder ms:pl-3${previewGridClass}`;
       const emptyClass = isEmpty
         ? ' ms:rounded-lg ms:border-2 ms:border-dashed ms:border-msprimary/30 ms:bg-gradient-to-br ms:from-msbackground ms:to-msbackgroundsecondary'
         : ' ms:min-h-[2rem]';
@@ -378,6 +421,7 @@ export const Canvas = React.memo(function Canvas({
       return (
         <div
           className={`${containerClass}${emptyClass}`}
+          style={mode === 'preview' ? PREVIEW_GRID_STYLE : undefined}
           data-depth={depth}
           data-sortable-list={dragEnabled ? 'true' : undefined}
           data-parent-id={parentId}
@@ -400,6 +444,7 @@ export const Canvas = React.memo(function Canvas({
               ui={ui}
               parentId={parentId}
               dragEnabled={dragEnabled}
+              previewGrid={mode === 'preview'}
               isSelected={
                 selectedFieldId === parentId && selectedFieldChildId === childId
               }
@@ -484,7 +529,10 @@ export const Canvas = React.memo(function Canvas({
       ) : (
         <div
           ref={canvasRef}
-          className="canvas-fields ms:space-y-0 ms:flex-1 ms:min-h-0 ms:overflow-y-auto ms:px-4 ms:pt-3 ms:pb-4"
+          className={`canvas-fields ${
+            mode === 'preview' ? PREVIEW_GRID_CLASS : 'ms:space-y-0'
+          } ms:flex-1 ms:min-h-0 ms:overflow-y-auto ms:px-4 ms:pt-3 ms:pb-4`}
+          style={mode === 'preview' ? PREVIEW_GRID_STYLE : undefined}
           data-sortable-list={dragEnabled ? 'true' : undefined}
           data-parent-id=""
         >
@@ -495,6 +543,7 @@ export const Canvas = React.memo(function Canvas({
               form={form}
               ui={ui}
               dragEnabled={dragEnabled}
+              previewGrid={mode === 'preview'}
               isSelected={
                 selectedFieldId === id && selectedFieldChildId === null
               }

@@ -21,6 +21,7 @@ export const CheckField = React.memo(function CheckField({
   const def = field.definition as CheckFieldDefinition;
   const instanceId = form.getState().instanceId;
   const options = def.options || [];
+  const isWrap = def.optionLayout === 'wrap';
   const selectedArr =
     (response?.selected as SelectedOption[] | undefined) ?? [];
   const selectedIds = selectedArr.map((s) => s.id);
@@ -48,7 +49,13 @@ export const CheckField = React.memo(function CheckField({
             </span>
           )}
         </div>
-        <div className="ms:space-y-1">
+        <div
+          className={
+            isWrap
+              ? 'ms:flex ms:flex-wrap ms:gap-x-4 ms:gap-y-1'
+              : 'ms:space-y-1'
+          }
+        >
           {options.map((option) => (
             <label
               key={option.id}

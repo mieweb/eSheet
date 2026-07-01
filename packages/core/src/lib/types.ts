@@ -242,6 +242,21 @@ export type FieldValidator = z.infer<typeof fieldValidatorSchema>;
 // Field Definition - Discriminated Union by fieldType
 // ---------------------------------------------------------------------------
 
+/**
+ * Layout width a field occupies in a row-based preview/render grid.
+ * - `full`  - spans the whole row (default).
+ * - `half`  - two per row.
+ * - `third` - three per row.
+ */
+export type FieldWidth = 'full' | 'half' | 'third';
+
+/**
+ * How a choice field arranges its options.
+ * - `stack` - one option per line (default).
+ * - `wrap`  - options flow horizontally and wrap to the next line.
+ */
+export type OptionLayout = 'stack' | 'wrap';
+
 // ---------------------------------------------------------------------------
 // Base Interfaces
 // ---------------------------------------------------------------------------
@@ -263,6 +278,8 @@ interface BaseFieldDefinition {
   required?: boolean | 'soft';
   /** Whether this field is read-only (user cannot edit; calculated value always wins). */
   readOnly?: boolean;
+  /** Layout width in a row grid (`full` | `half` | `third`). Defaults to `full`. */
+  width?: FieldWidth;
   /** Validation rules applied to the field's response. */
   validators?: FieldValidator[];
   /** Conditional rules that control visibility, enabled state, or required state. */
@@ -303,11 +320,15 @@ export interface MultitextFieldDefinition extends BaseFieldDefinition {
 export interface RadioFieldDefinition extends BaseFieldDefinition {
   fieldType: 'radio';
   options?: FieldOption[];
+  /** How options are arranged (`stack` | `wrap`). Defaults to `stack`. */
+  optionLayout?: OptionLayout;
 }
 
 export interface CheckFieldDefinition extends BaseFieldDefinition {
   fieldType: 'check';
   options?: FieldOption[];
+  /** How options are arranged (`stack` | `wrap`). Defaults to `stack`. */
+  optionLayout?: OptionLayout;
 }
 
 export interface BooleanFieldDefinition extends BaseFieldDefinition {
@@ -406,6 +427,8 @@ export interface DisplayFieldDefinition {
   content?: string;
   /** Display fields are never required. */
   required?: never;
+  /** Layout width in a row grid (`full` | `half` | `third`). Defaults to `full`. */
+  width?: FieldWidth;
   /** Conditional rules controlling visibility. */
   rules?: ConditionalRule[];
   /** @deprecated Display fields do not accept answers; calculation has no effect. */

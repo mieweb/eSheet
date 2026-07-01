@@ -144,7 +144,6 @@ export function FieldWrapper({
 
   // --- Preview mode: minimal chrome, no builder controls ---
   if (isPreview) {
-    const isSection = field.definition.fieldType === 'section';
     const parentNode = field.parentId
       ? form.getState().getField(field.parentId)
       : null;
@@ -152,17 +151,9 @@ export function FieldWrapper({
 
     return (
       <div
-        className={`field-wrapper ms:bg-mssurface${
-          isSection ? ' ms:mb-1 ms:border ms:border-msborder ms:rounded' : ''
-        }${
-          !isSection && !isChildOfSection
-            ? ' ms:mb-1 ms:p-4 ms:border ms:border-msborder ms:rounded'
-            : ''
-        }${
-          isChildOfSection
-            ? ' ms:p-4 ms:border-b ms:border-msborder ms:last:border-b-0'
-            : ''
-        }${!isEnabled ? ' ms:opacity-50 ms:pointer-events-none' : ''}`}
+        className={`field-wrapper${isChildOfSection ? ' ms:py-1' : ''}${
+          !isEnabled ? ' ms:opacity-50 ms:pointer-events-none' : ''
+        }`}
         aria-disabled={!isEnabled || undefined}
       >
         {children({
