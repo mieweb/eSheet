@@ -39,6 +39,34 @@ function previewColSpan(field: {
   }
 }
 
+// Below this viewport width the preview collapses to a single stacked column
+// (all fields full width), regardless of each field's chosen row width.
+const PREVIEW_STACK_MEDIA_QUERY = '(max-width: 900px)';
+
+/** True when the viewport is at tablet width or narrower. */
+function useIsNarrowPreview(): boolean {
+  const getMatches = () =>
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia(PREVIEW_STACK_MEDIA_QUERY).matches;
+
+  const [isNarrow, setIsNarrow] = React.useState(getMatches);
+
+  React.useEffect(() => {
+    if (
+      typeof window === 'undefined' ||
+      typeof window.matchMedia !== 'function'
+    )
+      return;
+    const mq = window.matchMedia(PREVIEW_STACK_MEDIA_QUERY);
+    const handler = (e: MediaQueryListEvent) => setIsNarrow(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  return isNarrow;
+}
+
 export interface CanvasProps {
   /** The form store */
   form: FormStore;
@@ -159,6 +187,8 @@ export const Canvas = React.memo(function Canvas({
   const rootIds = useVisibleRootIds();
   const { normalized, responses } = useFormApi();
   const { mode, selectedFieldId, selectedFieldChildId } = useUiApi();
+  const isNarrowPreview = useIsNarrowPreview();
+  const showPreviewGrid = mode === 'preview' && !isNarrowPreview;
   const [sectionExpandSignal, setSectionExpandSignal] = React.useState<{
     sectionId: string;
     version: number;
@@ -408,8 +438,7 @@ export const Canvas = React.memo(function Canvas({
       if (mode === 'preview' && childIds.length === 0) return null;
 
       const isEmpty = mode !== 'preview' && childIds.length === 0;
-      const previewGridClass =
-        mode === 'preview' ? ` ${PREVIEW_GRID_CLASS}` : '';
+      const previewGridClass = showPreviewGrid ? ` ${PREVIEW_GRID_CLASS}` : '';
       const containerClass =
         depth === 1
           ? `section-children${previewGridClass}`
@@ -421,7 +450,7 @@ export const Canvas = React.memo(function Canvas({
       return (
         <div
           className={`${containerClass}${emptyClass}`}
-          style={mode === 'preview' ? PREVIEW_GRID_STYLE : undefined}
+          style={showPreviewGrid ? PREVIEW_GRID_STYLE : undefined}
           data-depth={depth}
           data-sortable-list={dragEnabled ? 'true' : undefined}
           data-parent-id={parentId}
@@ -444,7 +473,7 @@ export const Canvas = React.memo(function Canvas({
               ui={ui}
               parentId={parentId}
               dragEnabled={dragEnabled}
-              previewGrid={mode === 'preview'}
+              previewGrid={showPreviewGrid}
               isSelected={
                 selectedFieldId === parentId && selectedFieldChildId === childId
               }
@@ -472,6 +501,7 @@ export const Canvas = React.memo(function Canvas({
       sectionExpandSignal,
       selectedFieldChildId,
       selectedFieldId,
+      showPreviewGrid,
       ui,
     ]
   );
@@ -530,9 +560,9 @@ export const Canvas = React.memo(function Canvas({
         <div
           ref={canvasRef}
           className={`canvas-fields ${
-            mode === 'preview' ? PREVIEW_GRID_CLASS : 'ms:space-y-0'
+            showPreviewGrid ? PREVIEW_GRID_CLASS : 'ms:space-y-0'
           } ms:flex-1 ms:min-h-0 ms:overflow-y-auto ms:px-4 ms:pt-3 ms:pb-4`}
-          style={mode === 'preview' ? PREVIEW_GRID_STYLE : undefined}
+          style={showPreviewGrid ? PREVIEW_GRID_STYLE : undefined}
           data-sortable-list={dragEnabled ? 'true' : undefined}
           data-parent-id=""
         >
@@ -543,7 +573,7 @@ export const Canvas = React.memo(function Canvas({
               form={form}
               ui={ui}
               dragEnabled={dragEnabled}
-              previewGrid={mode === 'preview'}
+              previewGrid={showPreviewGrid}
               isSelected={
                 selectedFieldId === id && selectedFieldChildId === null
               }
