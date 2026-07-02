@@ -311,6 +311,8 @@ export interface LongtextFieldDefinition extends BaseFieldDefinition {
 export interface MultitextFieldDefinition extends BaseFieldDefinition {
   fieldType: 'multitext';
   options?: FieldOption[];
+  /** How inputs are arranged (`stack` | `wrap`). Defaults to `stack`. */
+  optionLayout?: OptionLayout;
 }
 
 // ---------------------------------------------------------------------------

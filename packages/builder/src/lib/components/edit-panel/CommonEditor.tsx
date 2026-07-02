@@ -38,7 +38,9 @@ export function CommonEditor({
   const calculation = (def as { calculation?: string }).calculation ?? '';
   const width = (def as { width?: FieldWidth }).width ?? 'full';
   const showOptionLayout =
-    def.fieldType === 'radio' || def.fieldType === 'check';
+    def.fieldType === 'radio' ||
+    def.fieldType === 'check' ||
+    def.fieldType === 'multitext';
   const optionLayout =
     (def as { optionLayout?: OptionLayout }).optionLayout ?? 'stack';
 

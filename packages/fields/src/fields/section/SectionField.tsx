@@ -30,7 +30,9 @@ export const SectionField = React.memo(function SectionField({
           )}
         </h3>
         {nestedChildren && (
-          <div className="ms:bg-mssurface ms:space-y-3">{nestedChildren}</div>
+          <div className="ms:bg-mssurface ms:space-y-3 ms:px-4 ms:py-2">
+            {nestedChildren}
+          </div>
         )}
       </section>
     );
