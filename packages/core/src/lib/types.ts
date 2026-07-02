@@ -783,6 +783,7 @@ const diagramFieldSchema = z.strictObject({
 
 const displayBaseFieldProps = {
   id: z.string(),
+  width: z.optional(z.enum(['full', 'half', 'third'])),
   rules: z.optional(z.array(conditionalRuleSchema)),
   _sourceData: z.optional(z.unknown()),
   _conversionWarnings: z.optional(z.array(z.unknown())),
