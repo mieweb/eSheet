@@ -50,11 +50,8 @@ export const CheckField = React.memo(function CheckField({
           )}
         </div>
         <div
-          className={
-            isWrap
-              ? 'ms:flex ms:flex-wrap ms:gap-x-4 ms:gap-y-1'
-              : 'ms:space-y-1'
-          }
+          className={isWrap ? 'ms:flex ms:flex-wrap' : 'ms:space-y-1'}
+          style={isWrap ? { columnGap: '1rem', rowGap: '0.25rem' } : undefined}
         >
           {options.map((option) => (
             <label

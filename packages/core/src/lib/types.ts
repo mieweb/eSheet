@@ -517,10 +517,10 @@ const FIELD_TYPE_PROPERTIES: Record<FieldType, readonly string[]> = {
   // Text category
   text: ['inputType', 'unit'],
   longtext: ['inputType', 'unit'],
-  multitext: ['options'],
+  multitext: ['options', 'optionLayout'],
   // Selection category
-  radio: ['options'],
-  check: ['options'],
+  radio: ['options', 'optionLayout'],
+  check: ['options', 'optionLayout'],
   boolean: ['options'],
   dropdown: ['options'],
   multiselectdropdown: ['options'],
@@ -548,6 +548,7 @@ const BASE_PROPERTIES = [
   'question',
   'required',
   'readOnly',
+  'width',
   'validators',
   'calculation',
   'rules',
@@ -653,6 +654,7 @@ const baseFieldProps = {
   question: z.optional(z.string()),
   required: z.optional(z.union([z.boolean(), z.literal('soft')])),
   readOnly: z.optional(z.boolean()),
+  width: z.optional(z.enum(['full', 'half', 'third'])),
   validators: z.optional(z.array(fieldValidatorSchema)),
   rules: z.optional(z.array(conditionalRuleSchema)),
   /** JS expression that auto-computes this field's value (requires dangerouslyAllowJS on form). */
@@ -680,6 +682,7 @@ const multitextFieldSchema = z.strictObject({
   ...baseFieldProps,
   fieldType: z.literal('multitext'),
   options: z.optional(z.array(fieldOptionSchema)),
+  optionLayout: z.optional(z.enum(['stack', 'wrap'])),
 });
 
 // Selection category schemas
@@ -687,12 +690,14 @@ const radioFieldSchema = z.strictObject({
   ...baseFieldProps,
   fieldType: z.literal('radio'),
   options: z.optional(z.array(fieldOptionSchema)),
+  optionLayout: z.optional(z.enum(['stack', 'wrap'])),
 });
 
 const checkFieldSchema = z.strictObject({
   ...baseFieldProps,
   fieldType: z.literal('check'),
   options: z.optional(z.array(fieldOptionSchema)),
+  optionLayout: z.optional(z.enum(['stack', 'wrap'])),
 });
 
 const booleanFieldSchema = z.strictObject({

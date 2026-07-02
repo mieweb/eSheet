@@ -50,9 +50,10 @@ export const RadioField = React.memo(function RadioField({
         >
           <div
             className={
-              isWrap
-                ? 'ms:flex ms:flex-wrap ms:gap-x-4 ms:gap-y-1'
-                : 'ms:flex ms:flex-col ms:gap-1.5'
+              isWrap ? 'ms:flex ms:flex-wrap' : 'ms:flex ms:flex-col ms:gap-1.5'
+            }
+            style={
+              isWrap ? { columnGap: '1rem', rowGap: '0.25rem' } : undefined
             }
           >
             {options.map((option) => (
