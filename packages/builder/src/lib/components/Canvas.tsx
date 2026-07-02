@@ -17,7 +17,7 @@ import { ViewBigIcon, ViewSmallIcon } from '../icons.js';
 // single stacked column.
 //   full  -> 6 cols (whole row)   half -> 3 cols (2/row)   third -> 2 cols (3/row)
 // The 6-column track is applied via inline style because Tailwind's responsive
-// display utilities (`sm:grid`) are not reliably generated for these packages.
+// display utilities (`ms:sm:grid`) are not reliably generated for these packages.
 const PREVIEW_GRID_CLASS = 'ms:gap-3';
 const PREVIEW_GRID_STYLE: React.CSSProperties = {
   display: 'grid',

@@ -90,7 +90,7 @@ export const TextField = React.memo(function TextField({
               onResponse({ answer: val });
             }}
             placeholder={isReadOnly ? '—' : placeholder}
-            className={unit ? 'pr-16' : ''}
+            className={unit ? 'ms:pr-16' : ''}
           />
           {unit && (
             <span className="ms:absolute ms:right-3 ms:bottom-0 ms:h-10 ms:flex ms:items-center ms:text-sm ms:text-mstextmuted ms:pointer-events-none">
