@@ -122,7 +122,7 @@ export function CommonEditor({
         </select>
       </div>
 
-      {/* Options layout (radio / check only) */}
+      {/* Options layout (radio / check / multitext only) */}
       {showOptionLayout && (
         <div>
           <label

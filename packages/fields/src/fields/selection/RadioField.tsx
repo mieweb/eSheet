@@ -47,6 +47,7 @@ export const RadioField = React.memo(function RadioField({
             if (opt) onResponse({ selected: { id: opt.id, value: opt.value } });
           }}
           disabled={!isEnabled}
+          orientation={isWrap ? 'horizontal' : 'vertical'}
         >
           <div
             className={

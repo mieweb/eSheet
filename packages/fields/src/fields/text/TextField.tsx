@@ -60,31 +60,44 @@ export const TextField = React.memo(function TextField({
 
   if (isPreview) {
     return (
-      <div className="text-field-preview ms:relative">
-        <Input
-          id={`${instanceId}-text-answer-${def.id}`}
-          label={def.question || 'Question'}
-          required={isRequired || isSoftRequired}
-          type={inputType}
-          disabled={!isEnabled}
-          readOnly={isReadOnly}
-          aria-required={isRequired || undefined}
-          value={response?.answer || ''}
-          onChange={(e) => {
-            if (isReadOnly) return;
-            const val = isTel
-              ? formatPhoneNumber(e.target.value)
-              : e.target.value;
-            onResponse({ answer: val });
-          }}
-          placeholder={isReadOnly ? '—' : placeholder}
-          className={unit ? 'pr-16' : ''}
-        />
-        {unit && (
-          <span className="ms:absolute ms:right-3 ms:bottom-0 ms:h-10 ms:flex ms:items-center ms:text-sm ms:text-mstextmuted ms:pointer-events-none">
-            {unit}
-          </span>
-        )}
+      <div className="text-field-preview ms:space-y-2">
+        <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
+          {def.question || 'Question'}
+          {(isRequired || isSoftRequired) && (
+            <span
+              className={`ms:ml-0.5 ${
+                isSoftRequired ? 'ms:text-mswarning' : 'ms:text-msdanger'
+              }`}
+            >
+              *
+            </span>
+          )}
+        </div>
+        <div className="ms:relative">
+          <Input
+            id={`${instanceId}-text-answer-${def.id}`}
+            aria-label={def.question || 'Question'}
+            type={inputType}
+            disabled={!isEnabled}
+            readOnly={isReadOnly}
+            aria-required={isRequired || undefined}
+            value={response?.answer || ''}
+            onChange={(e) => {
+              if (isReadOnly) return;
+              const val = isTel
+                ? formatPhoneNumber(e.target.value)
+                : e.target.value;
+              onResponse({ answer: val });
+            }}
+            placeholder={isReadOnly ? '—' : placeholder}
+            className={unit ? 'pr-16' : ''}
+          />
+          {unit && (
+            <span className="ms:absolute ms:right-3 ms:bottom-0 ms:h-10 ms:flex ms:items-center ms:text-sm ms:text-mstextmuted ms:pointer-events-none">
+              {unit}
+            </span>
+          )}
+        </div>
       </div>
     );
   }
