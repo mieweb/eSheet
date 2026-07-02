@@ -1075,6 +1075,34 @@ function ExpectedValueInput({
     }
   }
 
+  // OpenChoice fields include predefined options plus a special "{fieldId}-other" option.
+  if (target?.fieldType === 'openchoice') {
+    if (
+      operator === 'equals' ||
+      operator === 'notEquals' ||
+      operator === 'includes'
+    ) {
+      const otherOptionId = `${target.id}-other`;
+      return (
+        <select
+          id={`${idPrefix}-expected`}
+          aria-label="Expected value"
+          value={expected}
+          onChange={(e) => onUpdate({ expected: e.currentTarget.value })}
+          className="condition-expected ms:w-full ms:min-w-0 ms:px-2 ms:py-1.5 ms:text-xs ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:cursor-pointer"
+        >
+          <option value="">Select a value…</option>
+          {target.options?.map((opt) => (
+            <option key={opt.id} value={opt.id}>
+              {opt.value}
+            </option>
+          ))}
+          <option value={otherOptionId}>Other</option>
+        </select>
+      );
+    }
+  }
+
   // If target has options and we're using equals/notEquals/includes,
   // show a dropdown of option values
   if (target?.hasOptions && target.options && target.options.length > 0) {

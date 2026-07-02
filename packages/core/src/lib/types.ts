@@ -504,7 +504,8 @@ export function hasOptions(
     field.fieldType === 'multiselectdropdown' ||
     field.fieldType === 'rating' ||
     field.fieldType === 'ranking' ||
-    field.fieldType === 'slider'
+    field.fieldType === 'slider' ||
+    field.fieldType === 'openchoice'
   );
 }
 
