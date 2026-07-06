@@ -862,7 +862,8 @@ function fieldToSurveyElement(field: FieldDefinition): SurveyJSElement {
     case 'file': {
       const fileField = field as unknown as Record<string, unknown>;
       if (fileField.accept) el.acceptedTypes = fileField.accept as string;
-      if (fileField.maxFiles) el.allowMultiple = (fileField.maxFiles as number) > 1;
+      if (fileField.maxFiles)
+        el.allowMultiple = (fileField.maxFiles as number) > 1;
       break;
     }
 
