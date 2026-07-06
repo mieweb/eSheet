@@ -131,6 +131,7 @@ function convertItemToField(
     id: item.linkId,
     question: item.text,
     required: item.required,
+    ...(item.readOnly ? { readOnly: item.readOnly } : {}),
   };
 
   // Build _sourceData for round-trip
@@ -168,6 +169,15 @@ function convertItemToField(
         options: convertAnswerOptions(item.answerOption, existingIds),
       };
 
+    case 'openchoice':
+      return {
+        ...base,
+        ...(hasFieldMeta ? { _sourceData: fieldMeta } : {}),
+        ...rulesSpread,
+        fieldType: 'openchoice' as const,
+        options: convertAnswerOptions(item.answerOption, existingIds),
+      };
+
     case 'rating':
     case 'slider':
       return {
@@ -201,6 +211,7 @@ function convertItemToField(
     case 'boolean':
     case 'signature':
     case 'diagram':
+    case 'file':
       return {
         ...base,
         ...(hasFieldMeta ? { _sourceData: fieldMeta } : {}),
