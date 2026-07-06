@@ -145,7 +145,8 @@ export const CONDITIONAL_EFFECTS = [
   'required',
   'visible',
   'enable',
-  'readOnly',
+  // 'readOnly', // TODO: implement readOnly properly (see INTERNAL-TICKETS/readonly-fields.md)
+  'setValue',
 ] as const;
 export const conditionalEffectSchema = z.enum(CONDITIONAL_EFFECTS);
 export type ConditionalEffect = z.infer<typeof conditionalEffectSchema>;
@@ -263,8 +264,7 @@ interface BaseFieldDefinition {
    * - `false` / omitted - not required.
    */
   required?: boolean | 'soft';
-  /** Whether this field is read-only (user cannot edit; calculated value always wins). */
-  readOnly?: boolean;
+  // readOnly?: boolean; // TODO: implement readOnly properly (see INTERNAL-TICKETS/readonly-fields.md)
   /** Validation rules applied to the field's response. */
   validators?: FieldValidator[];
   /** Conditional rules that control visibility, enabled state, or required state. */
@@ -550,7 +550,7 @@ const BASE_PROPERTIES = [
   'fieldType',
   'question',
   'required',
-  'readOnly',
+  // 'readOnly', // TODO: implement readOnly properly
   'validators',
   'calculation',
   'rules',
@@ -655,7 +655,7 @@ const baseFieldProps = {
   id: z.string(),
   question: z.optional(z.string()),
   required: z.optional(z.union([z.boolean(), z.literal('soft')])),
-  readOnly: z.optional(z.boolean()),
+  // readOnly: z.optional(z.boolean()), // TODO: implement readOnly properly
   validators: z.optional(z.array(fieldValidatorSchema)),
   rules: z.optional(z.array(conditionalRuleSchema)),
   /** JS expression that auto-computes this field's value (requires dangerouslyAllowJS on form). */

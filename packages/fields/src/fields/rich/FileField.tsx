@@ -90,7 +90,6 @@ export const FileField = React.memo(function FileField({
   isEnabled,
   isRequired,
   isSoftRequired,
-  isReadOnly,
   response,
   onUpdate,
   onResponse,
@@ -234,11 +233,11 @@ export const FileField = React.memo(function FileField({
       e.preventDefault();
       e.stopPropagation();
       setIsDragActive(false);
-      if (isEnabled && !isReadOnly) {
+      if (isEnabled) {
         handleFiles(e.dataTransfer.files);
       }
     },
-    [isEnabled, isReadOnly, handleFiles]
+    [isEnabled, handleFiles]
   );
 
   if (isPreview) {
@@ -287,7 +286,7 @@ export const FileField = React.memo(function FileField({
                     {file.size && <span>{formatFileSize(file.size)}</span>}
                   </div>
                 </div>
-                {!isReadOnly && isEnabled && (
+                {isEnabled && (
                   <button
                     type="button"
                     onClick={() => handleRemoveFile(index)}
@@ -313,7 +312,7 @@ export const FileField = React.memo(function FileField({
                 ? 'ms:border-msprimary ms:bg-msprimary/5'
                 : 'ms:border-msborder ms:bg-mssurface ms:hover:border-mstextmuted'
             } ${
-              !isEnabled || isReadOnly
+              !isEnabled
                 ? 'ms:opacity-50 ms:cursor-not-allowed'
                 : 'ms:cursor-pointer'
             }`}
@@ -327,7 +326,7 @@ export const FileField = React.memo(function FileField({
                 (e.target as HTMLInputElement).value = '';
               }}
               onChange={(e) => handleFiles(e.target.files)}
-              disabled={!isEnabled || isReadOnly}
+              disabled={!isEnabled}
               className="ms:hidden"
             />
             <label

@@ -12,6 +12,8 @@ import type {
   SectionFieldDefinition,
 } from '@esheet/core';
 
+import { normalizeExpression } from '@esheet/core';
+
 import type {
   FhirQuestionnaire,
   FhirQuestionnaireItem,
@@ -29,6 +31,7 @@ import type {
   FhirFieldMeta,
   FhirFormMeta,
   FhirCoding,
+  FhirExpression,
 } from './types.js';
 
 import {
@@ -140,6 +143,30 @@ function convertItemToField(
 
   // Convert enableWhen to rules
   const rules = convertEnableWhenToRules(item.enableWhen, item.enableBehavior);
+
+  // Convert calculatedExpression / initialExpression to a setValue rule.
+  // calculatedExpression takes priority over initialExpression.
+  //
+  // Language handling:
+  //   text/fhirpath  — normalise date arithmetic shorthands (e.g. today() + 7 days
+  //                    → addDays(today(), 7)) so the eSheet expression engine can
+  //                    evaluate them directly.
+  //   text/cql       — CQL library references (e.g. "ClinicalIndication") are opaque
+  //                    to the eSheet engine; stored verbatim for builder adaptation.
+  const exprMeta =
+    fieldMeta.calculatedExpression ?? fieldMeta.initialExpression;
+  if (exprMeta?.expression) {
+    const expression =
+      exprMeta.language === 'text/fhirpath'
+        ? normalizeExpression(exprMeta.expression)
+        : exprMeta.expression;
+    rules.push({
+      effect: 'setValue',
+      logic: 'AND',
+      conditions: [{ conditionType: 'expression', expression }],
+    });
+  }
+
   const rulesSpread = rules.length > 0 ? { rules } : {};
 
   // Handle warnings for lossy conversions
@@ -271,6 +298,23 @@ function buildFieldMeta(
   if (item.readOnly) (meta as { readOnly: boolean }).readOnly = item.readOnly;
   if (item.repeats) (meta as { repeats: boolean }).repeats = item.repeats;
 
+  // Extract SDC expression extensions for round-trip and setValue conversion
+  const calcExpr = getExtensionValue<FhirExpression>(
+    item.extension,
+    FHIR_EXT.CALCULATED_EXPRESSION
+  );
+  if (calcExpr)
+    (meta as { calculatedExpression: FhirExpression }).calculatedExpression =
+      calcExpr;
+
+  const initExpr = getExtensionValue<FhirExpression>(
+    item.extension,
+    FHIR_EXT.INITIAL_EXPRESSION
+  );
+  if (initExpr)
+    (meta as { initialExpression: FhirExpression }).initialExpression =
+      initExpr;
+
   // Store original FHIR type for export
   (meta as { fhirItemType: string }).fhirItemType = item.type;
 
@@ -370,6 +414,28 @@ function addConversionWarnings(
       path,
       code: 'UNSUPPORTED_TYPE',
       message: `FHIR quantity type converted to number field. Unit choices lost.`,
+    });
+  }
+
+  // Expression warning — calculatedExpression / initialExpression are imported
+  // as setValue rules but the expression string (CQL/FHIRPath) must be manually
+  // adapted to eSheet {fieldId} syntax before it will evaluate correctly.
+  const hasCalcExpr = !!getExtensionValue<FhirExpression>(
+    item.extension,
+    FHIR_EXT.CALCULATED_EXPRESSION
+  );
+  const hasInitExpr = !!getExtensionValue<FhirExpression>(
+    item.extension,
+    FHIR_EXT.INITIAL_EXPRESSION
+  );
+  if (hasCalcExpr || hasInitExpr) {
+    warnings.push({
+      path,
+      code: 'UNSUPPORTED_TYPE',
+      severity: 'info',
+      message: `${
+        hasCalcExpr ? 'calculatedExpression' : 'initialExpression'
+      } imported as a setValue rule. Expression syntax must be adapted to eSheet {fieldId} notation.`,
     });
   }
 

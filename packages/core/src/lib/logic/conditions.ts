@@ -328,6 +328,26 @@ type ExprNode =
       right: ExprNode;
     };
 
+/**
+ * Normalise natural-language date arithmetic into function calls understood by
+ * the expression engine. Applied at the adapter/schema level before storage.
+ *
+ * Supported shorthands:
+ *   `<expr> + N day(s)` → `addDays(<expr>, N)`
+ *   `<expr> - N day(s)` → `subDays(<expr>, N)`
+ */
+export function normalizeExpression(expression: string): string {
+  return expression
+    .replace(
+      /(.+?)\s*\+\s*(\d+(?:\.\d+)?)\s*days?\b/gi,
+      (_, lhs: string, n: string) => `addDays(${lhs.trim()}, ${n})`
+    )
+    .replace(
+      /(.+?)\s*-\s*(\d+(?:\.\d+)?)\s*days?\b/gi,
+      (_, lhs: string, n: string) => `subDays(${lhs.trim()}, ${n})`
+    );
+}
+
 export function isExpressionValid(expression: string): boolean {
   const tokens = tokenizeExpression(expression);
   if (!tokens) return false;

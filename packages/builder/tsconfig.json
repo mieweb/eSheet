@@ -4,10 +4,13 @@
   "include": ["../../types/**/*.d.ts"],
   "references": [
     {
-      "path": "../core"
+      "path": "../renderer"
     },
     {
       "path": "../fields"
+    },
+    {
+      "path": "../core"
     },
     {
       "path": "../adapters"

@@ -8,33 +8,118 @@ import type {
   FieldResponseMap,
 } from '../types.js';
 import type { NormalizedDefinition } from '../functions/normalize.js';
-import { evaluateRule } from './conditions.js';
+import { evaluateRule, evaluateExpression } from './conditions.js';
 
 // ---------------------------------------------------------------------------
-// resolveEffect()
+// Effect Handlers & Dispatcher
 // ---------------------------------------------------------------------------
 
-/** Default value when no matching rule exists for a given effect. */
-const EFFECT_DEFAULTS: Record<ConditionalEffect, boolean> = {
+/** Default value when no matching rule exists for a given boolean effect. */
+const BOOLEAN_EFFECT_DEFAULTS: Record<
+  'visible' | 'enable' | 'required',
+  boolean
+> = {
   visible: true,
   enable: true,
   required: false,
-  readOnly: false,
 };
+
+/**
+ * Resolve a boolean effect (visible, enable, required).
+ *
+ * For effects backed by a static field property (required),
+ * the static value gates whether rules apply.
+ * For visibility/enable effects, rules fully control the outcome.
+ */
+function resolveBooleanEffect(
+  effect: 'visible' | 'enable' | 'required',
+  field: Pick<FieldDefinition, 'rules'> & {
+    required?: boolean | 'soft';
+  },
+  normalized: NormalizedDefinition,
+  responses: FieldResponseMap,
+  dangerouslyAllowJS?: boolean
+): boolean {
+  // For required — static field property gates whether rules apply:
+  //   toggle OFF  → effect never applies, rules are ignored
+  //   toggle ON + no rules → effect always applies
+  //   toggle ON + rules    → effect applies only when any rule matches
+  if (effect === 'required') {
+    const staticValue = !!field.required; // true for both `true` and `'soft'`
+    const rules = field.rules?.filter((r) => r.effect === effect);
+    if (!rules || rules.length === 0 || !staticValue) return staticValue;
+    // When toggle is ON and rules exist, rules narrow down when effect applies.
+    return rules.some((rule) =>
+      evaluateRule(rule, normalized, responses, dangerouslyAllowJS)
+    );
+  }
+
+  // visible / enable — no static field property; rules fully control
+  const rules = field.rules?.filter((r) => r.effect === effect);
+  if (!rules || rules.length === 0) return BOOLEAN_EFFECT_DEFAULTS[effect];
+  return rules.some((rule) =>
+    evaluateRule(rule, normalized, responses, dangerouslyAllowJS)
+  );
+}
+
+/**
+ * Resolve a setValue effect — find the first matching rule and evaluate its expression
+ * to compute the field value.
+ *
+ * Returns the computed value (string/number/null) or null if no rule matches.
+ */
+export function resolveSetValue(
+  field: Pick<FieldDefinition, 'rules'>,
+  normalized: NormalizedDefinition,
+  responses: FieldResponseMap,
+  dangerouslyAllowJS?: boolean
+): string | number | null {
+  const rules = field.rules?.filter((r) => r.effect === 'setValue') ?? [];
+
+  for (const rule of rules) {
+    if (evaluateRule(rule, normalized, responses, dangerouslyAllowJS)) {
+      // Rule matched; now extract and evaluate the expression condition to get the value.
+      // Typically, a setValue rule will have ONE expression condition that produces the value.
+      const expressionCondition = rule.conditions.find(
+        (c) => c.conditionType === 'expression'
+      );
+
+      if (
+        expressionCondition &&
+        expressionCondition.conditionType === 'expression' &&
+        expressionCondition.expression
+      ) {
+        try {
+          // Evaluate the expression in context of current responses
+          // Uses the proper AST-based evaluator from conditions.ts, not string substitution
+          const result = evaluateExpression(
+            expressionCondition.expression,
+            normalized,
+            responses
+          );
+          // Coerce result to string/number or null
+          if (result === null || result === undefined) return null;
+          if (typeof result === 'string' || typeof result === 'number') {
+            return result;
+          }
+          // Convert other types to string
+          return String(result);
+        } catch {
+          // Expression evaluation failed; skip this rule
+          continue;
+        }
+      }
+    }
+  }
+
+  return null;
+}
 
 /**
  * Resolve a conditional effect for a single field.
  *
- * Filters the field's `rules` to those matching `effect`, evaluates each
- * against the current form state, then combines results:
- *
- * - **No matching rules** → returns the static default for the effect.
- *   For `'required'`, falls back to `field.required ?? false`.
- *   For `'visible'` / `'enable'`, defaults to `true`.
- *
- * - **One or more matching rules** → returns `true` if **any** rule
- *   evaluates to `true` (OR across rules). This means a single passing
- *   rule is enough to make the field visible / enabled / required.
+ * For boolean effects (visible, enable, required, readOnly), returns true/false.
+ * For value effects (setValue), use resolveSetValue() directly.
  *
  * @param effect     - Which effect to resolve (`'visible'`, `'enable'`, `'required'`).
  * @param field      - The field definition (must include `rules` and `required`).
@@ -45,41 +130,23 @@ export function resolveEffect(
   effect: ConditionalEffect,
   field: Pick<FieldDefinition, 'rules'> & {
     required?: boolean | 'soft';
-    readOnly?: boolean;
   },
   normalized: NormalizedDefinition,
   responses: FieldResponseMap,
   dangerouslyAllowJS?: boolean
 ): boolean {
-  // For effects backed by a static value on the field definition
-  // (required, readOnly), the static value is the gatekeeper:
-  //
-  //   toggle OFF  → effect never applies, rules are ignored
-  //   toggle ON + no rules → effect always applies
-  //   toggle ON + rules    → effect applies only when any rule matches
-  //
-  // Note: for 'required', both true (hard) and 'soft' count as ON.
-  // Use resolveRequiredSeverity() to distinguish hard vs soft.
-  //
-  if (effect === 'required' || effect === 'readOnly') {
-    const staticValue =
-      effect === 'required'
-        ? !!field.required // true for both `true` and `'soft'`
-        : field.readOnly ?? false;
-
-    const rules = field.rules?.filter((r) => r.effect === effect);
-    if (!rules || rules.length === 0 || !staticValue) return staticValue;
-    // When toggle is ON and rules exist, rules narrow down when effect applies.
-    return rules.some((rule) =>
-      evaluateRule(rule, normalized, responses, dangerouslyAllowJS)
-    );
+  // Delegate to appropriate handler
+  if (effect === 'setValue') {
+    // setValue is a value effect, not boolean — use resolveSetValue() instead
+    return false;
   }
 
-  // visible / enable — no static field property; rules fully control, default from EFFECT_DEFAULTS
-  const rules = field.rules?.filter((r) => r.effect === effect);
-  if (!rules || rules.length === 0) return EFFECT_DEFAULTS[effect];
-  return rules.some((rule) =>
-    evaluateRule(rule, normalized, responses, dangerouslyAllowJS)
+  return resolveBooleanEffect(
+    effect,
+    field,
+    normalized,
+    responses,
+    dangerouslyAllowJS
   );
 }
 

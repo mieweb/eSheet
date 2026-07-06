@@ -10,6 +10,13 @@ export {
   type ResponseFormat,
 } from './lib/EsheetRenderer.js';
 
+// Render tree builder (for computing setValue values in builder)
+export {
+  renderer,
+  buildRenderTree,
+  type RenderTreeOptions,
+} from './lib/renderer.js';
+
 // Core types (re-exported for consumer convenience)
 export type {
   FormDefinition,

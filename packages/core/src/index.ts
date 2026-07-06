@@ -110,9 +110,14 @@ export {
   isExpressionValid,
   evaluateExpression,
   evaluateJsExpression,
+  normalizeExpression,
 } from './lib/logic/conditions.js';
 
-export { resolveEffect, resolveRequiredSeverity } from './lib/logic/resolve.js';
+export {
+  resolveEffect,
+  resolveSetValue,
+  resolveRequiredSeverity,
+} from './lib/logic/resolve.js';
 
 export {
   validateField,

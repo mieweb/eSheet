@@ -46,8 +46,8 @@ export const TextField = React.memo(function TextField({
   isEnabled,
   isRequired,
   isSoftRequired,
-  isReadOnly,
   response,
+  computedValue,
   onUpdate,
   onResponse,
 }: FieldComponentProps) {
@@ -59,6 +59,40 @@ export const TextField = React.memo(function TextField({
   const placeholder = PLACEHOLDER[inputType] || 'Type your answer';
 
   if (isPreview) {
+    // Use computed value if available, otherwise use user's response
+    const displayValue =
+      computedValue !== undefined
+        ? String(computedValue)
+        : response?.answer || '';
+
+    // Fields with a computed setValue result render as plain text (not an input).
+    if (computedValue !== undefined) {
+      return (
+        <div className="text-field-preview ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
+          <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
+            {def.question || 'Question'}
+            {(isRequired || isSoftRequired) && (
+              <span
+                className={`ms:ml-0.5 ${
+                  isSoftRequired ? 'ms:text-mswarning' : 'ms:text-msdanger'
+                }`}
+              >
+                *
+              </span>
+            )}
+          </div>
+          <div className="ms:py-2 ms:text-mstext">
+            {displayValue || '—'}
+            {unit && displayValue && (
+              <span className="ms:ml-1 ms:text-sm ms:text-mstextmuted">
+                {unit}
+              </span>
+            )}
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="text-field-preview ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
         <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
@@ -79,17 +113,15 @@ export const TextField = React.memo(function TextField({
             aria-label={def.question || 'Question'}
             type={inputType}
             disabled={!isEnabled}
-            readOnly={isReadOnly}
             aria-required={isRequired || undefined}
-            value={response?.answer || ''}
+            value={displayValue}
             onChange={(e) => {
-              if (isReadOnly) return;
               const val = isTel
                 ? formatPhoneNumber(e.target.value)
                 : e.target.value;
               onResponse({ answer: val });
             }}
-            placeholder={isReadOnly ? '—' : placeholder}
+            placeholder={placeholder}
             className={unit ? 'pr-16' : ''}
           />
           {unit && (

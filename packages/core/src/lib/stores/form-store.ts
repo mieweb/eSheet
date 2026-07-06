@@ -147,7 +147,7 @@ export interface FormState {
   isRequired: (fieldId: string) => boolean;
   /** Whether a field is currently soft-required (warns but allows bypass). */
   isSoftRequired: (fieldId: string) => boolean;
-  /** Whether a field is currently read-only. */
+  /** Whether a field is currently read-only. Always false until readOnly is fully implemented. */
   isReadOnly: (fieldId: string) => boolean;
   /** Validate a single field and return its errors. */
   getFieldErrors: (fieldId: string) => ValidationError[];
@@ -356,17 +356,8 @@ export function createFormStore(
           const calc = (node.definition as { calculation?: string })
             .calculation;
           if (!calc?.trim()) continue;
-          // Skip fields the user has manually edited unless they are readOnly
-          if (nextEdited.has(calcId)) {
-            const isRO = resolveEffect(
-              'readOnly',
-              node.definition,
-              state.normalized,
-              state.responses,
-              state.dangerouslyAllowJS
-            );
-            if (!isRO) continue;
-          }
+          // Skip fields the user has manually edited
+          if (nextEdited.has(calcId)) continue;
           const result = evaluateJsExpression(
             calc,
             state.normalized,
@@ -911,17 +902,10 @@ export function createFormStore(
       );
     },
 
-    isReadOnly: (fieldId) => {
-      const { normalized, responses, dangerouslyAllowJS } = get();
-      const node = normalized.byId[fieldId];
-      if (!node) return false;
-      return resolveEffect(
-        'readOnly',
-        node.definition,
-        normalized,
-        responses,
-        dangerouslyAllowJS
-      );
+    isReadOnly: (_fieldId) => {
+      // readOnly is not yet implemented — always returns false.
+      // TODO: implement readOnly properly (see INTERNAL-TICKETS/readonly-fields.md)
+      return false;
     },
 
     getFieldErrors: (fieldId) => {
