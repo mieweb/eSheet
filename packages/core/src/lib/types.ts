@@ -784,6 +784,7 @@ const fileFieldSchema = z.strictObject({
   fieldType: z.literal('file'),
   accept: z.optional(z.string()),
   maxFileSize: z.optional(z.number()),
+  maxFiles: z.optional(z.number()),
 });
 
 const openChoiceFieldSchema = z.strictObject({
@@ -791,6 +792,7 @@ const openChoiceFieldSchema = z.strictObject({
   fieldType: z.literal('openchoice'),
   options: z.optional(z.array(fieldOptionSchema)),
   maxCustomOptions: z.optional(z.number()),
+  otherLabel: z.optional(z.string()),
 });
 
 const displayBaseFieldProps = {
