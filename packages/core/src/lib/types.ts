@@ -537,8 +537,8 @@ const FIELD_TYPE_PROPERTIES: Record<FieldType, readonly string[]> = {
   html: ['htmlContent', 'iframeHeight'],
   signature: ['padPlaceholder'],
   diagram: ['imageUri', 'padPlaceholder'],
-  file: ['accept', 'maxFileSize'],
-  openchoice: ['options', 'maxCustomOptions'],
+  file: ['accept', 'maxFileSize', 'maxFiles'],
+  openchoice: ['options', 'maxCustomOptions', 'otherLabel'],
   display: ['content'],
   // Organization category
   section: ['title', 'fields'],
