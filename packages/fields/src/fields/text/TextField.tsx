@@ -58,40 +58,17 @@ export const TextField = React.memo(function TextField({
   const isTel = inputType === 'tel';
   const placeholder = PLACEHOLDER[inputType] || 'Type your answer';
 
-  if (isPreview) {
-    // Use computed value if available, otherwise use user's response
-    const displayValue =
-      computedValue !== undefined
-        ? String(computedValue)
-        : response?.answer || '';
-
-    // Fields with a computed setValue result render as plain text (not an input).
-    if (computedValue !== undefined) {
-      return (
-        <div className="text-field-preview ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
-          <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
-            {def.question || 'Question'}
-            {(isRequired || isSoftRequired) && (
-              <span
-                className={`ms:ml-0.5 ${
-                  isSoftRequired ? 'ms:text-mswarning' : 'ms:text-msdanger'
-                }`}
-              >
-                *
-              </span>
-            )}
-          </div>
-          <div className="ms:py-2 ms:text-mstext">
-            {displayValue || '—'}
-            {unit && displayValue && (
-              <span className="ms:ml-1 ms:text-sm ms:text-mstextmuted">
-                {unit}
-              </span>
-            )}
-          </div>
-        </div>
-      );
+  // When a computed value arrives and the user hasn't answered yet, seed it as
+  // the response so it behaves like any other answered field (overwritable).
+  React.useEffect(() => {
+    if (computedValue !== undefined && !response?.answer) {
+      onResponse({ answer: String(computedValue) });
     }
+  }, [computedValue]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (isPreview) {
+    // Prefer user's response over computed value so users can overwrite computed defaults.
+    const displayValue = response?.answer ?? '';
 
     return (
       <div className="text-field-preview ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">

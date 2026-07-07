@@ -88,6 +88,7 @@ export {
   generateOptionId,
   generateRowId,
   generateColumnId,
+  slugifyQuestion,
 } from './lib/functions/ids.js';
 
 export {

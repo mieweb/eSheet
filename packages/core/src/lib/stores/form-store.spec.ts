@@ -360,6 +360,81 @@ describe('createFormStore', () => {
         store.getState().updateField('q1', { question: 'Changed' });
         expect(store.getState().normalized.byId['q2']).toBe(before);
       });
+
+      it('updates condition.targetId in other fields on rename', () => {
+        store = createFormStore(
+          form([
+            field('q1', 'text'),
+            field('q2', 'text', {
+              rules: [visibleRule('q1', 'yes')],
+            }),
+          ])
+        );
+        store.getState().updateField('q1', { id: 'q1-new' });
+        const rule =
+          store.getState().normalized.byId['q2'].definition.rules![0];
+        expect(rule.conditions[0].targetId).toBe('q1-new');
+      });
+
+      it('updates {fieldId} references in condition.expression on rename', () => {
+        store = createFormStore(
+          form([
+            field('score', 'text'),
+            field('result', 'text', {
+              rules: [
+                {
+                  effect: 'visible',
+                  logic: 'AND',
+                  conditions: [
+                    {
+                      conditionType: 'expression',
+                      expression: '{score} > 10 && {score} !== ""',
+                    },
+                  ],
+                } as ConditionalRule,
+              ],
+            }),
+          ])
+        );
+        store.getState().updateField('score', { id: 'total-score' });
+        const expr =
+          store.getState().normalized.byId['result'].definition.rules![0]
+            .conditions[0].expression;
+        expect(expr).toBe('{total-score} > 10 && {total-score} !== ""');
+      });
+
+      it('updates {fieldId} references in display field content on rename', () => {
+        store = createFormStore(
+          form([
+            field('weight', 'text'),
+            field('bmi-display', 'display', {
+              content: 'BMI: <round({weight} / 1.8)>',
+            } as Partial<FieldDefinition>),
+          ])
+        );
+        store.getState().updateField('weight', { id: 'weight-kg' });
+        const content = (
+          store.getState().normalized.byId['bmi-display']
+            .definition as unknown as { content: string }
+        ).content;
+        expect(content).toBe('BMI: <round({weight-kg} / 1.8)>');
+      });
+
+      it('does not corrupt unrelated field references on rename', () => {
+        store = createFormStore(
+          form([
+            field('q1', 'text'),
+            field('q2', 'text', {
+              rules: [visibleRule('q2', 'yes')],
+            }),
+          ])
+        );
+        store.getState().updateField('q1', { id: 'q1-renamed' });
+        // q2's rule references itself (q2), not q1 — should be unchanged
+        const rule =
+          store.getState().normalized.byId['q2'].definition.rules![0];
+        expect(rule.conditions[0].targetId).toBe('q2');
+      });
     });
 
     describe('removeField', () => {

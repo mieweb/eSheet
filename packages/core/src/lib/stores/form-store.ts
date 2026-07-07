@@ -214,6 +214,74 @@ function reindexChildren(
   }
 }
 
+/**
+ * Replace all references to `oldId` with `newId` in a single field definition.
+ * Handles:
+ *  - condition.targetId  (field-condition direct reference)
+ *  - condition.expression  (expression language: `{oldId}` → `{newId}`)
+ *  - definition.content  (display field inline expressions: `<fn({oldId})>`)
+ *  - definition.calculation  (JS: `responses['oldId']` / `responses["oldId"]`)
+ */
+function rewriteFieldRefs(
+  def: FieldDefinition,
+  oldId: string,
+  newId: string
+): FieldDefinition {
+  const escaped = oldId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const exprPattern = new RegExp(`\\{${escaped}\\}`, 'g');
+  const jsPatternSingle = new RegExp(`responses\\['${escaped}'\\]`, 'g');
+  const jsPatternDouble = new RegExp(`responses\\["${escaped}"\\]`, 'g');
+
+  const replaceExpr = (s: string) => s.replace(exprPattern, `{${newId}}`);
+  const replaceJs = (s: string) =>
+    s
+      .replace(jsPatternSingle, `responses['${newId}']`)
+      .replace(jsPatternDouble, `responses["${newId}"]`);
+
+  let changed = false;
+
+  const updatedRules = def.rules?.map((rule) => ({
+    ...rule,
+    conditions: rule.conditions.map((cond) => {
+      let c = cond;
+      if (c.targetId === oldId) {
+        c = { ...c, targetId: newId };
+        changed = true;
+      }
+      if (c.expression) {
+        const next =
+          c.conditionType === 'js'
+            ? replaceJs(c.expression)
+            : replaceExpr(c.expression);
+        if (next !== c.expression) {
+          c = { ...c, expression: next };
+          changed = true;
+        }
+      }
+      return c;
+    }),
+  }));
+
+  // Update display field content (inline `{fieldId}` expression placeholders)
+  const defAny = def as unknown as Record<string, unknown>;
+  const content = defAny['content'] as string | undefined;
+  const updatedContent = content ? replaceExpr(content) : content;
+  if (updatedContent !== content) changed = true;
+
+  // Update calculation (JS)
+  const calc = def.calculation;
+  const updatedCalc = calc ? replaceJs(calc) : calc;
+  if (updatedCalc !== calc) changed = true;
+
+  if (!changed) return def;
+  return {
+    ...def,
+    ...(updatedRules ? { rules: updatedRules } : {}),
+    ...(updatedContent !== content ? { content: updatedContent } : {}),
+    ...(updatedCalc !== calc ? { calculation: updatedCalc } : {}),
+  } as FieldDefinition;
+}
+
 /** Recursively collect all descendant field IDs of a section. */
 function collectDescendants(
   byId: Readonly<Record<string, FieldNode>>,
@@ -390,7 +458,15 @@ export function createFormStore(
       if (parentId && !normalized.byId[parentId]) return null;
 
       const existingIds = new Set(Object.keys(normalized.byId));
-      const id = generateFieldId(fieldType, existingIds, parentId ?? undefined);
+      const patchQuestion = (
+        options?.patch as { question?: string } | undefined
+      )?.question;
+      const id = generateFieldId(
+        fieldType,
+        existingIds,
+        parentId ?? undefined,
+        patchQuestion
+      );
 
       // Build definition from registry defaults + caller patch
       const { fields: _nestedFields, ...defaults } = meta.defaultProps;
@@ -513,6 +589,16 @@ export function createFormStore(
         for (const childId of node.childIds) {
           const child = byId[childId];
           if (child) byId[childId] = { ...child, parentId: newId! };
+        }
+
+        // Update cross-field references to the renamed ID in all other fields
+        for (const otherId of Object.keys(byId)) {
+          if (otherId === newId!) continue;
+          const other = byId[otherId];
+          const rewritten = rewriteFieldRefs(other.definition, fieldId, newId!);
+          if (rewritten !== other.definition) {
+            byId[otherId] = { ...other, definition: rewritten };
+          }
         }
 
         set({ normalized: { byId, rootIds } });
