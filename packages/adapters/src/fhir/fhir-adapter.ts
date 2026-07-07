@@ -134,7 +134,6 @@ function convertItemToField(
     id: item.linkId,
     question: item.text,
     required: item.required,
-    ...(item.readOnly ? { readOnly: item.readOnly } : {}),
   };
 
   // Build _sourceData for round-trip

@@ -121,6 +121,7 @@ export const OpenChoiceField = React.memo(function OpenChoiceField({
           <div className="ms:mt-2">
             <input
               id={`${instanceId}-openchoice-other-${def.id}`}
+              aria-label={otherLabel}
               type="text"
               value={otherText}
               onChange={(e) => {
