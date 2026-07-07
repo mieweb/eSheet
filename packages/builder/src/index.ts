@@ -44,10 +44,15 @@ export {
 
 export { CodeView, type CodeViewProps } from './lib/components/CodeView.js';
 
-export { useFormApi } from './lib/hooks/useFormApi.js';
-export type { FormApi, FieldResponseMap } from './lib/hooks/useFormApi.js';
-export { useUiApi } from './lib/hooks/useUiApi.js';
-export type { UiApi } from './lib/hooks/useUiApi.js';
+export {
+  useFormApi,
+  type FormApi,
+  type FieldResponseMap,
+} from './lib/hooks/useFormApi.js';
+export {
+  useUiApi,
+  type UiApi,
+} from './lib/hooks/useUiApi.js';
 export { useVisibleRootIds } from './lib/hooks/useVisibleRootIds.js';
 
 export {
@@ -55,10 +60,8 @@ export {
   BUILDER_TOOL_DEFINITIONS,
   BUILDER_SYSTEM_PROMPT,
   useBuilderMcpToolHandler,
-} from './lib/mcp/index.js';
-export type {
-  ToolDefinition,
-  UseBuilderMcpToolHandlerOptions,
+  type ToolDefinition,
+  type UseBuilderMcpToolHandlerOptions,
 } from './lib/mcp/index.js';
 
 // Re-export core schema types for consumer convenience

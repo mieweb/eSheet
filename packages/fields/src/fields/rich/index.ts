@@ -3,7 +3,7 @@ export type {
   DrawingData,
   DrawingPadConfig,
   DrawingPadPayload,
-  DrawingPadProps,
+  DrawingPadProps, // Internal component props - not re-exported from main API
   NormalizedPoint,
   Stroke,
 } from './DrawingPad.js';

@@ -36,9 +36,7 @@ export {
   RENDERER_TOOL_DEFINITIONS,
   RENDERER_SYSTEM_PROMPT,
   useRendererMcpToolHandler,
-} from './lib/mcp/index.js';
-export type {
-  ToolDefinition,
-  UseRendererMcpToolHandlerOptions,
+  type ToolDefinition,
+  type UseRendererMcpToolHandlerOptions,
 } from './lib/mcp/index.js';
 export type { RendererTools } from './lib/renderer-tools.js';
