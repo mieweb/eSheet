@@ -10,6 +10,13 @@ export {
   type ResponseFormat,
 } from './lib/EsheetRenderer.js';
 
+// Render tree builder (for computing setValue values in builder)
+export {
+  renderer,
+  buildRenderTree,
+  type RenderTreeOptions,
+} from './lib/renderer.js';
+
 // Core types (re-exported for consumer convenience)
 export type {
   FormDefinition,
@@ -29,9 +36,7 @@ export {
   RENDERER_TOOL_DEFINITIONS,
   RENDERER_SYSTEM_PROMPT,
   useRendererMcpToolHandler,
-} from './lib/mcp/index.js';
-export type {
-  ToolDefinition,
-  UseRendererMcpToolHandlerOptions,
+  type ToolDefinition,
+  type UseRendererMcpToolHandlerOptions,
 } from './lib/mcp/index.js';
 export type { RendererTools } from './lib/renderer-tools.js';

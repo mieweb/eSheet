@@ -148,9 +148,12 @@ function extractAnswer(
         response.signatureData ??
         response.markupImage ??
         response.markupData;
-      if (!dataUrl) return undefined;
-      const result: AttachmentAnswer = { contentType: 'image/png', dataUrl };
-      return result;
+      if (dataUrl) {
+        const result: AttachmentAnswer = { contentType: 'image/png', dataUrl };
+        return result;
+      }
+      // File fields store data in fileData with their actual contentType
+      return response.fileData;
     }
     default:
       return undefined;

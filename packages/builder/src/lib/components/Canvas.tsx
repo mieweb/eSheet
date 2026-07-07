@@ -1,5 +1,7 @@
 import React from 'react';
 import type { FieldComponentProps, FormStore, UIStore } from '@esheet/core';
+import { hydrateDefinition } from '@esheet/core';
+import { renderer } from '@esheet/renderer';
 import Sortable from 'sortablejs';
 import { useFormApi } from '../hooks/useFormApi.js';
 import { useUiApi } from '../hooks/useUiApi.js';
@@ -32,6 +34,7 @@ function DraggableFieldItem({
   forceExpandVersion,
   forceCollapseVersion,
   nestedChildren,
+  computedValue,
 }: {
   id: string;
   form: FormStore;
@@ -43,6 +46,7 @@ function DraggableFieldItem({
   forceExpandVersion?: number;
   forceCollapseVersion?: number;
   nestedChildren?: React.ReactNode;
+  computedValue?: string | number | null;
 }) {
   const handleRef = React.useRef<HTMLDivElement | null>(null);
   const field = form.getState().getField(id);
@@ -75,6 +79,7 @@ function DraggableFieldItem({
         isSelectedOverride={parentId ? isActiveChild : undefined}
         onSelectOverride={parentId ? handleSelectOverride : undefined}
         selectedVariant={parentId ? 'nested' : 'default'}
+        computedValue={computedValue}
       >
         {(props) => {
           const Component = getFieldComponent(props.field.definition.fieldType);
@@ -346,6 +351,30 @@ export const Canvas = React.memo(function Canvas({
     return rootIds.filter((id) => previewRenderableMap.get(id) === true);
   }, [mode, previewRenderableMap, rootIds]);
 
+  // Build render tree to extract computed values from setValue effects
+  const computedValuesMap = React.useMemo(() => {
+    const hydratedFields = hydrateDefinition(normalized);
+    const tree = renderer({ id: 'canvas', fields: hydratedFields }, responses);
+
+    const buildMap = (
+      nodes: typeof tree
+    ): Map<string, string | number | null> => {
+      const map = new Map<string, string | number | null>();
+      const walk = (n: typeof tree) => {
+        for (const node of n) {
+          if (node.computedValue !== undefined && node.computedValue !== null) {
+            map.set(node.id, node.computedValue);
+          }
+          walk(node.children);
+        }
+      };
+      walk(nodes);
+      return map;
+    };
+
+    return buildMap(tree);
+  }, [normalized, responses]);
+
   const getVisibleChildIds = React.useCallback(
     (parentId: string): readonly string[] => {
       const parent = normalized.byId[parentId];
@@ -413,6 +442,7 @@ export const Canvas = React.memo(function Canvas({
               }
               forceCollapseVersion={collapseAllVersion}
               nestedChildren={renderNestedChildren(childId, depth + 1)}
+              computedValue={computedValuesMap.get(childId)}
             />
           ))}
         </div>
@@ -420,6 +450,7 @@ export const Canvas = React.memo(function Canvas({
     },
     [
       collapseAllVersion,
+      computedValuesMap,
       dragEnabled,
       expandAllVersion,
       form,
@@ -505,6 +536,7 @@ export const Canvas = React.memo(function Canvas({
               }
               forceCollapseVersion={collapseAllVersion}
               nestedChildren={renderNestedChildren(id)}
+              computedValue={computedValuesMap.get(id)}
             />
           ))}
         </div>

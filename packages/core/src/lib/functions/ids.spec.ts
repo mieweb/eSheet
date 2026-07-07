@@ -3,6 +3,7 @@ import {
   generateOptionId,
   generateRowId,
   generateColumnId,
+  slugifyQuestion,
 } from './ids.js';
 
 describe('generateFieldId', () => {
@@ -45,6 +46,64 @@ describe('generateFieldId', () => {
     expect(generateFieldId('text', new Set(['text', 'text-extra']))).toBe(
       'text-1'
     );
+  });
+
+  it('should use slug from question when provided', () => {
+    expect(
+      generateFieldId('text', new Set(), undefined, 'How old are you?')
+    ).toBe('how-old-are-you');
+  });
+
+  it('should handle question slug collisions', () => {
+    expect(
+      generateFieldId(
+        'text',
+        new Set(['how-old-are-you']),
+        undefined,
+        'How old are you?'
+      )
+    ).toBe('how-old-are-you-1');
+  });
+
+  it('should fall back to fieldType when question slugifies to empty', () => {
+    expect(generateFieldId('text', new Set(), undefined, '???')).toBe('text');
+  });
+
+  it('should ignore parentId when question is provided', () => {
+    expect(generateFieldId('text', new Set(), 's1', 'Email Address')).toBe(
+      'email-address'
+    );
+  });
+});
+
+describe('slugifyQuestion', () => {
+  it('should lowercase and replace spaces with hyphens', () => {
+    expect(slugifyQuestion('How old are you')).toBe('how-old-are-you');
+  });
+
+  it('should strip punctuation', () => {
+    expect(slugifyQuestion('How old are you?')).toBe('how-old-are-you');
+    expect(slugifyQuestion('Email Address!')).toBe('email-address');
+    expect(slugifyQuestion('Do you agree?')).toBe('do-you-agree');
+  });
+
+  it('should collapse repeated hyphens', () => {
+    expect(slugifyQuestion('Hello  World')).toBe('hello-world');
+  });
+
+  it('should trim leading and trailing hyphens', () => {
+    expect(slugifyQuestion('?Hello?')).toBe('hello');
+  });
+
+  it('should return empty string for punctuation-only input', () => {
+    expect(slugifyQuestion('???')).toBe('');
+  });
+
+  it('should match ticket examples', () => {
+    expect(slugifyQuestion('How old are you?')).toBe('how-old-are-you');
+    expect(slugifyQuestion('What is your age?')).toBe('what-is-your-age');
+    expect(slugifyQuestion('Email Address')).toBe('email-address');
+    expect(slugifyQuestion('Do you agree?')).toBe('do-you-agree');
   });
 });
 

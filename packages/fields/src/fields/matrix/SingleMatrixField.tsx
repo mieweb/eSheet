@@ -78,7 +78,7 @@ export const SingleMatrixField = React.memo(function SingleMatrixField({
                         <label
                           key={col.id}
                           htmlFor={inputId}
-                          className={`ms:flex ms:items-center ms:gap-2 ms:rounded ms:transition-colors ms:py-1 ms:px-1 ${
+                          className={`ms:flex ms:items-center ms:gap-2 ms:rounded ms:transition-colors ms:py-1 ms:px-1 ms:select-none ${
                             isEnabled
                               ? 'ms:cursor-pointer ms:hover:bg-msprimary/5'
                               : 'ms:cursor-not-allowed'
@@ -160,7 +160,7 @@ export const SingleMatrixField = React.memo(function SingleMatrixField({
                         <label
                           key={col.id}
                           htmlFor={inputId}
-                          className={`ms:flex ms:justify-center ms:rounded ms:transition-colors ms:py-2 ${
+                          className={`ms:flex ms:justify-center ms:rounded ms:transition-colors ms:py-2 ms:select-none ${
                             isEnabled
                               ? 'ms:cursor-pointer ms:hover:bg-msprimary/5'
                               : 'ms:cursor-not-allowed'

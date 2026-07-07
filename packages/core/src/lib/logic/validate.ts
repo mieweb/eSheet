@@ -199,6 +199,14 @@ function isResponseEmpty(response: FieldResponse | undefined): boolean {
     if (values.some((v) => v.trim() !== '')) return false;
   }
 
+  // fileData — single or multiple file attachments
+  if (response.fileData != null) {
+    const files = Array.isArray(response.fileData)
+      ? response.fileData
+      : [response.fileData];
+    if (files.length > 0) return false;
+  }
+
   // signatureData
   if (response.signatureData && response.signatureData.trim() !== '')
     return false;

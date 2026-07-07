@@ -4,19 +4,19 @@
   "include": ["../../types/**/*.d.ts"],
   "references": [
     {
-      "path": "../core"
+      "path": "../renderer"
     },
     {
       "path": "../fields"
+    },
+    {
+      "path": "../core"
     },
     {
       "path": "../adapters"
     },
     {
       "path": "./tsconfig.lib.json"
-    },
-    {
-      "path": "./tsconfig.spec.json"
     }
   ]
 }

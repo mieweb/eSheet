@@ -156,8 +156,6 @@ export function EditPanel(_props: EditPanelProps) {
                   | boolean
                   | 'soft'
                   | undefined,
-                readOnly: (logicField.definition as { readOnly?: boolean })
-                  .readOnly,
               }}
               onUpdateDef={handleUpdate}
             />

@@ -36,6 +36,8 @@ export interface FieldWrapperProps {
   forceExpandVersion?: number;
   /** Optional signal used to force collapse a field wrapper. */
   forceCollapseVersion?: number;
+  /** Computed value from setValue effects (if applicable). */
+  computedValue?: string | number | null;
   /** Render function that receives field data and tools */
   children: (props: FieldWrapperRenderProps) => React.ReactNode;
 }
@@ -71,6 +73,7 @@ export function FieldWrapper({
   selectedVariant = 'default',
   forceExpandVersion,
   forceCollapseVersion,
+  computedValue,
   children,
 }: FieldWrapperProps) {
   const [isExpanded, setIsExpanded] = React.useState(() => {
@@ -176,6 +179,7 @@ export function FieldWrapper({
           isSoftRequired,
           isReadOnly,
           response,
+          computedValue,
           onRemove: field_.remove,
           onUpdate: field_.update,
           onResponse: field_.setResponse,
@@ -337,6 +341,7 @@ export function FieldWrapper({
           isSoftRequired,
           isReadOnly,
           response,
+          computedValue,
           onRemove: field_.remove,
           onUpdate: field_.update,
           onResponse: field_.setResponse,

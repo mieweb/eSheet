@@ -22,6 +22,7 @@ export {
   MultiTextField,
   RadioField,
   CheckField,
+  OpenChoiceField,
   BooleanField,
   DropdownField,
   MultiSelectDropdownField,
@@ -38,6 +39,7 @@ export {
   HtmlField,
   ImageField,
   SignatureField,
+  FileField,
 } from './fields/index.js';
 export type {
   DrawingData,

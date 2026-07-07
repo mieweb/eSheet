@@ -46,8 +46,8 @@ export const TextField = React.memo(function TextField({
   isEnabled,
   isRequired,
   isSoftRequired,
-  isReadOnly,
   response,
+  computedValue,
   onUpdate,
   onResponse,
 }: FieldComponentProps) {
@@ -58,7 +58,18 @@ export const TextField = React.memo(function TextField({
   const isTel = inputType === 'tel';
   const placeholder = PLACEHOLDER[inputType] || 'Type your answer';
 
+  // When a computed value arrives and the user hasn't answered yet, seed it as
+  // the response so it behaves like any other answered field (overwritable).
+  React.useEffect(() => {
+    if (computedValue !== undefined && !response?.answer) {
+      onResponse({ answer: String(computedValue) });
+    }
+  }, [computedValue]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (isPreview) {
+    // Prefer user's response over computed value so users can overwrite computed defaults.
+    const displayValue = response?.answer ?? '';
+
     return (
       <div className="text-field-preview ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
         <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
@@ -79,17 +90,15 @@ export const TextField = React.memo(function TextField({
             aria-label={def.question || 'Question'}
             type={inputType}
             disabled={!isEnabled}
-            readOnly={isReadOnly}
             aria-required={isRequired || undefined}
-            value={response?.answer || ''}
+            value={displayValue}
             onChange={(e) => {
-              if (isReadOnly) return;
               const val = isTel
                 ? formatPhoneNumber(e.target.value)
                 : e.target.value;
               onResponse({ answer: val });
             }}
-            placeholder={isReadOnly ? '—' : placeholder}
+            placeholder={placeholder}
             className={unit ? 'pr-16' : ''}
           />
           {unit && (

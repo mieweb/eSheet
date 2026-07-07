@@ -194,7 +194,22 @@ describe('mapFhirTypeToEsheet', () => {
 
   it('maps attachment to diagram by default', () => {
     const result = mapFhirTypeToEsheet('attachment', makeItem('attachment'));
-    expect(result.fieldType).toBe('diagram');
+    expect(result.fieldType).toBe('file');
+  });
+
+  it('maps open-choice itemControl to openchoice field', () => {
+    const result = mapFhirTypeToEsheet(
+      'choice',
+      makeItem('choice', {
+        extension: [
+          {
+            url: FHIR_EXT.ITEM_CONTROL,
+            valueCodeableConcept: { coding: [{ code: 'open-choice' }] },
+          },
+        ],
+      })
+    );
+    expect(result.fieldType).toBe('openchoice');
   });
 
   it('maps attachment with signatureRequired to signature', () => {
