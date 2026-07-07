@@ -1,4 +1,5 @@
 import { z } from 'zod/mini';
+import { getFieldTypeMeta } from './registry.js';
 
 // ---------------------------------------------------------------------------
 // Field Types
@@ -643,8 +644,8 @@ const sectionFieldSchema = z.strictObject({
   ),
 });
 
-/** Zod schema for FieldDefinition discriminated union. */
-export const fieldDefinitionSchema = z.discriminatedUnion('fieldType', [
+/** Zod schema for the built-in FieldDefinition discriminated union. */
+const builtInFieldDefinitionSchema = z.discriminatedUnion('fieldType', [
   // Text
   textFieldSchema,
   longtextFieldSchema,
@@ -671,6 +672,35 @@ export const fieldDefinitionSchema = z.discriminatedUnion('fieldType', [
   // Organization
   sectionFieldSchema,
 ]);
+
+/**
+ * Custom (plugin) field types registered via `registerFieldType()` /
+ * `registerCustomFieldTypes()`. Loose object — custom fields may carry
+ * arbitrary extra configuration props. Built-in field types never match
+ * this branch, so they keep strict validation above.
+ */
+const customFieldDefinitionSchema = z.looseObject({
+  ...baseFieldProps,
+  fieldType: z.string().check(
+    z.refine(
+      (t) =>
+        !(FIELD_TYPES as readonly string[]).includes(t) &&
+        getFieldTypeMeta(t) !== undefined,
+      'Unknown fieldType — custom field types must be registered via registerFieldType() before validation'
+    )
+  ),
+});
+
+/**
+ * Zod schema for FieldDefinition — built-in discriminated union plus any
+ * registered custom field types. Cast so the inferred TypeScript type stays
+ * the built-in `FieldDefinition` union (custom definitions are accessed via
+ * `field.definition as { ... }` in their components).
+ */
+export const fieldDefinitionSchema = z.union([
+  builtInFieldDefinitionSchema,
+  customFieldDefinitionSchema,
+]) as unknown as z.ZodMiniType<FieldDefinition>;
 
 // ---------------------------------------------------------------------------
 // Field Response Values (answers only)
