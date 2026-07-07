@@ -54,7 +54,7 @@ export const RadioField = React.memo(function RadioField({
               htmlFor={`${instanceId}-radio-answer-${def.id}-${option.id}`}
               className={`ms:flex ms:items-center ms:gap-2 ms:rounded ms:transition-colors ms:py-1 ms:px-1 ${
                 isEnabled
-                  ? 'ms:cursor-pointer ms:hover:bg-msprimary/5'
+                  ? 'ms:cursor-pointer ms:hover:bg-msprimary/5 ms:select-none'
                   : 'ms:cursor-not-allowed'
               }`}
             >

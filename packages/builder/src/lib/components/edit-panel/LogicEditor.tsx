@@ -178,12 +178,8 @@ export function LogicEditor({
           );
         }
 
-        const staticDefault =
-          effect === 'readOnly' ? def?.readOnly ?? false : undefined;
-        const onToggleStaticDefault =
-          staticDefault !== undefined && onUpdateDef
-            ? () => onUpdateDef({ [effect]: !staticDefault })
-            : undefined;
+        const staticDefault = undefined;
+        const onToggleStaticDefault = undefined;
         return (
           <EffectSection
             key={effect}
@@ -381,14 +377,14 @@ const EFFECT_LABELS: Record<ConditionalEffect, string> = {
   visible: 'Visible',
   enable: 'Enable',
   required: 'Required',
-  readOnly: 'Read Only',
+  setValue: 'Set Value',
 };
 
 const EFFECT_DESCRIPTIONS: Record<ConditionalEffect, string> = {
   visible: 'Show this field when…',
   enable: 'Enable this field when…',
   required: 'Require this field when…',
-  readOnly: 'Make this field read-only when…',
+  setValue: 'Set the field value when…',
 };
 
 function EffectSection({
@@ -678,6 +674,80 @@ const EXPRESSION_OPERATOR_CHIPS = [
   '/',
 ] as const;
 
+const EXPRESSION_FUNCTION_CHIPS: ReadonlyArray<{
+  label: string;
+  insert: string;
+  description: string;
+  cursorOffset: number;
+}> = [
+  {
+    label: 'today()',
+    insert: 'today()',
+    description: 'current date (YYYY-MM-DD)',
+    cursorOffset: 0,
+  },
+  {
+    label: 'addDays(date, n)',
+    insert: 'addDays()',
+    description: 'date + n days',
+    cursorOffset: 1,
+  },
+  {
+    label: 'subDays(date, n)',
+    insert: 'subDays()',
+    description: 'date − n days',
+    cursorOffset: 1,
+  },
+  {
+    label: 'diffDays(a, b)',
+    insert: 'diffDays()',
+    description: 'days between dates',
+    cursorOffset: 1,
+  },
+  {
+    label: 'year(date)',
+    insert: 'year()',
+    description: '4-digit year',
+    cursorOffset: 1,
+  },
+  {
+    label: 'min(...)',
+    insert: 'min()',
+    description: 'minimum value',
+    cursorOffset: 1,
+  },
+  {
+    label: 'max(...)',
+    insert: 'max()',
+    description: 'maximum value',
+    cursorOffset: 1,
+  },
+  {
+    label: 'round(n)',
+    insert: 'round()',
+    description: 'round to integer',
+    cursorOffset: 1,
+  },
+  {
+    label: 'floor(n)',
+    insert: 'floor()',
+    description: 'round down',
+    cursorOffset: 1,
+  },
+  {
+    label: 'ceil(n)',
+    insert: 'ceil()',
+    description: 'round up',
+    cursorOffset: 1,
+  },
+  {
+    label: 'abs(n)',
+    insert: 'abs()',
+    description: 'absolute value',
+    cursorOffset: 1,
+  },
+];
+
 /** Operators that don't need an expected value. */
 const UNARY_OPERATORS = new Set<ConditionOperator>(['empty', 'notEmpty']);
 
@@ -724,6 +794,7 @@ function ConditionRow({
   // Assisted expression state
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [fieldPickerOpen, setFieldPickerOpen] = React.useState(false);
+  const [funcPickerOpen, setFuncPickerOpen] = React.useState(false);
   const knownFieldIds = React.useMemo(
     () => new Set(otherFields.map((f) => f.id)),
     [otherFields]
@@ -739,14 +810,17 @@ function ConditionRow({
   );
 
   React.useEffect(() => {
-    if (!fieldPickerOpen) return;
-    const handleClick = () => setFieldPickerOpen(false);
+    if (!fieldPickerOpen && !funcPickerOpen) return;
+    const handleClick = () => {
+      setFieldPickerOpen(false);
+      setFuncPickerOpen(false);
+    };
     document.addEventListener('click', handleClick);
     return () => document.removeEventListener('click', handleClick);
-  }, [fieldPickerOpen]);
+  }, [fieldPickerOpen, funcPickerOpen]);
 
   const insertAtCursor = React.useCallback(
-    (text: string) => {
+    (text: string, cursorOffset = 0) => {
       const el = inputRef.current;
       if (!el) {
         onUpdate({ expression: (condition.expression ?? '') + text });
@@ -755,7 +829,7 @@ function ConditionRow({
       const start = el.selectionStart ?? el.value.length;
       const end = el.selectionEnd ?? el.value.length;
       const next = el.value.slice(0, start) + text + el.value.slice(end);
-      const newCursor = start + text.length;
+      const newCursor = start + text.length - cursorOffset;
       onUpdate({ expression: next });
       requestAnimationFrame(() => {
         el.setSelectionRange(newCursor, newCursor);
@@ -932,6 +1006,43 @@ function ConditionRow({
                 </div>
               )}
             </div>
+            <div className="ms:relative">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setFuncPickerOpen((v) => !v);
+                }}
+                className="condition-func-picker-btn ms:px-1.5 ms:py-0.5 ms:text-xs ms:font-medium ms:bg-transparent ms:text-msprimary ms:border ms:border-msprimary/40 ms:rounded ms:hover:bg-msprimary/10 ms:transition-colors ms:outline-none ms:focus:outline-none ms:cursor-pointer"
+              >
+                fn()
+              </button>
+              {funcPickerOpen && (
+                <div
+                  className="condition-func-picker-dropdown ms:absolute ms:top-full ms:left-0 ms:mt-0.5 ms:z-50 ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:shadow-lg ms:min-w-max ms:max-h-48 ms:overflow-y-auto"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {EXPRESSION_FUNCTION_CHIPS.map((fn) => (
+                    <button
+                      key={fn.label}
+                      type="button"
+                      onClick={() => {
+                        insertAtCursor(fn.insert, fn.cursorOffset);
+                        setFuncPickerOpen(false);
+                      }}
+                      className="ms:flex ms:flex-col ms:w-full ms:px-2 ms:py-1.5 ms:text-left ms:bg-transparent ms:border-0 ms:text-mstext ms:hover:bg-msbackgroundhover ms:outline-none ms:focus:outline-none ms:cursor-pointer"
+                    >
+                      <span className="ms:text-xs ms:font-mono ms:font-medium">
+                        {fn.label}
+                      </span>
+                      <span className="ms:text-xs ms:text-mstextmuted">
+                        {fn.description}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             {EXPRESSION_OPERATOR_CHIPS.map((op) => (
               <button
                 key={op}
@@ -1075,6 +1186,34 @@ function ExpectedValueInput({
     }
   }
 
+  // OpenChoice fields include predefined options plus a special "{fieldId}-other" option.
+  if (target?.fieldType === 'openchoice') {
+    if (
+      operator === 'equals' ||
+      operator === 'notEquals' ||
+      operator === 'includes'
+    ) {
+      const otherOptionId = `${target.id}-other`;
+      return (
+        <select
+          id={`${idPrefix}-expected`}
+          aria-label="Expected value"
+          value={expected}
+          onChange={(e) => onUpdate({ expected: e.currentTarget.value })}
+          className="condition-expected ms:w-full ms:min-w-0 ms:px-2 ms:py-1.5 ms:text-xs ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:cursor-pointer"
+        >
+          <option value="">Select a value…</option>
+          {target.options?.map((opt) => (
+            <option key={opt.id} value={opt.id}>
+              {opt.value}
+            </option>
+          ))}
+          <option value={otherOptionId}>Other</option>
+        </select>
+      );
+    }
+  }
+
   // If target has options and we're using equals/notEquals/includes,
   // show a dropdown of option values
   if (target?.hasOptions && target.options && target.options.length > 0) {
@@ -1169,6 +1308,11 @@ function getOperatorsForTarget(target: TargetField): ConditionOperator[] {
     return ['empty', 'notEmpty'];
   }
 
+  // Media answers (file, signature, diagram) — only presence checks are meaningful.
+  if (answerType === 'media') {
+    return ['empty', 'notEmpty'];
+  }
+
   // Single-value selection fields (radio/dropdown/boolean etc.).
   if (answerType === 'selection') {
     const ops: ConditionOperator[] = [
@@ -1256,7 +1400,7 @@ function groupByEffect(
     visible: [],
     enable: [],
     required: [],
-    readOnly: [],
+    setValue: [],
   };
   rules.forEach((rule, idx) => {
     if (result[rule.effect]) {

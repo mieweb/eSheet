@@ -1,5 +1,6 @@
 import { useStore } from 'zustand';
 import type { FieldDefinition, TextInputType } from '@esheet/core';
+import { slugifyQuestion } from '@esheet/core';
 import { useFormStore } from '@esheet/fields';
 import { useInstanceId } from '../../EsheetBuilder.js';
 import { DraftIdEditor } from './DraftIdEditor.js';
@@ -31,6 +32,9 @@ export function CommonEditor({
   const formStore = useFormStore();
   const dangerouslyAllowJS = useStore(formStore, (s) => s.dangerouslyAllowJS);
   const calculation = (def as { calculation?: string }).calculation ?? '';
+  const question = (def as { question?: string }).question ?? '';
+  const suggestedId = slugifyQuestion(question);
+  const showSuggestion = suggestedId !== '' && suggestedId !== def.id;
 
   return (
     <div className="common-editor ms:space-y-3">
@@ -43,6 +47,18 @@ export function CommonEditor({
           Field ID
         </label>
         <DraftIdEditor id={def.id} fieldId={fieldId} onCommit={onRenameId} />
+        {showSuggestion && (
+          <p className="ms:mt-1 ms:text-xs ms:text-mstextmuted">
+            Suggested:{' '}
+            <button
+              type="button"
+              onClick={() => onRenameId(suggestedId)}
+              className="ms:font-mono ms:text-msprimary ms:underline ms:cursor-pointer ms:bg-transparent ms:border-0 ms:p-0"
+            >
+              {suggestedId}
+            </button>
+          </p>
+        )}
       </div>
 
       {/* Question — hidden for display fields (they use content, not question) */}
