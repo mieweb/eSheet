@@ -49,10 +49,7 @@ export {
   type FormApi,
   type FieldResponseMap,
 } from './lib/hooks/useFormApi.js';
-export {
-  useUiApi,
-  type UiApi,
-} from './lib/hooks/useUiApi.js';
+export { useUiApi, type UiApi } from './lib/hooks/useUiApi.js';
 export { useVisibleRootIds } from './lib/hooks/useVisibleRootIds.js';
 
 export {
