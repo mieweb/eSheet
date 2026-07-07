@@ -13,6 +13,21 @@ Custom field types are registered via the `registerCustomFieldTypes()` function 
 1. **Metadata** -- label, category, answer type, default properties
 2. **React component** -- implements the `FieldComponentProps` interface
 
+:::caution Register before rendering
+
+Registration must happen **before** a form containing the custom type is
+validated or rendered (i.e. before `EsheetBuilder` / `EsheetRenderer` mounts).
+Form validation only accepts `fieldType` values that are registered at parse
+time — an unregistered custom type fails schema validation with an
+"Invalid form definition" error. Call `registerCustomFieldTypes()` at module
+load (top level), not inside a component.
+
+Custom field definitions may carry arbitrary extra configuration props; unlike
+built-in types, they are not strictly validated beyond the base props
+(`id`, `question`, `required`, `rules`).
+
+:::
+
 ## Registration API
 
 ```tsx

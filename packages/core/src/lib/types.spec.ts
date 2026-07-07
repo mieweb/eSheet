@@ -3,6 +3,7 @@ import {
   formDefinitionSchema,
   fieldDefinitionSchema,
 } from './types.js';
+import { registerFieldType, resetFieldTypeRegistry } from './registry.js';
 import type {
   FieldDefinition,
   FieldResponse,
@@ -90,6 +91,74 @@ describe('schema types', () => {
       question: 'Name',
       extra: true,
     });
+
+    expect(result.success).toBe(false);
+  });
+});
+
+describe('custom field type validation', () => {
+  afterEach(() => {
+    resetFieldTypeRegistry();
+  });
+
+  const registerVitals = () =>
+    registerFieldType('vitals', {
+      label: 'Vitals',
+      category: 'rich',
+      answerType: 'text',
+      hasOptions: false,
+      hasMatrix: false,
+      defaultProps: {},
+    });
+
+  it('should accept a registered custom field type with extra props', () => {
+    registerVitals();
+
+    const result = formDefinitionSchema.safeParse({
+      id: 'form',
+      fields: [
+        {
+          id: 'v1',
+          fieldType: 'vitals',
+          question: 'Vitals',
+          // custom types may carry arbitrary configuration props
+          units: 'metric',
+          panels: ['bp', 'pulse'],
+        },
+      ],
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it('should reject an unregistered field type', () => {
+    const result = formDefinitionSchema.safeParse({
+      id: 'form',
+      fields: [{ id: 'x1', fieldType: 'notRegistered' }],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('should keep strict validation for built-in types even when custom types are registered', () => {
+    registerVitals();
+
+    // A built-in type with a bogus prop must NOT sneak through the loose
+    // custom branch.
+    const result = fieldDefinitionSchema.safeParse({
+      id: 'q1',
+      fieldType: 'text',
+      bogus: true,
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('should require base props on custom field types', () => {
+    registerVitals();
+
+    // Missing required `id`
+    const result = fieldDefinitionSchema.safeParse({ fieldType: 'vitals' });
 
     expect(result.success).toBe(false);
   });
