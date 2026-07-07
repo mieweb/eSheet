@@ -77,18 +77,43 @@ export function resolveSetValue(
   const rules = field.rules?.filter((r) => r.effect === 'setValue') ?? [];
 
   for (const rule of rules) {
-    if (evaluateRule(rule, normalized, responses, dangerouslyAllowJS)) {
-      // Rule matched; now extract and evaluate the expression condition to get the value.
-      // Typically, a setValue rule will have ONE expression condition that produces the value.
-      const expressionCondition = rule.conditions.find(
-        (c) => c.conditionType === 'expression'
+    // Determine if this is a pure expression rule (all conditions are expression type,
+    // no field-ref guard conditions with targetId/operator).
+    // Pure expression rules from FHIR calculatedExpression/initialExpression should be
+    // evaluated unconditionally — the expression IS the value, not a guard condition.
+    // Gating behind evaluateRule would treat the expression as boolean and discard
+    // falsey results like 0, false, or "".
+    const isExpressionOnly =
+      rule.conditions.length > 0 &&
+      rule.conditions.every(
+        (c) => c.conditionType === 'expression' && !c.targetId && !c.operator
       );
 
-      if (
-        expressionCondition &&
-        expressionCondition.conditionType === 'expression' &&
-        expressionCondition.expression
-      ) {
+    const expressionCondition = rule.conditions.find(
+      (c) => c.conditionType === 'expression' && c.expression
+    );
+
+    if (isExpressionOnly && expressionCondition?.expression) {
+      // Evaluate expression unconditionally to preserve falsey values.
+      try {
+        const result = evaluateExpression(
+          expressionCondition.expression,
+          normalized,
+          responses
+        );
+        if (result === null || result === undefined) return null;
+        if (typeof result === 'string' || typeof result === 'number') {
+          return result;
+        }
+        return String(result);
+      } catch {
+        continue;
+      }
+    }
+
+    if (evaluateRule(rule, normalized, responses, dangerouslyAllowJS)) {
+      // Rule matched; now extract and evaluate the expression condition to get the value.
+      if (expressionCondition?.expression) {
         try {
           // Evaluate the expression in context of current responses
           // Uses the proper AST-based evaluator from conditions.ts, not string substitution
