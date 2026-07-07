@@ -2242,11 +2242,13 @@ describe('comprehensive conditions integration', () => {
       ).toBe(false);
     });
 
-    it('equals — matches __other__ when user types custom text', () => {
+    it('equals — matches other-option id when user selects the other option', () => {
       const { normalized, field } = setup(openChoiceDef);
-      field.rules = [fieldRule('visible', 'other-1', 'equals', '__other__')];
+      field.rules = [
+        fieldRule('visible', 'other-1', 'equals', 'other-1-other'),
+      ];
       const resp: FieldResponse = {
-        selected: { id: '__other__', value: 'custom text' },
+        selected: { id: 'other-1-other', value: 'custom text' },
       };
       expect(
         resolveEffect('visible', field, normalized, { 'other-1': resp })
@@ -2292,7 +2294,7 @@ describe('comprehensive conditions integration', () => {
       };
       const normalized = normalizeDefinition([driver, target]);
       const resp: FieldResponse = {
-        selected: { id: '__other__', value: 'custom text' },
+        selected: { id: 'other-5-other', value: 'custom text' },
       };
       expect(
         resolveEffect('visible', target, normalized, { 'other-5': resp })

@@ -376,10 +376,14 @@ export const FileField = React.memo(function FileField({
       </div>
 
       <div>
-        <label className="ms:block ms:text-sm ms:font-medium ms:text-mstextmuted ms:mb-2">
+        <label
+          htmlFor={`${instanceId}-editor-accepted-types-${def.id}`}
+          className="ms:block ms:text-sm ms:font-medium ms:text-mstextmuted ms:mb-2"
+        >
           Accepted types
         </label>
         <input
+          id={`${instanceId}-editor-accepted-types-${def.id}`}
           type="text"
           placeholder="Search file types..."
           value={typeSearch}
@@ -418,11 +422,15 @@ export const FileField = React.memo(function FileField({
       </div>
 
       <div>
-        <label className="ms:block ms:text-sm ms:font-medium ms:text-mstextmuted ms:mb-1">
+        <label
+          htmlFor={`${instanceId}-editor-max-file-size-${def.id}`}
+          className="ms:block ms:text-sm ms:font-medium ms:text-mstextmuted ms:mb-1"
+        >
           Max file size
         </label>
         <div className="ms:flex ms:gap-2">
           <input
+            id={`${instanceId}-editor-max-file-size-${def.id}`}
             type="number"
             value={
               def.maxFileSize
@@ -441,6 +449,8 @@ export const FileField = React.memo(function FileField({
             className="ms:px-3 ms:py-2 ms:h-10 ms:flex-1 ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:rounded-lg"
           />
           <select
+            id={`${instanceId}-editor-size-unit-${def.id}`}
+            aria-label="File size unit"
             value={sizeUnit}
             onChange={(e) => {
               const newUnit = e.target.value as SizeUnit;
@@ -456,10 +466,14 @@ export const FileField = React.memo(function FileField({
       </div>
 
       <div>
-        <label className="ms:block ms:text-sm ms:font-medium ms:text-mstextmuted ms:mb-1">
+        <label
+          htmlFor={`${instanceId}-editor-max-files-${def.id}`}
+          className="ms:block ms:text-sm ms:font-medium ms:text-mstextmuted ms:mb-1"
+        >
           Max files allowed
         </label>
         <input
+          id={`${instanceId}-editor-max-files-${def.id}`}
           type="number"
           min="1"
           value={def.maxFiles ?? ''}

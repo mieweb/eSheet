@@ -456,7 +456,6 @@ function convertElement(
     id,
     question: element.title ?? element.name,
     required: element.isRequired ?? false,
-    ...(element.readOnly ? { readOnly: element.readOnly } : {}),
     rules,
     _sourceData,
   };
