@@ -21,6 +21,7 @@ export const CheckField = React.memo(function CheckField({
   const def = field.definition as CheckFieldDefinition;
   const instanceId = form.getState().instanceId;
   const options = def.options || [];
+  const isWrap = def.optionLayout === 'wrap';
   const selectedArr =
     (response?.selected as SelectedOption[] | undefined) ?? [];
   const selectedIds = selectedArr.map((s) => s.id);
@@ -35,8 +36,8 @@ export const CheckField = React.memo(function CheckField({
 
   if (isPreview) {
     return (
-      <div className="check-field-preview ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
-        <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
+      <div className="check-field-preview ms:space-y-1.5">
+        <div className="ms:text-sm ms:font-medium ms:text-mstext ms:break-words ms:overflow-hidden">
           {def.question || 'Question'}
           {(isRequired || isSoftRequired) && (
             <span
@@ -48,14 +49,17 @@ export const CheckField = React.memo(function CheckField({
             </span>
           )}
         </div>
-        <div className="ms:space-y-1">
+        <div
+          className={isWrap ? 'ms:flex ms:flex-wrap' : 'ms:space-y-1'}
+          style={isWrap ? { columnGap: '1rem', rowGap: '0.25rem' } : undefined}
+        >
           {options.map((option) => (
             <label
               key={option.id}
               htmlFor={`${instanceId}-check-answer-${def.id}-${option.id}`}
-              className={`ms:flex ms:items-center ms:gap-2 ms:rounded ms:transition-colors ms:py-1 ms:px-1 ${
+              className={`ms:flex ms:items-center ms:gap-2 ms:rounded ms:transition-colors ms:py-1 ms:px-1 ms:select-none ${
                 isEnabled
-                  ? 'ms:cursor-pointer ms:hover:bg-msprimary/5 ms:select-none'
+                  ? 'ms:cursor-pointer ms:hover:bg-msprimary/5'
                   : 'ms:cursor-not-allowed'
               }`}
             >

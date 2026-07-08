@@ -112,7 +112,11 @@ const sidebars = {
         'adapters/overview',
         'adapters/surveyjs',
         'adapters/mcp',
-        'adapters/fhir',
+        {
+          type: 'category',
+          label: 'FHIR',
+          items: ['adapters/fhir/fhir-adapter', 'adapters/fhir/extensions'],
+        },
       ],
     },
     {

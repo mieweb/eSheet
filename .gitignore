@@ -35,6 +35,8 @@ node_modules
 npm-debug.log
 yarn-error.log
 testem.log
+nx-release-dryrun.log
+*-dryrun.log
 /typings
 
 # System Files

@@ -20,6 +20,7 @@ export const MultiTextField = React.memo(function MultiTextField({
   const def = field.definition as MultitextFieldDefinition;
   const instanceId = form.getState().instanceId;
   const options = def.options || [];
+  const isWrap = def.optionLayout === 'wrap';
   const multitextAnswers = response?.multitextAnswers || {};
 
   if (isPreview) {
@@ -39,11 +40,23 @@ export const MultiTextField = React.memo(function MultiTextField({
             )}
           </div>
         )}
-        <div className="ms:space-y-2 ms:w-full">
+        <div
+          className={
+            isWrap ? 'ms:flex ms:flex-wrap ms:w-full' : 'ms:space-y-2 ms:w-full'
+          }
+          style={isWrap ? { columnGap: '0.5rem', rowGap: '0.5rem' } : undefined}
+        >
           {options.map((option) => {
             const inputId = `${instanceId}-multitext-answer-${def.id}-${option.id}`;
             return (
-              <div key={option.id} className="ms:flex ms:flex-col ms:gap-1">
+              <div
+                key={option.id}
+                className={
+                  isWrap
+                    ? 'ms:flex ms:flex-col ms:gap-1 ms:flex-1 ms:min-w-[12rem]'
+                    : 'ms:flex ms:flex-col ms:gap-1'
+                }
+              >
                 <label
                   htmlFor={inputId}
                   className="ms:text-xs ms:font-medium ms:text-mstextmuted ms:px-0 ms:text-left"
