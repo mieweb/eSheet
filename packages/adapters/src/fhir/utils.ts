@@ -156,7 +156,7 @@ export function mapFhirTypeToEsheet(
       if (hasSignatureRequired(item.extension)) {
         return { fieldType: 'signature' };
       }
-      return { fieldType: 'diagram' };
+      return { fieldType: 'file' };
 
     case 'reference':
       return { fieldType: 'text', subType: 'reference' };
@@ -179,6 +179,10 @@ function mapChoiceType(
     return repeats
       ? { fieldType: 'multiselectdropdown' }
       : { fieldType: 'dropdown' };
+  }
+
+  if (itemControl === 'open-choice') {
+    return { fieldType: 'openchoice' };
   }
 
   if (itemControl === 'check-box') {
@@ -250,6 +254,12 @@ export function mapEsheetTypeToFhir(
 
     case 'diagram':
       return { type: 'attachment' };
+
+    case 'file':
+      return { type: 'attachment' };
+
+    case 'openchoice':
+      return { type: 'choice', itemControl: 'open-choice' };
 
     case 'singlematrix':
     case 'multimatrix':

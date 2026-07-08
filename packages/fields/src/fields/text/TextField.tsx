@@ -46,8 +46,8 @@ export const TextField = React.memo(function TextField({
   isEnabled,
   isRequired,
   isSoftRequired,
-  isReadOnly,
   response,
+  computedValue,
   onUpdate,
   onResponse,
 }: FieldComponentProps) {
@@ -58,33 +58,55 @@ export const TextField = React.memo(function TextField({
   const isTel = inputType === 'tel';
   const placeholder = PLACEHOLDER[inputType] || 'Type your answer';
 
+  // When a computed value arrives and the user hasn't answered yet, seed it as
+  // the response so it behaves like any other answered field (overwritable).
+  React.useEffect(() => {
+    if (computedValue !== undefined && !response?.answer) {
+      onResponse({ answer: String(computedValue) });
+    }
+  }, [computedValue]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (isPreview) {
+    // Prefer user's response over computed value so users can overwrite computed defaults.
+    const displayValue = response?.answer ?? '';
+
     return (
-      <div className="text-field-preview ms:relative">
-        <Input
-          id={`${instanceId}-text-answer-${def.id}`}
-          label={def.question || 'Question'}
-          required={isRequired || isSoftRequired}
-          type={inputType}
-          disabled={!isEnabled}
-          readOnly={isReadOnly}
-          aria-required={isRequired || undefined}
-          value={response?.answer || ''}
-          onChange={(e) => {
-            if (isReadOnly) return;
-            const val = isTel
-              ? formatPhoneNumber(e.target.value)
-              : e.target.value;
-            onResponse({ answer: val });
-          }}
-          placeholder={isReadOnly ? '—' : placeholder}
-          className={unit ? 'ms:pr-16' : ''}
-        />
-        {unit && (
-          <span className="ms:absolute ms:right-3 ms:bottom-0 ms:h-10 ms:flex ms:items-center ms:text-sm ms:text-mstextmuted ms:pointer-events-none">
-            {unit}
-          </span>
-        )}
+      <div className="text-field-preview ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
+        <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
+          {def.question || 'Question'}
+          {(isRequired || isSoftRequired) && (
+            <span
+              className={`ms:ml-0.5 ${
+                isSoftRequired ? 'ms:text-mswarning' : 'ms:text-msdanger'
+              }`}
+            >
+              *
+            </span>
+          )}
+        </div>
+        <div className="ms:relative">
+          <Input
+            id={`${instanceId}-text-answer-${def.id}`}
+            aria-label={def.question || 'Question'}
+            type={inputType}
+            disabled={!isEnabled}
+            aria-required={isRequired || undefined}
+            value={displayValue}
+            onChange={(e) => {
+              const val = isTel
+                ? formatPhoneNumber(e.target.value)
+                : e.target.value;
+              onResponse({ answer: val });
+            }}
+            placeholder={placeholder}
+            className={unit ? 'pr-16' : ''}
+          />
+          {unit && (
+            <span className="ms:absolute ms:right-3 ms:top-1/2 ms:-translate-y-1/2 ms:text-sm ms:text-mstextmuted ms:pointer-events-none">
+              {unit}
+            </span>
+          )}
+        </div>
       </div>
     );
   }

@@ -27,8 +27,8 @@ export const RadioField = React.memo(function RadioField({
 
   if (isPreview) {
     return (
-      <div className="radio-field-preview ms:space-y-1.5">
-        <div className="ms:text-sm ms:font-medium ms:text-mstext ms:break-words ms:overflow-hidden">
+      <div className="radio-field-preview ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
+        <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
           {def.question || 'Question'}
           {(isRequired || isSoftRequired) && (
             <span
@@ -61,7 +61,7 @@ export const RadioField = React.memo(function RadioField({
               <label
                 key={option.id}
                 htmlFor={`${instanceId}-radio-answer-${def.id}-${option.id}`}
-                className={`ms:flex ms:items-center ms:gap-2 ms:rounded ms:transition-colors ms:py-1 ms:px-1 ${
+                className={`ms:flex ms:items-center ms:gap-2 ms:rounded ms:transition-colors ms:py-1 ms:px-1 ms:select-none ${
                   isEnabled
                     ? 'ms:cursor-pointer ms:hover:bg-msprimary/5'
                     : 'ms:cursor-not-allowed'

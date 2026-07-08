@@ -34,6 +34,8 @@ export interface FieldComponentProps {
   isReadOnly: boolean;
   /** Current response data for this field (`undefined` if none yet). */
   response: FieldResponse | undefined;
+  /** Computed value from setValue effects (if applicable). */
+  computedValue?: string | number | null;
   /** Remove this field from the form. */
   onRemove: () => void;
   /** Patch this field's definition (shallow merge). */

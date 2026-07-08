@@ -23,6 +23,8 @@ export const FIELD_TYPES = [
   'html',
   'signature',
   'diagram',
+  'file',
+  'openchoice',
   'display',
   'section',
 ] as const;
@@ -143,7 +145,8 @@ export const CONDITIONAL_EFFECTS = [
   'required',
   'visible',
   'enable',
-  'readOnly',
+  // 'readOnly', // TODO: implement readOnly properly (see INTERNAL-TICKETS/readonly-fields.md)
+  'setValue',
 ] as const;
 export const conditionalEffectSchema = z.enum(CONDITIONAL_EFFECTS);
 export type ConditionalEffect = z.infer<typeof conditionalEffectSchema>;
@@ -276,8 +279,7 @@ interface BaseFieldDefinition {
    * - `false` / omitted - not required.
    */
   required?: boolean | 'soft';
-  /** Whether this field is read-only (user cannot edit; calculated value always wins). */
-  readOnly?: boolean;
+  // readOnly?: boolean; // TODO: implement readOnly properly (see INTERNAL-TICKETS/readonly-fields.md)
   /** Layout width in a row grid (`full` | `half` | `third`). Defaults to `full`. */
   width?: FieldWidth;
   /** Validation rules applied to the field's response. */
@@ -420,6 +422,26 @@ export interface DiagramFieldDefinition extends BaseFieldDefinition {
   padPlaceholder?: string;
 }
 
+export interface FileFieldDefinition extends BaseFieldDefinition {
+  fieldType: 'file';
+  /** Accept string for file input (MIME types or extensions), e.g. "image/*,.pdf" */
+  accept?: string;
+  /** Maximum allowed file size in bytes (optional). */
+  maxFileSize?: number;
+  /** Maximum number of files allowed to upload (optional). Default: 1. */
+  maxFiles?: number;
+}
+
+export interface OpenChoiceFieldDefinition extends BaseFieldDefinition {
+  fieldType: 'openchoice';
+  /** Predefined selectable options. */
+  options?: FieldOption[];
+  /** Maximum number of custom user-added options allowed at runtime (optional). */
+  maxCustomOptions?: number;
+  /** Label for the "Other, please specify" option (optional). */
+  otherLabel?: string;
+}
+
 export interface DisplayFieldDefinition {
   id: string;
   fieldType: 'display';
@@ -465,6 +487,7 @@ export type FieldDefinition =
   | BooleanFieldDefinition
   | DropdownFieldDefinition
   | MultiselectDropdownFieldDefinition
+  | OpenChoiceFieldDefinition
   // Rating
   | RatingFieldDefinition
   | RankingFieldDefinition
@@ -474,6 +497,7 @@ export type FieldDefinition =
   | MultiMatrixFieldDefinition
   // Rich
   | ImageFieldDefinition
+  | FileFieldDefinition
   | HtmlFieldDefinition
   | SignatureFieldDefinition
   | DiagramFieldDefinition
@@ -489,6 +513,7 @@ export type OptionBearingFieldDefinition =
   | DropdownFieldDefinition
   | MultiselectDropdownFieldDefinition
   | RatingFieldDefinition
+  | OpenChoiceFieldDefinition
   | RankingFieldDefinition
   | SliderFieldDefinition;
 
@@ -504,7 +529,8 @@ export function hasOptions(
     field.fieldType === 'multiselectdropdown' ||
     field.fieldType === 'rating' ||
     field.fieldType === 'ranking' ||
-    field.fieldType === 'slider'
+    field.fieldType === 'slider' ||
+    field.fieldType === 'openchoice'
   );
 }
 
@@ -536,6 +562,8 @@ const FIELD_TYPE_PROPERTIES: Record<FieldType, readonly string[]> = {
   html: ['htmlContent', 'iframeHeight'],
   signature: ['padPlaceholder'],
   diagram: ['imageUri', 'padPlaceholder'],
+  file: ['accept', 'maxFileSize', 'maxFiles'],
+  openchoice: ['options', 'maxCustomOptions', 'otherLabel'],
   display: ['content'],
   // Organization category
   section: ['title', 'fields'],
@@ -547,7 +575,7 @@ const BASE_PROPERTIES = [
   'fieldType',
   'question',
   'required',
-  'readOnly',
+  // 'readOnly', // TODO: implement readOnly properly
   'width',
   'validators',
   'calculation',
@@ -653,7 +681,7 @@ const baseFieldProps = {
   id: z.string(),
   question: z.optional(z.string()),
   required: z.optional(z.union([z.boolean(), z.literal('soft')])),
-  readOnly: z.optional(z.boolean()),
+  // readOnly: z.optional(z.boolean()), // TODO: implement readOnly properly
   width: z.optional(z.enum(['full', 'half', 'third'])),
   validators: z.optional(z.array(fieldValidatorSchema)),
   rules: z.optional(z.array(conditionalRuleSchema)),
@@ -781,6 +809,22 @@ const diagramFieldSchema = z.strictObject({
   padPlaceholder: z.optional(z.string()),
 });
 
+const fileFieldSchema = z.strictObject({
+  ...baseFieldProps,
+  fieldType: z.literal('file'),
+  accept: z.optional(z.string()),
+  maxFileSize: z.optional(z.number()),
+  maxFiles: z.optional(z.number()),
+});
+
+const openChoiceFieldSchema = z.strictObject({
+  ...baseFieldProps,
+  fieldType: z.literal('openchoice'),
+  options: z.optional(z.array(fieldOptionSchema)),
+  maxCustomOptions: z.optional(z.number()),
+  otherLabel: z.optional(z.string()),
+});
+
 const displayBaseFieldProps = {
   id: z.string(),
   width: z.optional(z.enum(['full', 'half', 'third'])),
@@ -829,9 +873,11 @@ const _coreFieldSchema = z.discriminatedUnion('fieldType', [
   multiMatrixFieldSchema,
   // Rich
   imageFieldSchema,
+  fileFieldSchema,
   htmlFieldSchema,
   signatureFieldSchema,
   diagramFieldSchema,
+  openChoiceFieldSchema,
   displayFieldSchema,
   // Organization
   sectionFieldSchema,
@@ -932,6 +978,8 @@ export interface FieldResponse {
   markupData?: string;
   /** Base64 diagram image (diagram field). */
   markupImage?: string;
+  /** File/attachment(s) uploaded by user (file field). Supports single or multiple files. */
+  fileData?: AttachmentAnswer | AttachmentAnswer[];
   /** Set to true when the response was filled programmatically by an AI agent. */
   _ai?: boolean;
 }
@@ -1083,6 +1131,8 @@ export type AttachmentAnswer = {
   dataUrl?: string;
   url?: string;
   title?: string;
+  /** File size in bytes (optional). */
+  size?: number;
 };
 
 /** All possible answer value shapes in a submission payload. */

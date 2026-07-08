@@ -96,3 +96,5 @@ graphify-out*
 # Adaptive Codegraph index artifacts
 .adaptive-codegraph/
 .fastembed_cache/
+
+.vscode/

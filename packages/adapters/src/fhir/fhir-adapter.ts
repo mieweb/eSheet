@@ -12,6 +12,8 @@ import type {
   SectionFieldDefinition,
 } from '@esheet/core';
 
+import { normalizeExpression } from '@esheet/core';
+
 import type {
   FhirQuestionnaire,
   FhirQuestionnaireItem,
@@ -29,6 +31,7 @@ import type {
   FhirFieldMeta,
   FhirFormMeta,
   FhirCoding,
+  FhirExpression,
 } from './types.js';
 
 import {
@@ -139,6 +142,21 @@ function convertItemToField(
 
   // Convert enableWhen to rules
   const rules = convertEnableWhenToRules(item.enableWhen, item.enableBehavior);
+
+  // Convert calculatedExpression / initialExpression to a setValue rule.
+  const exprMeta =
+    fieldMeta.calculatedExpression ?? fieldMeta.initialExpression;
+  if (exprMeta?.expression) {
+    const expression =
+      exprMeta.language === 'text/fhirpath'
+        ? normalizeExpression(exprMeta.expression)
+        : exprMeta.expression;
+    rules.push({
+      effect: 'setValue',
+      logic: 'AND',
+      conditions: [{ conditionType: 'expression', expression }],
+    });
+  }
   const rulesSpread = rules.length > 0 ? { rules } : {};
 
   // Handle warnings for lossy conversions
@@ -165,6 +183,15 @@ function convertItemToField(
         ...(hasFieldMeta ? { _sourceData: fieldMeta } : {}),
         ...rulesSpread,
         fieldType: typeResult.fieldType,
+        options: convertAnswerOptions(item.answerOption, existingIds),
+      };
+
+    case 'openchoice':
+      return {
+        ...base,
+        ...(hasFieldMeta ? { _sourceData: fieldMeta } : {}),
+        ...rulesSpread,
+        fieldType: 'openchoice' as const,
         options: convertAnswerOptions(item.answerOption, existingIds),
       };
 
@@ -201,6 +228,7 @@ function convertItemToField(
     case 'boolean':
     case 'signature':
     case 'diagram':
+    case 'file':
       return {
         ...base,
         ...(hasFieldMeta ? { _sourceData: fieldMeta } : {}),
@@ -259,6 +287,23 @@ function buildFieldMeta(
   if (item.prefix) (meta as { prefix: string }).prefix = item.prefix;
   if (item.readOnly) (meta as { readOnly: boolean }).readOnly = item.readOnly;
   if (item.repeats) (meta as { repeats: boolean }).repeats = item.repeats;
+
+  // Extract SDC expression extensions for round-trip and setValue conversion
+  const calcExpr = getExtensionValue<FhirExpression>(
+    item.extension,
+    FHIR_EXT.CALCULATED_EXPRESSION
+  );
+  if (calcExpr)
+    (meta as { calculatedExpression: FhirExpression }).calculatedExpression =
+      calcExpr;
+
+  const initExpr = getExtensionValue<FhirExpression>(
+    item.extension,
+    FHIR_EXT.INITIAL_EXPRESSION
+  );
+  if (initExpr)
+    (meta as { initialExpression: FhirExpression }).initialExpression =
+      initExpr;
 
   // Store original FHIR type for export
   (meta as { fhirItemType: string }).fhirItemType = item.type;
@@ -359,6 +404,28 @@ function addConversionWarnings(
       path,
       code: 'UNSUPPORTED_TYPE',
       message: `FHIR quantity type converted to number field. Unit choices lost.`,
+    });
+  }
+
+  // Expression warning — calculatedExpression / initialExpression are imported
+  // as setValue rules but the expression string (CQL/FHIRPath) must be manually
+  // adapted to eSheet {fieldId} syntax before it will evaluate correctly.
+  const hasCalcExpr = !!getExtensionValue<FhirExpression>(
+    item.extension,
+    FHIR_EXT.CALCULATED_EXPRESSION
+  );
+  const hasInitExpr = !!getExtensionValue<FhirExpression>(
+    item.extension,
+    FHIR_EXT.INITIAL_EXPRESSION
+  );
+  if (hasCalcExpr || hasInitExpr) {
+    warnings.push({
+      path,
+      code: 'UNSUPPORTED_TYPE',
+      severity: 'info',
+      message: `${
+        hasCalcExpr ? 'calculatedExpression' : 'initialExpression'
+      } imported as a setValue rule. Expression syntax must be adapted to eSheet {fieldId} notation.`,
     });
   }
 
@@ -611,7 +678,13 @@ function extractSingleAnswerValue(answer: FhirResponseAnswer): unknown {
   if (answer.valueUri !== undefined) return answer.valueUri;
   if (answer.valueCoding) return answer.valueCoding.code;
   if (answer.valueQuantity) return answer.valueQuantity.value;
-  if (answer.valueAttachment) return answer.valueAttachment.data;
+  if (answer.valueAttachment)
+    return {
+      data: answer.valueAttachment.data,
+      contentType: answer.valueAttachment.contentType,
+      title: answer.valueAttachment.title,
+      url: answer.valueAttachment.url,
+    };
   if (answer.valueReference) return answer.valueReference.reference;
 
   return undefined;
@@ -731,6 +804,47 @@ function convertValueToAnswers(
         },
       ];
 
+    case 'file': {
+      // value may be a string (base64) or an object with data/dataUrl/contentType/title
+      if (typeof value === 'string') {
+        return [
+          {
+            valueAttachment: {
+              contentType: 'application/octet-stream',
+              data: value,
+            },
+          },
+        ];
+      }
+
+      const v = value as {
+        data?: string;
+        dataUrl?: string;
+        contentType?: string;
+        title?: string;
+      };
+      let dataBase64: string | undefined = undefined;
+      let contentType = v.contentType ?? 'application/octet-stream';
+      if (v.data) dataBase64 = v.data;
+      else if (v.dataUrl) {
+        const comma = v.dataUrl.indexOf(',');
+        dataBase64 = comma >= 0 ? v.dataUrl.slice(comma + 1) : v.dataUrl;
+        const prefix = v.dataUrl.slice(0, comma);
+        const m = prefix.match(/data:([^;]+)/);
+        if (m && m[1]) contentType = m[1];
+      }
+
+      return [
+        {
+          valueAttachment: {
+            contentType,
+            data: dataBase64,
+            title: v.title,
+          },
+        },
+      ];
+    }
+
     default:
       return [{ valueString: String(value) }];
   }
@@ -758,15 +872,27 @@ function convertTextAnswer(
 
 function createCodingAnswer(
   field: FieldDefinition,
-  selectedId: string
+  selectedIdOrObj: string | { id?: string; value?: string }
 ): FhirResponseAnswer {
   const options = 'options' in field ? field.options : undefined;
+  const selectedId =
+    typeof selectedIdOrObj === 'string'
+      ? selectedIdOrObj
+      : selectedIdOrObj.id ?? String(selectedIdOrObj.value ?? '');
   const option = options?.find((o: FieldOption) => o.id === selectedId);
 
   return {
     valueCoding: {
-      code: option?.value ?? selectedId,
-      display: option?.text,
+      code:
+        option?.value ??
+        (typeof selectedIdOrObj === 'string'
+          ? selectedIdOrObj
+          : selectedIdOrObj.value ?? selectedId),
+      display:
+        option?.text ??
+        (typeof selectedIdOrObj === 'object'
+          ? selectedIdOrObj.value
+          : undefined),
     },
   };
 }

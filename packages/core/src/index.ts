@@ -51,12 +51,14 @@ export {
   type BooleanFieldDefinition,
   type DropdownFieldDefinition,
   type MultiselectDropdownFieldDefinition,
+  type OpenChoiceFieldDefinition,
   type RatingFieldDefinition,
   type RankingFieldDefinition,
   type SliderFieldDefinition,
   type SingleMatrixFieldDefinition,
   type MultiMatrixFieldDefinition,
   type ImageFieldDefinition,
+  type FileFieldDefinition,
   type HtmlFieldDefinition,
   type SignatureFieldDefinition,
   type DiagramFieldDefinition,
@@ -88,6 +90,7 @@ export {
   generateOptionId,
   generateRowId,
   generateColumnId,
+  slugifyQuestion,
 } from './lib/functions/ids.js';
 
 export {
@@ -110,9 +113,14 @@ export {
   isExpressionValid,
   evaluateExpression,
   evaluateJsExpression,
+  normalizeExpression,
 } from './lib/logic/conditions.js';
 
-export { resolveEffect, resolveRequiredSeverity } from './lib/logic/resolve.js';
+export {
+  resolveEffect,
+  resolveSetValue,
+  resolveRequiredSeverity,
+} from './lib/logic/resolve.js';
 
 export {
   validateField,

@@ -26,8 +26,14 @@ export const RatingField = React.memo(function RatingField({
 
   if (isPreview) {
     return (
-      <div className="rating-field-preview ms:text-mstext ms:space-y-1.5">
-        <div className="ms:text-sm ms:font-medium ms:text-mstext ms:break-words ms:overflow-hidden">
+      <div
+        className={`rating-field-preview ms:text-mstext ms:grid ms:gap-2 ms:pb-4 ${
+          options.length > 5
+            ? 'ms:grid-cols-1'
+            : 'ms:grid-cols-1 ms:lg:grid-cols-2'
+        }`}
+      >
+        <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
           {def.question || 'Question'}
           {(isRequired || isSoftRequired) && (
             <span

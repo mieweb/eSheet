@@ -47,7 +47,7 @@ export const MultiMatrixField = React.memo(function MultiMatrixField({
 
   if (isPreview) {
     return (
-      <div className="multimatrix-field-preview ms:text-mstext">
+      <div className="multimatrix-field-preview ms:text-mstext ms:pb-4">
         <div className="ms:font-light ms:mb-3 ms:text-mstext ms:break-words ms:overflow-hidden">
           {def.question || 'Question'}
           {(isRequired || isSoftRequired) && (
@@ -85,7 +85,7 @@ export const MultiMatrixField = React.memo(function MultiMatrixField({
                           <label
                             key={col.id}
                             htmlFor={inputId}
-                            className={`ms:flex ms:items-center ms:gap-2 ms:rounded ms:transition-colors ms:py-1 ms:px-1 ${
+                          className={`ms:flex ms:items-center ms:gap-2 ms:rounded ms:transition-colors ms:py-1 ms:px-1 ms:select-none ${
                               isEnabled
                                 ? 'ms:cursor-pointer ms:hover:bg-msprimary/5'
                                 : 'ms:cursor-not-allowed'
@@ -148,7 +148,7 @@ export const MultiMatrixField = React.memo(function MultiMatrixField({
                           <label
                             key={col.id}
                             htmlFor={inputId}
-                            className={`ms:flex ms:justify-center ms:rounded ms:transition-colors ms:py-2 ${
+                            className={`ms:flex ms:justify-center ms:rounded ms:transition-colors ms:py-2 ms:select-none ${
                               isEnabled
                                 ? 'ms:cursor-pointer ms:hover:bg-msprimary/5'
                                 : 'ms:cursor-not-allowed'

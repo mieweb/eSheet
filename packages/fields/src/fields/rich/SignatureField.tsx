@@ -55,7 +55,7 @@ export const SignatureField = React.memo(function SignatureField({
 
   if (isPreview) {
     return (
-      <div className="signature-field-preview ms:space-y-2">
+      <div className="signature-field-preview ms:space-y-2 ms:pb-4">
         <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
           {def.question || 'Signature'}
           {(isRequired || isSoftRequired) && (
