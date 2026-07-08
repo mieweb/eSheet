@@ -1,3 +1,14 @@
+## 0.0.3 (2026-05-19)
+
+### 🚀 Features
+
+- **repo:** migrate demo and field components to @mieweb/ui ([#26](https://github.com/mieweb/eSheet/pull/26))
+- **adapters:** extract MCP to adapters and add multi-format renderer support ([#35](https://github.com/mieweb/eSheet/pull/35))
+
+### 🐛 Bug Fixes
+
+- **repo:** WCAG AA contrast and accessibility fixes ([#36](https://github.com/mieweb/eSheet/pull/36))
+
 ## 0.0.2 (2026-04-27)
 
 ### 🚀 Features

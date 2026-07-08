@@ -1,5 +1,9 @@
 import React from 'react';
-import type { FieldComponentProps, SelectedOption } from '@esheet/core';
+import type {
+  FieldComponentProps,
+  SelectedOption,
+  MultiMatrixFieldDefinition,
+} from '@esheet/core';
 import { Checkbox } from '@mieweb/ui';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 
@@ -9,11 +13,12 @@ export const MultiMatrixField = React.memo(function MultiMatrixField({
   isPreview,
   isEnabled,
   isRequired,
+  isSoftRequired,
   response,
   onUpdate,
   onResponse,
 }: FieldComponentProps) {
-  const def = field.definition;
+  const def = field.definition as MultiMatrixFieldDefinition;
   const instanceId = form.getState().instanceId;
   const rows = def.rows || [];
   const columns = def.columns || [];
@@ -42,10 +47,18 @@ export const MultiMatrixField = React.memo(function MultiMatrixField({
 
   if (isPreview) {
     return (
-      <div className="multimatrix-field-preview ms:text-mstext ms:pb-4">
+      <div className="multimatrix-field-preview ms:text-mstext">
         <div className="ms:font-light ms:mb-3 ms:text-mstext ms:break-words ms:overflow-hidden">
           {def.question || 'Question'}
-          {isRequired && <span className="ms:text-msdanger ms:ml-0.5">*</span>}
+          {(isRequired || isSoftRequired) && (
+            <span
+              className={`ms:ml-0.5 ${
+                isSoftRequired ? 'ms:text-mswarning' : 'ms:text-msdanger'
+              }`}
+            >
+              *
+            </span>
+          )}
         </div>
 
         {rows.length > 0 && columns.length > 0 ? (
@@ -69,9 +82,14 @@ export const MultiMatrixField = React.memo(function MultiMatrixField({
                         );
                         const inputId = `${instanceId}-multimatrix-answer-${def.id}-${rowIndex}-${colIndex}-m`;
                         return (
-                          <div
+                          <label
                             key={col.id}
-                            className="ms:flex ms:items-center ms:gap-2 ms:py-1"
+                            htmlFor={inputId}
+                            className={`ms:flex ms:items-center ms:gap-2 ms:rounded ms:transition-colors ms:py-1 ms:px-1 ms:select-none ${
+                              isEnabled
+                                ? 'ms:cursor-pointer ms:hover:bg-msprimary/5'
+                                : 'ms:cursor-not-allowed'
+                            }`}
                           >
                             <Checkbox
                               id={inputId}
@@ -80,14 +98,12 @@ export const MultiMatrixField = React.memo(function MultiMatrixField({
                                 toggleSelection(row.id, col.id, col.value)
                               }
                               disabled={!isEnabled}
+                              size="lg"
                             />
-                            <label
-                              htmlFor={inputId}
-                              className="ms:text-sm ms:text-mstext ms:cursor-pointer"
-                            >
+                            <span className="ms:text-sm ms:text-mstext">
                               {col.value}
-                            </label>
-                          </div>
+                            </span>
+                          </label>
                         );
                       })}
                     </div>
@@ -129,9 +145,14 @@ export const MultiMatrixField = React.memo(function MultiMatrixField({
                         );
                         const inputId = `${instanceId}-multimatrix-answer-${def.id}-${rowIndex}-${colIndex}`;
                         return (
-                          <div
+                          <label
                             key={col.id}
-                            className="ms:flex ms:justify-center ms:py-2"
+                            htmlFor={inputId}
+                            className={`ms:flex ms:justify-center ms:rounded ms:transition-colors ms:py-2 ms:select-none ${
+                              isEnabled
+                                ? 'ms:cursor-pointer ms:hover:bg-msprimary/5'
+                                : 'ms:cursor-not-allowed'
+                            }`}
                           >
                             <Checkbox
                               id={inputId}
@@ -140,8 +161,9 @@ export const MultiMatrixField = React.memo(function MultiMatrixField({
                                 toggleSelection(row.id, col.id, col.value)
                               }
                               disabled={!isEnabled}
+                              size="lg"
                             />
-                          </div>
+                          </label>
                         );
                       })}
                     </React.Fragment>

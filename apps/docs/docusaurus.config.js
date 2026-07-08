@@ -1,5 +1,12 @@
 // @ts-check
+import dotenv from 'dotenv';
+import { resolve } from 'path';
 import { themes as prismThemes } from 'prism-react-renderer';
+
+// Load .env.local from workspace root — try __dirname-relative first,
+// then fall back to CWD-relative (handles nx run-many from repo root).
+dotenv.config({ path: resolve(__dirname, '../../.env.local') });
+dotenv.config({ path: resolve(process.cwd(), '.env.local') });
 
 const isDev = process.env.NODE_ENV !== 'production';
 const siteOrigin =
@@ -14,7 +21,16 @@ const config = {
   favicon: 'img/favicon.ico',
 
   future: {
-    v4: true,
+    v4: {
+      removeLegacyPostBuildHeadAttribute: true,
+      useCssCascadeLayers: true,
+      siteStorageNamespacing: true,
+      // fasterByDefault: false — @swc/html native Linux binary not in lockfile (generated on
+      // Windows). Disabling prevents @docusaurus/faster from being auto-enabled, which would
+      // trigger require('@swc/html') and fail on Linux CI with MODULE_NOT_FOUND.
+      fasterByDefault: false,
+      mdx1CompatDisabledByDefault: true,
+    },
   },
 
   url: siteOrigin,
@@ -28,6 +44,38 @@ const config = {
   customFields: {
     demoUrl,
   },
+
+  // Ozwell chat widget — Schemie agent key (agnt_key- prefix, safe to embed publicly).
+  // System prompt and tools are managed server-side via the agent definition.
+  headTags: [
+    {
+      tagName: 'style',
+      innerHTML:
+        '#loco-lang-widget { bottom: 88px !important; z-index: 9997 !important; }',
+      attributes: {},
+    },
+    {
+      tagName: 'script',
+      attributes: { src: '/loco.min.js' },
+    },
+    {
+      tagName: 'script',
+      innerHTML: `Loco.init({ apiUrl: 'https://loco.os.mieweb.org', apiKey: '202337e52dff4fb69e97857d' }); Loco.widget({ position: 'bottom-right' });`,
+      attributes: {},
+    },
+    {
+      tagName: 'script',
+      innerHTML: `window.OzwellChatConfig={apiKey:'agnt_key-mq5nmgl81f6785d0d6da3dd0',title:'Schemie',welcomeMessage:'Hi! Ask me anything about eSheet \u2014 the builder, renderer, fields, or any package.',debug:true};`,
+      attributes: { type: 'text/javascript' },
+    },
+  ],
+  scripts: [
+    {
+      src: 'https://ozwellapi.os.mieweb.org/embed/ozwell-loader.js',
+      async: true,
+    },
+    { src: '/js/ozwell-tools.js', async: true },
+  ],
 
   i18n: {
     defaultLocale: 'en',
@@ -57,10 +105,15 @@ const config = {
       colorMode: {
         defaultMode: 'light',
         disableSwitch: false,
-        respectPrefersColorScheme: true,
+        respectPrefersColorScheme: false,
       },
       navbar: {
         title: 'eSheet',
+        logo: {
+          alt: 'eSheet logo',
+          src: 'img/eSheet-modern.svg',
+          style: { height: '20px', width: 'auto' },
+        },
         items: [
           {
             type: 'docSidebar',

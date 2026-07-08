@@ -81,7 +81,7 @@ export function hydrateResponse(
         items.push({
           id,
           text:
-            definition.question ??
+            (definition as { question?: string }).question ??
             (definition as { title?: string }).title ??
             '',
           answer,
@@ -93,7 +93,9 @@ export function hydrateResponse(
       const item: ResponseItem = {
         id,
         text:
-          definition.question ?? (definition as { title?: string }).title ?? '',
+          (definition as { question?: string }).question ??
+          (definition as { title?: string }).title ??
+          '',
       };
       if (!isEmptyAnswer(answer))
         item.answer = answer as ResponseItem['answer'];
@@ -146,9 +148,12 @@ function extractAnswer(
         response.signatureData ??
         response.markupImage ??
         response.markupData;
-      if (!dataUrl) return undefined;
-      const result: AttachmentAnswer = { contentType: 'image/png', dataUrl };
-      return result;
+      if (dataUrl) {
+        const result: AttachmentAnswer = { contentType: 'image/png', dataUrl };
+        return result;
+      }
+      // File fields store data in fileData with their actual contentType
+      return response.fileData;
     }
     default:
       return undefined;

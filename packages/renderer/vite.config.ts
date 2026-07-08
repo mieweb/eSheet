@@ -41,7 +41,7 @@ export default defineConfig(() => ({
   cacheDir: '../../node_modules/.vite/packages/renderer',
   plugins: [
     react(),
-    dts({ tsconfigPath: './tsconfig.lib.json', rollupTypes: true }),
+    dts({ tsconfigPath: './tsconfig.lib.json' }),
     inlineCssRenderer(),
   ],
   build: {
@@ -62,6 +62,7 @@ export default defineConfig(() => ({
     },
     cssCodeSplit: false,
     sourcemap: false,
+    emptyOutDir: false,
   },
   test: {
     name: '@esheet/renderer',

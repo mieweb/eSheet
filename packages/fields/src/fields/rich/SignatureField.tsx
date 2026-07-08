@@ -1,5 +1,8 @@
 import React from 'react';
-import type { FieldComponentProps } from '@esheet/core';
+import type {
+  FieldComponentProps,
+  SignatureFieldDefinition,
+} from '@esheet/core';
 import { DrawingPad } from './DrawingPad.js';
 
 /** Detect dark mode from the document root and re-render on changes. */
@@ -30,11 +33,12 @@ export const SignatureField = React.memo(function SignatureField({
   isPreview,
   isEnabled,
   isRequired,
+  isSoftRequired,
   response,
   onUpdate,
   onResponse,
 }: FieldComponentProps) {
-  const def = field.definition;
+  const def = field.definition as SignatureFieldDefinition;
   const instanceId = form.getState().instanceId;
 
   const handleChange = React.useCallback(
@@ -51,10 +55,18 @@ export const SignatureField = React.memo(function SignatureField({
 
   if (isPreview) {
     return (
-      <div className="signature-field-preview ms:space-y-2 ms:pb-4">
-        <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
+      <div className="signature-field-preview ms:space-y-1.5">
+        <div className="ms:text-sm ms:font-medium ms:text-mstext ms:break-words ms:overflow-hidden">
           {def.question || 'Signature'}
-          {isRequired && <span className="ms:text-msdanger ms:ml-0.5">*</span>}
+          {(isRequired || isSoftRequired) && (
+            <span
+              className={`ms:ml-0.5 ${
+                isSoftRequired ? 'ms:text-mswarning' : 'ms:text-msdanger'
+              }`}
+            >
+              *
+            </span>
+          )}
         </div>
         <DrawingPad
           config={{

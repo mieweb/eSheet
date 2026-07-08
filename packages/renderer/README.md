@@ -39,7 +39,7 @@ import { EsheetRenderer } from '@esheet/renderer';
 import type { FormDefinition } from '@esheet/core';
 
 const myForm: FormDefinition = {
-  schemaType: 'mieforms-v1.0',
+  id: 'patient-intake',
   title: 'Patient Intake',
   fields: [
     {
@@ -105,7 +105,7 @@ function App() {
 
 ```tsx
 const yamlSchema = `
-schemaType: mieforms-v1.0
+id: simple-form
 title: Simple Form
 fields:
   - id: q1
@@ -164,7 +164,7 @@ EsheetRenderer is a thin wrapper that:
 
 ```tsx
 const conditionalForm: FormDefinition = {
-  schemaType: 'mieforms-v1.0',
+  id: 'conditional-form',
   title: 'Conditional Form',
   fields: [
     {

@@ -5,6 +5,7 @@ export { TextField, LongTextField, MultiTextField } from './text/index.js';
 export {
   RadioField,
   CheckField,
+  OpenChoiceField,
   BooleanField,
   DropdownField,
   MultiSelectDropdownField,
@@ -24,6 +25,7 @@ export {
   DrawingPad,
   DiagramField,
   DisplayField,
+  FileField,
   HtmlField,
   ImageField,
   SignatureField,

@@ -1,0 +1,40 @@
+import React from 'react';
+import { useStore } from 'zustand';
+import { useFormStore, useUI } from '@esheet/fields';
+
+/**
+ * useVisibleRootIds — returns the root field IDs to render.
+ *
+ * In build/code mode: all root IDs.
+ * In preview mode: only IDs whose visibility rules evaluate to true.
+ *
+ * Requires both FormStoreContext and UIContext providers.
+ * Uses a stable-ref cache so the array reference only changes when content does.
+ */
+export function useVisibleRootIds(): readonly string[] {
+  const form = useFormStore();
+  const ui = useUI();
+
+  const normalized = useStore(form, (s) => s.normalized);
+  const responses = useStore(form, (s) => s.responses);
+  const mode = useStore(ui, (s) => s.mode);
+
+  const cacheRef = React.useRef<readonly string[]>([]);
+
+  return React.useMemo(() => {
+    const rootIds =
+      mode !== 'preview'
+        ? normalized.rootIds
+        : normalized.rootIds.filter((id) => form.getState().isVisible(id));
+
+    const prev = cacheRef.current;
+    if (
+      prev.length === rootIds.length &&
+      prev.every((v, i) => v === rootIds[i])
+    ) {
+      return prev;
+    }
+    cacheRef.current = rootIds;
+    return rootIds;
+  }, [normalized, responses, mode, form]);
+}

@@ -45,7 +45,7 @@ function App() {
 import { EsheetBuilder } from '@esheet/builder';
 
 const initialForm: FormDefinition = {
-  schemaType: 'mieforms-v1.0',
+  id: 'patient-intake',
   title: 'Patient Intake',
   fields: [
     { id: 'name', fieldType: 'text', question: 'Full Name', required: true },

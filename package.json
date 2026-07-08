@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "build:cf": "bash deploy/scripts/cf-build.sh"
+    "build:cf": "bash deploy/scripts/cf-build.sh",
+    "postinstall": "node -e \"const fs=require('fs');const src='node_modules/@mieweb/ui/dist/index.d.cts';const dst=src.replace('.d.cts','.d.ts');if(fs.existsSync(src)&&!fs.existsSync(dst))fs.copyFileSync(src,dst);\""
   },
   "private": true,
   "devDependencies": {
@@ -70,7 +71,7 @@
     }
   },
   "dependencies": {
-    "@mieweb/ui": "0.3.0-dev.107",
+    "@mieweb/ui": "^0.6.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

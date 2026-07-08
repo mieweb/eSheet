@@ -1,3 +1,6 @@
+// Side-effect: inject compiled CSS (Tailwind utilities + touch-mode styles)
+import './index.output.css';
+
 // Controls
 export { CustomRadio } from './controls/CustomRadio.js';
 export { CustomCheckbox } from './controls/CustomCheckbox.js';
@@ -19,6 +22,7 @@ export {
   MultiTextField,
   RadioField,
   CheckField,
+  OpenChoiceField,
   BooleanField,
   DropdownField,
   MultiSelectDropdownField,
@@ -35,6 +39,7 @@ export {
   HtmlField,
   ImageField,
   SignatureField,
+  FileField,
 } from './fields/index.js';
 export type {
   DrawingData,
@@ -56,7 +61,15 @@ export {
 export {
   ZodIssuesPanel,
   type ZodIssuesPanelProps,
+  type ZodIssuesPanelVariant,
 } from './lib/ZodIssuesPanel.js';
+
+// Shared modal
+export {
+  FeedbackModal,
+  type FeedbackModalProps,
+  type FeedbackModalVariant,
+} from './lib/FeedbackModal.js';
 
 // Field component registry
 export {
@@ -64,5 +77,8 @@ export {
   getRegisteredComponentKeys,
   registerFieldComponents,
   registerCustomFieldTypes,
-  resetComponentRegistry,
+  // NOTE: resetComponentRegistry intentionally not exported - internal/test-only
 } from './lib/component-registry.js';
+
+// Touch mode
+export * from './lib/touch-mode/index.js';

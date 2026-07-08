@@ -1,5 +1,9 @@
 import React from 'react';
-import type { FieldComponentProps, SelectedOption } from '@esheet/core';
+import type {
+  FieldComponentProps,
+  SelectedOption,
+  DropdownFieldDefinition,
+} from '@esheet/core';
 import { Select } from '@mieweb/ui';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 
@@ -9,33 +13,43 @@ export const DropdownField = React.memo(function DropdownField({
   isPreview,
   isEnabled,
   isRequired,
+  isSoftRequired,
   response,
   onUpdate,
   onResponse,
 }: FieldComponentProps) {
-  const def = field.definition;
+  const def = field.definition as DropdownFieldDefinition;
   const instanceId = form.getState().instanceId;
   const options = def.options || [];
   const selectedId =
     (response?.selected as SelectedOption | undefined)?.id ?? null;
 
   if (isPreview) {
-    const selectOptions = options.map((o) => ({
-      value: o.id,
-      label: o.value,
-    }));
+    const clearOption = { value: '__clear__', label: '— None —' };
+    const selectOptions = [
+      ...(selectedId ? [clearOption] : []),
+      ...options.map((o) => ({ value: o.id, label: o.value })),
+    ];
 
     return (
-      <div className="dropdown-field-preview ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
-        <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
+      <div className="dropdown-field-preview ms:space-y-1.5">
+        <div className="ms:text-sm ms:font-medium ms:text-mstext ms:break-words ms:overflow-hidden">
           {def.question || 'Question'}
-          {isRequired && <span className="ms:text-msdanger ms:ml-0.5">*</span>}
+          {(isRequired || isSoftRequired) && (
+            <span
+              className={`ms:ml-0.5 ${
+                isSoftRequired ? 'ms:text-mswarning' : 'ms:text-msdanger'
+              }`}
+            >
+              *
+            </span>
+          )}
         </div>
         <Select
           options={selectOptions}
           value={selectedId || ''}
           onValueChange={(val) => {
-            if (!val) {
+            if (!val || val === '__clear__') {
               onResponse({ selected: undefined });
             } else {
               const opt = options.find((o) => o.id === val);

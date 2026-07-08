@@ -9,7 +9,7 @@ slug: /intro
 
 ## 📦 Package Overview
 
-eSheet is organized as six focused, composable packages:
+eSheet is organized as eight focused, composable packages:
 
 ### ⚙️ @esheet/core
 
@@ -49,6 +49,15 @@ Lightweight form renderer for end-users. Perfect for surveys, questionnaires, an
 - Response collection via API
 - Pre-fill support for partial responses
 
+### 🔌 @esheet/adapters
+
+Schema conversion utilities for interoperability with external systems:
+
+- Import/export SurveyJS schemas
+- Import/export MCP (Model Context Protocol) elicitation requests
+- System prompts for AI-assisted conversions
+- Auto-detection of schema formats
+
 ### 🧩 @esheet/renderer-standalone
 
 Renderer mount API for non-React hosts:
@@ -64,6 +73,14 @@ Meteor Blaze integration layer:
 - Registers a Blaze template around the same renderer core
 - Exposes response helpers on the Blaze template instance
 - Supports default and custom template names
+
+### ✍️ @esheet/field-kerebron
+
+Optional rich text editor field:
+
+- Adds a `richtext` field type backed by the Kerebron editor
+- Requires one-time asset configuration with `configureRichTextField()`
+- Install only when your form needs rich text authoring
 
 ## 🚀 Quick Start
 
@@ -96,6 +113,8 @@ Choose the scenario that matches your app:
 | React builder + renderer | `npm install @esheet/builder @esheet/renderer react react-dom` | `@esheet/core` only for direct core APIs/types                                                          |
 | Standalone renderer      | `npm install @esheet/renderer-standalone`                      | `@esheet/core` only if importing core types/APIs directly in host app code                              |
 | Blaze renderer           | `npm install @esheet/renderer-blaze`                           | `@esheet/core` only if importing core types/APIs directly in host app code                              |
+| Schema adapters          | `npm install @esheet/adapters`                                 | `@esheet/core` only if importing core types directly; typically used with renderer or builder           |
+| Rich text field          | `npm install @esheet/field-kerebron`                           | Used alongside `@esheet/builder` or `@esheet/renderer`; requires `configureRichTextField()` at startup  |
 
 `@esheet/renderer` and `@esheet/builder` include `@esheet/core` and `@esheet/fields` transitively — no need to install them separately for normal usage. Install them directly only when your app imports them directly.
 
@@ -108,6 +127,8 @@ Choose the scenario that matches your app:
 - ✏️ [Builder Quick Start](./getting-started/quickstart-builder)
 - 🧩 [Standalone Quick Start](./getting-started/quickstart-standalone)
 - 🔥 [Blaze Quick Start](./getting-started/quickstart-blaze)
+- ✍️ [kerebron](./field-types/custom/kerebron)
+- 🔌 [Schema Adapters](./adapters/overview)
 - 📋 [Schema Format](./schema-format)
 - 🧩 [Field Types](./field-types)
 - 🔀 [Conditional Logic](./conditional-logic)

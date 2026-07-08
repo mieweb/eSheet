@@ -1,5 +1,6 @@
 @import 'tailwindcss/theme' prefix(ms);
 @import 'tailwindcss/utilities' prefix(ms);
+@import './lib/touch-mode/touch-mode.css';
 
 @source "../**/*.{ts,tsx}";
 
@@ -8,7 +9,6 @@
 /* ------------------------------------------------------------------ */
 @theme {
   --color-msprimary: var(--mieweb-primary-500, #3b82f6);
-  --color-msprimary-active: var(--mieweb-primary-800, #1e40af);
   --color-mssecondary: var(--mieweb-muted-foreground, #6b7280);
   --color-msaccent: var(--mieweb-success, #10b981);
   --color-msdanger: var(--mieweb-destructive, #ef4444);

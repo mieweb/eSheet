@@ -23,7 +23,7 @@ export function getRegisteredFieldTypes(): string[] {
   return Object.keys(registry);
 }
 
-/** Reset the registry to only the 19 built-in field types (useful for testing). */
+/** Reset the registry to only the built-in field types (useful for testing). */
 export function resetFieldTypeRegistry(): void {
   for (const key of Object.keys(registry)) {
     // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
@@ -119,6 +119,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     answerType: 'selection',
     hasOptions: true,
     hasMatrix: false,
+    defaultOptionCount: 2,
     defaultProps: {},
     placeholder: { question: 'Enter your question...' },
   },
@@ -139,6 +140,19 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     label: 'Multi-Select Dropdown',
     category: 'selection',
     answerType: 'multiselection',
+    hasOptions: true,
+    hasMatrix: false,
+    defaultProps: {},
+    placeholder: {
+      question: 'Enter your question...',
+      options: 'Enter option text...',
+    },
+    defaultOptionCount: 3,
+  },
+  openchoice: {
+    label: 'Open Choice',
+    category: 'selection',
+    answerType: 'selection',
     hasOptions: true,
     hasMatrix: false,
     defaultProps: {},
@@ -253,6 +267,15 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
       question: 'Enter your question...',
       pad: 'Draw on the diagram',
     },
+  },
+  file: {
+    label: 'File',
+    category: 'rich',
+    answerType: 'media',
+    hasOptions: false,
+    hasMatrix: false,
+    defaultProps: {},
+    placeholder: { question: 'Upload a file' },
   },
   display: {
     label: 'Display',

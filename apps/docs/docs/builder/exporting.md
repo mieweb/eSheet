@@ -29,7 +29,7 @@ The exported `FormDefinition` contains only structural data:
 
 ```json
 {
-  "schemaType": "mieforms-v1.0",
+  "id": "my-form",
   "title": "My Form",
   "description": "Optional description",
   "fields": [
@@ -46,7 +46,7 @@ The exported `FormDefinition` contains only structural data:
 
 **What's included:**
 
-- Schema version
+- Form identifier (id)
 - Form title and description
 - All field definitions with their properties
 - Conditional rules

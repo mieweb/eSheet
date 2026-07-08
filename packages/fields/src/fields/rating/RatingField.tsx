@@ -1,5 +1,9 @@
 import React from 'react';
-import type { FieldComponentProps, SelectedOption } from '@esheet/core';
+import type {
+  FieldComponentProps,
+  SelectedOption,
+  RatingFieldDefinition,
+} from '@esheet/core';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 
 export const RatingField = React.memo(function RatingField({
@@ -8,11 +12,12 @@ export const RatingField = React.memo(function RatingField({
   isPreview,
   isEnabled,
   isRequired,
+  isSoftRequired,
   response,
   onUpdate,
   onResponse,
 }: FieldComponentProps) {
-  const def = field.definition;
+  const def = field.definition as RatingFieldDefinition;
   const instanceId = form.getState().instanceId;
   const options = def.options || [];
   const selectedId =
@@ -21,16 +26,18 @@ export const RatingField = React.memo(function RatingField({
 
   if (isPreview) {
     return (
-      <div
-        className={`rating-field-preview ms:text-mstext ms:grid ms:gap-2 ms:pb-4 ${
-          options.length > 5
-            ? 'ms:grid-cols-1'
-            : 'ms:grid-cols-1 ms:lg:grid-cols-2'
-        }`}
-      >
-        <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
+      <div className="rating-field-preview ms:text-mstext ms:space-y-1.5">
+        <div className="ms:text-sm ms:font-medium ms:text-mstext ms:break-words ms:overflow-hidden">
           {def.question || 'Question'}
-          {isRequired && <span className="ms:text-msdanger ms:ml-0.5">*</span>}
+          {(isRequired || isSoftRequired) && (
+            <span
+              className={`ms:ml-0.5 ${
+                isSoftRequired ? 'ms:text-mswarning' : 'ms:text-msdanger'
+              }`}
+            >
+              *
+            </span>
+          )}
         </div>
         {options.length > 0 ? (
           <div className="ms:inline-flex ms:w-fit ms:self-start ms:border ms:border-msborder ms:rounded ms:overflow-hidden">
@@ -43,9 +50,9 @@ export const RatingField = React.memo(function RatingField({
                   id={`${instanceId}-rating-answer-${def.id}-${option.id}`}
                   type="button"
                   disabled={!isEnabled}
-                  className={`ms:min-w-10 ms:h-10 ms:px-3 ms:text-sm ms:font-medium ms:border-0 ms:cursor-pointer ms:transition-colors ms:outline-none ms:focus:ring-2 ms:focus:ring-msprimary ms:focus:ring-inset ${
+                  className={`ms:px-3 ms:min-w-10 ms:h-10 ms:text-sm ms:font-medium ms:border-0 ms:cursor-pointer ms:transition-colors ms:outline-none ms:focus:ring-2 ms:focus:ring-msprimary ms:focus:ring-inset ${
                     isSelected
-                      ? 'ms:bg-msprimary-active ms:text-mstextsecondary'
+                      ? 'ms:bg-msprimary ms:text-mstextsecondary'
                       : 'ms:bg-mssurface ms:text-mstext ms:hover:bg-msbackgroundhover'
                   } ${index > 0 ? 'ms:border-l ms:border-l-msborder' : ''}`}
                   onClick={() => {

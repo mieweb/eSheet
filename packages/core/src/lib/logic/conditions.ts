@@ -34,11 +34,23 @@ import type { NormalizedDefinition } from '../functions/normalize.js';
 export function evaluateRule(
   rule: ConditionalRule,
   normalized: NormalizedDefinition,
-  responses: FieldResponseMap
+  responses: FieldResponseMap,
+  dangerouslyAllowJS?: boolean
 ): boolean {
   if (rule.conditions.length === 0) return true;
 
   const results = rule.conditions.map((cond) => {
+    // JS condition — arbitrary JS, requires dangerouslyAllowJS
+    if (cond.conditionType === 'js') {
+      if (!dangerouslyAllowJS || !cond.expression?.trim()) return false;
+      const result = evaluateJsExpression(
+        cond.expression,
+        normalized,
+        responses
+      );
+      return Boolean(result);
+    }
+
     const isExpressionCondition =
       cond.conditionType === 'expression' ||
       (!!cond.expression && cond.expression.trim().length > 0);
@@ -247,6 +259,29 @@ export function evaluateExpression(
   return evaluateExpressionToValue(expression, normalized, responses);
 }
 
+/**
+ * Evaluate an arbitrary JS expression string with field response data as context.
+ *
+ * The expression receives one argument:
+ * - `responses` — a flat map of field IDs to their resolved values.
+ *
+ * Only call this when `dangerouslyAllowJS` is confirmed true on the form.
+ * Returns `null` on any evaluation error.
+ */
+export function evaluateJsExpression(
+  expression: string,
+  normalized: NormalizedDefinition,
+  responses: FieldResponseMap
+): unknown {
+  try {
+    const data = buildExpressionData(normalized, responses);
+    // eslint-disable-next-line no-new-func
+    return new Function('responses', 'return ' + expression)(data);
+  } catch {
+    return null;
+  }
+}
+
 type ExprTokenType =
   | 'number'
   | 'string'
@@ -257,6 +292,7 @@ type ExprTokenType =
   | 'lparen'
   | 'rparen'
   | 'dot'
+  | 'comma'
   | 'identifier';
 
 interface ExprToken {
@@ -268,6 +304,7 @@ type ExprNode =
   | { type: 'literal'; value: unknown }
   | { type: 'field'; id: string }
   | { type: 'member'; object: ExprNode; property: 'length' | 'count' }
+  | { type: 'call'; name: string; args: ExprNode[] }
   | { type: 'unary'; operator: '!' | '-'; right: ExprNode }
   | {
       type: 'binary';
@@ -290,6 +327,26 @@ type ExprNode =
       left: ExprNode;
       right: ExprNode;
     };
+
+/**
+ * Normalise natural-language date arithmetic into function calls understood by
+ * the expression engine. Applied at the adapter/schema level before storage.
+ *
+ * Supported shorthands:
+ *   `<expr> + N day(s)` → `addDays(<expr>, N)`
+ *   `<expr> - N day(s)` → `subDays(<expr>, N)`
+ */
+export function normalizeExpression(expression: string): string {
+  return expression
+    .replace(
+      /(.+?)\s*\+\s*(\d+(?:\.\d+)?)\s*days?\b/gi,
+      (_, lhs: string, n: string) => `addDays(${lhs.trim()}, ${n})`
+    )
+    .replace(
+      /(.+?)\s*-\s*(\d+(?:\.\d+)?)\s*days?\b/gi,
+      (_, lhs: string, n: string) => `subDays(${lhs.trim()}, ${n})`
+    );
+}
 
 export function isExpressionValid(expression: string): boolean {
   const tokens = tokenizeExpression(expression);
@@ -374,6 +431,11 @@ function tokenizeExpression(source: string): ExprToken[] | null {
     }
     if (ch === '.') {
       tokens.push({ type: 'dot', value: ch });
+      i += 1;
+      continue;
+    }
+    if (ch === ',') {
+      tokens.push({ type: 'comma', value: ch });
       i += 1;
       continue;
     }
@@ -478,10 +540,30 @@ function parseExpression(tokens: ExprToken[]): ExprNode | null {
       return { type: 'field', id: String(t.value) };
     }
 
-    // Bare identifiers (e.g. q3 in display interpolation) resolve as field refs.
+    // Identifiers are either function calls (when followed by `(`) or, for
+    // backward compatibility, bare field refs (e.g. q3 in display interpolation).
     if (t.type === 'identifier') {
       consume();
-      return { type: 'field', id: String(t.value) };
+      const name = String(t.value);
+      if (peek()?.type === 'lparen') {
+        consume(); // (
+        const args: ExprNode[] = [];
+        if (peek()?.type !== 'rparen') {
+          for (;;) {
+            const arg = parseOr();
+            if (!arg) return null;
+            args.push(arg);
+            if (peek()?.type === 'comma') {
+              consume();
+              continue;
+            }
+            break;
+          }
+        }
+        if (consume()?.type !== 'rparen') return null;
+        return { type: 'call', name, args };
+      }
+      return { type: 'field', id: name };
     }
 
     if (t.type === 'lparen') {
@@ -664,6 +746,20 @@ function evaluateExpressionAst(
     return null;
   }
 
+  if (node.type === 'call') {
+    // `if` is lazy: only the taken branch is evaluated.
+    if (node.name === 'if') {
+      const cond = evaluateExpressionAst(node.args[0], data);
+      return cond
+        ? evaluateExpressionAst(node.args[1], data)
+        : evaluateExpressionAst(node.args[2], data);
+    }
+    const fn = EXPRESSION_FUNCTIONS[node.name];
+    if (!fn) return null;
+    const args = node.args.map((arg) => evaluateExpressionAst(arg, data));
+    return fn(args);
+  }
+
   if (node.operator === '&&') {
     const left = evaluateExpressionAst(node.left, data);
     if (!left) return left;
@@ -699,11 +795,22 @@ function evaluateExpressionAst(
       return toNumber(left) < toNumber(right);
     case '<=':
       return toNumber(left) <= toNumber(right);
-    case '+':
-      if (typeof left === 'string' || typeof right === 'string') {
+    case '+': {
+      // Only do string concatenation when a side is a non-empty, non-numeric string.
+      // Empty string (unanswered field) and numeric strings both coerce to numbers.
+      const leftIsText =
+        typeof left === 'string' &&
+        left !== '' &&
+        Number.isNaN(parseFloat(left));
+      const rightIsText =
+        typeof right === 'string' &&
+        right !== '' &&
+        Number.isNaN(parseFloat(right));
+      if (leftIsText || rightIsText) {
         return String(left ?? '') + String(right ?? '');
       }
       return toNumber(left) + toNumber(right);
+    }
     case '-':
       return toNumber(left) - toNumber(right);
     case '*':
@@ -723,6 +830,86 @@ function toNumber(value: unknown): number {
   const parsed = parseFloat(String(value ?? ''));
   return Number.isNaN(parsed) ? 0 : parsed;
 }
+
+// ---------------------------------------------------------------------------
+// Expression built-in functions
+// ---------------------------------------------------------------------------
+
+const MS_PER_DAY = 86_400_000;
+
+/** Text input types that carry date/time values (kept as strings, never coerced). */
+const DATE_INPUT_TYPES = new Set(['date', 'datetime-local', 'month', 'time']);
+
+/**
+ * Parse a value into a UTC-anchored Date. Accepts `YYYY-MM-DD`,
+ * `YYYY-MM-DDTHH:mm` (and other ISO-8601 strings), or an epoch number.
+ * Returns `null` when the value can't be interpreted as a date.
+ */
+function toDate(value: unknown): Date | null {
+  if (value instanceof Date)
+    return Number.isNaN(value.getTime()) ? null : value;
+  if (typeof value === 'number') {
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  const str = String(value ?? '').trim();
+  if (!str) return null;
+  // Date-only strings are parsed as UTC midnight to avoid timezone drift.
+  const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(str);
+  const d = new Date(dateOnly ? `${str}T00:00:00Z` : str);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/** Format a Date as a `YYYY-MM-DD` string in UTC. */
+function formatISODate(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+/**
+ * Built-in functions usable in expressions and `display` interpolation.
+ * Each receives already-evaluated argument values. `if` is handled separately
+ * (lazily) in the evaluator and is intentionally not listed here.
+ */
+const EXPRESSION_FUNCTIONS: Record<string, (args: unknown[]) => unknown> = {
+  // --- Date arithmetic (all date math is UTC-anchored) ---
+  /** addDays(date, n) → `YYYY-MM-DD` n days after date (n may be negative). */
+  addDays: (args) => {
+    const date = toDate(args[0]);
+    if (!date) return '';
+    return formatISODate(
+      new Date(date.getTime() + toNumber(args[1]) * MS_PER_DAY)
+    );
+  },
+  /** subDays(date, n) → `YYYY-MM-DD` n days before date. */
+  subDays: (args) => {
+    const date = toDate(args[0]);
+    if (!date) return '';
+    return formatISODate(
+      new Date(date.getTime() - toNumber(args[1]) * MS_PER_DAY)
+    );
+  },
+  /** diffDays(a, b) → whole days from b to a (a − b). */
+  diffDays: (args) => {
+    const a = toDate(args[0]);
+    const b = toDate(args[1]);
+    if (!a || !b) return null;
+    return Math.round((a.getTime() - b.getTime()) / MS_PER_DAY);
+  },
+  /** today() → current date as `YYYY-MM-DD` (UTC). */
+  today: () => formatISODate(new Date()),
+  /** year(date) → 4-digit year, or null. */
+  year: (args) => {
+    const d = toDate(args[0]);
+    return d ? d.getUTCFullYear() : null;
+  },
+  // --- Numeric helpers ---
+  min: (args) => Math.min(...args.map(toNumber)),
+  max: (args) => Math.max(...args.map(toNumber)),
+  round: (args) => Math.round(toNumber(args[0])),
+  floor: (args) => Math.floor(toNumber(args[0])),
+  ceil: (args) => Math.ceil(toNumber(args[0])),
+  abs: (args) => Math.abs(toNumber(args[0])),
+};
 
 function parseBoolean(value: string): boolean {
   const normalized = value.trim().toLowerCase();
@@ -755,6 +942,11 @@ function getExpressionFieldValue(
 
   if (definition.fieldType === 'text' || definition.fieldType === 'longtext') {
     const raw = response.answer ?? '';
+    // Date/time input types must stay as strings so date functions (addDays,
+    // diffDays, …) can parse them; numeric coercion would turn '2026-01-01'
+    // into 2026 via parseFloat's leading-number behavior.
+    const inputType = (definition as { inputType?: string }).inputType;
+    if (inputType && DATE_INPUT_TYPES.has(inputType)) return raw;
     const parsed = parseFloat(String(raw));
     return Number.isNaN(parsed) ? raw : parsed;
   }
@@ -764,7 +956,8 @@ function getExpressionFieldValue(
     definition.fieldType === 'dropdown' ||
     definition.fieldType === 'boolean' ||
     definition.fieldType === 'slider' ||
-    definition.fieldType === 'rating'
+    definition.fieldType === 'rating' ||
+    definition.fieldType === 'openchoice'
   ) {
     const selected = response.selected;
     if (
@@ -775,23 +968,50 @@ function getExpressionFieldValue(
     ) {
       const selectedId = (selected as SelectedOption).id;
       const opt = definition.options?.find((o) => o.id === selectedId);
-      const raw = opt?.value ?? selectedId;
+      if (opt?.score != null) return opt.score;
+      // For openchoice __other__, prefer the stored value (user-typed text)
+      // over the option lookup since the definition won't have that entry.
+      const raw =
+        opt?.value ?? (selected as SelectedOption).value ?? selectedId;
       const parsed = parseFloat(raw);
       return Number.isNaN(parsed) ? raw : parsed;
     }
     return definition.fieldType === 'rating' ? 0 : '';
   }
 
+  if (definition.fieldType === 'file') {
+    const fd = response.fileData;
+    if (!fd) return 0;
+    const files = Array.isArray(fd) ? fd : [fd];
+    return files.length;
+  }
+
   if (
     definition.fieldType === 'check' ||
-    definition.fieldType === 'multiselectdropdown' ||
-    definition.fieldType === 'ranking'
+    definition.fieldType === 'multiselectdropdown'
   ) {
     if (!Array.isArray(response.selected)) return [];
-    return (response.selected as SelectedOption[]).map((s) => {
+    const selected = response.selected as SelectedOption[];
+    // If any option has a score, sum the scores of selected options.
+    const anyScored = definition.options?.some((o) => o.score != null);
+    if (anyScored) {
+      return selected.reduce((sum, s) => {
+        const opt = definition.options?.find((o) => o.id === s.id);
+        return sum + (opt?.score ?? 0);
+      }, 0);
+    }
+    return selected.map((s) => {
       const mapped = definition.options?.find((o) => o.id === s.id);
       return mapped?.value ?? s.id;
     });
+  }
+
+  if (definition.fieldType === 'ranking') {
+    if (!Array.isArray(response.selected)) return 0;
+    const ranked = response.selected as SelectedOption[];
+    // Position-based scoring: 1st = k pts, 2nd = k-1 pts, ..., last = 1 pt.
+    const k = ranked.length;
+    return ranked.reduce((sum, _item, i) => sum + (k - i), 0);
   }
 
   return getActualValue(definition, response);
@@ -821,7 +1041,8 @@ function getActualValue(
     case 'dropdown':
     case 'boolean':
     case 'slider':
-    case 'rating': {
+    case 'rating':
+    case 'openchoice': {
       const sel = response.selected;
       if (
         sel != null &&
@@ -851,6 +1072,15 @@ function getActualValue(
         return response.selected as Record<string, unknown>;
       }
       return {};
+
+    case 'file': {
+      const fd = response.fileData;
+      if (!fd) return null;
+      const files = Array.isArray(fd) ? fd : [fd];
+      return files.length === 0
+        ? null
+        : files.map((f) => f.title ?? f.url ?? '');
+    }
 
     default:
       return null;

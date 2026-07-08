@@ -1,8 +1,29 @@
-import { useState, useCallback, useRef } from 'react';
-import { EsheetRenderer, type EsheetRendererHandle } from '@esheet/renderer';
-import type { FormDefinition, FormResponseEnvelope } from '@esheet/core';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import {
+  EsheetRenderer,
+  type EsheetRendererHandle,
+  useRendererMcpToolHandler,
+  type FormDefinition,
+  type ResponseFormat,
+} from '@esheet/renderer';
 import { Navbar } from '../components/Navbar';
-import { Button, Select } from '@mieweb/ui';
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Select,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@mieweb/ui';
+import { ClipboardList, Smartphone } from 'lucide-react';
+import { updateOzwellTools, FLOWIE_KEY } from '../ozwell-setup.js';
 
 interface SubmitResult {
   readonly kind: 'success' | 'error';
@@ -10,7 +31,7 @@ interface SubmitResult {
   readonly message: string;
   readonly items?: readonly string[];
   readonly detail?: string;
-  readonly data?: FormResponseEnvelope;
+  readonly data?: unknown;
 }
 
 interface SchemaOption {
@@ -33,6 +54,7 @@ const schemaModules = import.meta.glob('../schemas/*.json', {
 }) as Record<string, { default?: FormDefinition } | FormDefinition>;
 
 const TEST_SCHEMAS: readonly SchemaOption[] = Object.entries(schemaModules)
+  .filter(([path]) => !path.endsWith('.context.json'))
   .map(([path, mod]) => {
     const fileName = path.split('/').pop() ?? path;
     const data =
@@ -52,6 +74,14 @@ const TEST_SCHEMAS: readonly SchemaOption[] = Object.entries(schemaModules)
   .sort((a, b) => a!.label.localeCompare(b!.label));
 
 export function RendererView() {
+  useEffect(() => {
+    updateOzwellTools(FLOWIE_KEY);
+  }, []);
+
+  const onRendererToolsReady = useRendererMcpToolHandler({
+    eventName: 'ozwell-tool-call',
+  });
+
   const [rawInput, setRawInput] = useState<unknown>(null);
   const [selectedSchema, setSelectedSchema] = useState<string>('');
   const [formKey, setFormKey] = useState(0);
@@ -59,7 +89,10 @@ export function RendererView() {
   const [definition, setDefinition] = useState<unknown>(null);
   const rendererRef = useRef<EsheetRendererHandle>(null);
 
-  const [showDefinition, setShowDefinition] = useState(false);
+  const [touchMode, setTouchMode] = useState(false);
+  const [activeTab, setActiveTab] = useState<'form' | 'definition'>('form');
+  const [responseFormat, setResponseFormat] =
+    useState<ResponseFormat>('native');
 
   const resetFormKey = useCallback(() => {
     setFormKey((prev) => prev + 1);
@@ -71,6 +104,7 @@ export function RendererView() {
     setSelectedSchema(fileName);
     setRawInput(schema.data);
     setSubmitResult(null);
+    setActiveTab('form');
     resetFormKey();
   };
 
@@ -83,6 +117,7 @@ export function RendererView() {
         const data = JSON.parse(ev.target?.result as string);
         setRawInput(data);
         setSubmitResult(null);
+        setActiveTab('form');
         resetFormKey();
       } catch (err) {
         setSubmitResult({
@@ -115,23 +150,218 @@ export function RendererView() {
       return;
     }
 
-    const hydrated = renderer.getFormStore().getState().hydrateResponse();
+    // Get response in selected format
+    const response = renderer.getResponse({
+      format: responseFormat,
+      fhir:
+        responseFormat === 'fhir'
+          ? {
+              status: 'completed',
+            }
+          : undefined,
+    });
+
     console.log(
-      'Validated Form Response:',
-      JSON.stringify(result.response, null, 2)
+      `${responseFormat.toUpperCase()} Response:`,
+      JSON.stringify(response, null, 2)
     );
-    console.log('Hydrated Submit Payload:', JSON.stringify(hydrated, null, 2));
     setSubmitResult({
       kind: 'success',
-      title: 'Submit successful',
+      title: `Submit successful (${
+        responseFormat === 'fhir' ? 'FHIR QuestionnaireResponse' : 'Native'
+      })`,
       message: 'Validation passed. Form response data:',
-      data: hydrated,
+      data: response,
     });
   };
 
+  const hasForm = rawInput != null;
+
   return (
     <>
-      <Navbar>
+      <Navbar />
+
+      <input
+        id="renderer-file-import"
+        type="file"
+        accept=".json"
+        onChange={handleFileImport}
+        className="hidden"
+      />
+
+      <Tabs
+        value={activeTab}
+        onValueChange={(v) => setActiveTab(v as 'form' | 'definition')}
+      >
+        <div className="sticky top-14 z-30 bg-card border-b border-border">
+          <div className="max-w-4xl mx-auto px-3 py-1.5 flex flex-col sm:flex-row sm:items-center sm:h-11 gap-1.5 sm:gap-2">
+            {/* Left: tab triggers + touch mode */}
+            <div className="flex items-center gap-2">
+              <TabsList>
+                <TabsTrigger value="form" disabled={!hasForm}>
+                  Form
+                </TabsTrigger>
+                <TabsTrigger value="definition" disabled={!hasForm}>
+                  Definition
+                </TabsTrigger>
+              </TabsList>
+              <Button
+                variant={touchMode ? 'primary' : 'outline'}
+                size="sm"
+                disabled={!hasForm}
+                onClick={() => rendererRef.current?.setTouchMode(!touchMode)}
+                title={touchMode ? 'Disable touch mode' : 'Enable touch mode'}
+              >
+                <Smartphone size={14} />
+                <span className="hidden sm:inline ml-1">Touch</span>
+              </Button>
+            </div>
+            {/* Right: format select + import + submit */}
+            <div className="flex items-center gap-2 sm:ml-auto">
+              <Select
+                value={responseFormat}
+                onValueChange={(v: string) =>
+                  setResponseFormat(v as ResponseFormat)
+                }
+                options={[
+                  { value: 'native', label: 'Native' },
+                  { value: 'fhir', label: 'FHIR' },
+                ]}
+                className="w-24 shrink-0"
+                disabled={!hasForm}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="shrink-0"
+                onClick={() =>
+                  document.getElementById('renderer-file-import')?.click()
+                }
+              >
+                Import JSON
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                variant="primary"
+                size="sm"
+                className="shrink-0"
+                disabled={!hasForm}
+              >
+                Submit
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {submitResult && (
+          <div className="bg-muted py-4 px-4">
+            <Alert
+              variant={submitResult.kind === 'success' ? 'success' : 'danger'}
+              className="max-w-4xl mx-auto"
+            >
+              <AlertTitle>{submitResult.title}</AlertTitle>
+              <AlertDescription>
+                <p>{submitResult.message}</p>
+                {submitResult.items && submitResult.items.length > 0 && (
+                  <ul className="mt-3 list-disc space-y-1 pl-5 text-sm">
+                    {submitResult.items.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                )}
+                {submitResult.detail && (
+                  <p className="mt-3 text-sm">{submitResult.detail}</p>
+                )}
+                {submitResult.data != null && (
+                  <pre className="mt-3 p-3 bg-background/50 rounded-lg text-xs overflow-auto max-h-96 border border-border">
+                    {JSON.stringify(submitResult.data, null, 2)}
+                  </pre>
+                )}
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+
+        <div className="demo-renderer-content bg-background pt-6 pb-20 min-h-[calc(100vh-3.5rem)]">
+          {!hasForm ? (
+            <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] gap-6">
+              <div className="text-center max-w-md">
+                <ClipboardList
+                  className="mx-auto mb-4 text-muted-foreground"
+                  size={48}
+                  strokeWidth={1.5}
+                />
+                <h2 className="text-2xl font-semibold text-foreground mb-3">
+                  No Form Loaded
+                </h2>
+                <p className="text-muted-foreground mb-6">
+                  Select an example from the dropdown, or import your own JSON
+                  definition.
+                </p>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {TEST_SCHEMAS.slice(0, 3).map((s) => (
+                    <Button
+                      key={s.value}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleLoadSchema(s.value)}
+                    >
+                      {s.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              <TabsContent value="form">
+                <div className="pt-6 px-4 max-w-4xl mx-auto">
+                  <div className="flex-1 min-w-0">
+                    <EsheetRenderer
+                      key={formKey}
+                      formDataInput={rawInput}
+                      ref={rendererRef}
+                      allowDangerousJS={true}
+                      touchMode="auto"
+                      onTouchModeChange={setTouchMode}
+                      onRendererToolsReady={onRendererToolsReady}
+                      onReady={() => {
+                        const def = rendererRef.current
+                          ?.getFormStore()
+                          .getState()
+                          .hydrateDefinition();
+                        if (def) setDefinition(def);
+                      }}
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="definition">
+                <div className="max-w-4xl mx-auto px-4 pt-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-sm font-semibold">
+                        eSheet FormDefinition
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <pre className="text-xs overflow-auto max-h-[60vh]">
+                        {definition
+                          ? JSON.stringify(definition, null, 2)
+                          : '(loading…)'}
+                      </pre>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+            </>
+          )}
+        </div>
+      </Tabs>
+
+      {/* Sticky bottom bar — preset select only */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border px-4 py-2 flex items-center gap-2">
         <Select
           value={selectedSchema}
           onValueChange={(val: string) => {
@@ -144,135 +374,6 @@ export function RendererView() {
           placeholder="Load example…"
           className="w-48"
         />
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() =>
-            document.getElementById('renderer-file-import')?.click()
-          }
-        >
-          Import JSON
-        </Button>
-        <input
-          id="renderer-file-import"
-          type="file"
-          accept=".json"
-          onChange={handleFileImport}
-          className="hidden"
-        />
-
-        {rawInput != null && (
-          <button
-            onClick={() => setShowDefinition((prev) => !prev)}
-            className="px-3 py-1.5 text-sm font-medium bg-slate-500 hover:bg-slate-600 text-white rounded-lg transition-colors whitespace-nowrap"
-          >
-            {showDefinition ? 'Hide' : 'Show'} Definition
-          </button>
-        )}
-
-        {rawInput != null && (
-          <Button
-            onClick={handleSubmit}
-            variant="primary"
-            size="sm"
-            className="ml-auto"
-          >
-            Submit
-          </Button>
-        )}
-      </Navbar>
-
-      {submitResult && (
-        <div className="bg-muted pt-4">
-          <div
-            role={submitResult.kind === 'success' ? 'status' : 'alert'}
-            aria-live={submitResult.kind === 'success' ? 'polite' : undefined}
-            aria-atomic="true"
-            className={[
-              'max-w-4xl mx-auto rounded-2xl border px-4 py-4 shadow-sm',
-              submitResult.kind === 'success'
-                ? 'border-emerald-200 bg-emerald-50 text-emerald-950 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-100'
-                : 'border-rose-200 bg-rose-50 text-rose-950 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-100',
-            ].join(' ')}
-          >
-            <h2 className="text-base font-semibold">{submitResult.title}</h2>
-            <p className="mt-1 text-sm">{submitResult.message}</p>
-            {submitResult.items && submitResult.items.length > 0 && (
-              <ul className="mt-3 list-disc space-y-1 pl-5 text-sm">
-                {submitResult.items.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            )}
-            {submitResult.detail && (
-              <p className="mt-3 text-sm text-slate-700 dark:text-slate-300">
-                {submitResult.detail}
-              </p>
-            )}
-            {submitResult.data && (
-              <pre className="mt-3 p-3 bg-white/50 dark:bg-white/10 rounded-lg text-xs overflow-auto max-h-96 border border-emerald-200 dark:border-emerald-800">
-                {JSON.stringify(submitResult.data, null, 2)}
-              </pre>
-            )}
-          </div>
-        </div>
-      )}
-
-      <div className="demo-renderer-content bg-gray-100 dark:bg-neutral-900 pt-6 pb-20 min-h-[calc(100vh-3.5rem)]">
-        {/* SurveyJS conversion errors removed */}
-        {rawInput == null ? (
-          <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] gap-6">
-            <div className="text-center max-w-md">
-              <h2 className="text-2xl font-semibold text-foreground mb-3">
-                No Form Loaded
-              </h2>
-              <p className="text-muted-foreground mb-6">
-                Select an example from the dropdown above, or import your own
-                JSON form definition.
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div
-            className={
-              showDefinition
-                ? 'grid grid-cols-1 lg:grid-cols-2 gap-4 max-w-7xl mx-auto px-4'
-                : 'max-w-4xl mx-auto px-4'
-            }
-          >
-            <div>
-              <EsheetRenderer
-                key={formKey}
-                formDataInput={rawInput}
-                ref={rendererRef}
-                onReady={() => {
-                  const def = rendererRef.current
-                    ?.getFormStore()
-                    .getState()
-                    .hydrateDefinition();
-                  if (def) setDefinition(def);
-                }}
-              />
-            </div>
-            {showDefinition && (
-              <div className="lg:sticky lg:top-20 lg:self-start space-y-4">
-                <div className="bg-white dark:bg-neutral-800 rounded-lg border border-slate-200 dark:border-neutral-700 shadow-sm">
-                  <div className="px-4 py-2 border-b border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-900 rounded-t-lg">
-                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                      eSheet FormDefinition
-                    </h3>
-                  </div>
-                  <pre className="p-4 text-xs overflow-auto max-h-[40vh] text-slate-800 dark:text-slate-200">
-                    {definition
-                      ? JSON.stringify(definition, null, 2)
-                      : '(loading…)'}
-                  </pre>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </>
   );

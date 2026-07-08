@@ -120,6 +120,15 @@ export interface McpElicitationRequest {
  * `minimum`, `maximum`, `minItems`, `maxItems`) are preserved in each
  * field's `_sourceData` so they survive a round-trip export.
  */
+/** Type guard — detects an MCP elicitation/create JSON-RPC envelope. */
+export function isMcpElicitationRequest(
+  value: unknown
+): value is McpElicitationRequest {
+  if (typeof value !== 'object' || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return v['jsonrpc'] === '2.0' && v['method'] === 'elicitation/create';
+}
+
 export function importFromMcp(
   schema: McpElicitationSchema,
   options?: {
@@ -369,6 +378,8 @@ function mcpFormatToInputType(
  * - `check` / `multiselectdropdown` → `array` enum (with or without titles)
  * - `rating`                        → `integer` (min=1, max=option count)
  * - `slider`                        → `number`
+ * - `openchoice`                    → `string` enum with openchoice metadata
+ * - `file`                          → `string` with file metadata (outside MCP spec)
  */
 export function exportToMcp(definition: FormDefinition): McpElicitationRequest {
   const properties: Record<string, McpProperty> = {};
@@ -427,7 +438,7 @@ function collectLeafFields(
 }
 
 function fieldToMcpProp(field: FieldDefinition): McpProperty | null {
-  const title = field.question;
+  const title = (field as { question?: string }).question;
   const meta = field._sourceData as McpFieldMeta | null | undefined;
   const description = meta?.description;
 
@@ -571,6 +582,89 @@ function fieldToMcpProp(field: FieldDefinition): McpProperty | null {
           ? { default: meta.default as number }
           : {}),
       };
+    }
+
+    case 'openchoice': {
+      // OpenChoice maps to radio with metadata preserved for round-trip.
+      const options = field.options ?? [];
+      const fieldDef = field as {
+        maxCustomOptions?: number;
+        otherLabel?: string;
+      };
+      const ocMeta: Record<string, unknown> = {
+        ...(meta as unknown as Record<string, unknown>),
+      };
+      if (fieldDef.maxCustomOptions !== undefined) {
+        ocMeta.maxCustomOptions = fieldDef.maxCustomOptions;
+      }
+      if (fieldDef.otherLabel !== undefined) {
+        ocMeta.otherLabel = fieldDef.otherLabel;
+      }
+      const hasText = options.some((o) => o.text !== undefined);
+      if (hasText) {
+        return {
+          type: 'string',
+          ...(title !== undefined ? { title } : {}),
+          ...(description !== undefined ? { description } : {}),
+          oneOf: options.map((o) => ({
+            const: o.value,
+            title: o.text ?? o.value,
+          })),
+          ...(Object.keys(ocMeta).length > 0
+            ? {
+                _sourceData: {
+                  fieldType: 'openchoice',
+                  ...ocMeta,
+                },
+              }
+            : {}),
+        };
+      }
+      return {
+        type: 'string',
+        ...(title !== undefined ? { title } : {}),
+        ...(description !== undefined ? { description } : {}),
+        enum: options.map((o) => o.value),
+        ...(Object.keys(ocMeta).length > 0
+          ? {
+              _sourceData: {
+                fieldType: 'openchoice',
+                ...ocMeta,
+              },
+            }
+          : {}),
+      };
+    }
+
+    case 'file': {
+      // File upload is outside MCP flat-form spec. Preserve as object definition
+      // so export restores field type and constraints verbatim.
+      const fieldDef = field as {
+        accept?: string;
+        maxFileSize?: number;
+        maxFiles?: number;
+      };
+      const fMeta: Record<string, unknown> = {
+        ...(meta as unknown as Record<string, unknown>),
+      };
+      if (fieldDef.accept !== undefined) {
+        fMeta.accept = fieldDef.accept;
+      }
+      if (fieldDef.maxFileSize !== undefined) {
+        fMeta.maxFileSize = fieldDef.maxFileSize;
+      }
+      if (fieldDef.maxFiles !== undefined) {
+        fMeta.maxFiles = fieldDef.maxFiles;
+      }
+      return {
+        type: 'string',
+        ...(title !== undefined ? { title } : {}),
+        ...(description !== undefined ? { description } : {}),
+        _sourceData: {
+          fieldType: 'file',
+          ...fMeta,
+        },
+      } as unknown as McpProperty;
     }
 
     default:

@@ -1,7 +1,12 @@
-import { useState } from 'react';
-import { EsheetBuilder } from '@esheet/builder';
-import type { FormDefinition } from '@esheet/core';
-import { Navbar } from '../components/Navbar';
+import { useEffect } from 'react';
+import {
+  EsheetBuilder,
+  useBuilderMcpToolHandler,
+  type FormDefinition,
+} from '@esheet/builder';
+import type { RichTextFieldDefinition } from '@esheet/field-kerebron';
+import { Navbar } from '../components/Navbar.js';
+import { updateOzwellTools, FORMIE_KEY } from '../ozwell-setup.js';
 
 const INITIAL_DEF: FormDefinition = {
   id: 'demo-builder',
@@ -23,18 +28,33 @@ const INITIAL_DEF: FormDefinition = {
         { id: 'o3', value: 'Green' },
       ],
     },
-  ],
+    {
+      id: 'q4',
+      fieldType: 'richtext',
+      question: 'Tell us more (rich text):',
+    } as unknown as RichTextFieldDefinition,
+  ] as FormDefinition['fields'],
 };
 
 export function BuilderView() {
-  const [def, setDef] = useState<FormDefinition>(INITIAL_DEF);
+  useEffect(() => {
+    updateOzwellTools(FORMIE_KEY);
+  }, []);
+
+  const onBuilderToolsReady = useBuilderMcpToolHandler({
+    eventName: 'ozwell-tool-call',
+  });
 
   return (
     <div className="demo-builder-view w-full h-screen flex flex-col">
       <Navbar />
-      <div className="flex-1 overflow-y-auto bg-muted">
+      <div className="flex-1 overflow-y-auto bg-background">
         <div className="w-full flex justify-center px-2 pt-5">
-          <EsheetBuilder definition={def} onChange={setDef} />
+          <EsheetBuilder
+            definition={INITIAL_DEF}
+            onBuilderToolsReady={onBuilderToolsReady}
+            allowDangerousJS={true}
+          />
         </div>
       </div>
     </div>

@@ -7,13 +7,23 @@ import {
   type FormStore,
   type UIStore,
 } from '@esheet/core';
-import { importFromMcp, convertSurveyJS } from '@esheet/adapters';
+import {
+  importFromMcp,
+  convertSurveyJS,
+  isSurveyJSSchema,
+  isMcpElicitationRequest,
+  importFromFhir,
+  isFhirQuestionnaire,
+  type McpElicitationRequest,
+  type FhirQuestionnaire,
+} from '@esheet/adapters';
 
 /**
  * Initialize renderer with form definition.
  *
  * Auto-detects and converts the following input formats:
  * - eSheet FormDefinition (object or JSON/YAML string)
+ * - FHIR R4 Questionnaire resource
  * - MCP elicitation/create envelope
  * - SurveyJS schema (has top-level `pages` or `elements` array)
  */
@@ -24,7 +34,8 @@ export function useRendererInit(
   initialResponses?: FormResponse,
   onValidationError?: (errors: string[]) => void,
   strict = false,
-  onReady?: () => void
+  onReady?: () => void,
+  allowDangerousJS = false
 ): void {
   // Store onReady in a ref so it never causes the effect to re-run
   const onReadyRef = React.useRef(onReady);
@@ -43,8 +54,10 @@ export function useRendererInit(
         parsed = formData;
       }
 
-      // Auto-detect and convert MCP or SurveyJS input (skipped in strict mode)
-      if (!strict && isMcpElicitationRequest(parsed)) {
+      // Auto-detect and convert FHIR, MCP or SurveyJS input (skipped in strict mode)
+      if (!strict && isFhirQuestionnaire(parsed)) {
+        parsed = importFromFhir(parsed as FhirQuestionnaire);
+      } else if (!strict && isMcpElicitationRequest(parsed)) {
         const mcpReq = parsed as McpElicitationRequest;
         if (mcpReq.params.mode !== 'url') {
           parsed = importFromMcp(
@@ -86,6 +99,10 @@ export function useRendererInit(
 
       // Load validated definition
       form.getState().loadDefinition(validated.data);
+      // Host must explicitly opt in — suppress dangerouslyAllowJS from schema if not allowed.
+      if (!allowDangerousJS) {
+        form.getState().setDangerouslyAllowJS(false);
+      }
 
       // Apply initial responses if provided
       if (initialResponses && Object.keys(initialResponses).length > 0) {
@@ -108,35 +125,4 @@ export function useRendererInit(
       ui.getState().setMode('preview');
     }
   }, [form, ui, formData, initialResponses, onValidationError, strict]);
-}
-
-/** Type guard — detects an MCP elicitation/create JSON-RPC envelope. */
-interface McpElicitationRequest {
-  jsonrpc: '2.0';
-  method: 'elicitation/create';
-  id: string | number;
-  params: { mode?: string; message?: string; requestedSchema: unknown };
-}
-function isMcpElicitationRequest(
-  value: unknown
-): value is McpElicitationRequest {
-  if (typeof value !== 'object' || value === null) return false;
-  const v = value as Record<string, unknown>;
-  return v['jsonrpc'] === '2.0' && v['method'] === 'elicitation/create';
-}
-
-/** Minimal SurveyJS schema shape for detection. */
-interface SurveyJSSchema {
-  pages?: unknown[];
-  elements?: unknown[];
-}
-/** Type guard — detects a SurveyJS schema (has top-level pages or elements array). */
-function isSurveyJSSchema(value: unknown): value is SurveyJSSchema {
-  if (typeof value !== 'object' || value === null) return false;
-  const v = value as Record<string, unknown>;
-  const hasPages = Array.isArray(v['pages']);
-  const hasElements = Array.isArray(v['elements']);
-  // SurveyJS schemas have pages/elements but NOT eSheet's required fields
-  const hasESheetFields = typeof v['fields'] !== 'undefined';
-  return (hasPages || hasElements) && !hasESheetFields;
 }

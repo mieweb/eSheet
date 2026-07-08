@@ -5,6 +5,9 @@ dist
 tmp
 out-tsc
 
+# Kerebron WASM runtime assets (large binaries, not tracked in git)
+apps/demo/public/kerebron-wasm/
+
 # dependencies
 node_modules
 
@@ -32,6 +35,8 @@ node_modules
 npm-debug.log
 yarn-error.log
 testem.log
+nx-release-dryrun.log
+*-dryrun.log
 /typings
 
 # System Files
@@ -72,6 +77,9 @@ deploy/authorized_keys.local
 apps/docs/build/
 apps/docs/.docusaurus/
 
+# Kerebron WASM binaries — generated at dev/build time by kerebronWasmPlugin in vite.config.mts
+apps/demo/public/kerebron-wasm/
+
 vite.config.*.timestamp*
 vitest.config.*.timestamp*
 .nx/polygraph
@@ -82,3 +90,13 @@ vitest.config.*.timestamp*
 .tmp_ci_logs/
 .tmp-*.log
 .nx/self-healing
+apps/docs/static/doc-content.json
+
+# Graphify artifacts
+graphify-out*
+
+# Adaptive Codegraph index artifacts
+.adaptive-codegraph/
+.fastembed_cache/
+
+.vscode/

@@ -1015,6 +1015,7 @@ describe('comprehensive conditions integration', () => {
         id: 'target',
         fieldType: 'text',
         question: 'T',
+        required: true,
         rules: [fieldRule('required', 'drv-boolean', 'equals', 'drv-bool-y')],
       };
       const { normalized, field } = setup(f);
@@ -1027,6 +1028,7 @@ describe('comprehensive conditions integration', () => {
         id: 'target',
         fieldType: 'text',
         question: 'T',
+        required: true,
         rules: [
           fieldRule('visible', 'drv-radio', 'notEmpty'),
           exprRule('required', '{drv-slider} > 5'),
@@ -1330,7 +1332,6 @@ describe('comprehensive conditions integration', () => {
       const f: FieldDefinition = {
         id: 'rc-display-conditional',
         fieldType: 'display',
-        question: 'Display',
         content: 'Content with {drv-slider}',
         rules: [exprRule('visible', '{drv-slider} > 5 && {drv-rating} > 3')],
       };
@@ -1597,7 +1598,6 @@ describe('comprehensive conditions integration', () => {
       {
         id: 'ft-display',
         fieldType: 'display',
-        question: 'T',
         content: 'text',
       },
       { id: 'ft-signature', fieldType: 'signature', question: 'T' },
@@ -2203,6 +2203,171 @@ describe('comprehensive conditions integration', () => {
       const respOne: FieldResponse = { selected: [{ id: 'a', value: 'A' }] };
       expect(
         resolveEffect('visible', target, normalized, { src: respOne })
+      ).toBe(false);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // § New field types — openchoice and file
+  // ---------------------------------------------------------------------------
+
+  describe('openchoice field conditions', () => {
+    const openChoiceDef: FieldDefinition = {
+      id: 'other-1',
+      fieldType: 'openchoice',
+      question: 'Pick one or other',
+      options: [
+        { id: 'other-1', value: 'Alpha' },
+        { id: 'other-2', value: 'Beta' },
+      ],
+    };
+
+    it('equals — matches predefined option id', () => {
+      const driver: FieldDefinition = { ...openChoiceDef, id: 'other-3' };
+      const target: FieldDefinition = {
+        id: 'other-4',
+        fieldType: 'text',
+        question: 'Target',
+        rules: [fieldRule('visible', 'other-3', 'equals', 'other-1')],
+      };
+      const normalized = normalizeDefinition([driver, target]);
+      const respMatch: FieldResponse = { selected: sel('other-1', 'Alpha') };
+      expect(
+        resolveEffect('visible', target, normalized, { 'other-3': respMatch })
+      ).toBe(true);
+
+      const respNoMatch: FieldResponse = { selected: sel('other-2', 'Beta') };
+      expect(
+        resolveEffect('visible', target, normalized, { 'other-3': respNoMatch })
+      ).toBe(false);
+    });
+
+    it('equals — matches other-option id when user selects the other option', () => {
+      const { normalized, field } = setup(openChoiceDef);
+      field.rules = [
+        fieldRule('visible', 'other-1', 'equals', 'other-1-other'),
+      ];
+      const resp: FieldResponse = {
+        selected: { id: 'other-1-other', value: 'custom text' },
+      };
+      expect(
+        resolveEffect('visible', field, normalized, { 'other-1': resp })
+      ).toBe(true);
+    });
+
+    it('notEquals — does not match different option', () => {
+      const { normalized, field } = setup(openChoiceDef);
+      field.rules = [fieldRule('visible', 'other-1', 'notEquals', 'other-1')];
+      const resp: FieldResponse = { selected: sel('other-2', 'Beta') };
+      expect(
+        resolveEffect('visible', field, normalized, { 'other-1': resp })
+      ).toBe(true);
+    });
+
+    it('empty — true when nothing selected', () => {
+      const { normalized, field } = setup(openChoiceDef);
+      field.rules = [fieldRule('visible', 'other-1', 'empty')];
+      expect(resolveEffect('visible', field, normalized, {})).toBe(true);
+    });
+
+    it('notEmpty — true when option is selected', () => {
+      const { normalized, field } = setup(openChoiceDef);
+      field.rules = [fieldRule('visible', 'other-1', 'notEmpty')];
+      const resp: FieldResponse = { selected: sel('other-1', 'Alpha') };
+      expect(
+        resolveEffect('visible', field, normalized, { 'other-1': resp })
+      ).toBe(true);
+    });
+
+    it('expression — returns user-typed text for __other__', () => {
+      const driver: FieldDefinition = {
+        id: 'other-5',
+        fieldType: 'openchoice',
+        question: 'Source',
+        options: [{ id: 'other-6', value: 'X' }],
+      };
+      const target: FieldDefinition = {
+        id: 'other-7',
+        fieldType: 'text',
+        question: 'Target',
+        rules: [exprRule('visible', "{other-5} == 'custom text'")],
+      };
+      const normalized = normalizeDefinition([driver, target]);
+      const resp: FieldResponse = {
+        selected: { id: 'other-5-other', value: 'custom text' },
+      };
+      expect(
+        resolveEffect('visible', target, normalized, { 'other-5': resp })
+      ).toBe(true);
+    });
+  });
+
+  describe('file field conditions', () => {
+    const fileDef: FieldDefinition = {
+      id: 'other-8',
+      fieldType: 'file',
+      question: 'Upload a file',
+    };
+
+    it('empty — true when no fileData', () => {
+      const { normalized, field } = setup(fileDef);
+      field.rules = [fieldRule('visible', 'other-8', 'empty')];
+      expect(resolveEffect('visible', field, normalized, {})).toBe(true);
+    });
+
+    it('notEmpty — true when fileData is present', () => {
+      const { normalized, field } = setup(fileDef);
+      field.rules = [fieldRule('visible', 'other-8', 'notEmpty')];
+      const resp: FieldResponse = {
+        fileData: { contentType: 'application/pdf', title: 'doc.pdf' },
+      };
+      expect(
+        resolveEffect('visible', field, normalized, { 'other-8': resp })
+      ).toBe(true);
+    });
+
+    it('notEmpty — true when fileData is an array with entries', () => {
+      const { normalized, field } = setup(fileDef);
+      field.rules = [fieldRule('visible', 'other-8', 'notEmpty')];
+      const resp: FieldResponse = {
+        fileData: [
+          { contentType: 'image/png', title: 'a.png' },
+          { contentType: 'image/png', title: 'b.png' },
+        ],
+      };
+      expect(
+        resolveEffect('visible', field, normalized, { 'other-8': resp })
+      ).toBe(true);
+    });
+
+    it('expression — file count used for numeric comparison', () => {
+      const driver: FieldDefinition = {
+        id: 'other-9',
+        fieldType: 'file',
+        question: 'Source files',
+      };
+      const target: FieldDefinition = {
+        id: 'other-10',
+        fieldType: 'text',
+        question: 'Target',
+        rules: [exprRule('visible', '{other-9} >= 2')],
+      };
+      const normalized = normalizeDefinition([driver, target]);
+      const resp: FieldResponse = {
+        fileData: [
+          { contentType: 'image/png', title: 'a.png' },
+          { contentType: 'image/png', title: 'b.png' },
+        ],
+      };
+      expect(
+        resolveEffect('visible', target, normalized, { 'other-9': resp })
+      ).toBe(true);
+
+      const singleResp: FieldResponse = {
+        fileData: { contentType: 'image/png', title: 'a.png' },
+      };
+      expect(
+        resolveEffect('visible', target, normalized, { 'other-9': singleResp })
       ).toBe(false);
     });
   });

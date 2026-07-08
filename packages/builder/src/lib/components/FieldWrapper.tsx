@@ -1,12 +1,7 @@
-import React, { useSyncExternalStore } from 'react';
-import type {
-  FieldDefinition,
-  FieldResponse,
-  FieldComponentProps,
-  FormStore,
-  UIStore,
-} from '@esheet/core';
-import { useSelectedFieldId } from '../hooks/useSelectedFieldId.js';
+import React from 'react';
+import type { FieldComponentProps, FormStore, UIStore } from '@esheet/core';
+import { useFormApi } from '../hooks/useFormApi.js';
+import { useUiApi } from '../hooks/useUiApi.js';
 import {
   TrashIcon,
   ViewBigIcon,
@@ -41,6 +36,8 @@ export interface FieldWrapperProps {
   forceExpandVersion?: number;
   /** Optional signal used to force collapse a field wrapper. */
   forceCollapseVersion?: number;
+  /** Computed value from setValue effects (if applicable). */
+  computedValue?: string | number | null;
   /** Render function that receives field data and tools */
   children: (props: FieldWrapperRenderProps) => React.ReactNode;
 }
@@ -76,93 +73,54 @@ export function FieldWrapper({
   selectedVariant = 'default',
   forceExpandVersion,
   forceCollapseVersion,
+  computedValue,
   children,
 }: FieldWrapperProps) {
-  const [isExpanded, setIsExpanded] = React.useState(true);
-  const lastForceExpandVersionRef = React.useRef<number | undefined>(undefined);
+  const [isExpanded, setIsExpanded] = React.useState(() => {
+    const collapseActive =
+      forceCollapseVersion !== undefined &&
+      (forceExpandVersion === undefined ||
+        forceCollapseVersion > forceExpandVersion);
+    return !collapseActive;
+  });
+  const lastForceExpandVersionRef = React.useRef<number | undefined>(
+    forceExpandVersion
+  );
   const lastForceCollapseVersionRef = React.useRef<number | undefined>(
-    undefined
+    forceCollapseVersion
   );
 
-  const field = useSyncExternalStore(
-    (cb) => form.subscribe(cb),
-    () => form.getState().getField(fieldId),
-    () => form.getState().getField(fieldId)
-  );
-  const response = useSyncExternalStore(
-    (cb) => form.subscribe(cb),
-    () => form.getState().getResponse(fieldId),
-    () => form.getState().getResponse(fieldId)
-  );
-  const mode = useSyncExternalStore(
-    (cb) => ui.subscribe(cb),
-    () => ui.getState().mode,
-    () => ui.getState().mode
-  );
-  // Conditional states — subscribe so we re-render when other field responses
-  // change (which may flip this field's visibility / enabled / required state).
-  const isVisible = useSyncExternalStore(
-    (cb) => form.subscribe(cb),
-    () => form.getState().isVisible(fieldId),
-    () => true
-  );
-  const isEnabled = useSyncExternalStore(
-    (cb) => form.subscribe(cb),
-    () => form.getState().isEnabled(fieldId),
-    () => true
-  );
-  const isRequired = useSyncExternalStore(
-    (cb) => form.subscribe(cb),
-    () => form.getState().isRequired(fieldId),
-    () => false
-  );
-  const instanceId = form.getState().instanceId;
-  const selectedFieldId = useSelectedFieldId(ui);
+  const {
+    field,
+    response,
+    isVisible,
+    isEnabled,
+    isRequired,
+    isReadOnly,
+    isSoftRequired,
+    instanceId,
+    field_,
+  } = useFormApi(fieldId);
+  const { mode, selectedFieldId, selectField, setEditModalOpen } = useUiApi();
+
   const isPreview = mode === 'preview';
   const isSelected =
     !isPreview && (isSelectedOverride ?? selectedFieldId === fieldId);
 
-  // Handlers
-  const handleSelect = React.useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      if (onSelectOverride) {
-        onSelectOverride(e);
-        return;
-      }
-      ui.getState().selectField(fieldId);
-    },
-    [ui, fieldId, onSelectOverride]
-  );
+  const handleSelect = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onSelectOverride) {
+      onSelectOverride(e);
+      return;
+    }
+    selectField(fieldId);
+  };
 
-  const handleRemove = React.useCallback(() => {
-    form.getState().removeField(fieldId);
-  }, [form, fieldId]);
-
-  const handleUpdate = React.useCallback(
-    (patch: Partial<Omit<FieldDefinition, 'fields'>>) => {
-      form.getState().updateField(fieldId, patch);
-    },
-    [form, fieldId]
-  );
-
-  const handleResponse = React.useCallback(
-    (resp: FieldResponse) => {
-      form.getState().setResponse(fieldId, resp);
-    },
-    [form, fieldId]
-  );
-
-  const handleToggleExpand = React.useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      if (!isSelected) {
-        handleSelect(e);
-      }
-      setIsExpanded((prev) => !prev);
-    },
-    [isSelected, handleSelect]
-  );
+  const handleToggleExpand = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isSelected) handleSelect(e);
+    setIsExpanded((prev) => !prev);
+  };
 
   React.useEffect(() => {
     if (forceExpandVersion === undefined) return;
@@ -189,7 +147,6 @@ export function FieldWrapper({
 
   // --- Preview mode: minimal chrome, no builder controls ---
   if (isPreview) {
-    const isSection = field.definition.fieldType === 'section';
     const parentNode = field.parentId
       ? form.getState().getField(field.parentId)
       : null;
@@ -197,20 +154,8 @@ export function FieldWrapper({
 
     return (
       <div
-        className={`field-wrapper ms:bg-mssurface${
-          isSection ? ' ms:mb-1 ms:border ms:border-msborder ms:rounded' : ''
-        }${
-          !isSection && !isChildOfSection
-            ? ' ms:mb-1 ms:p-6 ms:border ms:border-msborder ms:rounded'
-            : ''
-        }${
-          isChildOfSection
-            ? ' ms:p-6 ms:border-b ms:border-msborder ms:last:border-b-0'
-            : ''
-        }${!isEnabled ? ' ms:opacity-50 ms:pointer-events-none' : ''}${
-          isRequired && !isSection && !isChildOfSection
-            ? ' ms:border-l-2 ms:border-l-msdanger'
-            : ''
+        className={`field-wrapper${isChildOfSection ? ' ms:py-1' : ''}${
+          !isEnabled ? ' ms:opacity-50 ms:pointer-events-none' : ''
         }`}
         aria-disabled={!isEnabled || undefined}
       >
@@ -222,10 +167,13 @@ export function FieldWrapper({
           isPreview: true,
           isEnabled,
           isRequired,
+          isSoftRequired,
+          isReadOnly,
           response,
-          onRemove: handleRemove,
-          onUpdate: handleUpdate,
-          onResponse: handleResponse,
+          computedValue,
+          onRemove: field_.remove,
+          onUpdate: field_.update,
+          onResponse: field_.setResponse,
         })}
       </div>
     );
@@ -276,29 +224,34 @@ export function FieldWrapper({
             ref={dragHandleRef}
             className="drag-handle ms:flex ms:items-center ms:p-1 ms:text-mstextmuted ms:cursor-grab ms:active:cursor-grabbing ms:shrink-0 ms:user-select-none"
             style={{ touchAction: 'none' }}
-            role="img"
             aria-label="Drag to reorder"
           >
             <DragHandleIcon className="ms:w-4 ms:h-4" />
           </div>
         )}
         <div className="ms:flex-1 ms:flex ms:items-center ms:gap-1.5 ms:min-w-0 ms:select-none">
-          {/* Type chip — foreground text on tinted primary bg, always accessible */}
-          <span className="fieldtype-chip ms:inline-block ms:shrink-0 ms:text-xs ms:font-medium ms:text-mstext ms:bg-msprimary/10 ms:px-2 ms:py-0.5 ms:rounded">
+          {/* Type chip — tinted primary bg, same as before */}
+          <span className="fieldtype-chip ms:inline-block ms:shrink-0 ms:text-xs ms:font-medium ms:text-msprimary ms:bg-msprimary/10 ms:px-2 ms:py-0.5 ms:rounded">
             {field.definition.fieldType}
           </span>
           {/* ID chip — explicit label for quick scanning */}
-          <span className="id-chip ms:inline-flex ms:items-center ms:gap-1 ms:shrink-0 ms:text-xs ms:font-mono ms:text-mstext ms:bg-mssecondary/10 ms:px-2 ms:py-0.5 ms:rounded">
-            <span>id:</span>
-            <span className="ms:font-semibold">{field.definition.id}</span>
+          <span className="id-chip ms:inline-flex ms:items-center ms:gap-1 ms:min-w-0 ms:shrink ms:text-xs ms:font-mono ms:text-mssecondary ms:bg-mssecondary/10 ms:px-2 ms:py-0.5 ms:rounded">
+            <span className="ms:opacity-70 ms:shrink-0">id:</span>
+            <span className="ms:font-semibold ms:truncate">
+              {field.definition.id}
+            </span>
           </span>
           {/* Question — plain muted text */}
-          <span className="question-label ms:text-xs ms:text-mstext/65 ms:truncate ms:min-w-0">
+          <span className="question-label ms:text-xs ms:text-mstextmuted ms:truncate ms:min-w-0">
             {questionPreview}
           </span>
           {field.definition.required && (
             <span
-              className="required-indicator ms:text-msdanger ms:text-xs ms:font-bold ms:shrink-0"
+              className={`required-indicator ms:text-xs ms:font-bold ms:shrink-0 ${
+                field.definition.required === 'soft'
+                  ? 'ms:text-mswarning'
+                  : 'ms:text-msdanger'
+              }`}
               aria-label="Required"
             >
               *
@@ -316,9 +269,9 @@ export function FieldWrapper({
               if (onSelectOverride) {
                 onSelectOverride(e);
               } else {
-                ui.getState().selectField(fieldId);
+                selectField(fieldId);
               }
-              ui.getState().setEditModalOpen(true);
+              setEditModalOpen(true);
             }}
             className="field-edit-btn ms:block ms:lg:hidden ms:p-1.5 ms:bg-transparent ms:text-mstextmuted ms:hover:bg-msbackgroundhover ms:rounded ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none"
             title="Edit"
@@ -349,7 +302,7 @@ export function FieldWrapper({
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              handleRemove();
+              field_.remove();
             }}
             className="field-delete-btn ms:p-1.5 ms:bg-transparent ms:text-mstextmuted ms:hover:bg-msdanger/10 ms:hover:text-msdanger ms:rounded ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none"
             title="Delete"
@@ -376,10 +329,13 @@ export function FieldWrapper({
           isPreview: false,
           isEnabled,
           isRequired,
+          isSoftRequired,
+          isReadOnly,
           response,
-          onRemove: handleRemove,
-          onUpdate: handleUpdate,
-          onResponse: handleResponse,
+          computedValue,
+          onRemove: field_.remove,
+          onUpdate: field_.update,
+          onResponse: field_.setResponse,
         })}
       </div>
     </div>

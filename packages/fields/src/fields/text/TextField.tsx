@@ -1,5 +1,9 @@
 import React from 'react';
-import type { FieldComponentProps } from '@esheet/core';
+import type {
+  FieldComponentProps,
+  TextFieldDefinition,
+  LongtextFieldDefinition,
+} from '@esheet/core';
 import { Input } from '@mieweb/ui';
 
 function formatPhoneNumber(value: string): string {
@@ -41,47 +45,52 @@ export const TextField = React.memo(function TextField({
   isPreview,
   isEnabled,
   isRequired,
+  isSoftRequired,
   response,
+  computedValue,
   onUpdate,
   onResponse,
 }: FieldComponentProps) {
-  const def = field.definition;
+  const def = field.definition as TextFieldDefinition | LongtextFieldDefinition;
   const instanceId = form.getState().instanceId;
   const inputType = def.inputType || 'string';
   const unit = def.unit || '';
   const isTel = inputType === 'tel';
   const placeholder = PLACEHOLDER[inputType] || 'Type your answer';
 
+  // When a computed value arrives and the user hasn't answered yet, seed it as
+  // the response so it behaves like any other answered field (overwritable).
+  React.useEffect(() => {
+    if (computedValue !== undefined && !response?.answer) {
+      onResponse({ answer: String(computedValue) });
+    }
+  }, [computedValue]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (isPreview) {
     return (
-      <div className="text-field-preview ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
-        <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
-          {def.question || 'Question'}
-          {isRequired && <span className="ms:text-msdanger ms:ml-0.5">*</span>}
-        </div>
-        <div className="ms:relative">
-          <Input
-            id={`${instanceId}-text-answer-${def.id}`}
-            aria-label={def.question || 'Question'}
-            type={inputType}
-            disabled={!isEnabled}
-            aria-required={isRequired || undefined}
-            value={response?.answer || ''}
-            onChange={(e) => {
-              const val = isTel
-                ? formatPhoneNumber(e.target.value)
-                : e.target.value;
-              onResponse({ answer: val });
-            }}
-            placeholder={placeholder}
-            className={unit ? 'pr-16' : ''}
-          />
-          {unit && (
-            <span className="ms:absolute ms:right-3 ms:top-1/2 ms:-translate-y-1/2 ms:text-sm ms:text-mstextmuted ms:pointer-events-none">
-              {unit}
-            </span>
-          )}
-        </div>
+      <div className="text-field-preview ms:relative">
+        <Input
+          id={`${instanceId}-text-answer-${def.id}`}
+          label={def.question || 'Question'}
+          required={isRequired || isSoftRequired}
+          type={inputType}
+          disabled={!isEnabled}
+          aria-required={isRequired || undefined}
+          value={response?.answer || ''}
+          onChange={(e) => {
+            const val = isTel
+              ? formatPhoneNumber(e.target.value)
+              : e.target.value;
+            onResponse({ answer: val });
+          }}
+          placeholder={placeholder}
+          className={unit ? 'ms:pr-16' : ''}
+        />
+        {unit && (
+          <span className="ms:absolute ms:right-3 ms:bottom-0 ms:h-10 ms:flex ms:items-center ms:text-sm ms:text-mstextmuted ms:pointer-events-none">
+            {unit}
+          </span>
+        )}
       </div>
     );
   }

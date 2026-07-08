@@ -41,9 +41,11 @@ export function formatZodValidationError(issue: {
     }
 
     case 'unrecognized_keys': {
-      const keys = Array.isArray(issue.received)
-        ? issue.received.join(', ')
-        : String(issue.received);
+      // zod v4 stores unknown key names in `issue.keys`, not `issue.received`
+      const raw = (issue as unknown as { keys?: unknown }).keys;
+      const keys = Array.isArray(raw)
+        ? raw.join(', ')
+        : String(issue.received ?? raw);
       return `${path}: Unknown property/properties: ${keys}`;
     }
 

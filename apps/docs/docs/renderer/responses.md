@@ -21,16 +21,18 @@ function MyForm() {
   const ref = useRef<EsheetRendererHandle>(null);
 
   const handleSubmit = () => {
-    const responses = ref.current?.getResponse();
-    if (!responses) return;
-
-    // responses is Record<string, FieldResponse>
-    console.log(responses);
+    const result = ref.current?.getValidResponse();
+    if (!result) return;
+    if (result.errors.length > 0) {
+      console.log('Validation errors:', result.errors);
+      return;
+    }
+    console.log('Valid responses:', result.response);
   };
 
   return (
     <>
-      <EsheetRenderer ref={ref} formData={myForm} />
+      <EsheetRenderer ref={ref} formDataInput={myForm} />
       <button onClick={handleSubmit}>Submit</button>
     </>
   );
@@ -86,6 +88,61 @@ function MyForm() {
 }
 ```
 
+## Response Format Options
+
+The renderer supports multiple output formats via the `getResponse()` method:
+
+### Native Format (Default)
+
+Returns the raw `FieldResponseMap` — structured response objects keyed by field ID:
+
+```tsx
+const response = ref.current?.getResponse();
+// or explicitly:
+const response = ref.current?.getResponse({ format: 'native' });
+```
+
+### FHIR QuestionnaireResponse
+
+Export responses directly as a FHIR R4 QuestionnaireResponse resource:
+
+```tsx
+const fhirResponse = ref.current?.getResponse({
+  format: 'fhir',
+  fhir: {
+    questionnaireUrl: 'http://example.org/Questionnaire/my-form',
+    status: 'completed',
+    subject: { reference: 'Patient/123' },
+    author: { reference: 'Practitioner/456' },
+  },
+});
+
+// Returns:
+// {
+//   resourceType: 'QuestionnaireResponse',
+//   questionnaire: 'http://example.org/Questionnaire/my-form',
+//   status: 'completed',
+//   subject: { reference: 'Patient/123' },
+//   author: { reference: 'Practitioner/456' },
+//   authored: '2024-01-15T10:30:00Z',
+//   item: [...]
+// }
+```
+
+**FHIR Options:**
+
+| Option             | Type            | Description                                                                        |
+| ------------------ | --------------- | ---------------------------------------------------------------------------------- |
+| `questionnaireUrl` | `string`        | Canonical URL of the questionnaire (auto-detected if imported from FHIR)           |
+| `status`           | `string`        | Response status: `'in-progress'`, `'completed'`, `'amended'`, `'entered-in-error'` |
+| `subject`          | `FhirReference` | Patient/subject reference (e.g., `{ reference: 'Patient/123' }`)                   |
+| `author`           | `FhirReference` | Author reference                                                                   |
+| `resourceId`       | `string`        | Resource ID for the QuestionnaireResponse                                          |
+
+:::tip
+If the form was imported from a FHIR Questionnaire, the `questionnaireUrl` is automatically detected from the original resource metadata.
+:::
+
 ## Pre-filling Responses
 
 Pass `initialResponses` to populate the form with existing data:
@@ -98,7 +155,7 @@ const existingResponses = {
 
 <EsheetRenderer
   ref={ref}
-  formData={myForm}
+  formDataInput={myForm}
   initialResponses={existingResponses}
 />;
 ```
@@ -147,5 +204,5 @@ const isRequired = state.isRequired('field_id');
 ```
 
 :::warning
-Direct store access is an advanced API. The store's internal structure may change between versions. Prefer using `getResponse()` for standard response collection.
+Direct store access is an advanced API. The store's internal structure may change between versions. Prefer using `getRawResponse()` (or `getValidResponse()` for validated submission) for standard response collection.
 :::

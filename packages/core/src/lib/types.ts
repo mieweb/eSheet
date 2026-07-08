@@ -24,6 +24,8 @@ export const FIELD_TYPES = [
   'html',
   'signature',
   'diagram',
+  'file',
+  'openchoice',
   'display',
   'section',
 ] as const;
@@ -43,15 +45,15 @@ export type FieldCategory =
 /**
  * How a field stores its answer value.
  *
- * - `text`           — single string (`field.answer`)
- * - `selection`      — single option id (`field.selected: string`)
- * - `multiselection` — multiple option ids (`field.selected: string[]`)
- * - `multitext`      — per-option text (`field.options[].answer`)
- * - `matrix`         — row→column mapping (`field.selected: Record`)
- * - `media`          — binary/base64 data
- * - `display`        — no answer (presentational only)
- * - `container`      — no own answer (children hold answers)
- * - `none`           — unsupported / no answer
+ * - `text`           - single string (`field.answer`)
+ * - `selection`      - single option id (`field.selected: string`)
+ * - `multiselection` - multiple option ids (`field.selected: string[]`)
+ * - `multitext`      - per-option text (`field.options[].answer`)
+ * - `matrix`         - row -> column mapping (`field.selected: Record`)
+ * - `media`          - binary/base64 data
+ * - `display`        - no answer (presentational only)
+ * - `container`      - no own answer (children hold answers)
+ * - `none`           - unsupported / no answer
  */
 export type AnswerType =
   | 'text'
@@ -135,12 +137,18 @@ export const CONDITION_OPERATORS = [
 export const conditionOperatorSchema = z.enum(CONDITION_OPERATORS);
 export type ConditionOperator = z.infer<typeof conditionOperatorSchema>;
 
-export const CONDITION_TYPES = ['field', 'expression'] as const;
+export const CONDITION_TYPES = ['field', 'expression', 'js'] as const;
 export const conditionTypeSchema = z.enum(CONDITION_TYPES);
 export type ConditionType = z.infer<typeof conditionTypeSchema>;
 
 /** What effect a conditional rule has on the field. */
-export const CONDITIONAL_EFFECTS = ['visible', 'enable', 'required'] as const;
+export const CONDITIONAL_EFFECTS = [
+  'required',
+  'visible',
+  'enable',
+  // 'readOnly', // TODO: implement readOnly properly (see INTERNAL-TICKETS/readonly-fields.md)
+  'setValue',
+] as const;
 export const conditionalEffectSchema = z.enum(CONDITIONAL_EFFECTS);
 export type ConditionalEffect = z.infer<typeof conditionalEffectSchema>;
 
@@ -169,34 +177,128 @@ export const conditionalRuleSchema = z.object({
   logic: z.enum(['AND', 'OR']),
   /** One or more conditions to evaluate. */
   conditions: z.array(conditionSchema),
+  /**
+   * Severity for `required` rules only.
+   * - `'hard'` (default) - blocks submission.
+   * - `'soft'` - warns but allows bypass.
+   */
+  severity: z.optional(z.enum(['hard', 'soft'])),
 });
 export type ConditionalRule = z.infer<typeof conditionalRuleSchema>;
 
 // ---------------------------------------------------------------------------
-// Field Definition — Discriminated Union by fieldType
+// Field Validators
 // ---------------------------------------------------------------------------
+
+/** All supported validator type identifiers. */
+export const VALIDATOR_TYPES = [
+  // Number
+  'number',
+  'numberBetween',
+  'numberEquals',
+  'numberGreaterThan',
+  'numberLessThan',
+  // Date (MM-DD-YYYY)
+  'date',
+  'dateAfter',
+  'dateBefore',
+  'dateBetween',
+  'dateEquals',
+  'dateAfterToday',
+  'dateBeforeToday',
+  'dateIsToday',
+  // Datetime (MM-DD-YYYY HH:mm:ss)
+  'datetime',
+  'datetimeAfter',
+  'datetimeBefore',
+  'datetimeBetween',
+  'datetimeEquals',
+  'datetimeAfterToday',
+  'datetimeBeforeToday',
+  'datetimeIsToday',
+  // Time (HH:mm)
+  'time',
+  'timeAfter',
+  'timeBefore',
+  'timeBetween',
+  'timeEquals',
+  // Generic
+  'answerEquals',
+] as const;
+
+export const validatorTypeSchema = z.enum(VALIDATOR_TYPES);
+export type ValidatorType = z.infer<typeof validatorTypeSchema>;
+
+/** A validation rule applied to a field's response. */
+export const fieldValidatorSchema = z.object({
+  /** The type of validation to perform. */
+  type: validatorTypeSchema,
+  /** Parameters for the validator (e.g., boundary values, reference dates). */
+  params: z.optional(z.array(z.union([z.string(), z.number()]))),
+  /** Custom error message. Falls back to a built-in message when omitted. */
+  message: z.optional(z.string()),
+  /** Whether this validator is a hard block or soft warning. Defaults to 'hard'. */
+  severity: z.optional(z.enum(['hard', 'soft'])),
+});
+export type FieldValidator = z.infer<typeof fieldValidatorSchema>;
+
+// ---------------------------------------------------------------------------
+// Field Definition - Discriminated Union by fieldType
+// ---------------------------------------------------------------------------
+
+/**
+ * Layout width a field occupies in a row-based preview/render grid.
+ * - `full`  - spans the whole row (default).
+ * - `half`  - two per row.
+ * - `third` - three per row.
+ *
+ * **FHIR extension:** serialised as `valueCode` on the item's `extension` array.
+ * Definition: https://esheet.os.mieweb.org/docs/adapters/fhir/extensions#field-width
+ */
+export type FieldWidth = 'full' | 'half' | 'third';
+
+/**
+ * How a choice field arranges its options.
+ * - `stack` - one option per line (default).
+ * - `wrap`  - options flow horizontally and wrap to the next line.
+ *
+ * **FHIR extension:** serialised as `valueCode` on the item's `extension` array.
+ * Applies to `choice` items (radio, check, openchoice, multitext).
+ * Definition: https://esheet.os.mieweb.org/docs/adapters/fhir/extensions#option-layout
+ */
+export type OptionLayout = 'stack' | 'wrap';
 
 // ---------------------------------------------------------------------------
 // Base Interfaces
 // ---------------------------------------------------------------------------
 
 /**
- * Properties shared by ALL field types.
- * Includes `question` and `required` for backward compatibility, even though
- * some field types (html, display) don't semantically use them.
+ * Properties shared by ALL answer-bearing field types.
  */
 interface BaseFieldDefinition {
   /** Unique identifier within the form. */
   id: string;
   /** The question / label shown to the user. */
   question?: string;
-  /** Whether a response is required. */
-  required?: boolean;
+  /**
+   * Required state for this field.
+   * - `true`    - hard required (blocks submission).
+   * - `'soft'`  - soft required (warns but allows bypass).
+   * - `false` / omitted - not required.
+   */
+  required?: boolean | 'soft';
+  // readOnly?: boolean; // TODO: implement readOnly properly (see INTERNAL-TICKETS/readonly-fields.md)
+  /** Layout width in a row grid (`full` | `half` | `third`). Defaults to `full`. */
+  width?: FieldWidth;
+  /** Validation rules applied to the field's response. */
+  validators?: FieldValidator[];
   /** Conditional rules that control visibility, enabled state, or required state. */
   rules?: ConditionalRule[];
-  /** Adapter metadata — original source data before conversion. */
+  /** JS expression that auto-computes this field's value. Requires dangerouslyAllowJS on form. */
+  calculation?: string;
+  /** Adapter metadata - original source data before conversion. */
   _sourceData?: unknown;
-  /** Adapter metadata — warnings generated during conversion. */
+  /** Adapter metadata - warnings generated during conversion. */
   _conversionWarnings?: unknown[];
 }
 
@@ -219,6 +321,8 @@ export interface LongtextFieldDefinition extends BaseFieldDefinition {
 export interface MultitextFieldDefinition extends BaseFieldDefinition {
   fieldType: 'multitext';
   options?: FieldOption[];
+  /** How inputs are arranged (`stack` | `wrap`). Defaults to `stack`. */
+  optionLayout?: OptionLayout;
 }
 
 // ---------------------------------------------------------------------------
@@ -228,11 +332,15 @@ export interface MultitextFieldDefinition extends BaseFieldDefinition {
 export interface RadioFieldDefinition extends BaseFieldDefinition {
   fieldType: 'radio';
   options?: FieldOption[];
+  /** How options are arranged (`stack` | `wrap`). Defaults to `stack`. */
+  optionLayout?: OptionLayout;
 }
 
 export interface CheckFieldDefinition extends BaseFieldDefinition {
   fieldType: 'check';
   options?: FieldOption[];
+  /** How options are arranged (`stack` | `wrap`). Defaults to `stack`. */
+  optionLayout?: OptionLayout;
 }
 
 export interface BooleanFieldDefinition extends BaseFieldDefinition {
@@ -322,10 +430,45 @@ export interface DiagramFieldDefinition extends BaseFieldDefinition {
   padPlaceholder?: string;
 }
 
-export interface DisplayFieldDefinition extends BaseFieldDefinition {
+export interface FileFieldDefinition extends BaseFieldDefinition {
+  fieldType: 'file';
+  /** Accept string for file input (MIME types or extensions), e.g. "image/*,.pdf" */
+  accept?: string;
+  /** Maximum allowed file size in bytes (optional). */
+  maxFileSize?: number;
+  /** Maximum number of files allowed to upload (optional). Default: 1. */
+  maxFiles?: number;
+}
+
+export interface OpenChoiceFieldDefinition extends BaseFieldDefinition {
+  fieldType: 'openchoice';
+  /** Predefined selectable options. */
+  options?: FieldOption[];
+  /** Maximum number of custom user-added options allowed at runtime (optional). */
+  maxCustomOptions?: number;
+  /** Label for the "Other, please specify" option (optional). */
+  otherLabel?: string;
+  /** Controls whether options flow horizontally (wrap) or stack vertically (default). */
+  optionLayout?: OptionLayout;
+}
+
+export interface DisplayFieldDefinition {
+  id: string;
   fieldType: 'display';
+  /** Display fields have no question text. */
+  question?: never;
   /** Markdown-like content with inline expression placeholders. */
   content?: string;
+  /** Display fields are never required. */
+  required?: never;
+  /** Layout width in a row grid (`full` | `half` | `third`). Defaults to `full`. */
+  width?: FieldWidth;
+  /** Conditional rules controlling visibility. */
+  rules?: ConditionalRule[];
+  /** @deprecated Display fields do not accept answers; calculation has no effect. */
+  calculation?: never;
+  _sourceData?: unknown;
+  _conversionWarnings?: unknown[];
 }
 
 // ---------------------------------------------------------------------------
@@ -354,6 +497,7 @@ export type FieldDefinition =
   | BooleanFieldDefinition
   | DropdownFieldDefinition
   | MultiselectDropdownFieldDefinition
+  | OpenChoiceFieldDefinition
   // Rating
   | RatingFieldDefinition
   | RankingFieldDefinition
@@ -363,12 +507,42 @@ export type FieldDefinition =
   | MultiMatrixFieldDefinition
   // Rich
   | ImageFieldDefinition
+  | FileFieldDefinition
   | HtmlFieldDefinition
   | SignatureFieldDefinition
   | DiagramFieldDefinition
   | DisplayFieldDefinition
   // Organization
   | SectionFieldDefinition;
+
+/** Union of all field variants that carry an `options` array. */
+export type OptionBearingFieldDefinition =
+  | RadioFieldDefinition
+  | CheckFieldDefinition
+  | BooleanFieldDefinition
+  | DropdownFieldDefinition
+  | MultiselectDropdownFieldDefinition
+  | RatingFieldDefinition
+  | OpenChoiceFieldDefinition
+  | RankingFieldDefinition
+  | SliderFieldDefinition;
+
+/** Type predicate: narrows a FieldDefinition to the option-bearing variants. */
+export function hasOptions(
+  field: FieldDefinition
+): field is OptionBearingFieldDefinition {
+  return (
+    field.fieldType === 'radio' ||
+    field.fieldType === 'check' ||
+    field.fieldType === 'boolean' ||
+    field.fieldType === 'dropdown' ||
+    field.fieldType === 'multiselectdropdown' ||
+    field.fieldType === 'rating' ||
+    field.fieldType === 'ranking' ||
+    field.fieldType === 'slider' ||
+    field.fieldType === 'openchoice'
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Field Normalization (strips irrelevant properties by fieldType)
@@ -379,10 +553,10 @@ const FIELD_TYPE_PROPERTIES: Record<FieldType, readonly string[]> = {
   // Text category
   text: ['inputType', 'unit'],
   longtext: ['inputType', 'unit'],
-  multitext: ['options'],
+  multitext: ['options', 'optionLayout'],
   // Selection category
-  radio: ['options'],
-  check: ['options'],
+  radio: ['options', 'optionLayout'],
+  check: ['options', 'optionLayout'],
   boolean: ['options'],
   dropdown: ['options'],
   multiselectdropdown: ['options'],
@@ -398,6 +572,8 @@ const FIELD_TYPE_PROPERTIES: Record<FieldType, readonly string[]> = {
   html: ['htmlContent', 'iframeHeight'],
   signature: ['padPlaceholder'],
   diagram: ['imageUri', 'padPlaceholder'],
+  file: ['accept', 'maxFileSize', 'maxFiles'],
+  openchoice: ['options', 'maxCustomOptions', 'otherLabel'],
   display: ['content'],
   // Organization category
   section: ['title', 'fields'],
@@ -409,6 +585,10 @@ const BASE_PROPERTIES = [
   'fieldType',
   'question',
   'required',
+  // 'readOnly', // TODO: implement readOnly properly
+  'width',
+  'validators',
+  'calculation',
   'rules',
   '_sourceData',
   '_conversionWarnings',
@@ -430,6 +610,12 @@ function normalizeFieldDefinition(
     ...BASE_PROPERTIES,
     ...FIELD_TYPE_PROPERTIES[fieldType],
   ]);
+  // Display fields have no question - strip it if present.
+  if (fieldType === 'display') {
+    allowedProps.delete('question');
+    allowedProps.delete('required');
+    allowedProps.delete('calculation');
+  }
 
   const normalized: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(field)) {
@@ -504,8 +690,13 @@ export function normalizeFormDefinition(
 const baseFieldProps = {
   id: z.string(),
   question: z.optional(z.string()),
-  required: z.optional(z.boolean()),
+  required: z.optional(z.union([z.boolean(), z.literal('soft')])),
+  // readOnly: z.optional(z.boolean()), // TODO: implement readOnly properly
+  width: z.optional(z.enum(['full', 'half', 'third'])),
+  validators: z.optional(z.array(fieldValidatorSchema)),
   rules: z.optional(z.array(conditionalRuleSchema)),
+  /** JS expression that auto-computes this field's value (requires dangerouslyAllowJS on form). */
+  calculation: z.optional(z.string()),
   _sourceData: z.optional(z.unknown()),
   _conversionWarnings: z.optional(z.array(z.unknown())),
 };
@@ -529,6 +720,7 @@ const multitextFieldSchema = z.strictObject({
   ...baseFieldProps,
   fieldType: z.literal('multitext'),
   options: z.optional(z.array(fieldOptionSchema)),
+  optionLayout: z.optional(z.enum(['stack', 'wrap'])),
 });
 
 // Selection category schemas
@@ -536,12 +728,14 @@ const radioFieldSchema = z.strictObject({
   ...baseFieldProps,
   fieldType: z.literal('radio'),
   options: z.optional(z.array(fieldOptionSchema)),
+  optionLayout: z.optional(z.enum(['stack', 'wrap'])),
 });
 
 const checkFieldSchema = z.strictObject({
   ...baseFieldProps,
   fieldType: z.literal('check'),
   options: z.optional(z.array(fieldOptionSchema)),
+  optionLayout: z.optional(z.enum(['stack', 'wrap'])),
 });
 
 const booleanFieldSchema = z.strictObject({
@@ -625,8 +819,32 @@ const diagramFieldSchema = z.strictObject({
   padPlaceholder: z.optional(z.string()),
 });
 
-const displayFieldSchema = z.strictObject({
+const fileFieldSchema = z.strictObject({
   ...baseFieldProps,
+  fieldType: z.literal('file'),
+  accept: z.optional(z.string()),
+  maxFileSize: z.optional(z.number()),
+  maxFiles: z.optional(z.number()),
+});
+
+const openChoiceFieldSchema = z.strictObject({
+  ...baseFieldProps,
+  fieldType: z.literal('openchoice'),
+  options: z.optional(z.array(fieldOptionSchema)),
+  maxCustomOptions: z.optional(z.number()),
+  otherLabel: z.optional(z.string()),
+});
+
+const displayBaseFieldProps = {
+  id: z.string(),
+  width: z.optional(z.enum(['full', 'half', 'third'])),
+  rules: z.optional(z.array(conditionalRuleSchema)),
+  _sourceData: z.optional(z.unknown()),
+  _conversionWarnings: z.optional(z.array(z.unknown())),
+};
+
+const displayFieldSchema = z.strictObject({
+  ...displayBaseFieldProps,
   fieldType: z.literal('display'),
   content: z.optional(z.string()),
 });
@@ -665,9 +883,11 @@ const builtInFieldDefinitionSchema = z.discriminatedUnion('fieldType', [
   multiMatrixFieldSchema,
   // Rich
   imageFieldSchema,
+  fileFieldSchema,
   htmlFieldSchema,
   signatureFieldSchema,
   diagramFieldSchema,
+  openChoiceFieldSchema,
   displayFieldSchema,
   // Organization
   sectionFieldSchema,
@@ -717,7 +937,7 @@ export interface SelectedOption {
 /**
  * Response values for a single field.
  *
- * The shape of the response depends on the field type — consumers
+ * The shape of the response depends on the field type - consumers
  * inspect which property is present (duck typing) rather than
  * checking `fieldType`.
  *
@@ -732,7 +952,7 @@ export interface FieldResponse {
    * Selected option(s).
    * - `SelectedOption` for single-select (radio, dropdown, boolean, rating, slider)
    * - `SelectedOption[]` for multi-select (check, multiselectdropdown, ranking)
-   * - `Record<string, SelectedOption | SelectedOption[]>` for matrix (rowId → column(s))
+   * - `Record<string, SelectedOption | SelectedOption[]>` for matrix (rowId -> column(s))
    */
   selected?:
     | SelectedOption
@@ -748,6 +968,10 @@ export interface FieldResponse {
   markupData?: string;
   /** Base64 diagram image (diagram field). */
   markupImage?: string;
+  /** File/attachment(s) uploaded by user (file field). Supports single or multiple files. */
+  fileData?: AttachmentAnswer | AttachmentAnswer[];
+  /** Set to true when the response was filled programmatically by an AI agent. */
+  _ai?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -759,7 +983,9 @@ export const formDefinitionSchema = z.strictObject({
   id: z.string(),
   title: z.optional(z.string()),
   description: z.optional(z.string()),
-  fields: z.array(fieldDefinitionSchema),
+  /** When true, enables dangerously embedded JS - calculations on fields and conditionType 'js'. */
+  dangerouslyAllowJS: z.optional(z.boolean()),
+  fields: z.array(z.lazy(() => fieldDefinitionSchema)),
   _sourceData: z.optional(z.unknown()),
 });
 export type FormDefinition = z.infer<typeof formDefinitionSchema>;
@@ -861,13 +1087,21 @@ function makeOpenAICompatible(schema: JsonSchemaObject): JsonSchemaObject {
   return result;
 }
 
-/** Pre-computed JSON Schema (Draft-07) for FormDefinition — used by builder's Monaco editor. */
-export const formDefinitionJSONSchema: Record<string, unknown> =
-  makeOpenAICompatible(
+/**
+ * Return the JSON Schema (Draft-07) for FormDefinition - used by builder's Monaco editor.
+ *
+ * Intentionally lazy (not computed at module load) so that plugin field schemas
+ * registered via {@link registerFieldSchema} are included when first called.
+ * Evaluating eagerly at module load would cache `fieldDefinitionSchema`'s lazy
+ * inner type before any plugins have a chance to call `registerFieldSchema`.
+ */
+export function getFormDefinitionJSONSchema(): Record<string, unknown> {
+  return makeOpenAICompatible(
     z.toJSONSchema(formDefinitionSchema) as JsonSchemaObject
   );
+}
 
-/** Response store — maps field IDs to their response values. */
+/** Response store - maps field IDs to their response values. */
 export type FieldResponseMap = Record<string, FieldResponse>;
 
 // ---------------------------------------------------------------------------
@@ -887,6 +1121,8 @@ export type AttachmentAnswer = {
   dataUrl?: string;
   url?: string;
   title?: string;
+  /** File size in bytes (optional). */
+  size?: number;
 };
 
 /** All possible answer value shapes in a submission payload. */
@@ -902,7 +1138,7 @@ export type AnswerValue =
   | AttachmentAnswer
   | Record<string, SelectedOption | SelectedOption[]>;
 
-/** A single item in the submission payload — one per answerable field. */
+/** A single item in the submission payload - one per answerable field. */
 export interface ResponseItem {
   id: string;
   text?: string;
@@ -966,7 +1202,7 @@ export interface FieldTypeMeta {
 }
 
 /**
- * The field type registry — maps field type keys to their metadata.
+ * The field type registry - maps field type keys to their metadata.
  *
  * Uses `string` keys so consumers can register custom field types
  * beyond the 19 built-in ones.

@@ -1,5 +1,9 @@
 import React from 'react';
-import type { FieldComponentProps, SelectedOption } from '@esheet/core';
+import type {
+  FieldComponentProps,
+  SelectedOption,
+  CheckFieldDefinition,
+} from '@esheet/core';
 import { Checkbox } from '@mieweb/ui';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 
@@ -9,13 +13,15 @@ export const CheckField = React.memo(function CheckField({
   isPreview,
   isEnabled,
   isRequired,
+  isSoftRequired,
   response,
   onUpdate,
   onResponse,
 }: FieldComponentProps) {
-  const def = field.definition;
+  const def = field.definition as CheckFieldDefinition;
   const instanceId = form.getState().instanceId;
   const options = def.options || [];
+  const isWrap = def.optionLayout === 'wrap';
   const selectedArr =
     (response?.selected as SelectedOption[] | undefined) ?? [];
   const selectedIds = selectedArr.map((s) => s.id);
@@ -30,21 +36,41 @@ export const CheckField = React.memo(function CheckField({
 
   if (isPreview) {
     return (
-      <div className="check-field-preview ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
-        <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
+      <div className="check-field-preview ms:space-y-1.5">
+        <div className="ms:text-sm ms:font-medium ms:text-mstext ms:break-words ms:overflow-hidden">
           {def.question || 'Question'}
-          {isRequired && <span className="ms:text-msdanger ms:ml-0.5">*</span>}
+          {(isRequired || isSoftRequired) && (
+            <span
+              className={`ms:ml-0.5 ${
+                isSoftRequired ? 'ms:text-mswarning' : 'ms:text-msdanger'
+              }`}
+            >
+              *
+            </span>
+          )}
         </div>
-        <div className="ms:space-y-2">
+        <div
+          className={isWrap ? 'ms:flex ms:flex-wrap' : 'ms:space-y-1'}
+          style={isWrap ? { columnGap: '1rem', rowGap: '0.25rem' } : undefined}
+        >
           {options.map((option) => (
-            <Checkbox
+            <label
               key={option.id}
-              id={`${instanceId}-check-answer-${def.id}-${option.id}`}
-              checked={selectedIds.includes(option.id)}
-              onChange={() => toggleOption(option.id, option.value)}
-              disabled={!isEnabled}
-              label={option.value}
-            />
+              htmlFor={`${instanceId}-check-answer-${def.id}-${option.id}`}
+              className={`ms:flex ms:items-center ms:gap-2 ms:rounded ms:transition-colors ms:py-1 ms:px-1 ms:select-none ${
+                isEnabled
+                  ? 'ms:cursor-pointer ms:hover:bg-msprimary/5'
+                  : 'ms:cursor-not-allowed'
+              }`}
+            >
+              <Checkbox
+                id={`${instanceId}-check-answer-${def.id}-${option.id}`}
+                checked={selectedIds.includes(option.id)}
+                onChange={() => toggleOption(option.id, option.value)}
+                disabled={!isEnabled}
+              />
+              <span className="ms:text-sm ms:text-mstext">{option.value}</span>
+            </label>
           ))}
         </div>
       </div>

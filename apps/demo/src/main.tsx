@@ -1,4 +1,11 @@
 import './styles.css';
+import './ozwell-setup.js';
+import { registerFieldComponents } from '@esheet/fields';
+import {
+  RichTextEditorField,
+  configureRichTextField,
+} from '@esheet/field-kerebron';
+import { createAssetLoad } from '@kerebron/wasm/web';
 import { StrictMode } from 'react';
 import * as ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
@@ -7,6 +14,17 @@ import { BuilderView } from './views/BuilderView';
 import { RendererView } from './views/RendererView';
 import { Navbar } from './components/Navbar';
 import { BrandInitializer } from './components/BrandInitializer';
+
+// Register plugin fields (imports also self-register metadata + Zod schema)
+registerFieldComponents({ richtext: RichTextEditorField });
+
+// Configure Kerebron's markdown parser with the WASM asset loader.
+// WASM files are copied to public/kerebron-wasm/ at build time.
+configureRichTextField({
+  assetLoad: createAssetLoad(
+    `${import.meta.env.BASE_URL}kerebron-wasm`.replace(/\/\//g, '/')
+  ),
+});
 
 if (import.meta.env.DEV) {
   await import('../../../packages/builder/src/index.output.css');

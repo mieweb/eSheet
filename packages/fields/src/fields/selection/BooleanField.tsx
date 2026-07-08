@@ -1,5 +1,9 @@
 import React from 'react';
-import type { FieldComponentProps, SelectedOption } from '@esheet/core';
+import type {
+  FieldComponentProps,
+  SelectedOption,
+  BooleanFieldDefinition,
+} from '@esheet/core';
 
 export const BooleanField = React.memo(function BooleanField({
   field,
@@ -7,11 +11,12 @@ export const BooleanField = React.memo(function BooleanField({
   isPreview,
   isEnabled,
   isRequired,
+  isSoftRequired,
   response,
   onUpdate,
   onResponse,
 }: FieldComponentProps) {
-  const def = field.definition;
+  const def = field.definition as BooleanFieldDefinition;
   const instanceId = form.getState().instanceId;
   const options =
     def.options && def.options.length === 2
@@ -25,10 +30,18 @@ export const BooleanField = React.memo(function BooleanField({
 
   if (isPreview) {
     return (
-      <div className="boolean-field-preview ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
-        <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
+      <div className="boolean-field-preview ms:space-y-1.5">
+        <div className="ms:text-sm ms:font-medium ms:text-mstext ms:break-words ms:overflow-hidden">
           {def.question || 'Question'}
-          {isRequired && <span className="ms:text-msdanger ms:ml-0.5">*</span>}
+          {(isRequired || isSoftRequired) && (
+            <span
+              className={`ms:ml-0.5 ${
+                isSoftRequired ? 'ms:text-mswarning' : 'ms:text-msdanger'
+              }`}
+            >
+              *
+            </span>
+          )}
         </div>
         <div className="ms:flex ms:gap-2">
           {options.map((option) => {
@@ -42,8 +55,8 @@ export const BooleanField = React.memo(function BooleanField({
                 disabled={!isEnabled}
                 className={`ms:flex-1 ms:px-3 ms:py-2 ms:rounded-lg ms:text-sm ms:font-medium ms:transition-colors ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:disabled:opacity-50 ms:disabled:cursor-not-allowed ${
                   isSelected
-                    ? 'ms:bg-msprimary-active ms:text-mstextsecondary ms:border ms:border-msprimary ms:shadow-sm'
-                    : 'ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:hover:bg-msprimary-active ms:hover:text-mstextsecondary ms:hover:border-msprimary'
+                    ? 'ms:bg-msprimary ms:text-mstextsecondary ms:border ms:border-msprimary ms:shadow-sm'
+                    : 'ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:hover:bg-msprimary/15 ms:hover:border-msprimary/50'
                 }`}
                 onClick={() => {
                   if (isSelected) {

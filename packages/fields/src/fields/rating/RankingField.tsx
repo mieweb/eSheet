@@ -1,5 +1,9 @@
 import React from 'react';
-import type { FieldComponentProps, SelectedOption } from '@esheet/core';
+import type {
+  FieldComponentProps,
+  SelectedOption,
+  RankingFieldDefinition,
+} from '@esheet/core';
 import Sortable from 'sortablejs';
 import {
   TrashIcon,
@@ -21,6 +25,8 @@ function DraggableRankItem({
   total,
   fieldId,
   isEnabled,
+  isDragging,
+  anyDragging,
   onMove,
 }: {
   optId: string;
@@ -29,6 +35,8 @@ function DraggableRankItem({
   total: number;
   fieldId: string;
   isEnabled: boolean;
+  isDragging: boolean;
+  anyDragging: boolean;
   onMove: (optId: string, direction: 'up' | 'down') => void;
 }) {
   const canMoveUp = index > 0;
@@ -37,7 +45,13 @@ function DraggableRankItem({
   return (
     <div
       data-opt-id={optId}
-      className="ranking-field-item ms:relative ms:flex ms:items-center ms:px-3 ms:py-2 ms:bg-mssurface ms:border ms:border-msborder ms:rounded-lg ms:shadow-sm ms:hover:border-msprimary/50 ms:hover:bg-msprimary/10 ms:transition-colors"
+      className={`ranking-field-item ms:relative ms:flex ms:items-center ms:px-3 ms:py-2 ms:bg-mssurface ms:border ms:rounded-lg ms:shadow-sm ms:transition-colors ${
+        isDragging
+          ? 'ms:border-msprimary ms:bg-msprimary/10 ms:shadow-md'
+          : anyDragging
+          ? 'ms:border-msborder'
+          : 'ms:border-msborder ms:hover:border-msprimary/50 ms:hover:bg-msprimary/10'
+      }`}
     >
       <div
         className="rank-drag-handle ms:flex ms:items-center ms:mr-2 ms:text-mstextmuted ms:cursor-grab ms:active:cursor-grabbing ms:user-select-none"
@@ -89,6 +103,7 @@ function RankingPreview({
   fieldId,
   isEnabled,
   isRequired,
+  isSoftRequired,
   question,
   moveItem,
   setRanking,
@@ -98,11 +113,21 @@ function RankingPreview({
   fieldId: string;
   isEnabled: boolean;
   isRequired: boolean;
+  isSoftRequired: boolean;
   question: string | undefined;
   moveItem: (optId: string, direction: 'up' | 'down') => void;
   setRanking: (newOrder: string[]) => void;
 }) {
   const listRef = React.useRef<HTMLDivElement | null>(null);
+  const [draggingId, setDraggingId] = React.useState<string | null>(null);
+  // Use refs so the Sortable effect doesn't need to re-run on every ranking
+  // change — recreating Sortable mid-drag causes stale highlights & duplicates.
+  const rankingRef = React.useRef(ranking);
+  rankingRef.current = ranking;
+  const setRankingRef = React.useRef(setRanking);
+  setRankingRef.current = setRanking;
+  const setDraggingIdRef = React.useRef(setDraggingId);
+  setDraggingIdRef.current = setDraggingId;
 
   // Preview wrapper — owns Sortable drag-to-reorder state wiring
   React.useEffect(() => {
@@ -119,7 +144,15 @@ function RankingPreview({
       forceAutoScrollFallback: true,
       scrollSensitivity: 120,
       scrollSpeed: 18,
+      onChoose: (evt) => {
+        const id = evt.item.getAttribute('data-opt-id');
+        setDraggingIdRef.current(id);
+      },
+      onUnchoose: () => {
+        setDraggingIdRef.current(null);
+      },
       onEnd: (evt) => {
+        setDraggingIdRef.current(null);
         if (
           typeof evt.oldIndex !== 'number' ||
           typeof evt.newIndex !== 'number' ||
@@ -128,22 +161,30 @@ function RankingPreview({
           return;
         }
 
-        const next = [...ranking];
+        const next = [...rankingRef.current];
         const [moved] = next.splice(evt.oldIndex, 1);
         if (!moved) return;
         next.splice(evt.newIndex, 0, moved);
-        setRanking(next);
+        setRankingRef.current(next);
       },
     });
 
     return () => sortable.destroy();
-  }, [isEnabled, ranking, setRanking]);
+  }, [isEnabled]);
 
   return (
-    <div className="ranking-field-preview ms:text-mstext ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
-      <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
+    <div className="ranking-field-preview ms:text-mstext ms:space-y-1.5">
+      <div className="ms:text-sm ms:font-medium ms:text-mstext ms:break-words ms:overflow-hidden">
         {question || 'Question'}
-        {isRequired && <span className="ms:text-msdanger ms:ml-0.5">*</span>}
+        {(isRequired || isSoftRequired) && (
+          <span
+            className={`ms:ml-0.5 ${
+              isSoftRequired ? 'ms:text-mswarning' : 'ms:text-msdanger'
+            }`}
+          >
+            *
+          </span>
+        )}
       </div>
       <div ref={listRef} className="ms:flex ms:flex-col ms:gap-2">
         {ranking.map((optId, index) => (
@@ -155,6 +196,8 @@ function RankingPreview({
             total={ranking.length}
             fieldId={fieldId}
             isEnabled={isEnabled}
+            isDragging={draggingId === optId}
+            anyDragging={draggingId !== null}
             onMove={moveItem}
           />
         ))}
@@ -173,11 +216,12 @@ export const RankingField = React.memo(function RankingField({
   isPreview,
   isEnabled,
   isRequired,
+  isSoftRequired,
   response,
   onUpdate,
   onResponse,
 }: FieldComponentProps) {
-  const def = field.definition;
+  const def = field.definition as RankingFieldDefinition;
   const instanceId = form.getState().instanceId;
   const options = def.options || [];
 
@@ -226,6 +270,7 @@ export const RankingField = React.memo(function RankingField({
         fieldId={def.id}
         isEnabled={isEnabled}
         isRequired={isRequired}
+        isSoftRequired={isSoftRequired}
         question={def.question}
         moveItem={moveItem}
         setRanking={setRanking}

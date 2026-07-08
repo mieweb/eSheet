@@ -2,18 +2,31 @@
   "name": "app-docs",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "targets": {
+    "generate-doc-content": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node apps/docs/scripts/generate-doc-content.mjs"
+      },
+      "outputs": ["{projectRoot}/static/doc-content.json"]
+    },
     "dev": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npx nx run app-docs:serve"
-      }
+        "commands": [
+          "node apps/docs/scripts/generate-doc-content.mjs --watch",
+          "npx nx run app-docs:serve"
+        ],
+        "parallel": true
+      },
+      "dependsOn": ["generate-doc-content"]
     },
     "serve": {
       "executor": "nx:run-commands",
       "options": {
         "command": "npx docusaurus start --host 0.0.0.0 --port 3000 --no-open",
         "cwd": "apps/docs"
-      }
+      },
+      "dependsOn": ["generate-doc-content"]
     },
     "build": {
       "executor": "nx:run-commands",
@@ -21,6 +34,7 @@
         "command": "npx docusaurus build",
         "cwd": "apps/docs"
       },
+      "dependsOn": ["generate-doc-content"],
       "outputs": ["{projectRoot}/build"]
     },
     "preview": {

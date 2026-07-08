@@ -4,6 +4,7 @@ export {
   TEXT_INPUT_TYPES,
   CONDITION_OPERATORS,
   CONDITIONAL_EFFECTS,
+  VALIDATOR_TYPES,
 
   // Zod schemas
   fieldTypeSchema,
@@ -15,10 +16,11 @@ export {
   conditionalEffectSchema,
   conditionSchema,
   conditionalRuleSchema,
+  fieldValidatorSchema,
   fieldDefinitionSchema,
   formDefinitionSchema,
-  formDefinitionJSONSchema,
-  normalizeFormDefinition,
+  getFormDefinitionJSONSchema,
+  registerFieldSchema,
 
   // Types
   type FieldType,
@@ -33,7 +35,13 @@ export {
   type ConditionalEffect,
   type Condition,
   type ConditionalRule,
+  type ValidatorType,
+  type FieldValidator,
   type FieldDefinition,
+  type FieldWidth,
+  type OptionLayout,
+  type OptionBearingFieldDefinition,
+  hasOptions,
   // Per-field-type interfaces (discriminated union members)
   type TextFieldDefinition,
   type LongtextFieldDefinition,
@@ -43,12 +51,14 @@ export {
   type BooleanFieldDefinition,
   type DropdownFieldDefinition,
   type MultiselectDropdownFieldDefinition,
+  type OpenChoiceFieldDefinition,
   type RatingFieldDefinition,
   type RankingFieldDefinition,
   type SliderFieldDefinition,
   type SingleMatrixFieldDefinition,
   type MultiMatrixFieldDefinition,
   type ImageFieldDefinition,
+  type FileFieldDefinition,
   type HtmlFieldDefinition,
   type SignatureFieldDefinition,
   type DiagramFieldDefinition,
@@ -71,8 +81,8 @@ export {
   registerFieldType,
   getFieldTypeMeta,
   getRegisteredFieldTypes,
-  resetFieldTypeRegistry,
   registerFieldElements,
+  // NOTE: resetFieldTypeRegistry intentionally not exported - internal/test-only
 } from './lib/registry.js';
 
 export {
@@ -80,6 +90,7 @@ export {
   generateOptionId,
   generateRowId,
   generateColumnId,
+  slugifyQuestion,
 } from './lib/functions/ids.js';
 
 export {
@@ -92,13 +103,24 @@ export {
 export { hydrateResponse } from './lib/functions/hydrate-response.js';
 
 export {
+  normalizeResponses,
+  extractResponseValue,
+} from './lib/functions/normalize-responses.js';
+
+export {
   evaluateCondition,
   evaluateRule,
   isExpressionValid,
   evaluateExpression,
+  evaluateJsExpression,
+  normalizeExpression,
 } from './lib/logic/conditions.js';
 
-export { resolveEffect } from './lib/logic/resolve.js';
+export {
+  resolveEffect,
+  resolveSetValue,
+  resolveRequiredSeverity,
+} from './lib/logic/resolve.js';
 
 export {
   validateField,

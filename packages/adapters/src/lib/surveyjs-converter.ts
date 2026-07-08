@@ -46,6 +46,7 @@ interface SurveyJSElement {
   title?: string;
   description?: string;
   isRequired?: boolean;
+  readOnly?: boolean;
   inputType?: string;
   choices?: (string | SurveyJSChoice)[];
   rows?: (string | SurveyJSMatrixItem)[];
@@ -162,6 +163,7 @@ const TYPE_MAP: Record<string, FieldDefinition['fieldType']> = {
   checkbox: 'check',
   dropdown: 'dropdown',
   tagbox: 'multiselectdropdown',
+  select: 'openchoice',
   boolean: 'boolean',
   rating: 'rating',
   ranking: 'ranking',
@@ -173,7 +175,7 @@ const TYPE_MAP: Record<string, FieldDefinition['fieldType']> = {
   html: 'html',
   expression: 'html',
   imagepicker: 'radio',
-  file: 'text',
+  file: 'file',
   panel: 'section',
   paneldynamic: 'section',
   multipletext: 'multitext',
@@ -543,6 +545,34 @@ function convertElement(
         fieldType: 'signature',
       };
 
+    case 'file': {
+      const fileField: FieldDefinition = {
+        ...base,
+        fieldType: 'file' as const,
+      };
+      // Preserve file-specific metadata
+      if (element.acceptedTypes !== undefined) {
+        (fileField as unknown as Record<string, unknown>).accept =
+          element.acceptedTypes;
+      }
+      if (element.allowMultiple !== undefined) {
+        (fileField as unknown as Record<string, unknown>).maxFiles =
+          element.allowMultiple ? undefined : 1;
+      }
+      return fileField;
+    }
+
+    case 'openchoice': {
+      return {
+        ...base,
+        fieldType: 'openchoice',
+        options: (element.choices ?? []).map(convertChoice),
+        ...(element.otherText
+          ? { otherLabel: element.otherText }
+          : { otherLabel: 'Other, please specify' }),
+      };
+    }
+
     case 'image':
       return {
         ...base,
@@ -636,8 +666,10 @@ export function convertSurveyJSToESheet(
       if (survey.pages.length === 1) {
         fields.push(...page.elements.map((el) => convertElement(el)));
       } else {
-        // Multiple pages become sections
-        const sectionId = toKebabCase(page.name ?? page.title ?? 'page');
+        // Multiple pages become sections — prefix with "page-" to avoid
+        // collisions when a page name matches one of its element names.
+        const sectionId =
+          'page-' + toKebabCase(page.name ?? page.title ?? 'page');
         const sectionAncestors = new Set([sectionId]);
         fields.push({
           id: sectionId,
@@ -748,8 +780,12 @@ function fieldToSurveyElement(field: FieldDefinition): SurveyJSElement {
     meta?.surveyType ?? FIELD_TYPE_TO_SURVEY[field.fieldType] ?? 'text';
 
   const el: SurveyJSElement = { type, name };
-  if (field.question !== undefined) el.title = field.question;
+  const q = (field as { question?: string }).question;
+  if (q !== undefined) el.title = q;
   if (field.required) el.isRequired = true;
+  if ((field as unknown as { readOnly?: boolean }).readOnly) {
+    el.readOnly = true;
+  }
 
   // Restore conditional expressions verbatim from _sourceData for lossless round-trip.
   // Fall back to re-constructing from parsed rules.
@@ -810,6 +846,7 @@ function fieldToSurveyElement(field: FieldDefinition): SurveyJSElement {
     case 'multiselectdropdown':
     case 'ranking':
     case 'rating':
+    case 'openchoice':
       el.choices = (field.options ?? []).map((o) =>
         o.text !== undefined
           ? {
@@ -820,6 +857,15 @@ function fieldToSurveyElement(field: FieldDefinition): SurveyJSElement {
           : o.value
       );
       break;
+
+    case 'file': {
+      const fileField = field as unknown as Record<string, unknown>;
+      if (fileField.accept) el.acceptedTypes = fileField.accept as string;
+      if (fileField.maxFiles)
+        el.allowMultiple = (fileField.maxFiles as number) > 1;
+      break;
+    }
+
     case 'singlematrix':
     case 'multimatrix':
       el.rows = (field.rows ?? []).map((r) => ({ value: r.id, text: r.value }));
@@ -919,3 +965,24 @@ export const importFromSurveyJS = convertSurveyJSToESheet;
  * Alias for importFromSurveyJS / convertSurveyJSToESheet.
  */
 export const convertSurveyJS = convertSurveyJSToESheet;
+
+/** Minimal SurveyJS schema shape for detection. */
+export interface SurveyJSDetectionSchema {
+  pages?: unknown[];
+  elements?: unknown[];
+}
+
+/**
+ * Type guard — returns true if the value looks like a SurveyJS schema
+ * (has top-level `pages` or `elements` array but NOT eSheet's `fields` property).
+ */
+export function isSurveyJSSchema(
+  value: unknown
+): value is SurveyJSDetectionSchema {
+  if (typeof value !== 'object' || value === null) return false;
+  const v = value as Record<string, unknown>;
+  const hasPages = Array.isArray(v['pages']);
+  const hasElements = Array.isArray(v['elements']);
+  const hasESheetFields = typeof v['fields'] !== 'undefined';
+  return (hasPages || hasElements) && !hasESheetFields;
+}

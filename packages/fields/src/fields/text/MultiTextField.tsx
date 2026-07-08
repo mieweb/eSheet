@@ -1,5 +1,8 @@
 import React from 'react';
-import type { FieldComponentProps } from '@esheet/core';
+import type {
+  FieldComponentProps,
+  MultitextFieldDefinition,
+} from '@esheet/core';
 import { Input } from '@mieweb/ui';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 
@@ -9,31 +12,51 @@ export const MultiTextField = React.memo(function MultiTextField({
   isPreview,
   isEnabled,
   isRequired,
+  isSoftRequired,
   response,
   onUpdate,
   onResponse,
 }: FieldComponentProps) {
-  const def = field.definition;
+  const def = field.definition as MultitextFieldDefinition;
   const instanceId = form.getState().instanceId;
   const options = def.options || [];
+  const isWrap = def.optionLayout === 'wrap';
   const multitextAnswers = response?.multitextAnswers || {};
 
   if (isPreview) {
     return (
       <div className="multitext-field-preview ms:text-mstext ms:space-y-3 ms:pb-4">
-        {(def.question || isRequired) && (
+        {(def.question || isRequired || isSoftRequired) && (
           <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
             {def.question || 'Question'}
-            {isRequired && (
-              <span className="ms:text-msdanger ms:ml-0.5">*</span>
+            {(isRequired || isSoftRequired) && (
+              <span
+                className={`ms:ml-0.5 ${
+                  isSoftRequired ? 'ms:text-mswarning' : 'ms:text-msdanger'
+                }`}
+              >
+                *
+              </span>
             )}
           </div>
         )}
-        <div className="ms:space-y-2 ms:w-full">
+        <div
+          className={
+            isWrap ? 'ms:flex ms:flex-wrap ms:w-full' : 'ms:space-y-2 ms:w-full'
+          }
+          style={isWrap ? { columnGap: '0.5rem', rowGap: '0.5rem' } : undefined}
+        >
           {options.map((option) => {
             const inputId = `${instanceId}-multitext-answer-${def.id}-${option.id}`;
             return (
-              <div key={option.id} className="ms:flex ms:flex-col ms:gap-1">
+              <div
+                key={option.id}
+                className={
+                  isWrap
+                    ? 'ms:flex ms:flex-col ms:gap-1 ms:flex-1 ms:min-w-[12rem]'
+                    : 'ms:flex ms:flex-col ms:gap-1'
+                }
+              >
                 <label
                   htmlFor={inputId}
                   className="ms:text-xs ms:font-medium ms:text-mstextmuted ms:px-0 ms:text-left"

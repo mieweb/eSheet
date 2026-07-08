@@ -1,10 +1,73 @@
 import React from 'react';
 import type { FieldComponentProps, FormStore, UIStore } from '@esheet/core';
+import { hydrateDefinition } from '@esheet/core';
+import { renderer } from '@esheet/renderer';
 import Sortable from 'sortablejs';
-import { useVisibleFields } from '../hooks/useVisibleFields.js';
+import { useFormApi } from '../hooks/useFormApi.js';
+import { useUiApi } from '../hooks/useUiApi.js';
+import { useVisibleRootIds } from '../hooks/useVisibleRootIds.js';
 import { FieldWrapper } from './FieldWrapper.js';
 import { getFieldComponent } from '@esheet/fields';
 import { ViewBigIcon, ViewSmallIcon } from '../icons.js';
+
+// ---------------------------------------------------------------------------
+// Preview row grid
+// ---------------------------------------------------------------------------
+// Preview lays fields out on a 6-column grid so fields can share rows. Each
+// field's `width` decides how many columns it spans; the grid packs them left
+// to right and wraps automatically. On narrow screens the grid collapses to a
+// single stacked column.
+//   full  -> 6 cols (whole row)   half -> 3 cols (2/row)   third -> 2 cols (3/row)
+// The 6-column track is applied via inline style because Tailwind's responsive
+// display utilities (`ms:sm:grid`) are not reliably generated for these packages.
+const PREVIEW_GRID_CLASS = 'ms:gap-3';
+const PREVIEW_GRID_STYLE: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(6, minmax(0, 1fr))',
+  alignItems: 'start',
+};
+
+function previewColSpan(field: {
+  definition: { fieldType: string; width?: 'full' | 'half' | 'third' };
+}): number {
+  if (field.definition.fieldType === 'section') return 6;
+  switch (field.definition.width) {
+    case 'half':
+      return 3;
+    case 'third':
+      return 2;
+    default:
+      return 6;
+  }
+}
+
+// Below this viewport width the preview collapses to a single stacked column
+// (all fields full width), regardless of each field's chosen row width.
+const PREVIEW_STACK_MEDIA_QUERY = '(max-width: 900px)';
+
+/** True when the viewport is at tablet width or narrower. */
+function useIsNarrowPreview(): boolean {
+  const getMatches = () =>
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia(PREVIEW_STACK_MEDIA_QUERY).matches;
+
+  const [isNarrow, setIsNarrow] = React.useState(getMatches);
+
+  React.useEffect(() => {
+    if (
+      typeof window === 'undefined' ||
+      typeof window.matchMedia !== 'function'
+    )
+      return;
+    const mq = window.matchMedia(PREVIEW_STACK_MEDIA_QUERY);
+    const handler = (e: MediaQueryListEvent) => setIsNarrow(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  return isNarrow;
+}
 
 export interface CanvasProps {
   /** The form store */
@@ -30,6 +93,8 @@ function DraggableFieldItem({
   forceExpandVersion,
   forceCollapseVersion,
   nestedChildren,
+  previewGrid = false,
+  computedValue,
 }: {
   id: string;
   form: FormStore;
@@ -41,11 +106,11 @@ function DraggableFieldItem({
   forceExpandVersion?: number;
   forceCollapseVersion?: number;
   nestedChildren?: React.ReactNode;
+  previewGrid?: boolean;
+  computedValue?: string | number | null;
 }) {
   const handleRef = React.useRef<HTMLDivElement | null>(null);
   const field = form.getState().getField(id);
-
-  if (!field) return null;
 
   const handleSelectOverride = React.useCallback(
     (e: React.MouseEvent) => {
@@ -56,9 +121,19 @@ function DraggableFieldItem({
     [id, parentId, ui]
   );
 
+  if (!field) return null;
+
+  const wrapperClass = previewGrid
+    ? 'field-canvas-wrapper ms:relative'
+    : 'field-canvas-wrapper ms:relative ms:pb-1 ms:last:pb-0';
+  const wrapperStyle = previewGrid
+    ? { gridColumn: `span ${previewColSpan(field)}` }
+    : undefined;
+
   return (
     <div
-      className="field-canvas-wrapper ms:relative ms:pb-1 ms:last:pb-0"
+      className={wrapperClass}
+      style={wrapperStyle}
       data-field-id={id}
       data-field-type={field.definition.fieldType}
       data-selected={isSelected ? 'true' : 'false'}
@@ -73,11 +148,21 @@ function DraggableFieldItem({
         isSelectedOverride={parentId ? isActiveChild : undefined}
         onSelectOverride={parentId ? handleSelectOverride : undefined}
         selectedVariant={parentId ? 'nested' : 'default'}
+        computedValue={computedValue}
       >
         {(props) => {
-          const Component = getFieldComponent(
-            props.field.definition.fieldType
-          )!;
+          const Component = getFieldComponent(props.field.definition.fieldType);
+
+          if (!Component) {
+            return (
+              <p className="ms:text-sm ms:text-mstextmuted ms:p-2">
+                Unknown field type:{' '}
+                <code className="ms:font-mono">
+                  {props.field.definition.fieldType}
+                </code>
+              </p>
+            );
+          }
 
           if (props.field.definition.fieldType === 'section') {
             const SectionComponent = Component as React.ComponentType<
@@ -104,32 +189,11 @@ export const Canvas = React.memo(function Canvas({
   dragEnabled = true,
 }: CanvasProps) {
   const canvasRef = React.useRef<HTMLDivElement | null>(null);
-  const rootIds = useVisibleFields(form, ui);
-  const normalized = React.useSyncExternalStore(
-    (cb) => form.subscribe(cb),
-    () => form.getState().normalized,
-    () => form.getState().normalized
-  );
-  const mode = React.useSyncExternalStore(
-    (cb) => ui.subscribe(cb),
-    () => ui.getState().mode,
-    () => ui.getState().mode
-  );
-  const responses = React.useSyncExternalStore(
-    (cb) => form.subscribe(cb),
-    () => form.getState().responses,
-    () => form.getState().responses
-  );
-  const selectedFieldId = React.useSyncExternalStore(
-    (cb) => ui.subscribe(cb),
-    () => ui.getState().selectedFieldId,
-    () => ui.getState().selectedFieldId
-  );
-  const selectedFieldChildId = React.useSyncExternalStore(
-    (cb) => ui.subscribe(cb),
-    () => ui.getState().selectedFieldChildId,
-    () => ui.getState().selectedFieldChildId
-  );
+  const rootIds = useVisibleRootIds();
+  const { normalized, responses } = useFormApi();
+  const { mode, selectedFieldId, selectedFieldChildId } = useUiApi();
+  const isNarrowPreview = useIsNarrowPreview();
+  const showPreviewGrid = mode === 'preview' && !isNarrowPreview;
   const [sectionExpandSignal, setSectionExpandSignal] = React.useState<{
     sectionId: string;
     version: number;
@@ -140,6 +204,7 @@ export const Canvas = React.memo(function Canvas({
   const [collapseAllVersion, setCollapseAllVersion] = React.useState<
     number | undefined
   >(undefined);
+  const [allExpanded, setAllExpanded] = React.useState(false);
   const normalizedRef = React.useRef(normalized);
 
   React.useEffect(() => {
@@ -357,6 +422,30 @@ export const Canvas = React.memo(function Canvas({
     return rootIds.filter((id) => previewRenderableMap.get(id) === true);
   }, [mode, previewRenderableMap, rootIds]);
 
+  // Build render tree to extract computed values from setValue effects
+  const computedValuesMap = React.useMemo(() => {
+    const hydratedFields = hydrateDefinition(normalized);
+    const tree = renderer({ id: 'canvas', fields: hydratedFields }, responses);
+
+    const buildMap = (
+      nodes: typeof tree
+    ): Map<string, string | number | null> => {
+      const map = new Map<string, string | number | null>();
+      const walk = (n: typeof tree) => {
+        for (const node of n) {
+          if (node.computedValue !== undefined && node.computedValue !== null) {
+            map.set(node.id, node.computedValue);
+          }
+          walk(node.children);
+        }
+      };
+      walk(nodes);
+      return map;
+    };
+
+    return buildMap(tree);
+  }, [normalized, responses]);
+
   const getVisibleChildIds = React.useCallback(
     (parentId: string): readonly string[] => {
       const parent = normalized.byId[parentId];
@@ -378,10 +467,11 @@ export const Canvas = React.memo(function Canvas({
       if (mode === 'preview' && childIds.length === 0) return null;
 
       const isEmpty = mode !== 'preview' && childIds.length === 0;
+      const previewGridClass = showPreviewGrid ? ` ${PREVIEW_GRID_CLASS}` : '';
       const containerClass =
         depth === 1
-          ? 'section-children'
-          : 'section-children ms:border-l ms:border-msborder ms:pl-3';
+          ? `section-children${previewGridClass}`
+          : `section-children ms:border-l ms:border-msborder ms:pl-3${previewGridClass}`;
       const emptyClass = isEmpty
         ? ' ms:rounded-lg ms:border-2 ms:border-dashed ms:border-msprimary/30 ms:bg-gradient-to-br ms:from-msbackground ms:to-msbackgroundsecondary'
         : ' ms:min-h-[2rem]';
@@ -389,6 +479,7 @@ export const Canvas = React.memo(function Canvas({
       return (
         <div
           className={`${containerClass}${emptyClass}`}
+          style={showPreviewGrid ? PREVIEW_GRID_STYLE : undefined}
           data-depth={depth}
           data-sortable-list={dragEnabled ? 'true' : undefined}
           data-parent-id={parentId}
@@ -411,6 +502,7 @@ export const Canvas = React.memo(function Canvas({
               ui={ui}
               parentId={parentId}
               dragEnabled={dragEnabled}
+              previewGrid={showPreviewGrid}
               isSelected={
                 selectedFieldId === parentId && selectedFieldChildId === childId
               }
@@ -424,6 +516,7 @@ export const Canvas = React.memo(function Canvas({
               }
               forceCollapseVersion={collapseAllVersion}
               nestedChildren={renderNestedChildren(childId, depth + 1)}
+              computedValue={computedValuesMap.get(childId)}
             />
           ))}
         </div>
@@ -431,6 +524,7 @@ export const Canvas = React.memo(function Canvas({
     },
     [
       collapseAllVersion,
+      computedValuesMap,
       dragEnabled,
       expandAllVersion,
       form,
@@ -438,6 +532,7 @@ export const Canvas = React.memo(function Canvas({
       sectionExpandSignal,
       selectedFieldChildId,
       selectedFieldId,
+      showPreviewGrid,
       ui,
     ]
   );
@@ -457,35 +552,32 @@ export const Canvas = React.memo(function Canvas({
   return (
     <div className="ms:flex ms:flex-col ms:flex-1 ms:min-h-0">
       {mode === 'build' && (
-        <div className="ms:bg-msbackground ms:border-b ms:border-msborder ms:px-3 ms:py-1.5 ms:flex ms:items-center ms:justify-between ms:gap-2 ms:py-2 ms:mb-2">
-          <span className="ms:text-xs ms:font-medium ms:text-mstext/65 ms:uppercase ms:tracking-wide ms:select-none ms:py-1">
+        <div className="ms:bg-mssurface ms:border-b ms:border-msborder ms:px-4 ms:py-4 ms:flex ms:items-center ms:justify-between ms:gap-2">
+          <span className="ms:text-sm ms:font-semibold ms:text-mstext ms:select-none">
             Fields
           </span>
           {items.length > 0 && (
             <div className="ms:flex ms:items-center ms:gap-1">
               <button
                 type="button"
-                title="Expand all"
-                className="ms:flex ms:items-center ms:gap-1 ms:px-2  ms:text-xs ms:text-mstext/65 ms:hover:text-mstext ms:rounded ms:hover:bg-msbackgroundhover ms:transition-colors"
+                title={allExpanded ? 'Collapse all' : 'Expand all'}
+                className="ms:flex ms:items-center ms:gap-1 ms:px-2 ms:py-1 ms:text-xs ms:text-mstextmuted ms:hover:text-mstext ms:rounded ms:hover:bg-msbackgroundhover ms:transition-colors"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setExpandAllVersion((v) => (v ?? 0) + 1);
+                  if (allExpanded) {
+                    setCollapseAllVersion((v) => (v ?? 0) + 1);
+                  } else {
+                    setExpandAllVersion((v) => (v ?? 0) + 1);
+                  }
+                  setAllExpanded((v) => !v);
                 }}
               >
-                <ViewBigIcon className="ms:w-3.5 ms:h-3.5" />
-                Expand all
-              </button>
-              <button
-                type="button"
-                title="Collapse all"
-                className="ms:flex ms:items-center ms:gap-1 ms:px-2 ms:py-1 ms:text-xs ms:text-mstext/65 ms:hover:text-mstext ms:rounded ms:hover:bg-msbackgroundhover ms:transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCollapseAllVersion((v) => (v ?? 0) + 1);
-                }}
-              >
-                <ViewSmallIcon className="ms:w-3.5 ms:h-3.5" />
-                Collapse all
+                {allExpanded ? (
+                  <ViewSmallIcon className="ms:w-3.5 ms:h-3.5" />
+                ) : (
+                  <ViewBigIcon className="ms:w-3.5 ms:h-3.5" />
+                )}
+                {allExpanded ? 'Collapse all' : 'Expand all'}
               </button>
             </div>
           )}
@@ -498,7 +590,10 @@ export const Canvas = React.memo(function Canvas({
       ) : (
         <div
           ref={canvasRef}
-          className="canvas-fields ms:space-y-0 ms:flex-1 ms:min-h-0 ms:overflow-y-auto"
+          className={`canvas-fields ${
+            showPreviewGrid ? PREVIEW_GRID_CLASS : 'ms:space-y-0'
+          } ms:flex-1 ms:min-h-0 ms:overflow-y-auto ms:px-4 ms:pt-3 ms:pb-4`}
+          style={showPreviewGrid ? PREVIEW_GRID_STYLE : undefined}
           data-sortable-list={dragEnabled ? 'true' : undefined}
           data-parent-id=""
         >
@@ -509,6 +604,7 @@ export const Canvas = React.memo(function Canvas({
               form={form}
               ui={ui}
               dragEnabled={dragEnabled}
+              previewGrid={showPreviewGrid}
               isSelected={
                 selectedFieldId === id && selectedFieldChildId === null
               }
@@ -519,6 +615,7 @@ export const Canvas = React.memo(function Canvas({
               }
               forceCollapseVersion={collapseAllVersion}
               nestedChildren={renderNestedChildren(id)}
+              computedValue={computedValuesMap.get(id)}
             />
           ))}
         </div>

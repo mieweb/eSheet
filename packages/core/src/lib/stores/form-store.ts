@@ -32,6 +32,7 @@ import {
 import { hydrateResponse } from '../functions/hydrate-response.js';
 import type { FormResponse } from '../types.js';
 import { resolveEffect } from '../logic/resolve.js';
+import { evaluateJsExpression } from '../logic/conditions.js';
 import { validateField, validateForm } from '../logic/validate.js';
 import type { ValidationError } from '../logic/validate.js';
 
@@ -56,18 +57,32 @@ export interface FormState {
   readonly instanceId: string;
   /** Top-level form identifier used for import/export and schema validation. */
   readonly formId: string;
+  /** Human-readable form title preserved from the definition. */
+  readonly formTitle?: string;
+  /** Human-readable form description preserved from the definition. */
+  readonly formDescription?: string;
   /** Opaque metadata preserved from the original import source (e.g. MCP envelope fields). */
   readonly formSourceData?: unknown;
+  /** When true, enables dangerously embedded JS — field calculations and conditionType 'js'. */
+  readonly dangerouslyAllowJS: boolean;
   /** Flat-indexed map — the source of truth for field structure. */
   readonly normalized: NormalizedDefinition;
   /** Current responses keyed by field ID. */
   readonly responses: FieldResponseMap;
+  /** Field IDs that have been explicitly edited by the user (not auto-calculated). */
+  readonly userEditedFields: ReadonlySet<string>;
 
   // --- Lifecycle Actions ---
   /** Load a form definition (tree), normalizing it into the flat index. */
   loadDefinition: (definition: FormDefinition) => void;
   /** Update the top-level form id without replacing fields. */
   setFormId: (id: string) => void;
+  /** Update the form title. */
+  setFormTitle: (title: string | undefined) => void;
+  /** Update the form description. */
+  setFormDescription: (description: string | undefined) => void;
+  /** Enable or disable dangerously embedded JS for this form. */
+  setDangerouslyAllowJS: (enabled: boolean) => void;
   /** Set (or replace) a single field's response. */
   setResponse: (fieldId: string, response: FieldResponse) => void;
   /** Remove a single field's response. */
@@ -92,6 +107,12 @@ export interface FormState {
   addOption: (fieldId: string, value?: string) => string | null;
   /** Update an option's value. */
   updateOption: (fieldId: string, optionId: string, value: string) => boolean;
+  /** Set or clear an option's numeric score. Pass `undefined` to remove. */
+  setOptionScore: (
+    fieldId: string,
+    optionId: string,
+    score: number | undefined
+  ) => boolean;
   /** Remove an option. */
   removeOption: (fieldId: string, optionId: string) => boolean;
   /** Add a matrix row. Returns the generated row ID. */
@@ -104,6 +125,12 @@ export interface FormState {
   addColumn: (fieldId: string, value?: string) => string | null;
   /** Update a column's value. */
   updateColumn: (fieldId: string, columnId: string, value: string) => boolean;
+  /** Set or clear a column's numeric score. Pass `undefined` to remove. */
+  setColumnScore: (
+    fieldId: string,
+    columnId: string,
+    score: number | undefined
+  ) => boolean;
   /** Remove a matrix column. */
   removeColumn: (fieldId: string, columnId: string) => boolean;
 
@@ -116,8 +143,12 @@ export interface FormState {
   isVisible: (fieldId: string) => boolean;
   /** Whether a field is currently enabled. */
   isEnabled: (fieldId: string) => boolean;
-  /** Whether a field is currently required. */
+  /** Whether a field is currently hard-required. */
   isRequired: (fieldId: string) => boolean;
+  /** Whether a field is currently soft-required (warns but allows bypass). */
+  isSoftRequired: (fieldId: string) => boolean;
+  /** Whether a field is currently read-only. Always false until readOnly is fully implemented. */
+  isReadOnly: (fieldId: string) => boolean;
   /** Validate a single field and return its errors. */
   getFieldErrors: (fieldId: string) => ValidationError[];
   /** Validate all fields and return all errors. */
@@ -181,6 +212,74 @@ function reindexChildren(
       byId[ids[i]] = { ...node, index: i };
     }
   }
+}
+
+/**
+ * Replace all references to `oldId` with `newId` in a single field definition.
+ * Handles:
+ *  - condition.targetId  (field-condition direct reference)
+ *  - condition.expression  (expression language: `{oldId}` → `{newId}`)
+ *  - definition.content  (display field inline expressions: `<fn({oldId})>`)
+ *  - definition.calculation  (JS: `responses['oldId']` / `responses["oldId"]`)
+ */
+function rewriteFieldRefs(
+  def: FieldDefinition,
+  oldId: string,
+  newId: string
+): FieldDefinition {
+  const escaped = oldId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const exprPattern = new RegExp(`\\{${escaped}\\}`, 'g');
+  const jsPatternSingle = new RegExp(`responses\\['${escaped}'\\]`, 'g');
+  const jsPatternDouble = new RegExp(`responses\\["${escaped}"\\]`, 'g');
+
+  const replaceExpr = (s: string) => s.replace(exprPattern, `{${newId}}`);
+  const replaceJs = (s: string) =>
+    s
+      .replace(jsPatternSingle, `responses['${newId}']`)
+      .replace(jsPatternDouble, `responses["${newId}"]`);
+
+  let changed = false;
+
+  const updatedRules = def.rules?.map((rule) => ({
+    ...rule,
+    conditions: rule.conditions.map((cond) => {
+      let c = cond;
+      if (c.targetId === oldId) {
+        c = { ...c, targetId: newId };
+        changed = true;
+      }
+      if (c.expression) {
+        const next =
+          c.conditionType === 'js'
+            ? replaceJs(c.expression)
+            : replaceExpr(c.expression);
+        if (next !== c.expression) {
+          c = { ...c, expression: next };
+          changed = true;
+        }
+      }
+      return c;
+    }),
+  }));
+
+  // Update display field content (inline `{fieldId}` expression placeholders)
+  const defAny = def as unknown as Record<string, unknown>;
+  const content = defAny['content'] as string | undefined;
+  const updatedContent = content ? replaceExpr(content) : content;
+  if (updatedContent !== content) changed = true;
+
+  // Update calculation (JS)
+  const calc = def.calculation;
+  const updatedCalc = calc ? replaceJs(calc) : calc;
+  if (updatedCalc !== calc) changed = true;
+
+  if (!changed) return def;
+  return {
+    ...def,
+    ...(updatedRules ? { rules: updatedRules } : {}),
+    ...(updatedContent !== content ? { content: updatedContent } : {}),
+    ...(updatedCalc !== calc ? { calculation: updatedCalc } : {}),
+  } as FieldDefinition;
 }
 
 /** Recursively collect all descendant field IDs of a section. */
@@ -261,26 +360,40 @@ function createTemporaryFormId(): string {
   return id;
 }
 
-export function createFormStore(initial?: FormDefinition): FormStore {
+export function createFormStore(
+  initial?: FormDefinition,
+  hostAllowsJS = false
+): FormStore {
   const initialFormId = initial?.id?.trim() || createTemporaryFormId();
+  // Sealed at creation time — cannot be overridden by store mutations.
+  const _hostAllowsJS = hostAllowsJS;
 
-  return createStore<FormState>()((set, get) => ({
+  const store = createStore<FormState>()((set, get) => ({
     // --- Data ---
     instanceId: `ms-${nextInstanceId++}`,
     formId: initialFormId,
+    formTitle: initial?.title,
+    formDescription: initial?.description,
     formSourceData: initial?._sourceData,
+    dangerouslyAllowJS: (initial?.dangerouslyAllowJS ?? false) && _hostAllowsJS,
     normalized: initial
       ? normalizeDefinition(initial.fields)
       : EMPTY_NORMALIZED,
     responses: {},
+    userEditedFields: new Set<string>(),
 
     // --- Actions ---
     loadDefinition: (definition) =>
       set({
         formId: definition.id,
+        formTitle: definition.title,
+        formDescription: definition.description,
         formSourceData: definition._sourceData,
+        dangerouslyAllowJS:
+          (definition.dangerouslyAllowJS ?? false) && _hostAllowsJS,
         normalized: normalizeDefinition(definition.fields),
         responses: {},
+        userEditedFields: new Set<string>(),
       }),
 
     setFormId: (id) => {
@@ -289,10 +402,41 @@ export function createFormStore(initial?: FormDefinition): FormStore {
       set({ formId: nextId });
     },
 
+    setFormTitle: (title) => set({ formTitle: title }),
+
+    setFormDescription: (description) => set({ formDescription: description }),
+
+    setDangerouslyAllowJS: (enabled) =>
+      set({ dangerouslyAllowJS: enabled && _hostAllowsJS }),
+
     setResponse: (fieldId, response) =>
-      set((state) => ({
-        responses: { ...state.responses, [fieldId]: response },
-      })),
+      set((state) => {
+        const updated = { ...state.responses, [fieldId]: response };
+        // Mark this field as user-edited so calculations won't overwrite it
+        // (unless the field is explicitly readOnly).
+        const nextEdited = new Set(state.userEditedFields);
+        nextEdited.add(fieldId);
+        if (!state.dangerouslyAllowJS)
+          return { responses: updated, userEditedFields: nextEdited };
+        // Apply calculations for all fields that have a calculation string
+        const calcResponses = { ...updated };
+        for (const [calcId, node] of Object.entries(state.normalized.byId)) {
+          const calc = (node.definition as { calculation?: string })
+            .calculation;
+          if (!calc?.trim()) continue;
+          // Skip fields the user has manually edited
+          if (nextEdited.has(calcId)) continue;
+          const result = evaluateJsExpression(
+            calc,
+            state.normalized,
+            calcResponses
+          );
+          if (result !== null && result !== undefined) {
+            calcResponses[calcId] = { answer: String(result) };
+          }
+        }
+        return { responses: calcResponses, userEditedFields: nextEdited };
+      }),
 
     clearResponse: (fieldId) =>
       set((state) => {
@@ -301,7 +445,8 @@ export function createFormStore(initial?: FormDefinition): FormStore {
         return { responses: rest };
       }),
 
-    resetResponses: () => set({ responses: {} }),
+    resetResponses: () =>
+      set({ responses: {}, userEditedFields: new Set<string>() }),
 
     // --- Builder Actions ---
     addField: (fieldType, options) => {
@@ -313,7 +458,15 @@ export function createFormStore(initial?: FormDefinition): FormStore {
       if (parentId && !normalized.byId[parentId]) return null;
 
       const existingIds = new Set(Object.keys(normalized.byId));
-      const id = generateFieldId(fieldType, existingIds, parentId ?? undefined);
+      const patchQuestion = (
+        options?.patch as { question?: string } | undefined
+      )?.question;
+      const id = generateFieldId(
+        fieldType,
+        existingIds,
+        parentId ?? undefined,
+        patchQuestion
+      );
 
       // Build definition from registry defaults + caller patch
       const { fields: _nestedFields, ...defaults } = meta.defaultProps;
@@ -325,7 +478,7 @@ export function createFormStore(initial?: FormDefinition): FormStore {
         fieldType,
       } as FieldDefinition;
 
-      if (!definition.question) {
+      if (!(definition as { question?: string }).question) {
         const defaultQuestion = getDefaultQuestion(fieldType, meta.label);
         if (defaultQuestion) {
           (definition as unknown as Record<string, unknown>).question =
@@ -356,7 +509,7 @@ export function createFormStore(initial?: FormDefinition): FormStore {
       }
 
       if (meta.hasMatrix && count > 0) {
-        if (!(definition as { rows?: unknown[] }).rows?.length) {
+        if ((definition as { rows?: unknown[] }).rows === undefined) {
           const rows: MatrixRow[] = [];
           const rIds = new Set<string>();
           for (let i = 0; i < count; i++) {
@@ -366,7 +519,7 @@ export function createFormStore(initial?: FormDefinition): FormStore {
           }
           (definition as unknown as Record<string, unknown>).rows = rows;
         }
-        if (!(definition as { columns?: unknown[] }).columns?.length) {
+        if ((definition as { columns?: unknown[] }).columns === undefined) {
           const cols: MatrixColumn[] = [];
           const cIds = new Set<string>();
           for (let i = 0; i < count; i++) {
@@ -436,6 +589,16 @@ export function createFormStore(initial?: FormDefinition): FormStore {
         for (const childId of node.childIds) {
           const child = byId[childId];
           if (child) byId[childId] = { ...child, parentId: newId! };
+        }
+
+        // Update cross-field references to the renamed ID in all other fields
+        for (const otherId of Object.keys(byId)) {
+          if (otherId === newId!) continue;
+          const other = byId[otherId];
+          const rewritten = rewriteFieldRefs(other.definition, fieldId, newId!);
+          if (rewritten !== other.definition) {
+            byId[otherId] = { ...other, definition: rewritten };
+          }
         }
 
         set({ normalized: { byId, rootIds } });
@@ -582,6 +745,30 @@ export function createFormStore(initial?: FormDefinition): FormStore {
       return true;
     },
 
+    setOptionScore: (fieldId, optionId, score) => {
+      const result = patchField(get().normalized, fieldId, (def) => {
+        const opts = (def as unknown as { options?: FieldOption[] }).options;
+        if (!opts) return null;
+        let changed = false;
+        const next = opts.map((o) => {
+          if (o.id !== optionId) return o;
+          if (o.score === score) return o;
+          changed = true;
+          if (score === undefined) {
+            const { score: _s, ...rest } = o;
+            return rest;
+          }
+          return { ...o, score };
+        });
+        return changed
+          ? ({ ...def, options: next } as unknown as FieldDefinition)
+          : null;
+      });
+      if (!result) return false;
+      set({ normalized: result });
+      return true;
+    },
+
     removeOption: (fieldId, optionId) => {
       const result = patchField(get().normalized, fieldId, (def) => {
         const opts = (def as unknown as { options?: FieldOption[] }).options;
@@ -704,6 +891,30 @@ export function createFormStore(initial?: FormDefinition): FormStore {
       return true;
     },
 
+    setColumnScore: (fieldId, columnId, score) => {
+      const result = patchField(get().normalized, fieldId, (def) => {
+        const cols = (def as unknown as { columns?: MatrixColumn[] }).columns;
+        if (!cols) return null;
+        let changed = false;
+        const next = cols.map((c) => {
+          if (c.id !== columnId) return c;
+          if (c.score === score) return c;
+          changed = true;
+          if (score === undefined) {
+            const { score: _s, ...rest } = c;
+            return rest;
+          }
+          return { ...c, score };
+        });
+        return changed
+          ? ({ ...def, columns: next } as unknown as FieldDefinition)
+          : null;
+      });
+      if (!result) return false;
+      set({ normalized: result });
+      return true;
+    },
+
     removeColumn: (fieldId, columnId) => {
       const result = patchField(get().normalized, fieldId, (def) => {
         const cols = (def as unknown as { columns?: MatrixColumn[] }).columns;
@@ -724,40 +935,91 @@ export function createFormStore(initial?: FormDefinition): FormStore {
     getResponse: (fieldId) => get().responses[fieldId],
 
     isVisible: (fieldId) => {
-      const { normalized, responses } = get();
+      const { normalized, responses, dangerouslyAllowJS } = get();
       const node = normalized.byId[fieldId];
       if (!node) return false;
-      return resolveEffect('visible', node.definition, normalized, responses);
+      return resolveEffect(
+        'visible',
+        node.definition,
+        normalized,
+        responses,
+        dangerouslyAllowJS
+      );
     },
 
     isEnabled: (fieldId) => {
-      const { normalized, responses } = get();
+      const { normalized, responses, dangerouslyAllowJS } = get();
       const node = normalized.byId[fieldId];
       if (!node) return false;
-      return resolveEffect('enable', node.definition, normalized, responses);
+      return resolveEffect(
+        'enable',
+        node.definition,
+        normalized,
+        responses,
+        dangerouslyAllowJS
+      );
     },
 
     isRequired: (fieldId) => {
-      const { normalized, responses } = get();
+      const { normalized, responses, dangerouslyAllowJS } = get();
       const node = normalized.byId[fieldId];
       if (!node) return false;
-      return resolveEffect('required', node.definition, normalized, responses);
+      if (node.definition.required === 'soft') return false; // soft is handled by isSoftRequired
+      return resolveEffect(
+        'required',
+        node.definition,
+        normalized,
+        responses,
+        dangerouslyAllowJS
+      );
+    },
+
+    isSoftRequired: (fieldId) => {
+      const { normalized, responses, dangerouslyAllowJS } = get();
+      const node = normalized.byId[fieldId];
+      if (!node) return false;
+      if (node.definition.required !== 'soft') return false;
+      return resolveEffect(
+        'required',
+        node.definition,
+        normalized,
+        responses,
+        dangerouslyAllowJS
+      );
+    },
+
+    isReadOnly: (_fieldId) => {
+      // readOnly is not yet implemented — always returns false.
+      // TODO: implement readOnly properly (see INTERNAL-TICKETS/readonly-fields.md)
+      return false;
     },
 
     getFieldErrors: (fieldId) => {
-      const { normalized, responses } = get();
-      return validateField(fieldId, normalized, responses);
+      const { normalized, responses, dangerouslyAllowJS } = get();
+      return validateField(fieldId, normalized, responses, dangerouslyAllowJS);
     },
 
     getErrors: () => {
-      const { normalized, responses } = get();
-      return validateForm(normalized, responses);
+      const { normalized, responses, dangerouslyAllowJS } = get();
+      return validateForm(normalized, responses, dangerouslyAllowJS);
     },
 
     hydrateDefinition: () => {
-      const { normalized, formId, formSourceData } = get();
+      const {
+        normalized,
+        formId,
+        formTitle,
+        formDescription,
+        formSourceData,
+        dangerouslyAllowJS,
+      } = get();
       return {
         id: formId,
+        ...(formTitle !== undefined ? { title: formTitle } : {}),
+        ...(formDescription !== undefined
+          ? { description: formDescription }
+          : {}),
+        ...(dangerouslyAllowJS ? { dangerouslyAllowJS: true } : {}),
         ...(formSourceData !== undefined
           ? { _sourceData: formSourceData }
           : {}),
@@ -773,4 +1035,25 @@ export function createFormStore(initial?: FormDefinition): FormStore {
       });
     },
   }));
+
+  // Prevent external setState bypass: store.setState({ dangerouslyAllowJS: true })
+  // Internal set() calls in actions close over the original setState and are unaffected.
+  const _origSetState = store.setState.bind(store);
+  store.setState = (partial, replace?) => {
+    const resolved =
+      typeof partial === 'function' ? partial(store.getState()) : partial;
+    if (
+      resolved !== null &&
+      typeof resolved === 'object' &&
+      'dangerouslyAllowJS' in resolved
+    ) {
+      (resolved as Record<string, unknown>)['dangerouslyAllowJS'] =
+        Boolean((resolved as Record<string, unknown>)['dangerouslyAllowJS']) &&
+        _hostAllowsJS;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    _origSetState(resolved as any, replace as any);
+  };
+
+  return store;
 }

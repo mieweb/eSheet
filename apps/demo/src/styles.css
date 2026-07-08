@@ -9,12 +9,39 @@
    override Tailwind's preflight resets (border-width: 0) by source order. */
 @import '@mieweb/ui/styles.css';
 
-/* 4. Tell Tailwind to scan demo app source files + @mieweb/ui dist */
+/* 4. Tell Tailwind to scan demo app source files + @mieweb/ui dist + eSheet packages */
 @source "./";
 @source "../../../node_modules/@mieweb/ui/dist";
+@source "../../../packages/fields/src";
+@source "../../../packages/renderer/src";
+@source "../../../packages/builder/src";
 
 /* 5. Define dark mode variant for Tailwind 4 */
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+/* 6. Mobile nav sidebar — slide-in from left animation */
+@keyframes slide-in-left {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-out-left {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+@theme {
+  --animate-slide-in-left: slide-in-left 0.2s ease-out both;
+  --animate-slide-out-left: slide-out-left 0.2s ease-in both;
+}
 
 html,
 body {
@@ -27,6 +54,36 @@ body {
   color-scheme: dark;
 }
 
+/* Scrollbars — always themed, arrows invisible (match track) */
+:root {
+  scrollbar-color: var(--mieweb-foreground) var(--mieweb-background);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--mieweb-background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--mieweb-foreground);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--mieweb-muted-foreground);
+}
+
+::-webkit-scrollbar-button {
+  background: var(--mieweb-background);
+  display: block;
+  height: 0;
+  width: 0;
+}
+
 #root {
   min-height: 100%;
 }
@@ -34,6 +91,11 @@ body {
 body {
   font-family: system-ui, sans-serif;
   @apply bg-neutral-50 text-neutral-800 dark:bg-neutral-900 dark:text-neutral-100;
+}
+
+/* Invert logo SVG in dark mode */
+[data-theme='dark'] .demo-navbar img[alt='eSheet logo'] {
+  filter: invert(1);
 }
 
 /* Override Chrome autofill background in dark mode */

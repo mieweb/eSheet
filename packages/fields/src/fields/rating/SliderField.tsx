@@ -1,5 +1,9 @@
 import React from 'react';
-import type { FieldComponentProps, SelectedOption } from '@esheet/core';
+import type {
+  FieldComponentProps,
+  SelectedOption,
+  SliderFieldDefinition,
+} from '@esheet/core';
 import { Slider } from '@mieweb/ui';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 
@@ -9,11 +13,12 @@ export const SliderField = React.memo(function SliderField({
   isPreview,
   isEnabled,
   isRequired,
+  isSoftRequired,
   response,
   onUpdate,
   onResponse,
 }: FieldComponentProps) {
-  const def = field.definition;
+  const def = field.definition as SliderFieldDefinition;
   const instanceId = form.getState().instanceId;
   const options = def.options || [];
   const selectedId =
@@ -22,16 +27,18 @@ export const SliderField = React.memo(function SliderField({
 
   if (isPreview) {
     return (
-      <div
-        className={`slider-field-preview ms:text-mstext ms:grid ms:gap-2 ms:pb-4 ${
-          options.length > 5
-            ? 'ms:grid-cols-1'
-            : 'ms:grid-cols-1 ms:sm:grid-cols-2'
-        }`}
-      >
-        <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
+      <div className="slider-field-preview ms:text-mstext ms:space-y-1.5">
+        <div className="ms:text-sm ms:font-medium ms:text-mstext ms:break-words ms:overflow-hidden">
           {def.question || 'Question'}
-          {isRequired && <span className="ms:text-msdanger ms:ml-0.5">*</span>}
+          {(isRequired || isSoftRequired) && (
+            <span
+              className={`ms:ml-0.5 ${
+                isSoftRequired ? 'ms:text-mswarning' : 'ms:text-msdanger'
+              }`}
+            >
+              *
+            </span>
+          )}
         </div>
         {options.length > 0 ? (
           <Slider

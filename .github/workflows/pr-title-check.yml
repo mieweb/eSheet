@@ -22,7 +22,7 @@ jobs:
             exit 1
           fi
 
-          REGEX='^(feat|enhance|fix|perf|refactor|docs|test|chore|ci|build|repo)\((repo|docs|demo|core|fields|builder|renderer|renderer-standalone|renderer-blaze|adapters)\): .+$'
+          REGEX='^(feat|enhance|fix|perf|refactor|docs|test|chore|ci|build|repo)\((repo|docs|demo|core|fields|builder|renderer|renderer-standalone|renderer-blaze|adapters|field-kerebron)\): .+$'
 
           if [[ "$PR_TITLE" =~ $REGEX ]]; then
             echo "PR title is valid: $PR_TITLE"
@@ -31,7 +31,7 @@ jobs:
 
           cat <<'EOF'
           PR title must follow conventional commits format:
-            feat(scope): descriptionP
+            feat(scope): description
             enhance(scope): description
             fix(scope): description
             perf(scope): description
@@ -47,7 +47,7 @@ jobs:
             feat, enhance, fix, perf, refactor, docs, test, chore, ci, build, repo
 
           Allowed scopes:
-            repo, docs, demo, core, fields, builder, renderer, renderer-standalone, renderer-blaze, adapters
+            repo, docs, demo, core, fields, builder, renderer, renderer-standalone, renderer-blaze, adapters, field-kerebron
 
           Examples:
             repo(repo): update CI workflow

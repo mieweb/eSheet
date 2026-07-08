@@ -7,11 +7,14 @@ export {
   convertSurveyJSToESheet,
   importFromSurveyJS,
   exportToSurveyJS,
+  isSurveyJSSchema,
   SURVEYJS_SYSTEM_PROMPT,
+  type SurveyJSDetectionSchema,
 } from './lib/surveyjs-converter.js';
 export {
   importFromMcp,
   exportToMcp,
+  isMcpElicitationRequest,
   type McpElicitationSchema,
   type McpElicitationRequest,
   type McpProperty,
@@ -21,3 +24,4 @@ export {
   type McpArrayProp,
   type McpConstOption,
 } from './lib/mcp.js';
+export * from './fhir/index.js';

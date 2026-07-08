@@ -214,10 +214,10 @@ describe('normalizeDefinition', () => {
     ];
 
     const result = normalizeDefinition(fields);
-    const def = result.byId['q1'].definition;
+    const def = result.byId['q1'].definition as TextFieldDefinition;
     expect(def.question).toBe('Name?');
     expect(def.required).toBe(true);
-    expect((def as TextFieldDefinition).inputType).toBe('string');
-    expect((def as TextFieldDefinition).unit).toBe('kg');
+    expect(def.inputType).toBe('string');
+    expect(def.unit).toBe('kg');
   });
 });

@@ -1,6 +1,6 @@
 {
   "name": "@esheet/builder",
-  "version": "0.0.2",
+  "version": "0.0.4-1",
   "repository": {
     "type": "git",
     "url": "https://github.com/mieweb/eSheet"
@@ -38,14 +38,17 @@
     ]
   },
   "dependencies": {
-    "@esheet/adapters": "0.0.2",
-    "@esheet/core": "0.0.2-0",
-    "@esheet/fields": "0.0.2-0",
+    "@esheet/adapters": "0.0.4-1",
+    "@esheet/core": "0.0.4-1",
+    "@esheet/fields": "0.0.4-1",
+    "@mieweb/ui": "^0.6.1",
     "@monaco-editor/react": "^4.7.0",
     "js-yaml": "^4.1.1",
     "react": "^19.2.4",
     "sortablejs": "^1.15.7",
-    "tslib": "^2.3.0"
+    "tslib": "^2.3.0",
+    "zustand": "^5.0.11",
+    "@esheet/renderer": "0.0.4-1"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.2.1",

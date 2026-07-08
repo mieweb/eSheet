@@ -7,7 +7,23 @@ import {
   type FormStore,
   type UIStore,
 } from '@esheet/core';
-import { FormStoreContext, UIContext } from '@esheet/fields';
+import {
+  createBuilderTools,
+  type BuilderTools,
+  type FieldSummary,
+} from './builder-tools.js';
+import { FormStoreContext, UIContext, useTouchMode } from '@esheet/fields';
+import {
+  convertSurveyJS,
+  isSurveyJSSchema,
+  importFromMcp,
+  isMcpElicitationRequest,
+  importFromFhir,
+  isFhirQuestionnaire,
+  type McpElicitationRequest,
+  type McpElicitationSchema,
+  type FhirQuestionnaire,
+} from '@esheet/adapters';
 import { Canvas } from './components/Canvas.js';
 import { ToolPanel } from './components/ToolPanel.js';
 import { EditPanel } from './components/edit-panel/EditPanel.js';
@@ -15,6 +31,8 @@ import { BuilderHeader } from './components/BuilderHeader.js';
 import { CodeView } from './components/CodeView.js';
 import { PlusIcon } from './icons.js';
 import { ensureDefaultFieldComponentsRegistered } from './register-defaults.js';
+import { MobileBottomDrawer } from './components/MobileBottomDrawer.js';
+import { Switch } from '@mieweb/ui';
 
 // ---------------------------------------------------------------------------
 // Contexts
@@ -33,86 +51,104 @@ export function useInstanceId(): string {
   return React.useContext(InstanceIdContext);
 }
 
+// Re-export for public API
+export type { BuilderTools, FieldSummary };
+
 // ---------------------------------------------------------------------------
 // Props
 // ---------------------------------------------------------------------------
 
 export interface EsheetBuilderProps {
-  /** Initial form definition to load. */
-  definition?: FormDefinition;
+  /** Initial form definition to load. Also accepts SurveyJS, MCP elicitation, or FHIR Questionnaire schemas, which are auto-converted. */
+  definition?: FormDefinition | Record<string, unknown>;
   /** Callback fired when the form definition changes. */
   onChange?: (definition: FormDefinition) => void;
-  /** Whether drag-and-drop reordering is enabled (default: true). Disable for better performance on slow devices. */
+  /**
+   * Opt-in to allow dangerously embedded JavaScript in this builder instance.
+   * When `false` (default), the JS toggle is hidden and any `dangerouslyAllowJS: true`
+   * flag in the loaded schema is suppressed — JS never executes regardless of schema content.
+   * Only set to `true` when you fully control and trust the form schemas being authored.
+   */
+  allowDangerousJS?: boolean;
+  /**
+   * Called once after the builder mounts, providing a narrow `BuilderTools`
+   * facade for MCP / AI tool integrations. Not intended for general developer use —
+   * everything a developer needs is available through the builder's own UI and props.
+   */
+  onBuilderToolsReady?: (tools: BuilderTools) => void;
+  /** Whether drag-and-drop reordering is enabled (default: true). When false, field reordering is disabled entirely — no fallback UI (e.g. arrow buttons) is shown. */
   dragEnabled?: boolean;
   /** Additional CSS class name. */
   className?: string;
   /** Optional content rendered below the header (e.g. custom status/debug panels). */
   children?: React.ReactNode;
+  /**
+   * Enable touch-optimized mode with larger touch targets in preview mode.
+   * - `true`: Always enable touch mode
+   * - `false`: Never enable touch mode (CSS media query still applies)
+   * - `'auto'`: Enable based on viewport width (<980px) via JavaScript
+   * - `undefined`: Rely on CSS media query only (default)
+   */
+  touchMode?: boolean | 'auto';
+  /** Called when touch mode changes (via auto-detection or programmatic toggle). */
+  onTouchModeChange?: (enabled: boolean) => void;
 }
 
-interface MobileBottomDrawerProps {
-  title: string;
-  open: boolean;
-  onClose: () => void;
-  children: React.ReactNode;
-}
-
-function MobileBottomDrawer({
-  title,
-  open,
-  onClose,
-  children,
-}: MobileBottomDrawerProps) {
-  if (!open) return null;
-
-  return (
-    <>
-      <button
-        type="button"
-        className="ms:lg:hidden ms:fixed ms:inset-0 ms:z-40 ms:bg-msoverlay ms:border-0"
-        onClick={onClose}
-        aria-label={`Close ${title} drawer`}
-      />
-      <div className="ms:lg:hidden ms:fixed ms:left-0 ms:right-0 ms:bottom-0 ms:z-50 ms:h-[50dvh] ms:bg-mssurface ms:border-t ms:border-msborder ms:rounded-t-2xl ms:shadow-2xl ms:overflow-hidden">
-        <div className="ms:flex ms:items-center ms:justify-between ms:px-4 ms:py-2 ms:border-b ms:border-msborder">
-          <span className="ms:text-sm ms:font-medium ms:text-mstext">
-            {title}
-          </span>
-          <button
-            type="button"
-            onClick={onClose}
-            className="ms:px-2 ms:py-1 ms:bg-transparent ms:text-mstextmuted ms:border-0 ms:outline-none ms:focus:outline-none"
-            aria-label={`Close ${title} drawer`}
-          >
-            Close
-          </button>
-        </div>
-        <div className="ms:h-[calc(50dvh-45px)] ms:overflow-y-auto">
-          {children}
-        </div>
-      </div>
-    </>
-  );
+export interface EsheetBuilderHandle {
+  /** Returns true if touch mode is currently enabled */
+  isTouchModeEnabled: () => boolean;
+  /** Toggle touch mode on/off. Only works when touchMode prop is 'auto' or undefined. */
+  setTouchMode: (enabled: boolean) => void;
+  /** Reset to auto-detection mode (clears manual override). Only works when touchMode='auto'. */
+  resetTouchMode: () => void;
 }
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-export function EsheetBuilder({
-  definition,
-  onChange,
-  dragEnabled = true,
-  className = '',
-  children,
-}: EsheetBuilderProps) {
+export const EsheetBuilder = React.forwardRef<
+  EsheetBuilderHandle,
+  EsheetBuilderProps
+>(function EsheetBuilder(
+  {
+    definition,
+    onChange,
+    onBuilderToolsReady,
+    dragEnabled = true,
+    className = '',
+    children,
+    touchMode: touchModeProp,
+    onTouchModeChange,
+    allowDangerousJS = false,
+  },
+  ref
+) {
   ensureDefaultFieldComponentsRegistered();
 
   const formRef = React.useRef<FormStore | null>(null);
   const uiRef = React.useRef<UIStore | null>(null);
 
   if (!formRef.current) {
-    formRef.current = createFormStore(definition);
+    let resolved: FormDefinition | undefined;
+    if (isFhirQuestionnaire(definition)) {
+      resolved = importFromFhir(definition as FhirQuestionnaire);
+    } else if (isSurveyJSSchema(definition)) {
+      resolved = convertSurveyJS(
+        definition as Parameters<typeof convertSurveyJS>[0]
+      );
+    } else if (isMcpElicitationRequest(definition)) {
+      const mcpReq = definition as McpElicitationRequest;
+      if (mcpReq.params.mode !== 'url') {
+        resolved = importFromMcp(
+          mcpReq.params.requestedSchema as McpElicitationSchema,
+          { mcpId: mcpReq.id, mcpMessage: mcpReq.params.message }
+        );
+      }
+    } else {
+      resolved = definition as FormDefinition | undefined;
+    }
+    formRef.current = createFormStore(resolved, allowDangerousJS);
   }
   if (!uiRef.current) {
     uiRef.current = createUIStore();
@@ -142,6 +178,21 @@ export function EsheetBuilder({
   );
   const [toolsModalOpen, setToolsModalOpen] = React.useState(false);
 
+  // Touch mode state using shared hook
+  const { isTouchEnabled, isManualOverride, setTouchMode, resetTouchMode } =
+    useTouchMode({ mode: touchModeProp, onChange: onTouchModeChange });
+
+  // Expose ref API for touch mode
+  React.useImperativeHandle(
+    ref,
+    () => ({
+      isTouchModeEnabled: () => isTouchEnabled,
+      setTouchMode,
+      resetTouchMode,
+    }),
+    [isTouchEnabled, setTouchMode, resetTouchMode]
+  );
+
   React.useEffect(() => {
     if (mode !== 'build') {
       setToolsModalOpen(false);
@@ -163,27 +214,42 @@ export function EsheetBuilder({
     });
   }, [form, onChange]);
 
+  // Expose a narrow BuilderTools facade to MCP / AI tool callers once on mount.
+  React.useEffect(() => {
+    if (onBuilderToolsReady) onBuilderToolsReady(createBuilderTools(form));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form]);
+
+  // Apply disabled class when user explicitly disabled touch mode (prevents CSS media query)
+  const applyTouchDisabledClass = isManualOverride && !isTouchEnabled;
+
+  // Build root class string
+  const rootClasses = [
+    'ms-builder-root',
+    isTouchEnabled && 'esheet-touch-active',
+    applyTouchDisabledClass && 'touch-mode-disabled',
+    'ms:flex ms:h-full ms:flex-1 ms:min-h-0 ms:max-h-full ms:w-full ms:min-w-0 ms:max-w-[1440px] ms:mx-auto ms:flex-col ms:gap-2',
+    'ms:overflow-x-hidden ms:bg-msbackground ms:text-mstext',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
     <FormStoreContext.Provider value={form}>
       <UIContext.Provider value={ui}>
         <InstanceIdContext.Provider value={instanceId}>
-          <div
-            className={`ms-builder-root ms:flex ms:h-full ms:flex-1 ms:min-h-0 ms:max-h-full ms:w-full ms:min-w-0 ms:max-w-[1440px] ms:mx-auto ms:flex-col ms:gap-2 
-                        ms:overflow-x-hidden ms:bg-msbackground ms:text-mstext ${className}`.trim()}
-          >
+          <div className={rootClasses}>
             <div className="ms:sticky ms:top-0 ms:z-40 ms:bg-msbackground">
-              <BuilderHeader form={form} ui={ui} />
+              <BuilderHeader allowDangerousJS={allowDangerousJS} />
             </div>
             {children}
             {mode === 'build' && (
-              <div className="builder-layout ms:grid ms:flex-1 ms:min-h-0 ms:min-w-0 ms:grid-cols-1 ms:lg:grid-cols-[18rem_minmax(0,1fr)_340px] ms:gap-3 ms:overflow-hidden">
-                <aside
-                  className="panel-tools-wrap panel-tools ms:hidden ms:lg:flex ms:self-start ms:min-h-0 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto ms:flex-col ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface"
-                  aria-label="Field types"
-                >
-                  <ToolPanel form={form} ui={ui} />
+              <div className="builder-layout ms:grid ms:min-w-0 ms:grid-cols-1 ms:lg:grid-cols-[18rem_minmax(0,1fr)_340px] ms:gap-3">
+                <aside className="panel-tools-wrap panel-tools ms:hidden ms:lg:flex ms:self-start ms:min-h-0 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto ms:flex-col ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
+                  <ToolPanel />
                 </aside>
-                <main className="panel-canvas ms:min-w-0 ms:min-h-0 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-hidden ms:flex ms:flex-col ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:px-4 ms:pb-4">
+                <main className="panel-canvas ms:min-w-0 ms:self-start ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-hidden ms:flex ms:flex-col ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
                   <Canvas form={form} ui={ui} dragEnabled={dragEnabled} />
                   <div className="ms:lg:hidden ms:sticky ms:bottom-0 ms:z-20 ms:pt-2 ms:pb-3 ms:flex ms:justify-center ms:pointer-events-none">
                     <button
@@ -197,11 +263,8 @@ export function EsheetBuilder({
                     </button>
                   </div>
                 </main>
-                <aside
-                  className="panel-editor-wrap panel-editor ms:hidden ms:lg:flex ms:self-start ms:min-h-0 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto ms:flex-col ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface"
-                  aria-label="Field editor"
-                >
-                  <EditPanel form={form} ui={ui} />
+                <aside className="panel-editor-wrap panel-editor ms:hidden ms:lg:flex ms:self-start ms:min-h-0 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto ms:flex-col ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
+                  <EditPanel />
                 </aside>
 
                 <MobileBottomDrawer
@@ -209,7 +272,7 @@ export function EsheetBuilder({
                   open={toolsModalOpen}
                   onClose={() => setToolsModalOpen(false)}
                 >
-                  <ToolPanel form={form} ui={ui} />
+                  <ToolPanel />
                 </MobileBottomDrawer>
 
                 <MobileBottomDrawer
@@ -217,7 +280,7 @@ export function EsheetBuilder({
                   open={editModalOpen && !!selectedFieldId}
                   onClose={() => ui.getState().setEditModalOpen(false)}
                 >
-                  <EditPanel form={form} ui={ui} />
+                  <EditPanel />
                 </MobileBottomDrawer>
               </div>
             )}
@@ -227,7 +290,15 @@ export function EsheetBuilder({
               </div>
             )}
             {mode === 'preview' && (
-              <div className="preview-layout ms:flex-1 ms:min-h-0 ms:min-w-0 ms:w-full ms:max-w-2xl ms:mx-auto ms:p-4 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto">
+              <div className="preview-layout ms:flex-1 ms:min-h-0 ms:min-w-0 ms:w-full ms:max-w-5xl ms:mx-auto ms:p-4 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto">
+                <div className="ms:flex ms:items-center ms:justify-end ms:mb-3">
+                  <Switch
+                    size="sm"
+                    checked={isTouchEnabled}
+                    onCheckedChange={setTouchMode}
+                    label="Touch Mode"
+                  />
+                </div>
                 <Canvas form={form} ui={ui} dragEnabled={false} />
               </div>
             )}
@@ -236,4 +307,4 @@ export function EsheetBuilder({
       </UIContext.Provider>
     </FormStoreContext.Provider>
   );
-}
+});

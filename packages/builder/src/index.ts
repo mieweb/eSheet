@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore — generated CSS asset, no type declarations needed
 import './index.output.css';
 
 // Re-export UIStore from core for backward compat
@@ -19,6 +21,8 @@ export {
   useUI,
   useInstanceId,
   type EsheetBuilderProps,
+  type BuilderTools,
+  type FieldSummary,
 } from './lib/EsheetBuilder.js';
 
 export {
@@ -31,7 +35,6 @@ export {
   registerCustomFieldTypes,
   getFieldComponent,
   getRegisteredComponentKeys,
-  resetComponentRegistry,
 } from '@esheet/fields';
 
 export {
@@ -40,3 +43,23 @@ export {
 } from './lib/components/BuilderHeader.js';
 
 export { CodeView, type CodeViewProps } from './lib/components/CodeView.js';
+
+export {
+  useFormApi,
+  type FormApi,
+  type FieldResponseMap,
+} from './lib/hooks/useFormApi.js';
+export { useUiApi, type UiApi } from './lib/hooks/useUiApi.js';
+export { useVisibleRootIds } from './lib/hooks/useVisibleRootIds.js';
+
+export {
+  executeToolCall,
+  BUILDER_TOOL_DEFINITIONS,
+  BUILDER_SYSTEM_PROMPT,
+  useBuilderMcpToolHandler,
+  type ToolDefinition,
+  type UseBuilderMcpToolHandlerOptions,
+} from './lib/mcp/index.js';
+
+// Re-export core schema types for consumer convenience
+export type { FormDefinition, FieldDefinition } from '@esheet/core';

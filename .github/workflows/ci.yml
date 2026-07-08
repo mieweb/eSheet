@@ -26,4 +26,4 @@ jobs:
       - run: npm ci --include=optional
 
       - run: npx nx format:check --base="$NX_BASE"
-      - run: npx nx run-many -t lint test build typecheck
+      - run: npx nx run-many -t lint test build typecheck --exclude=app-docs

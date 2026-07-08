@@ -1,5 +1,10 @@
 import React from 'react';
-import { evaluateExpression, type FieldComponentProps } from '@esheet/core';
+import {
+  evaluateExpression,
+  evaluateJsExpression,
+  type FieldComponentProps,
+  type DisplayFieldDefinition,
+} from '@esheet/core';
 
 function formatComputedValue(value: unknown): string {
   if (value == null) return '';
@@ -21,26 +26,82 @@ function formatComputedValue(value: unknown): string {
 function interpolateExpressions(
   source: string,
   normalized: ReturnType<FieldComponentProps['form']['getState']>['normalized'],
-  responses: ReturnType<FieldComponentProps['form']['getState']>['responses']
+  responses: ReturnType<FieldComponentProps['form']['getState']>['responses'],
+  dangerouslyAllowJS: boolean
 ): string {
   if (!source) return '';
-  // {field-id}   — simple field value lookup (consistent with schema convention)
-  // <expression> — full expression, supports {ref} + arithmetic (e.g. <{a} * {b} + " pts">)
-  return source.replace(
-    /\{([^{}]+)\}|<([^>]+)>/g,
-    (_match, fieldId: string | undefined, expr: string | undefined) => {
-      if (fieldId !== undefined) {
-        const id = fieldId.trim();
-        if (!id) return '';
-        return formatComputedValue(
-          evaluateExpression(`{${id}}`, normalized, responses)
+  // {field-id}        — simple field value lookup
+  // <expression>      — safe AST expression ({ref} + arithmetic/functions)
+  //                     closing > is paren-depth-aware so >= inside args works
+  // [[js expression]] — arbitrary JS (only when dangerouslyAllowJS is true)
+  let result = '';
+  let i = 0;
+
+  while (i < source.length) {
+    // [[js expression]]
+    if (source[i] === '[' && source[i + 1] === '[') {
+      const end = source.indexOf(']]', i + 2);
+      if (end === -1) {
+        result += source[i++];
+        continue;
+      }
+      const jsExpr = source.slice(i + 2, end).trim();
+      if (jsExpr && dangerouslyAllowJS) {
+        result += formatComputedValue(
+          evaluateJsExpression(jsExpr, normalized, responses)
         );
       }
-      const e = expr?.trim();
-      if (!e) return '';
-      return formatComputedValue(evaluateExpression(e, normalized, responses));
+      i = end + 2;
+      continue;
     }
-  );
+
+    // {field-id}
+    if (source[i] === '{') {
+      const end = source.indexOf('}', i + 1);
+      if (end === -1) {
+        result += source[i++];
+        continue;
+      }
+      const fieldId = source.slice(i + 1, end).trim();
+      if (fieldId) {
+        result += formatComputedValue(
+          evaluateExpression(`{${fieldId}}`, normalized, responses)
+        );
+      }
+      i = end + 1;
+      continue;
+    }
+
+    // <expression> — scan for closing > at paren depth 0 so >= doesn't close early
+    if (source[i] === '<') {
+      let depth = 0;
+      let j = i + 1;
+      while (j < source.length) {
+        const ch = source[j];
+        if (ch === '(') depth++;
+        else if (ch === ')') depth--;
+        else if (ch === '>' && depth === 0) break;
+        j++;
+      }
+      if (j < source.length && source[j] === '>') {
+        const expr = source.slice(i + 1, j).trim();
+        if (expr) {
+          result += formatComputedValue(
+            evaluateExpression(expr, normalized, responses)
+          );
+        }
+        i = j + 1;
+        continue;
+      }
+      // No matching > found — emit literal <
+      result += source[i++];
+      continue;
+    }
+
+    result += source[i++];
+  }
+
+  return result;
 }
 
 // Renders inline markdown with recursive nesting so formats can combine.
@@ -58,8 +119,12 @@ function renderInlineNode(text: string, key: string): React.ReactNode {
       </React.Fragment>
     );
   }
-  // Italic — -text- (no leading/trailing space to avoid conflicting with bullet `- `)
-  const italic = text.match(/^(.*?)-([^\s-][^-]*[^\s-]|[^\s-])-(.*)$/s);
+  // Italic — -text- (no leading/trailing space to avoid conflicting with bullet `- `).
+  // Digit-flanked hyphens are skipped so ISO dates (2026-01-31), ranges, and
+  // negative numbers from computed expressions are not mangled into <em>.
+  const italic = text.match(
+    /^(.*?)(?<!\d)-([^\s-][^-]*[^\s-]|[^\s-])-(?!\d)(.*)$/s
+  );
   if (italic) {
     return (
       <React.Fragment key={key}>
@@ -214,17 +279,23 @@ export const DisplayField = React.memo(function DisplayField({
   isPreview,
   onUpdate,
 }: FieldComponentProps) {
-  const def = field.definition;
+  const def = field.definition as DisplayFieldDefinition;
   const instanceId = form.getState().instanceId;
-  const { normalized, responses } = React.useSyncExternalStore(
-    (cb) => form.subscribe(cb),
-    () => form.getState(),
-    () => form.getState()
-  );
+  const { normalized, responses, dangerouslyAllowJS } =
+    React.useSyncExternalStore(
+      (cb) => form.subscribe(cb),
+      () => form.getState(),
+      () => form.getState()
+    );
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
   const source = def.content ?? '';
-  const rendered = interpolateExpressions(source, normalized, responses);
+  const rendered = interpolateExpressions(
+    source,
+    normalized,
+    responses,
+    dangerouslyAllowJS
+  );
 
   if (isPreview) {
     return (

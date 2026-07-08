@@ -1,14 +1,13 @@
-import React, { useSyncExternalStore } from 'react';
+import React from 'react';
 import YAML from 'js-yaml';
 import {
   formatZodValidationError,
   formDefinitionSchema,
   type Condition,
   isExpressionValid,
+  hasOptions,
   type FieldDefinition,
   type FormDefinition,
-  type FormStore,
-  type UIStore,
   type BuilderMode,
   type ValidationError,
   type FormResponseEnvelope,
@@ -16,7 +15,15 @@ import {
 import {
   importFromMcp,
   exportToMcp,
+  convertSurveyJS,
+  isSurveyJSSchema,
+  isMcpElicitationRequest,
+  importFromFhir,
+  exportToFhir,
+  isFhirQuestionnaire,
+  type McpElicitationRequest,
   type McpElicitationSchema,
+  type FhirQuestionnaire,
 } from '@esheet/adapters';
 import {
   VEditorIcon,
@@ -26,10 +33,12 @@ import {
   DownloadIcon,
 } from '../icons.js';
 import { FeedbackModal, type FeedbackModalVariant } from './FeedbackModal.js';
+import { useUiApi } from '../hooks/useUiApi.js';
+import { useFormApi } from '../hooks/useFormApi.js';
 
 export interface BuilderHeaderProps {
-  form: FormStore;
-  ui: UIStore;
+  /** When false (default), hides the JS toggle and prevents enabling dangerous JS. */
+  allowDangerousJS?: boolean;
 }
 
 interface FeedbackState {
@@ -116,21 +125,10 @@ function collectImportWarnings(fields: FieldDefinition[]): string[] {
     }
   }
 
-  const optionRequiredTypes = new Set([
-    'radio',
-    'check',
-    'dropdown',
-    'multiselectdropdown',
-    'rating',
-    'ranking',
-    'slider',
-    'boolean',
-  ]);
-
   for (const entry of flat) {
     const { field, path } = entry;
 
-    if (optionRequiredTypes.has(field.fieldType)) {
+    if (hasOptions(field)) {
       if (!field.options || field.options.length === 0) {
         warnings.push(
           `${field.id}: ${path} has no options for fieldType '${field.fieldType}'.`
@@ -223,14 +221,16 @@ function formatDryRunDetails(result: DryRunResult): string {
 /**
  * BuilderHeader — top bar with Build/Code/Preview mode toggle and Import/Export actions.
  */
-export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
+export function BuilderHeader({
+  allowDangerousJS = false,
+}: BuilderHeaderProps) {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [exportIdModalOpen, setExportIdModalOpen] = React.useState(false);
   const [exportIdInput, setExportIdInput] = React.useState('');
   const [exportIdError, setExportIdError] = React.useState('');
-  const [exportFormat, setExportFormat] = React.useState<'esheet' | 'mcp'>(
-    'esheet'
-  );
+  const [exportFormat, setExportFormat] = React.useState<
+    'esheet' | 'mcp' | 'fhir'
+  >('esheet');
   const [feedback, setFeedback] = React.useState<FeedbackState>({
     open: false,
     title: '',
@@ -282,17 +282,8 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
     []
   );
 
-  const mode = useSyncExternalStore(
-    (cb) => ui.subscribe(cb),
-    () => ui.getState().mode,
-    () => ui.getState().mode
-  );
-
-  const codeHasError = useSyncExternalStore(
-    (cb) => ui.subscribe(cb),
-    () => ui.getState().codeEditorHasError,
-    () => ui.getState().codeEditorHasError
-  );
+  const { mode, codeEditorHasError: codeHasError, setMode } = useUiApi();
+  const { _form: form } = useFormApi();
 
   React.useEffect(() => {
     if (mode !== 'preview') {
@@ -324,6 +315,23 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
       const schema = exportToMcp(definition);
       const filename = (definition.id || 'form') + '-mcp-schema.json';
       const blob = new Blob([JSON.stringify(schema, null, 2)], {
+        type: 'application/json',
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      setExportIdModalOpen(false);
+      return;
+    }
+
+    if (exportFormat === 'fhir') {
+      const definition = form.getState().hydrateDefinition();
+      const fhirQuestionnaire = exportToFhir(definition);
+      const filename = (definition.id || 'form') + '-fhir-questionnaire.json';
+      const blob = new Blob([JSON.stringify(fhirQuestionnaire, null, 2)], {
         type: 'application/json',
       });
       const url = URL.createObjectURL(blob);
@@ -376,46 +384,30 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
         const parsed = isYaml ? YAML.load(content) : JSON.parse(content);
 
         // Auto-detect MCP elicitation schema (JSON only).
-        // Accepts: full elicitation/create request, params object, or raw requestedSchema.
+        // Accepts: full elicitation/create envelope or raw requestedSchema object.
         if (!isYaml) {
-          const p = parsed as Record<string, unknown>;
-          const params = p?.params as Record<string, unknown> | undefined;
-
-          // URL mode — no requestedSchema, nothing to import as a form.
-          const mode = params?.mode ?? p?.mode;
-          if (mode === 'url') {
-            showFeedback(
-              'error',
-              'URL Mode Not Supported',
-              'This MCP elicitation uses URL mode (out-of-band). Only form mode schemas can be imported into the builder.'
+          if (isMcpElicitationRequest(parsed)) {
+            const mcpReq = parsed as McpElicitationRequest;
+            if (mcpReq.params.mode === 'url') {
+              showFeedback(
+                'error',
+                'URL Mode Not Supported',
+                'This MCP elicitation uses URL mode (out-of-band). Only form mode schemas can be imported into the builder.'
+              );
+              return;
+            }
+            const formDef = importFromMcp(
+              mcpReq.params.requestedSchema as McpElicitationSchema,
+              {
+                formId: form.getState().hydrateDefinition().id || 'mcp-form',
+                ...(typeof mcpReq.params.message === 'string' &&
+                mcpReq.params.message.length > 0
+                  ? { description: mcpReq.params.message }
+                  : {}),
+                mcpId: mcpReq.id,
+                mcpMessage: mcpReq.params.message,
+              }
             );
-            return;
-          }
-
-          let mcpSchema: McpElicitationSchema | undefined;
-          if (params?.requestedSchema) {
-            mcpSchema = params.requestedSchema as McpElicitationSchema;
-          } else if (p?.requestedSchema) {
-            mcpSchema = p.requestedSchema as McpElicitationSchema;
-          } else if (p?.type === 'object' && p?.properties) {
-            mcpSchema = p as unknown as McpElicitationSchema;
-          }
-
-          if (mcpSchema) {
-            const message = params?.message ?? p?.message;
-            const mcpId = p?.id ?? params?.id;
-            const mcpMeta = p?.meta;
-            const formDef = importFromMcp(mcpSchema, {
-              formId: form.getState().hydrateDefinition().id || 'mcp-form',
-              ...(typeof message === 'string' && message.length > 0
-                ? { description: message }
-                : {}),
-              ...(mcpId !== undefined
-                ? { mcpId: mcpId as string | number }
-                : {}),
-              ...(typeof message === 'string' ? { mcpMessage: message } : {}),
-              ...(mcpMeta !== undefined ? { mcpMeta } : {}),
-            });
             form.getState().loadDefinition(formDef);
             showFeedback(
               'success',
@@ -424,6 +416,84 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
             );
             return;
           }
+
+          // Raw requestedSchema: { type: 'object', properties: {...} }
+          const p = parsed as Record<string, unknown>;
+          if (p?.type === 'object' && p?.properties) {
+            const formDef = importFromMcp(
+              p as unknown as McpElicitationSchema,
+              {
+                formId: form.getState().hydrateDefinition().id || 'mcp-form',
+              }
+            );
+            form.getState().loadDefinition(formDef);
+            showFeedback(
+              'success',
+              'Import Successful',
+              `Loaded ${formDef.fields.length} field(s) from MCP elicitation schema.`
+            );
+            return;
+          }
+        }
+
+        if (!isYaml && isFhirQuestionnaire(parsed)) {
+          const formDef = importFromFhir(parsed as FhirQuestionnaire);
+          form.getState().loadDefinition(formDef);
+          // Check for conversion warnings in _sourceData
+          type ConversionWarning = {
+            code: string;
+            itemLinkId?: string;
+            message: string;
+            severity?: 'info' | 'warning' | 'error';
+          };
+          const meta = formDef._sourceData as
+            | { _conversionWarnings?: ConversionWarning[] }
+            | undefined;
+          const allWarnings = meta?._conversionWarnings ?? [];
+          // Split by severity: info vs warning/error
+          const infoItems = allWarnings.filter((w) => w.severity === 'info');
+          const warnItems = allWarnings.filter((w) => w.severity !== 'info');
+          const hasActualWarnings = warnItems.length > 0;
+
+          if (allWarnings.length > 0) {
+            const items = hasActualWarnings ? warnItems : infoItems;
+            const prefix = hasActualWarnings ? '⚠️' : 'ℹ️';
+            showFeedback(
+              hasActualWarnings ? 'warning' : 'success',
+              hasActualWarnings
+                ? 'Import Successful (with warnings)'
+                : 'Import Successful',
+              `Loaded ${formDef.fields.length} field(s) from FHIR Questionnaire.`,
+              undefined,
+              items.map(
+                (w) =>
+                  `${prefix} [${w.code}] ${w.itemLinkId ?? 'form'}: ${
+                    w.message
+                  }`
+              ),
+              hasActualWarnings ? 'Import Warnings' : 'Import Notes'
+            );
+          } else {
+            showFeedback(
+              'success',
+              'Import Successful',
+              `Loaded ${formDef.fields.length} field(s) from FHIR Questionnaire.`
+            );
+          }
+          return;
+        }
+
+        if (!isYaml && isSurveyJSSchema(parsed)) {
+          const formDef = convertSurveyJS(
+            parsed as Parameters<typeof convertSurveyJS>[0]
+          );
+          form.getState().loadDefinition(formDef);
+          showFeedback(
+            'success',
+            'Import Successful',
+            `Loaded ${formDef.fields.length} field(s) from SurveyJS schema.`
+          );
+          return;
         }
 
         const validated = formDefinitionSchema.safeParse(parsed);
@@ -484,38 +554,49 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
   const handleDryRunSubmit = () => {
     const state = form.getState();
     const errors = state.getErrors();
+    const hardErrors = errors.filter((e) => e.severity !== 'soft');
 
-    if (errors.length > 0) {
+    if (hardErrors.length > 0) {
       const result: DryRunResult = {
         wouldSubmit: false,
-        errorCount: errors.length,
-        errors,
+        errorCount: hardErrors.length,
+        errors: hardErrors,
         response: null,
       };
 
       showDryRunFeedback(
         'warning',
         'Dry Run Submit Failed',
-        `Submit would fail validation with ${errors.length} error(s).`,
+        `Submit would fail validation with ${hardErrors.length} error(s).`,
         formatDryRunDetails(result)
       );
       return;
     }
 
     const response = state.hydrateResponse({ status: 'draft' });
+    const softErrors = errors.filter((e) => e.severity === 'soft');
     const result: DryRunResult = {
       wouldSubmit: true,
-      errorCount: 0,
-      errors: [],
+      errorCount: softErrors.length,
+      errors: softErrors,
       response,
     };
 
-    showDryRunFeedback(
-      'success',
-      'Dry Run Submit Passed',
-      'Submit would pass validation.',
-      formatDryRunDetails(result)
-    );
+    if (softErrors.length > 0) {
+      showDryRunFeedback(
+        'warning',
+        'Dry Run Submit Passed (with warnings)',
+        `Submit would pass, but ${softErrors.length} recommended field(s) are unanswered.`,
+        formatDryRunDetails(result)
+      );
+    } else {
+      showDryRunFeedback(
+        'success',
+        'Dry Run Submit Passed',
+        'Submit would pass validation.',
+        formatDryRunDetails(result)
+      );
+    }
   };
 
   return (
@@ -524,7 +605,7 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
         open={exportIdModalOpen}
         title="Export Form"
         message={
-          exportFormat === 'mcp'
+          exportFormat === 'mcp' || exportFormat === 'fhir'
             ? 'Choose a format to export your form.'
             : `Do you want to use '${
                 sanitizeFormId(exportIdInput) || exportIdInput
@@ -552,6 +633,16 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
                   onChange={() => setExportFormat('mcp')}
                 />
                 MCP Elicitation Schema
+              </label>
+              <label className="ms:flex ms:items-center ms:gap-2 ms:text-sm ms:text-mstext ms:cursor-pointer">
+                <input
+                  type="radio"
+                  name="export-format"
+                  value="fhir"
+                  checked={exportFormat === 'fhir'}
+                  onChange={() => setExportFormat('fhir')}
+                />
+                FHIR R4 Questionnaire
               </label>
             </div>
             {exportFormat === 'esheet' && (
@@ -590,11 +681,25 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
                 omitted.
               </p>
             )}
+            {exportFormat === 'fhir' && (
+              <p className="ms:text-sm ms:text-mstextmuted">
+                Exports as a FHIR R4{' '}
+                <code className="ms:font-mono ms:text-xs ms:bg-msbackground ms:px-1 ms:py-0.5 ms:rounded">
+                  Questionnaire
+                </code>{' '}
+                resource. Supports standard item types, enableWhen logic, and
+                common extensions. DTR profiles are applied when applicable.
+              </p>
+            )}
           </div>
         }
         variant="info"
         confirmLabel={
-          exportFormat === 'mcp' ? 'Export MCP Schema' : 'Use This ID & Export'
+          exportFormat === 'mcp'
+            ? 'Export MCP Schema'
+            : exportFormat === 'fhir'
+            ? 'Export FHIR Questionnaire'
+            : 'Use This ID & Export'
         }
         cancelLabel="Cancel"
         showCancel
@@ -693,7 +798,7 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
               <button
                 key={value}
                 type="button"
-                onClick={() => ui.getState().setMode(value)}
+                onClick={() => setMode(value)}
                 disabled={codeHasError && value !== 'code'}
                 className={`mode-btn ms:flex ms:items-center ms:justify-center ms:gap-2 ms:px-2 ms:lg:px-4 ms:py-2 ms:rounded-lg ms:text-xs ms:lg:text-sm ms:font-medium ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none ${
                   codeHasError && value !== 'code'
@@ -701,8 +806,8 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
                     : 'ms:cursor-pointer'
                 } ${
                   mode === value
-                    ? 'ms:bg-msprimary-active ms:text-mstextsecondary ms:shadow-sm'
-                    : 'ms:bg-transparent ms:text-mstext/65 ms:hover:text-mstext ms:hover:bg-mssurface'
+                    ? 'ms:bg-msprimary ms:text-mstextsecondary ms:shadow-sm'
+                    : 'ms:bg-transparent ms:text-mstextmuted ms:hover:text-mstext ms:hover:bg-mssurface'
                 }`}
               >
                 <Icon className="ms:w-5 ms:h-5" />
@@ -713,7 +818,17 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
 
           {/* Right — Import / Export */}
           <div className="header-actions ms:flex ms:gap-1 ms:items-center">
-            <label className="header-import-label ms:group ms:px-2 ms:py-2 ms:lg:px-3 ms:lg:py-2 ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:hover:bg-msprimary-active ms:hover:text-mstextsecondary ms:hover:border-msprimary ms:cursor-pointer ms:text-xs ms:lg:text-sm ms:font-medium ms:transition-colors ms:flex ms:items-center ms:lg:gap-2 ms:gap-0 ms:text-mstext">
+            {/* Dangerous JS indicator — read-only, only shown when the host has opted in via allowDangerousJS prop */}
+            {allowDangerousJS && (
+              <span
+                title="Dangerous JS enabled (calculations & JS conditions) — controlled via allowDangerousJS prop"
+                className="dangerous-js-indicator ms:px-2 ms:py-2 ms:lg:px-3 ms:lg:py-2 ms:rounded-lg ms:border ms:border-msdanger ms:bg-msdanger/10 ms:text-msdanger ms:text-xs ms:lg:text-sm ms:font-medium ms:flex ms:items-center ms:gap-1"
+              >
+                <span>⚠</span>
+                <span className="ms:hidden ms:sm:inline">JS On</span>
+              </span>
+            )}
+            <label className="header-import-label ms:group ms:px-2 ms:py-2 ms:lg:px-3 ms:lg:py-2 ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:hover:bg-msprimary ms:hover:text-mstextsecondary ms:hover:border-msprimary ms:cursor-pointer ms:text-xs ms:lg:text-sm ms:font-medium ms:transition-colors ms:flex ms:items-center ms:lg:gap-2 ms:gap-0 ms:text-mstext">
               <UploadIcon className="ms:w-4 ms:h-4 ms:text-mstext ms:group-hover:text-mstextsecondary ms:transition-colors" />
               <span className="ms:hidden ms:sm:inline">Import</span>
               <input
@@ -729,7 +844,7 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
             <button
               type="button"
               onClick={handleExport}
-              className="export-btn ms:group ms:px-2 ms:py-2 ms:lg:px-3 ms:lg:py-2 ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:hover:bg-msprimary-active ms:hover:text-mstextsecondary ms:hover:border-msprimary ms:text-xs ms:lg:text-sm ms:font-medium ms:transition-colors ms:flex ms:items-center ms:lg:gap-2 ms:gap-0 ms:outline-none ms:focus:outline-none ms:text-mstext ms:cursor-pointer"
+              className="export-btn ms:group ms:px-2 ms:py-2 ms:lg:px-3 ms:lg:py-2 ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:hover:bg-msprimary ms:hover:text-mstextsecondary ms:hover:border-msprimary ms:text-xs ms:lg:text-sm ms:font-medium ms:transition-colors ms:flex ms:items-center ms:lg:gap-2 ms:gap-0 ms:outline-none ms:focus:outline-none ms:text-mstext ms:cursor-pointer"
               title="Export"
             >
               <DownloadIcon className="ms:w-4 ms:h-4 ms:text-mstext ms:group-hover:text-mstextsecondary ms:transition-colors" />
@@ -742,7 +857,7 @@ export function BuilderHeader({ form, ui }: BuilderHeaderProps) {
                 onClick={handleDryRunSubmit}
                 aria-label="Dry run submit"
                 title="Dry Run Submit"
-                className="dry-run-submit-btn ms:group ms:px-2 ms:py-2 ms:lg:px-3 ms:lg:py-2 ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:hover:bg-msprimary-active ms:hover:text-mstextsecondary ms:hover:border-msprimary ms:text-xs ms:lg:text-sm ms:font-medium ms:transition-colors ms:flex ms:items-center ms:lg:gap-2 ms:gap-0 ms:outline-none ms:focus:outline-none ms:text-mstext ms:cursor-pointer"
+                className="dry-run-submit-btn ms:group ms:px-2 ms:py-2 ms:lg:px-3 ms:lg:py-2 ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:hover:bg-msprimary ms:hover:text-mstextsecondary ms:hover:border-msprimary ms:text-xs ms:lg:text-sm ms:font-medium ms:transition-colors ms:flex ms:items-center ms:lg:gap-2 ms:gap-0 ms:outline-none ms:focus:outline-none ms:text-mstext ms:cursor-pointer"
               >
                 <span className="ms:hidden ms:sm:inline">Dry Run Submit</span>
                 <span className="ms:sm:hidden">Dry Run</span>

@@ -1,5 +1,5 @@
 import React from 'react';
-import type { FieldComponentProps } from '@esheet/core';
+import type { FieldComponentProps, SectionFieldDefinition } from '@esheet/core';
 
 type SectionFieldProps = FieldComponentProps & {
   nestedChildren?: React.ReactNode;
@@ -13,23 +13,26 @@ export const SectionField = React.memo(function SectionField({
   field,
   isPreview,
   isRequired,
+  isSoftRequired,
   onUpdate,
   nestedChildren,
 }: SectionFieldProps) {
-  const def = field.definition;
+  const def = field.definition as SectionFieldDefinition;
   const title = def.title || 'Section';
 
   if (isPreview) {
     return (
       <section className="section-field-preview ms:pb-0">
-        <div className="ms:bg-msprimary-active ms:text-mstextsecondary ms:text-xl ms:px-4 ms:py-2 ms:rounded-t-lg ms:break-words ms:overflow-hidden">
+        <h3 className="ms:text-base ms:font-semibold ms:text-mstext ms:bg-msprimary/10 ms:px-4 ms:py-2 ms:break-words ms:overflow-hidden">
           {title}
-          {isRequired && (
-            <span className="ms:text-mstextsecondary ms:ml-1">*</span>
+          {(isRequired || isSoftRequired) && (
+            <span className="ms:text-msdanger ms:ml-1">*</span>
           )}
-        </div>
+        </h3>
         {nestedChildren && (
-          <div className="ms:bg-mssurface ms:space-y-3">{nestedChildren}</div>
+          <div className="ms:bg-mssurface ms:space-y-3 ms:px-4 ms:py-2">
+            {nestedChildren}
+          </div>
         )}
       </section>
     );

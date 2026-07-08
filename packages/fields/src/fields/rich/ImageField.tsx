@@ -1,5 +1,5 @@
 import React from 'react';
-import type { FieldComponentProps } from '@esheet/core';
+import type { FieldComponentProps, ImageFieldDefinition } from '@esheet/core';
 
 export const ImageField = React.memo(function ImageField({
   field,
@@ -7,7 +7,7 @@ export const ImageField = React.memo(function ImageField({
   isPreview,
   onUpdate,
 }: FieldComponentProps) {
-  const def = field.definition;
+  const def = field.definition as ImageFieldDefinition;
   const instanceId = form.getState().instanceId;
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -57,7 +57,7 @@ export const ImageField = React.memo(function ImageField({
   // --- Preview (display) mode ---
   if (isPreview) {
     return (
-      <div className="image-field-preview ms:pb-4">
+      <div className="image-field-preview">
         {def.question && (
           <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden ms:mb-2">
             {def.question}

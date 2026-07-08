@@ -2,8 +2,6 @@ import React from 'react';
 import {
   getRegisteredFieldTypes,
   getFieldTypeMeta,
-  type FormStore,
-  type UIStore,
   type FieldType,
 } from '@esheet/core';
 import {
@@ -15,13 +13,11 @@ import {
   OrganizationIcon,
   ChevronIcon,
 } from '../icons.js';
+import { useFormApi } from '../hooks/useFormApi.js';
+import { useUiApi } from '../hooks/useUiApi.js';
 
-export interface ToolPanelProps {
-  /** The form store */
-  form: FormStore;
-  /** The UI store */
-  ui: UIStore;
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-empty-interface
+export interface ToolPanelProps {}
 
 /** Category display labels. */
 const CATEGORY_LABELS: Record<string, string> = {
@@ -70,28 +66,18 @@ function buildCategories(): Record<string, { type: string; label: string }[]> {
  * Clicking a button calls `form.addField(type)` and auto-selects
  * the new field. Groups field types by category from the registry.
  */
-export const ToolPanel = React.memo(function ToolPanel({
-  form,
-  ui,
-}: ToolPanelProps) {
-  const selectedFieldId = React.useSyncExternalStore(
-    (cb) => ui.subscribe(cb),
-    () => ui.getState().selectedFieldId,
-    () => ui.getState().selectedFieldId
-  );
-  const selectedField = React.useSyncExternalStore(
-    (cb) => form.subscribe(cb),
-    () =>
-      selectedFieldId ? form.getState().getField(selectedFieldId) : undefined,
-    () =>
-      selectedFieldId ? form.getState().getField(selectedFieldId) : undefined
-  );
+export const ToolPanel = React.memo(function ToolPanel(_props: ToolPanelProps) {
+  const { normalized, form: formApi, _form } = useFormApi();
+  const { selectedFieldId, selectField, selectFieldChild, _ui } = useUiApi();
+  const selectedField = selectedFieldId
+    ? normalized.byId[selectedFieldId]
+    : undefined;
   const selectedSectionId =
     selectedField?.definition.fieldType === 'section'
       ? selectedFieldId
       : undefined;
   const selectedSectionLabel = selectedSectionId
-    ? selectedField?.definition.title ||
+    ? (selectedField?.definition as { title?: string })?.title ||
       selectedField?.definition.id ||
       selectedSectionId
     : null;
@@ -127,44 +113,42 @@ export const ToolPanel = React.memo(function ToolPanel({
 
   const handleAdd = React.useCallback(
     (type: string) => {
-      const selectedFieldId = ui.getState().selectedFieldId;
-      const selectedField = selectedFieldId
-        ? form.getState().getField(selectedFieldId)
+      const curSelectedId = _ui.getState().selectedFieldId;
+      const curSelectedField = curSelectedId
+        ? _form.getState().getField(curSelectedId)
         : undefined;
       const sectionParentId =
-        selectedField?.definition.fieldType === 'section'
-          ? selectedFieldId
+        curSelectedField?.definition.fieldType === 'section'
+          ? curSelectedId
           : undefined;
 
-      const newId = form
-        .getState()
-        .addField(
-          type as FieldType,
-          sectionParentId ? { parentId: sectionParentId } : undefined
-        );
+      const newId = formApi.addField(
+        type as FieldType,
+        sectionParentId ? { parentId: sectionParentId } : undefined
+      );
       if (newId) {
         if (sectionParentId) {
-          ui.getState().selectFieldChild(sectionParentId, newId);
+          selectFieldChild(sectionParentId, newId);
         } else {
-          ui.getState().selectField(newId);
+          selectField(newId);
         }
       }
     },
-    [form, ui]
+    [_form, _ui, formApi, selectField, selectFieldChild]
   );
 
   const allCollapsed = collapsed.size === categoryNames.length;
 
   return (
     <div className="tool-panel ms:flex ms:flex-1 ms:flex-col ms:min-h-0">
-      <h3 className="tool-panel-title ms:sticky ms:top-0 ms:z-10 ms:bg-mssurface ms:text-sm ms:font-semibold ms:text-mstext ms:py-2 ms:px-4 ms:border-b ms:border-msborder ms:flex ms:items-center ms:justify-between">
+      <h3 className="tool-panel-title ms:sticky ms:top-0 ms:z-10 ms:bg-mssurface ms:text-sm ms:font-semibold ms:text-mstext ms:py-4 ms:px-4 ms:border-b ms:border-msborder ms:flex ms:items-center ms:justify-between">
         <div className="ms:flex ms:min-w-0 ms:items-center ms:gap-2">
           <span>Tools</span>
           <span
             className={`ms:inline-flex ms:min-w-0 ms:max-w-[120px] ms:flex-shrink ms:items-center ms:gap-1 ms:rounded-full ms:px-2.5 ms:py-1 ms:text-[11px] ms:font-medium ${
               selectedSectionId
                 ? 'ms:bg-msprimary/10 ms:text-msprimary'
-                : 'ms:bg-msbackgroundsecondary ms:text-mstext/65'
+                : 'ms:bg-msbackgroundsecondary ms:text-mstextmuted'
             }`}
             title={
               selectedSectionId
@@ -176,7 +160,7 @@ export const ToolPanel = React.memo(function ToolPanel({
               <>
                 <button
                   type="button"
-                  onClick={() => ui.getState().selectField(null)}
+                  onClick={() => selectField(null)}
                   className="ms:flex ms:min-w-0 ms:flex-1 ms:items-center ms:gap-1 ms:bg-transparent ms:p-0 ms:text-left ms:text-msprimary ms:outline-none ms:focus:outline-none ms:cursor-pointer"
                   title="Switch to adding into root"
                   aria-label="Switch to adding into root"
@@ -190,7 +174,7 @@ export const ToolPanel = React.memo(function ToolPanel({
                 </button>
                 <button
                   type="button"
-                  onClick={() => ui.getState().selectField(null)}
+                  onClick={() => selectField(null)}
                   className="ms:inline-flex ms:h-4 ms:w-4 ms:flex-shrink-0 ms:items-center ms:justify-center ms:rounded-full ms:bg-transparent ms:text-msprimary ms:hover:bg-msprimary/15 ms:outline-none ms:focus:outline-none ms:cursor-pointer"
                   title="Switch to adding into root"
                   aria-label="Switch to adding into root"

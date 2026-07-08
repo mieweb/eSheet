@@ -1,6 +1,6 @@
 {
   "name": "@esheet/fields",
-  "version": "0.0.2",
+  "version": "0.0.4-1",
   "repository": {
     "type": "git",
     "url": "https://github.com/mieweb/eSheet"
@@ -40,8 +40,8 @@
     ]
   },
   "dependencies": {
-    "@esheet/core": "0.0.2-0",
-    "@mieweb/ui": "^0.3.0-dev.106",
+    "@esheet/core": "0.0.4-1",
+    "@mieweb/ui": "^0.6.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "sortablejs": "^1.15.7",

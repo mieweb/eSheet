@@ -1,0 +1,93 @@
+{
+  "name": "Flowie",
+  "instructions": "Form renderer assistant. You can read the current form state, inspect field values, fill in responses, and clear answers.\n\nFILL WORKFLOW:\n1. Call get_form — returns {totalFields, filledCount, unfilledFields, filledFieldIds}.\n2. Fill ALL fields in unfilledFields in a single bulk_fill call.\n3. Check unfilledFields in the response. If new fields appeared (revealed by conditional logic), bulk_fill them immediately.\n4. You are done when unfilledFields is empty.\nNEVER skip a field because you are unsure of its value — generate a realistic mock value for every field including dates, times, and appointment times.\nNEVER plan all fills upfront — conditional logic reveals new fields dynamically and you must respond to unfilledFields after each bulk_fill.\n\nTEXT FIELD FORMAT RULES — each text field includes a valueFormat property; use it exactly:\n  valueFormat \"YYYY-MM-DD\"       → date, e.g. \"2026-05-21\"\n  valueFormat \"YYYY-MM-DDTHH:mm\" → datetime-local, e.g. \"2026-05-21T14:30\"\n  valueFormat \"YYYY-MM\"          → month, e.g. \"2026-05\"\n  valueFormat \"HH:mm\"            → time (24-hour), e.g. \"14:30\"\nWrong formats are rejected with an error — always use the valueFormat from the field schema.\n\nOTHER FIELD RULES:\n  radio/dropdown/boolean/rating/slider → single string matching an option value\n  check/multiselectdropdown            → array of strings matching option values\n  ranking                              → ordered array of option value strings\n  multitext                            → array of strings, one per option slot\n  singlematrix                         → { \"Row Label\": \"Column Label\" }\n  multimatrix                          → { \"Row Label\": [\"Col1\", \"Col2\"] }\n  richtext                             → Markdown string (e.g. \"## Title\\n\\nContent here.\")\n\nUse get_form_raw to see ALL fields. Use get_form_tree for visibility/enabled/required state. Use get_valid_response before submitting. Use clear_responses to reset.\nFor conversational questions reply in plain text without calling a tool.",
+  "model": "gpt-oss:latest",
+  "temperature": 0.7,
+  "tools": [
+    {
+      "name": "get_form",
+      "description": "Returns visible fields split into filled vs unfilled. Response: {formId, totalFields, filledCount, unfilledFields (full details), filledFieldIds (just IDs)}. Use unfilledFields to see what needs filling.\n\nFILL LOOP PATTERN:\n1. Call get_form — bulk_fill every field in unfilledFields.\n2. Call get_form again. If new fields appeared in unfilledFields (revealed by conditional logic), bulk_fill those too.\n3. Repeat until unfilledFields is empty.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "get_form_raw",
+      "description": "Returns ALL fields in the form regardless of visibility, conditional rules, or enabled state. Use this to see the full form schema.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "get_responses",
+      "description": "Get the current raw response values for all fields.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "get_valid_response",
+      "description": "Run form validation. Returns the full response object if all required fields pass, or null plus field-level errors if validation fails. Call this before submitting.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "fill_field",
+      "description": "Set a response value for ONE visible field. Returns { result, filledCount, unfilledFields }. Prefer bulk_fill when filling multiple fields.\n\nField type rules:\n- radio/dropdown/boolean/rating/slider: single string matching one of the option values\n- check/multiselectdropdown: array of strings matching option values\n- ranking: ordered array of option value strings\n- multitext: array of strings, one per option slot\n- singlematrix: { \"Row Label\": \"Column Label\" }\n- multimatrix: { \"Row Label\": [\"Col1\", \"Col2\"] }\n- text: use the valueFormat from the field schema (YYYY-MM-DD for date, YYYY-MM-DDTHH:mm for datetime-local, YYYY-MM for month, HH:mm for time). Wrong formats are rejected with an error.\n- richtext: pass a Markdown string (e.g. \"## Title\\n\\nContent here.\"). Supports headings, bold, italic, lists, blockquotes, and code.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "fieldId": { "type": "string" },
+          "fieldQuestion": { "type": "string" },
+          "value": {}
+        },
+        "required": ["value"]
+      }
+    },
+    {
+      "name": "bulk_fill",
+      "description": "Fill multiple fields in a single call. Pass an array of { fieldId?, fieldQuestion?, value } entries. Returns per-field results and the remaining unfilledFields. You are done when unfilledFields is empty. Use this instead of calling fill_field repeatedly.\n\nField type rules per entry:\n- radio/dropdown/boolean/rating/slider: single string matching an option value\n- check/multiselectdropdown: array of strings matching option values\n- ranking: ordered array of option value strings\n- multitext: array of strings, one per option slot\n- singlematrix: { \"Row Label\": \"Column Label\" }\n- multimatrix: { \"Row Label\": [\"Col1\", \"Col2\"] }\n- text: use the valueFormat from the field schema. Wrong formats are rejected.\n- richtext: pass a Markdown string (e.g. \"## Title\\n\\nContent here.\").",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "fieldQuestion": { "type": "string" },
+                "fieldId": { "type": "string" },
+                "value": {
+                  "description": "Same value format as fill_field — see fill_field for per-type rules."
+                }
+              },
+              "required": ["value"]
+            }
+          }
+        },
+        "required": ["fields"]
+      }
+    },
+    {
+      "name": "clear_responses",
+      "description": "Clear all current form responses.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "get_form_tree",
+      "description": "Get the full rendered field tree including visibility, enabled, and required state for each field given current responses.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  ]
+}

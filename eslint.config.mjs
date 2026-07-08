@@ -1,9 +1,18 @@
 import nx from '@nx/eslint-plugin';
+import reactHooks from 'eslint-plugin-react-hooks';
 
 export default [
   ...nx.configs['flat/base'],
   ...nx.configs['flat/typescript'],
   ...nx.configs['flat/javascript'],
+  {
+    plugins: {
+      'react-hooks': reactHooks,
+    },
+    rules: {
+      ...reactHooks.configs.recommended.rules,
+    },
+  },
   {
     ignores: [
       '**/dist',
@@ -11,6 +20,8 @@ export default [
       '**/.docusaurus',
       '**/vite.config.*.timestamp*',
       '**/vitest.config.*.timestamp*',
+      'apps/demo/public/**',
+      'apps/docs/static/**',
     ],
   },
   {
@@ -49,7 +60,11 @@ export default [
               onlyDependOnLibsWithTags: ['scope:core'],
             },
             {
-              sourceTag: 'scope:ai-gateway',
+              sourceTag: 'scope:field-kerebron',
+              onlyDependOnLibsWithTags: ['scope:core'],
+            },
+            {
+              sourceTag: 'scope:adapters',
               onlyDependOnLibsWithTags: ['scope:core'],
             },
             {
@@ -58,9 +73,10 @@ export default [
               onlyDependOnLibsWithTags: [
                 'scope:core',
                 'scope:fields',
+                'scope:field-kerebron',
                 'scope:builder',
                 'scope:renderer',
-                'scope:ai-gateway',
+                'scope:adapters',
               ],
             },
           ],

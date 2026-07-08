@@ -35,11 +35,11 @@ Single-column with bottom-sheet drawers:
 
 The builder header provides mode switching:
 
-| Mode        | Description                                                        |
-| ----------- | ------------------------------------------------------------------ |
-| **Build**   | Visual editor -- drag-and-drop canvas with ToolPanel and EditPanel |
-| **Code**    | JSON/YAML editor (Monaco) -- edit the form definition as text      |
-| **Preview** | Read-only preview -- same rendering as the Renderer component      |
+| Mode        | Description                                                                                                                         |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| **Build**   | Visual editor -- drag-and-drop canvas with ToolPanel and EditPanel                                                                  |
+| **Code**    | JSON/YAML editor (Monaco) -- edit the form definition as text                                                                       |
+| **Preview** | Read-only preview -- same rendering as the Renderer component. Includes a **Touch Mode** toggle for testing mobile-friendly sizing. |
 
 ## Component API
 
@@ -58,13 +58,17 @@ import { EsheetBuilder } from '@esheet/builder';
 
 ### Props Reference
 
-| Prop          | Type                            | Default     | Description                                                                      |
-| ------------- | ------------------------------- | ----------- | -------------------------------------------------------------------------------- |
-| `definition`  | `FormDefinition`                | `undefined` | Initial form definition to load                                                  |
-| `onChange`    | `(def: FormDefinition) => void` | --          | Called when the form definition changes (any edit, reorder, add, remove)         |
-| `dragEnabled` | `boolean`                       | `true`      | Whether drag-and-drop is enabled. Disable for better performance on slow devices |
-| `className`   | `string`                        | `''`        | Additional CSS class for the root container                                      |
-| `children`    | `ReactNode`                     | --          | Content rendered between the header and the editor layout                        |
+| Prop                | Type                            | Default     | Description                                                                                                                                                             |
+| ------------------- | ------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `definition`        | `FormDefinition`                | `undefined` | Initial form definition — accepts eSheet `FormDefinition`, FHIR R4 Questionnaire, SurveyJS schema, or MCP elicitation envelope. Auto-detected and converted internally. |
+| `onChange`          | `(def: FormDefinition) => void` | --          | Called when the form definition changes (any edit, reorder, add, remove)                                                                                                |
+| `dragEnabled`       | `boolean`                       | `true`      | Whether drag-and-drop reordering is enabled. When `false`, field reordering is disabled entirely — there is no fallback UI (e.g. arrow buttons).                        |
+| `className`         | `string`                        | `''`        | Additional CSS class for the root container                                                                                                                             |
+| `touchMode`         | `boolean \| 'auto'`             | --          | Touch mode for preview: `true`, `false`, `'auto'`, or omit for CSS-only                                                                                                 |
+| `onTouchModeChange` | `(enabled: boolean) => void`    | --          | Callback when touch mode changes                                                                                                                                        |
+| `children`          | `ReactNode`                     | --          | Content rendered between the header and the editor layout                                                                                                               |
+
+See [Touch Mode](./touch-mode) for details on mobile-friendly form preview.
 
 ## Exported Hooks & Contexts
 

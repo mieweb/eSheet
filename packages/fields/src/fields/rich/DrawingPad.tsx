@@ -117,6 +117,12 @@ export const DrawingPad = React.memo(function DrawingPad({
   const isDrawingRef = React.useRef(false);
   /** Last pointer position as a normalized point (0..1). */
   const lastNormRef = React.useRef<NormalizedPoint>({ x: 0, y: 0 });
+  /**
+   * Snapshot of the drawing layer captured at the start of each stroke.
+   * Used by handleMove to restore-then-redraw the live stroke smoothly
+   * without touching completed strokes underneath.
+   */
+  const strokeSnapshotRef = React.useRef<ImageData | null>(null);
   const strokesRef = React.useRef<Stroke[]>([]);
   const undoStackRef = React.useRef<Stroke[]>([]);
   const bgImageRef = React.useRef<HTMLImageElement | null>(null);
@@ -256,6 +262,61 @@ export const DrawingPad = React.memo(function DrawingPad({
     [drawBackground, placeholder]
   );
 
+  // ---- Smooth stroke renderer (quadratic Bézier midpoint algorithm) --------
+
+  /**
+   * Draw a single pen stroke onto `ctx` using quadratic Bézier curves
+   * through each consecutive midpoint. This eliminates the visible kinks
+   * that appear when slow mouse movement produces short, angled lineTo segments.
+   */
+  const drawSmoothStroke = React.useCallback(
+    (ctx: CanvasRenderingContext2D, stroke: Stroke, w: number, h: number) => {
+      const pts = stroke.points;
+      if (pts.length === 0) return;
+
+      ctx.strokeStyle = stroke.color;
+      ctx.lineWidth = stroke.size;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      if (pts.length === 1) {
+        ctx.fillStyle = stroke.color;
+        ctx.beginPath();
+        ctx.arc(
+          pts[0].x * w,
+          pts[0].y * h,
+          Math.max(1, stroke.size / 2),
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+        return;
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x * w, pts[0].y * h);
+
+      if (pts.length === 2) {
+        ctx.lineTo(pts[1].x * w, pts[1].y * h);
+      } else {
+        // Draw through each interior point as a quadratic control point,
+        // landing on the midpoint between consecutive points.
+        for (let i = 1; i < pts.length - 1; i++) {
+          const cur = pts[i];
+          const next = pts[i + 1];
+          const midX = ((cur.x + next.x) / 2) * w;
+          const midY = ((cur.y + next.y) / 2) * h;
+          ctx.quadraticCurveTo(cur.x * w, cur.y * h, midX, midY);
+        }
+        const last = pts[pts.length - 1];
+        ctx.lineTo(last.x * w, last.y * h);
+      }
+
+      ctx.stroke();
+    },
+    []
+  );
+
   // ---- Stroke redraw from normalized points --------------------------------
 
   /**
@@ -297,22 +358,11 @@ export const DrawingPad = React.memo(function DrawingPad({
             ctx.fill();
             continue;
           }
-          ctx.strokeStyle = stroke.color;
-          ctx.lineWidth = stroke.size;
-          ctx.lineCap = 'round';
-          ctx.lineJoin = 'round';
-          ctx.beginPath();
-          stroke.points.forEach((pt, i) => {
-            const px = pt.x * w;
-            const py = pt.y * h;
-            if (i === 0) ctx.moveTo(px, py);
-            else ctx.lineTo(px, py);
-          });
-          ctx.stroke();
+          drawSmoothStroke(ctx, stroke, w, h);
         }
       }
     },
-    [eraserWidth]
+    [eraserWidth, drawSmoothStroke]
   );
 
   // ---- Full repaint helper -------------------------------------------------
@@ -444,6 +494,21 @@ export const DrawingPad = React.memo(function DrawingPad({
       setCanUndo(true);
       setCanRedo(false);
 
+      // Snapshot the drawing layer before this stroke starts so handleMove
+      // can restore-then-redraw for smooth quadratic curves.
+      const drawing = drawingRef.current;
+      if (drawing) {
+        const dCtx = drawing.getContext('2d');
+        if (dCtx) {
+          strokeSnapshotRef.current = dCtx.getImageData(
+            0,
+            0,
+            drawing.width,
+            drawing.height
+          );
+        }
+      }
+
       // Render an immediate dot/erase mark even if the pointer doesn't move.
       const { width: w, height: h } = displaySize;
       drawSegment(
@@ -474,25 +539,54 @@ export const DrawingPad = React.memo(function DrawingPad({
       if (!norm) return;
 
       const { width: w, height: h } = displaySize;
-      const last = lastNormRef.current;
 
-      drawSegment(
-        last.x * w,
-        last.y * h,
-        norm.x * w,
-        norm.y * h,
-        currentTool,
-        currentColor,
-        currentSize
-      );
-
-      // Append to current stroke's point list.
+      // Append to current stroke's point list first so the smooth redraw
+      // includes the new point.
       const current = strokesRef.current[strokesRef.current.length - 1];
+      const last = lastNormRef.current;
       if (current) current.points.push(norm);
-
       lastNormRef.current = norm;
+
+      const drawing = drawingRef.current;
+      if (!drawing) return;
+      const dCtx = drawing.getContext('2d');
+      if (!dCtx) return;
+
+      if (current && current.tool === 'pen') {
+        // Restore the pre-stroke snapshot, then redraw the live stroke using
+        // smooth quadratic Bézier curves — eliminates visible kinks between
+        // successive lineTo segments when the mouse moves slowly.
+        if (strokeSnapshotRef.current) {
+          dCtx.putImageData(strokeSnapshotRef.current, 0, 0);
+        }
+        drawSmoothStroke(dCtx, current, w, h);
+      } else {
+        // Eraser: incremental segment is fine (no smoothing needed).
+        drawSegment(
+          last.x * w,
+          last.y * h,
+          norm.x * w,
+          norm.y * h,
+          currentTool,
+          currentColor,
+          currentSize
+        );
+        // drawSegment already composites; skip the extra call below.
+        return;
+      }
+
+      composite(w, h);
     },
-    [toNorm, drawSegment, currentTool, currentColor, currentSize, displaySize]
+    [
+      toNorm,
+      drawSegment,
+      drawSmoothStroke,
+      composite,
+      currentTool,
+      currentColor,
+      currentSize,
+      displaySize,
+    ]
   );
 
   const handleUp = React.useCallback(() => {
@@ -776,7 +870,7 @@ export const DrawingPad = React.memo(function DrawingPad({
             title="Pen"
             className={`drawing-pad-pen-btn ms:w-7 ms:h-7 ms:flex ms:items-center ms:justify-center ms:rounded ms:border ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:transition-colors ${
               currentTool === 'pen'
-                ? 'ms:bg-msprimary-active ms:text-mstextsecondary ms:border-msprimary'
+                ? 'ms:bg-msprimary ms:text-mstextsecondary ms:border-msprimary'
                 : 'ms:bg-msbackground ms:text-mstext ms:border-msborder ms:hover:bg-msbackgroundsecondary'
             }`}
           >
@@ -803,7 +897,7 @@ export const DrawingPad = React.memo(function DrawingPad({
               title="Eraser"
               className={`drawing-pad-eraser-btn ms:w-7 ms:h-7 ms:flex ms:items-center ms:justify-center ms:rounded ms:border ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:transition-colors ${
                 currentTool === 'eraser'
-                  ? 'ms:bg-msprimary-active ms:text-mstextsecondary ms:border-msprimary'
+                  ? 'ms:bg-msprimary ms:text-mstextsecondary ms:border-msprimary'
                   : 'ms:bg-msbackground ms:text-mstext ms:border-msborder ms:hover:bg-msbackgroundsecondary'
               }`}
             >
@@ -881,7 +975,7 @@ export const DrawingPad = React.memo(function DrawingPad({
                   title={`${s}px`}
                   className={`drawing-pad-size-btn ms:w-7 ms:h-7 ms:flex ms:items-center ms:justify-center ms:rounded ms:border ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:transition-all ${
                     currentSize === s
-                      ? 'ms:bg-msprimary-active ms:border-msprimary'
+                      ? 'ms:bg-msprimary ms:border-msprimary'
                       : 'ms:bg-msbackground ms:border-msborder ms:hover:bg-msbackgroundsecondary'
                   }`}
                 >
