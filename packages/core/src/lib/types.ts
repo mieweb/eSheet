@@ -245,6 +245,28 @@ export type FieldValidator = z.infer<typeof fieldValidatorSchema>;
 // Field Definition - Discriminated Union by fieldType
 // ---------------------------------------------------------------------------
 
+/**
+ * Layout width a field occupies in a row-based preview/render grid.
+ * - `full`  - spans the whole row (default).
+ * - `half`  - two per row.
+ * - `third` - three per row.
+ *
+ * **FHIR extension:** serialised as `valueCode` on the item's `extension` array.
+ * Definition: https://esheet.os.mieweb.org/docs/adapters/fhir/extensions#field-width
+ */
+export type FieldWidth = 'full' | 'half' | 'third';
+
+/**
+ * How a choice field arranges its options.
+ * - `stack` - one option per line (default).
+ * - `wrap`  - options flow horizontally and wrap to the next line.
+ *
+ * **FHIR extension:** serialised as `valueCode` on the item's `extension` array.
+ * Applies to `choice` items (radio, check, openchoice, multitext).
+ * Definition: https://esheet.os.mieweb.org/docs/adapters/fhir/extensions#option-layout
+ */
+export type OptionLayout = 'stack' | 'wrap';
+
 // ---------------------------------------------------------------------------
 // Base Interfaces
 // ---------------------------------------------------------------------------
@@ -265,6 +287,8 @@ interface BaseFieldDefinition {
    */
   required?: boolean | 'soft';
   // readOnly?: boolean; // TODO: implement readOnly properly (see INTERNAL-TICKETS/readonly-fields.md)
+  /** Layout width in a row grid (`full` | `half` | `third`). Defaults to `full`. */
+  width?: FieldWidth;
   /** Validation rules applied to the field's response. */
   validators?: FieldValidator[];
   /** Conditional rules that control visibility, enabled state, or required state. */
@@ -296,6 +320,8 @@ export interface LongtextFieldDefinition extends BaseFieldDefinition {
 export interface MultitextFieldDefinition extends BaseFieldDefinition {
   fieldType: 'multitext';
   options?: FieldOption[];
+  /** How inputs are arranged (`stack` | `wrap`). Defaults to `stack`. */
+  optionLayout?: OptionLayout;
 }
 
 // ---------------------------------------------------------------------------
@@ -305,11 +331,15 @@ export interface MultitextFieldDefinition extends BaseFieldDefinition {
 export interface RadioFieldDefinition extends BaseFieldDefinition {
   fieldType: 'radio';
   options?: FieldOption[];
+  /** How options are arranged (`stack` | `wrap`). Defaults to `stack`. */
+  optionLayout?: OptionLayout;
 }
 
 export interface CheckFieldDefinition extends BaseFieldDefinition {
   fieldType: 'check';
   options?: FieldOption[];
+  /** How options are arranged (`stack` | `wrap`). Defaults to `stack`. */
+  optionLayout?: OptionLayout;
 }
 
 export interface BooleanFieldDefinition extends BaseFieldDefinition {
@@ -417,6 +447,8 @@ export interface OpenChoiceFieldDefinition extends BaseFieldDefinition {
   maxCustomOptions?: number;
   /** Label for the "Other, please specify" option (optional). */
   otherLabel?: string;
+  /** Controls whether options flow horizontally (wrap) or stack vertically (default). */
+  optionLayout?: OptionLayout;
 }
 
 export interface DisplayFieldDefinition {
@@ -428,6 +460,8 @@ export interface DisplayFieldDefinition {
   content?: string;
   /** Display fields are never required. */
   required?: never;
+  /** Layout width in a row grid (`full` | `half` | `third`). Defaults to `full`. */
+  width?: FieldWidth;
   /** Conditional rules controlling visibility. */
   rules?: ConditionalRule[];
   /** @deprecated Display fields do not accept answers; calculation has no effect. */
@@ -518,10 +552,10 @@ const FIELD_TYPE_PROPERTIES: Record<FieldType, readonly string[]> = {
   // Text category
   text: ['inputType', 'unit'],
   longtext: ['inputType', 'unit'],
-  multitext: ['options'],
+  multitext: ['options', 'optionLayout'],
   // Selection category
-  radio: ['options'],
-  check: ['options'],
+  radio: ['options', 'optionLayout'],
+  check: ['options', 'optionLayout'],
   boolean: ['options'],
   dropdown: ['options'],
   multiselectdropdown: ['options'],
@@ -551,6 +585,7 @@ const BASE_PROPERTIES = [
   'question',
   'required',
   // 'readOnly', // TODO: implement readOnly properly
+  'width',
   'validators',
   'calculation',
   'rules',
@@ -656,6 +691,7 @@ const baseFieldProps = {
   question: z.optional(z.string()),
   required: z.optional(z.union([z.boolean(), z.literal('soft')])),
   // readOnly: z.optional(z.boolean()), // TODO: implement readOnly properly
+  width: z.optional(z.enum(['full', 'half', 'third'])),
   validators: z.optional(z.array(fieldValidatorSchema)),
   rules: z.optional(z.array(conditionalRuleSchema)),
   /** JS expression that auto-computes this field's value (requires dangerouslyAllowJS on form). */
@@ -683,6 +719,7 @@ const multitextFieldSchema = z.strictObject({
   ...baseFieldProps,
   fieldType: z.literal('multitext'),
   options: z.optional(z.array(fieldOptionSchema)),
+  optionLayout: z.optional(z.enum(['stack', 'wrap'])),
 });
 
 // Selection category schemas
@@ -690,12 +727,14 @@ const radioFieldSchema = z.strictObject({
   ...baseFieldProps,
   fieldType: z.literal('radio'),
   options: z.optional(z.array(fieldOptionSchema)),
+  optionLayout: z.optional(z.enum(['stack', 'wrap'])),
 });
 
 const checkFieldSchema = z.strictObject({
   ...baseFieldProps,
   fieldType: z.literal('check'),
   options: z.optional(z.array(fieldOptionSchema)),
+  optionLayout: z.optional(z.enum(['stack', 'wrap'])),
 });
 
 const booleanFieldSchema = z.strictObject({
@@ -797,6 +836,7 @@ const openChoiceFieldSchema = z.strictObject({
 
 const displayBaseFieldProps = {
   id: z.string(),
+  width: z.optional(z.enum(['full', 'half', 'third'])),
   rules: z.optional(z.array(conditionalRuleSchema)),
   _sourceData: z.optional(z.unknown()),
   _conversionWarnings: z.optional(z.array(z.unknown())),

@@ -77,12 +77,6 @@ export function resolveSetValue(
   const rules = field.rules?.filter((r) => r.effect === 'setValue') ?? [];
 
   for (const rule of rules) {
-    // Determine if this is a pure expression rule (all conditions are expression type,
-    // no field-ref guard conditions with targetId/operator).
-    // Pure expression rules from FHIR calculatedExpression/initialExpression should be
-    // evaluated unconditionally — the expression IS the value, not a guard condition.
-    // Gating behind evaluateRule would treat the expression as boolean and discard
-    // falsey results like 0, false, or "".
     const isExpressionOnly =
       rule.conditions.length > 0 &&
       rule.conditions.every(
@@ -94,7 +88,6 @@ export function resolveSetValue(
     );
 
     if (isExpressionOnly && expressionCondition?.expression) {
-      // Evaluate expression unconditionally to preserve falsey values.
       try {
         const result = evaluateExpression(
           expressionCondition.expression,
@@ -112,25 +105,19 @@ export function resolveSetValue(
     }
 
     if (evaluateRule(rule, normalized, responses, dangerouslyAllowJS)) {
-      // Rule matched; now extract and evaluate the expression condition to get the value.
       if (expressionCondition?.expression) {
         try {
-          // Evaluate the expression in context of current responses
-          // Uses the proper AST-based evaluator from conditions.ts, not string substitution
           const result = evaluateExpression(
             expressionCondition.expression,
             normalized,
             responses
           );
-          // Coerce result to string/number or null
           if (result === null || result === undefined) return null;
           if (typeof result === 'string' || typeof result === 'number') {
             return result;
           }
-          // Convert other types to string
           return String(result);
         } catch {
-          // Expression evaluation failed; skip this rule
           continue;
         }
       }
@@ -143,7 +130,7 @@ export function resolveSetValue(
 /**
  * Resolve a conditional effect for a single field.
  *
- * For boolean effects (visible, enable, required, readOnly), returns true/false.
+ * For boolean effects (visible, enable, required), returns true/false.
  * For value effects (setValue), use resolveSetValue() directly.
  *
  * @param effect     - Which effect to resolve (`'visible'`, `'enable'`, `'required'`).

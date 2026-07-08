@@ -1,5 +1,10 @@
 import { useStore } from 'zustand';
-import type { FieldDefinition, TextInputType } from '@esheet/core';
+import type {
+  FieldDefinition,
+  FieldWidth,
+  OptionLayout,
+  TextInputType,
+} from '@esheet/core';
 import { slugifyQuestion } from '@esheet/core';
 import { useFormStore } from '@esheet/fields';
 import { useInstanceId } from '../../EsheetBuilder.js';
@@ -32,6 +37,14 @@ export function CommonEditor({
   const formStore = useFormStore();
   const dangerouslyAllowJS = useStore(formStore, (s) => s.dangerouslyAllowJS);
   const calculation = (def as { calculation?: string }).calculation ?? '';
+  const width = (def as { width?: FieldWidth }).width ?? 'full';
+  const showOptionLayout =
+    def.fieldType === 'radio' ||
+    def.fieldType === 'check' ||
+    def.fieldType === 'multitext' ||
+    def.fieldType === 'openchoice';
+  const optionLayout =
+    (def as { optionLayout?: OptionLayout }).optionLayout ?? 'stack';
   const question = (def as { question?: string }).question ?? '';
   const suggestedId = slugifyQuestion(question);
   const showSuggestion = suggestedId !== '' && suggestedId !== def.id;
@@ -97,6 +110,61 @@ export function CommonEditor({
             onUpdate(patch as Parameters<typeof onUpdate>[0])
           }
         />
+      )}
+
+      {/* Row width */}
+      <div>
+        <label
+          htmlFor={`${instanceId}-editor-width-${fieldId}`}
+          className="edit-label ms:block ms:text-sm ms:font-medium ms:text-mstext ms:mb-1"
+        >
+          Row width
+        </label>
+        <select
+          id={`${instanceId}-editor-width-${fieldId}`}
+          value={width}
+          onChange={(e) =>
+            onUpdate({
+              width:
+                e.currentTarget.value === 'full'
+                  ? undefined
+                  : (e.currentTarget.value as FieldWidth),
+            } as Parameters<typeof onUpdate>[0])
+          }
+          className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
+        >
+          <option value="full">Full (whole row)</option>
+          <option value="half">Half (2 per row)</option>
+          <option value="third">Third (3 per row)</option>
+        </select>
+      </div>
+
+      {/* Options layout (radio / check / multitext only) */}
+      {showOptionLayout && (
+        <div>
+          <label
+            htmlFor={`${instanceId}-editor-optionlayout-${fieldId}`}
+            className="edit-label ms:block ms:text-sm ms:font-medium ms:text-mstext ms:mb-1"
+          >
+            Options layout
+          </label>
+          <select
+            id={`${instanceId}-editor-optionlayout-${fieldId}`}
+            value={optionLayout}
+            onChange={(e) =>
+              onUpdate({
+                optionLayout:
+                  e.currentTarget.value === 'stack'
+                    ? undefined
+                    : (e.currentTarget.value as OptionLayout),
+              } as Parameters<typeof onUpdate>[0])
+            }
+            className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
+          >
+            <option value="stack">Stack (one per line)</option>
+            <option value="wrap">Wrap (flow horizontally)</option>
+          </select>
+        </div>
       )}
 
       {/* Calculation (only when dangerouslyAllowJS is enabled on the form) */}

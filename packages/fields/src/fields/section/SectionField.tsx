@@ -23,14 +23,16 @@ export const SectionField = React.memo(function SectionField({
   if (isPreview) {
     return (
       <section className="section-field-preview ms:pb-0">
-        <div className="ms:bg-msprimary ms:text-mstextsecondary ms:text-xl ms:px-4 ms:py-2 ms:rounded-t-lg ms:break-words ms:overflow-hidden">
+        <h3 className="ms:text-base ms:font-semibold ms:text-mstext ms:bg-msprimary/10 ms:px-4 ms:py-2 ms:break-words ms:overflow-hidden">
           {title}
           {(isRequired || isSoftRequired) && (
-            <span className="ms:text-mstextsecondary ms:ml-1">*</span>
+            <span className="ms:text-msdanger ms:ml-1">*</span>
           )}
-        </div>
+        </h3>
         {nestedChildren && (
-          <div className="ms:bg-mssurface ms:space-y-3">{nestedChildren}</div>
+          <div className="ms:bg-mssurface ms:space-y-3 ms:px-4 ms:py-2">
+            {nestedChildren}
+          </div>
         )}
       </section>
     );

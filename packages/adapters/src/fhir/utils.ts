@@ -61,6 +61,15 @@ export const FHIR_EXT = {
   ENABLE_WHEN_EXPRESSION:
     'http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-enableWhenExpression',
   VARIABLE: 'http://hl7.org/fhir/StructureDefinition/variable',
+
+  // eSheet layout extensions (custom)
+  // Definitions are documented at the URLs used as extension identifiers.
+  /** valueCode: 'full' | 'half' | 'third' */
+  FIELD_WIDTH:
+    'https://esheet.os.mieweb.org/docs/adapters/fhir/extensions#field-width',
+  /** valueCode: 'stack' | 'wrap' */
+  OPTION_LAYOUT:
+    'https://esheet.os.mieweb.org/docs/adapters/fhir/extensions#option-layout',
 } as const;
 
 export const ITEM_CONTROL_SYSTEM =

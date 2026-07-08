@@ -1,5 +1,5 @@
 ---
-sidebar_position: 4
+sidebar_position: 1
 ---
 
 # FHIR Adapter
@@ -325,6 +325,15 @@ const item = {
 // options: [{ id: 'mild', value: 'mild', text: 'Mild', score: 1 }, ...]
 ```
 
+### eSheet Layout Extensions
+
+eSheet adds two custom extensions to preserve its layout model in FHIR exports. See [Extensions](./extensions.md) for the full specification.
+
+| Extension                | `valueCode`                 | Applies to               |
+| ------------------------ | --------------------------- | ------------------------ |
+| `FHIR_EXT.FIELD_WIDTH`   | `full` \| `half` \| `third` | All answer-bearing items |
+| `FHIR_EXT.OPTION_LAYOUT` | `stack` \| `wrap`           | `choice` items           |
+
 ### Supported Extension URLs
 
 ```typescript
@@ -345,6 +354,10 @@ FHIR_EXT.INITIAL_EXPRESSION; // sdc-questionnaire-initialExpression
 FHIR_EXT.CALCULATED_EXPRESSION; // sdc-questionnaire-calculatedExpression
 FHIR_EXT.ENABLE_WHEN_EXPRESSION; // sdc-questionnaire-enableWhenExpression
 FHIR_EXT.VARIABLE; // variable
+
+// eSheet Layout Extensions
+FHIR_EXT.FIELD_WIDTH; // field-width
+FHIR_EXT.OPTION_LAYOUT; // option-layout
 ```
 
 ## Metadata Preservation
@@ -497,98 +510,3 @@ The adapter preserves these SDC/DTR extensions in `_sourceData` without evaluati
 - `variable` — Named FHIRPath expressions
 
 These expressions require a FHIRPath evaluation engine to execute at runtime.
-
-## Round-Trip Fidelity
-
-Original FHIR metadata is preserved in `_sourceData` for lossless round-trips:
-
-```typescript
-// Import
-const form = importFromFhir(originalQuestionnaire);
-
-// Modify
-form.title = 'Updated Title';
-
-// Export — original extensions, codes, definitions restored
-const exported = exportToFhir(form);
-```
-
-### What Gets Preserved
-
-- ✅ All standard FHIR properties (url, version, status, publisher, etc.)
-- ✅ All extensions (itemControl, validation, scoring, custom)
-- ✅ Semantic codes and definitions
-- ✅ Nested item structure
-- ✅ enableWhen/enableBehavior
-- ✅ repeats flag
-- ✅ readOnly flag
-
-### What Requires Re-mapping
-
-- ⚠️ `answerValueSet` — Must be expanded before import
-- ⚠️ Complex expressions — FHIRPath/CQL evaluated externally
-- ⚠️ Nested answers in QuestionnaireResponse — Flattened to simple map
-
-## Utility Functions
-
-For advanced use cases, low-level utilities are exported:
-
-```typescript
-import {
-  mapFhirTypeToEsheet,
-  mapEsheetTypeToFhir,
-  convertAnswerOptionToFieldOption,
-  convertOptionToFhirAnswerOption,
-  mapFhirOperatorToEsheet,
-  mapEsheetOperatorToFhir,
-  getExtensionValue,
-  createItemControlExtension,
-  FHIR_EXT,
-  ITEM_CONTROL_SYSTEM,
-} from '@esheet/adapters';
-```
-
-## Types
-
-```typescript
-import type {
-  // Primitives
-  FhirCoding,
-  FhirCodeableConcept,
-  FhirReference,
-  FhirIdentifier,
-  FhirPeriod,
-  FhirAttachment,
-  FhirQuantity,
-  FhirExpression,
-  FhirExtension,
-
-  // Questionnaire
-  FhirQuestionnaire,
-  FhirQuestionnaireItem,
-  FhirQuestionnaireStatus,
-  FhirQuestionnaireItemType,
-  FhirAnswerOption,
-  FhirEnableWhen,
-  FhirEnableWhenOperator,
-  FhirEnableBehavior,
-
-  // Response
-  FhirQuestionnaireResponse,
-  FhirQuestionnaireResponseItem,
-  FhirResponseAnswer,
-  FhirResponseStatus,
-
-  // Options
-  FhirImportOptions,
-  FhirExportOptions,
-  ResponseImportOptions,
-  ResponseExportOptions,
-  ImportWarning,
-  ImportWarningCode,
-
-  // Metadata
-  FhirFieldMeta,
-  FhirFormMeta,
-} from '@esheet/adapters';
-```

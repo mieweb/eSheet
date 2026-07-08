@@ -34,10 +34,11 @@ export const OpenChoiceField = React.memo(function OpenChoiceField({
   if (isPreview) {
     const otherText =
       selectedId === otherOptionId && selected?.value ? selected.value : '';
+    const isWrap = def.optionLayout === 'wrap';
 
     return (
-      <div className="openchoice-field-preview ms:grid ms:grid-cols-1 ms:gap-2 ms:sm:grid-cols-2 ms:pb-4">
-        <div className="ms:font-light ms:text-mstext ms:break-words ms:overflow-hidden">
+      <div className="openchoice-field-preview ms:space-y-1.5">
+        <div className="ms:text-sm ms:font-medium ms:text-mstext ms:break-words ms:overflow-hidden">
           {def.question || 'Question'}
           {(isRequired || isSoftRequired) && (
             <span
@@ -49,28 +50,34 @@ export const OpenChoiceField = React.memo(function OpenChoiceField({
             </span>
           )}
         </div>
-        <div className="ms:space-y-2">
-          <RadioGroup
-            value={selectedId ?? ''}
-            onValueChange={(val) => {
-              if (!val) {
-                onResponse({ selected: undefined });
-                return;
-              }
+        <RadioGroup
+          value={selectedId ?? ''}
+          onValueChange={(val) => {
+            if (!val) {
+              onResponse({ selected: undefined });
+              return;
+            }
 
-              if (val === otherOptionId) {
-                onResponse({ selected: { id: otherOptionId, value: '' } });
-                return;
-              }
+            if (val === otherOptionId) {
+              onResponse({ selected: { id: otherOptionId, value: '' } });
+              return;
+            }
 
-              const opt = options.find((o) => o.id === val);
-              if (opt) {
-                onResponse({ selected: { id: opt.id, value: opt.value } });
-              }
-            }}
-            disabled={!isEnabled}
-            orientation="vertical"
-            className="ms:space-y-2"
+            const opt = options.find((o) => o.id === val);
+            if (opt) {
+              onResponse({ selected: { id: opt.id, value: opt.value } });
+            }
+          }}
+          disabled={!isEnabled}
+          orientation={isWrap ? 'horizontal' : 'vertical'}
+        >
+          <div
+            className={
+              isWrap ? 'ms:flex ms:flex-wrap' : 'ms:flex ms:flex-col ms:gap-1.5'
+            }
+            style={
+              isWrap ? { columnGap: '1rem', rowGap: '0.25rem' } : undefined
+            }
           >
             {options.map((option: FieldOption) => (
               <label
@@ -116,27 +123,27 @@ export const OpenChoiceField = React.memo(function OpenChoiceField({
               />
               <span className="ms:text-sm ms:text-mstext">{otherLabel}</span>
             </label>
-          </RadioGroup>
-
-          <div className="ms:mt-2">
-            <input
-              id={`${instanceId}-openchoice-other-${def.id}`}
-              aria-label={otherLabel}
-              type="text"
-              value={otherText}
-              onChange={(e) => {
-                onResponse({
-                  selected: { id: otherOptionId, value: e.target.value },
-                });
-              }}
-              disabled={!isOtherSelected}
-              className={`ms:w-full ms:px-3 ms:py-2 ms:h-9 ms:rounded-lg ms:transition-all ${
-                isOtherSelected
-                  ? 'ms:border ms:border-msborder ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary/30 ms:outline-none ms:bg-mssurface ms:text-mstext ms:cursor-text'
-                  : 'ms:border ms:border-dashed ms:border-msborder ms:bg-mssurface ms:text-mstextmuted ms:opacity-40 ms:cursor-not-allowed'
-              }`}
-            />
           </div>
+        </RadioGroup>
+
+        <div className="ms:mt-2">
+          <input
+            id={`${instanceId}-openchoice-other-${def.id}`}
+            aria-label={otherLabel}
+            type="text"
+            value={otherText}
+            onChange={(e) => {
+              onResponse({
+                selected: { id: otherOptionId, value: e.target.value },
+              });
+            }}
+            disabled={!isOtherSelected}
+            className={`ms:w-full ms:px-3 ms:py-2 ms:h-9 ms:rounded-lg ms:transition-all ${
+              isOtherSelected
+                ? 'ms:border ms:border-msborder ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary/30 ms:outline-none ms:bg-mssurface ms:text-mstext ms:cursor-text'
+                : 'ms:border ms:border-dashed ms:border-msborder ms:bg-mssurface ms:text-mstextmuted ms:opacity-40 ms:cursor-not-allowed'
+            }`}
+          />
         </div>
       </div>
     );
@@ -159,7 +166,7 @@ export const OpenChoiceField = React.memo(function OpenChoiceField({
           value={def.question || ''}
           onChange={(e) => onUpdate({ question: e.target.value })}
           placeholder="Enter question"
-          className="ms:px-3 ms:py-2 ms:h-10 ms:w-full ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:rounded-lg"
+          className="ms:px-3 ms:py-2 ms:h-10 ms:w-full ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:rounded-lg ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary/30 ms:outline-none ms:transition-colors"
         />
       </div>
 
@@ -171,7 +178,7 @@ export const OpenChoiceField = React.memo(function OpenChoiceField({
           {options.map((option: FieldOption) => (
             <div
               key={option.id}
-              className="ms:flex ms:items-center ms:gap-2 ms:px-3 ms:py-2 ms:border ms:border-msborder ms:bg-mssurface ms:rounded-lg"
+              className="ms:flex ms:items-center ms:gap-2 ms:px-3 ms:py-2 ms:border ms:border-msborder ms:bg-mssurface ms:rounded-lg ms:shadow-sm ms:hover:border-mstextmuted ms:transition-colors"
             >
               <span className="ms:shrink-0 ms:w-4 ms:h-4 ms:rounded-full ms:border ms:border-msborder ms:bg-mssurface" />
               <input
@@ -189,7 +196,7 @@ export const OpenChoiceField = React.memo(function OpenChoiceField({
               />
               <button
                 onClick={() => form.getState().removeOption(def.id, option.id)}
-                className="ms:shrink-0 ms:text-mstextmuted ms:hover:text-msdanger ms:transition-colors ms:bg-transparent ms:border-0 ms:outline-none"
+                className="ms:shrink-0 ms:text-mstextmuted ms:hover:text-msdanger ms:transition-colors ms:bg-transparent ms:border-0 ms:outline-none ms:focus:outline-none"
                 title="Remove option"
               >
                 <TrashIcon className="ms:w-4 ms:h-4" />
@@ -219,7 +226,7 @@ export const OpenChoiceField = React.memo(function OpenChoiceField({
           value={def.otherLabel || ''}
           onChange={(e) => onUpdate({ otherLabel: e.target.value })}
           placeholder="Other, please Specify :"
-          className="ms:px-3 ms:py-2 ms:h-10 ms:w-full ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:rounded-lg"
+          className="ms:px-3 ms:py-2 ms:h-10 ms:w-full ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:rounded-lg ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary/30 ms:outline-none ms:transition-colors"
         />
       </div>
     </div>
