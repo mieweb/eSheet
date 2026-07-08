@@ -34,6 +34,7 @@ export const OpenChoiceField = React.memo(function OpenChoiceField({
   if (isPreview) {
     const otherText =
       selectedId === otherOptionId && selected?.value ? selected.value : '';
+    const isWrap = def.optionLayout === 'wrap';
 
     return (
       <div className="openchoice-field-preview ms:space-y-1.5">
@@ -68,13 +69,43 @@ export const OpenChoiceField = React.memo(function OpenChoiceField({
             }
           }}
           disabled={!isEnabled}
-          orientation="vertical"
-          className="ms:space-y-2"
+          orientation={isWrap ? 'horizontal' : 'vertical'}
         >
-          {options.map((option: FieldOption) => (
+          <div
+            className={
+              isWrap ? 'ms:flex ms:flex-wrap' : 'ms:flex ms:flex-col ms:gap-1.5'
+            }
+            style={
+              isWrap ? { columnGap: '1rem', rowGap: '0.25rem' } : undefined
+            }
+          >
+            {options.map((option: FieldOption) => (
+              <label
+                key={option.id}
+                htmlFor={`${instanceId}-openchoice-answer-${def.id}-${option.id}`}
+                className={`ms:flex ms:items-center ms:gap-2 ms:rounded ms:transition-colors ms:py-1 ms:px-1 ms:select-none ${
+                  isEnabled
+                    ? 'ms:cursor-pointer ms:hover:bg-msprimary/5'
+                    : 'ms:cursor-not-allowed'
+                }`}
+              >
+                <Radio
+                  id={`${instanceId}-openchoice-answer-${def.id}-${option.id}`}
+                  value={option.id}
+                  onClick={() => {
+                    if (selectedId === option.id) {
+                      onResponse({ selected: undefined });
+                    }
+                  }}
+                />
+                <span className="ms:text-sm ms:text-mstext">
+                  {option.value}
+                </span>
+              </label>
+            ))}
+
             <label
-              key={option.id}
-              htmlFor={`${instanceId}-openchoice-answer-${def.id}-${option.id}`}
+              htmlFor={`${instanceId}-openchoice-answer-${def.id}-other`}
               className={`ms:flex ms:items-center ms:gap-2 ms:rounded ms:transition-colors ms:py-1 ms:px-1 ms:select-none ${
                 isEnabled
                   ? 'ms:cursor-pointer ms:hover:bg-msprimary/5'
@@ -82,37 +113,17 @@ export const OpenChoiceField = React.memo(function OpenChoiceField({
               }`}
             >
               <Radio
-                id={`${instanceId}-openchoice-answer-${def.id}-${option.id}`}
-                value={option.id}
+                id={`${instanceId}-openchoice-answer-${def.id}-other`}
+                value={otherOptionId}
                 onClick={() => {
-                  if (selectedId === option.id) {
+                  if (isOtherSelected) {
                     onResponse({ selected: undefined });
                   }
                 }}
               />
-              <span className="ms:text-sm ms:text-mstext">{option.value}</span>
+              <span className="ms:text-sm ms:text-mstext">{otherLabel}</span>
             </label>
-          ))}
-
-          <label
-            htmlFor={`${instanceId}-openchoice-answer-${def.id}-other`}
-            className={`ms:flex ms:items-center ms:gap-2 ms:rounded ms:transition-colors ms:py-1 ms:px-1 ms:select-none ${
-              isEnabled
-                ? 'ms:cursor-pointer ms:hover:bg-msprimary/5'
-                : 'ms:cursor-not-allowed'
-            }`}
-          >
-            <Radio
-              id={`${instanceId}-openchoice-answer-${def.id}-other`}
-              value={otherOptionId}
-              onClick={() => {
-                if (isOtherSelected) {
-                  onResponse({ selected: undefined });
-                }
-              }}
-            />
-            <span className="ms:text-sm ms:text-mstext">{otherLabel}</span>
-          </label>
+          </div>
         </RadioGroup>
 
         <div className="ms:mt-2">

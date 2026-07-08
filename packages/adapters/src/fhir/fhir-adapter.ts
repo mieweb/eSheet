@@ -10,6 +10,8 @@ import type {
   Condition,
   TextInputType,
   SectionFieldDefinition,
+  FieldWidth,
+  OptionLayout,
 } from '@esheet/core';
 
 import { normalizeExpression } from '@esheet/core';
@@ -136,6 +138,18 @@ function convertItemToField(
     required: item.required,
   };
 
+  // Extract eSheet layout extensions — first-class field properties, not metadata
+  const width = getExtensionValue<string>(
+    item.extension,
+    FHIR_EXT.FIELD_WIDTH
+  ) as FieldWidth | undefined;
+  const optionLayout = getExtensionValue<string>(
+    item.extension,
+    FHIR_EXT.OPTION_LAYOUT
+  ) as OptionLayout | undefined;
+  const widthSpread = width ? { width } : {};
+  const optionLayoutSpread = optionLayout ? { optionLayout } : {};
+
   // Build _sourceData for round-trip
   const fieldMeta: FhirFieldMeta = buildFieldMeta(item, typeResult, options);
   const hasFieldMeta = Object.keys(fieldMeta).length > 0;
@@ -171,7 +185,8 @@ function convertItemToField(
         path,
         warnings,
         options,
-        hasFieldMeta ? fieldMeta : undefined
+        hasFieldMeta ? fieldMeta : undefined,
+        widthSpread
       );
 
     case 'radio':
@@ -182,6 +197,8 @@ function convertItemToField(
         ...base,
         ...(hasFieldMeta ? { _sourceData: fieldMeta } : {}),
         ...rulesSpread,
+        ...widthSpread,
+        ...optionLayoutSpread,
         fieldType: typeResult.fieldType,
         options: convertAnswerOptions(item.answerOption, existingIds),
       };
@@ -191,6 +208,8 @@ function convertItemToField(
         ...base,
         ...(hasFieldMeta ? { _sourceData: fieldMeta } : {}),
         ...rulesSpread,
+        ...widthSpread,
+        ...optionLayoutSpread,
         fieldType: 'openchoice' as const,
         options: convertAnswerOptions(item.answerOption, existingIds),
       };
@@ -201,6 +220,8 @@ function convertItemToField(
         ...base,
         ...(hasFieldMeta ? { _sourceData: fieldMeta } : {}),
         ...rulesSpread,
+        ...widthSpread,
+        ...optionLayoutSpread,
         fieldType: typeResult.fieldType,
         options: convertAnswerOptions(item.answerOption, existingIds),
       };
@@ -211,6 +232,7 @@ function convertItemToField(
         ...base,
         ...(hasFieldMeta ? { _sourceData: fieldMeta } : {}),
         ...rulesSpread,
+        ...widthSpread,
         fieldType: typeResult.fieldType,
         ...(typeResult.inputType ? { inputType: typeResult.inputType } : {}),
       };
@@ -233,6 +255,7 @@ function convertItemToField(
         ...base,
         ...(hasFieldMeta ? { _sourceData: fieldMeta } : {}),
         ...rulesSpread,
+        ...widthSpread,
         fieldType: typeResult.fieldType,
       };
 
@@ -241,6 +264,7 @@ function convertItemToField(
         ...base,
         ...(hasFieldMeta ? { _sourceData: fieldMeta } : {}),
         ...rulesSpread,
+        ...widthSpread,
         fieldType: 'text',
       };
   }
@@ -252,7 +276,8 @@ function buildSectionField(
   path: string,
   warnings: ImportWarning[],
   options?: FhirImportOptions,
-  fieldMeta?: FhirFieldMeta
+  fieldMeta?: FhirFieldMeta,
+  widthSpread?: { width?: FieldWidth }
 ): SectionFieldDefinition {
   const nestedFields = item.item
     ? item.item.map((child, i) =>
@@ -263,6 +288,7 @@ function buildSectionField(
   return {
     ...base,
     ...(fieldMeta ? { _sourceData: fieldMeta } : {}),
+    ...widthSpread,
     fieldType: 'section',
     title: item.text,
     fields: nestedFields,
@@ -522,12 +548,28 @@ function convertFieldToItem(field: FieldDefinition): FhirQuestionnaireItem {
     extensions.push(createSignatureRequiredExtension());
   }
 
-  // Add preserved extensions
+  // Add eSheet layout extensions
+  const fieldDef = field as { width?: string; optionLayout?: string };
+  if (fieldDef.width && fieldDef.width !== 'full') {
+    extensions.push({ url: FHIR_EXT.FIELD_WIDTH, valueCode: fieldDef.width });
+  }
+  if (fieldDef.optionLayout && fieldDef.optionLayout !== 'stack') {
+    extensions.push({
+      url: FHIR_EXT.OPTION_LAYOUT,
+      valueCode: fieldDef.optionLayout,
+    });
+  }
+
+  // Add preserved extensions (exclude any we regenerate to avoid duplicates)
   if (fieldMeta?.fhirExtensions) {
-    // Filter out extensions we're generating ourselves
+    const generated = new Set<string>([
+      FHIR_EXT.ITEM_CONTROL,
+      FHIR_EXT.SIGNATURE_REQUIRED,
+      FHIR_EXT.FIELD_WIDTH,
+      FHIR_EXT.OPTION_LAYOUT,
+    ]);
     const preserved = fieldMeta.fhirExtensions.filter(
-      (e) =>
-        e.url !== FHIR_EXT.ITEM_CONTROL && e.url !== FHIR_EXT.SIGNATURE_REQUIRED
+      (e) => !generated.has(e.url)
     );
     extensions.push(...preserved);
   }

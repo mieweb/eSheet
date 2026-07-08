@@ -41,7 +41,8 @@ export function CommonEditor({
   const showOptionLayout =
     def.fieldType === 'radio' ||
     def.fieldType === 'check' ||
-    def.fieldType === 'multitext';
+    def.fieldType === 'multitext' ||
+    def.fieldType === 'openchoice';
   const optionLayout =
     (def as { optionLayout?: OptionLayout }).optionLayout ?? 'stack';
   const question = (def as { question?: string }).question ?? '';

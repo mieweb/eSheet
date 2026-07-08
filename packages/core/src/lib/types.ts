@@ -250,6 +250,9 @@ export type FieldValidator = z.infer<typeof fieldValidatorSchema>;
  * - `full`  - spans the whole row (default).
  * - `half`  - two per row.
  * - `third` - three per row.
+ *
+ * **FHIR extension:** serialised as `valueCode` on the item's `extension` array.
+ * Definition: https://esheet.os.mieweb.org/docs/adapters/fhir/extensions#field-width
  */
 export type FieldWidth = 'full' | 'half' | 'third';
 
@@ -257,6 +260,10 @@ export type FieldWidth = 'full' | 'half' | 'third';
  * How a choice field arranges its options.
  * - `stack` - one option per line (default).
  * - `wrap`  - options flow horizontally and wrap to the next line.
+ *
+ * **FHIR extension:** serialised as `valueCode` on the item's `extension` array.
+ * Applies to `choice` items (radio, check, openchoice, multitext).
+ * Definition: https://esheet.os.mieweb.org/docs/adapters/fhir/extensions#option-layout
  */
 export type OptionLayout = 'stack' | 'wrap';
 
@@ -440,6 +447,8 @@ export interface OpenChoiceFieldDefinition extends BaseFieldDefinition {
   maxCustomOptions?: number;
   /** Label for the "Other, please specify" option (optional). */
   otherLabel?: string;
+  /** Controls whether options flow horizontally (wrap) or stack vertically (default). */
+  optionLayout?: OptionLayout;
 }
 
 export interface DisplayFieldDefinition {
