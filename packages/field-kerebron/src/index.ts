@@ -1,5 +1,4 @@
-import { z } from 'zod/mini';
-import { registerFieldType, registerFieldSchema } from '@esheet/core';
+import { registerFieldType } from '@esheet/core';
 import type { AssetLoad } from '@kerebron/editor';
 import { setAssetLoad } from './asset-load.js';
 
@@ -28,17 +27,6 @@ registerFieldType('richtext', {
   defaultProps: {},
   placeholder: { question: 'Enter your question...' },
 });
-
-// Register Zod schema so form validation accepts richtext fields
-registerFieldSchema(
-  z.object({
-    fieldType: z.literal('richtext'),
-    id: z.string(),
-    question: z.optional(z.string()),
-    required: z.optional(z.boolean()),
-    defaultContent: z.optional(z.string()),
-  })
-);
 
 export { RichTextEditorField } from './RichTextEditorField.js';
 export type { RichTextFieldDefinition } from './RichTextEditorField.js';

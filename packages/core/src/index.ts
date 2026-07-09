@@ -20,7 +20,6 @@ export {
   fieldDefinitionSchema,
   formDefinitionSchema,
   getFormDefinitionJSONSchema,
-  registerFieldSchema,
 
   // Types
   type FieldType,
