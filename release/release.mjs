@@ -163,25 +163,84 @@ if (IS_PRERELEASE) {
 }
 
 // ---------------------------------------------------------------------------
-// 7. npm publish --provenance (OIDC trusted publishing)
+// 7. npm publish — two-phase, all-or-nothing.
+//    Phase A: preflight checks (dry-run + registry existence).
+//             Any failure aborts before anything real is published.
+//    Phase B: only if every preflight passes, publish for real.
 //    Done BEFORE the git push so that if publish fails, nothing lands on main.
 // ---------------------------------------------------------------------------
 
-for (const pkgDir of PACKAGES) {
-  const pkg = readPkg(pkgDir);
-  if (DRY_RUN) {
+const publishTag = IS_PRERELEASE ? '--tag next' : '';
+// Provenance flags are only used for the real publish — not dry-run.
+// --provenance requires OIDC at signing time; no need to exercise it twice.
+const publishFlags = `--provenance --access public ${publishTag}`.trim();
+const dryRunFlags = `--dry-run --access public ${publishTag}`.trim();
+
+if (DRY_RUN) {
+  for (const pkgDir of PACKAGES) {
+    const pkg = readPkg(pkgDir);
     console.log(`[DRY RUN] Would publish ${pkg.name}@${newVersion}`);
-    continue;
   }
-  console.log(`\nPublishing ${pkg.name}@${newVersion}...`);
-  const publishTag = IS_PRERELEASE ? '--tag next' : '';
-  exec(`npm publish --provenance --access public ${publishTag}`.trim(), {
-    cwd: pkgDir,
-  });
+} else {
+  // Phase A — preflight: registry existence check + dry-run on every package.
+  console.log('\n── Phase A: preflight checks for all packages ──');
+  const preflight = [];
+  for (const pkgDir of PACKAGES) {
+    const pkg = readPkg(pkgDir);
+    process.stdout.write(`  checking ${pkg.name}@${newVersion} ... `);
+
+    // 1. Verify the package already exists on the registry.
+    //    A brand-new package (never published) will 404 on the real publish
+    //    with OIDC provenance — catch it here with a clear message.
+    const registryInfo = tryRun(`npm view ${pkg.name} --json`);
+    if (!registryInfo) {
+      console.log('✗ (not on registry)');
+      preflight.push({
+        pkgDir,
+        pkg,
+        ok: false,
+        err: new Error(
+          `'${pkg.name}' has never been published. ` +
+            `Run 'npm publish --access public' from ${pkgDir} once manually to register it, ` +
+            `then re-run the release.`
+        ),
+      });
+      continue;
+    }
+
+    // 2. Dry-run publish (validates package structure and auth, no OIDC needed).
+    try {
+      exec(`npm publish ${dryRunFlags}`, { cwd: pkgDir });
+      console.log('✓');
+      preflight.push({ pkgDir, pkg, ok: true });
+    } catch (err) {
+      console.log('✗');
+      preflight.push({ pkgDir, pkg, ok: false, err });
+    }
+  }
+
+  const failures = preflight.filter((p) => !p.ok);
+  if (failures.length > 0) {
+    console.error(
+      `\n❌  Preflight failed for ${failures.length} package(s):\n` +
+        failures.map((f) => `   • ${f.pkg.name}: ${f.err.message}`).join('\n') +
+        `\n\nNo packages were published. Fix the issues above and re-run.`
+    );
+    process.exit(1);
+  }
+
+  console.log('\n── Phase B: publishing all packages ──');
+  // Phase B — all preflights passed; publish for real.
+  for (const { pkgDir, pkg } of preflight) {
+    console.log(`\nPublishing ${pkg.name}@${newVersion}...`);
+    exec(`npm publish ${publishFlags}`, { cwd: pkgDir });
+  }
 }
 
 // ---------------------------------------------------------------------------
 // 8. Git commit + tag + push — only reached if publish succeeded above.
+//    Update the lockfile first so cross-package @esheet/* pinned versions
+//    stay consistent with the bumped package.json files.
 //    (prereleases: no tag, no changelog in commit)
 // ---------------------------------------------------------------------------
 
@@ -191,20 +250,26 @@ if (DRY_RUN) {
       IS_PRERELEASE ? '' : `, tag v${newVersion},`
     } and push`
   );
-} else if (IS_PRERELEASE) {
-  const changedFiles = PACKAGES.map((p) => `${p}/package.json`).join(' ');
-  run(`git add ${changedFiles} package-lock.json`);
-  run(`git commit -m "chore(release): bump to ${newVersion} [prerelease]"`);
-  run('git push origin main');
-  console.log(`📦 Committed version bumps for ${newVersion} (no tag)`);
 } else {
-  const changedFiles = PACKAGES.map((p) => `${p}/package.json`).join(' ');
-  run(`git add ${changedFiles} CHANGELOG.md package-lock.json`);
-  run(`git commit -m "chore(release): publish ${newVersion}"`);
-  run(`git tag v${newVersion}`);
-  run('git push origin main');
-  run(`git push origin v${newVersion}`);
-  console.log(`🏷  Tagged and pushed v${newVersion}`);
+  // Sync lockfile with the updated package.json cross-dep versions.
+  console.log('Updating package-lock.json...');
+  exec('npm install --package-lock-only --legacy-peer-deps');
+
+  if (IS_PRERELEASE) {
+    const changedFiles = PACKAGES.map((p) => `${p}/package.json`).join(' ');
+    run(`git add ${changedFiles} package-lock.json`);
+    run(`git commit -m "chore(release): bump to ${newVersion} [prerelease]"`);
+    run('git push origin main');
+    console.log(`📦 Committed version bumps for ${newVersion} (no tag)`);
+  } else {
+    const changedFiles = PACKAGES.map((p) => `${p}/package.json`).join(' ');
+    run(`git add ${changedFiles} CHANGELOG.md package-lock.json`);
+    run(`git commit -m "chore(release): publish ${newVersion}"`);
+    run(`git tag v${newVersion}`);
+    run('git push origin main');
+    run(`git push origin v${newVersion}`);
+    console.log(`🏷  Tagged and pushed v${newVersion}`);
+  }
 }
 
 // ---------------------------------------------------------------------------
