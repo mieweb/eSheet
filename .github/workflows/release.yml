@@ -25,13 +25,55 @@ on:
           - patch
           - prerelease
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 permissions:
   contents: write
   id-token: write
 
 jobs:
+  # ------------------------------------------------------------------
+  # Job 1: quality gate — must pass before the bot is allowed to push.
+  # Only runs for a real full-release dispatch; dry-run skips it.
+  # ------------------------------------------------------------------
+  check:
+    if: github.event_name == 'workflow_dispatch' && inputs.mode == 'full-release'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - run: npm ci --legacy-peer-deps
+
+      - name: Lint, test, typecheck
+        run: npx nx run-many -t lint test typecheck
+
+  # ------------------------------------------------------------------
+  # Job 2: release — only runs after `check` succeeds (or is skipped
+  # for dry-run / PR-merge paths).  The bot can NEVER push to main
+  # unless this job runs, and it will not run if `check` failed.
+  # ------------------------------------------------------------------
   release:
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
+    needs: [check]
+    # `check` is skipped for dry-run and PR-merge; treat skipped as success.
+    # The bot can NEVER push to main unless this job runs, and it will not
+    # run if `check` failed.
+    if: >-
+      always() && (
+        needs.check.result == 'success' ||
+        needs.check.result == 'skipped'
+      ) && (
+        github.event_name == 'workflow_dispatch' ||
+        github.event.pull_request.merged == true
+      )
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -48,10 +90,6 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - run: npm ci --legacy-peer-deps
-
-      - name: Lint, test, typecheck
-        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'full-release'
-        run: npx nx run-many -t lint test typecheck
 
       - name: Configure git identity
         if: github.event_name == 'workflow_dispatch' && inputs.mode == 'full-release'

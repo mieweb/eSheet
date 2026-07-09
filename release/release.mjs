@@ -28,12 +28,35 @@ const MANUAL_BUMP = bumpArg ? bumpArg.split('=')[1] : null;
 // ---------------------------------------------------------------------------
 
 const lastTag = tryRun('git describe --tags --abbrev=0');
-const currentVersion = lastTag
-  ? lastTag.replace(/^v/, '')
-  : readPkg('packages/core').version;
+const tagVersion = lastTag ? lastTag.replace(/^v/, '') : null;
+const pkgVersion = readPkg('packages/core').version;
+
+// If a previous prerelease bumped package.json without creating a tag,
+// the tag is stale. Prefer the package.json version when it's strictly
+// ahead of the last tag so the prerelease counter increments correctly.
+function isVersionAhead(pkg, tag) {
+  if (!tag) return true;
+  // If pkg contains a pre-release suffix, compare the base parts first.
+  const [pkgBase] = pkg.split('-');
+  const [tagBase] = tag.split('-');
+  const pkgParts = pkgBase.split('.').map(Number);
+  const tagParts = tagBase.split('.').map(Number);
+  for (let i = 0; i < 3; i++) {
+    if (pkgParts[i] > tagParts[i]) return true;
+    if (pkgParts[i] < tagParts[i]) return false;
+  }
+  // Same base: pkg is ahead only if it has a prerelease suffix (tag doesn't)
+  return pkg.includes('-') && !tag.includes('-');
+}
+
+const currentVersion =
+  tagVersion && !isVersionAhead(pkgVersion, tagVersion)
+    ? tagVersion
+    : pkgVersion;
 
 console.log(`Last tag:        ${lastTag || '(none)'}`);
-console.log(`Current version: ${currentVersion}`);
+console.log(`Package version: ${pkgVersion}`);
+console.log(`Current version: ${currentVersion}  ${currentVersion === pkgVersion && tagVersion ? '(from package.json — ahead of tag)' : '(from tag)'}`);
 
 // ---------------------------------------------------------------------------
 // 2. Collect + parse conventional commits since last tag
@@ -59,6 +82,41 @@ if (!MANUAL_BUMP) {
 
 const newVersion = applyBump(currentVersion, bump);
 const IS_PRERELEASE = newVersion.includes('-');
+
+// ---------------------------------------------------------------------------
+// Version regression guard — prevent the bot from committing a downgrade.
+// Compares newVersion against the live package.json version so a re-run that
+// somehow computes a lower version fails loudly instead of silently pushing.
+// ---------------------------------------------------------------------------
+
+function versionGt(a, b) {
+  const parseParts = (v) => {
+    const [base, pre] = v.split('-');
+    const nums = base.split('.').map(Number);
+    // No prerelease suffix is "higher" than any prerelease suffix on same base.
+    const preNum = pre === undefined ? Infinity : Number(pre);
+    return [...nums, preNum];
+  };
+  const pa = parseParts(a);
+  const pb = parseParts(b);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const diff = (pa[i] ?? 0) - (pb[i] ?? 0);
+    if (diff !== 0) return diff > 0;
+  }
+  return false;
+}
+
+if (!versionGt(newVersion, pkgVersion)) {
+  console.error(
+    `\n❌  Version regression detected!\n` +
+      `   Computed : ${newVersion}\n` +
+      `   package.json : ${pkgVersion}\n` +
+      `   The new version must be strictly greater than the current package.json version.\n` +
+      `   This can happen when the last git tag is stale after a prerelease.\n` +
+      `   Aborting to prevent the bot from pushing a downgraded version.`
+  );
+  process.exit(1);
+}
 
 console.log(`\nBump:        ${bump}`);
 console.log(
@@ -105,7 +163,26 @@ if (IS_PRERELEASE) {
 }
 
 // ---------------------------------------------------------------------------
-// 7. Git commit + tag + push (prereleases: no tag, no changelog in commit)
+// 7. npm publish --provenance (OIDC trusted publishing)
+//    Done BEFORE the git push so that if publish fails, nothing lands on main.
+// ---------------------------------------------------------------------------
+
+for (const pkgDir of PACKAGES) {
+  const pkg = readPkg(pkgDir);
+  if (DRY_RUN) {
+    console.log(`[DRY RUN] Would publish ${pkg.name}@${newVersion}`);
+    continue;
+  }
+  console.log(`\nPublishing ${pkg.name}@${newVersion}...`);
+  const publishTag = IS_PRERELEASE ? '--tag next' : '';
+  exec(`npm publish --provenance --access public ${publishTag}`.trim(), {
+    cwd: pkgDir,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// 8. Git commit + tag + push — only reached if publish succeeded above.
+//    (prereleases: no tag, no changelog in commit)
 // ---------------------------------------------------------------------------
 
 if (DRY_RUN) {
@@ -131,7 +208,7 @@ if (DRY_RUN) {
 }
 
 // ---------------------------------------------------------------------------
-// 8. GitHub Release (skipped for prereleases)
+// 9. GitHub Release (skipped for prereleases; tag must be on remote first)
 // ---------------------------------------------------------------------------
 
 if (IS_PRERELEASE) {
@@ -150,23 +227,6 @@ if (IS_PRERELEASE) {
     );
     console.log(`📦 GitHub release v${newVersion} created`);
   }
-}
-
-// ---------------------------------------------------------------------------
-// 9. npm publish --provenance (OIDC trusted publishing)
-// ---------------------------------------------------------------------------
-
-for (const pkgDir of PACKAGES) {
-  const pkg = readPkg(pkgDir);
-  if (DRY_RUN) {
-    console.log(`[DRY RUN] Would publish ${pkg.name}@${newVersion}`);
-    continue;
-  }
-  console.log(`\nPublishing ${pkg.name}@${newVersion}...`);
-  const publishTag = IS_PRERELEASE ? '--tag next' : '';
-  exec(`npm publish --provenance --access public ${publishTag}`.trim(), {
-    cwd: pkgDir,
-  });
 }
 
 console.log(`\n✅  Released v${newVersion}`);
