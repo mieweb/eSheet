@@ -41,7 +41,7 @@
     "@esheet/adapters": "0.0.4-2",
     "@esheet/core": "0.0.4-2",
     "@esheet/fields": "0.0.4-2",
-    "js-yaml": "^4.1.0"
+    "js-yaml": "^4.2.0"
   },
   "peerDependencies": {
     "react": ">=19.0.0"
