@@ -908,7 +908,7 @@ const customFieldDefinitionSchema = z.looseObject({
         (t) =>
           !(FIELD_TYPES as readonly string[]).includes(t) &&
           getFieldTypeMeta(t) !== undefined,
-        'Unknown fieldType — custom field types must be registered via registerFieldType() before validation'
+        'Unknown fieldType — must be a registered custom type via registerFieldType() and must not be one of the built-in FIELD_TYPES values'
       )
     ),
 });
@@ -991,6 +991,20 @@ export const formDefinitionSchema = z.strictObject({
   _sourceData: z.optional(z.unknown()),
 });
 export type FormDefinition = z.infer<typeof formDefinitionSchema>;
+
+/**
+ * Built-in-only form schema used exclusively for JSON Schema generation.
+ * Excludes the loose `customFieldDefinitionSchema` branch so the generated
+ * JSON Schema stays strict (fieldType remains a literal union, not `string`).
+ */
+const builtInFormDefinitionSchema = z.strictObject({
+  id: z.string(),
+  title: z.optional(z.string()),
+  description: z.optional(z.string()),
+  dangerouslyAllowJS: z.optional(z.boolean()),
+  fields: z.array(builtInFieldDefinitionSchema),
+  _sourceData: z.optional(z.unknown()),
+});
 
 // ---------------------------------------------------------------------------
 // JSON Schema (OpenAI Structured Outputs compatible)
@@ -1092,14 +1106,13 @@ function makeOpenAICompatible(schema: JsonSchemaObject): JsonSchemaObject {
 /**
  * Return the JSON Schema (Draft-07) for FormDefinition - used by builder's Monaco editor.
  *
- * Intentionally lazy (not computed at module load) so that plugin field schemas
- * registered via {@link registerFieldSchema} are included when first called.
- * Evaluating eagerly at module load would cache `fieldDefinitionSchema`'s lazy
- * inner type before any plugins have a chance to call `registerFieldSchema`.
+ * Uses the built-in-only form schema so the generated JSON Schema stays strict
+ * (fieldType remains a literal union rather than widening to `string` via the
+ * loose customFieldDefinitionSchema branch).
  */
 export function getFormDefinitionJSONSchema(): Record<string, unknown> {
   return makeOpenAICompatible(
-    z.toJSONSchema(formDefinitionSchema) as JsonSchemaObject
+    z.toJSONSchema(builtInFormDefinitionSchema) as JsonSchemaObject
   );
 }
 

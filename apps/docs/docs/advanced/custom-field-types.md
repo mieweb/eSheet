@@ -23,8 +23,8 @@ time — an unregistered custom type fails schema validation with an
 load (top level), not inside a component.
 
 Custom field definitions may carry arbitrary extra configuration props; unlike
-built-in types, they are not strictly validated beyond the base props
-(`id`, `question`, `required`, `rules`).
+built-in types, they are not strictly validated beyond the shared base props
+(`id`, `question`, `required`, `width`, `validators`, `rules`, `calculation`).
 
 :::
 

@@ -79,20 +79,19 @@ Quick reference of all public exports from each eSheet package.
 
 ### Zod Schemas
 
-| Export                     | Validates                                     |
-| -------------------------- | --------------------------------------------- |
-| `formDefinitionSchema`     | `FormDefinition`                              |
-| `fieldDefinitionSchema`    | `FieldDefinition`                             |
-| `fieldTypeSchema`          | `FieldType`                                   |
-| `conditionSchema`          | `Condition`                                   |
-| `conditionalRuleSchema`    | `ConditionalRule`                             |
-| `conditionOperatorSchema`  | `ConditionOperator`                           |
-| `conditionTypeSchema`      | `ConditionType`                               |
-| `fieldOptionSchema`        | `FieldOption`                                 |
-| `matrixRowSchema`          | `MatrixRow`                                   |
-| `matrixColumnSchema`       | `MatrixColumn`                                |
-| `formDefinitionJSONSchema` | JSON Schema (Draft-07) for Monaco             |
-| `registerFieldSchema()`    | Register a Zod schema for a custom field type |
+| Export                     | Validates                         |
+| -------------------------- | --------------------------------- |
+| `formDefinitionSchema`     | `FormDefinition`                  |
+| `fieldDefinitionSchema`    | `FieldDefinition`                 |
+| `fieldTypeSchema`          | `FieldType`                       |
+| `conditionSchema`          | `Condition`                       |
+| `conditionalRuleSchema`    | `ConditionalRule`                 |
+| `conditionOperatorSchema`  | `ConditionOperator`               |
+| `conditionTypeSchema`      | `ConditionType`                   |
+| `fieldOptionSchema`        | `FieldOption`                     |
+| `matrixRowSchema`          | `MatrixRow`                       |
+| `matrixColumnSchema`       | `MatrixColumn`                    |
+| `formDefinitionJSONSchema` | JSON Schema (Draft-07) for Monaco |
 
 ### Store Factories
 
