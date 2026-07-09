@@ -901,14 +901,16 @@ const builtInFieldDefinitionSchema = z.discriminatedUnion('fieldType', [
  */
 const customFieldDefinitionSchema = z.looseObject({
   ...baseFieldProps,
-  fieldType: z.string().check(
-    z.refine(
-      (t) =>
-        !(FIELD_TYPES as readonly string[]).includes(t) &&
-        getFieldTypeMeta(t) !== undefined,
-      'Unknown fieldType — custom field types must be registered via registerFieldType() before validation'
-    )
-  ),
+  fieldType: z
+    .string()
+    .check(
+      z.refine(
+        (t) =>
+          !(FIELD_TYPES as readonly string[]).includes(t) &&
+          getFieldTypeMeta(t) !== undefined,
+        'Unknown fieldType — custom field types must be registered via registerFieldType() before validation'
+      )
+    ),
 });
 
 /**
