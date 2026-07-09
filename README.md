@@ -2,6 +2,13 @@
 
 **Modular form builder & renderer for React.**
 
+[![CI](https://github.com/mieweb/eSheet/actions/workflows/ci.yml/badge.svg)](https://github.com/mieweb/eSheet/actions/workflows/ci.yml)
+[![Release](https://github.com/mieweb/eSheet/actions/workflows/release.yml/badge.svg)](https://github.com/mieweb/eSheet/actions/workflows/release.yml)
+[![npm](https://img.shields.io/npm/v/@esheet/core?label=npm)](https://www.npmjs.com/package/@esheet/core)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](#license)
+[![TypeScript](https://img.shields.io/badge/TypeScript-first-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=061b23)](https://react.dev/)
+
 eSheet is a TypeScript-first Nx monorepo providing composable packages for embedding a visual form builder and renderer into any React application — no lock-in, no required backend.
 
 - **[Live Demo](https://esheet-demo.os.mieweb.org/)** — builder + renderer playground
