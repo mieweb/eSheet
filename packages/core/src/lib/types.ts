@@ -1,4 +1,5 @@
 import { z } from 'zod/mini';
+import { getFieldTypeMeta } from './registry.js';
 
 // ---------------------------------------------------------------------------
 // Field Types
@@ -861,8 +862,8 @@ const sectionFieldSchema = z.strictObject({
   ),
 });
 
-/** Core (built-in) discriminated union - sealed, never mutated. */
-const _coreFieldSchema = z.discriminatedUnion('fieldType', [
+/** Zod schema for the built-in FieldDefinition discriminated union. */
+const builtInFieldDefinitionSchema = z.discriminatedUnion('fieldType', [
   // Text
   textFieldSchema,
   longtextFieldSchema,
@@ -892,54 +893,36 @@ const _coreFieldSchema = z.discriminatedUnion('fieldType', [
   sectionFieldSchema,
 ]);
 
-/** Plugin field schemas registered at runtime via {@link registerFieldSchema}. */
-const _extraFieldSchemas: z.ZodMiniType[] = [];
+/**
+ * Custom (plugin) field types registered via `registerFieldType()` /
+ * `registerCustomFieldTypes()`. Loose object — custom fields may carry
+ * arbitrary extra configuration props. Built-in field types never match
+ * this branch, so they keep strict validation above.
+ */
+const customFieldDefinitionSchema = z.looseObject({
+  ...baseFieldProps,
+  fieldType: z
+    .string()
+    .check(
+      z.refine(
+        (t) =>
+          !(FIELD_TYPES as readonly string[]).includes(t) &&
+          getFieldTypeMeta(t) !== undefined,
+        'Unknown fieldType — must be a registered custom type via registerFieldType() and must not be one of the built-in FIELD_TYPES values'
+      )
+    ),
+});
 
 /**
- * Register a Zod schema for a plugin field type.
- * Call this when importing a plugin field package so form validation
- * accepts that field type.
- *
- * @example
- * ```ts
- * registerFieldSchema(
- *   z.object({ fieldType: z.literal('richtext'), id: z.string(), defaultContent: z.optional(z.string()) })
- * );
- * ```
+ * Zod schema for FieldDefinition — built-in discriminated union plus any
+ * registered custom field types. Cast so the inferred TypeScript type stays
+ * the built-in `FieldDefinition` union (custom definitions are accessed via
+ * `field.definition as { ... }` in their components).
  */
-export function registerFieldSchema(schema: z.ZodMiniType): void {
-  _extraFieldSchemas.push(schema);
-  // Reset z.lazy's cached inner type so the next parse re-evaluates the union
-  // with the newly registered schema included. z.lazy stores its cache at
-  // `_zod.def._cachedInner` - clearing it forces the getter to run again.
-  const def = (
-    fieldDefinitionSchema as unknown as {
-      _zod: { def: { _cachedInner?: unknown } };
-    }
-  )._zod.def;
-  if (def) {
-    delete def._cachedInner;
-  }
-}
-
-/**
- * Zod schema for FieldDefinition.
- *
- * The core built-in types use a discriminated union for precise validation.
- * Plugin types registered via {@link registerFieldSchema} are tried after.
- * Uses `z.lazy` so plugin schemas added after module load are always included.
- */
-export const fieldDefinitionSchema: z.ZodMiniType<FieldDefinition> = z.lazy(
-  (): z.ZodMiniType<FieldDefinition> => {
-    if (_extraFieldSchemas.length === 0) {
-      return _coreFieldSchema as unknown as z.ZodMiniType<FieldDefinition>;
-    }
-    return z.union([
-      _coreFieldSchema,
-      ..._extraFieldSchemas,
-    ]) as unknown as z.ZodMiniType<FieldDefinition>;
-  }
-);
+export const fieldDefinitionSchema = z.union([
+  builtInFieldDefinitionSchema,
+  customFieldDefinitionSchema,
+]) as unknown as z.ZodMiniType<FieldDefinition>;
 
 // ---------------------------------------------------------------------------
 // Field Response Values (answers only)
@@ -1008,6 +991,20 @@ export const formDefinitionSchema = z.strictObject({
   _sourceData: z.optional(z.unknown()),
 });
 export type FormDefinition = z.infer<typeof formDefinitionSchema>;
+
+/**
+ * Built-in-only form schema used exclusively for JSON Schema generation.
+ * Excludes the loose `customFieldDefinitionSchema` branch so the generated
+ * JSON Schema stays strict (fieldType remains a literal union, not `string`).
+ */
+const builtInFormDefinitionSchema = z.strictObject({
+  id: z.string(),
+  title: z.optional(z.string()),
+  description: z.optional(z.string()),
+  dangerouslyAllowJS: z.optional(z.boolean()),
+  fields: z.array(builtInFieldDefinitionSchema),
+  _sourceData: z.optional(z.unknown()),
+});
 
 // ---------------------------------------------------------------------------
 // JSON Schema (OpenAI Structured Outputs compatible)
@@ -1109,14 +1106,13 @@ function makeOpenAICompatible(schema: JsonSchemaObject): JsonSchemaObject {
 /**
  * Return the JSON Schema (Draft-07) for FormDefinition - used by builder's Monaco editor.
  *
- * Intentionally lazy (not computed at module load) so that plugin field schemas
- * registered via {@link registerFieldSchema} are included when first called.
- * Evaluating eagerly at module load would cache `fieldDefinitionSchema`'s lazy
- * inner type before any plugins have a chance to call `registerFieldSchema`.
+ * Uses the built-in-only form schema so the generated JSON Schema stays strict
+ * (fieldType remains a literal union rather than widening to `string` via the
+ * loose customFieldDefinitionSchema branch).
  */
 export function getFormDefinitionJSONSchema(): Record<string, unknown> {
   return makeOpenAICompatible(
-    z.toJSONSchema(formDefinitionSchema) as JsonSchemaObject
+    z.toJSONSchema(builtInFormDefinitionSchema) as JsonSchemaObject
   );
 }
 
