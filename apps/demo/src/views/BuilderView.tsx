@@ -4,36 +4,40 @@ import {
   useBuilderMcpToolHandler,
   type FormDefinition,
 } from '@esheet/builder';
-import type { RichTextFieldDefinition } from '@esheet/field-kerebron';
 import { Navbar } from '../components/Navbar.js';
 import { updateOzwellTools, FORMIE_KEY } from '../ozwell-setup.js';
 
 const INITIAL_DEF: FormDefinition = {
   id: 'demo-builder',
-  fields: [
-    { id: 'q1', fieldType: 'text', question: 'What is your name?' },
+  pages: [
     {
-      id: 'q2',
-      fieldType: 'text',
-      question: 'What is your email?',
-      inputType: 'email',
-    },
-    {
-      id: 'q3',
-      fieldType: 'radio',
-      question: 'Favorite color?',
-      options: [
-        { id: 'o1', value: 'Red' },
-        { id: 'o2', value: 'Blue' },
-        { id: 'o3', value: 'Green' },
+      id: 'page-1',
+      fields: [
+        { id: 'q1', fieldType: 'text', question: 'What is your name?' },
+        {
+          id: 'q2',
+          fieldType: 'text',
+          question: 'What is your email?',
+          inputType: 'email',
+        },
+        {
+          id: 'q3',
+          fieldType: 'radio',
+          question: 'Favorite color?',
+          options: [
+            { id: 'o1', value: 'Red' },
+            { id: 'o2', value: 'Blue' },
+            { id: 'o3', value: 'Green' },
+          ],
+        },
+        {
+          id: 'q4',
+          fieldType: 'richtext',
+          question: 'Tell us more (rich text):',
+        } as unknown as NonNullable<FormDefinition['pages'][number]['fields']>[number],
       ],
     },
-    {
-      id: 'q4',
-      fieldType: 'richtext',
-      question: 'Tell us more (rich text):',
-    } as unknown as RichTextFieldDefinition,
-  ] as FormDefinition['fields'],
+  ],
 };
 
 export function BuilderView() {

@@ -45,7 +45,7 @@ import {
  * Extract a flat FieldDefinition[] from a FormDefinition's pages array.
  */
 function fieldsFromDefinition(def: FormDefinition): FieldDefinition[] {
-  return def.pages.map((page) => ({
+  return (def.pages ?? []).map((page) => ({
     fieldType: 'pages' as const,
     id: page.id,
     ...(page.title !== undefined && { title: page.title }),

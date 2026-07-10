@@ -3,6 +3,7 @@ import { useSyncExternalStore } from 'react';
 import {
   createFormStore,
   createUIStore,
+  formDefinitionSchema,
   type FormDefinition,
   type FormStore,
   type UIStore,
@@ -145,8 +146,13 @@ export const EsheetBuilder = React.forwardRef<
           { mcpId: mcpReq.id, mcpMessage: mcpReq.params.message }
         );
       }
-    } else {
-      resolved = definition as FormDefinition | undefined;
+    } else if (definition !== undefined) {
+      const result = formDefinitionSchema.safeParse(definition);
+      if (result.success) {
+        resolved = result.data;
+      } else {
+        console.error('[EsheetBuilder] Invalid form definition:', result.error);
+      }
     }
     formRef.current = createFormStore(resolved, allowDangerousJS);
   }
