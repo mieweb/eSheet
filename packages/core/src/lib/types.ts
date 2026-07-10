@@ -28,6 +28,7 @@ export const FIELD_TYPES = [
   'openchoice',
   'display',
   'section',
+  'pages',
 ] as const;
 
 export const fieldTypeSchema = z.enum(FIELD_TYPES);
@@ -481,6 +482,14 @@ export interface SectionFieldDefinition extends BaseFieldDefinition {
   fields?: FieldDefinition[]; // recursive!
 }
 
+export interface PagesFieldDefinition extends BaseFieldDefinition {
+  fieldType: 'pages';
+  title?: string;
+  /** When true, the form auto-advances to the next page when all required fields on the current page are answered. */
+  autoAdvance?: boolean;
+  fields?: FieldDefinition[]; // each direct child is one page (typically a section)
+}
+
 // ---------------------------------------------------------------------------
 // Discriminated Union Type
 // ---------------------------------------------------------------------------
@@ -513,7 +522,8 @@ export type FieldDefinition =
   | DiagramFieldDefinition
   | DisplayFieldDefinition
   // Organization
-  | SectionFieldDefinition;
+  | SectionFieldDefinition
+  | PagesFieldDefinition;
 
 /** Union of all field variants that carry an `options` array. */
 export type OptionBearingFieldDefinition =
@@ -577,6 +587,7 @@ const FIELD_TYPE_PROPERTIES: Record<FieldType, readonly string[]> = {
   display: ['content'],
   // Organization category
   section: ['title', 'fields'],
+  pages: ['title', 'autoAdvance', 'fields'],
 };
 
 /** Base properties allowed on all field types. */
@@ -621,7 +632,7 @@ function normalizeFieldDefinition(
   for (const [key, value] of Object.entries(field)) {
     if (!allowedProps.has(key)) continue;
 
-    // Recursively normalize nested fields (for sections)
+    // Recursively normalize nested fields (for sections and pages)
     if (key === 'fields' && Array.isArray(value)) {
       normalized[key] = value.map((f) =>
         normalizeFieldDefinition(f as Record<string, unknown>)
@@ -662,11 +673,29 @@ export function normalizeFormDefinition(
     'title',
     'description',
     'fields',
+    'pages',
     '_sourceData',
   ];
   for (const key of allowedFormProps) {
     if (key in formObj) {
-      if (key === 'fields' && Array.isArray(formObj[key])) {
+      if (key === 'pages' && Array.isArray(formObj[key])) {
+        // Convert top-level pages array to fieldType:'pages' entries in fields
+        result['fields'] = (formObj[key] as Record<string, unknown>[]).map(
+          (page) => ({
+            fieldType: 'pages',
+            id: page['id'],
+            ...(page['title'] !== undefined ? { title: page['title'] } : {}),
+            ...(page['autoAdvance'] !== undefined
+              ? { autoAdvance: page['autoAdvance'] }
+              : {}),
+            fields: Array.isArray(page['fields'])
+              ? (page['fields'] as Record<string, unknown>[]).map((f) =>
+                  normalizeFieldDefinition(f)
+                )
+              : [],
+          })
+        );
+      } else if (key === 'fields' && Array.isArray(formObj[key])) {
         result[key] = (formObj[key] as Record<string, unknown>[]).map((f) =>
           normalizeFieldDefinition(f)
         );
@@ -862,6 +891,19 @@ const sectionFieldSchema = z.strictObject({
   ),
 });
 
+// Pages schema (recursive via z.lazy)
+const pagesFieldSchema = z.strictObject({
+  ...baseFieldProps,
+  fieldType: z.literal('pages'),
+  title: z.optional(z.string()),
+  autoAdvance: z.optional(z.boolean()),
+  fields: z.optional(
+    z.lazy(
+      (): z.ZodMiniType<FieldDefinition[]> => z.array(fieldDefinitionSchema)
+    )
+  ),
+});
+
 /** Zod schema for the built-in FieldDefinition discriminated union. */
 const builtInFieldDefinitionSchema = z.discriminatedUnion('fieldType', [
   // Text
@@ -891,6 +933,7 @@ const builtInFieldDefinitionSchema = z.discriminatedUnion('fieldType', [
   displayFieldSchema,
   // Organization
   sectionFieldSchema,
+  pagesFieldSchema,
 ]);
 
 /**
@@ -980,6 +1023,22 @@ export interface FieldResponse {
 // Form Schema (top-level definition)
 // ---------------------------------------------------------------------------
 
+/**
+ * A single page entry in the top-level `pages` array.
+ * Equivalent to PagesFieldDefinition but without the `fieldType` discriminant.
+ */
+const pageEntrySchema = z.object({
+  id: z.string(),
+  title: z.optional(z.string()),
+  autoAdvance: z.optional(z.boolean()),
+  fields: z.optional(
+    z.lazy(
+      (): z.ZodMiniType<FieldDefinition[]> => z.array(fieldDefinitionSchema)
+    )
+  ),
+});
+export type PageEntry = z.infer<typeof pageEntrySchema>;
+
 /** A complete form definition (no response values). */
 export const formDefinitionSchema = z.strictObject({
   id: z.string(),
@@ -987,7 +1046,8 @@ export const formDefinitionSchema = z.strictObject({
   description: z.optional(z.string()),
   /** When true, enables dangerously embedded JS - calculations on fields and conditionType 'js'. */
   dangerouslyAllowJS: z.optional(z.boolean()),
-  fields: z.array(z.lazy(() => fieldDefinitionSchema)),
+  /** Pages array — required; every form must declare at least its fields inside pages. */
+  pages: z.array(pageEntrySchema),
   _sourceData: z.optional(z.unknown()),
 });
 export type FormDefinition = z.infer<typeof formDefinitionSchema>;
@@ -1002,7 +1062,14 @@ const builtInFormDefinitionSchema = z.strictObject({
   title: z.optional(z.string()),
   description: z.optional(z.string()),
   dangerouslyAllowJS: z.optional(z.boolean()),
-  fields: z.array(builtInFieldDefinitionSchema),
+  pages: z.array(
+    z.object({
+      id: z.string(),
+      title: z.optional(z.string()),
+      autoAdvance: z.optional(z.boolean()),
+      fields: z.optional(z.array(builtInFieldDefinitionSchema)),
+    })
+  ),
   _sourceData: z.optional(z.unknown()),
 });
 

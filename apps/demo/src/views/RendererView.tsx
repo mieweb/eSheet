@@ -16,11 +16,13 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  DialogOverlay,
   Select,
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
+  Textarea,
 } from '@mieweb/ui';
 import { ClipboardList, Smartphone } from 'lucide-react';
 import { updateOzwellTools, FLOWIE_KEY } from '../ozwell-setup.js';
@@ -93,6 +95,9 @@ export function RendererView() {
   const [activeTab, setActiveTab] = useState<'form' | 'definition'>('form');
   const [responseFormat, setResponseFormat] =
     useState<ResponseFormat>('native');
+  const [pasteOpen, setPasteOpen] = useState(false);
+  const [pasteText, setPasteText] = useState('');
+  const [pasteError, setPasteError] = useState<string | null>(null);
 
   const resetFormKey = useCallback(() => {
     setFormKey((prev) => prev + 1);
@@ -175,6 +180,21 @@ export function RendererView() {
     });
   };
 
+  const handlePasteApply = () => {
+    try {
+      const data = JSON.parse(pasteText);
+      setRawInput(data);
+      setSubmitResult(null);
+      setActiveTab('form');
+      resetFormKey();
+      setPasteOpen(false);
+      setPasteText('');
+      setPasteError(null);
+    } catch (err) {
+      setPasteError(err instanceof Error ? err.message : String(err));
+    }
+  };
+
   const hasForm = rawInput != null;
 
   return (
@@ -230,6 +250,18 @@ export function RendererView() {
                 className="w-24 shrink-0"
                 disabled={!hasForm}
               />
+              <Button
+                variant="outline"
+                size="sm"
+                className="shrink-0"
+                onClick={() => {
+                  setPasteText('');
+                  setPasteError(null);
+                  setPasteOpen(true);
+                }}
+              >
+                Paste JSON
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -359,6 +391,43 @@ export function RendererView() {
           )}
         </div>
       </Tabs>
+
+      <DialogOverlay isOpen={pasteOpen} onClose={() => setPasteOpen(false)}>
+        <div className="flex flex-col gap-3 p-1">
+          <h2 className="text-base font-semibold">Paste JSON Definition</h2>
+          <Textarea
+            value={pasteText}
+            onChange={(e) => {
+              setPasteText(e.target.value);
+              setPasteError(null);
+            }}
+            placeholder="Paste your eSheet / FHIR / SurveyJS JSON here…"
+            rows={14}
+            className="font-mono text-xs"
+            autoFocus
+          />
+          {pasteError && (
+            <p className="text-sm text-destructive">{pasteError}</p>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPasteOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              disabled={pasteText.trim() === ''}
+              onClick={handlePasteApply}
+            >
+              Apply
+            </Button>
+          </div>
+        </div>
+      </DialogOverlay>
 
       {/* Sticky bottom bar — preset select only */}
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border px-4 py-2 flex items-center gap-2">

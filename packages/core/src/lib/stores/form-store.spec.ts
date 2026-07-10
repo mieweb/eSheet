@@ -25,7 +25,7 @@ function field(
 }
 
 function form(fields: FieldDefinition[]): FormDefinition {
-  return { id: 'test-form', fields };
+  return { id: 'test-form', pages: [{ id: 'page-1', fields }] };
 }
 
 function visibleRule(targetId: string, expected: string): ConditionalRule {
@@ -76,7 +76,7 @@ describe('createFormStore', () => {
       const def = form([field('q1'), field('q2')]);
       store = createFormStore(def);
       const s = store.getState();
-      expect(s.normalized.rootIds).toEqual(['q1', 'q2']);
+      expect(s.normalized.byId['page-1'].childIds).toEqual(['q1', 'q2']);
       expect(s.responses).toEqual({});
     });
   });
@@ -95,7 +95,7 @@ describe('createFormStore', () => {
         const newDef = form([field('a'), field('b'), field('c')]);
         store.getState().loadDefinition(newDef);
         const s = store.getState();
-        expect(s.normalized.rootIds).toEqual(['a', 'b', 'c']);
+        expect(s.normalized.byId['page-1'].childIds).toEqual(['a', 'b', 'c']);
       });
 
       it('clears responses on load', () => {
@@ -179,18 +179,24 @@ describe('createFormStore', () => {
     describe('addField', () => {
       it('adds a field at root level', () => {
         store = createFormStore(form([]));
-        const id = store.getState().addField('text');
+        const id = store.getState().addField('text', { parentId: 'page-1' });
         expect(id).toBeTruthy();
         const s = store.getState();
-        expect(s.normalized.rootIds).toEqual([id]);
+        expect(s.normalized.byId['page-1'].childIds).toContain(id);
         expect(s.normalized.byId[id!].definition.fieldType).toBe('text');
-        expect(s.normalized.byId[id!].parentId).toBeNull();
+        expect(s.normalized.byId[id!].parentId).toBe('page-1');
       });
 
       it('inserts at specific root index', () => {
         store = createFormStore(form([field('a'), field('b')]));
-        const id = store.getState().addField('text', { index: 1 });
-        expect(store.getState().normalized.rootIds).toEqual(['a', id, 'b']);
+        const id = store
+          .getState()
+          .addField('text', { parentId: 'page-1', index: 1 });
+        expect(store.getState().normalized.byId['page-1'].childIds).toEqual([
+          'a',
+          id,
+          'b',
+        ]);
       });
 
       it('adds a field inside a section', () => {
@@ -323,8 +329,8 @@ describe('createFormStore', () => {
         const s = store.getState();
         expect(s.normalized.byId['q1']).toBeUndefined();
         expect(s.normalized.byId['q1-renamed']).toBeDefined();
-        expect(s.normalized.rootIds).toContain('q1-renamed');
-        expect(s.normalized.rootIds).not.toContain('q1');
+        expect(s.normalized.byId['page-1'].childIds).toContain('q1-renamed');
+        expect(s.normalized.byId['page-1'].childIds).not.toContain('q1');
       });
 
       it('rejects rename on collision', () => {
@@ -442,7 +448,7 @@ describe('createFormStore', () => {
         store = createFormStore(form([field('q1'), field('q2')]));
         expect(store.getState().removeField('q1')).toBe(true);
         const s = store.getState();
-        expect(s.normalized.rootIds).toEqual(['q2']);
+        expect(s.normalized.byId['page-1'].childIds).toEqual(['q2']);
         expect(s.normalized.byId['q1']).toBeUndefined();
       });
 
@@ -491,8 +497,12 @@ describe('createFormStore', () => {
     describe('moveField', () => {
       it('reorders within root', () => {
         store = createFormStore(form([field('a'), field('b'), field('c')]));
-        store.getState().moveField('a', 2);
-        expect(store.getState().normalized.rootIds).toEqual(['b', 'c', 'a']);
+        store.getState().moveField('a', 2, 'page-1');
+        expect(store.getState().normalized.byId['page-1'].childIds).toEqual([
+          'b',
+          'c',
+          'a',
+        ]);
       });
 
       it('reorders within same section', () => {
@@ -516,7 +526,7 @@ describe('createFormStore', () => {
         store = createFormStore(form([field('s1', 'section'), field('q1')]));
         store.getState().moveField('q1', 0, 's1');
         const s = store.getState();
-        expect(s.normalized.rootIds).toEqual(['s1']);
+        expect(s.normalized.byId['page-1'].childIds).toEqual(['s1']);
         expect(s.normalized.byId['s1'].childIds).toEqual(['q1']);
         expect(s.normalized.byId['q1'].parentId).toBe('s1');
       });
@@ -834,9 +844,10 @@ describe('createFormStore', () => {
         form([field('q1', 'text'), field('q2', 'number')])
       );
       const def = store.getState().hydrateDefinition();
-      expect(def.fields).toHaveLength(2);
-      expect(def.fields[0].id).toBe('q1');
-      expect(def.fields[1].id).toBe('q2');
+      const pageFields = def.pages[0].fields ?? [];
+      expect(pageFields).toHaveLength(2);
+      expect(pageFields[0].id).toBe('q1');
+      expect(pageFields[1].id).toBe('q2');
     });
 
     it('reconstructs nested sections', () => {
@@ -845,19 +856,20 @@ describe('createFormStore', () => {
       } as Partial<FieldDefinition>);
       store = createFormStore(form([sec, field('q1')]));
       const def = store.getState().hydrateDefinition();
-      expect(def.fields).toHaveLength(2);
-      expect(def.fields[0].id).toBe('s1');
-      const sec0 = def.fields[0] as SectionFieldDefinition;
+      const pageFields = def.pages[0].fields ?? [];
+      expect(pageFields).toHaveLength(2);
+      expect(pageFields[0].id).toBe('s1');
+      const sec0 = pageFields[0] as SectionFieldDefinition;
       expect(sec0.fields).toHaveLength(2);
       expect(sec0.fields![0].id).toBe('c1');
       expect(sec0.fields![1].id).toBe('c2');
-      expect(def.fields[1].id).toBe('q1');
+      expect(pageFields[1].id).toBe('q1');
     });
 
     it('returns empty fields when no definition loaded', () => {
       store = createFormStore();
       const def = store.getState().hydrateDefinition();
-      expect(def.fields).toEqual([]);
+      expect(def.pages).toEqual([]);
     });
 
     it('round-trips title and description', () => {
@@ -865,7 +877,7 @@ describe('createFormStore', () => {
         id: 'test-form',
         title: 'My Form',
         description: 'A test form',
-        fields: [],
+        pages: [],
       });
       const def = store.getState().hydrateDefinition();
       expect(def.title).toBe('My Form');
@@ -878,7 +890,7 @@ describe('createFormStore', () => {
         id: 'test-form',
         title: 'Loaded Title',
         description: 'Loaded Desc',
-        fields: [],
+        pages: [],
       });
       const def = store.getState().hydrateDefinition();
       expect(def.title).toBe('Loaded Title');
@@ -905,7 +917,7 @@ describe('createFormStore', () => {
       store = createFormStore({
         id: 'test-form',
         title: 'To Remove',
-        fields: [],
+        pages: [],
       });
       store.getState().setFormTitle(undefined);
       const def = store.getState().hydrateDefinition();

@@ -413,9 +413,9 @@ describe('importFromFhir', () => {
     expect(form.id).toBe('test-form');
     expect(form.title).toBe('Test Form');
     expect(form.description).toBe('A test form');
-    expect(form.fields).toHaveLength(2);
+    expect(form.pages[0].fields).toHaveLength(2);
 
-    const [q1, q2] = form.fields;
+    const [q1, q2] = form.pages[0].fields!;
     expect(q1.id).toBe('q1');
     expect(q1.fieldType).toBe('text');
     expect(q1.question).toBe('What is your name?');
@@ -442,7 +442,7 @@ describe('importFromFhir', () => {
     };
 
     const form = importFromFhir(fhir);
-    const field = form.fields[0];
+    const field = form.pages[0].fields![0];
 
     expect(field.id).toBe('intro');
     expect(field.fieldType).toBe('display');
@@ -473,7 +473,7 @@ describe('importFromFhir', () => {
     };
 
     const form = importFromFhir(fhir);
-    const field = form.fields[0];
+    const field = form.pages[0].fields![0];
 
     expect(field.fieldType).toBe('radio');
     if (field.fieldType === 'radio') {
@@ -509,7 +509,7 @@ describe('importFromFhir', () => {
     };
 
     const form = importFromFhir(fhir);
-    const section = form.fields[0];
+    const section = form.pages[0].fields![0];
 
     expect(section.fieldType).toBe('section');
     if (section.fieldType === 'section') {
@@ -549,7 +549,7 @@ describe('importFromFhir', () => {
     };
 
     const form = importFromFhir(fhir);
-    const conditionalField = form.fields[1];
+    const conditionalField = form.pages[0].fields![1];
 
     expect(conditionalField.rules).toHaveLength(1);
     expect(conditionalField.rules?.[0].effect).toBe('visible');
@@ -603,17 +603,22 @@ describe('exportToFhir', () => {
     const form = {
       id: 'test-form',
       title: 'Test Form',
-      fields: [
+      pages: [
         {
-          id: 'q1',
-          fieldType: 'text' as const,
-          question: 'What is your name?',
-          required: true,
-        },
-        {
-          id: 'q2',
-          fieldType: 'boolean' as const,
-          question: 'Do you agree?',
+          id: 'page-1',
+          fields: [
+            {
+              id: 'q1',
+              fieldType: 'text' as const,
+              question: 'What is your name?',
+              required: true,
+            },
+            {
+              id: 'q2',
+              fieldType: 'boolean' as const,
+              question: 'Do you agree?',
+            },
+          ],
         },
       ],
     };
@@ -637,14 +642,19 @@ describe('exportToFhir', () => {
   it('exports choice fields with options', () => {
     const form = {
       id: 'test',
-      fields: [
+      pages: [
         {
-          id: 'gender',
-          fieldType: 'radio' as const,
-          question: 'Gender',
-          options: [
-            { id: 'male', value: 'male', text: 'Male' },
-            { id: 'female', value: 'female', text: 'Female' },
+          id: 'page-1',
+          fields: [
+            {
+              id: 'gender',
+              fieldType: 'radio' as const,
+              question: 'Gender',
+              options: [
+                { id: 'male', value: 'male', text: 'Male' },
+                { id: 'female', value: 'female', text: 'Female' },
+              ],
+            },
           ],
         },
       ],
@@ -662,16 +672,21 @@ describe('exportToFhir', () => {
   it('exports sections as groups', () => {
     const form = {
       id: 'test',
-      fields: [
+      pages: [
         {
-          id: 'section1',
-          fieldType: 'section' as const,
-          title: 'Section 1',
+          id: 'page-1',
           fields: [
             {
-              id: 'nested-q',
-              fieldType: 'text' as const,
-              question: 'Nested Question',
+              id: 'section1',
+              fieldType: 'section' as const,
+              title: 'Section 1',
+              fields: [
+                {
+                  id: 'nested-q',
+                  fieldType: 'text' as const,
+                  question: 'Nested Question',
+                },
+              ],
             },
           ],
         },
@@ -690,26 +705,31 @@ describe('exportToFhir', () => {
   it('exports visibility rules as enableWhen', () => {
     const form = {
       id: 'test',
-      fields: [
+      pages: [
         {
-          id: 'q1',
-          fieldType: 'boolean' as const,
-          question: 'Show more?',
-        },
-        {
-          id: 'q2',
-          fieldType: 'text' as const,
-          question: 'Details',
-          rules: [
+          id: 'page-1',
+          fields: [
             {
-              effect: 'visible' as const,
-              logic: 'AND' as const,
-              conditions: [
+              id: 'q1',
+              fieldType: 'boolean' as const,
+              question: 'Show more?',
+            },
+            {
+              id: 'q2',
+              fieldType: 'text' as const,
+              question: 'Details',
+              rules: [
                 {
-                  conditionType: 'field' as const,
-                  targetId: 'q1',
-                  operator: 'equals' as const,
-                  expected: 'true',
+                  effect: 'visible' as const,
+                  logic: 'AND' as const,
+                  conditions: [
+                    {
+                      conditionType: 'field' as const,
+                      targetId: 'q1',
+                      operator: 'equals' as const,
+                      expected: 'true',
+                    },
+                  ],
                 },
               ],
             },
@@ -730,7 +750,7 @@ describe('exportToFhir', () => {
   it('applies export options', () => {
     const form = {
       id: 'test',
-      fields: [],
+      pages: [],
     };
 
     const fhir = exportToFhir(form, {
@@ -933,10 +953,19 @@ describe('exportResponseToFhir', () => {
   it('exports simple answers to response', () => {
     const form = {
       id: 'test',
-      fields: [
-        { id: 'name', fieldType: 'text' as const, question: 'Name' },
-        { id: 'age', fieldType: 'text' as const, inputType: 'number' as const },
-        { id: 'active', fieldType: 'boolean' as const },
+      pages: [
+        {
+          id: 'page-1',
+          fields: [
+            { id: 'name', fieldType: 'text' as const, question: 'Name' },
+            {
+              id: 'age',
+              fieldType: 'text' as const,
+              inputType: 'number' as const,
+            },
+            { id: 'active', fieldType: 'boolean' as const },
+          ],
+        },
       ],
     };
 
@@ -965,13 +994,18 @@ describe('exportResponseToFhir', () => {
   it('exports choice answers with valueCoding', () => {
     const form = {
       id: 'test',
-      fields: [
+      pages: [
         {
-          id: 'gender',
-          fieldType: 'radio' as const,
-          options: [
-            { id: 'male', value: 'male', text: 'Male' },
-            { id: 'female', value: 'female', text: 'Female' },
+          id: 'page-1',
+          fields: [
+            {
+              id: 'gender',
+              fieldType: 'radio' as const,
+              options: [
+                { id: 'male', value: 'male', text: 'Male' },
+                { id: 'female', value: 'female', text: 'Female' },
+              ],
+            },
           ],
         },
       ],
@@ -990,14 +1024,19 @@ describe('exportResponseToFhir', () => {
   it('exports multiple selections as multiple answers', () => {
     const form = {
       id: 'test',
-      fields: [
+      pages: [
         {
-          id: 'colors',
-          fieldType: 'check' as const,
-          options: [
-            { id: 'red', value: 'red', text: 'Red' },
-            { id: 'blue', value: 'blue', text: 'Blue' },
-            { id: 'green', value: 'green', text: 'Green' },
+          id: 'page-1',
+          fields: [
+            {
+              id: 'colors',
+              fieldType: 'check' as const,
+              options: [
+                { id: 'red', value: 'red', text: 'Red' },
+                { id: 'blue', value: 'blue', text: 'Blue' },
+                { id: 'green', value: 'green', text: 'Green' },
+              ],
+            },
           ],
         },
       ],
@@ -1017,9 +1056,14 @@ describe('exportResponseToFhir', () => {
   it('skips fields with no answer', () => {
     const form = {
       id: 'test',
-      fields: [
-        { id: 'q1', fieldType: 'text' as const },
-        { id: 'q2', fieldType: 'text' as const },
+      pages: [
+        {
+          id: 'page-1',
+          fields: [
+            { id: 'q1', fieldType: 'text' as const },
+            { id: 'q2', fieldType: 'text' as const },
+          ],
+        },
       ],
     };
 
@@ -1034,7 +1078,7 @@ describe('exportResponseToFhir', () => {
   });
 
   it('applies response options', () => {
-    const form = { id: 'test', fields: [] };
+    const form = { id: 'test', pages: [] };
 
     const response = exportResponseToFhir(
       form,
@@ -1068,7 +1112,7 @@ describe('edge cases', () => {
 
     const form = importFromFhir(fhir);
 
-    expect(form.fields).toHaveLength(0);
+    expect(form.pages[0]?.fields ?? []).toHaveLength(0);
     expect(form.id).toBeTruthy(); // Should generate an ID
   });
 
@@ -1081,7 +1125,7 @@ describe('edge cases', () => {
 
     const form = importFromFhir(fhir);
 
-    expect(form.fields).toHaveLength(0);
+    expect(form.pages[0]?.fields ?? []).toHaveLength(0);
   });
 
   it('handles deeply nested sections', () => {
@@ -1112,7 +1156,7 @@ describe('edge cases', () => {
     };
 
     const form = importFromFhir(fhir);
-    const level1 = form.fields[0];
+    const level1 = form.pages[0].fields![0];
 
     expect(level1.fieldType).toBe('section');
     if (level1.fieldType === 'section') {
@@ -1144,7 +1188,9 @@ describe('edge cases', () => {
     expect(meta._conversionWarnings).toHaveLength(1);
 
     // Verify answerValueSet URL is preserved in field's _sourceData
-    const fieldMeta = form.fields[0]._sourceData as { answerValueSet?: string };
+    const fieldMeta = form.pages[0].fields![0]._sourceData as {
+      answerValueSet?: string;
+    };
     expect(fieldMeta.answerValueSet).toBe('http://example.com/ValueSet/test');
   });
 
@@ -1168,7 +1214,7 @@ describe('edge cases', () => {
     };
 
     const form = importFromFhir(fhir);
-    const q3 = form.fields[2];
+    const q3 = form.pages[0].fields![2];
 
     expect(q3.rules?.[0].conditions).toHaveLength(2);
     expect(q3.rules?.[0].logic).toBe('AND');
@@ -1194,7 +1240,7 @@ describe('edge cases', () => {
     };
 
     const form = importFromFhir(fhir);
-    const q3 = form.fields[2];
+    const q3 = form.pages[0].fields![2];
 
     expect(q3.rules?.[0].logic).toBe('OR');
   });

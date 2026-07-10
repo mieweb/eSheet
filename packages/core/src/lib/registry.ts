@@ -298,6 +298,15 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     defaultProps: { fields: [] },
     placeholder: { title: 'Enter section title...' },
   },
+  pages: {
+    label: 'Pages',
+    category: 'organization',
+    answerType: 'container',
+    hasOptions: false,
+    hasMatrix: false,
+    defaultProps: { fields: [], autoAdvance: false },
+    placeholder: { title: 'Enter pages title...' },
+  },
 };
 
 /** Mutable registry seeded with the 19 built-in field types. */

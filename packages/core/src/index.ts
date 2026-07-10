@@ -63,6 +63,7 @@ export {
   type DiagramFieldDefinition,
   type DisplayFieldDefinition,
   type SectionFieldDefinition,
+  type PagesFieldDefinition,
   type FieldResponse,
   type FormDefinition,
   type FieldResponseMap as FormResponse,

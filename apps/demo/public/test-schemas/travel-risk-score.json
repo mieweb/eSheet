@@ -1,154 +1,194 @@
-{
+﻿{
   "id": "travel-risk-score",
   "title": "Travel Health Risk Assessment",
   "dangerouslyAllowJS": true,
-  "fields": [
+  "pages": [
     {
-      "id": "age-group",
-      "fieldType": "radio",
-      "question": "What is your age group?",
-      "required": false,
-      "options": [
+      "id": "page-1",
+      "fields": [
         {
-          "id": "age-under18",
-          "value": "under18",
-          "text": "Under 18",
-          "score": 1
-        },
-        { "id": "age-18-40", "value": "18-40", "text": "18 – 40", "score": 0 },
-        { "id": "age-41-60", "value": "41-60", "text": "41 – 60", "score": 1 },
-        { "id": "age-over60", "value": "over60", "text": "Over 60", "score": 3 }
-      ]
-    },
-    {
-      "id": "travel-duration",
-      "fieldType": "radio",
-      "question": "Expected duration of travel?",
-      "required": false,
-      "options": [
-        {
-          "id": "dur-1wk",
-          "value": "1wk",
-          "text": "Less than 1 week",
-          "score": 0
-        },
-        { "id": "dur-2wk", "value": "2wk", "text": "1 – 2 weeks", "score": 1 },
-        { "id": "dur-1mo", "value": "1mo", "text": "2 – 4 weeks", "score": 2 },
-        {
-          "id": "dur-long",
-          "value": "long",
-          "text": "More than 1 month",
-          "score": 3
-        }
-      ]
-    },
-    {
-      "id": "destination-risk",
-      "fieldType": "radio",
-      "question": "Destination region risk level?",
-      "required": false,
-      "options": [
-        {
-          "id": "dest-low",
-          "value": "low",
-          "text": "Low risk (Western Europe, Canada, Australia)",
-          "score": 0
-        },
-        {
-          "id": "dest-med",
-          "value": "med",
-          "text": "Medium risk (Eastern Europe, Mexico, SE Asia)",
-          "score": 2
-        },
-        {
-          "id": "dest-high",
-          "value": "high",
-          "text": "High risk (sub-Saharan Africa, South Asia, Central America)",
-          "score": 4
-        }
-      ]
-    },
-    {
-      "id": "pre-existing",
-      "fieldType": "radio",
-      "question": "Do you have any pre-existing chronic conditions (heart, lung, immune)?",
-      "required": false,
-      "options": [
-        { "id": "pre-no", "value": "no", "text": "No", "score": 0 },
-        { "id": "pre-yes", "value": "yes", "text": "Yes", "score": 3 }
-      ]
-    },
-    {
-      "id": "total-score",
-      "fieldType": "text",
-      "question": "Risk Score (calculated)",
-      "required": false,
-      "calculation": "String((responses['age-group'] || 0) + (responses['travel-duration'] || 0) + (responses['destination-risk'] || 0) + (responses['pre-existing'] || 0))"
-    },
-    {
-      "id": "risk-low",
-      "fieldType": "display",
-      "content": "✅ Low Risk — standard travel health precautions are sufficient.",
-      "rules": [
-        {
-          "effect": "visible",
-          "logic": "AND",
-          "conditions": [
+          "id": "age-group",
+          "fieldType": "radio",
+          "question": "What is your age group?",
+          "required": false,
+          "options": [
             {
-              "conditionType": "js",
-              "expression": "(function(){ var s = (responses['age-group']||0)+(responses['travel-duration']||0)+(responses['destination-risk']||0)+(responses['pre-existing']||0); return s >= 0 && s <= 2; })()"
+              "id": "age-under18",
+              "value": "under18",
+              "text": "Under 18",
+              "score": 1
+            },
+            {
+              "id": "age-18-40",
+              "value": "18-40",
+              "text": "18 â€“ 40",
+              "score": 0
+            },
+            {
+              "id": "age-41-60",
+              "value": "41-60",
+              "text": "41 â€“ 60",
+              "score": 1
+            },
+            {
+              "id": "age-over60",
+              "value": "over60",
+              "text": "Over 60",
+              "score": 3
             }
           ]
-        }
-      ]
-    },
-    {
-      "id": "risk-moderate",
-      "fieldType": "display",
-      "content": "⚠️ Moderate Risk — consult a travel health clinic at least 4 weeks before departure.",
-      "rules": [
+        },
         {
-          "effect": "visible",
-          "logic": "AND",
-          "conditions": [
+          "id": "travel-duration",
+          "fieldType": "radio",
+          "question": "Expected duration of travel?",
+          "required": false,
+          "options": [
             {
-              "conditionType": "js",
-              "expression": "(function(){ var s = (responses['age-group']||0)+(responses['travel-duration']||0)+(responses['destination-risk']||0)+(responses['pre-existing']||0); return s >= 3 && s <= 5; })()"
+              "id": "dur-1wk",
+              "value": "1wk",
+              "text": "Less than 1 week",
+              "score": 0
+            },
+            {
+              "id": "dur-2wk",
+              "value": "2wk",
+              "text": "1 â€“ 2 weeks",
+              "score": 1
+            },
+            {
+              "id": "dur-1mo",
+              "value": "1mo",
+              "text": "2 â€“ 4 weeks",
+              "score": 2
+            },
+            {
+              "id": "dur-long",
+              "value": "long",
+              "text": "More than 1 month",
+              "score": 3
             }
           ]
-        }
-      ]
-    },
-    {
-      "id": "risk-high",
-      "fieldType": "display",
-      "content": "🔴 High Risk — urgent travel health consultation required. Consider vaccination review, prophylaxis, and emergency contact plan.",
-      "rules": [
+        },
         {
-          "effect": "visible",
-          "logic": "AND",
-          "conditions": [
+          "id": "destination-risk",
+          "fieldType": "radio",
+          "question": "Destination region risk level?",
+          "required": false,
+          "options": [
             {
-              "conditionType": "js",
-              "expression": "(responses['age-group']||0)+(responses['travel-duration']||0)+(responses['destination-risk']||0)+(responses['pre-existing']||0) >= 6"
+              "id": "dest-low",
+              "value": "low",
+              "text": "Low risk (Western Europe, Canada, Australia)",
+              "score": 0
+            },
+            {
+              "id": "dest-med",
+              "value": "med",
+              "text": "Medium risk (Eastern Europe, Mexico, SE Asia)",
+              "score": 2
+            },
+            {
+              "id": "dest-high",
+              "value": "high",
+              "text": "High risk (sub-Saharan Africa, South Asia, Central America)",
+              "score": 4
             }
           ]
-        }
-      ]
-    },
-    {
-      "id": "high-risk-followup",
-      "fieldType": "longtext",
-      "question": "Please describe any specific health concerns or medications you are currently taking:",
-      "required": false,
-      "rules": [
+        },
         {
-          "effect": "visible",
-          "logic": "AND",
-          "conditions": [
+          "id": "pre-existing",
+          "fieldType": "radio",
+          "question": "Do you have any pre-existing chronic conditions (heart, lung, immune)?",
+          "required": false,
+          "options": [
             {
-              "conditionType": "js",
-              "expression": "(responses['age-group']||0)+(responses['travel-duration']||0)+(responses['destination-risk']||0)+(responses['pre-existing']||0) >= 6"
+              "id": "pre-no",
+              "value": "no",
+              "text": "No",
+              "score": 0
+            },
+            {
+              "id": "pre-yes",
+              "value": "yes",
+              "text": "Yes",
+              "score": 3
+            }
+          ]
+        },
+        {
+          "id": "total-score",
+          "fieldType": "text",
+          "question": "Risk Score (calculated)",
+          "required": false,
+          "calculation": "String((responses[\u0027age-group\u0027] || 0) + (responses[\u0027travel-duration\u0027] || 0) + (responses[\u0027destination-risk\u0027] || 0) + (responses[\u0027pre-existing\u0027] || 0))"
+        },
+        {
+          "id": "risk-low",
+          "fieldType": "display",
+          "content": "âœ… Low Risk â€” standard travel health precautions are sufficient.",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "(function(){ var s = (responses[\u0027age-group\u0027]||0)+(responses[\u0027travel-duration\u0027]||0)+(responses[\u0027destination-risk\u0027]||0)+(responses[\u0027pre-existing\u0027]||0); return s \u003e= 0 \u0026\u0026 s \u003c= 2; })()"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "risk-moderate",
+          "fieldType": "display",
+          "content": "âš ï¸ Moderate Risk â€” consult a travel health clinic at least 4 weeks before departure.",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "(function(){ var s = (responses[\u0027age-group\u0027]||0)+(responses[\u0027travel-duration\u0027]||0)+(responses[\u0027destination-risk\u0027]||0)+(responses[\u0027pre-existing\u0027]||0); return s \u003e= 3 \u0026\u0026 s \u003c= 5; })()"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "risk-high",
+          "fieldType": "display",
+          "content": "ðŸ”´ High Risk â€” urgent travel health consultation required. Consider vaccination review, prophylaxis, and emergency contact plan.",
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "(responses[\u0027age-group\u0027]||0)+(responses[\u0027travel-duration\u0027]||0)+(responses[\u0027destination-risk\u0027]||0)+(responses[\u0027pre-existing\u0027]||0) \u003e= 6"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "high-risk-followup",
+          "fieldType": "longtext",
+          "question": "Please describe any specific health concerns or medications you are currently taking:",
+          "required": false,
+          "rules": [
+            {
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "(responses[\u0027age-group\u0027]||0)+(responses[\u0027travel-duration\u0027]||0)+(responses[\u0027destination-risk\u0027]||0)+(responses[\u0027pre-existing\u0027]||0) \u003e= 6"
+                }
+              ]
             }
           ]
         }

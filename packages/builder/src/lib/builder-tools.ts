@@ -167,11 +167,11 @@ export function createBuilderTools(form: FormStore): BuilderTools {
       }));
       form.getState().loadDefinition({
         id: form.getState().formId,
-        fields: [],
+        pages: [],
       } as unknown as FormDefinition);
       form.getState().loadDefinition({
         id: form.getState().formId,
-        fields,
+        pages: [{ id: 'page-1', fields }],
       } as unknown as FormDefinition);
       const summary = fields
         .map((f, i) => `${i + 1}. ${f.question} (${f.fieldType})`)
@@ -430,7 +430,7 @@ export function createBuilderTools(form: FormStore): BuilderTools {
       const { normalized, formId } = form.getState();
       return {
         id: formId,
-        fields: hydrateDefinition(normalized),
+        pages: [{ id: 'page-1', fields: hydrateDefinition(normalized) }],
       } as FormDefinition;
     },
     setFormId: (id) => form.getState().setFormId(id),

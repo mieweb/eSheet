@@ -41,9 +41,14 @@ export const FieldNode = React.memo(function FieldNode({
     () => form.getState().responses
   );
 
-  // Get visible children for sections
+  // Get visible children for sections and pages
   const visibleChildIds = React.useMemo(() => {
-    if (!field || field.definition.fieldType !== 'section') return [];
+    if (
+      !field ||
+      (field.definition.fieldType !== 'section' &&
+        field.definition.fieldType !== 'pages')
+    )
+      return [];
 
     const node = normalized.byId[id];
     if (!node || node.childIds.length === 0) return [];
@@ -66,7 +71,10 @@ export const FieldNode = React.memo(function FieldNode({
         return false;
       }
 
-      if (childNode.definition.fieldType !== 'section') {
+      if (
+        childNode.definition.fieldType !== 'section' &&
+        childNode.definition.fieldType !== 'pages'
+      ) {
         cache.set(fieldId, true);
         return true;
       }
@@ -81,16 +89,16 @@ export const FieldNode = React.memo(function FieldNode({
     return node.childIds.filter((childId) => isFieldRenderable(childId));
   }, [field, id, form, normalized, responses]);
 
-  // Render nested children for sections
+  // Render nested children for sections and pages
   const nestedChildren = React.useMemo(() => {
     if (
       !field ||
-      field.definition.fieldType !== 'section' ||
+      (field.definition.fieldType !== 'section' &&
+        field.definition.fieldType !== 'pages') ||
       visibleChildIds.length === 0
     ) {
       return null;
     }
-
     const containerClass =
       depth === 1
         ? 'section-children ms:space-y-2'
@@ -158,15 +166,18 @@ export const FieldNode = React.memo(function FieldNode({
   };
 
   const isSection = field.definition.fieldType === 'section';
+  const isPages = field.definition.fieldType === 'pages';
   const parentNode = field.parentId
     ? form.getState().getField(field.parentId)
     : null;
-  const isChildOfSection = parentNode?.definition.fieldType === 'section';
+  const isChildOfSection =
+    parentNode?.definition.fieldType === 'section' ||
+    parentNode?.definition.fieldType === 'pages';
 
-  const wrapperClass = `field-wrapper ms:bg-mssurface${
+  const wrapperClass = `field-wrapper${isPages ? '' : ' ms:bg-mssurface'}${
     isSection ? ' ms:mb-2 ms:border ms:border-msborder ms:rounded' : ''
   }${
-    !isSection && !isChildOfSection
+    !isSection && !isPages && !isChildOfSection
       ? ' ms:mb-2 ms:p-4 ms:border ms:border-msborder ms:rounded'
       : ''
   }${
@@ -182,13 +193,14 @@ export const FieldNode = React.memo(function FieldNode({
       data-field-id={field.definition.id}
       aria-disabled={!isEnabled || undefined}
     >
-      {field.definition.fieldType === 'section' ? (
+      {field.definition.fieldType === 'section' ||
+      field.definition.fieldType === 'pages' ? (
         (() => {
-          const SectionComponent = Component as React.ComponentType<
+          const ContainerComponent = Component as React.ComponentType<
             FieldComponentProps & { nestedChildren?: React.ReactNode }
           >;
           return (
-            <SectionComponent {...props} nestedChildren={nestedChildren} />
+            <ContainerComponent {...props} nestedChildren={nestedChildren} />
           );
         })()
       ) : (

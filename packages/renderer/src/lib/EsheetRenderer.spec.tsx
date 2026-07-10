@@ -25,7 +25,12 @@ describe('EsheetRenderer', () => {
           formDataInput={{
             id: 'test-form-1',
             title: 'Test',
-            fields: [{ id: 'q1', fieldType: 'text', question: 'Name?' }],
+            pages: [
+              {
+                id: 'page-1',
+                fields: [{ id: 'q1', fieldType: 'text', question: 'Name?' }],
+              },
+            ],
           }}
         />
       );
@@ -48,7 +53,12 @@ describe('EsheetRenderer', () => {
           formDataInput={{
             id: 'test-form-2',
             title: 'Test',
-            fields: [{ id: 'q1', fieldType: 'text', question: 'Name?' }],
+            pages: [
+              {
+                id: 'page-1',
+                fields: [{ id: 'q1', fieldType: 'text', question: 'Name?' }],
+              },
+            ],
           }}
           initialResponses={{ q1: { answer: 'Alice' } }}
         />
@@ -68,7 +78,12 @@ describe('EsheetRenderer', () => {
           formDataInput={{
             id: 'test-form-3',
             title: 'Test Form',
-            fields: [{ id: 'f1', fieldType: 'text', question: 'Q?' }],
+            pages: [
+              {
+                id: 'page-1',
+                fields: [{ id: 'f1', fieldType: 'text', question: 'Q?' }],
+              },
+            ],
           }}
         />
       );
@@ -77,7 +92,7 @@ describe('EsheetRenderer', () => {
     const normalized = getRendererHandle(ref)
       .getFormStore()
       .getState().normalized;
-    expect(normalized.rootIds).toContain('f1');
+    expect(normalized.byId['page-1'].childIds).toContain('f1');
   });
 
   it('getUIStore() is in preview mode after mount', async () => {
@@ -89,7 +104,12 @@ describe('EsheetRenderer', () => {
           formDataInput={{
             id: 'test-form-4',
             title: 'Test',
-            fields: [{ id: 'q1', fieldType: 'text', question: 'Q?' }],
+            pages: [
+              {
+                id: 'page-1',
+                fields: [{ id: 'q1', fieldType: 'text', question: 'Q?' }],
+              },
+            ],
           }}
         />
       );
@@ -108,12 +128,17 @@ describe('EsheetRenderer', () => {
           formDataInput={{
             id: 'test-form-5',
             title: 'Test',
-            fields: [
+            pages: [
               {
-                id: 'q1',
-                fieldType: 'text',
-                question: 'Name?',
-                required: true,
+                id: 'page-1',
+                fields: [
+                  {
+                    id: 'q1',
+                    fieldType: 'text',
+                    question: 'Name?',
+                    required: true,
+                  },
+                ],
               },
             ],
           }}
@@ -143,12 +168,17 @@ describe('EsheetRenderer', () => {
           formDataInput={{
             id: 'test-form-6',
             title: 'Test',
-            fields: [
+            pages: [
               {
-                id: 'q1',
-                fieldType: 'text',
-                question: 'Name?',
-                required: true,
+                id: 'page-1',
+                fields: [
+                  {
+                    id: 'q1',
+                    fieldType: 'text',
+                    question: 'Name?',
+                    required: true,
+                  },
+                ],
               },
             ],
           }}
@@ -172,35 +202,40 @@ describe('EsheetRenderer', () => {
           formDataInput={{
             id: 'test-form-7',
             title: 'Test',
-            fields: [
+            pages: [
               {
-                id: 'trigger',
-                fieldType: 'text',
-                question: 'Trigger?',
-              },
-              {
-                id: 'sec',
-                fieldType: 'section',
-                title: 'Section',
-                rules: [
-                  {
-                    effect: 'enable',
-                    logic: 'AND',
-                    conditions: [
-                      {
-                        targetId: 'trigger',
-                        operator: 'equals',
-                        expected: 'enabled',
-                      },
-                    ],
-                  },
-                ],
+                id: 'page-1',
                 fields: [
                   {
-                    id: 'q1',
+                    id: 'trigger',
                     fieldType: 'text',
-                    question: 'Name?',
-                    required: true,
+                    question: 'Trigger?',
+                  },
+                  {
+                    id: 'sec',
+                    fieldType: 'section',
+                    title: 'Section',
+                    rules: [
+                      {
+                        effect: 'enable',
+                        logic: 'AND',
+                        conditions: [
+                          {
+                            targetId: 'trigger',
+                            operator: 'equals',
+                            expected: 'enabled',
+                          },
+                        ],
+                      },
+                    ],
+                    fields: [
+                      {
+                        id: 'q1',
+                        fieldType: 'text',
+                        question: 'Name?',
+                        required: true,
+                      },
+                    ],
                   },
                 ],
               },
@@ -226,7 +261,12 @@ describe('EsheetRenderer display markdown', () => {
           formDataInput={{
             id: 'display-form',
             title: 'Test',
-            fields: [{ id: 'note', fieldType: 'display', content }],
+            pages: [
+              {
+                id: 'page-1',
+                fields: [{ id: 'note', fieldType: 'display', content }],
+              },
+            ],
           }}
         />
       );

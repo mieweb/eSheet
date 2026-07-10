@@ -2,7 +2,11 @@
 // Normalization — tree → flat indexed map
 // ---------------------------------------------------------------------------
 
-import type { FieldDefinition, SectionFieldDefinition } from '../types.js';
+import type {
+  FieldDefinition,
+  SectionFieldDefinition,
+  PagesFieldDefinition,
+} from '../types.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -55,12 +59,15 @@ export function normalizeDefinition(
 
     for (let i = 0; i < defs.length; i++) {
       const def = defs[i];
-      // Cast to SectionFieldDefinition to destructure out the recursive `fields` array.
-      // For non-section fields the cast is safe at runtime (fields is absent/undefined).
-      const { fields: children, ...rest } = def as SectionFieldDefinition;
+      // Cast to SectionFieldDefinition/PagesFieldDefinition to destructure out the recursive `fields` array.
+      // For non-container fields the cast is safe at runtime (fields is absent/undefined).
+      const { fields: children, ...rest } = def as
+        | SectionFieldDefinition
+        | PagesFieldDefinition;
 
       const childIds =
-        def.fieldType === 'section' && Array.isArray(children)
+        (def.fieldType === 'section' || def.fieldType === 'pages') &&
+        Array.isArray(children)
           ? walk(children, def.id)
           : [];
 

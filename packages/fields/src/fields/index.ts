@@ -19,6 +19,7 @@ export { SingleMatrixField, MultiMatrixField } from './matrix/index.js';
 
 // Organization Fields
 export { SectionField } from './section/index.js';
+export { PagesField } from './pages/index.js';
 
 // Rich Content Fields
 export {

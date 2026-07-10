@@ -296,7 +296,9 @@ const EsheetRendererInner = React.forwardRef<
           // Rebuild form definition from normalized state
           const formDefinition = {
             id: state.formId,
-            fields: hydrateDefinition(state.normalized),
+            pages: [
+              { id: 'page-1', fields: hydrateDefinition(state.normalized) },
+            ],
             _sourceData: state.formSourceData,
           };
 

@@ -30,7 +30,11 @@ const PREVIEW_GRID_STYLE: React.CSSProperties = {
 function previewColSpan(field: {
   definition: { fieldType: string; width?: 'full' | 'half' | 'third' };
 }): number {
-  if (field.definition.fieldType === 'section') return 6;
+  if (
+    field.definition.fieldType === 'section' ||
+    field.definition.fieldType === 'pages'
+  )
+    return 6;
   switch (field.definition.width) {
     case 'half':
       return 3;
@@ -164,12 +168,15 @@ function DraggableFieldItem({
             );
           }
 
-          if (props.field.definition.fieldType === 'section') {
-            const SectionComponent = Component as React.ComponentType<
+          if (
+            props.field.definition.fieldType === 'section' ||
+            props.field.definition.fieldType === 'pages'
+          ) {
+            const ContainerComponent = Component as React.ComponentType<
               FieldComponentProps & { nestedChildren?: React.ReactNode }
             >;
             return (
-              <SectionComponent {...props} nestedChildren={nestedChildren} />
+              <ContainerComponent {...props} nestedChildren={nestedChildren} />
             );
           }
           return <Component {...props} />;
@@ -205,6 +212,7 @@ export const Canvas = React.memo(function Canvas({
     number | undefined
   >(undefined);
   const [allExpanded, setAllExpanded] = React.useState(false);
+  const [currentPagesIdx, setCurrentPagesIdx] = React.useState(0);
   const normalizedRef = React.useRef(normalized);
 
   React.useEffect(() => {
@@ -399,7 +407,10 @@ export const Canvas = React.memo(function Canvas({
         return false;
       }
 
-      if (node.definition.fieldType !== 'section') {
+      if (
+        node.definition.fieldType !== 'section' &&
+        node.definition.fieldType !== 'pages'
+      ) {
         cache.set(fieldId, true);
         return true;
       }
@@ -422,10 +433,68 @@ export const Canvas = React.memo(function Canvas({
     return rootIds.filter((id) => previewRenderableMap.get(id) === true);
   }, [mode, previewRenderableMap, rootIds]);
 
+  // Separate pages fields from other root fields
+  const { pagesIds } = React.useMemo(() => {
+    const pages: string[] = [];
+    for (const id of items) {
+      if (normalized.byId[id]?.definition.fieldType === 'pages') {
+        pages.push(id);
+      }
+    }
+    return { pagesIds: pages };
+  }, [items, normalized]);
+
+  const isMultiPage = pagesIds.length > 1;
+
+  // Clamp index when pages are added or removed
+  React.useEffect(() => {
+    if (pagesIds.length > 0 && currentPagesIdx >= pagesIds.length) {
+      setCurrentPagesIdx(pagesIds.length - 1);
+    }
+  }, [pagesIds.length, currentPagesIdx]);
+
+  const pageLabels = React.useMemo(
+    () =>
+      pagesIds.map((id, i) => {
+        const def = normalized.byId[id]?.definition;
+        return (def as { title?: string })?.title || `Page ${i + 1}`;
+      }),
+    [pagesIds, normalized]
+  );
+
+  const handlePrevPage = React.useCallback(
+    () => setCurrentPagesIdx((p) => Math.max(p - 1, 0)),
+    []
+  );
+  const handleNextPage = React.useCallback(
+    () => setCurrentPagesIdx((p) => Math.min(p + 1, pagesIds.length - 1)),
+    [pagesIds.length]
+  );
+
+  // When pages exist, the canvas IS the active page — show its children directly.
+  const hasPages = pagesIds.length > 0;
+  const activePagesId = hasPages ? pagesIds[currentPagesIdx] ?? null : null;
+
+  // Keep UIStore in sync so ToolPanel always knows which page is active
+  React.useEffect(() => {
+    ui.getState().setActivePagesId(activePagesId);
+  }, [activePagesId, ui]);
+
+  const displayItems = React.useMemo(() => {
+    if (!hasPages || !activePagesId) return items;
+    const node = normalized.byId[activePagesId];
+    if (!node) return [];
+    if (mode !== 'preview') return [...node.childIds];
+    return node.childIds.filter((id) => previewRenderableMap?.get(id) === true);
+  }, [hasPages, activePagesId, items, normalized, mode, previewRenderableMap]);
+
   // Build render tree to extract computed values from setValue effects
   const computedValuesMap = React.useMemo(() => {
     const hydratedFields = hydrateDefinition(normalized);
-    const tree = renderer({ id: 'canvas', fields: hydratedFields }, responses);
+    const tree = renderer(
+      { id: 'canvas', pages: [{ id: 'page-1', fields: hydratedFields }] },
+      responses
+    );
 
     const buildMap = (
       nodes: typeof tree
@@ -461,7 +530,12 @@ export const Canvas = React.memo(function Canvas({
   const renderNestedChildren = React.useCallback(
     (parentId: string, depth = 1): React.ReactNode => {
       const parent = normalized.byId[parentId];
-      if (!parent || parent.definition.fieldType !== 'section') return null;
+      if (
+        !parent ||
+        (parent.definition.fieldType !== 'section' &&
+          parent.definition.fieldType !== 'pages')
+      )
+        return null;
 
       const childIds = getVisibleChildIds(parentId);
       if (mode === 'preview' && childIds.length === 0) return null;
@@ -556,7 +630,7 @@ export const Canvas = React.memo(function Canvas({
           <span className="ms:text-sm ms:font-semibold ms:text-mstext ms:select-none">
             Fields
           </span>
-          {items.length > 0 && (
+          {displayItems.length > 0 && (
             <div className="ms:flex ms:items-center ms:gap-1">
               <button
                 type="button"
@@ -583,6 +657,52 @@ export const Canvas = React.memo(function Canvas({
           )}
         </div>
       )}
+      {isMultiPage && (
+        <div className="pages-nav ms:flex ms:items-center ms:justify-between ms:gap-2 ms:px-4 ms:py-2 ms:border-b ms:border-msborder ms:bg-mssurface ms:flex-wrap">
+          <div className="ms:flex ms:items-center ms:gap-1 ms:flex-wrap">
+            <button
+              type="button"
+              aria-label="Previous page"
+              disabled={currentPagesIdx === 0}
+              onClick={handlePrevPage}
+              className="ms:inline-flex ms:items-center ms:justify-center ms:h-7 ms:w-7 ms:rounded ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:transition-colors ms:hover:bg-msbackgroundhover ms:disabled:opacity-40 ms:disabled:cursor-not-allowed ms:outline-none ms:cursor-pointer ms:shrink-0 ms:text-base ms:leading-none"
+            >
+              ‹
+            </button>
+            {pageLabels.map((label, i) => (
+              <button
+                key={pagesIds[i]}
+                type="button"
+                aria-label={`Go to ${label}`}
+                aria-current={i === currentPagesIdx ? 'page' : undefined}
+                onClick={() => {
+                  setCurrentPagesIdx(i);
+                  ui.getState().selectField(pagesIds[i]);
+                }}
+                className={`ms:inline-flex ms:items-center ms:justify-center ms:min-w-[2rem] ms:h-7 ms:px-2 ms:rounded ms:border ms:text-xs ms:font-medium ms:transition-colors ms:outline-none ms:cursor-pointer ms:shrink-0 ${
+                  i === currentPagesIdx
+                    ? 'ms:border-msprimary ms:bg-msprimary/10 ms:text-msprimary'
+                    : 'ms:border-msborder ms:bg-mssurface ms:text-mstext ms:hover:bg-msbackgroundhover ms:hover:border-msprimary/40'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+            <button
+              type="button"
+              aria-label="Next page"
+              disabled={currentPagesIdx === pagesIds.length - 1}
+              onClick={handleNextPage}
+              className="ms:inline-flex ms:items-center ms:justify-center ms:h-7 ms:w-7 ms:rounded ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:transition-colors ms:hover:bg-msbackgroundhover ms:disabled:opacity-40 ms:disabled:cursor-not-allowed ms:outline-none ms:cursor-pointer ms:shrink-0 ms:text-base ms:leading-none"
+            >
+              ›
+            </button>
+          </div>
+          <span className="ms:text-xs ms:text-mstextmuted ms:shrink-0">
+            {currentPagesIdx + 1} / {pagesIds.length}
+          </span>
+        </div>
+      )}
       {items.length === 0 ? (
         <div className="canvas-empty ms:flex ms:flex-1 ms:items-center ms:justify-center ms:min-h-[200px] ms:text-mstextmuted ms:text-sm">
           No fields yet. Add a field from the Tool Panel to get started.
@@ -595,29 +715,50 @@ export const Canvas = React.memo(function Canvas({
           } ms:flex-1 ms:min-h-0 ms:overflow-y-auto ms:px-4 ms:pt-3 ms:pb-4`}
           style={showPreviewGrid ? PREVIEW_GRID_STYLE : undefined}
           data-sortable-list={dragEnabled ? 'true' : undefined}
-          data-parent-id=""
+          data-parent-id={activePagesId ?? ''}
         >
-          {items.map((id) => (
-            <DraggableFieldItem
-              key={id}
-              id={id}
-              form={form}
-              ui={ui}
-              dragEnabled={dragEnabled}
-              previewGrid={showPreviewGrid}
-              isSelected={
-                selectedFieldId === id && selectedFieldChildId === null
-              }
-              forceExpandVersion={
-                sectionExpandSignal?.sectionId === id
-                  ? sectionExpandSignal.version
-                  : expandAllVersion
-              }
-              forceCollapseVersion={collapseAllVersion}
-              nestedChildren={renderNestedChildren(id)}
-              computedValue={computedValuesMap.get(id)}
-            />
-          ))}
+          {displayItems.length === 0 && hasPages && mode !== 'preview' ? (
+            <div className="section-empty-placeholder ms:flex ms:flex-col ms:items-center ms:justify-center ms:p-8 ms:text-center ms:pointer-events-none ms:select-none ms:rounded-lg ms:border-2 ms:border-dashed ms:border-msprimary/30 ms:bg-gradient-to-br ms:from-msbackground ms:to-msbackgroundsecondary">
+              <p className="ms:text-sm ms:font-semibold ms:text-mstext ms:mb-2">
+                No fields on this page
+              </p>
+              <p className="ms:text-xs ms:text-mstextmuted ms:leading-relaxed">
+                Use the Tool Panel on the left to add fields.
+              </p>
+            </div>
+          ) : (
+            displayItems.map((id) => (
+              <DraggableFieldItem
+                key={id}
+                id={id}
+                form={form}
+                ui={ui}
+                parentId={activePagesId ?? undefined}
+                dragEnabled={dragEnabled}
+                previewGrid={showPreviewGrid}
+                isSelected={
+                  activePagesId
+                    ? selectedFieldId === activePagesId &&
+                      selectedFieldChildId === id
+                    : selectedFieldId === id && selectedFieldChildId === null
+                }
+                isActiveChild={
+                  activePagesId
+                    ? selectedFieldId === activePagesId &&
+                      selectedFieldChildId === id
+                    : false
+                }
+                forceExpandVersion={
+                  sectionExpandSignal?.sectionId === id
+                    ? sectionExpandSignal.version
+                    : expandAllVersion
+                }
+                forceCollapseVersion={collapseAllVersion}
+                nestedChildren={renderNestedChildren(id)}
+                computedValue={computedValuesMap.get(id)}
+              />
+            ))
+          )}
         </div>
       )}
     </div>

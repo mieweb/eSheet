@@ -5,14 +5,15 @@
 import { createStore } from 'zustand/vanilla';
 import type { StoreApi } from 'zustand/vanilla';
 import type {
-  FormDefinition,
   FieldResponseMap,
   FieldResponse,
-  FieldDefinition,
   FieldType,
   FieldOption,
   MatrixRow,
   MatrixColumn,
+  FormResponse,
+  FormDefinition,
+  FieldDefinition,
 } from '../types.js';
 import { getFieldTypeMeta } from '../registry.js';
 import {
@@ -21,20 +22,37 @@ import {
   generateRowId,
   generateColumnId,
 } from '../functions/ids.js';
-import type {
-  NormalizedDefinition,
-  FieldNode,
-} from '../functions/normalize.js';
 import {
+  type NormalizedDefinition,
+  type FieldNode,
   normalizeDefinition,
   hydrateDefinition,
 } from '../functions/normalize.js';
 import { hydrateResponse } from '../functions/hydrate-response.js';
-import type { FormResponse } from '../types.js';
 import { resolveEffect } from '../logic/resolve.js';
 import { evaluateJsExpression } from '../logic/conditions.js';
-import { validateField, validateForm } from '../logic/validate.js';
-import type { ValidationError } from '../logic/validate.js';
+import {
+  validateField,
+  validateForm,
+  type ValidationError,
+} from '../logic/validate.js';
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Extract a flat FieldDefinition[] from a FormDefinition's pages array.
+ */
+function fieldsFromDefinition(def: FormDefinition): FieldDefinition[] {
+  return def.pages.map((page) => ({
+    fieldType: 'pages' as const,
+    id: page.id,
+    ...(page.title !== undefined && { title: page.title }),
+    ...(page.autoAdvance !== undefined && { autoAdvance: page.autoAdvance }),
+    ...(page.fields && { fields: page.fields }),
+  })) as FieldDefinition[];
+}
 
 // ---------------------------------------------------------------------------
 // Types
@@ -276,9 +294,9 @@ function rewriteFieldRefs(
   if (!changed) return def;
   return {
     ...def,
-    ...(updatedRules ? { rules: updatedRules } : {}),
-    ...(updatedContent !== content ? { content: updatedContent } : {}),
-    ...(updatedCalc !== calc ? { calculation: updatedCalc } : {}),
+    ...(updatedRules && { rules: updatedRules }),
+    ...(updatedContent !== content && { content: updatedContent }),
+    ...(updatedCalc !== calc && { calculation: updatedCalc }),
   } as FieldDefinition;
 }
 
@@ -303,6 +321,7 @@ function getDefaultQuestion(
 ): string | undefined {
   if (
     fieldType === 'section' ||
+    fieldType === 'pages' ||
     fieldType === 'html' ||
     fieldType === 'display'
   ) {
@@ -377,7 +396,7 @@ export function createFormStore(
     formSourceData: initial?._sourceData,
     dangerouslyAllowJS: (initial?.dangerouslyAllowJS ?? false) && _hostAllowsJS,
     normalized: initial
-      ? normalizeDefinition(initial.fields)
+      ? normalizeDefinition(fieldsFromDefinition(initial))
       : EMPTY_NORMALIZED,
     responses: {},
     userEditedFields: new Set<string>(),
@@ -391,7 +410,7 @@ export function createFormStore(
         formSourceData: definition._sourceData,
         dangerouslyAllowJS:
           (definition.dangerouslyAllowJS ?? false) && _hostAllowsJS,
-        normalized: normalizeDefinition(definition.fields),
+        normalized: normalizeDefinition(fieldsFromDefinition(definition)),
         responses: {},
         userEditedFields: new Set<string>(),
       }),
@@ -1013,18 +1032,53 @@ export function createFormStore(
         formSourceData,
         dangerouslyAllowJS,
       } = get();
-      return {
+
+      const base = {
         id: formId,
-        ...(formTitle !== undefined ? { title: formTitle } : {}),
-        ...(formDescription !== undefined
-          ? { description: formDescription }
-          : {}),
-        ...(dangerouslyAllowJS ? { dangerouslyAllowJS: true } : {}),
-        ...(formSourceData !== undefined
-          ? { _sourceData: formSourceData }
-          : {}),
-        fields: hydrateDefinition(normalized),
+        ...(formTitle !== undefined && { title: formTitle }),
+        ...(formDescription !== undefined && { description: formDescription }),
+        ...(dangerouslyAllowJS && { dangerouslyAllowJS: true }),
+        ...(formSourceData !== undefined && { _sourceData: formSourceData }),
       };
+
+      // When every root field is a pages field, output the first-class `pages`
+      // array format. This is now always the case since FormDefinition requires pages.
+      const allRootsArePages =
+        normalized.rootIds.length > 0 &&
+        normalized.rootIds.every(
+          (id) => normalized.byId[id]?.definition.fieldType === 'pages'
+        );
+
+      if (allRootsArePages) {
+        const pages = normalized.rootIds.map((id) => {
+          const node = normalized.byId[id];
+          const def = node.definition as {
+            title?: string;
+            autoAdvance?: boolean;
+          };
+          const childFields = hydrateDefinition({
+            byId: normalized.byId,
+            rootIds: node.childIds,
+          });
+          return {
+            id,
+            ...(def.title !== undefined && { title: def.title }),
+            ...(def.autoAdvance !== undefined && {
+              autoAdvance: def.autoAdvance,
+            }),
+            ...(childFields.length > 0 && { fields: childFields }),
+          };
+        });
+        return { ...base, pages } as FormDefinition;
+      }
+
+      // Fallback: wrap any non-pages root fields in a single default page.
+      const rootFields = hydrateDefinition(normalized);
+      return {
+        ...base,
+        pages:
+          rootFields.length > 0 ? [{ id: 'page-1', fields: rootFields }] : [],
+      } as FormDefinition;
     },
 
     hydrateResponse: (options) => {

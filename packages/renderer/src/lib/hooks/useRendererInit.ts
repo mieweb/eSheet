@@ -89,7 +89,7 @@ export function useRendererInit(
         form.getState().loadDefinition({
           id: 'invalid-form',
           title: 'Invalid Form',
-          fields: [],
+          pages: [],
         });
         ui.getState().setMode('preview');
         return;
@@ -120,7 +120,7 @@ export function useRendererInit(
       form.getState().loadDefinition({
         id: 'error-form',
         title: 'Error',
-        fields: [],
+        pages: [],
       });
       ui.getState().setMode('preview');
     }

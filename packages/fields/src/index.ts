@@ -32,6 +32,7 @@ export {
   SingleMatrixField,
   MultiMatrixField,
   SectionField,
+  PagesField,
   // Rich content
   DrawingPad,
   DiagramField,

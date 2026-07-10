@@ -72,8 +72,7 @@ describe('importFromMcp', () => {
       type: 'object',
       properties: { name: { type: 'string', title: 'Full Name' } },
     });
-    const field = form.fields[0];
-    expect(field.id).toBe('name');
+    const field = form.pages[0].fields![0];
     expect(field.fieldType).toBe('text');
     expect(field.question).toBe('Full Name');
   });
@@ -87,8 +86,12 @@ describe('importFromMcp', () => {
         bio: { type: 'string' },
       },
     });
-    expect(form.fields.find((f) => f.id === 'name')?.required).toBe(true);
-    expect(form.fields.find((f) => f.id === 'bio')?.required).toBeUndefined();
+    expect(form.pages[0].fields!.find((f) => f.id === 'name')?.required).toBe(
+      true
+    );
+    expect(
+      form.pages[0].fields!.find((f) => f.id === 'bio')?.required
+    ).toBeUndefined();
   });
 
   it('maps string enum to radio field', () => {
@@ -102,7 +105,7 @@ describe('importFromMcp', () => {
         },
       },
     });
-    const field = form.fields[0] as RadioFieldDefinition;
+    const field = form.pages[0].fields![0] as RadioFieldDefinition;
     expect(field.fieldType).toBe('radio');
     expect(field.options?.map((o) => o.value)).toEqual(['SaaS', 'Portfolio']);
   });
@@ -121,7 +124,7 @@ describe('importFromMcp', () => {
         },
       },
     });
-    const field = form.fields[0] as RadioFieldDefinition;
+    const field = form.pages[0].fields![0] as RadioFieldDefinition;
     expect(field.fieldType).toBe('radio');
     expect(field.options?.map((o) => o.value)).toEqual(['#FF0000', '#00FF00']);
     expect(field.options?.map((o) => o.text)).toEqual(['Red', 'Green']);
@@ -139,7 +142,7 @@ describe('importFromMcp', () => {
         },
       },
     });
-    const field = form.fields[0] as CheckFieldDefinition;
+    const field = form.pages[0].fields![0] as CheckFieldDefinition;
     expect(field.fieldType).toBe('check');
     expect(field.options?.map((o) => o.value)).toEqual(['A', 'B', 'C']);
   });
@@ -155,7 +158,9 @@ describe('importFromMcp', () => {
         },
       },
     });
-    const meta = form.fields[0]._sourceData as { uniqueItems?: boolean };
+    const meta = form.pages[0].fields![0]._sourceData as {
+      uniqueItems?: boolean;
+    };
     expect(meta?.uniqueItems).toBe(true);
   });
 
@@ -166,7 +171,7 @@ describe('importFromMcp', () => {
         isPublic: { type: 'boolean', title: 'Publicly Accessible' },
       },
     });
-    expect(form.fields[0].fieldType).toBe('boolean');
+    expect(form.pages[0].fields![0].fieldType).toBe('boolean');
   });
 
   it('maps integer to text+number field and preserves constraints', () => {
@@ -181,7 +186,7 @@ describe('importFromMcp', () => {
         },
       },
     });
-    const field = form.fields[0] as TextFieldDefinition;
+    const field = form.pages[0].fields![0] as TextFieldDefinition;
     expect(field.fieldType).toBe('text');
     expect(field.inputType).toBe('number');
     const meta = field._sourceData as {
@@ -199,7 +204,9 @@ describe('importFromMcp', () => {
       type: 'object',
       properties: { email: { type: 'string', format: 'email' } },
     });
-    expect((form.fields[0] as TextFieldDefinition).inputType).toBe('email');
+    expect((form.pages[0].fields![0] as TextFieldDefinition).inputType).toBe(
+      'email'
+    );
   });
 
   it('preserves string constraints in _sourceData', () => {
@@ -214,7 +221,7 @@ describe('importFromMcp', () => {
         },
       },
     });
-    const meta = form.fields[0]._sourceData as {
+    const meta = form.pages[0].fields![0]._sourceData as {
       minLength?: number;
       maxLength?: number;
       pattern?: string;

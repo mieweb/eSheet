@@ -164,7 +164,7 @@ export function importFromMcp(
       ? { description: options.description }
       : {}),
     ...(hasMcpMeta ? { _sourceData: mcpMeta } : {}),
-    fields,
+    pages: [{ id: 'page-1', fields }],
   };
 }
 
@@ -385,7 +385,9 @@ export function exportToMcp(definition: FormDefinition): McpElicitationRequest {
   const properties: Record<string, McpProperty> = {};
   const required: string[] = [];
 
-  for (const field of collectLeafFields(definition.fields)) {
+  for (const field of collectLeafFields(
+    definition.pages.flatMap((p) => p.fields ?? [])
+  )) {
     const prop = fieldToMcpProp(field);
     if (prop === null) continue;
     properties[field.id] = prop;

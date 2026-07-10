@@ -10,34 +10,39 @@ describe('renderer', () => {
     return {
       id: 'renderer-test',
       title: 'Renderer Test',
-      fields: [
+      pages: [
         {
-          id: 'toggle',
-          fieldType: 'radio',
-          options: [
-            { id: 'yes', value: 'yes', text: 'Yes' },
-            { id: 'no', value: 'no', text: 'No' },
-          ],
-        },
-        {
-          id: 'section-main',
-          fieldType: 'section',
-          title: 'Main Section',
+          id: 'page-1',
           fields: [
             {
-              id: 'child-a',
-              fieldType: 'text',
-              question: 'Child A',
+              id: 'toggle',
+              fieldType: 'radio',
+              options: [
+                { id: 'yes', value: 'yes', text: 'Yes' },
+                { id: 'no', value: 'no', text: 'No' },
+              ],
             },
             {
-              id: 'section-nested',
+              id: 'section-main',
               fieldType: 'section',
-              title: 'Nested Section',
+              title: 'Main Section',
               fields: [
                 {
-                  id: 'nested-child',
+                  id: 'child-a',
                   fieldType: 'text',
-                  question: 'Nested Child',
+                  question: 'Child A',
+                },
+                {
+                  id: 'section-nested',
+                  fieldType: 'section',
+                  title: 'Nested Section',
+                  fields: [
+                    {
+                      id: 'nested-child',
+                      fieldType: 'text',
+                      question: 'Nested Child',
+                    },
+                  ],
                 },
               ],
             },
@@ -62,7 +67,9 @@ describe('renderer', () => {
 
   it('hides section children by default when rules resolve invisible', () => {
     const definition = baseDefinition();
-    (definition.fields[1] as SectionFieldDefinition).fields![0].rules = [
+    (
+      definition.pages[0].fields![1] as SectionFieldDefinition
+    ).fields![0].rules = [
       {
         effect: 'visible',
         logic: 'AND',
@@ -90,7 +97,7 @@ describe('renderer', () => {
 
   it('can include hidden nodes for preview/debug rendering', () => {
     const definition = baseDefinition();
-    definition.fields[1].rules = [
+    definition.pages[0].fields![1].rules = [
       {
         effect: 'visible',
         logic: 'AND',
@@ -127,42 +134,47 @@ describe('renderer', () => {
     const definition: FormDefinition = {
       id: 'renderer-effects',
       title: 'Renderer Effects Test',
-      fields: [
+      pages: [
         {
-          id: 'toggle',
-          fieldType: 'radio',
-          options: [
-            { id: 'yes', value: 'yes', text: 'Yes' },
-            { id: 'no', value: 'no', text: 'No' },
-          ],
-        },
-        {
-          id: 'target',
-          fieldType: 'text',
-          question: 'Target',
-          required: true,
-          rules: [
+          id: 'page-1',
+          fields: [
             {
-              effect: 'enable',
-              logic: 'AND',
-              conditions: [
-                {
-                  conditionType: 'field',
-                  targetId: 'toggle',
-                  operator: 'equals',
-                  expected: 'yes',
-                },
+              id: 'toggle',
+              fieldType: 'radio',
+              options: [
+                { id: 'yes', value: 'yes', text: 'Yes' },
+                { id: 'no', value: 'no', text: 'No' },
               ],
             },
             {
-              effect: 'required',
-              logic: 'AND',
-              conditions: [
+              id: 'target',
+              fieldType: 'text',
+              question: 'Target',
+              required: true,
+              rules: [
                 {
-                  conditionType: 'field',
-                  targetId: 'toggle',
-                  operator: 'equals',
-                  expected: 'yes',
+                  effect: 'enable',
+                  logic: 'AND',
+                  conditions: [
+                    {
+                      conditionType: 'field',
+                      targetId: 'toggle',
+                      operator: 'equals',
+                      expected: 'yes',
+                    },
+                  ],
+                },
+                {
+                  effect: 'required',
+                  logic: 'AND',
+                  conditions: [
+                    {
+                      conditionType: 'field',
+                      targetId: 'toggle',
+                      operator: 'equals',
+                      expected: 'yes',
+                    },
+                  ],
                 },
               ],
             },
