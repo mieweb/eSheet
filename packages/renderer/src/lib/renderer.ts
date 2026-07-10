@@ -47,9 +47,7 @@ export function renderer(
   responses: FormResponse = {},
   options: RenderTreeOptions = {}
 ): RenderFieldNode[] {
-  const normalized = normalizeDefinition(
-    definition.pages.flatMap((p) => p.fields ?? [])
-  );
+  const normalized = normalizeDefinition(definition.pages);
   const includeHidden = options.includeHidden === true;
   // Both the host option AND the schema flag must be true.
   const dangerouslyAllowJS =
@@ -104,7 +102,7 @@ export function renderer(
     return result;
   }
 
-  return build(normalized.rootIds);
+  return normalized.pages.flatMap((page) => build(page.fieldIds));
 }
 
 /** Alias for readability in consumers that prefer explicit naming. */

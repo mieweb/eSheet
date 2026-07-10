@@ -1,11 +1,9 @@
 import React from 'react';
 import type { FieldComponentProps, FormStore, UIStore } from '@esheet/core';
-import { hydrateDefinition } from '@esheet/core';
 import { renderer } from '@esheet/renderer';
 import Sortable from 'sortablejs';
 import { useFormApi } from '../hooks/useFormApi.js';
 import { useUiApi } from '../hooks/useUiApi.js';
-import { useVisibleRootIds } from '../hooks/useVisibleRootIds.js';
 import { FieldWrapper } from './FieldWrapper.js';
 import { getFieldComponent } from '@esheet/fields';
 import { ViewBigIcon, ViewSmallIcon } from '../icons.js';
@@ -120,9 +118,14 @@ function DraggableFieldItem({
     (e: React.MouseEvent) => {
       if (!parentId) return;
       e.stopPropagation();
-      ui.getState().selectFieldChild(parentId, id);
+      // parentId is a section ID (in byId) → selectFieldChild; page ID (not in byId) → selectField
+      if (form.getState().normalized.byId[parentId]) {
+        ui.getState().selectFieldChild(parentId, id);
+      } else {
+        ui.getState().selectField(id);
+      }
     },
-    [id, parentId, ui]
+    [id, parentId, form, ui]
   );
 
   if (!field) return null;
@@ -168,10 +171,7 @@ function DraggableFieldItem({
             );
           }
 
-          if (
-            props.field.definition.fieldType === 'section' ||
-            props.field.definition.fieldType === 'pages'
-          ) {
+          if (props.field.definition.fieldType === 'section') {
             const ContainerComponent = Component as React.ComponentType<
               FieldComponentProps & { nestedChildren?: React.ReactNode }
             >;
@@ -196,7 +196,6 @@ export const Canvas = React.memo(function Canvas({
   dragEnabled = true,
 }: CanvasProps) {
   const canvasRef = React.useRef<HTMLDivElement | null>(null);
-  const rootIds = useVisibleRootIds();
   const { normalized, responses } = useFormApi();
   const { mode, selectedFieldId, selectedFieldChildId } = useUiApi();
   const isNarrowPreview = useIsNarrowPreview();
@@ -365,8 +364,8 @@ export const Canvas = React.memo(function Canvas({
 
           form.getState().moveField(sourceId, newIndex, toParentId);
 
-          // Update selection to follow the moved field to its new location.
-          if (toParentId !== null) {
+          // Update selection: section parent → selectFieldChild, page parent → selectField
+          if (toParentId !== null && normalizedRef.current.byId[toParentId]) {
             setSectionExpandSignal((prev) => ({
               sectionId: toParentId,
               version: (prev?.version ?? 0) + 1,
@@ -407,10 +406,7 @@ export const Canvas = React.memo(function Canvas({
         return false;
       }
 
-      if (
-        node.definition.fieldType !== 'section' &&
-        node.definition.fieldType !== 'pages'
-      ) {
+      if (node.definition.fieldType !== 'section') {
         cache.set(fieldId, true);
         return true;
       }
@@ -429,20 +425,17 @@ export const Canvas = React.memo(function Canvas({
   }, [form, mode, normalized, responses]);
 
   const items = React.useMemo(() => {
-    if (mode !== 'preview' || !previewRenderableMap) return [...rootIds];
-    return rootIds.filter((id) => previewRenderableMap.get(id) === true);
-  }, [mode, previewRenderableMap, rootIds]);
+    const activePage = normalized.pages[currentPagesIdx];
+    const fieldIds = activePage?.fieldIds ?? [];
+    if (mode !== 'preview' || !previewRenderableMap) return [...fieldIds];
+    return fieldIds.filter((id) => previewRenderableMap.get(id) === true);
+  }, [mode, previewRenderableMap, normalized.pages, currentPagesIdx]);
 
-  // Separate pages fields from other root fields
-  const { pagesIds } = React.useMemo(() => {
-    const pages: string[] = [];
-    for (const id of items) {
-      if (normalized.byId[id]?.definition.fieldType === 'pages') {
-        pages.push(id);
-      }
-    }
-    return { pagesIds: pages };
-  }, [items, normalized]);
+  // Pages come from normalized.pages (not from the field tree)
+  const pagesIds = React.useMemo(
+    () => normalized.pages.map((p) => p.id),
+    [normalized.pages]
+  );
 
   const isMultiPage = pagesIds.length > 1;
 
@@ -456,10 +449,10 @@ export const Canvas = React.memo(function Canvas({
   const pageLabels = React.useMemo(
     () =>
       pagesIds.map((id, i) => {
-        const def = normalized.byId[id]?.definition;
-        return (def as { title?: string })?.title || `Page ${i + 1}`;
+        const page = normalized.pages.find((p) => p.id === id);
+        return page?.title || `Page ${i + 1}`;
       }),
-    [pagesIds, normalized]
+    [pagesIds, normalized.pages]
   );
 
   const handlePrevPage = React.useCallback(
@@ -480,19 +473,20 @@ export const Canvas = React.memo(function Canvas({
     ui.getState().setActivePagesId(activePagesId);
   }, [activePagesId, ui]);
 
+  // Active page's field IDs for display
   const displayItems = React.useMemo(() => {
-    if (!hasPages || !activePagesId) return items;
-    const node = normalized.byId[activePagesId];
-    if (!node) return [];
-    if (mode !== 'preview') return [...node.childIds];
-    return node.childIds.filter((id) => previewRenderableMap?.get(id) === true);
-  }, [hasPages, activePagesId, items, normalized, mode, previewRenderableMap]);
+    const page = normalized.pages[currentPagesIdx];
+    if (!page) return [];
+    if (mode !== 'preview' || !previewRenderableMap) return [...page.fieldIds];
+    return page.fieldIds.filter(
+      (id) => previewRenderableMap.get(id) === true
+    );
+  }, [normalized.pages, currentPagesIdx, mode, previewRenderableMap]);
 
   // Build render tree to extract computed values from setValue effects
   const computedValuesMap = React.useMemo(() => {
-    const hydratedFields = hydrateDefinition(normalized);
     const tree = renderer(
-      { id: 'canvas', pages: [{ id: 'page-1', fields: hydratedFields }] },
+      form.getState().hydrateDefinition(),
       responses
     );
 
@@ -532,8 +526,7 @@ export const Canvas = React.memo(function Canvas({
       const parent = normalized.byId[parentId];
       if (
         !parent ||
-        (parent.definition.fieldType !== 'section' &&
-          parent.definition.fieldType !== 'pages')
+        parent.definition.fieldType !== 'section'
       )
         return null;
 
@@ -630,45 +623,48 @@ export const Canvas = React.memo(function Canvas({
           <span className="ms:text-sm ms:font-semibold ms:text-mstext ms:select-none">
             Fields
           </span>
-          {displayItems.length > 0 && (
-            <div className="ms:flex ms:items-center ms:gap-1">
-              <button
-                type="button"
-                title={allExpanded ? 'Collapse all' : 'Expand all'}
-                className="ms:flex ms:items-center ms:gap-1 ms:px-2 ms:py-1 ms:text-xs ms:text-mstextmuted ms:hover:text-mstext ms:rounded ms:hover:bg-msbackgroundhover ms:transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (allExpanded) {
-                    setCollapseAllVersion((v) => (v ?? 0) + 1);
-                  } else {
-                    setExpandAllVersion((v) => (v ?? 0) + 1);
-                  }
-                  setAllExpanded((v) => !v);
-                }}
-              >
-                {allExpanded ? (
-                  <ViewSmallIcon className="ms:w-3.5 ms:h-3.5" />
-                ) : (
-                  <ViewBigIcon className="ms:w-3.5 ms:h-3.5" />
-                )}
-                {allExpanded ? 'Collapse all' : 'Expand all'}
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-      {isMultiPage && (
-        <div className="pages-nav ms:flex ms:items-center ms:justify-between ms:gap-2 ms:px-4 ms:py-2 ms:border-b ms:border-msborder ms:bg-mssurface ms:flex-wrap">
-          <div className="ms:flex ms:items-center ms:gap-1 ms:flex-wrap">
+          <div
+            className="ms:flex ms:items-center ms:gap-1"
+            style={{ visibility: displayItems.length > 0 ? 'visible' : 'hidden' }}
+          >
             <button
               type="button"
-              aria-label="Previous page"
-              disabled={currentPagesIdx === 0}
-              onClick={handlePrevPage}
-              className="ms:inline-flex ms:items-center ms:justify-center ms:h-7 ms:w-7 ms:rounded ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:transition-colors ms:hover:bg-msbackgroundhover ms:disabled:opacity-40 ms:disabled:cursor-not-allowed ms:outline-none ms:cursor-pointer ms:shrink-0 ms:text-base ms:leading-none"
+              title={allExpanded ? 'Collapse all' : 'Expand all'}
+              className="ms:flex ms:items-center ms:gap-1 ms:px-2 ms:py-1 ms:text-xs ms:text-mstextmuted ms:hover:text-mstext ms:rounded ms:hover:bg-msbackgroundhover ms:transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (allExpanded) {
+                  setCollapseAllVersion((v) => (v ?? 0) + 1);
+                } else {
+                  setExpandAllVersion((v) => (v ?? 0) + 1);
+                }
+                setAllExpanded((v) => !v);
+              }}
             >
-              ‹
+              {allExpanded ? (
+                <ViewSmallIcon className="ms:w-3.5 ms:h-3.5" />
+              ) : (
+                <ViewBigIcon className="ms:w-3.5 ms:h-3.5" />
+              )}
+              {allExpanded ? 'Collapse all' : 'Expand all'}
             </button>
+          </div>
+        </div>
+      )}
+      {(hasPages && mode === 'build') || isMultiPage ? (
+        <div className="pages-nav ms:flex ms:items-center ms:justify-between ms:gap-2 ms:px-4 ms:py-2 ms:border-b ms:border-msborder ms:bg-mssurface ms:flex-wrap">
+          <div className="ms:flex ms:items-center ms:gap-1 ms:flex-wrap">
+            {isMultiPage && (
+              <button
+                type="button"
+                aria-label="Previous page"
+                disabled={currentPagesIdx === 0}
+                onClick={handlePrevPage}
+                className="ms:inline-flex ms:items-center ms:justify-center ms:h-7 ms:w-7 ms:rounded ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:transition-colors ms:hover:bg-msbackgroundhover ms:disabled:opacity-40 ms:disabled:cursor-not-allowed ms:outline-none ms:cursor-pointer ms:shrink-0 ms:text-base ms:leading-none"
+              >
+                ‹
+              </button>
+            )}
             {pageLabels.map((label, i) => (
               <button
                 key={pagesIds[i]}
@@ -677,7 +673,7 @@ export const Canvas = React.memo(function Canvas({
                 aria-current={i === currentPagesIdx ? 'page' : undefined}
                 onClick={() => {
                   setCurrentPagesIdx(i);
-                  ui.getState().selectField(pagesIds[i]);
+                  ui.getState().selectField(null);
                 }}
                 className={`ms:inline-flex ms:items-center ms:justify-center ms:min-w-[2rem] ms:h-7 ms:px-2 ms:rounded ms:border ms:text-xs ms:font-medium ms:transition-colors ms:outline-none ms:cursor-pointer ms:shrink-0 ${
                   i === currentPagesIdx
@@ -688,37 +684,55 @@ export const Canvas = React.memo(function Canvas({
                 {label}
               </button>
             ))}
-            <button
-              type="button"
-              aria-label="Next page"
-              disabled={currentPagesIdx === pagesIds.length - 1}
-              onClick={handleNextPage}
-              className="ms:inline-flex ms:items-center ms:justify-center ms:h-7 ms:w-7 ms:rounded ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:transition-colors ms:hover:bg-msbackgroundhover ms:disabled:opacity-40 ms:disabled:cursor-not-allowed ms:outline-none ms:cursor-pointer ms:shrink-0 ms:text-base ms:leading-none"
-            >
-              ›
-            </button>
+            {isMultiPage && (
+              <button
+                type="button"
+                aria-label="Next page"
+                disabled={currentPagesIdx === pagesIds.length - 1}
+                onClick={handleNextPage}
+                className="ms:inline-flex ms:items-center ms:justify-center ms:h-7 ms:w-7 ms:rounded ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:transition-colors ms:hover:bg-msbackgroundhover ms:disabled:opacity-40 ms:disabled:cursor-not-allowed ms:outline-none ms:cursor-pointer ms:shrink-0 ms:text-base ms:leading-none"
+              >
+                ›
+              </button>
+            )}
           </div>
           <span className="ms:text-xs ms:text-mstextmuted ms:shrink-0">
             {currentPagesIdx + 1} / {pagesIds.length}
           </span>
-          {mode === 'build' && activePagesId && (
-            <button
-              type="button"
-              aria-label="Delete current page"
-              disabled={pagesIds.length <= 1}
-              onClick={() => {
-                const nextIdx = Math.max(currentPagesIdx - 1, 0);
-                form.getState().removePage(activePagesId);
-                setCurrentPagesIdx(nextIdx);
-                ui.getState().selectField(null);
-              }}
-              className="ms:inline-flex ms:items-center ms:justify-center ms:h-7 ms:px-2 ms:rounded ms:border ms:border-msdanger/50 ms:bg-mssurface ms:text-msdanger ms:text-xs ms:transition-colors ms:hover:bg-msdanger/10 ms:outline-none ms:cursor-pointer ms:shrink-0 ms:disabled:opacity-40 ms:disabled:cursor-not-allowed"
-            >
-              Delete page
-            </button>
+          {mode === 'build' && (
+            <div className="ms:flex ms:items-center ms:gap-1 ms:shrink-0">
+              <button
+                type="button"
+                aria-label="Add page"
+                onClick={() => {
+                  const newId = form.getState().addPage();
+                  setCurrentPagesIdx(pagesIds.length); // new page is appended
+                  ui.getState().selectField(null);
+                  void newId;
+                }}
+                className="ms:inline-flex ms:items-center ms:justify-center ms:h-7 ms:px-2 ms:rounded ms:border ms:border-msprimary/50 ms:bg-mssurface ms:text-msprimary ms:text-xs ms:transition-colors ms:hover:bg-msprimary/10 ms:outline-none ms:cursor-pointer ms:shrink-0"
+              >
+                + Page
+              </button>
+              <button
+                type="button"
+                aria-label="Delete current page"
+                disabled={pagesIds.length <= 1}
+                onClick={() => {
+                  const nextIdx = Math.max(currentPagesIdx - 1, 0);
+                  if (!activePagesId) return;
+                  form.getState().removePage(activePagesId);
+                  setCurrentPagesIdx(nextIdx);
+                  ui.getState().selectField(null);
+                }}
+                className="ms:inline-flex ms:items-center ms:justify-center ms:h-7 ms:px-2 ms:rounded ms:border ms:border-msdanger/50 ms:bg-mssurface ms:text-msdanger ms:text-xs ms:transition-colors ms:hover:bg-msdanger/10 ms:outline-none ms:cursor-pointer ms:shrink-0 ms:disabled:opacity-40 ms:disabled:cursor-not-allowed"
+              >
+                Delete page
+              </button>
+            </div>
           )}
         </div>
-      )}
+      ) : null}
       {items.length === 0 ? (
         <div className="canvas-empty ms:flex ms:flex-1 ms:items-center ms:justify-center ms:min-h-[200px] ms:text-mstextmuted ms:text-sm">
           No fields yet. Add a field from the Tool Panel to get started.
@@ -752,18 +766,8 @@ export const Canvas = React.memo(function Canvas({
                 parentId={activePagesId ?? undefined}
                 dragEnabled={dragEnabled}
                 previewGrid={showPreviewGrid}
-                isSelected={
-                  activePagesId
-                    ? selectedFieldId === activePagesId &&
-                      selectedFieldChildId === id
-                    : selectedFieldId === id && selectedFieldChildId === null
-                }
-                isActiveChild={
-                  activePagesId
-                    ? selectedFieldId === activePagesId &&
-                      selectedFieldChildId === id
-                    : false
-                }
+                isSelected={selectedFieldId === id && selectedFieldChildId === null}
+                isActiveChild={false}
                 forceExpandVersion={
                   sectionExpandSignal?.sectionId === id
                     ? sectionExpandSignal.version

@@ -14,7 +14,6 @@ import type {
 import {
   getFieldTypeMeta,
   getRegisteredFieldTypes,
-  hydrateDefinition,
 } from '@esheet/core';
 
 /** Summary of a single field, suitable for AI context. */
@@ -426,13 +425,7 @@ export function createBuilderTools(form: FormStore): BuilderTools {
         };
       }),
     getFieldSpec: (fieldType) => getFieldTypeMeta(fieldType),
-    getDefinition: () => {
-      const { normalized, formId } = form.getState();
-      return {
-        id: formId,
-        pages: [{ id: 'page-1', fields: hydrateDefinition(normalized) }],
-      } as FormDefinition;
-    },
+    getDefinition: () => form.getState().hydrateDefinition(),
     setFormId: (id) => form.getState().setFormId(id),
     getFormSummary: () => {
       const { normalized, formId } = form.getState();
@@ -511,7 +504,7 @@ export function createBuilderTools(form: FormStore): BuilderTools {
       return {
         formId,
         fieldCount: Object.keys(normalized.byId).length,
-        fields: normalized.rootIds.map(summarizeField),
+        fields: normalized.pages.flatMap((p) => p.fieldIds).map(summarizeField),
       };
     },
   };

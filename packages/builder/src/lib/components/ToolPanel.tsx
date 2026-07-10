@@ -127,31 +127,25 @@ export const ToolPanel = React.memo(function ToolPanel(_props: ToolPanelProps) {
         : undefined;
       const effectiveFieldType = effectiveField?.definition.fieldType;
 
-      // Pages always go at root.
-      // Sections: add into the active page (never inside another section).
-      // Everything else: add inside the selected section if one is active,
-      //   otherwise into the active page, otherwise root.
-      let containerParentId: string | undefined;
-      if (type !== 'pages') {
-        if (type === 'section') {
-          containerParentId = _ui.getState().activePagesId ?? undefined;
-        } else if (effectiveFieldType === 'section') {
-          containerParentId = effectiveId ?? undefined;
-        } else {
-          containerParentId = _ui.getState().activePagesId ?? undefined;
-        }
+      // Determine page and parent for the new field.
+      // Sections go at page root; other fields go inside the active section if one is selected.
+      const activePageId = _ui.getState().activePagesId ?? undefined;
+      let parentId: string | undefined;
+      if (type === 'section') {
+        // Sections always go at page root — no section parent
+      } else if (effectiveFieldType === 'section') {
+        parentId = effectiveId ?? undefined;
       }
 
-      const newId = formApi.addField(
-        type as FieldType,
-        containerParentId ? { parentId: containerParentId } : undefined
-      );
+      const newId = formApi.addField(type as Exclude<FieldType, 'pages'>, {
+        pageId: activePageId,
+        ...(parentId && { parentId }),
+      });
       if (newId) {
-        if (effectiveFieldType === 'section') {
+        if (effectiveFieldType === 'section' && parentId) {
           // Keep the section selected as the active insertion context so
           // subsequent adds continue to target the same section.
-        } else if (containerParentId) {
-          selectFieldChild(containerParentId, newId);
+          selectFieldChild(parentId, newId);
         } else {
           selectField(newId);
         }

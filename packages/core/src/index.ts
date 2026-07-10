@@ -63,7 +63,6 @@ export {
   type DiagramFieldDefinition,
   type DisplayFieldDefinition,
   type SectionFieldDefinition,
-  type PagesFieldDefinition,
   type FieldResponse,
   type FormDefinition,
   type FieldResponseMap as FormResponse,
@@ -98,6 +97,7 @@ export {
   hydrateDefinition,
   type FieldNode,
   type NormalizedDefinition,
+  type NormalizedPage,
 } from './lib/functions/normalize.js';
 
 export { hydrateResponse } from './lib/functions/hydrate-response.js';
