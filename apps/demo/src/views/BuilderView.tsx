@@ -12,6 +12,7 @@ const INITIAL_DEF: FormDefinition = {
   pages: [
     {
       id: 'page-1',
+      title: 'Page 1',
       fields: [
         { id: 'q1', fieldType: 'text', question: 'What is your name?' },
         {

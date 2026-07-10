@@ -701,6 +701,22 @@ export const Canvas = React.memo(function Canvas({
           <span className="ms:text-xs ms:text-mstextmuted ms:shrink-0">
             {currentPagesIdx + 1} / {pagesIds.length}
           </span>
+          {mode === 'build' && activePagesId && (
+            <button
+              type="button"
+              aria-label="Delete current page"
+              disabled={pagesIds.length <= 1}
+              onClick={() => {
+                const nextIdx = Math.max(currentPagesIdx - 1, 0);
+                form.getState().removePage(activePagesId);
+                setCurrentPagesIdx(nextIdx);
+                ui.getState().selectField(null);
+              }}
+              className="ms:inline-flex ms:items-center ms:justify-center ms:h-7 ms:px-2 ms:rounded ms:border ms:border-msdanger/50 ms:bg-mssurface ms:text-msdanger ms:text-xs ms:transition-colors ms:hover:bg-msdanger/10 ms:outline-none ms:cursor-pointer ms:shrink-0 ms:disabled:opacity-40 ms:disabled:cursor-not-allowed"
+            >
+              Delete page
+            </button>
+          )}
         </div>
       )}
       {items.length === 0 ? (

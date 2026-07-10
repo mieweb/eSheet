@@ -32,30 +32,41 @@ export function EditPanel(_props: EditPanelProps) {
     selectedFieldChildId,
     editTab,
     selectField,
+    selectFieldChild,
     setEditTab,
   } = useUiApi();
   const { normalized } = useFormApi(undefined);
 
-  // Bind field actions to the currently selected field
-  const { field_: selectedField_ } = useFormApi(selectedFieldId ?? undefined);
+  // When selectedFieldId is a pages container, the real edit target is the child field.
+  const selectedNode = selectedFieldId
+    ? normalized.byId[selectedFieldId]
+    : undefined;
+  const isPageContainer =
+    selectedNode?.definition.fieldType === 'pages';
+  const effectiveFieldId = isPageContainer
+    ? (selectedFieldChildId ?? null)
+    : selectedFieldId;
+
+  // Bind field actions to the effective field
+  const { field_: selectedField_ } = useFormApi(effectiveFieldId ?? undefined);
 
   // Logic tab target: when a section is selected, edit logic for the active child.
   const logicField = React.useMemo(() => {
-    if (!selectedFieldId) return undefined;
-    const parent = normalized.byId[selectedFieldId];
-    if (!parent) return undefined;
-    if (parent.definition.fieldType !== 'section' || !selectedFieldChildId) {
-      return parent;
+    if (!effectiveFieldId) return undefined;
+    const node = normalized.byId[effectiveFieldId];
+    if (!node) return undefined;
+    if (node.definition.fieldType === 'section' && selectedFieldChildId) {
+      return normalized.byId[selectedFieldChildId] ?? node;
     }
-    return normalized.byId[selectedFieldChildId] ?? parent;
-  }, [normalized, selectedFieldId, selectedFieldChildId]);
+    return node;
+  }, [normalized, effectiveFieldId, selectedFieldChildId]);
 
-  const activeField = selectedFieldId
-    ? normalized.byId[selectedFieldId]
+  const activeField = effectiveFieldId
+    ? normalized.byId[effectiveFieldId]
     : undefined;
 
-  // No selection
-  if (!selectedFieldId || !activeField) {
+  // No selection (includes pages container with no child selected)
+  if (!effectiveFieldId || !activeField) {
     return (
       <div className="edit-panel-empty ms:flex ms:flex-1 ms:min-h-0 ms:items-center ms:justify-center ms:text-mstextmuted ms:text-sm ms:p-4 ms:text-center">
         Select a field to edit its properties
@@ -89,7 +100,11 @@ export function EditPanel(_props: EditPanelProps) {
   const handleRenameId = (newId: string): boolean => {
     const success = selectedField_.update({ id: newId });
     if (success) {
-      selectField(newId);
+      if (isPageContainer && selectedFieldId) {
+        selectFieldChild(selectedFieldId, newId);
+      } else {
+        selectField(newId);
+      }
     }
     return success;
   };
@@ -132,7 +147,7 @@ export function EditPanel(_props: EditPanelProps) {
       <div className="edit-panel-content ms:flex-1 ms:min-h-0 ms:p-4">
         {editTab === 'edit' ? (
           <EditTabContent
-            fieldId={selectedFieldId}
+            fieldId={effectiveFieldId}
             def={def}
             meta={meta}
             onUpdate={handleUpdate}

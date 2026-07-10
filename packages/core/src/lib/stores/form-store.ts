@@ -110,11 +110,15 @@ export interface FormState {
 
   // --- Builder Actions ---
   /** Add a new field. Returns the generated field ID, or `null` if the type is unknown. */
-  addField: (fieldType: FieldType, options?: AddFieldOptions) => string | null;
+  addField: (fieldType: Exclude<FieldType, 'pages'>, options?: AddFieldOptions) => string | null;
   /** Patch a field's definition. Returns `false` if not found or rename collided. */
   updateField: (fieldId: string, patch: Record<string, unknown>) => boolean;
   /** Remove a field (and its children if it is a section). */
   removeField: (fieldId: string) => boolean;
+  /** Add a new page. Returns the generated page ID. */
+  addPage: (options?: { title?: string; index?: number }) => string;
+  /** Remove a page and all its fields. Returns `false` if the page is not found or it is the last page (minimum 1 required). */
+  removePage: (pageId: string) => boolean;
   /** Move a field to a new position/parent. `toParentId` defaults to current parent; pass `null` for root. */
   moveField: (
     fieldId: string,
@@ -665,6 +669,47 @@ export function createFormStore(
         reindexChildren(byId, rootIds);
       }
 
+      set({ normalized: { byId, rootIds } });
+      return true;
+    },
+
+    addPage: (options) => {
+      const { normalized } = get();
+      const existingIds = new Set(Object.keys(normalized.byId));
+      const id = generateFieldId('pages', existingIds);
+      const definition: FieldDefinition = {
+        id,
+        fieldType: 'pages',
+        ...(options?.title !== undefined && { title: options.title }),
+      };
+      const byId: Record<string, FieldNode> = { ...normalized.byId };
+      const rootIds = insertAt(normalized.rootIds, id, options?.index);
+      byId[id] = { definition, parentId: null, childIds: [], index: 0 };
+      reindexChildren(byId, rootIds);
+      set({ normalized: { byId, rootIds } });
+      return id;
+    },
+
+    removePage: (pageId) => {
+      const { normalized } = get();
+      const node = normalized.byId[pageId];
+      if (!node || node.definition.fieldType !== 'pages') return false;
+      // Enforce minimum 1 page.
+      const pageCount = normalized.rootIds.filter(
+        (id) => normalized.byId[id]?.definition.fieldType === 'pages'
+      ).length;
+      if (pageCount <= 1) return false;
+
+      const toRemove = new Set([
+        pageId,
+        ...collectDescendants(normalized.byId, pageId),
+      ]);
+      const byId: Record<string, FieldNode> = {};
+      for (const [id, n] of Object.entries(normalized.byId)) {
+        if (!toRemove.has(id)) byId[id] = n;
+      }
+      const rootIds = normalized.rootIds.filter((r) => r !== pageId);
+      reindexChildren(byId, rootIds);
       set({ normalized: { byId, rootIds } });
       return true;
     },
