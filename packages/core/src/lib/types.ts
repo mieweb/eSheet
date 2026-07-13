@@ -479,12 +479,12 @@ export interface SectionFieldDefinition extends BaseFieldDefinition {
   fieldType: 'section';
   title?: string;
   /**
-   * How the section is displayed in preview.
+   * Collapse behaviour of the section in preview.
    * - `'collapsed'` — collapsible, starts collapsed.
    * - `'expanded'` — collapsible, starts expanded.
    * - `'disabled'` (default) — collapsing disabled, always expanded.
    */
-  sectionDisplay?: 'collapsed' | 'expanded' | 'disabled';
+  sectionCollapse?: 'collapsed' | 'expanded' | 'disabled';
   fields?: FieldDefinition[]; // recursive!
 }
 

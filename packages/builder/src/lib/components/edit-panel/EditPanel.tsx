@@ -384,11 +384,11 @@ function SectionEditContent({
         </label>
         <select
           id={`${instanceId}-editor-collapse-${fieldId}`}
-          value={(def as { sectionDisplay?: string }).sectionDisplay ?? 'disabled'}
+          value={(def as { sectionCollapse?: string }).sectionCollapse ?? 'disabled'}
           onChange={(e) => {
             const value = e.currentTarget.value;
             onUpdate({
-              sectionDisplay: value,
+              sectionCollapse: value,
             } as Parameters<typeof onUpdate>[0]);
           }}
           className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
