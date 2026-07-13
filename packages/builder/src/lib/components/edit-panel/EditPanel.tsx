@@ -385,7 +385,7 @@ function SectionEditContent({
         <select
           id={`${instanceId}-editor-collapse-${fieldId}`}
           value={
-            (def as { sectionCollapse?: string }).sectionCollapse ?? 'disabled'
+            (def as { sectionCollapse?: string }).sectionCollapse ?? 'expanded'
           }
           onChange={(e) => {
             const value = e.currentTarget.value;

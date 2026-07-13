@@ -481,8 +481,8 @@ export interface SectionFieldDefinition extends BaseFieldDefinition {
   /**
    * Collapse behaviour of the section in preview.
    * - `'collapsed'` — collapsible, starts collapsed.
-   * - `'expanded'` — collapsible, starts expanded.
-   * - `'disabled'` (default) — collapsing disabled, always expanded.
+   * - `'expanded'` (default when absent) — collapsible, starts expanded.
+   * - `'disabled'` — collapsing disabled, always expanded.
    */
   sectionCollapse?: 'collapsed' | 'expanded' | 'disabled';
   fields?: FieldDefinition[]; // recursive!
