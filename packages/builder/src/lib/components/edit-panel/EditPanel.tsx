@@ -384,25 +384,18 @@ function SectionEditContent({
         </label>
         <select
           id={`${instanceId}-editor-collapse-${fieldId}`}
-          value={
-            (def as { collapsible?: boolean }).collapsible === false
-              ? 'none'
-              : (def as { defaultExpanded?: boolean }).defaultExpanded
-              ? 'expanded'
-              : 'collapsed'
-          }
+          value={(def as { sectionDisplay?: string }).sectionDisplay ?? 'disabled'}
           onChange={(e) => {
             const value = e.currentTarget.value;
             onUpdate({
-              collapsible: value === 'none' ? false : undefined,
-              defaultExpanded: value === 'expanded' ? true : undefined,
+              sectionDisplay: value,
             } as Parameters<typeof onUpdate>[0]);
           }}
           className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
         >
           <option value="collapsed">Collapsible (collapsed by default)</option>
           <option value="expanded">Collapsible (expanded by default)</option>
-          <option value="none">Not collapsible (always expanded)</option>
+          <option value="disabled">Not collapsible (always expanded)</option>
         </select>
       </div>
 

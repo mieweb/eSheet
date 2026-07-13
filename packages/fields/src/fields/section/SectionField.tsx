@@ -19,9 +19,9 @@ export const SectionField = React.memo(function SectionField({
 }: SectionFieldProps) {
   const def = field.definition as SectionFieldDefinition;
   const title = def.title || 'Section';
-  const collapsible = def.collapsible ?? true;
+  const collapsible = (def.sectionDisplay ?? 'disabled') !== 'disabled';
   const [expanded, setExpanded] = React.useState(
-    collapsible ? def.defaultExpanded ?? false : true
+    (def.sectionDisplay ?? 'disabled') === 'expanded'
   );
   const isExpanded = collapsible ? expanded : true;
 
