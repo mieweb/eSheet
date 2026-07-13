@@ -19,10 +19,17 @@ export const SectionField = React.memo(function SectionField({
 }: SectionFieldProps) {
   const def = field.definition as SectionFieldDefinition;
   const title = def.title || 'Section';
-  const collapsible = (def.sectionCollapse ?? 'disabled') !== 'disabled';
-  const [expanded, setExpanded] = React.useState(
-    (def.sectionCollapse ?? 'disabled') === 'expanded'
-  );
+  const bodyId = React.useId();
+  const sectionCollapse = def.sectionCollapse ?? 'disabled';
+  const collapsible = sectionCollapse !== 'disabled';
+  const defaultExpanded = collapsible ? sectionCollapse === 'expanded' : true;
+  const [expanded, setExpanded] = React.useState(defaultExpanded);
+  const [prevDefault, setPrevDefault] = React.useState(defaultExpanded);
+  // Re-sync when collapse settings change while mounted (e.g. edited in builder).
+  if (prevDefault !== defaultExpanded) {
+    setPrevDefault(defaultExpanded);
+    setExpanded(defaultExpanded);
+  }
   const isExpanded = collapsible ? expanded : true;
 
   if (isPreview) {
@@ -33,6 +40,7 @@ export const SectionField = React.memo(function SectionField({
             <button
               type="button"
               aria-expanded={isExpanded}
+              aria-controls={bodyId}
               onClick={() => setExpanded((prev) => !prev)}
               className="ms:w-full ms:flex ms:items-center ms:justify-between ms:gap-2 ms:px-4 ms:py-2 ms:text-left ms:text-base ms:font-semibold ms:text-mstext ms:bg-transparent ms:border-0 ms:cursor-pointer"
             >
@@ -69,7 +77,10 @@ export const SectionField = React.memo(function SectionField({
           )}
         </h3>
         {nestedChildren && isExpanded && (
-          <div className="ms:bg-mssurface ms:space-y-3 ms:px-4 ms:py-2">
+          <div
+            id={bodyId}
+            className="ms:bg-mssurface ms:space-y-3 ms:px-4 ms:py-2"
+          >
             {nestedChildren}
           </div>
         )}
