@@ -19,17 +19,56 @@ export const SectionField = React.memo(function SectionField({
 }: SectionFieldProps) {
   const def = field.definition as SectionFieldDefinition;
   const title = def.title || 'Section';
+  const collapsible = def.collapsible ?? true;
+  const [expanded, setExpanded] = React.useState(
+    collapsible ? def.defaultExpanded ?? false : true
+  );
+  const isExpanded = collapsible ? expanded : true;
 
   if (isPreview) {
     return (
       <section className="section-field-preview ms:pb-0">
-        <h3 className="ms:text-base ms:font-semibold ms:text-mstext ms:bg-msprimary/10 ms:px-4 ms:py-2 ms:break-words ms:overflow-hidden">
-          {title}
-          {(isRequired || isSoftRequired) && (
-            <span className="ms:text-msdanger ms:ml-1">*</span>
+        <h3 className="ms:text-base ms:font-semibold ms:text-mstext ms:bg-msprimary/10 ms:break-words ms:overflow-hidden">
+          {collapsible ? (
+            <button
+              type="button"
+              aria-expanded={isExpanded}
+              onClick={() => setExpanded((prev) => !prev)}
+              className="ms:w-full ms:flex ms:items-center ms:justify-between ms:gap-2 ms:px-4 ms:py-2 ms:text-left ms:text-base ms:font-semibold ms:text-mstext ms:bg-transparent ms:border-0 ms:cursor-pointer"
+            >
+              <span>
+                {title}
+                {(isRequired || isSoftRequired) && (
+                  <span className="ms:text-msdanger ms:ml-1">*</span>
+                )}
+              </span>
+              <svg
+                className={`ms:w-4 ms:h-4 ms:shrink-0 ms:transition-transform ${
+                  isExpanded ? 'ms:rotate-180' : ''
+                }`}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
+          ) : (
+            <span className="ms:block ms:px-4 ms:py-2">
+              {title}
+              {(isRequired || isSoftRequired) && (
+                <span className="ms:text-msdanger ms:ml-1">*</span>
+              )}
+            </span>
           )}
         </h3>
-        {nestedChildren && (
+        {nestedChildren && isExpanded && (
           <div className="ms:bg-mssurface ms:space-y-3 ms:px-4 ms:py-2">
             {nestedChildren}
           </div>
