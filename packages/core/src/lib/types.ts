@@ -28,6 +28,7 @@ export const FIELD_TYPES = [
   'openchoice',
   'display',
   'section',
+  'pages',
 ] as const;
 
 export const fieldTypeSchema = z.enum(FIELD_TYPES);
@@ -481,6 +482,13 @@ export interface SectionFieldDefinition extends BaseFieldDefinition {
   fields?: FieldDefinition[]; // recursive!
 }
 
+export interface PagesFieldDefinition extends BaseFieldDefinition {
+  fieldType: 'pages';
+  title?: string;
+  autoAdvance?: boolean;
+  fields?: FieldDefinition[]; // recursive!
+}
+
 // ---------------------------------------------------------------------------
 // Discriminated Union Type
 // ---------------------------------------------------------------------------
@@ -513,7 +521,8 @@ export type FieldDefinition =
   | DiagramFieldDefinition
   | DisplayFieldDefinition
   // Organization
-  | SectionFieldDefinition;
+  | SectionFieldDefinition
+  | PagesFieldDefinition;
 
 /** Union of all field variants that carry an `options` array. */
 export type OptionBearingFieldDefinition =
@@ -576,7 +585,8 @@ const FIELD_TYPE_PROPERTIES: Record<FieldType, readonly string[]> = {
   openchoice: ['options', 'maxCustomOptions', 'otherLabel'],
   display: ['content'],
   // Organization category
-  section: ['title', 'fields'],
+  section: ['title', 'fields', 'sectionCollapse'],
+  pages: ['title', 'fields', 'autoAdvance'],
 };
 
 /** Base properties allowed on all field types. */
