@@ -259,7 +259,12 @@ describe('BuilderHeader import feedback', () => {
     const ui = createUIStore();
     mockFileContent = JSON.stringify({
       id: 'good-form',
-      pages: [{ id: 'page-1', fields: [{ id: 'ok', fieldType: 'text', question: 'OK' }] }],
+      pages: [
+        {
+          id: 'page-1',
+          fields: [{ id: 'ok', fieldType: 'text', question: 'OK' }],
+        },
+      ],
     });
 
     renderWithContexts(form, ui, <BuilderHeader />);

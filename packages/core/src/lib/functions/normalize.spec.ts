@@ -18,9 +18,7 @@ describe('normalizeDefinition', () => {
       { id: 'q2', fieldType: 'radio', question: 'Agree?' },
     ];
 
-    const result = normalizeDefinition([
-      { id: 'page-1', fields },
-    ]);
+    const result = normalizeDefinition([{ id: 'page-1', fields }]);
 
     expect(result.pages[0].fieldIds).toEqual(['q1', 'q2']);
     expect(Object.keys(result.byId)).toHaveLength(2);

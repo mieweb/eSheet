@@ -559,8 +559,7 @@ export function createFormStore(
         const targetPage =
           (options?.pageId
             ? normalized.pages.find((p) => p.id === options.pageId)
-            : undefined) ??
-          normalized.pages[0];
+            : undefined) ?? normalized.pages[0];
         if (!targetPage) return null; // no pages defined
         const fieldIds = insertAt(targetPage.fieldIds, id, options?.index);
         pages = pages.map((p) =>

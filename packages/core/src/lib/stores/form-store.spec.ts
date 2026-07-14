@@ -224,7 +224,9 @@ describe('createFormStore', () => {
 
       it('returns null for unknown field type', () => {
         store = createFormStore(form([]));
-        expect(store.getState().addField('nope' as Exclude<FieldType, 'pages'>)).toBeNull();
+        expect(
+          store.getState().addField('nope' as Exclude<FieldType, 'pages'>)
+        ).toBeNull();
       });
 
       it('returns null for nonexistent parent', () => {
