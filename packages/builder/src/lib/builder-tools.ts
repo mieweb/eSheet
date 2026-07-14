@@ -11,10 +11,7 @@ import type {
   FormDefinition,
   FormStore,
 } from '@esheet/core';
-import {
-  getFieldTypeMeta,
-  getRegisteredFieldTypes,
-} from '@esheet/core';
+import { getFieldTypeMeta, getRegisteredFieldTypes } from '@esheet/core';
 
 /** Summary of a single field, suitable for AI context. */
 export interface FieldSummary {
@@ -177,7 +174,8 @@ export function createBuilderTools(form: FormStore): BuilderTools {
         .join(', ');
       return `Form generated with ${fields.length} field(s): ${summary}`;
     },
-    addField: (fieldType, opts) => form.getState().addField(fieldType, opts),
+    addField: (fieldType, opts) =>
+      form.getState().addField(fieldType as Exclude<FieldType, 'pages'>, opts),
     updateField: (fieldId, patch) =>
       form.getState().updateField(fieldId, patch),
     removeField: (fieldId) => form.getState().removeField(fieldId),

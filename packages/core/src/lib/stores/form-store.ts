@@ -100,7 +100,10 @@ export interface FormState {
 
   // --- Builder Actions ---
   /** Add a new field. Returns the generated field ID, or `null` if the type is unknown. */
-  addField: (fieldType: Exclude<FieldType, 'pages'>, options?: AddFieldOptions) => string | null;
+  addField: (
+    fieldType: Exclude<FieldType, 'pages'>,
+    options?: AddFieldOptions
+  ) => string | null;
   /** Patch a field's definition. Returns `false` if not found or rename collided. */
   updateField: (fieldId: string, patch: Record<string, unknown>) => boolean;
   /** Remove a field (and its children if it is a section). */
@@ -388,9 +391,7 @@ export function createFormStore(
     formDescription: initial?.description,
     formSourceData: initial?._sourceData,
     dangerouslyAllowJS: (initial?.dangerouslyAllowJS ?? false) && _hostAllowsJS,
-    normalized: initial
-      ? normalizeDefinition(initial.pages)
-      : EMPTY_NORMALIZED,
+    normalized: initial ? normalizeDefinition(initial.pages) : EMPTY_NORMALIZED,
     responses: {},
     userEditedFields: new Set<string>(),
 
@@ -558,7 +559,8 @@ export function createFormStore(
         const targetPage =
           (options?.pageId
             ? normalized.pages.find((p) => p.id === options.pageId)
-            : undefined) ?? normalized.pages[0];
+            : undefined) ??
+          normalized.pages[0];
         if (!targetPage) return null; // no pages defined
         const fieldIds = insertAt(targetPage.fieldIds, id, options?.index);
         pages = pages.map((p) =>

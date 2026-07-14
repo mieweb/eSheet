@@ -285,4 +285,3 @@ In practical terms, this branch turns eSheet into a page-native form system:
 - the renderer navigates between pages
 - adapters preserve page structure through external formats
 - the public API now reflects pages as the top-level form concept
-

@@ -478,17 +478,12 @@ export const Canvas = React.memo(function Canvas({
     const page = normalized.pages[currentPagesIdx];
     if (!page) return [];
     if (mode !== 'preview' || !previewRenderableMap) return [...page.fieldIds];
-    return page.fieldIds.filter(
-      (id) => previewRenderableMap.get(id) === true
-    );
+    return page.fieldIds.filter((id) => previewRenderableMap.get(id) === true);
   }, [normalized.pages, currentPagesIdx, mode, previewRenderableMap]);
 
   // Build render tree to extract computed values from setValue effects
   const computedValuesMap = React.useMemo(() => {
-    const tree = renderer(
-      form.getState().hydrateDefinition(),
-      responses
-    );
+    const tree = renderer(form.getState().hydrateDefinition(), responses);
 
     const buildMap = (
       nodes: typeof tree
@@ -524,11 +519,7 @@ export const Canvas = React.memo(function Canvas({
   const renderNestedChildren = React.useCallback(
     (parentId: string, depth = 1): React.ReactNode => {
       const parent = normalized.byId[parentId];
-      if (
-        !parent ||
-        parent.definition.fieldType !== 'section'
-      )
-        return null;
+      if (!parent || parent.definition.fieldType !== 'section') return null;
 
       const childIds = getVisibleChildIds(parentId);
       if (mode === 'preview' && childIds.length === 0) return null;
@@ -625,7 +616,9 @@ export const Canvas = React.memo(function Canvas({
           </span>
           <div
             className="ms:flex ms:items-center ms:gap-1"
-            style={{ visibility: displayItems.length > 0 ? 'visible' : 'hidden' }}
+            style={{
+              visibility: displayItems.length > 0 ? 'visible' : 'hidden',
+            }}
           >
             <button
               type="button"
@@ -766,7 +759,9 @@ export const Canvas = React.memo(function Canvas({
                 parentId={activePagesId ?? undefined}
                 dragEnabled={dragEnabled}
                 previewGrid={showPreviewGrid}
-                isSelected={selectedFieldId === id && selectedFieldChildId === null}
+                isSelected={
+                  selectedFieldId === id && selectedFieldChildId === null
+                }
                 isActiveChild={false}
                 forceExpandVersion={
                   sectionExpandSignal?.sectionId === id

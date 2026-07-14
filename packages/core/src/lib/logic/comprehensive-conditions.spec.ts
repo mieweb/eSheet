@@ -16,6 +16,18 @@ import type { NormalizedDefinition } from '../functions/normalize.js';
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
+// Test helper
+// ---------------------------------------------------------------------------
+
+/**
+ * Wrap field definitions in a page entry for normalization.
+ * Normalization expects pages, not bare field arrays.
+ */
+function withPage(fields: FieldDefinition[]): NormalizedDefinition {
+  return normalizeDefinition([{ id: 'test-page', fields }]);
+}
+
+// ---------------------------------------------------------------------------
 // Shared driver field definitions (Section 1 of the schema)
 // ---------------------------------------------------------------------------
 
@@ -155,7 +167,7 @@ function setup(targetField: FieldDefinition): {
   field: FieldDefinition;
 } {
   const allFields = [...DRIVERS, targetField];
-  return { normalized: normalizeDefinition(allFields), field: targetField };
+  return { normalized: withPage(allFields), field: targetField };
 }
 
 function sel(id: string, value: string): { id: string; value: string } {
@@ -1246,7 +1258,7 @@ describe('comprehensive conditions integration', () => {
         fields: [{ id: 'inner-text', fieldType: 'text', question: 'Inner' }],
       };
       const allFields: FieldDefinition[] = [...DRIVERS, section];
-      const normalized = normalizeDefinition(allFields);
+      const normalized = withPage(allFields);
       expect(
         resolveEffect('visible', section, normalized, {
           'drv-radio': { selected: sel('drv-radio-c', 'charlie') },
@@ -1283,7 +1295,7 @@ describe('comprehensive conditions integration', () => {
         fields: [innerRadio, nestedField],
       };
       const allFields: FieldDefinition[] = [...DRIVERS, section];
-      const normalized = normalizeDefinition(allFields);
+      const normalized = withPage(allFields);
 
       // Nested field visible when inner radio = show
       expect(
@@ -1615,7 +1627,7 @@ describe('comprehensive conditions integration', () => {
           rules: [exprRule('visible', '{drv-slider} >= 3')],
         };
         const allFields = [...DRIVERS, f];
-        const normalized = normalizeDefinition(allFields);
+        const normalized = withPage(allFields);
 
         // Slider = 3 → visible
         expect(
@@ -1653,7 +1665,7 @@ describe('comprehensive conditions integration', () => {
         rules: [fieldRule('visible', 'drv-text', 'notEmpty')],
       };
       const { normalized } = setup(fEmpty);
-      const normalized2 = normalizeDefinition([...DRIVERS, fNotEmpty]);
+      const normalized2 = withPage([...DRIVERS, fNotEmpty]);
       expect(resolveEffect('visible', fEmpty, normalized, {})).toBe(true);
       expect(resolveEffect('visible', fNotEmpty, normalized2, {})).toBe(false);
     });
@@ -1759,7 +1771,7 @@ describe('comprehensive conditions integration', () => {
         question: 'T',
         rules: [fieldRule('visible', 'src', 'equals', 'hello')],
       };
-      const normalized = normalizeDefinition([driver, target]);
+      const normalized = withPage([driver, target]);
       const resp: FieldResponse = { answer: 'hello' };
       expect(resolveEffect('visible', target, normalized, { src: resp })).toBe(
         true
@@ -1784,7 +1796,7 @@ describe('comprehensive conditions integration', () => {
         question: 'T',
         rules: [fieldRule('visible', 'src', 'greaterThan', '50')],
       };
-      const normalized = normalizeDefinition([driver, target]);
+      const normalized = withPage([driver, target]);
       const resp: FieldResponse = { answer: '75' };
       expect(resolveEffect('visible', target, normalized, { src: resp })).toBe(
         true
@@ -1812,7 +1824,7 @@ describe('comprehensive conditions integration', () => {
         question: 'T',
         rules: [fieldRule('visible', 'src', 'equals', 'opt-a')],
       };
-      const normalized = normalizeDefinition([driver, target]);
+      const normalized = withPage([driver, target]);
       const resp: FieldResponse = { selected: { id: 'opt-a', value: 'A' } };
       expect(resolveEffect('visible', target, normalized, { src: resp })).toBe(
         true
@@ -1840,7 +1852,7 @@ describe('comprehensive conditions integration', () => {
         question: 'T',
         rules: [fieldRule('visible', 'src', 'equals', 'dd-2')],
       };
-      const normalized = normalizeDefinition([driver, target]);
+      const normalized = withPage([driver, target]);
       const resp: FieldResponse = { selected: { id: 'dd-2', value: 'two' } };
       expect(resolveEffect('visible', target, normalized, { src: resp })).toBe(
         true
@@ -1863,7 +1875,7 @@ describe('comprehensive conditions integration', () => {
         question: 'T',
         rules: [fieldRule('visible', 'src', 'equals', 'b-y')],
       };
-      const normalized = normalizeDefinition([driver, target]);
+      const normalized = withPage([driver, target]);
       const resp: FieldResponse = { selected: { id: 'b-y', value: 'yes' } };
       expect(resolveEffect('visible', target, normalized, { src: resp })).toBe(
         true
@@ -1886,7 +1898,7 @@ describe('comprehensive conditions integration', () => {
         question: 'T',
         rules: [fieldRule('visible', 'src', 'greaterThan', '3')],
       };
-      const normalized = normalizeDefinition([driver, target]);
+      const normalized = withPage([driver, target]);
       const resp: FieldResponse = { selected: { id: 's-4', value: '4' } };
       expect(resolveEffect('visible', target, normalized, { src: resp })).toBe(
         true
@@ -1914,7 +1926,7 @@ describe('comprehensive conditions integration', () => {
         question: 'T',
         rules: [fieldRule('visible', 'src', 'greaterThanOrEqual', '4')],
       };
-      const normalized = normalizeDefinition([driver, target]);
+      const normalized = withPage([driver, target]);
       const resp: FieldResponse = { selected: { id: 'r-4', value: '4' } };
       expect(resolveEffect('visible', target, normalized, { src: resp })).toBe(
         true
@@ -1943,7 +1955,7 @@ describe('comprehensive conditions integration', () => {
         question: 'T',
         rules: [fieldRule('visible', 'src', 'includes', 'c-2')],
       };
-      const normalized = normalizeDefinition([driver, target]);
+      const normalized = withPage([driver, target]);
       const resp: FieldResponse = {
         selected: [
           { id: 'c-1', value: 'A' },
@@ -1978,7 +1990,7 @@ describe('comprehensive conditions integration', () => {
         question: 'T',
         rules: [fieldRule('visible', 'src', 'includes', 'ms-g')],
       };
-      const normalized = normalizeDefinition([driver, target]);
+      const normalized = withPage([driver, target]);
       const resp: FieldResponse = {
         selected: [
           { id: 'ms-r', value: 'red' },
@@ -2006,7 +2018,7 @@ describe('comprehensive conditions integration', () => {
         question: 'T',
         rules: [fieldRule('visible', 'src', 'includes', 'rk-2')],
       };
-      const normalized = normalizeDefinition([driver, target]);
+      const normalized = withPage([driver, target]);
       const resp: FieldResponse = {
         selected: [
           { id: 'rk-1', value: 'first' },
@@ -2031,7 +2043,7 @@ describe('comprehensive conditions integration', () => {
         question: 'T',
         rules: [fieldRule('visible', 'src', 'empty')],
       };
-      const normalized = normalizeDefinition([driver, target]);
+      const normalized = withPage([driver, target]);
       const resp: FieldResponse = { selected: [] };
       expect(resolveEffect('visible', target, normalized, { src: resp })).toBe(
         true
@@ -2056,8 +2068,8 @@ describe('comprehensive conditions integration', () => {
         question: 'T',
         rules: [fieldRule('visible', 'src', 'notEmpty')],
       };
-      const normalized1 = normalizeDefinition([driver, targetEmpty]);
-      const normalized2 = normalizeDefinition([driver, targetNotEmpty]);
+      const normalized1 = withPage([driver, targetEmpty]);
+      const normalized2 = withPage([driver, targetNotEmpty]);
       const resp: FieldResponse | undefined = undefined;
       expect(
         resolveEffect('visible', targetEmpty, normalized1, {
@@ -2081,7 +2093,7 @@ describe('comprehensive conditions integration', () => {
         question: 'T',
         rules: [fieldRule('visible', 'src', 'contains', 'keyword')],
       };
-      const normalized = normalizeDefinition([driver, target]);
+      const normalized = withPage([driver, target]);
       const resp: FieldResponse = {
         answer: 'this paragraph has the keyword inside',
       };
@@ -2108,7 +2120,7 @@ describe('comprehensive conditions integration', () => {
         question: 'T',
         rules: [exprRule('visible', '{src} > 100')],
       };
-      const normalized = normalizeDefinition([driver, target]);
+      const normalized = withPage([driver, target]);
       const resp: FieldResponse = { answer: '150' };
       expect(resolveEffect('visible', target, normalized, { src: resp })).toBe(
         true
@@ -2136,7 +2148,7 @@ describe('comprehensive conditions integration', () => {
         question: 'T',
         rules: [exprRule('visible', '{src} >= 7')],
       };
-      const normalized = normalizeDefinition([driver, target]);
+      const normalized = withPage([driver, target]);
       const resp: FieldResponse = { selected: { id: 's-8', value: '8' } };
       expect(resolveEffect('visible', target, normalized, { src: resp })).toBe(
         true
@@ -2160,7 +2172,7 @@ describe('comprehensive conditions integration', () => {
         question: 'T',
         rules: [exprRule('visible', '{src}.length > 3')],
       };
-      const normalized = normalizeDefinition([driver, target]);
+      const normalized = withPage([driver, target]);
       const resp: FieldResponse = { answer: 'abcde' };
       expect(resolveEffect('visible', target, normalized, { src: resp })).toBe(
         true
@@ -2189,7 +2201,7 @@ describe('comprehensive conditions integration', () => {
         question: 'T',
         rules: [exprRule('visible', '{src}.length >= 2')],
       };
-      const normalized = normalizeDefinition([driver, target]);
+      const normalized = withPage([driver, target]);
       const resp: FieldResponse = {
         selected: [
           { id: 'a', value: 'A' },
@@ -2230,7 +2242,7 @@ describe('comprehensive conditions integration', () => {
         question: 'Target',
         rules: [fieldRule('visible', 'other-3', 'equals', 'other-1')],
       };
-      const normalized = normalizeDefinition([driver, target]);
+      const normalized = withPage([driver, target]);
       const respMatch: FieldResponse = { selected: sel('other-1', 'Alpha') };
       expect(
         resolveEffect('visible', target, normalized, { 'other-3': respMatch })
@@ -2292,7 +2304,7 @@ describe('comprehensive conditions integration', () => {
         question: 'Target',
         rules: [exprRule('visible', "{other-5} == 'custom text'")],
       };
-      const normalized = normalizeDefinition([driver, target]);
+      const normalized = withPage([driver, target]);
       const resp: FieldResponse = {
         selected: { id: 'other-5-other', value: 'custom text' },
       };
@@ -2352,7 +2364,7 @@ describe('comprehensive conditions integration', () => {
         question: 'Target',
         rules: [exprRule('visible', '{other-9} >= 2')],
       };
-      const normalized = normalizeDefinition([driver, target]);
+      const normalized = withPage([driver, target]);
       const resp: FieldResponse = {
         fileData: [
           { contentType: 'image/png', title: 'a.png' },
@@ -2372,3 +2384,4 @@ describe('comprehensive conditions integration', () => {
     });
   });
 });
+

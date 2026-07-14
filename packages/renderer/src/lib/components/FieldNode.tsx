@@ -43,11 +43,7 @@ export const FieldNode = React.memo(function FieldNode({
 
   // Get visible children for sections and pages
   const visibleChildIds = React.useMemo(() => {
-    if (
-      !field ||
-      field.definition.fieldType !== 'section'
-    )
-      return [];
+    if (!field || field.definition.fieldType !== 'section') return [];
 
     const node = normalized.byId[id];
     if (!node || node.childIds.length === 0) return [];

@@ -92,7 +92,7 @@ describe('EsheetRenderer', () => {
     const normalized = getRendererHandle(ref)
       .getFormStore()
       .getState().normalized;
-    expect(normalized.byId['page-1'].childIds).toContain('f1');
+    expect(normalized.pages[0].fieldIds).toContain('f1');
   });
 
   it('getUIStore() is in preview mode after mount', async () => {

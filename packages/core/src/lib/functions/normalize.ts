@@ -2,7 +2,11 @@
 // Normalization — tree → flat indexed map
 // ---------------------------------------------------------------------------
 
-import type { FieldDefinition, PageEntry, SectionFieldDefinition } from '../types.js';
+import type {
+  FieldDefinition,
+  PageEntry,
+  SectionFieldDefinition,
+} from '../types.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -55,7 +59,10 @@ export function normalizeDefinition(
 ): NormalizedDefinition {
   const byId: Record<string, FieldNode> = {};
 
-  function walk(defs: readonly FieldDefinition[], parentId: string | null): string[] {
+  function walk(
+    defs: readonly FieldDefinition[],
+    parentId: string | null
+  ): string[] {
     const ids: string[] = [];
     for (let i = 0; i < defs.length; i++) {
       const def = defs[i];
@@ -64,7 +71,12 @@ export function normalizeDefinition(
         def.fieldType === 'section' && Array.isArray(children)
           ? walk(children, def.id)
           : [];
-      byId[def.id] = { definition: rest as FieldDefinition, parentId, childIds, index: i };
+      byId[def.id] = {
+        definition: rest as FieldDefinition,
+        parentId,
+        childIds,
+        index: i,
+      };
       ids.push(def.id);
     }
     return ids;
@@ -95,12 +107,16 @@ export function normalizeDefinition(
  *
  * @param normalized - The flat indexed form produced by `normalizeDefinition`.
  */
-export function hydrateDefinition(normalized: NormalizedDefinition): PageEntry[] {
+export function hydrateDefinition(
+  normalized: NormalizedDefinition
+): PageEntry[] {
   function build(ids: readonly string[]): FieldDefinition[] {
     return ids.map((id) => {
       const node = normalized.byId[id];
       if (!node) return { id, fieldType: 'text' } as FieldDefinition;
-      const def = { ...node.definition } as FieldDefinition & { fields?: FieldDefinition[] };
+      const def = { ...node.definition } as FieldDefinition & {
+        fields?: FieldDefinition[];
+      };
       if (node.childIds.length > 0) {
         def.fields = build(node.childIds);
       }

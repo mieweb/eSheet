@@ -68,7 +68,7 @@ describe('createFormStore', () => {
       store = createFormStore();
       const s = store.getState();
       expect(s.normalized.byId).toEqual({});
-      expect(s.normalized.rootIds).toEqual([]);
+      expect(s.normalized.pages).toEqual([]);
       expect(s.responses).toEqual({});
     });
 
@@ -76,7 +76,7 @@ describe('createFormStore', () => {
       const def = form([field('q1'), field('q2')]);
       store = createFormStore(def);
       const s = store.getState();
-      expect(s.normalized.byId['page-1'].childIds).toEqual(['q1', 'q2']);
+      expect(s.normalized.pages[0].fieldIds).toEqual(['q1', 'q2']);
       expect(s.responses).toEqual({});
     });
   });
@@ -95,7 +95,7 @@ describe('createFormStore', () => {
         const newDef = form([field('a'), field('b'), field('c')]);
         store.getState().loadDefinition(newDef);
         const s = store.getState();
-        expect(s.normalized.byId['page-1'].childIds).toEqual(['a', 'b', 'c']);
+        expect(s.normalized.pages[0].fieldIds).toEqual(['a', 'b', 'c']);
       });
 
       it('clears responses on load', () => {
@@ -179,20 +179,20 @@ describe('createFormStore', () => {
     describe('addField', () => {
       it('adds a field at root level', () => {
         store = createFormStore(form([]));
-        const id = store.getState().addField('text', { parentId: 'page-1' });
+        const id = store.getState().addField('text', { pageId: 'page-1' });
         expect(id).toBeTruthy();
         const s = store.getState();
-        expect(s.normalized.byId['page-1'].childIds).toContain(id);
+        expect(s.normalized.pages[0].fieldIds).toContain(id);
         expect(s.normalized.byId[id!].definition.fieldType).toBe('text');
-        expect(s.normalized.byId[id!].parentId).toBe('page-1');
+        expect(s.normalized.byId[id!].parentId).toBeNull();
       });
 
       it('inserts at specific root index', () => {
         store = createFormStore(form([field('a'), field('b')]));
         const id = store
           .getState()
-          .addField('text', { parentId: 'page-1', index: 1 });
-        expect(store.getState().normalized.byId['page-1'].childIds).toEqual([
+          .addField('text', { pageId: 'page-1', index: 1 });
+        expect(store.getState().normalized.pages[0].fieldIds).toEqual([
           'a',
           id,
           'b',
@@ -206,7 +206,7 @@ describe('createFormStore', () => {
         const s = store.getState();
         expect(s.normalized.byId['s1'].childIds).toContain(id);
         expect(s.normalized.byId[id!].parentId).toBe('s1');
-        expect(s.normalized.rootIds).not.toContain(id);
+        expect(s.normalized.pages[0].fieldIds).not.toContain(id);
       });
 
       it('applies initial patch', () => {
@@ -224,7 +224,7 @@ describe('createFormStore', () => {
 
       it('returns null for unknown field type', () => {
         store = createFormStore(form([]));
-        expect(store.getState().addField('nope' as FieldType)).toBeNull();
+        expect(store.getState().addField('nope' as Exclude<FieldType, 'pages'>)).toBeNull();
       });
 
       it('returns null for nonexistent parent', () => {
@@ -329,8 +329,8 @@ describe('createFormStore', () => {
         const s = store.getState();
         expect(s.normalized.byId['q1']).toBeUndefined();
         expect(s.normalized.byId['q1-renamed']).toBeDefined();
-        expect(s.normalized.byId['page-1'].childIds).toContain('q1-renamed');
-        expect(s.normalized.byId['page-1'].childIds).not.toContain('q1');
+        expect(s.normalized.pages[0].fieldIds).toContain('q1-renamed');
+        expect(s.normalized.pages[0].fieldIds).not.toContain('q1');
       });
 
       it('rejects rename on collision', () => {
@@ -448,7 +448,7 @@ describe('createFormStore', () => {
         store = createFormStore(form([field('q1'), field('q2')]));
         expect(store.getState().removeField('q1')).toBe(true);
         const s = store.getState();
-        expect(s.normalized.byId['page-1'].childIds).toEqual(['q2']);
+        expect(s.normalized.pages[0].fieldIds).toEqual(['q2']);
         expect(s.normalized.byId['q1']).toBeUndefined();
       });
 
@@ -498,7 +498,7 @@ describe('createFormStore', () => {
       it('reorders within root', () => {
         store = createFormStore(form([field('a'), field('b'), field('c')]));
         store.getState().moveField('a', 2, 'page-1');
-        expect(store.getState().normalized.byId['page-1'].childIds).toEqual([
+        expect(store.getState().normalized.pages[0].fieldIds).toEqual([
           'b',
           'c',
           'a',
@@ -526,7 +526,7 @@ describe('createFormStore', () => {
         store = createFormStore(form([field('s1', 'section'), field('q1')]));
         store.getState().moveField('q1', 0, 's1');
         const s = store.getState();
-        expect(s.normalized.byId['page-1'].childIds).toEqual(['s1']);
+        expect(s.normalized.pages[0].fieldIds).toEqual(['s1']);
         expect(s.normalized.byId['s1'].childIds).toEqual(['q1']);
         expect(s.normalized.byId['q1'].parentId).toBe('s1');
       });
@@ -541,7 +541,7 @@ describe('createFormStore', () => {
         );
         store.getState().moveField('c1', 0, null);
         const s = store.getState();
-        expect(s.normalized.rootIds).toContain('c1');
+        expect(s.normalized.pages[0].fieldIds).toContain('c1');
         expect(s.normalized.byId['s1'].childIds).toEqual([]);
         expect(s.normalized.byId['c1'].parentId).toBeNull();
       });

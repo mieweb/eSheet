@@ -35,7 +35,9 @@ const INITIAL_DEF: FormDefinition = {
           id: 'q4',
           fieldType: 'richtext',
           question: 'Tell us more (rich text):',
-        } as unknown as NonNullable<FormDefinition['pages'][number]['fields']>[number],
+        } as unknown as NonNullable<
+          FormDefinition['pages'][number]['fields']
+        >[number],
       ],
     },
   ],
