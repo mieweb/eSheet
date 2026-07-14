@@ -132,13 +132,15 @@ export const TextField = React.memo(function TextField({
         />
       </div>
       {inputType === 'date' ? (
-        <DateInput
-          id={`${instanceId}-canvas-preview-${def.id}`}
-          aria-label="Answer preview"
-          value=""
-          disabled
-          showCalendar
-        />
+        <div className="ms:pointer-events-none ms:select-none">
+          <DateInput
+            id={`${instanceId}-canvas-preview-${def.id}`}
+            aria-label="Answer preview"
+            value=""
+            disabled
+            showCalendar
+          />
+        </div>
       ) : (
         <div className="ms:relative">
           <input
