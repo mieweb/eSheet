@@ -474,11 +474,14 @@ export const Canvas = React.memo(function Canvas({
 
   // Scroll active tab into view whenever the active page changes
   React.useEffect(() => {
-    activeTabRef.current?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'nearest',
-      inline: 'nearest',
-    });
+    const el = activeTabRef.current;
+    if (el && typeof el.scrollIntoView === 'function') {
+      el.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'nearest',
+      });
+    }
   }, [currentPagesIdx]);
 
   // When pages exist, the canvas IS the active page — show its children directly.
