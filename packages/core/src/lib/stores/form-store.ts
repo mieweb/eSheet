@@ -112,6 +112,12 @@ export interface FormState {
   addPage: (options?: { title?: string; index?: number }) => string;
   /** Remove a page and all its fields. Returns `false` if the page is not found or it is the last page (minimum 1 required). */
   removePage: (pageId: string) => boolean;
+  /** Move a page to a new index. Returns `false` if the page is not found. */
+  movePage: (pageId: string, toIndex: number) => boolean;
+  /** Update a page's title. Returns `false` if the page is not found. */
+  updatePageTitle: (pageId: string, title: string) => boolean;
+  /** Toggle auto-advance for a page. Returns `false` if the page is not found. */
+  setPageAutoAdvance: (pageId: string, autoAdvance: boolean) => boolean;
   /** Move a field to a new position/parent. `toParentId` defaults to current parent; pass `null` for root. */
   moveField: (
     fieldId: string,
@@ -723,6 +729,48 @@ export function createFormStore(
       }
       const pages = normalized.pages.filter((p) => p.id !== pageId);
       set({ normalized: { byId, pages } });
+      return true;
+    },
+
+    movePage: (pageId, toIndex) => {
+      const { normalized } = get();
+      const fromIndex = normalized.pages.findIndex((p) => p.id === pageId);
+      if (fromIndex === -1) return false;
+      const clamped = Math.max(
+        0,
+        Math.min(toIndex, normalized.pages.length - 1)
+      );
+      if (fromIndex === clamped) return true;
+      const pages = [...normalized.pages];
+      const [page] = pages.splice(fromIndex, 1);
+      pages.splice(clamped, 0, page);
+      set({ normalized: { ...normalized, pages } });
+      return true;
+    },
+
+    updatePageTitle: (pageId, title) => {
+      const { normalized } = get();
+      const idx = normalized.pages.findIndex((p) => p.id === pageId);
+      if (idx === -1) return false;
+      const pages = normalized.pages.map((p) =>
+        p.id === pageId ? { ...p, title: title || undefined } : p
+      );
+      set({ normalized: { ...normalized, pages } });
+      return true;
+    },
+
+    setPageAutoAdvance: (pageId, autoAdvance) => {
+      const { normalized } = get();
+      const idx = normalized.pages.findIndex((p) => p.id === pageId);
+      if (idx === -1) return false;
+      const pages = normalized.pages.map((p) =>
+        p.id === pageId
+          ? autoAdvance
+            ? { ...p, autoAdvance: true }
+            : (({ autoAdvance: _aa, ...rest }) => rest)(p)
+          : p
+      );
+      set({ normalized: { ...normalized, pages } });
       return true;
     },
 

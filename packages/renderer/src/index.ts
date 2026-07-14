@@ -12,10 +12,12 @@ export {
 
 // Render tree builder (for computing setValue values in builder)
 export {
-  renderer,
   buildRenderTree,
+  buildRenderTree as renderer,
+  applyComputedValues,
+  type RenderFieldNode,
   type RenderTreeOptions,
-} from './lib/renderer.js';
+} from '@esheet/core';
 
 // Core types (re-exported for consumer convenience)
 export type {
@@ -25,7 +27,12 @@ export type {
 } from '@esheet/core';
 
 // Components (for advanced use cases)
-export { RendererBody, FieldNode } from './lib/components/index.js';
+export {
+  RendererBody,
+  FieldNode,
+  PageNavigator,
+} from './lib/components/index.js';
+export type { PageNavigatorProps } from './lib/components/index.js';
 
 // Hooks (for advanced use cases)
 export { useRendererInit } from './lib/hooks/index.js';

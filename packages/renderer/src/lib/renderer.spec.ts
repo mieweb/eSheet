@@ -3,7 +3,7 @@ import {
   type FormResponse,
   type SectionFieldDefinition,
 } from '@esheet/core';
-import { renderer } from './renderer.js';
+import { buildRenderTree as renderer } from '@esheet/core';
 
 describe('renderer', () => {
   function baseDefinition(): FormDefinition {

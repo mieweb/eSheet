@@ -1,11 +1,11 @@
 import React from 'react';
 import type { FieldComponentProps, FormStore, UIStore } from '@esheet/core';
-import { renderer } from '@esheet/renderer';
+import { buildRenderTree } from '@esheet/core';
 import Sortable from 'sortablejs';
 import { useFormApi } from '../hooks/useFormApi.js';
 import { useUiApi } from '../hooks/useUiApi.js';
 import { FieldWrapper } from './FieldWrapper.js';
-import { getFieldComponent } from '@esheet/fields';
+import { getFieldComponent, PageNavigator } from '@esheet/fields';
 import { ViewBigIcon, ViewSmallIcon } from '../icons.js';
 
 // ---------------------------------------------------------------------------
@@ -212,6 +212,12 @@ export const Canvas = React.memo(function Canvas({
   >(undefined);
   const [allExpanded, setAllExpanded] = React.useState(false);
   const [currentPagesIdx, setCurrentPagesIdx] = React.useState(0);
+  const [editingPageId, setEditingPageId] = React.useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = React.useState('');
+  const [dragPageIdx, setDragPageIdx] = React.useState<number | null>(null);
+  const [dragOverPageIdx, setDragOverPageIdx] = React.useState<number | null>(
+    null
+  );
   const normalizedRef = React.useRef(normalized);
 
   React.useEffect(() => {
@@ -483,7 +489,10 @@ export const Canvas = React.memo(function Canvas({
 
   // Build render tree to extract computed values from setValue effects
   const computedValuesMap = React.useMemo(() => {
-    const tree = renderer(form.getState().hydrateDefinition(), responses);
+    const tree = buildRenderTree(
+      form.getState().hydrateDefinition(),
+      responses
+    );
 
     const buildMap = (
       nodes: typeof tree
@@ -644,7 +653,7 @@ export const Canvas = React.memo(function Canvas({
           </div>
         </div>
       )}
-      {(hasPages && mode === 'build') || isMultiPage ? (
+      {hasPages && mode === 'build' ? (
         <div className="pages-nav ms:flex ms:items-center ms:justify-between ms:gap-2 ms:px-4 ms:py-2 ms:border-b ms:border-msborder ms:bg-mssurface ms:flex-wrap">
           <div className="ms:flex ms:items-center ms:gap-1 ms:flex-wrap">
             {isMultiPage && (
@@ -658,25 +667,110 @@ export const Canvas = React.memo(function Canvas({
                 ‹
               </button>
             )}
-            {pageLabels.map((label, i) => (
-              <button
-                key={pagesIds[i]}
-                type="button"
-                aria-label={`Go to ${label}`}
-                aria-current={i === currentPagesIdx ? 'page' : undefined}
-                onClick={() => {
-                  setCurrentPagesIdx(i);
-                  ui.getState().selectField(null);
-                }}
-                className={`ms:inline-flex ms:items-center ms:justify-center ms:min-w-[2rem] ms:h-7 ms:px-2 ms:rounded ms:border ms:text-xs ms:font-medium ms:transition-colors ms:outline-none ms:cursor-pointer ms:shrink-0 ${
-                  i === currentPagesIdx
-                    ? 'ms:border-msprimary ms:bg-msprimary/10 ms:text-msprimary'
-                    : 'ms:border-msborder ms:bg-mssurface ms:text-mstext ms:hover:bg-msbackgroundhover ms:hover:border-msprimary/40'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
+            {pageLabels.map((label, i) => {
+              const pageId = pagesIds[i];
+              const isActive = i === currentPagesIdx;
+              const isDragOver = dragOverPageIdx === i && dragPageIdx !== i;
+              const isEditing = editingPageId === pageId;
+
+              return (
+                <div
+                  key={pageId}
+                  draggable={mode === 'build'}
+                  onDragStart={() => {
+                    setDragPageIdx(i);
+                    setDragOverPageIdx(null);
+                  }}
+                  onDragOver={(e) => {
+                    if (dragPageIdx === null || dragPageIdx === i) return;
+                    e.preventDefault();
+                    setDragOverPageIdx(i);
+                  }}
+                  onDragLeave={() => {
+                    setDragOverPageIdx((prev) => (prev === i ? null : prev));
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (dragPageIdx !== null && dragPageIdx !== i) {
+                      form.getState().movePage(pagesIds[dragPageIdx], i);
+                      setCurrentPagesIdx(i);
+                    }
+                    setDragPageIdx(null);
+                    setDragOverPageIdx(null);
+                  }}
+                  onDragEnd={() => {
+                    setDragPageIdx(null);
+                    setDragOverPageIdx(null);
+                  }}
+                  className={`ms:inline-flex ms:items-center ms:h-7 ms:rounded ms:border ms:text-xs ms:font-medium ms:transition-colors ms:shrink-0 ${
+                    isDragOver
+                      ? 'ms:border-msprimary ms:bg-msprimary/20 ms:text-msprimary'
+                      : isActive
+                      ? 'ms:border-msprimary ms:bg-msprimary/10 ms:text-msprimary'
+                      : 'ms:border-msborder ms:bg-mssurface ms:text-mstext'
+                  } ${mode === 'build' ? 'ms:cursor-grab' : ''}`}
+                >
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editingTitle}
+                      autoFocus
+                      aria-label={`Rename page ${i + 1}`}
+                      className="ms:h-full ms:min-w-[4rem] ms:max-w-[120px] ms:px-2 ms:bg-transparent ms:outline-none ms:text-xs ms:font-medium ms:text-msprimary"
+                      onChange={(e) => setEditingTitle(e.currentTarget.value)}
+                      onBlur={() => {
+                        form
+                          .getState()
+                          .updatePageTitle(pageId, editingTitle.trim());
+                        setEditingPageId(null);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') e.currentTarget.blur();
+                        if (e.key === 'Escape') {
+                          setEditingPageId(null);
+                        }
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        aria-label={`Go to ${label}`}
+                        aria-current={isActive ? 'page' : undefined}
+                        onClick={() => {
+                          setCurrentPagesIdx(i);
+                          ui.getState().selectField(null);
+                        }}
+                        onDoubleClick={() => {
+                          if (mode !== 'build') return;
+                          setEditingPageId(pageId);
+                          setEditingTitle(normalized.pages[i]?.title ?? '');
+                        }}
+                        className="ms:h-full ms:px-2 ms:outline-none ms:cursor-pointer ms:bg-transparent ms:min-w-[2rem]"
+                      >
+                        {label}
+                      </button>
+                      {mode === 'build' && isActive && (
+                        <button
+                          type="button"
+                          aria-label={`Edit title of ${label}`}
+                          title="Edit page title"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingPageId(pageId);
+                            setEditingTitle(normalized.pages[i]?.title ?? '');
+                          }}
+                          className="ms:inline-flex ms:items-center ms:justify-center ms:w-5 ms:h-5 ms:mr-1 ms:rounded ms:text-msprimary/60 ms:hover:text-msprimary ms:hover:bg-msprimary/10 ms:transition-colors ms:outline-none ms:cursor-pointer ms:bg-transparent ms:shrink-0"
+                        >
+                          ✎
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+              );
+            })}
             {isMultiPage && (
               <button
                 type="button"
@@ -726,56 +820,74 @@ export const Canvas = React.memo(function Canvas({
           )}
         </div>
       ) : null}
-      {items.length === 0 ? (
-        <div className="canvas-empty ms:flex ms:flex-1 ms:items-center ms:justify-center ms:min-h-[200px] ms:text-mstextmuted ms:text-sm">
-          No fields yet. Add a field from the Tool Panel to get started.
-        </div>
-      ) : (
-        <div
-          ref={canvasRef}
-          className={`canvas-fields ${
-            showPreviewGrid ? PREVIEW_GRID_CLASS : 'ms:space-y-0'
-          } ms:flex-1 ms:min-h-0 ms:overflow-y-auto ms:px-4 ms:pt-3 ms:pb-4`}
-          style={showPreviewGrid ? PREVIEW_GRID_STYLE : undefined}
-          data-sortable-list={dragEnabled ? 'true' : undefined}
-          data-parent-id={activePagesId ?? ''}
-        >
-          {displayItems.length === 0 && hasPages && mode !== 'preview' ? (
-            <div className="section-empty-placeholder ms:flex ms:flex-col ms:items-center ms:justify-center ms:p-8 ms:text-center ms:pointer-events-none ms:select-none ms:rounded-lg ms:border-2 ms:border-dashed ms:border-msprimary/30 ms:bg-gradient-to-br ms:from-msbackground ms:to-msbackgroundsecondary">
-              <p className="ms:text-sm ms:font-semibold ms:text-mstext ms:mb-2">
-                No fields on this page
-              </p>
-              <p className="ms:text-xs ms:text-mstextmuted ms:leading-relaxed">
-                Use the Tool Panel on the left to add fields.
-              </p>
+      {(() => {
+        const fieldsContent =
+          items.length === 0 ? (
+            <div className="canvas-empty ms:flex ms:flex-1 ms:items-center ms:justify-center ms:min-h-[200px] ms:text-mstextmuted ms:text-sm">
+              No fields yet. Add a field from the Tool Panel to get started.
             </div>
           ) : (
-            displayItems.map((id) => (
-              <DraggableFieldItem
-                key={id}
-                id={id}
-                form={form}
-                ui={ui}
-                parentId={activePagesId ?? undefined}
-                dragEnabled={dragEnabled}
-                previewGrid={showPreviewGrid}
-                isSelected={
-                  selectedFieldId === id && selectedFieldChildId === null
-                }
-                isActiveChild={false}
-                forceExpandVersion={
-                  sectionExpandSignal?.sectionId === id
-                    ? sectionExpandSignal.version
-                    : expandAllVersion
-                }
-                forceCollapseVersion={collapseAllVersion}
-                nestedChildren={renderNestedChildren(id)}
-                computedValue={computedValuesMap.get(id)}
-              />
-            ))
-          )}
-        </div>
-      )}
+            <div
+              ref={canvasRef}
+              className={`canvas-fields ${
+                showPreviewGrid ? PREVIEW_GRID_CLASS : 'ms:space-y-0'
+              } ms:flex-1 ms:min-h-0 ms:overflow-y-auto ms:px-4 ms:pt-3 ms:pb-4`}
+              style={showPreviewGrid ? PREVIEW_GRID_STYLE : undefined}
+              data-sortable-list={dragEnabled ? 'true' : undefined}
+              data-parent-id={activePagesId ?? ''}
+            >
+              {displayItems.length === 0 && hasPages && mode !== 'preview' ? (
+                <div className="section-empty-placeholder ms:flex ms:flex-col ms:items-center ms:justify-center ms:p-8 ms:text-center ms:pointer-events-none ms:select-none ms:rounded-lg ms:border-2 ms:border-dashed ms:border-msprimary/30 ms:bg-gradient-to-br ms:from-msbackground ms:to-msbackgroundsecondary">
+                  <p className="ms:text-sm ms:font-semibold ms:text-mstext ms:mb-2">
+                    No fields on this page
+                  </p>
+                  <p className="ms:text-xs ms:text-mstextmuted ms:leading-relaxed">
+                    Use the Tool Panel on the left to add fields.
+                  </p>
+                </div>
+              ) : (
+                displayItems.map((id) => (
+                  <DraggableFieldItem
+                    key={id}
+                    id={id}
+                    form={form}
+                    ui={ui}
+                    parentId={activePagesId ?? undefined}
+                    dragEnabled={dragEnabled}
+                    previewGrid={showPreviewGrid}
+                    isSelected={
+                      selectedFieldId === id && selectedFieldChildId === null
+                    }
+                    isActiveChild={false}
+                    forceExpandVersion={
+                      sectionExpandSignal?.sectionId === id
+                        ? sectionExpandSignal.version
+                        : expandAllVersion
+                    }
+                    forceCollapseVersion={collapseAllVersion}
+                    nestedChildren={renderNestedChildren(id)}
+                    computedValue={computedValuesMap.get(id)}
+                  />
+                ))
+              )}
+            </div>
+          );
+
+        if (mode === 'preview' && isMultiPage) {
+          return (
+            <PageNavigator
+              currentIdx={currentPagesIdx}
+              total={pagesIds.length}
+              onPrev={handlePrevPage}
+              onNext={handleNextPage}
+            >
+              {fieldsContent}
+            </PageNavigator>
+          );
+        }
+
+        return fieldsContent;
+      })()}
     </div>
   );
 });

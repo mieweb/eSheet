@@ -1,12 +1,11 @@
-import {
-  normalizeDefinition,
-  resolveEffect,
-  resolveSetValue,
-  type FieldDefinition,
-  type FormDefinition,
-  type FormResponse,
-  type FieldResponse,
-} from '@esheet/core';
+import { normalizeDefinition } from './normalize.js';
+import { resolveEffect, resolveSetValue } from '../logic/resolve.js';
+import type {
+  FieldDefinition,
+  FormDefinition,
+  FieldResponseMap,
+  FieldResponse,
+} from '../types.js';
 
 export interface RenderTreeOptions {
   /** Include fields that resolve to invisible (default: false). */
@@ -37,19 +36,21 @@ export interface RenderFieldNode {
 }
 
 /**
- * Build a render tree from form definition + responses.
+ * Build a render tree from a form definition + responses.
+ *
+ * Pure function — no React, no UI. Evaluates conditional visibility,
+ * enabled, required, and setValue effects for every field and returns
+ * a flat-to-nested tree of `RenderFieldNode` objects.
  *
  * Sections are represented as nodes with nested `children`.
- * Computed values from setValue effects are included in computedValue field.
  */
-export function renderer(
+export function buildRenderTree(
   definition: FormDefinition,
-  responses: FormResponse = {},
+  responses: FieldResponseMap = {},
   options: RenderTreeOptions = {}
 ): RenderFieldNode[] {
   const normalized = normalizeDefinition(definition.pages);
   const includeHidden = options.includeHidden === true;
-  // Both the host option AND the schema flag must be true.
   const dangerouslyAllowJS =
     options.allowDangerousJS === true && definition.dangerouslyAllowJS === true;
 
@@ -105,28 +106,20 @@ export function renderer(
   return normalized.pages.flatMap((page) => build(page.fieldIds));
 }
 
-/** Alias for readability in consumers that prefer explicit naming. */
-export const buildRenderTree = renderer;
-
 /**
- * Apply computed values from a render tree to a responses object.
+ * Apply computed values from a render tree back into a responses map.
  *
- * Iterates through the render tree and merges any computed values
- * (from setValue effects) into the responses map. Wraps string/number
- * values as FieldResponse answer objects.
- *
- * @param tree - Render tree with computed values.
- * @param responses - Base responses object to merge into (is modified in-place).
- * @returns Updated responses object.
+ * Iterates the tree and merges any `computedValue` entries (from setValue
+ * effects) into the provided responses object. Modifies in place and returns
+ * it for convenience.
  */
 export function applyComputedValues(
   tree: RenderFieldNode[],
-  responses: FormResponse = {}
-): FormResponse {
+  responses: FieldResponseMap = {}
+): FieldResponseMap {
   const walk = (nodes: RenderFieldNode[]) => {
     for (const node of nodes) {
       if (node.computedValue !== undefined && node.computedValue !== null) {
-        // Wrap computed value in FieldResponse answer property
         const fieldResponse: FieldResponse = {
           answer: String(node.computedValue),
         };
@@ -135,7 +128,6 @@ export function applyComputedValues(
       walk(node.children);
     }
   };
-
   walk(tree);
   return responses;
 }

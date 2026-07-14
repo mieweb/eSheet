@@ -146,3 +146,10 @@ export {
 } from './lib/stores/ui-store.js';
 
 export { type FieldComponentProps } from './lib/field-component-props.js';
+
+export {
+  buildRenderTree,
+  applyComputedValues,
+  type RenderFieldNode,
+  type RenderTreeOptions,
+} from './lib/functions/render-tree.js';
