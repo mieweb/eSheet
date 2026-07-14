@@ -4,7 +4,7 @@ import type {
   TextFieldDefinition,
   LongtextFieldDefinition,
 } from '@esheet/core';
-import { Input } from '@mieweb/ui';
+import { Input, DateInput } from '@mieweb/ui';
 
 function formatPhoneNumber(value: string): string {
   if (!value) return value;
@@ -67,6 +67,23 @@ export const TextField = React.memo(function TextField({
   }, [computedValue]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (isPreview) {
+    if (inputType === 'date') {
+      return (
+        <div className="text-field-preview">
+          <DateInput
+            id={`${instanceId}-text-answer-${def.id}`}
+            label={def.question || 'Question'}
+            required={isRequired || isSoftRequired}
+            disabled={!isEnabled}
+            aria-required={isRequired || undefined}
+            value={response?.answer || ''}
+            onChange={(val) => onResponse({ answer: val })}
+            showCalendar
+          />
+        </div>
+      );
+    }
+
     return (
       <div className="text-field-preview ms:relative">
         <Input
@@ -114,24 +131,34 @@ export const TextField = React.memo(function TextField({
           className="ms:px-3 ms:py-2 ms:h-10 ms:w-full ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:rounded-lg ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary/30 ms:outline-none ms:transition-colors"
         />
       </div>
-      <div className="ms:relative">
-        <input
+      {inputType === 'date' ? (
+        <DateInput
           id={`${instanceId}-canvas-preview-${def.id}`}
           aria-label="Answer preview"
-          type={inputType}
           value=""
-          placeholder={placeholder}
-          className={`ms:px-4 ms:py-2 ms:w-full ms:border ms:border-msborder ms:shadow-sm ms:rounded-lg ms:bg-msbackground ms:text-mstextmuted ${
-            unit ? 'ms:pr-16' : ''
-          }`}
           disabled
+          showCalendar
         />
-        {unit && (
-          <span className="ms:absolute ms:right-3 ms:top-1/2 ms:-translate-y-1/2 ms:text-sm ms:text-mstextmuted">
-            {unit}
-          </span>
-        )}
-      </div>
+      ) : (
+        <div className="ms:relative">
+          <input
+            id={`${instanceId}-canvas-preview-${def.id}`}
+            aria-label="Answer preview"
+            type={inputType}
+            value=""
+            placeholder={placeholder}
+            className={`ms:px-4 ms:py-2 ms:w-full ms:border ms:border-msborder ms:shadow-sm ms:rounded-lg ms:bg-msbackground ms:text-mstextmuted ${
+              unit ? 'ms:pr-16' : ''
+            }`}
+            disabled
+          />
+          {unit && (
+            <span className="ms:absolute ms:right-3 ms:top-1/2 ms:-translate-y-1/2 ms:text-sm ms:text-mstextmuted">
+              {unit}
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 });
