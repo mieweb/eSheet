@@ -4,9 +4,6 @@
   "include": ["../../types/**/*.d.ts"],
   "references": [
     {
-      "path": "../renderer"
-    },
-    {
       "path": "../fields"
     },
     {

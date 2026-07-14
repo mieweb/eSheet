@@ -210,9 +210,11 @@ export const Canvas = React.memo(function Canvas({
   const [collapseAllVersion, setCollapseAllVersion] = React.useState<
     number | undefined
   >(undefined);
-  const [allExpanded, setAllExpanded] = React.useState(false);
+  const [allExpanded, setAllExpanded] = React.useState(true);
   const [currentPagesIdx, setCurrentPagesIdx] = React.useState(0);
   const [editingPageId, setEditingPageId] = React.useState<string | null>(null);
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+  const activeTabRef = React.useRef<HTMLDivElement>(null);
   const [editingTitle, setEditingTitle] = React.useState('');
   const [dragPageIdx, setDragPageIdx] = React.useState<number | null>(null);
   const [dragOverPageIdx, setDragOverPageIdx] = React.useState<number | null>(
@@ -456,7 +458,7 @@ export const Canvas = React.memo(function Canvas({
     () =>
       pagesIds.map((id, i) => {
         const page = normalized.pages.find((p) => p.id === id);
-        return page?.title || `Page ${i + 1}`;
+        return page?.title || `Sheet ${i + 1}`;
       }),
     [pagesIds, normalized.pages]
   );
@@ -469,6 +471,15 @@ export const Canvas = React.memo(function Canvas({
     () => setCurrentPagesIdx((p) => Math.min(p + 1, pagesIds.length - 1)),
     [pagesIds.length]
   );
+
+  // Scroll active tab into view whenever the active page changes
+  React.useEffect(() => {
+    activeTabRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+      inline: 'nearest',
+    });
+  }, [currentPagesIdx]);
 
   // When pages exist, the canvas IS the active page — show its children directly.
   const hasPages = pagesIds.length > 0;
@@ -619,20 +630,212 @@ export const Canvas = React.memo(function Canvas({
   return (
     <div className="ms:flex ms:flex-col ms:flex-1 ms:min-h-0">
       {mode === 'build' && (
-        <div className="ms:bg-mssurface ms:border-b ms:border-msborder ms:px-4 ms:py-4 ms:flex ms:items-center ms:justify-between ms:gap-2">
-          <span className="ms:text-sm ms:font-semibold ms:text-mstext ms:select-none">
-            Fields
+        <div className="ms:bg-mssurface ms:border-b ms:border-msborder ms:px-4 ms:py-[0.88rem] ms:flex ms:items-center ms:gap-2 ">
+          <span className="ms:text-sm ms:font-semibold ms:text-mstext ms:select-none ms:shrink-0">
+            Sheets
           </span>
-          <div
-            className="ms:flex ms:items-center ms:gap-1"
-            style={{
-              visibility: displayItems.length > 0 ? 'visible' : 'hidden',
-            }}
-          >
+          {hasPages && (
+            <>
+              <div className="ms:w-px ms:h-4 ms:bg-msborder ms:shrink-0" />
+              {isMultiPage && (
+                <button
+                  type="button"
+                  aria-label="Previous sheet"
+                  disabled={currentPagesIdx === 0}
+                  onClick={handlePrevPage}
+                  className="ms:inline-flex ms:items-center ms:justify-center ms:h-7 ms:w-7 ms:rounded ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:transition-colors ms:hover:bg-msbackgroundhover ms:disabled:opacity-40 ms:disabled:cursor-not-allowed ms:outline-none ms:cursor-pointer ms:shrink-0 ms:text-base ms:leading-none"
+                >
+                  ‹
+                </button>
+              )}
+              <div className="ms:flex-1 ms:min-w-0 ms:overflow-hidden">
+                <div
+                  ref={scrollContainerRef}
+                  className="ms:flex ms:items-center ms:gap-1 ms:flex-nowrap ms:overflow-x-auto ms:h-7"
+                  style={
+                    {
+                      scrollbarWidth: 'none',
+                      msOverflowStyle: 'none',
+                    } as React.CSSProperties
+                  }
+                  onWheel={(e) => {
+                    const el = scrollContainerRef.current;
+                    if (!el) return;
+                    e.preventDefault();
+                    el.scrollLeft += e.deltaY || e.deltaX;
+                  }}
+                >
+                  {pageLabels.map((label, i) => {
+                    const pageId = pagesIds[i];
+                    const isActive = i === currentPagesIdx;
+                    const isDragOver =
+                      dragOverPageIdx === i && dragPageIdx !== i;
+                    const isEditing = editingPageId === pageId;
+
+                    return (
+                      <div
+                        ref={isActive ? activeTabRef : undefined}
+                        key={pageId}
+                        draggable={mode === 'build'}
+                        onDragStart={() => {
+                          setDragPageIdx(i);
+                          setDragOverPageIdx(null);
+                        }}
+                        onDragOver={(e) => {
+                          if (dragPageIdx === null || dragPageIdx === i) return;
+                          e.preventDefault();
+                          setDragOverPageIdx(i);
+                        }}
+                        onDragLeave={() => {
+                          setDragOverPageIdx((prev) =>
+                            prev === i ? null : prev
+                          );
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          if (dragPageIdx !== null && dragPageIdx !== i) {
+                            form.getState().movePage(pagesIds[dragPageIdx], i);
+                            setCurrentPagesIdx(i);
+                          }
+                          setDragPageIdx(null);
+                          setDragOverPageIdx(null);
+                        }}
+                        onDragEnd={() => {
+                          setDragPageIdx(null);
+                          setDragOverPageIdx(null);
+                        }}
+                        className={`ms:inline-flex ms:items-center ms:h-7 ms:rounded ms:border ms:text-xs ms:font-medium ms:transition-colors ms:shrink-0 ${
+                          isDragOver
+                            ? 'ms:border-msprimary ms:bg-msprimary/20 ms:text-msprimary'
+                            : isActive
+                            ? 'ms:border-msprimary ms:bg-msprimary/10 ms:text-msprimary'
+                            : 'ms:border-msborder ms:bg-mssurface ms:text-mstext'
+                        } ${mode === 'build' ? 'ms:cursor-grab' : ''}`}
+                      >
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={editingTitle}
+                            autoFocus
+                            aria-label={`Rename sheet ${i + 1}`}
+                            className="ms:h-full ms:min-w-[4rem] ms:max-w-[120px] ms:px-2 ms:bg-transparent ms:outline-none ms:text-xs ms:font-medium ms:text-msprimary"
+                            onChange={(e) =>
+                              setEditingTitle(e.currentTarget.value)
+                            }
+                            onBlur={() => {
+                              form
+                                .getState()
+                                .updatePageTitle(pageId, editingTitle.trim());
+                              setEditingPageId(null);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') e.currentTarget.blur();
+                              if (e.key === 'Escape') {
+                                setEditingPageId(null);
+                              }
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              aria-label={`Go to ${label}`}
+                              aria-current={isActive ? 'page' : undefined}
+                              onClick={() => {
+                                setCurrentPagesIdx(i);
+                                ui.getState().selectField(null);
+                              }}
+                              onDoubleClick={() => {
+                                if (mode !== 'build') return;
+                                setEditingPageId(pageId);
+                                setEditingTitle(
+                                  normalized.pages[i]?.title ?? ''
+                                );
+                              }}
+                              className="ms:h-full ms:px-2 ms:outline-none ms:cursor-pointer ms:bg-transparent ms:min-w-[2rem]"
+                            >
+                              {label}
+                            </button>
+                            {mode === 'build' && isActive && (
+                              <button
+                                type="button"
+                                aria-label={`Edit title of ${label}`}
+                                title="Edit sheet title"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingPageId(pageId);
+                                  setEditingTitle(
+                                    normalized.pages[i]?.title ?? ''
+                                  );
+                                }}
+                                className="ms:inline-flex ms:items-center ms:justify-center ms:w-5 ms:h-5 ms:mr-1 ms:rounded ms:text-msprimary/60 ms:hover:text-msprimary ms:hover:bg-msprimary/10 ms:transition-colors ms:outline-none ms:cursor-pointer ms:bg-transparent ms:shrink-0"
+                              >
+                                ✎
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              {isMultiPage && (
+                <button
+                  type="button"
+                  aria-label="Next sheet"
+                  disabled={currentPagesIdx === pagesIds.length - 1}
+                  onClick={handleNextPage}
+                  className="ms:inline-flex ms:items-center ms:justify-center ms:h-7 ms:w-7 ms:rounded ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:transition-colors ms:hover:bg-msbackgroundhover ms:disabled:opacity-40 ms:disabled:cursor-not-allowed ms:outline-none ms:cursor-pointer ms:shrink-0 ms:text-base ms:leading-none"
+                >
+                  ›
+                </button>
+              )}
+            </>
+          )}
+          <div className="ms:ml-auto ms:flex ms:items-center ms:gap-1 ms:shrink-0">
+            {hasPages && (
+              <>
+                <button
+                  type="button"
+                  aria-label="Add sheet"
+                  onClick={() => {
+                    const newId = form.getState().addPage();
+                    setCurrentPagesIdx(pagesIds.length);
+                    ui.getState().selectField(null);
+                    void newId;
+                  }}
+                  className="ms:inline-flex ms:items-center ms:justify-center ms:h-7 ms:px-2 ms:rounded ms:border ms:border-msprimary/50 ms:bg-mssurface ms:text-msprimary ms:text-xs ms:transition-colors ms:hover:bg-msprimary/10 ms:outline-none ms:cursor-pointer ms:shrink-0"
+                >
+                  + Sheet
+                </button>
+                <button
+                  type="button"
+                  aria-label="Delete current sheet"
+                  disabled={pagesIds.length <= 1}
+                  onClick={() => {
+                    const nextIdx = Math.max(currentPagesIdx - 1, 0);
+                    if (!activePagesId) return;
+                    form.getState().removePage(activePagesId);
+                    setCurrentPagesIdx(nextIdx);
+                    ui.getState().selectField(null);
+                  }}
+                  className="ms:inline-flex ms:items-center ms:justify-center ms:h-7 ms:px-2 ms:rounded ms:border ms:border-msdanger/50 ms:bg-mssurface ms:text-msdanger ms:text-xs ms:transition-colors ms:hover:bg-msdanger/10 ms:outline-none ms:cursor-pointer ms:shrink-0 ms:disabled:opacity-40 ms:disabled:cursor-not-allowed"
+                >
+                  Delete sheet
+                </button>
+                <span className="ms:inline-flex ms:items-center ms:h-7 ms:text-xs ms:text-mstextmuted ms:shrink-0">
+                  {currentPagesIdx + 1} / {pagesIds.length}
+                </span>
+                <div className="ms:w-px ms:h-4 ms:bg-msborder ms:shrink-0" />
+              </>
+            )}
             <button
               type="button"
               title={allExpanded ? 'Collapse all' : 'Expand all'}
-              className="ms:flex ms:items-center ms:gap-1 ms:px-2 ms:py-1 ms:text-xs ms:text-mstextmuted ms:hover:text-mstext ms:rounded ms:hover:bg-msbackgroundhover ms:transition-colors"
+              disabled={displayItems.length === 0}
+              className="ms:flex ms:items-center ms:gap-1 ms:px-2 ms:py-1 ms:text-xs ms:text-mstextmuted ms:hover:text-mstext ms:rounded ms:hover:bg-msbackgroundhover ms:transition-colors ms:disabled:opacity-40 ms:disabled:cursor-not-allowed"
               onClick={(e) => {
                 e.stopPropagation();
                 if (allExpanded) {
@@ -653,173 +856,6 @@ export const Canvas = React.memo(function Canvas({
           </div>
         </div>
       )}
-      {hasPages && mode === 'build' ? (
-        <div className="pages-nav ms:flex ms:items-center ms:justify-between ms:gap-2 ms:px-4 ms:py-2 ms:border-b ms:border-msborder ms:bg-mssurface ms:flex-wrap">
-          <div className="ms:flex ms:items-center ms:gap-1 ms:flex-wrap">
-            {isMultiPage && (
-              <button
-                type="button"
-                aria-label="Previous page"
-                disabled={currentPagesIdx === 0}
-                onClick={handlePrevPage}
-                className="ms:inline-flex ms:items-center ms:justify-center ms:h-7 ms:w-7 ms:rounded ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:transition-colors ms:hover:bg-msbackgroundhover ms:disabled:opacity-40 ms:disabled:cursor-not-allowed ms:outline-none ms:cursor-pointer ms:shrink-0 ms:text-base ms:leading-none"
-              >
-                ‹
-              </button>
-            )}
-            {pageLabels.map((label, i) => {
-              const pageId = pagesIds[i];
-              const isActive = i === currentPagesIdx;
-              const isDragOver = dragOverPageIdx === i && dragPageIdx !== i;
-              const isEditing = editingPageId === pageId;
-
-              return (
-                <div
-                  key={pageId}
-                  draggable={mode === 'build'}
-                  onDragStart={() => {
-                    setDragPageIdx(i);
-                    setDragOverPageIdx(null);
-                  }}
-                  onDragOver={(e) => {
-                    if (dragPageIdx === null || dragPageIdx === i) return;
-                    e.preventDefault();
-                    setDragOverPageIdx(i);
-                  }}
-                  onDragLeave={() => {
-                    setDragOverPageIdx((prev) => (prev === i ? null : prev));
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    if (dragPageIdx !== null && dragPageIdx !== i) {
-                      form.getState().movePage(pagesIds[dragPageIdx], i);
-                      setCurrentPagesIdx(i);
-                    }
-                    setDragPageIdx(null);
-                    setDragOverPageIdx(null);
-                  }}
-                  onDragEnd={() => {
-                    setDragPageIdx(null);
-                    setDragOverPageIdx(null);
-                  }}
-                  className={`ms:inline-flex ms:items-center ms:h-7 ms:rounded ms:border ms:text-xs ms:font-medium ms:transition-colors ms:shrink-0 ${
-                    isDragOver
-                      ? 'ms:border-msprimary ms:bg-msprimary/20 ms:text-msprimary'
-                      : isActive
-                      ? 'ms:border-msprimary ms:bg-msprimary/10 ms:text-msprimary'
-                      : 'ms:border-msborder ms:bg-mssurface ms:text-mstext'
-                  } ${mode === 'build' ? 'ms:cursor-grab' : ''}`}
-                >
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={editingTitle}
-                      autoFocus
-                      aria-label={`Rename page ${i + 1}`}
-                      className="ms:h-full ms:min-w-[4rem] ms:max-w-[120px] ms:px-2 ms:bg-transparent ms:outline-none ms:text-xs ms:font-medium ms:text-msprimary"
-                      onChange={(e) => setEditingTitle(e.currentTarget.value)}
-                      onBlur={() => {
-                        form
-                          .getState()
-                          .updatePageTitle(pageId, editingTitle.trim());
-                        setEditingPageId(null);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') e.currentTarget.blur();
-                        if (e.key === 'Escape') {
-                          setEditingPageId(null);
-                        }
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  ) : (
-                    <>
-                      <button
-                        type="button"
-                        aria-label={`Go to ${label}`}
-                        aria-current={isActive ? 'page' : undefined}
-                        onClick={() => {
-                          setCurrentPagesIdx(i);
-                          ui.getState().selectField(null);
-                        }}
-                        onDoubleClick={() => {
-                          if (mode !== 'build') return;
-                          setEditingPageId(pageId);
-                          setEditingTitle(normalized.pages[i]?.title ?? '');
-                        }}
-                        className="ms:h-full ms:px-2 ms:outline-none ms:cursor-pointer ms:bg-transparent ms:min-w-[2rem]"
-                      >
-                        {label}
-                      </button>
-                      {mode === 'build' && isActive && (
-                        <button
-                          type="button"
-                          aria-label={`Edit title of ${label}`}
-                          title="Edit page title"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingPageId(pageId);
-                            setEditingTitle(normalized.pages[i]?.title ?? '');
-                          }}
-                          className="ms:inline-flex ms:items-center ms:justify-center ms:w-5 ms:h-5 ms:mr-1 ms:rounded ms:text-msprimary/60 ms:hover:text-msprimary ms:hover:bg-msprimary/10 ms:transition-colors ms:outline-none ms:cursor-pointer ms:bg-transparent ms:shrink-0"
-                        >
-                          ✎
-                        </button>
-                      )}
-                    </>
-                  )}
-                </div>
-              );
-            })}
-            {isMultiPage && (
-              <button
-                type="button"
-                aria-label="Next page"
-                disabled={currentPagesIdx === pagesIds.length - 1}
-                onClick={handleNextPage}
-                className="ms:inline-flex ms:items-center ms:justify-center ms:h-7 ms:w-7 ms:rounded ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:transition-colors ms:hover:bg-msbackgroundhover ms:disabled:opacity-40 ms:disabled:cursor-not-allowed ms:outline-none ms:cursor-pointer ms:shrink-0 ms:text-base ms:leading-none"
-              >
-                ›
-              </button>
-            )}
-          </div>
-          <span className="ms:text-xs ms:text-mstextmuted ms:shrink-0">
-            {currentPagesIdx + 1} / {pagesIds.length}
-          </span>
-          {mode === 'build' && (
-            <div className="ms:flex ms:items-center ms:gap-1 ms:shrink-0">
-              <button
-                type="button"
-                aria-label="Add page"
-                onClick={() => {
-                  const newId = form.getState().addPage();
-                  setCurrentPagesIdx(pagesIds.length); // new page is appended
-                  ui.getState().selectField(null);
-                  void newId;
-                }}
-                className="ms:inline-flex ms:items-center ms:justify-center ms:h-7 ms:px-2 ms:rounded ms:border ms:border-msprimary/50 ms:bg-mssurface ms:text-msprimary ms:text-xs ms:transition-colors ms:hover:bg-msprimary/10 ms:outline-none ms:cursor-pointer ms:shrink-0"
-              >
-                + Page
-              </button>
-              <button
-                type="button"
-                aria-label="Delete current page"
-                disabled={pagesIds.length <= 1}
-                onClick={() => {
-                  const nextIdx = Math.max(currentPagesIdx - 1, 0);
-                  if (!activePagesId) return;
-                  form.getState().removePage(activePagesId);
-                  setCurrentPagesIdx(nextIdx);
-                  ui.getState().selectField(null);
-                }}
-                className="ms:inline-flex ms:items-center ms:justify-center ms:h-7 ms:px-2 ms:rounded ms:border ms:border-msdanger/50 ms:bg-mssurface ms:text-msdanger ms:text-xs ms:transition-colors ms:hover:bg-msdanger/10 ms:outline-none ms:cursor-pointer ms:shrink-0 ms:disabled:opacity-40 ms:disabled:cursor-not-allowed"
-              >
-                Delete page
-              </button>
-            </div>
-          )}
-        </div>
-      ) : null}
       {(() => {
         const fieldsContent =
           items.length === 0 ? (

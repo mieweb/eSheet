@@ -11,8 +11,8 @@ const INITIAL_DEF: FormDefinition = {
   id: 'demo-builder',
   pages: [
     {
-      id: 'page-1',
-      title: 'Page 1',
+      id: 'sheet-1',
+      title: 'Initial sheet',
       fields: [
         { id: 'q1', fieldType: 'text', question: 'What is your name?' },
         {

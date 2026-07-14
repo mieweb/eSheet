@@ -31,7 +31,7 @@ export function PageNavigator({
   return (
     <div className="pages-navigator ms:flex ms:flex-col ms:flex-1 ms:min-h-0">
       <div className="ms:flex-1 ms:min-h-0 ms:overflow-y-auto">{children}</div>
-      <div className="pages-nav-footer ms:flex ms:items-center ms:justify-between ms:px-4 ms:py-3 ms:bg-mssurface ms:shrink-0">
+      <div className="pages-nav-footer ms:flex ms:items-center ms:justify-between ms:px-4 ms:py-3 ms:shrink-0">
         <button
           type="button"
           disabled={isFirst}
