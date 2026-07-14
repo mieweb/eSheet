@@ -19,18 +19,68 @@ export const SectionField = React.memo(function SectionField({
 }: SectionFieldProps) {
   const def = field.definition as SectionFieldDefinition;
   const title = def.title || 'Section';
+  const bodyId = React.useId();
+  const sectionCollapse = def.sectionCollapse ?? 'disabled';
+  const collapsible = sectionCollapse !== 'disabled';
+  const defaultExpanded = collapsible ? sectionCollapse === 'expanded' : true;
+  const [expanded, setExpanded] = React.useState(defaultExpanded);
+  const [prevDefault, setPrevDefault] = React.useState(defaultExpanded);
+  // Re-sync when collapse settings change while mounted (e.g. edited in builder).
+  if (prevDefault !== defaultExpanded) {
+    setPrevDefault(defaultExpanded);
+    setExpanded(defaultExpanded);
+  }
+  const isExpanded = collapsible ? expanded : true;
 
   if (isPreview) {
     return (
       <section className="section-field-preview ms:pb-0">
-        <h3 className="ms:text-base ms:font-semibold ms:text-mstext ms:bg-msprimary/10 ms:px-4 ms:py-2 ms:break-words ms:overflow-hidden">
-          {title}
-          {(isRequired || isSoftRequired) && (
-            <span className="ms:text-msdanger ms:ml-1">*</span>
+        <h3 className="ms:text-base ms:font-semibold ms:text-mstext ms:bg-msprimary/10 ms:break-words ms:overflow-hidden">
+          {collapsible ? (
+            <button
+              type="button"
+              aria-expanded={isExpanded}
+              aria-controls={bodyId}
+              onClick={() => setExpanded((prev) => !prev)}
+              className="ms:w-full ms:flex ms:items-center ms:justify-between ms:gap-2 ms:px-4 ms:py-2 ms:text-left ms:text-base ms:font-semibold ms:text-mstext ms:bg-transparent ms:border-0 ms:cursor-pointer"
+            >
+              <span>
+                {title}
+                {(isRequired || isSoftRequired) && (
+                  <span className="ms:text-msdanger ms:ml-1">*</span>
+                )}
+              </span>
+              <svg
+                className={`ms:w-4 ms:h-4 ms:shrink-0 ms:transition-transform ${
+                  isExpanded ? 'ms:rotate-180' : ''
+                }`}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
+          ) : (
+            <span className="ms:block ms:px-4 ms:py-2">
+              {title}
+              {(isRequired || isSoftRequired) && (
+                <span className="ms:text-msdanger ms:ml-1">*</span>
+              )}
+            </span>
           )}
         </h3>
-        {nestedChildren && (
-          <div className="ms:bg-mssurface ms:space-y-3 ms:px-4 ms:py-2">
+        {nestedChildren && isExpanded && (
+          <div
+            id={bodyId}
+            className="ms:bg-mssurface ms:space-y-3 ms:px-4 ms:py-2"
+          >
             {nestedChildren}
           </div>
         )}

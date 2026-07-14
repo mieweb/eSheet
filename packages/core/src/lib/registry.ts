@@ -295,7 +295,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     answerType: 'container',
     hasOptions: false,
     hasMatrix: false,
-    defaultProps: { fields: [] },
+    defaultProps: { fields: [], sectionCollapse: 'expanded' },
     placeholder: { title: 'Enter section title...' },
   },
 };
