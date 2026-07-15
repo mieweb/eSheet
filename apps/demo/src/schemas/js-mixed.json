@@ -1,4 +1,4 @@
-﻿{
+{
   "id": "js-mixed",
   "dangerouslyAllowJS": true,
   "title": "JS Mixed: Calculations + Conditions",
@@ -9,18 +9,18 @@
         {
           "id": "intro",
           "fieldType": "html",
-          "htmlContent": "\u003ch2 style=\u0027margin:0 0 8px\u0027\u003eJS Mixed Test Suite\u003c/h2\u003e\u003cp\u003eTests \u003cstrong\u003eboth\u003c/strong\u003e features together: a \u003ccode\u003ecalculation\u003c/code\u003e derives a value, and a \u003ccode\u003econditionType: \u0027js\u0027\u003c/code\u003e condition reacts to that derived value â€” forming a two-stage JS pipeline. Also covers mixed rule logic (JS condition combined with field/expression condition in the same rule).\u003c/p\u003e",
+          "htmlContent": "<h2 style='margin:0 0 8px'>JS Mixed Test Suite</h2><p>Tests <strong>both</strong> features together: a <code>calculation</code> derives a value, and a <code>conditionType: 'js'</code> condition reacts to that derived value — forming a two-stage JS pipeline. Also covers mixed rule logic (JS condition combined with field/expression condition in the same rule).</p>",
           "iframeHeight": 110
         },
         {
           "id": "section-pipeline",
           "fieldType": "section",
-          "title": "1 â€” Calculation â†’ JS Condition Pipeline",
+          "title": "1 — Calculation → JS Condition Pipeline",
           "fields": [
             {
               "id": "pipe-q1",
               "fieldType": "slider",
-              "question": "Anxiety score (0â€“10)",
+              "question": "Anxiety score (0–10)",
               "options": [
                 {
                   "id": "pipe-q1-0",
@@ -82,7 +82,7 @@
             {
               "id": "pipe-q2",
               "fieldType": "slider",
-              "question": "Depression score (0â€“10)",
+              "question": "Depression score (0–10)",
               "options": [
                 {
                   "id": "pipe-q2-0",
@@ -144,7 +144,7 @@
             {
               "id": "pipe-q3",
               "fieldType": "slider",
-              "question": "Stress score (0â€“10)",
+              "question": "Stress score (0–10)",
               "options": [
                 {
                   "id": "pipe-q3-0",
@@ -208,19 +208,19 @@
               "fieldType": "text",
               "question": "Derived total score (calculation)",
               "inputType": "number",
-              "calculation": "(responses[\u0027pipe-q1\u0027] || 0) + (responses[\u0027pipe-q2\u0027] || 0) + (responses[\u0027pipe-q3\u0027] || 0)"
+              "calculation": "(responses['pipe-q1'] || 0) + (responses['pipe-q2'] || 0) + (responses['pipe-q3'] || 0)"
             },
             {
               "id": "pipe-label",
               "fieldType": "text",
               "question": "Derived severity label (calculation on total)",
               "inputType": "string",
-              "calculation": "(function() { var t = (responses[\u0027pipe-q1\u0027] || 0) + (responses[\u0027pipe-q2\u0027] || 0) + (responses[\u0027pipe-q3\u0027] || 0); return t \u003e= 24 ? \u0027Severe\u0027 : t \u003e= 15 ? \u0027Moderate\u0027 : t \u003e= 7 ? \u0027Mild\u0027 : \u0027Minimal\u0027; })()"
+              "calculation": "(function() { var t = (responses['pipe-q1'] || 0) + (responses['pipe-q2'] || 0) + (responses['pipe-q3'] || 0); return t >= 24 ? 'Severe' : t >= 15 ? 'Moderate' : t >= 7 ? 'Mild' : 'Minimal'; })()"
             },
             {
               "id": "pipe-referral",
               "fieldType": "text",
-              "question": "âœ“ Referral note â€” visible when JS condition reads derived total \u003e 15",
+              "question": "✓ Referral note — visible when JS condition reads derived total > 15",
               "inputType": "string",
               "rules": [
                 {
@@ -229,7 +229,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "Number(responses[\u0027pipe-total\u0027]) \u003e 15"
+                      "expression": "Number(responses['pipe-total']) > 15"
                     }
                   ]
                 }
@@ -238,7 +238,7 @@
             {
               "id": "pipe-crisis",
               "fieldType": "text",
-              "question": "âœ“ Crisis protocol â€” visible when JS reads derived total \u003e= 24",
+              "question": "✓ Crisis protocol — visible when JS reads derived total >= 24",
               "inputType": "string",
               "rules": [
                 {
@@ -247,7 +247,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "Number(responses[\u0027pipe-total\u0027]) \u003e= 24"
+                      "expression": "Number(responses['pipe-total']) >= 24"
                     }
                   ]
                 }
@@ -258,7 +258,7 @@
         {
           "id": "section-bmi-branch",
           "fieldType": "section",
-          "title": "2 â€” BMI Calculation â†’ Conditional Branching",
+          "title": "2 — BMI Calculation → Conditional Branching",
           "fields": [
             {
               "id": "bmi-weight",
@@ -277,12 +277,12 @@
               "fieldType": "text",
               "question": "Calculated BMI",
               "inputType": "number",
-              "calculation": "responses[\u0027bmi-height\u0027] ? (responses[\u0027bmi-weight\u0027] / Math.pow(responses[\u0027bmi-height\u0027] / 100, 2)).toFixed(1) : \u0027\u0027"
+              "calculation": "responses['bmi-height'] ? (responses['bmi-weight'] / Math.pow(responses['bmi-height'] / 100, 2)).toFixed(1) : ''"
             },
             {
               "id": "bmi-under",
               "fieldType": "text",
-              "question": "âœ“ Underweight guidance â€” shown when BMI \u003c 18.5",
+              "question": "✓ Underweight guidance — shown when BMI < 18.5",
               "inputType": "string",
               "rules": [
                 {
@@ -291,7 +291,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "responses[\u0027bmi-result\u0027] !== \u0027\u0027 \u0026\u0026 Number(responses[\u0027bmi-result\u0027]) \u003c 18.5"
+                      "expression": "responses['bmi-result'] !== '' && Number(responses['bmi-result']) < 18.5"
                     }
                   ]
                 }
@@ -300,7 +300,7 @@
             {
               "id": "bmi-normal",
               "fieldType": "text",
-              "question": "âœ“ Normal range note â€” shown when 18.5 â‰¤ BMI \u003c 25",
+              "question": "✓ Normal range note — shown when 18.5 ≤ BMI < 25",
               "inputType": "string",
               "rules": [
                 {
@@ -309,7 +309,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "responses[\u0027bmi-result\u0027] !== \u0027\u0027 \u0026\u0026 Number(responses[\u0027bmi-result\u0027]) \u003e= 18.5 \u0026\u0026 Number(responses[\u0027bmi-result\u0027]) \u003c 25"
+                      "expression": "responses['bmi-result'] !== '' && Number(responses['bmi-result']) >= 18.5 && Number(responses['bmi-result']) < 25"
                     }
                   ]
                 }
@@ -318,7 +318,7 @@
             {
               "id": "bmi-over",
               "fieldType": "text",
-              "question": "âœ“ Overweight / obese follow-up â€” shown when BMI \u003e= 25",
+              "question": "✓ Overweight / obese follow-up — shown when BMI >= 25",
               "inputType": "string",
               "rules": [
                 {
@@ -327,7 +327,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "responses[\u0027bmi-result\u0027] !== \u0027\u0027 \u0026\u0026 Number(responses[\u0027bmi-result\u0027]) \u003e= 25"
+                      "expression": "responses['bmi-result'] !== '' && Number(responses['bmi-result']) >= 25"
                     }
                   ]
                 }
@@ -338,7 +338,7 @@
         {
           "id": "section-mixed-rules",
           "fieldType": "section",
-          "title": "3 â€” Mixed Rule Logic (JS + field condition in same rule)",
+          "title": "3 — Mixed Rule Logic (JS + field condition in same rule)",
           "fields": [
             {
               "id": "mix-age",
@@ -366,7 +366,7 @@
             {
               "id": "mix-adult-consent",
               "fieldType": "text",
-              "question": "âœ“ Visible when BOTH: JS says age \u003e= 18 AND field condition says consent = yes",
+              "question": "✓ Visible when BOTH: JS says age >= 18 AND field condition says consent = yes",
               "inputType": "string",
               "rules": [
                 {
@@ -375,7 +375,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "responses[\u0027mix-age\u0027] \u003e= 18"
+                      "expression": "responses['mix-age'] >= 18"
                     },
                     {
                       "conditionType": "field",
@@ -390,7 +390,7 @@
             {
               "id": "mix-minor-or-noconsent",
               "fieldType": "text",
-              "question": "âœ“ Visible when JS age \u003c 18 OR field consent = no (OR logic)",
+              "question": "✓ Visible when JS age < 18 OR field consent = no (OR logic)",
               "inputType": "string",
               "rules": [
                 {
@@ -399,7 +399,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "responses[\u0027mix-age\u0027] !== \u0027\u0027 \u0026\u0026 responses[\u0027mix-age\u0027] \u003c 18"
+                      "expression": "responses['mix-age'] !== '' && responses['mix-age'] < 18"
                     },
                     {
                       "conditionType": "field",
@@ -416,12 +416,12 @@
         {
           "id": "section-expression-vs-js",
           "fieldType": "section",
-          "title": "4 â€” Safe Expression vs. JS Condition (same logic, both types)",
+          "title": "4 — Safe Expression vs. JS Condition (same logic, both types)",
           "fields": [
             {
               "id": "evj-slider",
               "fieldType": "slider",
-              "question": "Slider (0â€“10)",
+              "question": "Slider (0–10)",
               "options": [
                 {
                   "id": "evj-s-0",
@@ -483,7 +483,7 @@
             {
               "id": "evj-via-expression",
               "fieldType": "text",
-              "question": "conditionType: expression â€” visible when slider \u003e 5",
+              "question": "conditionType: expression — visible when slider > 5",
               "inputType": "string",
               "rules": [
                 {
@@ -492,7 +492,7 @@
                   "conditions": [
                     {
                       "conditionType": "expression",
-                      "expression": "{evj-slider} \u003e 5"
+                      "expression": "{evj-slider} > 5"
                     }
                   ]
                 }
@@ -501,7 +501,7 @@
             {
               "id": "evj-via-js",
               "fieldType": "text",
-              "question": "conditionType: js â€” visible when slider \u003e 5 (same condition, JS variant)",
+              "question": "conditionType: js — visible when slider > 5 (same condition, JS variant)",
               "inputType": "string",
               "rules": [
                 {
@@ -510,7 +510,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "responses[\u0027evj-slider\u0027] \u003e 5"
+                      "expression": "responses['evj-slider'] > 5"
                     }
                   ]
                 }
@@ -519,7 +519,7 @@
             {
               "id": "evj-note",
               "fieldType": "html",
-              "htmlContent": "\u003cp style=\u0027font-size:0.85rem;color:#666;margin:4px 0\u0027\u003eThe two fields above should appear and disappear in sync â€” they implement identical logic via different condition types.\u003c/p\u003e",
+              "htmlContent": "<p style='font-size:0.85rem;color:#666;margin:4px 0'>The two fields above should appear and disappear in sync — they implement identical logic via different condition types.</p>",
               "iframeHeight": 50
             }
           ]
@@ -527,12 +527,12 @@
         {
           "id": "section-runtime-errors",
           "fieldType": "section",
-          "title": "5 â€” Runtime Error Resilience",
+          "title": "5 — Runtime Error Resilience",
           "fields": [
             {
               "id": "err-note",
               "fieldType": "html",
-              "htmlContent": "\u003cp style=\u0027font-size:0.85rem;color:#666;margin:4px 0\u0027\u003eAll fields in this section have deliberately broken JS. None should be visible, and the form should not crash.\u003c/p\u003e",
+              "htmlContent": "<p style='font-size:0.85rem;color:#666;margin:4px 0'>All fields in this section have deliberately broken JS. None should be visible, and the form should not crash.</p>",
               "iframeHeight": 50
             },
             {
@@ -583,7 +583,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "(function(){ throw \u0027oops\u0027; })()"
+                      "expression": "(function(){ throw 'oops'; })()"
                     }
                   ]
                 }
@@ -594,7 +594,7 @@
               "fieldType": "text",
               "question": "Calculation: broken JS (should show empty string)",
               "inputType": "string",
-              "calculation": "responses[\u0027nonexistent_field\u0027].deeply.nested.value"
+              "calculation": "responses['nonexistent_field'].deeply.nested.value"
             },
             {
               "id": "err-calc-syntax",

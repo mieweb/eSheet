@@ -67,7 +67,10 @@ const sidebars = {
         {
           type: 'category',
           label: 'Organization',
-          items: ['field-types/organization/section'],
+          items: [
+            'field-types/organization/section',
+            'field-types/organization/pages',
+          ],
         },
         {
           type: 'category',

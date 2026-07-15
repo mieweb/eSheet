@@ -1,4 +1,4 @@
-﻿{
+{
   "id": "expression-functions",
   "title": "Expression Functions Test Suite",
   "pages": [
@@ -8,13 +8,13 @@
         {
           "id": "intro",
           "fieldType": "html",
-          "htmlContent": "\u003ch2 style=\u0027margin:0 0 8px\u0027\u003eExpression Functions Test Suite\u003c/h2\u003e\u003cp\u003eDemonstrates the built-in expression engine functions: \u003cstrong\u003edate arithmetic\u003c/strong\u003e (\u003ccode\u003eaddDays\u003c/code\u003e, \u003ccode\u003esubDays\u003c/code\u003e, \u003ccode\u003ediffDays\u003c/code\u003e, \u003ccode\u003etoday\u003c/code\u003e, \u003ccode\u003eyear\u003c/code\u003e), \u003cstrong\u003enumeric helpers\u003c/strong\u003e (\u003ccode\u003emin\u003c/code\u003e, \u003ccode\u003emax\u003c/code\u003e, \u003ccode\u003eround\u003c/code\u003e, \u003ccode\u003efloor\u003c/code\u003e, \u003ccode\u003eceil\u003c/code\u003e, \u003ccode\u003eabs\u003c/code\u003e), and \u003cstrong\u003econditional\u003c/strong\u003e (\u003ccode\u003eif\u003c/code\u003e). Fill in the input fields and watch the results update live.\u003c/p\u003e",
+          "htmlContent": "<h2 style='margin:0 0 8px'>Expression Functions Test Suite</h2><p>Demonstrates the built-in expression engine functions: <strong>date arithmetic</strong> (<code>addDays</code>, <code>subDays</code>, <code>diffDays</code>, <code>today</code>, <code>year</code>), <strong>numeric helpers</strong> (<code>min</code>, <code>max</code>, <code>round</code>, <code>floor</code>, <code>ceil</code>, <code>abs</code>), and <strong>conditional</strong> (<code>if</code>). Fill in the input fields and watch the results update live.</p>",
           "iframeHeight": 110
         },
         {
           "id": "section-date",
           "fieldType": "section",
-          "title": "1 â€” Date Arithmetic",
+          "title": "1 — Date Arithmetic",
           "fields": [
             {
               "id": "start-date",
@@ -33,7 +33,7 @@
             {
               "id": "date-results",
               "fieldType": "display",
-              "content": "**14 days after start:** \u003caddDays({start-date}, 14)\u003e\n\n**7 days before start:** \u003csubDays({start-date}, 7)\u003e\n\n**Days between start â†’ end:** \u003cdiffDays({end-date}, {start-date})\u003e\n\n**Year of start date:** \u003cyear({start-date})\u003e\n\n**Today:** \u003ctoday()\u003e",
+              "content": "**14 days after start:** <addDays({start-date}, 14)>\n\n**7 days before start:** <subDays({start-date}, 7)>\n\n**Days between start → end:** <diffDays({end-date}, {start-date})>\n\n**Year of start date:** <year({start-date})>\n\n**Today:** <today()>",
               "rules": [
                 {
                   "effect": "visible",
@@ -41,7 +41,7 @@
                   "conditions": [
                     {
                       "conditionType": "expression",
-                      "expression": "{start-date} !== \u0027\u0027 \u0026\u0026 {end-date} !== \u0027\u0027"
+                      "expression": "{start-date} !== '' && {end-date} !== ''"
                     }
                   ]
                 }
@@ -50,7 +50,7 @@
             {
               "id": "date-gap-warning",
               "fieldType": "display",
-              "content": "âš ï¸ End date is more than 30 days after start.",
+              "content": "⚠️ End date is more than 30 days after start.",
               "rules": [
                 {
                   "effect": "visible",
@@ -58,7 +58,7 @@
                   "conditions": [
                     {
                       "conditionType": "expression",
-                      "expression": "{start-date} !== \u0027\u0027 \u0026\u0026 {end-date} !== \u0027\u0027 \u0026\u0026 diffDays({end-date}, {start-date}) \u003e 30"
+                      "expression": "{start-date} !== '' && {end-date} !== '' && diffDays({end-date}, {start-date}) > 30"
                     }
                   ]
                 }
@@ -67,7 +67,7 @@
             {
               "id": "date-order-warning",
               "fieldType": "display",
-              "content": "âš ï¸ End date is before start date.",
+              "content": "⚠️ End date is before start date.",
               "rules": [
                 {
                   "effect": "visible",
@@ -75,7 +75,7 @@
                   "conditions": [
                     {
                       "conditionType": "expression",
-                      "expression": "{start-date} !== \u0027\u0027 \u0026\u0026 {end-date} !== \u0027\u0027 \u0026\u0026 diffDays({end-date}, {start-date}) \u003c 0"
+                      "expression": "{start-date} !== '' && {end-date} !== '' && diffDays({end-date}, {start-date}) < 0"
                     }
                   ]
                 }
@@ -86,7 +86,7 @@
         {
           "id": "section-today",
           "fieldType": "section",
-          "title": "2 â€” today() Comparisons",
+          "title": "2 — today() Comparisons",
           "fields": [
             {
               "id": "event-date",
@@ -98,7 +98,7 @@
             {
               "id": "event-timing",
               "fieldType": "display",
-              "content": "**Days until/since event:** \u003cdiffDays({event-date}, today())\u003e\n\n**Event year:** \u003cyear({event-date})\u003e",
+              "content": "**Days until/since event:** <diffDays({event-date}, today())>\n\n**Event year:** <year({event-date})>",
               "rules": [
                 {
                   "effect": "visible",
@@ -106,7 +106,7 @@
                   "conditions": [
                     {
                       "conditionType": "expression",
-                      "expression": "{event-date} !== \u0027\u0027"
+                      "expression": "{event-date} !== ''"
                     }
                   ]
                 }
@@ -115,7 +115,7 @@
             {
               "id": "event-past",
               "fieldType": "display",
-              "content": "âœ… This event is in the past.",
+              "content": "✅ This event is in the past.",
               "rules": [
                 {
                   "effect": "visible",
@@ -123,7 +123,7 @@
                   "conditions": [
                     {
                       "conditionType": "expression",
-                      "expression": "{event-date} !== \u0027\u0027 \u0026\u0026 diffDays({event-date}, today()) \u003c 0"
+                      "expression": "{event-date} !== '' && diffDays({event-date}, today()) < 0"
                     }
                   ]
                 }
@@ -132,7 +132,7 @@
             {
               "id": "event-future",
               "fieldType": "display",
-              "content": "ðŸ“… This event is in the future.",
+              "content": "📅 This event is in the future.",
               "rules": [
                 {
                   "effect": "visible",
@@ -140,7 +140,7 @@
                   "conditions": [
                     {
                       "conditionType": "expression",
-                      "expression": "{event-date} !== \u0027\u0027 \u0026\u0026 diffDays({event-date}, today()) \u003e 0"
+                      "expression": "{event-date} !== '' && diffDays({event-date}, today()) > 0"
                     }
                   ]
                 }
@@ -151,7 +151,7 @@
         {
           "id": "section-numeric",
           "fieldType": "section",
-          "title": "3 â€” Numeric Functions",
+          "title": "3 — Numeric Functions",
           "fields": [
             {
               "id": "num-a",
@@ -174,7 +174,7 @@
             {
               "id": "numeric-results",
               "fieldType": "display",
-              "content": "**min(A, B, C):** \u003cmin({num-a}, {num-b}, {num-c})\u003e\n\n**max(A, B, C):** \u003cmax({num-a}, {num-b}, {num-c})\u003e\n\n**round(A / B):** \u003cround({num-a} / {num-b})\u003e\n\n**floor(A / B):** \u003cfloor({num-a} / {num-b})\u003e\n\n**ceil(A / B):** \u003cceil({num-a} / {num-b})\u003e\n\n**abs(A âˆ’ B):** \u003cabs({num-a} - {num-b})\u003e",
+              "content": "**min(A, B, C):** <min({num-a}, {num-b}, {num-c})>\n\n**max(A, B, C):** <max({num-a}, {num-b}, {num-c})>\n\n**round(A / B):** <round({num-a} / {num-b})>\n\n**floor(A / B):** <floor({num-a} / {num-b})>\n\n**ceil(A / B):** <ceil({num-a} / {num-b})>\n\n**abs(A − B):** <abs({num-a} - {num-b})>",
               "rules": [
                 {
                   "effect": "visible",
@@ -182,7 +182,7 @@
                   "conditions": [
                     {
                       "conditionType": "expression",
-                      "expression": "{num-a} !== \u0027\u0027 \u0026\u0026 {num-b} !== \u0027\u0027 \u0026\u0026 {num-c} !== \u0027\u0027 \u0026\u0026 {num-b} !== 0"
+                      "expression": "{num-a} !== '' && {num-b} !== '' && {num-c} !== '' && {num-b} !== 0"
                     }
                   ]
                 }
@@ -193,7 +193,7 @@
         {
           "id": "section-bmi",
           "fieldType": "section",
-          "title": "4 â€” BMI Calculator (round + if)",
+          "title": "4 — BMI Calculator (round + if)",
           "fields": [
             {
               "id": "weight-kg",
@@ -214,7 +214,7 @@
             {
               "id": "bmi-result",
               "fieldType": "display",
-              "content": "**BMI:** \u003cround({weight-kg} / (({height-cm} / 100) * ({height-cm} / 100)))\u003e\n\n**Category:** \u003cif(round({weight-kg} / (({height-cm} / 100) * ({height-cm} / 100))) \u003e= 30, \u0027Obese\u0027, if(round({weight-kg} / (({height-cm} / 100) * ({height-cm} / 100))) \u003e= 25, \u0027Overweight\u0027, if(round({weight-kg} / (({height-cm} / 100) * ({height-cm} / 100))) \u003e= 18.5, \u0027Normal weight\u0027, \u0027Underweight\u0027)))\u003e",
+              "content": "**BMI:** <round({weight-kg} / (({height-cm} / 100) * ({height-cm} / 100)))>\n\n**Category:** <if(round({weight-kg} / (({height-cm} / 100) * ({height-cm} / 100))) >= 30, 'Obese', if(round({weight-kg} / (({height-cm} / 100) * ({height-cm} / 100))) >= 25, 'Overweight', if(round({weight-kg} / (({height-cm} / 100) * ({height-cm} / 100))) >= 18.5, 'Normal weight', 'Underweight')))>",
               "rules": [
                 {
                   "effect": "visible",
@@ -222,7 +222,7 @@
                   "conditions": [
                     {
                       "conditionType": "expression",
-                      "expression": "{weight-kg} \u003e 0 \u0026\u0026 {height-cm} \u003e 0"
+                      "expression": "{weight-kg} > 0 && {height-cm} > 0"
                     }
                   ]
                 }
@@ -233,7 +233,7 @@
         {
           "id": "section-if",
           "fieldType": "section",
-          "title": "5 â€” Conditional (if)",
+          "title": "5 — Conditional (if)",
           "fields": [
             {
               "id": "phq-score",
@@ -357,7 +357,7 @@
             {
               "id": "phq-severity",
               "fieldType": "display",
-              "content": "**Severity:** \u003cif({phq-score} \u003e= 20, \u0027Severe\u0027, if({phq-score} \u003e= 15, \u0027Moderately Severe\u0027, if({phq-score} \u003e= 10, \u0027Moderate\u0027, if({phq-score} \u003e= 5, \u0027Mild\u0027, \u0027Minimal\u0027))))\u003e\n\n**Recommendation:** \u003cif({phq-score} \u003e= 10, \u0027Refer for clinical evaluation.\u0027, \u0027No immediate referral needed.\u0027)\u003e",
+              "content": "**Severity:** <if({phq-score} >= 20, 'Severe', if({phq-score} >= 15, 'Moderately Severe', if({phq-score} >= 10, 'Moderate', if({phq-score} >= 5, 'Mild', 'Minimal'))))>\n\n**Recommendation:** <if({phq-score} >= 10, 'Refer for clinical evaluation.', 'No immediate referral needed.')>",
               "rules": [
                 {
                   "effect": "visible",
@@ -365,7 +365,7 @@
                   "conditions": [
                     {
                       "conditionType": "expression",
-                      "expression": "{phq-score} \u003e= 0"
+                      "expression": "{phq-score} >= 0"
                     }
                   ]
                 }
@@ -376,7 +376,7 @@
         {
           "id": "section-nested",
           "fieldType": "section",
-          "title": "6 â€” Nested Functions (diffDays + addDays)",
+          "title": "6 — Nested Functions (diffDays + addDays)",
           "fields": [
             {
               "id": "baseline-date",
@@ -402,7 +402,7 @@
             {
               "id": "nested-result",
               "fieldType": "display",
-              "content": "**Baseline + offset:** \u003caddDays({baseline-date}, {offset-days})\u003e\n\n**Days from (baseline + offset) to target:** \u003cdiffDays({target-date}, addDays({baseline-date}, {offset-days}))\u003e",
+              "content": "**Baseline + offset:** <addDays({baseline-date}, {offset-days})>\n\n**Days from (baseline + offset) to target:** <diffDays({target-date}, addDays({baseline-date}, {offset-days}))>",
               "rules": [
                 {
                   "effect": "visible",
@@ -410,7 +410,7 @@
                   "conditions": [
                     {
                       "conditionType": "expression",
-                      "expression": "{baseline-date} !== \u0027\u0027 \u0026\u0026 {offset-days} !== \u0027\u0027 \u0026\u0026 {target-date} !== \u0027\u0027"
+                      "expression": "{baseline-date} !== '' && {offset-days} !== '' && {target-date} !== ''"
                     }
                   ]
                 }
@@ -419,7 +419,7 @@
             {
               "id": "nested-match",
               "fieldType": "display",
-              "content": "âœ… Target date exactly matches baseline + offset.",
+              "content": "✅ Target date exactly matches baseline + offset.",
               "rules": [
                 {
                   "effect": "visible",
@@ -427,7 +427,7 @@
                   "conditions": [
                     {
                       "conditionType": "expression",
-                      "expression": "{baseline-date} !== \u0027\u0027 \u0026\u0026 {offset-days} !== \u0027\u0027 \u0026\u0026 {target-date} !== \u0027\u0027 \u0026\u0026 diffDays({target-date}, addDays({baseline-date}, {offset-days})) === 0"
+                      "expression": "{baseline-date} !== '' && {offset-days} !== '' && {target-date} !== '' && diffDays({target-date}, addDays({baseline-date}, {offset-days})) === 0"
                     }
                   ]
                 }

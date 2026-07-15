@@ -54,6 +54,36 @@ export function RendererBody({ form, ui }: RendererBodyProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form, pages, currentPagesIdx, responses]);
 
+  /**
+   * Count of hard-required visible leaf fields on the current page that have
+   * no response. Sections are traversed to find their required children.
+   * Uses getFieldErrors() — the same validation path as form submit.
+   */
+  const unfilledRequiredCount = React.useMemo(() => {
+    const { normalized } = form.getState();
+    let count = 0;
+    const walk = (ids: readonly string[]) => {
+      for (const id of ids) {
+        const node = normalized.byId[id];
+        if (!node) continue;
+        if (node.definition.fieldType === 'section') {
+          walk(node.childIds);
+        } else {
+          const errors = form.getState().getFieldErrors(id);
+          if (
+            errors.some((e) => e.severity === 'hard' && e.rule === 'required')
+          ) {
+            count += 1;
+          }
+        }
+      }
+    };
+    const page = pages[currentPagesIdx];
+    if (page) walk(page.fieldIds);
+    return count;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form, pages, currentPagesIdx, responses]);
+
   const fields = visibleFieldIds.map((id) => (
     <FieldNode key={id} id={id} form={form} ui={ui} />
   ));
@@ -70,6 +100,7 @@ export function RendererBody({ form, ui }: RendererBodyProps) {
       total={pages.length}
       onPrev={handlePrev}
       onNext={handleNext}
+      blockedCount={unfilledRequiredCount}
     >
       <div className="canvas-fields renderer-body ms:space-y-0 ms:px-0">
         {fields}

@@ -1,4 +1,4 @@
-﻿{
+{
   "id": "employee-onboarding",
   "title": "Employee Onboarding Form",
   "pages": [
@@ -8,7 +8,7 @@
         {
           "id": "eo-intro",
           "fieldType": "html",
-          "htmlContent": "\u003ch2 style=\u0027margin:0 0 8px\u0027\u003eWelcome to the Team!\u003c/h2\u003e\u003cp\u003ePlease complete this form before your first day. All information is kept confidential and used only for HR purposes.\u003c/p\u003e",
+          "htmlContent": "<h2 style='margin:0 0 8px'>Welcome to the Team!</h2><p>Please complete this form before your first day. All information is kept confidential and used only for HR purposes.</p>",
           "iframeHeight": 90
         },
         {
@@ -74,7 +74,7 @@
         {
           "id": "section-role",
           "fieldType": "section",
-          "title": "Role \u0026 Department",
+          "title": "Role & Department",
           "fields": [
             {
               "id": "eo-department",
@@ -105,7 +105,7 @@
                 {
                   "id": "eo-dept-hr",
                   "value": "hr",
-                  "text": "People \u0026 HR"
+                  "text": "People & HR"
                 },
                 {
                   "id": "eo-dept-finance",
@@ -211,7 +211,7 @@
                 {
                   "id": "eo-ol-hq",
                   "value": "hq",
-                  "text": "HQ â€” New York"
+                  "text": "HQ — New York"
                 },
                 {
                   "id": "eo-ol-sf",
@@ -255,7 +255,7 @@
         {
           "id": "section-equipment",
           "fieldType": "section",
-          "title": "Equipment \u0026 Setup",
+          "title": "Equipment & Setup",
           "fields": [
             {
               "id": "eo-equipment",
@@ -392,12 +392,12 @@
         {
           "id": "section-policies",
           "fieldType": "section",
-          "title": "Policies \u0026 Compliance",
+          "title": "Policies & Compliance",
           "fields": [
             {
               "id": "eo-policy-note",
               "fieldType": "html",
-              "htmlContent": "\u003cp style=\u0027font-size:13px;color:#555\u0027\u003ePlease confirm that you have read and understood the following documents. Links will be sent to your email before your start date.\u003c/p\u003e",
+              "htmlContent": "<p style='font-size:13px;color:#555'>Please confirm that you have read and understood the following documents. Links will be sent to your email before your start date.</p>",
               "iframeHeight": 55
             },
             {
@@ -490,12 +490,12 @@
         {
           "id": "section-skills",
           "fieldType": "section",
-          "title": "Skills \u0026 Preferences",
+          "title": "Skills & Preferences",
           "fields": [
             {
               "id": "eo-skill-ranking",
               "fieldType": "ranking",
-              "question": "Rank your top work strengths (drag to reorder â€” #1 = strongest)",
+              "question": "Rank your top work strengths (drag to reorder — #1 = strongest)",
               "options": [
                 {
                   "id": "eo-sk-collab",
@@ -539,7 +539,7 @@
             {
               "id": "eo-declaration",
               "fieldType": "html",
-              "htmlContent": "\u003cp style=\u0027font-size:13px;color:#555\u0027\u003eBy signing below, I confirm that all information provided is accurate and complete.\u003c/p\u003e",
+              "htmlContent": "<p style='font-size:13px;color:#555'>By signing below, I confirm that all information provided is accurate and complete.</p>",
               "iframeHeight": 50
             },
             {

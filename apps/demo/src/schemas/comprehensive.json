@@ -1,4 +1,4 @@
-﻿{
+{
   "id": "comprehensive",
   "title": "Comprehensive Field Showcase",
   "pages": [
@@ -8,7 +8,7 @@
         {
           "id": "comp-intro",
           "fieldType": "html",
-          "htmlContent": "\u003ch2 style=\u0027margin:0 0 8px\u0027\u003eComprehensive Field Showcase\u003c/h2\u003e\u003cp\u003eThis form demonstrates \u003cstrong\u003eevery supported field type\u003c/strong\u003e in a realistic clinical/business context. Use it to explore rendering, validation, and conditional logic.\u003c/p\u003e\u003cp\u003e\u003cem\u003eSections:\u003c/em\u003e Demographics \u0026rarr; Choices \u0026rarr; Scales \u0026rarr; Matrix \u0026rarr; Free Text \u0026rarr; Media \u0026rarr; Summary\u003c/p\u003e",
+          "htmlContent": "<h2 style='margin:0 0 8px'>Comprehensive Field Showcase</h2><p>This form demonstrates <strong>every supported field type</strong> in a realistic clinical/business context. Use it to explore rendering, validation, and conditional logic.</p><p><em>Sections:</em> Demographics &rarr; Choices &rarr; Scales &rarr; Matrix &rarr; Free Text &rarr; Media &rarr; Summary</p>",
           "iframeHeight": 130
         },
         {
@@ -77,7 +77,7 @@
         {
           "id": "section-choices",
           "fieldType": "section",
-          "title": "Choices \u0026 Selections",
+          "title": "Choices & Selections",
           "fields": [
             {
               "id": "comp-gender",
@@ -230,7 +230,7 @@
         {
           "id": "section-scales",
           "fieldType": "section",
-          "title": "Scales \u0026 Ratings",
+          "title": "Scales & Ratings",
           "fields": [
             {
               "id": "comp-pain",
@@ -329,12 +329,12 @@
             {
               "id": "comp-priorities",
               "fieldType": "ranking",
-              "question": "Rank your health priorities (drag to reorder â€” #1 = most important)",
+              "question": "Rank your health priorities (drag to reorder — #1 = most important)",
               "options": [
                 {
                   "id": "comp-pr-diet",
                   "value": "diet",
-                  "text": "Nutrition \u0026 diet"
+                  "text": "Nutrition & diet"
                 },
                 {
                   "id": "comp-pr-exercise",
@@ -484,7 +484,7 @@
         {
           "id": "section-media",
           "fieldType": "section",
-          "title": "Media \u0026 Rich Fields",
+          "title": "Media & Rich Fields",
           "fields": [
             {
               "id": "comp-info-image",
@@ -522,7 +522,7 @@
             {
               "id": "comp-additional",
               "fieldType": "longtext",
-              "question": "Anything else you\u0027d like us to know?"
+              "question": "Anything else you'd like us to know?"
             }
           ]
         },

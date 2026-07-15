@@ -4,7 +4,7 @@ slug: /field-types
 
 # Overview
 
-eSheet includes 19 built-in field types across six categories. Use this section as the index for built-in and custom field work.
+eSheet includes 19 built-in field types across six categories, plus **Pages** — a first-class form structure for multi-page forms. Use this section as the index for built-in and custom field work.
 
 ## Categories
 
@@ -14,7 +14,7 @@ eSheet includes 19 built-in field types across six categories. Use this section 
 | Selection    | `radio`, `check`, `boolean`, `dropdown`, `multiselectdropdown` |
 | Rating       | `rating`, `ranking`, `slider`                                  |
 | Matrix       | `singlematrix`, `multimatrix`                                  |
-| Organization | `section`                                                      |
+| Organization | `section`, `pages` (form structure)                            |
 | Rich         | `display`, `html`, `image`, `signature`, `diagram`             |
 
 ## Built-in Fields
@@ -47,6 +47,7 @@ eSheet includes 19 built-in field types across six categories. Use this section 
 ### Organization
 
 - [section](/docs/field-types/section)
+- [pages](/docs/field-types/pages) — multi-page form structure
 
 ### Rich
 

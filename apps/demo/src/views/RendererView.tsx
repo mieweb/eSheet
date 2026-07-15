@@ -73,7 +73,7 @@ const TEST_SCHEMAS: readonly SchemaOption[] = Object.entries(schemaModules)
     };
   })
   .filter((schema): schema is SchemaOption => schema !== null)
-  .sort((a, b) => a!.label.localeCompare(b!.label));
+  .sort((a, b) => a.label.localeCompare(b.label));
 
 export function RendererView() {
   useEffect(() => {

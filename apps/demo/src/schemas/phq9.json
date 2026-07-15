@@ -1,4 +1,4 @@
-﻿{
+{
   "id": "phq9",
   "title": "PHQ-9 Patient Health Questionnaire",
   "pages": [
@@ -8,7 +8,7 @@
         {
           "id": "phq-intro",
           "fieldType": "html",
-          "htmlContent": "\u003ch2 style=\u0027margin:0 0 8px\u0027\u003ePHQ-9 Depression Screening\u003c/h2\u003e\u003cp\u003eOver the \u003cstrong\u003elast 2 weeks\u003c/strong\u003e, how often have you been bothered by any of the following problems?\u003c/p\u003e\u003ctable style=\u0027font-size:12px;border-collapse:collapse;width:100%\u0027\u003e\u003ctr\u003e\u003ctd style=\u0027padding:2px 8px;border:1px solid #ccc\u0027\u003e0\u003c/td\u003e\u003ctd style=\u0027padding:2px 8px;border:1px solid #ccc\u0027\u003eNot at all\u003c/td\u003e\u003ctd style=\u0027padding:2px 8px;border:1px solid #ccc\u0027\u003e1\u003c/td\u003e\u003ctd style=\u0027padding:2px 8px;border:1px solid #ccc\u0027\u003eSeveral days\u003c/td\u003e\u003ctd style=\u0027padding:2px 8px;border:1px solid #ccc\u0027\u003e2\u003c/td\u003e\u003ctd style=\u0027padding:2px 8px;border:1px solid #ccc\u0027\u003eMore than half the days\u003c/td\u003e\u003ctd style=\u0027padding:2px 8px;border:1px solid #ccc\u0027\u003e3\u003c/td\u003e\u003ctd style=\u0027padding:2px 8px;border:1px solid #ccc\u0027\u003eNearly every day\u003c/td\u003e\u003c/tr\u003e\u003c/table\u003e",
+          "htmlContent": "<h2 style='margin:0 0 8px'>PHQ-9 Depression Screening</h2><p>Over the <strong>last 2 weeks</strong>, how often have you been bothered by any of the following problems?</p><table style='font-size:12px;border-collapse:collapse;width:100%'><tr><td style='padding:2px 8px;border:1px solid #ccc'>0</td><td style='padding:2px 8px;border:1px solid #ccc'>Not at all</td><td style='padding:2px 8px;border:1px solid #ccc'>1</td><td style='padding:2px 8px;border:1px solid #ccc'>Several days</td><td style='padding:2px 8px;border:1px solid #ccc'>2</td><td style='padding:2px 8px;border:1px solid #ccc'>More than half the days</td><td style='padding:2px 8px;border:1px solid #ccc'>3</td><td style='padding:2px 8px;border:1px solid #ccc'>Nearly every day</td></tr></table>",
           "iframeHeight": 130
         },
         {
@@ -159,7 +159,7 @@
             {
               "id": "phq-q6",
               "fieldType": "radio",
-              "question": "6. Feeling bad about yourself â€” or feeling like a failure or that you have let yourself or your family down",
+              "question": "6. Feeling bad about yourself — or feeling like a failure or that you have let yourself or your family down",
               "required": true,
               "options": [
                 {
@@ -215,7 +215,7 @@
             {
               "id": "phq-q8",
               "fieldType": "radio",
-              "question": "8. Moving or speaking so slowly that other people could have noticed â€” or being so fidgety or restless that you have been moving around much more than usual",
+              "question": "8. Moving or speaking so slowly that other people could have noticed — or being so fidgety or restless that you have been moving around much more than usual",
               "required": true,
               "options": [
                 {
@@ -312,7 +312,7 @@
             {
               "id": "phq-score-display",
               "fieldType": "html",
-              "htmlContent": "\u003ctable style=\u0027font-size:13px;border-collapse:collapse;width:100%\u0027\u003e\u003cthead\u003e\u003ctr style=\u0027background:#f1f5f9\u0027\u003e\u003cth style=\u0027padding:6px 10px;border:1px solid #cbd5e1;text-align:left\u0027\u003eTotal Score\u003c/th\u003e\u003cth style=\u0027padding:6px 10px;border:1px solid #cbd5e1;text-align:left\u0027\u003eDepression Severity\u003c/th\u003e\u003c/tr\u003e\u003c/thead\u003e\u003ctbody\u003e\u003ctr\u003e\u003ctd style=\u0027padding:5px 10px;border:1px solid #e2e8f0\u0027\u003e1â€“4\u003c/td\u003e\u003ctd style=\u0027padding:5px 10px;border:1px solid #e2e8f0\u0027\u003eMinimal\u003c/td\u003e\u003c/tr\u003e\u003ctr\u003e\u003ctd style=\u0027padding:5px 10px;border:1px solid #e2e8f0\u0027\u003e5â€“9\u003c/td\u003e\u003ctd style=\u0027padding:5px 10px;border:1px solid #e2e8f0\u0027\u003eMild\u003c/td\u003e\u003c/tr\u003e\u003ctr\u003e\u003ctd style=\u0027padding:5px 10px;border:1px solid #e2e8f0\u0027\u003e10â€“14\u003c/td\u003e\u003ctd style=\u0027padding:5px 10px;border:1px solid #e2e8f0\u0027\u003eModerate\u003c/td\u003e\u003c/tr\u003e\u003ctr\u003e\u003ctd style=\u0027padding:5px 10px;border:1px solid #e2e8f0\u0027\u003e15â€“19\u003c/td\u003e\u003ctd style=\u0027padding:5px 10px;border:1px solid #e2e8f0\u0027\u003eModerately severe\u003c/td\u003e\u003c/tr\u003e\u003ctr\u003e\u003ctd style=\u0027padding:5px 10px;border:1px solid #e2e8f0\u0027\u003e20â€“27\u003c/td\u003e\u003ctd style=\u0027padding:5px 10px;border:1px solid #e2e8f0\u0027\u003eSevere\u003c/td\u003e\u003c/tr\u003e\u003c/tbody\u003e\u003c/table\u003e\u003cp style=\u0027font-size:12px;color:#64748b;margin-top:8px\u0027\u003eScore is the sum of responses to questions 1â€“9. Your clinician will review the results.\u003c/p\u003e",
+              "htmlContent": "<table style='font-size:13px;border-collapse:collapse;width:100%'><thead><tr style='background:#f1f5f9'><th style='padding:6px 10px;border:1px solid #cbd5e1;text-align:left'>Total Score</th><th style='padding:6px 10px;border:1px solid #cbd5e1;text-align:left'>Depression Severity</th></tr></thead><tbody><tr><td style='padding:5px 10px;border:1px solid #e2e8f0'>1–4</td><td style='padding:5px 10px;border:1px solid #e2e8f0'>Minimal</td></tr><tr><td style='padding:5px 10px;border:1px solid #e2e8f0'>5–9</td><td style='padding:5px 10px;border:1px solid #e2e8f0'>Mild</td></tr><tr><td style='padding:5px 10px;border:1px solid #e2e8f0'>10–14</td><td style='padding:5px 10px;border:1px solid #e2e8f0'>Moderate</td></tr><tr><td style='padding:5px 10px;border:1px solid #e2e8f0'>15–19</td><td style='padding:5px 10px;border:1px solid #e2e8f0'>Moderately severe</td></tr><tr><td style='padding:5px 10px;border:1px solid #e2e8f0'>20–27</td><td style='padding:5px 10px;border:1px solid #e2e8f0'>Severe</td></tr></tbody></table><p style='font-size:12px;color:#64748b;margin-top:8px'>Score is the sum of responses to questions 1–9. Your clinician will review the results.</p>",
               "iframeHeight": 230
             }
           ]

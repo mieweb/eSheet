@@ -1,4 +1,4 @@
-﻿{
+{
   "id": "js-conditions",
   "dangerouslyAllowJS": true,
   "title": "JS Conditions Test Suite",
@@ -9,13 +9,13 @@
         {
           "id": "intro",
           "fieldType": "html",
-          "htmlContent": "\u003ch2 style=\u0027margin:0 0 8px\u0027\u003eJS Conditions Test Suite\u003c/h2\u003e\u003cp\u003eTests every \u003ccode\u003econditionType: \u0027js\u0027\u003c/code\u003e pattern: comparisons, logical operators, string methods, regex, array checks, cross-field comparisons, and null guards. Fields in each section only appear when the JS condition passes.\u003c/p\u003e",
+          "htmlContent": "<h2 style='margin:0 0 8px'>JS Conditions Test Suite</h2><p>Tests every <code>conditionType: 'js'</code> pattern: comparisons, logical operators, string methods, regex, array checks, cross-field comparisons, and null guards. Fields in each section only appear when the JS condition passes.</p>",
           "iframeHeight": 100
         },
         {
           "id": "section-comparisons",
           "fieldType": "section",
-          "title": "1 â€” Simple Comparisons",
+          "title": "1 — Simple Comparisons",
           "fields": [
             {
               "id": "cmp-number",
@@ -26,7 +26,7 @@
             {
               "id": "cmp-gt10",
               "fieldType": "text",
-              "question": "âœ“ Visible when number \u003e 10",
+              "question": "✓ Visible when number > 10",
               "inputType": "string",
               "rules": [
                 {
@@ -35,7 +35,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "responses[\u0027cmp-number\u0027] \u003e 10"
+                      "expression": "responses['cmp-number'] > 10"
                     }
                   ]
                 }
@@ -44,7 +44,7 @@
             {
               "id": "cmp-gte18",
               "fieldType": "text",
-              "question": "âœ“ Visible when number \u003e= 18 (adult check)",
+              "question": "✓ Visible when number >= 18 (adult check)",
               "inputType": "string",
               "rules": [
                 {
@@ -53,7 +53,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "responses[\u0027cmp-number\u0027] \u003e= 18"
+                      "expression": "responses['cmp-number'] >= 18"
                     }
                   ]
                 }
@@ -62,7 +62,7 @@
             {
               "id": "cmp-range",
               "fieldType": "text",
-              "question": "âœ“ Visible when number is between 10 and 20 inclusive",
+              "question": "✓ Visible when number is between 10 and 20 inclusive",
               "inputType": "string",
               "rules": [
                 {
@@ -71,7 +71,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "responses[\u0027cmp-number\u0027] \u003e= 10 \u0026\u0026 responses[\u0027cmp-number\u0027] \u003c= 20"
+                      "expression": "responses['cmp-number'] >= 10 && responses['cmp-number'] <= 20"
                     }
                   ]
                 }
@@ -80,7 +80,7 @@
             {
               "id": "cmp-not100",
               "fieldType": "text",
-              "question": "âœ“ Visible when number !== 100 (negation)",
+              "question": "✓ Visible when number !== 100 (negation)",
               "inputType": "string",
               "rules": [
                 {
@@ -89,7 +89,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "responses[\u0027cmp-number\u0027] !== 100 \u0026\u0026 responses[\u0027cmp-number\u0027] !== \u0027\u0027"
+                      "expression": "responses['cmp-number'] !== 100 && responses['cmp-number'] !== ''"
                     }
                   ]
                 }
@@ -98,7 +98,7 @@
             {
               "id": "cmp-abs",
               "fieldType": "text",
-              "question": "âœ“ Visible when |number| \u003e 50 (Math.abs check)",
+              "question": "✓ Visible when |number| > 50 (Math.abs check)",
               "inputType": "string",
               "rules": [
                 {
@@ -107,7 +107,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "Math.abs(responses[\u0027cmp-number\u0027] || 0) \u003e 50"
+                      "expression": "Math.abs(responses['cmp-number'] || 0) > 50"
                     }
                   ]
                 }
@@ -118,18 +118,18 @@
         {
           "id": "section-strings",
           "fieldType": "section",
-          "title": "2 â€” String Method Conditions",
+          "title": "2 — String Method Conditions",
           "fields": [
             {
               "id": "str-input",
               "fieldType": "text",
-              "question": "Enter some text (try \u0027hello world\u0027, \u0027test@email.com\u0027, \u0027MR SMITH\u0027)",
+              "question": "Enter some text (try 'hello world', 'test@email.com', 'MR SMITH')",
               "inputType": "string"
             },
             {
               "id": "str-includes",
               "fieldType": "text",
-              "question": "âœ“ Visible when input includes \u0027world\u0027",
+              "question": "✓ Visible when input includes 'world'",
               "inputType": "string",
               "rules": [
                 {
@@ -138,7 +138,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "typeof responses[\u0027str-input\u0027] === \u0027string\u0027 \u0026\u0026 responses[\u0027str-input\u0027].includes(\u0027world\u0027)"
+                      "expression": "typeof responses['str-input'] === 'string' && responses['str-input'].includes('world')"
                     }
                   ]
                 }
@@ -147,7 +147,7 @@
             {
               "id": "str-startswith",
               "fieldType": "text",
-              "question": "âœ“ Visible when input starts with \u0027hello\u0027",
+              "question": "✓ Visible when input starts with 'hello'",
               "inputType": "string",
               "rules": [
                 {
@@ -156,7 +156,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "typeof responses[\u0027str-input\u0027] === \u0027string\u0027 \u0026\u0026 responses[\u0027str-input\u0027].toLowerCase().startsWith(\u0027hello\u0027)"
+                      "expression": "typeof responses['str-input'] === 'string' && responses['str-input'].toLowerCase().startsWith('hello')"
                     }
                   ]
                 }
@@ -165,7 +165,7 @@
             {
               "id": "str-endswith",
               "fieldType": "text",
-              "question": "âœ“ Visible when input ends with \u0027.com\u0027",
+              "question": "✓ Visible when input ends with '.com'",
               "inputType": "string",
               "rules": [
                 {
@@ -174,7 +174,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "typeof responses[\u0027str-input\u0027] === \u0027string\u0027 \u0026\u0026 responses[\u0027str-input\u0027].endsWith(\u0027.com\u0027)"
+                      "expression": "typeof responses['str-input'] === 'string' && responses['str-input'].endsWith('.com')"
                     }
                   ]
                 }
@@ -183,7 +183,7 @@
             {
               "id": "str-length",
               "fieldType": "text",
-              "question": "âœ“ Visible when input is longer than 10 characters",
+              "question": "✓ Visible when input is longer than 10 characters",
               "inputType": "string",
               "rules": [
                 {
@@ -192,7 +192,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "typeof responses[\u0027str-input\u0027] === \u0027string\u0027 \u0026\u0026 responses[\u0027str-input\u0027].length \u003e 10"
+                      "expression": "typeof responses['str-input'] === 'string' && responses['str-input'].length > 10"
                     }
                   ]
                 }
@@ -201,7 +201,7 @@
             {
               "id": "str-upper",
               "fieldType": "text",
-              "question": "âœ“ Visible when input is ALL UPPERCASE",
+              "question": "✓ Visible when input is ALL UPPERCASE",
               "inputType": "string",
               "rules": [
                 {
@@ -210,7 +210,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "typeof responses[\u0027str-input\u0027] === \u0027string\u0027 \u0026\u0026 responses[\u0027str-input\u0027].trim().length \u003e 0 \u0026\u0026 responses[\u0027str-input\u0027] === responses[\u0027str-input\u0027].toUpperCase()"
+                      "expression": "typeof responses['str-input'] === 'string' && responses['str-input'].trim().length > 0 && responses['str-input'] === responses['str-input'].toUpperCase()"
                     }
                   ]
                 }
@@ -219,7 +219,7 @@
             {
               "id": "str-regex-email",
               "fieldType": "text",
-              "question": "âœ“ Visible when input looks like an email (regex)",
+              "question": "✓ Visible when input looks like an email (regex)",
               "inputType": "string",
               "rules": [
                 {
@@ -228,7 +228,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(responses[\u0027str-input\u0027] || \u0027\u0027)"
+                      "expression": "/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(responses['str-input'] || '')"
                     }
                   ]
                 }
@@ -237,7 +237,7 @@
             {
               "id": "str-regex-zip",
               "fieldType": "text",
-              "question": "âœ“ Visible when input is a 5-digit US ZIP code",
+              "question": "✓ Visible when input is a 5-digit US ZIP code",
               "inputType": "string",
               "rules": [
                 {
@@ -246,7 +246,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "/^[0-9]{5}$/.test(responses[\u0027str-input\u0027] || \u0027\u0027)"
+                      "expression": "/^[0-9]{5}$/.test(responses['str-input'] || '')"
                     }
                   ]
                 }
@@ -257,7 +257,7 @@
         {
           "id": "section-logic",
           "fieldType": "section",
-          "title": "3 â€” Logical Operators (AND / OR / NOT)",
+          "title": "3 — Logical Operators (AND / OR / NOT)",
           "fields": [
             {
               "id": "logic-p",
@@ -274,7 +274,7 @@
             {
               "id": "logic-and",
               "fieldType": "text",
-              "question": "âœ“ Visible when P \u003e 5 AND Q \u003e 5",
+              "question": "✓ Visible when P > 5 AND Q > 5",
               "inputType": "string",
               "rules": [
                 {
@@ -283,7 +283,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "responses[\u0027logic-p\u0027] \u003e 5 \u0026\u0026 responses[\u0027logic-q\u0027] \u003e 5"
+                      "expression": "responses['logic-p'] > 5 && responses['logic-q'] > 5"
                     }
                   ]
                 }
@@ -292,7 +292,7 @@
             {
               "id": "logic-or",
               "fieldType": "text",
-              "question": "âœ“ Visible when P \u003e 5 OR Q \u003e 5",
+              "question": "✓ Visible when P > 5 OR Q > 5",
               "inputType": "string",
               "rules": [
                 {
@@ -301,7 +301,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "responses[\u0027logic-p\u0027] \u003e 5 || responses[\u0027logic-q\u0027] \u003e 5"
+                      "expression": "responses['logic-p'] > 5 || responses['logic-q'] > 5"
                     }
                   ]
                 }
@@ -310,7 +310,7 @@
             {
               "id": "logic-not",
               "fieldType": "text",
-              "question": "âœ“ Visible when NOT (P === Q)",
+              "question": "✓ Visible when NOT (P === Q)",
               "inputType": "string",
               "rules": [
                 {
@@ -319,7 +319,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "!(responses[\u0027logic-p\u0027] === responses[\u0027logic-q\u0027]) \u0026\u0026 (responses[\u0027logic-p\u0027] !== \u0027\u0027 \u0026\u0026 responses[\u0027logic-q\u0027] !== \u0027\u0027)"
+                      "expression": "!(responses['logic-p'] === responses['logic-q']) && (responses['logic-p'] !== '' && responses['logic-q'] !== '')"
                     }
                   ]
                 }
@@ -328,7 +328,7 @@
             {
               "id": "logic-xor",
               "fieldType": "text",
-              "question": "âœ“ Visible when exactly one of P, Q is \u003e 5 (XOR)",
+              "question": "✓ Visible when exactly one of P, Q is > 5 (XOR)",
               "inputType": "string",
               "rules": [
                 {
@@ -337,7 +337,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "(responses[\u0027logic-p\u0027] \u003e 5) !== (responses[\u0027logic-q\u0027] \u003e 5)"
+                      "expression": "(responses['logic-p'] > 5) !== (responses['logic-q'] > 5)"
                     }
                   ]
                 }
@@ -346,7 +346,7 @@
             {
               "id": "logic-complex",
               "fieldType": "text",
-              "question": "âœ“ Visible when (P \u003e 0 AND Q \u003e 0) AND P + Q \u003e 20",
+              "question": "✓ Visible when (P > 0 AND Q > 0) AND P + Q > 20",
               "inputType": "string",
               "rules": [
                 {
@@ -355,7 +355,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "responses[\u0027logic-p\u0027] \u003e 0 \u0026\u0026 responses[\u0027logic-q\u0027] \u003e 0 \u0026\u0026 (responses[\u0027logic-p\u0027] + responses[\u0027logic-q\u0027]) \u003e 20"
+                      "expression": "responses['logic-p'] > 0 && responses['logic-q'] > 0 && (responses['logic-p'] + responses['logic-q']) > 20"
                     }
                   ]
                 }
@@ -366,7 +366,7 @@
         {
           "id": "section-crossfield",
           "fieldType": "section",
-          "title": "4 â€” Cross-Field Comparisons",
+          "title": "4 — Cross-Field Comparisons",
           "fields": [
             {
               "id": "cf-start",
@@ -383,7 +383,7 @@
             {
               "id": "cf-valid-range",
               "fieldType": "text",
-              "question": "âœ“ Visible when start \u003c end (valid range)",
+              "question": "✓ Visible when start < end (valid range)",
               "inputType": "string",
               "rules": [
                 {
@@ -392,7 +392,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "responses[\u0027cf-start\u0027] !== \u0027\u0027 \u0026\u0026 responses[\u0027cf-end\u0027] !== \u0027\u0027 \u0026\u0026 Number(responses[\u0027cf-start\u0027]) \u003c Number(responses[\u0027cf-end\u0027])"
+                      "expression": "responses['cf-start'] !== '' && responses['cf-end'] !== '' && Number(responses['cf-start']) < Number(responses['cf-end'])"
                     }
                   ]
                 }
@@ -401,7 +401,7 @@
             {
               "id": "cf-equal",
               "fieldType": "text",
-              "question": "âœ“ Visible when start === end",
+              "question": "✓ Visible when start === end",
               "inputType": "string",
               "rules": [
                 {
@@ -410,7 +410,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "responses[\u0027cf-start\u0027] !== \u0027\u0027 \u0026\u0026 responses[\u0027cf-end\u0027] !== \u0027\u0027 \u0026\u0026 Number(responses[\u0027cf-start\u0027]) === Number(responses[\u0027cf-end\u0027])"
+                      "expression": "responses['cf-start'] !== '' && responses['cf-end'] !== '' && Number(responses['cf-start']) === Number(responses['cf-end'])"
                     }
                   ]
                 }
@@ -419,7 +419,7 @@
             {
               "id": "cf-diff-big",
               "fieldType": "text",
-              "question": "âœ“ Visible when |end âˆ’ start| \u003e 100",
+              "question": "✓ Visible when |end − start| > 100",
               "inputType": "string",
               "rules": [
                 {
@@ -428,7 +428,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "Math.abs((responses[\u0027cf-end\u0027] || 0) - (responses[\u0027cf-start\u0027] || 0)) \u003e 100"
+                      "expression": "Math.abs((responses['cf-end'] || 0) - (responses['cf-start'] || 0)) > 100"
                     }
                   ]
                 }
@@ -439,7 +439,7 @@
         {
           "id": "section-nullguard",
           "fieldType": "section",
-          "title": "5 â€” Null / Empty Guards",
+          "title": "5 — Null / Empty Guards",
           "fields": [
             {
               "id": "ng-optional",
@@ -450,7 +450,7 @@
             {
               "id": "ng-truthy",
               "fieldType": "text",
-              "question": "âœ“ Visible when optional field is truthy (non-empty)",
+              "question": "✓ Visible when optional field is truthy (non-empty)",
               "inputType": "string",
               "rules": [
                 {
@@ -459,7 +459,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "!!responses[\u0027ng-optional\u0027]"
+                      "expression": "!!responses['ng-optional']"
                     }
                   ]
                 }
@@ -468,7 +468,7 @@
             {
               "id": "ng-empty",
               "fieldType": "text",
-              "question": "âœ“ Visible when optional field IS empty",
+              "question": "✓ Visible when optional field IS empty",
               "inputType": "string",
               "rules": [
                 {
@@ -477,7 +477,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "!responses[\u0027ng-optional\u0027] || responses[\u0027ng-optional\u0027] === \u0027\u0027"
+                      "expression": "!responses['ng-optional'] || responses['ng-optional'] === ''"
                     }
                   ]
                 }
@@ -486,7 +486,7 @@
             {
               "id": "ng-bad-js",
               "fieldType": "text",
-              "question": "âœ“ This field has BROKEN JS condition â€” should stay hidden (graceful fail)",
+              "question": "✓ This field has BROKEN JS condition — should stay hidden (graceful fail)",
               "inputType": "string",
               "rules": [
                 {
@@ -504,7 +504,7 @@
             {
               "id": "ng-throw",
               "fieldType": "text",
-              "question": "âœ“ This field throws inside JS â€” should stay hidden (graceful fail)",
+              "question": "✓ This field throws inside JS — should stay hidden (graceful fail)",
               "inputType": "string",
               "rules": [
                 {
@@ -513,7 +513,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "(function(){ throw new Error(\u0027deliberate\u0027); })()"
+                      "expression": "(function(){ throw new Error('deliberate'); })()"
                     }
                   ]
                 }
@@ -524,7 +524,7 @@
         {
           "id": "section-array",
           "fieldType": "section",
-          "title": "6 â€” Array / Inclusion Checks",
+          "title": "6 — Array / Inclusion Checks",
           "fields": [
             {
               "id": "arr-choice",
@@ -556,7 +556,7 @@
             {
               "id": "arr-in-set",
               "fieldType": "text",
-              "question": "âœ“ Visible when choice is Alpha or Beta (Array.includes)",
+              "question": "✓ Visible when choice is Alpha or Beta (Array.includes)",
               "inputType": "string",
               "rules": [
                 {
@@ -565,7 +565,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "[\u0027alpha\u0027, \u0027beta\u0027].includes(responses[\u0027arr-choice\u0027])"
+                      "expression": "['alpha', 'beta'].includes(responses['arr-choice'])"
                     }
                   ]
                 }
@@ -574,7 +574,7 @@
             {
               "id": "arr-not-in-set",
               "fieldType": "text",
-              "question": "âœ“ Visible when choice is NOT in [alpha, gamma]",
+              "question": "✓ Visible when choice is NOT in [alpha, gamma]",
               "inputType": "string",
               "rules": [
                 {
@@ -583,7 +583,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "![\u0027alpha\u0027, \u0027gamma\u0027].includes(responses[\u0027arr-choice\u0027])"
+                      "expression": "!['alpha', 'gamma'].includes(responses['arr-choice'])"
                     }
                   ]
                 }
@@ -594,12 +594,12 @@
         {
           "id": "section-effects",
           "fieldType": "section",
-          "title": "7 â€” All Three Effects (visible / enable / required)",
+          "title": "7 — All Three Effects (visible / enable / required)",
           "fields": [
             {
               "id": "eff-gate",
               "fieldType": "slider",
-              "question": "Gate value (0â€“10)",
+              "question": "Gate value (0–10)",
               "options": [
                 {
                   "id": "eff-g-0",
@@ -661,7 +661,7 @@
             {
               "id": "eff-visible",
               "fieldType": "text",
-              "question": "effect: visible â€” shown only when gate \u003e 3",
+              "question": "effect: visible — shown only when gate > 3",
               "inputType": "string",
               "rules": [
                 {
@@ -670,7 +670,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "responses[\u0027eff-gate\u0027] \u003e 3"
+                      "expression": "responses['eff-gate'] > 3"
                     }
                   ]
                 }
@@ -679,7 +679,7 @@
             {
               "id": "eff-enabled",
               "fieldType": "text",
-              "question": "effect: enable â€” interactive only when gate \u003e 6 (otherwise disabled)",
+              "question": "effect: enable — interactive only when gate > 6 (otherwise disabled)",
               "inputType": "string",
               "rules": [
                 {
@@ -688,7 +688,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "responses[\u0027eff-gate\u0027] \u003e 6"
+                      "expression": "responses['eff-gate'] > 6"
                     }
                   ]
                 }
@@ -697,7 +697,7 @@
             {
               "id": "eff-required",
               "fieldType": "text",
-              "question": "effect: required â€” mandatory when gate === 10",
+              "question": "effect: required — mandatory when gate === 10",
               "inputType": "string",
               "rules": [
                 {
@@ -706,7 +706,7 @@
                   "conditions": [
                     {
                       "conditionType": "js",
-                      "expression": "responses[\u0027eff-gate\u0027] === 10"
+                      "expression": "responses['eff-gate'] === 10"
                     }
                   ]
                 }

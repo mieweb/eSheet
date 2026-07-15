@@ -1,4 +1,4 @@
-﻿{
+{
   "id": "nps",
   "title": "Net Promoter Score Survey",
   "pages": [
@@ -8,7 +8,7 @@
         {
           "id": "nps-intro",
           "fieldType": "html",
-          "htmlContent": "\u003ch2 style=\u0027margin:0 0 8px\u0027\u003eHow are we doing?\u003c/h2\u003e\u003cp\u003eYour feedback helps us improve. This survey takes less than 2 minutes.\u003c/p\u003e",
+          "htmlContent": "<h2 style='margin:0 0 8px'>How are we doing?</h2><p>Your feedback helps us improve. This survey takes less than 2 minutes.</p>",
           "iframeHeight": 80
         },
         {
@@ -84,7 +84,7 @@
         {
           "id": "section-promoter",
           "fieldType": "section",
-          "title": "Great to hear! ðŸŽ‰",
+          "title": "Great to hear! 🎉",
           "rules": [
             {
               "effect": "visible",
@@ -92,7 +92,7 @@
               "conditions": [
                 {
                   "conditionType": "expression",
-                  "expression": "{nps-score} \u003e= 9"
+                  "expression": "{nps-score} >= 9"
                 }
               ]
             }
@@ -101,7 +101,7 @@
             {
               "id": "nps-promoter-reason",
               "fieldType": "longtext",
-              "question": "What\u0027s the main reason for your high score? We\u0027d love to share your story."
+              "question": "What's the main reason for your high score? We'd love to share your story."
             },
             {
               "id": "nps-promoter-feature",
@@ -148,7 +148,7 @@
               "conditions": [
                 {
                   "conditionType": "expression",
-                  "expression": "{nps-score} \u003e= 7 \u0026\u0026 {nps-score} \u003c= 8"
+                  "expression": "{nps-score} >= 7 && {nps-score} <= 8"
                 }
               ]
             }
@@ -196,7 +196,7 @@
         {
           "id": "section-detractor",
           "fieldType": "section",
-          "title": "We\u0027re sorry to hear that",
+          "title": "We're sorry to hear that",
           "rules": [
             {
               "effect": "visible",
@@ -204,7 +204,7 @@
               "conditions": [
                 {
                   "conditionType": "expression",
-                  "expression": "{nps-score} \u003c= 6"
+                  "expression": "{nps-score} <= 6"
                 }
               ]
             }
@@ -213,7 +213,7 @@
             {
               "id": "nps-detractor-reason",
               "fieldType": "longtext",
-              "question": "What\u0027s the main reason for your score? Please be as specific as you can."
+              "question": "What's the main reason for your score? Please be as specific as you can."
             },
             {
               "id": "nps-detractor-issue",

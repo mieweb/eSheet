@@ -114,6 +114,11 @@ function DraggableFieldItem({
   const handleRef = React.useRef<HTMLDivElement | null>(null);
   const field = form.getState().getField(id);
 
+  // True when parentId refers to a section field (in normalized.byId), not a page.
+  const parentIsSectionField = parentId
+    ? !!form.getState().normalized.byId[parentId]
+    : false;
+
   const handleSelectOverride = React.useCallback(
     (e: React.MouseEvent) => {
       if (!parentId) return;
@@ -152,9 +157,11 @@ function DraggableFieldItem({
         dragHandleRef={handleRef}
         forceExpandVersion={forceExpandVersion}
         forceCollapseVersion={forceCollapseVersion}
-        isSelectedOverride={parentId ? isActiveChild : undefined}
-        onSelectOverride={parentId ? handleSelectOverride : undefined}
-        selectedVariant={parentId ? 'nested' : 'default'}
+        isSelectedOverride={parentIsSectionField ? isActiveChild : undefined}
+        onSelectOverride={
+          parentIsSectionField ? handleSelectOverride : undefined
+        }
+        selectedVariant={parentIsSectionField ? 'nested' : 'default'}
         computedValue={computedValue}
       >
         {(props) => {
