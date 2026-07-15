@@ -11,11 +11,11 @@ This matches the URL layout used by the Nginx atomic deployment.
 
 Configure the Cloudflare Pages project from the repository root with these settings:
 
-| Setting | Value |
-| --- | --- |
-| Build command | `npm run build:cf` |
-| Build output directory | `dist` |
-| Root directory | Repository root |
+| Setting                | Value              |
+| ---------------------- | ------------------ |
+| Build command          | `npm run build:cf` |
+| Build output directory | `dist`             |
+| Root directory         | Repository root    |
 
 The Cloudflare build script defaults the production origin to the Cloudflare custom domain. You can set `ESHEET_SITE_ORIGIN` explicitly to the same value, without a trailing slash:
 
