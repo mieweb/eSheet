@@ -1,10 +1,12 @@
 import React from 'react';
-import type { FormStore, UIStore } from '@esheet/core';
+import type { CollabDecorations, FormStore, UIStore } from '@esheet/core';
 import { FieldNode } from './FieldNode.js';
 
 export interface RendererBodyProps {
   form: FormStore;
   ui: UIStore;
+  /** Optional host-supplied collaboration decorations (see EsheetRendererProps). */
+  collab?: CollabDecorations;
 }
 
 /**
@@ -14,7 +16,7 @@ export interface RendererBodyProps {
  * Only renders fields where isVisible() returns true.
  * Sections recursively render their visible children.
  */
-export function RendererBody({ form, ui }: RendererBodyProps) {
+export function RendererBody({ form, ui, collab }: RendererBodyProps) {
   // Subscribe to form state for visibility updates and responses
   const normalized = React.useSyncExternalStore(
     (cb) => form.subscribe(cb),
@@ -67,7 +69,7 @@ export function RendererBody({ form, ui }: RendererBodyProps) {
   return (
     <div className="canvas-fields renderer-body ms:space-y-0">
       {visibleRootIds.map((id) => (
-        <FieldNode key={id} id={id} form={form} ui={ui} />
+        <FieldNode key={id} id={id} form={form} ui={ui} collab={collab} />
       ))}
     </div>
   );

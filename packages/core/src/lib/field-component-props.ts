@@ -43,3 +43,45 @@ export interface FieldComponentProps {
   /** Set this field's response value. */
   onResponse: (response: FieldResponse) => void;
 }
+
+// ---------------------------------------------------------------------------
+// CollabDecorations — optional, host-supplied collaboration decorations
+// (presence + change proposals) that the renderer displays per field. eSheet
+// stays transport-agnostic: the host owns the collaboration machinery and
+// hands the renderer plain data plus callbacks.
+// ---------------------------------------------------------------------------
+
+/** A collaborator currently focused on a field. */
+export interface FieldPresence {
+  name: string;
+  color: string;
+}
+
+/** A pending change proposal targeting one field. */
+export interface FieldProposal {
+  id: string;
+  proposedValue: unknown;
+  baseValue?: unknown;
+  actor: string;
+  status: string;
+  /** Present when the canonical value changed after the proposal was made. */
+  conflict?: { currentValue: unknown };
+}
+
+/** Host-supplied decorations rendered by `EsheetRenderer` (all optional). */
+export interface CollabDecorations {
+  /** Collaborators focused per field id — rendered as colored presence dots. */
+  presenceByField?: Record<string, FieldPresence[]>;
+  /** Open proposals per field id — rendered as an adornment under the field. */
+  proposalsByField?: Record<string, FieldProposal[]>;
+  /** When true, Accept / Reject buttons are shown on proposal adornments. */
+  canResolve?: boolean;
+  /** Called when the user resolves a proposal from an adornment. */
+  onProposalAction?: (
+    fieldId: string,
+    proposalId: string,
+    action: 'accept' | 'accept-anyway' | 'reject'
+  ) => void;
+  /** Renders proposed/current values for display. Defaults to `String(value)`. */
+  formatValue?: (value: unknown) => string;
+}

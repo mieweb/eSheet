@@ -5,6 +5,7 @@ import {
   normalizeResponses,
   hydrateDefinition,
   validateForm,
+  type CollabDecorations,
   type FormResponse,
   type FormStore,
   type UIStore,
@@ -73,6 +74,12 @@ export interface EsheetRendererProps {
    * Useful for syncing external UI with the renderer's touch state.
    */
   onTouchModeChange?: (enabled: boolean) => void;
+  /**
+   * Optional host-supplied collaboration decorations (presence dots and
+   * change-proposal adornments per field). The renderer only displays what
+   * it is given — the host owns the collaboration transport.
+   */
+  collab?: CollabDecorations;
 }
 
 // ---------------------------------------------------------------------------
@@ -217,6 +224,7 @@ const EsheetRendererInner = React.forwardRef<
     touchMode,
     onTouchModeChange,
     allowDangerousJS = false,
+    collab,
   },
   ref
 ) {
@@ -355,7 +363,7 @@ const EsheetRendererInner = React.forwardRef<
   return (
     <div className={rootClasses}>
       <ZodIssuesPanel issues={validationErrors} />
-      <RendererBody form={formStore} ui={uiStore} />
+      <RendererBody form={formStore} ui={uiStore} collab={collab} />
       {onSubmit && (
         <div className="renderer-submit ms:mt-6 ms:flex ms:justify-end">
           <button
