@@ -9,7 +9,7 @@ describe('normalizeDefinition', () => {
   it('should return empty result for empty fields', () => {
     const result = normalizeDefinition([]);
     expect(result.byId).toEqual({});
-    expect(result.rootIds).toEqual([]);
+    expect(result.pages).toEqual([]);
   });
 
   it('should flatten top-level fields into byId', () => {
@@ -18,9 +18,9 @@ describe('normalizeDefinition', () => {
       { id: 'q2', fieldType: 'radio', question: 'Agree?' },
     ];
 
-    const result = normalizeDefinition(fields);
+    const result = normalizeDefinition([{ id: 'page-1', fields }]);
 
-    expect(result.rootIds).toEqual(['q1', 'q2']);
+    expect(result.pages[0].fieldIds).toEqual(['q1', 'q2']);
     expect(Object.keys(result.byId)).toHaveLength(2);
     expect(result.byId['q1'].definition.fieldType).toBe('text');
     expect(result.byId['q2'].definition.fieldType).toBe('radio');
@@ -29,7 +29,7 @@ describe('normalizeDefinition', () => {
   it('should set parentId to null for top-level fields', () => {
     const fields: FieldDefinition[] = [{ id: 'q1', fieldType: 'text' }];
 
-    const result = normalizeDefinition(fields);
+    const result = normalizeDefinition([{ id: 'page-1', fields }]);
     expect(result.byId['q1'].parentId).toBeNull();
   });
 
@@ -40,7 +40,7 @@ describe('normalizeDefinition', () => {
       { id: 'c', fieldType: 'text' },
     ];
 
-    const result = normalizeDefinition(fields);
+    const result = normalizeDefinition([{ id: 'page-1', fields }]);
     expect(result.byId['a'].index).toBe(0);
     expect(result.byId['b'].index).toBe(1);
     expect(result.byId['c'].index).toBe(2);
@@ -49,7 +49,7 @@ describe('normalizeDefinition', () => {
   it('should set childIds to empty for non-section fields', () => {
     const fields: FieldDefinition[] = [{ id: 'q1', fieldType: 'text' }];
 
-    const result = normalizeDefinition(fields);
+    const result = normalizeDefinition([{ id: 'page-1', fields }]);
     expect(result.byId['q1'].childIds).toEqual([]);
   });
 
@@ -66,7 +66,7 @@ describe('normalizeDefinition', () => {
       },
     ];
 
-    const result = normalizeDefinition(fields);
+    const result = normalizeDefinition([{ id: 'page-1', fields }]);
 
     // Section and its children are all in byId
     expect(Object.keys(result.byId)).toHaveLength(3);
@@ -87,7 +87,7 @@ describe('normalizeDefinition', () => {
       },
     ];
 
-    const result = normalizeDefinition(fields);
+    const result = normalizeDefinition([{ id: 'page-1', fields }]);
     expect(result.byId['s1'].childIds).toEqual(['q1', 'q2']);
   });
 
@@ -100,11 +100,11 @@ describe('normalizeDefinition', () => {
       },
     ];
 
-    const result = normalizeDefinition(fields);
+    const result = normalizeDefinition([{ id: 'page-1', fields }]);
     expect(result.byId['q1'].parentId).toBe('s1');
   });
 
-  it('should only include top-level IDs in rootIds', () => {
+  it('should only include top-level IDs in fieldIds', () => {
     const fields: FieldDefinition[] = [
       { id: 'q0', fieldType: 'text' },
       {
@@ -115,8 +115,8 @@ describe('normalizeDefinition', () => {
       { id: 'q2', fieldType: 'text' },
     ];
 
-    const result = normalizeDefinition(fields);
-    expect(result.rootIds).toEqual(['q0', 's1', 'q2']);
+    const result = normalizeDefinition([{ id: 'page-1', fields }]);
+    expect(result.pages[0].fieldIds).toEqual(['q0', 's1', 'q2']);
   });
 
   it('should strip the fields property from section definitions', () => {
@@ -129,7 +129,7 @@ describe('normalizeDefinition', () => {
       },
     ];
 
-    const result = normalizeDefinition(fields);
+    const result = normalizeDefinition([{ id: 'page-1', fields }]);
     expect(result.byId['s1'].definition).not.toHaveProperty('fields');
     expect((result.byId['s1'].definition as SectionFieldDefinition).title).toBe(
       'Section'
@@ -151,10 +151,10 @@ describe('normalizeDefinition', () => {
       },
     ];
 
-    const result = normalizeDefinition(fields);
+    const result = normalizeDefinition([{ id: 'page-1', fields }]);
 
     expect(Object.keys(result.byId)).toHaveLength(3);
-    expect(result.rootIds).toEqual(['outer']);
+    expect(result.pages[0].fieldIds).toEqual(['outer']);
 
     expect(result.byId['outer'].childIds).toEqual(['inner']);
     expect(result.byId['outer'].parentId).toBeNull();
@@ -171,14 +171,14 @@ describe('normalizeDefinition', () => {
       { id: 's1', fieldType: 'section', fields: [] },
     ];
 
-    const result = normalizeDefinition(fields);
+    const result = normalizeDefinition([{ id: 'page-1', fields }]);
     expect(result.byId['s1'].childIds).toEqual([]);
   });
 
   it('should handle section with no fields property', () => {
     const fields: FieldDefinition[] = [{ id: 's1', fieldType: 'section' }];
 
-    const result = normalizeDefinition(fields);
+    const result = normalizeDefinition([{ id: 'page-1', fields }]);
     expect(result.byId['s1'].childIds).toEqual([]);
   });
 
@@ -195,7 +195,7 @@ describe('normalizeDefinition', () => {
       },
     ];
 
-    const result = normalizeDefinition(fields);
+    const result = normalizeDefinition([{ id: 'page-1', fields }]);
     expect(result.byId['a'].index).toBe(0);
     expect(result.byId['b'].index).toBe(1);
     expect(result.byId['c'].index).toBe(2);
@@ -213,7 +213,7 @@ describe('normalizeDefinition', () => {
       },
     ];
 
-    const result = normalizeDefinition(fields);
+    const result = normalizeDefinition([{ id: 'page-1', fields }]);
     const def = result.byId['q1'].definition as TextFieldDefinition;
     expect(def.question).toBe('Name?');
     expect(def.required).toBe(true);

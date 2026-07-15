@@ -16,7 +16,7 @@ function def(
 }
 
 function norm(fields: FieldDefinition[]) {
-  return normalizeDefinition(fields);
+  return normalizeDefinition([{ id: 'test-page', fields }]);
 }
 
 function requiredRule(targetId: string, expected: string): ConditionalRule {

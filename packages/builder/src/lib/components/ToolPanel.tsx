@@ -72,14 +72,18 @@ export const ToolPanel = React.memo(function ToolPanel(_props: ToolPanelProps) {
   const selectedField = selectedFieldId
     ? normalized.byId[selectedFieldId]
     : undefined;
-  const selectedSectionId =
+  // Only sections act as explicit containers in the badge — pages are automatic.
+  const selectedContainerId =
     selectedField?.definition.fieldType === 'section'
       ? selectedFieldId
       : undefined;
-  const selectedSectionLabel = selectedSectionId
+  const selectedContainerType = selectedContainerId
+    ? selectedField?.definition.fieldType
+    : undefined;
+  const selectedContainerLabel = selectedContainerId
     ? (selectedField?.definition as { title?: string })?.title ||
       selectedField?.definition.id ||
-      selectedSectionId
+      selectedContainerId
     : null;
 
   const categories = React.useMemo(buildCategories, []);
@@ -114,21 +118,34 @@ export const ToolPanel = React.memo(function ToolPanel(_props: ToolPanelProps) {
   const handleAdd = React.useCallback(
     (type: string) => {
       const curSelectedId = _ui.getState().selectedFieldId;
-      const curSelectedField = curSelectedId
-        ? _form.getState().getField(curSelectedId)
+      const curChildId = _ui.getState().selectedFieldChildId;
+      // The effective selection is the child field when one is active
+      // (e.g. a section inside a page is selectedFieldChild, not selectedField)
+      const effectiveId = curChildId ?? curSelectedId;
+      const effectiveField = effectiveId
+        ? _form.getState().getField(effectiveId)
         : undefined;
-      const sectionParentId =
-        curSelectedField?.definition.fieldType === 'section'
-          ? curSelectedId
-          : undefined;
+      const effectiveFieldType = effectiveField?.definition.fieldType;
 
-      const newId = formApi.addField(
-        type as FieldType,
-        sectionParentId ? { parentId: sectionParentId } : undefined
-      );
+      // Determine page and parent for the new field.
+      // Sections go at page root; other fields go inside the active section if one is selected.
+      const activePageId = _ui.getState().activePagesId ?? undefined;
+      let parentId: string | undefined;
+      if (type === 'section') {
+        // Sections always go at page root — no section parent
+      } else if (effectiveFieldType === 'section') {
+        parentId = effectiveId ?? undefined;
+      }
+
+      const newId = formApi.addField(type as Exclude<FieldType, 'pages'>, {
+        pageId: activePageId,
+        ...(parentId && { parentId }),
+      });
       if (newId) {
-        if (sectionParentId) {
-          selectFieldChild(sectionParentId, newId);
+        if (effectiveFieldType === 'section' && parentId) {
+          // Keep the section selected as the active insertion context so
+          // subsequent adds continue to target the same section.
+          selectFieldChild(parentId, newId);
         } else {
           selectField(newId);
         }
@@ -146,17 +163,19 @@ export const ToolPanel = React.memo(function ToolPanel(_props: ToolPanelProps) {
           <span>Tools</span>
           <span
             className={`ms:inline-flex ms:min-w-0 ms:max-w-[120px] ms:flex-shrink ms:items-center ms:gap-1 ms:rounded-full ms:px-2.5 ms:py-1 ms:text-[11px] ms:font-medium ${
-              selectedSectionId
+              selectedContainerId
                 ? 'ms:bg-msprimary/10 ms:text-msprimary'
                 : 'ms:bg-msbackgroundsecondary ms:text-mstextmuted'
             }`}
             title={
-              selectedSectionId
-                ? `Adding into section: ${selectedSectionLabel ?? ''}`
+              selectedContainerId
+                ? `Adding into ${selectedContainerType}: ${
+                    selectedContainerLabel ?? ''
+                  }`
                 : 'Adding into root'
             }
           >
-            {selectedSectionId ? (
+            {selectedContainerId ? (
               <>
                 <button
                   type="button"
@@ -167,9 +186,9 @@ export const ToolPanel = React.memo(function ToolPanel(_props: ToolPanelProps) {
                 >
                   <span className="ms:inline-flex ms:h-1.5 ms:w-1.5 ms:rounded-full ms:bg-msprimary" />
                   <span className="ms:min-w-0 ms:flex-shrink ms:truncate">
-                    {(selectedSectionLabel ?? '').length > 12
-                      ? `${(selectedSectionLabel ?? '').slice(0, 12)}…`
-                      : selectedSectionLabel}
+                    {(selectedContainerLabel ?? '').length > 12
+                      ? `${(selectedContainerLabel ?? '').slice(0, 12)}…`
+                      : selectedContainerLabel}
                   </span>
                 </button>
                 <button

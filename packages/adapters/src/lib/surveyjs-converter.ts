@@ -634,8 +634,6 @@ function convertElement(
 export function convertSurveyJSToESheet(
   survey: SurveyJSSchema
 ): FormDefinition {
-  const fields: FieldDefinition[] = [];
-
   // Collect survey-level metadata for round-trip fidelity
   const surveyMeta: SurveyJSSchemaMeta = {};
   if (survey.locale !== undefined) surveyMeta.locale = survey.locale;
@@ -657,47 +655,43 @@ export function convertSurveyJSToESheet(
   if (survey.triggers !== undefined) surveyMeta.triggers = survey.triggers;
   const hasSurveyMeta = Object.keys(surveyMeta).length > 0;
 
-  // Handle pages (convert each page to a section)
-  if (survey.pages && survey.pages.length > 0) {
-    for (const page of survey.pages) {
-      if (!page.elements || page.elements.length === 0) continue;
-
-      // If only one page, flatten elements directly
-      if (survey.pages.length === 1) {
-        fields.push(...page.elements.map((el) => convertElement(el)));
-      } else {
-        // Multiple pages become sections — prefix with "page-" to avoid
-        // collisions when a page name matches one of its element names.
-        const sectionId =
-          'page-' + toKebabCase(page.name ?? page.title ?? 'page');
-        const sectionAncestors = new Set([sectionId]);
-        fields.push({
-          id: sectionId,
-          fieldType: 'section',
-          question: '',
-          required: false,
-          rules: [],
-          title: page.title ?? page.name ?? 'Section',
-          fields: page.elements.map((el) =>
-            convertElement(el, sectionAncestors)
-          ),
-        });
-      }
-    }
-  }
-
-  // Handle top-level elements (no pages)
-  if (survey.elements) {
-    fields.push(...survey.elements.map((el) => convertElement(el)));
-  }
-
-  return {
+  const base = {
     id: toKebabCase(survey.title ?? 'form'),
     title: survey.title ?? 'Untitled Form',
     description: survey.description,
-    fields,
     ...(hasSurveyMeta ? { _sourceData: { surveyMeta } } : {}),
   };
+
+  // Map SurveyJS pages directly to eSheet pages.
+  if (survey.pages && survey.pages.length > 0) {
+    const pages = survey.pages
+      .filter((page) => page.elements && page.elements.length > 0)
+      .map((page, i) => {
+        const pageId = toKebabCase(page.name ?? page.title ?? `page-${i + 1}`);
+        const pageAncestors = new Set([pageId]);
+        return {
+          id: pageId,
+          ...(page.title ? { title: page.title } : {}),
+          fields: page.elements!.map((el) => convertElement(el, pageAncestors)),
+        };
+      });
+    return { ...base, pages };
+  }
+
+  // Top-level elements (no pages) — wrap in a single page.
+  if (survey.elements) {
+    return {
+      ...base,
+      pages: [
+        {
+          id: 'page-1',
+          fields: survey.elements.map((el) => convertElement(el)),
+        },
+      ],
+    };
+  }
+
+  return { ...base, pages: [] };
 }
 
 /**
@@ -909,6 +903,7 @@ function fieldToSurveyElement(field: FieldDefinition): SurveyJSElement {
  * Fields without `_sourceData` are reverse-mapped from eSheet types.
  *
  * Section fields become pages; non-section fields are placed in a single page.
+ * First-class `pages` entries are mapped directly to SurveyJS pages.
  */
 export function exportToSurveyJS(form: FormDefinition): SurveyJSSchema {
   // Restore survey-level metadata preserved during import
@@ -916,19 +911,36 @@ export function exportToSurveyJS(form: FormDefinition): SurveyJSSchema {
     (form._sourceData as { surveyMeta?: SurveyJSSchemaMeta } | null)
       ?.surveyMeta ?? {};
 
-  const hasSections = form.fields.some((f) => f.fieldType === 'section');
+  const base = {
+    title: form.title,
+    ...(form.description ? { description: form.description } : {}),
+    ...surveyMeta,
+  };
+
+  // First-class pages format — map each eSheet page directly to a SurveyJS page.
+  if (form.pages && form.pages.length > 0) {
+    const pages: SurveyJSPage[] = form.pages.map((page) => ({
+      name: page.id,
+      ...(page.title ? { title: page.title } : {}),
+      elements: (page.fields ?? []).map(fieldToSurveyElement),
+    }));
+    return { ...base, pages };
+  }
+
+  const fields = form.pages.flatMap((p) => p.fields ?? []);
+  const hasSections = fields.some((f) => f.fieldType === 'section');
 
   if (hasSections) {
     // Each top-level section becomes a page; non-section fields go into a leading page.
     const pages: SurveyJSPage[] = [];
-    const topLevelFields = form.fields.filter((f) => f.fieldType !== 'section');
+    const topLevelFields = fields.filter((f) => f.fieldType !== 'section');
     if (topLevelFields.length > 0) {
       pages.push({
         name: 'page1',
         elements: topLevelFields.map(fieldToSurveyElement),
       });
     }
-    for (const field of form.fields) {
+    for (const field of fields) {
       if (field.fieldType !== 'section') continue;
       const meta = field._sourceData as SurveyJSFieldMeta | null | undefined;
       pages.push({
@@ -937,20 +949,13 @@ export function exportToSurveyJS(form: FormDefinition): SurveyJSSchema {
         elements: (field.fields ?? []).map(fieldToSurveyElement),
       });
     }
-    return {
-      title: form.title,
-      ...(form.description ? { description: form.description } : {}),
-      ...surveyMeta,
-      pages,
-    };
+    return { ...base, pages };
   }
 
   // No sections — single page
   return {
-    title: form.title,
-    ...(form.description ? { description: form.description } : {}),
-    ...surveyMeta,
-    pages: [{ name: 'page1', elements: form.fields.map(fieldToSurveyElement) }],
+    ...base,
+    pages: [{ name: 'page1', elements: fields.map(fieldToSurveyElement) }],
   };
 }
 
@@ -984,5 +989,19 @@ export function isSurveyJSSchema(
   const hasPages = Array.isArray(v['pages']);
   const hasElements = Array.isArray(v['elements']);
   const hasESheetFields = typeof v['fields'] !== 'undefined';
-  return (hasPages || hasElements) && !hasESheetFields;
+  if ((!hasPages && !hasElements) || hasESheetFields) return false;
+  // eSheet pages contain `fields` arrays; SurveyJS pages contain `elements`.
+  // If the first page has a `fields` array, this is an eSheet pages-based schema.
+  if (hasPages) {
+    const pages = v['pages'] as unknown[];
+    const firstPage = pages[0];
+    if (
+      typeof firstPage === 'object' &&
+      firstPage !== null &&
+      Array.isArray((firstPage as Record<string, unknown>)['fields'])
+    ) {
+      return false;
+    }
+  }
+  return true;
 }

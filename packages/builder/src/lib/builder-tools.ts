@@ -11,11 +11,7 @@ import type {
   FormDefinition,
   FormStore,
 } from '@esheet/core';
-import {
-  getFieldTypeMeta,
-  getRegisteredFieldTypes,
-  hydrateDefinition,
-} from '@esheet/core';
+import { getFieldTypeMeta, getRegisteredFieldTypes } from '@esheet/core';
 
 /** Summary of a single field, suitable for AI context. */
 export interface FieldSummary {
@@ -167,18 +163,19 @@ export function createBuilderTools(form: FormStore): BuilderTools {
       }));
       form.getState().loadDefinition({
         id: form.getState().formId,
-        fields: [],
+        pages: [],
       } as unknown as FormDefinition);
       form.getState().loadDefinition({
         id: form.getState().formId,
-        fields,
+        pages: [{ id: 'page-1', fields }],
       } as unknown as FormDefinition);
       const summary = fields
         .map((f, i) => `${i + 1}. ${f.question} (${f.fieldType})`)
         .join(', ');
       return `Form generated with ${fields.length} field(s): ${summary}`;
     },
-    addField: (fieldType, opts) => form.getState().addField(fieldType, opts),
+    addField: (fieldType, opts) =>
+      form.getState().addField(fieldType as Exclude<FieldType, 'pages'>, opts),
     updateField: (fieldId, patch) =>
       form.getState().updateField(fieldId, patch),
     removeField: (fieldId) => form.getState().removeField(fieldId),
@@ -426,13 +423,7 @@ export function createBuilderTools(form: FormStore): BuilderTools {
         };
       }),
     getFieldSpec: (fieldType) => getFieldTypeMeta(fieldType),
-    getDefinition: () => {
-      const { normalized, formId } = form.getState();
-      return {
-        id: formId,
-        fields: hydrateDefinition(normalized),
-      } as FormDefinition;
-    },
+    getDefinition: () => form.getState().hydrateDefinition(),
     setFormId: (id) => form.getState().setFormId(id),
     getFormSummary: () => {
       const { normalized, formId } = form.getState();
@@ -511,7 +502,7 @@ export function createBuilderTools(form: FormStore): BuilderTools {
       return {
         formId,
         fieldCount: Object.keys(normalized.byId).length,
-        fields: normalized.rootIds.map(summarizeField),
+        fields: normalized.pages.flatMap((p) => p.fieldIds).map(summarizeField),
       };
     },
   };

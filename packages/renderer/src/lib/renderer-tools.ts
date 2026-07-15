@@ -8,8 +8,8 @@ import {
   type FormStore,
   type ValidationError,
 } from '@esheet/core';
-import { renderer } from './renderer.js';
-import type { RenderFieldNode } from './renderer.js';
+import { buildRenderTree as renderer } from '@esheet/core';
+import type { RenderFieldNode } from '@esheet/core';
 
 /** Summary of a single field, suitable for AI context. */
 export interface RendererFieldSummary {

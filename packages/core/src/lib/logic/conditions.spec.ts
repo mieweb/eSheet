@@ -69,7 +69,7 @@ function node(def: Def, index = 0): FieldNode {
 }
 
 function norm(nodes: Record<string, FieldNode>): NormalizedDefinition {
-  return { byId: nodes, rootIds: Object.keys(nodes) };
+  return { byId: nodes, pages: [] };
 }
 
 // ---------------------------------------------------------------------------

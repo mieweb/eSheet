@@ -72,27 +72,26 @@ export function importFromFhir(
   const formId =
     options?.formId ?? questionnaire.id ?? questionnaire.name ?? generateUUID();
 
-  const form: FormDefinition = {
+  const fields = questionnaire.item
+    ? questionnaire.item.map((item, index) =>
+        convertItemToField(item, `item[${index}]`, warnings, options)
+      )
+    : [];
+
+  const sourceData = extractFormMetadata(questionnaire, options);
+  if (warnings.length > 0) {
+    (
+      sourceData as { _conversionWarnings: ImportWarning[] }
+    )._conversionWarnings = warnings;
+  }
+
+  return {
     id: formId,
     title: questionnaire.title,
     description: questionnaire.description,
-    fields: [],
-    _sourceData: extractFormMetadata(questionnaire, options),
+    _sourceData: sourceData,
+    pages: [{ id: 'page-1', fields }],
   };
-
-  if (questionnaire.item) {
-    form.fields = questionnaire.item.map((item, index) =>
-      convertItemToField(item, `item[${index}]`, warnings, options)
-    );
-  }
-
-  if (warnings.length > 0) {
-    const meta = form._sourceData as FhirFormMeta;
-    (meta as { _conversionWarnings: ImportWarning[] })._conversionWarnings =
-      warnings;
-  }
-
-  return form;
 }
 
 function extractFormMetadata(
@@ -493,7 +492,7 @@ export function exportToFhir(
       ? { publisher: options?.publisher ?? sourceMeta?.publisher }
       : {}),
     ...(sourceMeta?.date ? { date: sourceMeta.date } : {}),
-    item: form.fields.map(convertFieldToItem),
+    item: form.pages.flatMap((p) => (p.fields ?? []).map(convertFieldToItem)),
   };
 
   // DTR compliance
@@ -752,7 +751,10 @@ export function exportResponseToFhir(
     ...(options.subject ? { subject: options.subject } : {}),
     ...(options.author ? { author: options.author } : {}),
     authored: new Date().toISOString(),
-    item: convertFieldsToResponseItems(form.fields, answers),
+    item: convertFieldsToResponseItems(
+      form.pages.flatMap((p) => p.fields ?? []),
+      answers
+    ),
   };
 
   return response;

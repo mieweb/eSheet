@@ -17,7 +17,10 @@ function mkField(
 }
 
 function hydrate(fields: FieldDefinition[], responses: FieldResponseMap) {
-  return hydrateResponse(normalizeDefinition(fields), responses);
+  return hydrateResponse(
+    normalizeDefinition([{ id: 'test-page', fields }]),
+    responses
+  );
 }
 
 function visibleRule(expected: string) {

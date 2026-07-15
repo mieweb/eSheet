@@ -36,18 +36,18 @@ export function EditPanel(_props: EditPanelProps) {
   } = useUiApi();
   const { normalized } = useFormApi(undefined);
 
-  // Bind field actions to the currently selected field
+  // Bind field actions to the selected field
   const { field_: selectedField_ } = useFormApi(selectedFieldId ?? undefined);
 
   // Logic tab target: when a section is selected, edit logic for the active child.
   const logicField = React.useMemo(() => {
     if (!selectedFieldId) return undefined;
-    const parent = normalized.byId[selectedFieldId];
-    if (!parent) return undefined;
-    if (parent.definition.fieldType !== 'section' || !selectedFieldChildId) {
-      return parent;
+    const node = normalized.byId[selectedFieldId];
+    if (!node) return undefined;
+    if (node.definition.fieldType === 'section' && selectedFieldChildId) {
+      return normalized.byId[selectedFieldChildId] ?? node;
     }
-    return normalized.byId[selectedFieldChildId] ?? parent;
+    return node;
   }, [normalized, selectedFieldId, selectedFieldChildId]);
 
   const activeField = selectedFieldId

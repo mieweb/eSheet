@@ -80,6 +80,27 @@ Section fields are containers that can hold other fields:
 - Sections support **recursive nesting** (sections inside sections)
 - Conditional visibility applied to a section hides all children
 
+## Sheets (Pages)
+
+The Canvas header contains a **Sheets** bar that manages the form's pages. Every form has at least one sheet; adding a second sheet activates multi-page navigation in the renderer.
+
+### Sheet controls
+
+| Control          | Description                                                                      |
+| ---------------- | -------------------------------------------------------------------------------- |
+| Tab              | Shows the page title (default: "Sheet N"). Click to switch to that page.         |
+| **+ Sheet**      | Appends a new blank page to the form.                                            |
+| **Delete sheet** | Removes the active page and all its fields. Disabled when only one page remains. |
+| Drag tab         | Drag a tab left or right to change page order.                                   |
+| Double-click tab | Edit the page title inline.                                                      |
+| ✎ pencil icon    | Opens inline title editing for the active tab.                                   |
+
+When only one sheet exists the tab bar still renders, but no navigation UI appears in the renderer.
+
+### Adding fields to a page
+
+Fields added via the ToolPanel are placed on the **currently active page** (the selected sheet tab). Switching tabs and then adding a field places it on the newly active page.
+
 ## Conditional Visibility Preview
 
 Fields with `visible` rules show/hide in real-time as you fill out the form in **Preview** mode. In **Build** mode, all fields are always shown (with a visual indicator for conditional fields where applicable).
