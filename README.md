@@ -11,8 +11,8 @@
 
 eSheet is a TypeScript-first Nx monorepo providing composable packages for embedding a visual form builder and renderer into any React application — no lock-in, no required backend.
 
-- **[Live Demo](https://esheet-demo.os.mieweb.org/)** — builder + renderer playground
-- **[Documentation](https://esheet-docs.os.mieweb.org)** — full API & usage docs
+- **[Live Demo](https://esheet.mieweb.org/demo/)** — builder + renderer playground
+- **[Documentation](https://esheet.mieweb.org/)** — full API & usage docs
 
 ---
 
@@ -208,6 +208,15 @@ chmod +x deploy/scripts/workflow/atomic-deploy.sh
 - Deploy script in repo: `deploy/scripts/workflow/atomic-deploy.sh`
 - Setup helper in repo: `deploy/scripts/manual/setup-nginx.sh`
 - Runbook in repo: `deploy/RUNBOOK-nginx-atomic.md`
+
+### Production Static Deploy (Cloudflare Pages)
+
+Cloudflare Pages publishes the same combined URL layout as the Nginx deployment:
+
+- Documentation at `/`
+- Demo at `/demo/`
+
+Use `npm run build:cf` as the build command and `dist` as the output directory. See [the Cloudflare Pages runbook](deploy/RUNBOOK-cloudflare-pages.md) for the complete project settings, environment variables, routing behavior, and verification steps.
 
 ---
 

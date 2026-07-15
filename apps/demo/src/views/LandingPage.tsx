@@ -12,11 +12,7 @@ function DemoCard({
   to: string;
 }) {
   return (
-    <Link
-      to={to}
-      reloadDocument
-      className="demo-card-link block no-underline group"
-    >
+    <Link to={to} className="demo-card-link block no-underline group">
       <Card className="demo-card h-full hover:shadow-xl hover:border-primary-500 transition-all duration-300 hover:-translate-y-1">
         <CardContent className="p-8">
           <h3 className="demo-card-title m-0 mb-3 text-2xl font-bold text-foreground group-hover:text-primary-600 transition-colors">
