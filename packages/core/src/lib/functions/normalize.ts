@@ -2,7 +2,11 @@
 // Normalization — tree → flat indexed map
 // ---------------------------------------------------------------------------
 
-import type { FieldDefinition, SectionFieldDefinition } from '../types.js';
+import type {
+  FieldDefinition,
+  PageEntry,
+  SectionFieldDefinition,
+} from '../types.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -12,7 +16,7 @@ import type { FieldDefinition, SectionFieldDefinition } from '../types.js';
 export interface FieldNode {
   /** The field definition (without nested `fields` — children are tracked via `childIds`). */
   readonly definition: FieldDefinition;
-  /** Parent section ID, or `null` for top-level fields. */
+  /** Parent section ID, or `null` for page-root fields. */
   readonly parentId: string | null;
   /** Ordered child field IDs (non-empty only for sections). */
   readonly childIds: readonly string[];
@@ -20,12 +24,21 @@ export interface FieldNode {
   readonly index: number;
 }
 
-/** The result of normalizing a field tree into a flat indexed map. */
+/** A page in the normalized form — stores ordered field IDs rather than nested definitions. */
+export interface NormalizedPage {
+  readonly id: string;
+  readonly title?: string;
+  readonly autoAdvance?: boolean;
+  /** Ordered top-level field IDs on this page. */
+  readonly fieldIds: readonly string[];
+}
+
+/** The result of normalizing a form definition into a flat indexed map. */
 export interface NormalizedDefinition {
-  /** Every field keyed by ID — sections and their children alike. */
+  /** Every field keyed by ID — sections and their children alike. Pages are NOT stored here. */
   readonly byId: Readonly<Record<string, FieldNode>>;
-  /** Ordered top-level field IDs (rendering order). */
-  readonly rootIds: readonly string[];
+  /** Ordered pages. Each page holds ordered top-level field IDs. */
+  readonly pages: readonly NormalizedPage[];
 }
 
 // ---------------------------------------------------------------------------
@@ -33,53 +46,53 @@ export interface NormalizedDefinition {
 // ---------------------------------------------------------------------------
 
 /**
- * Flatten a tree of `FieldDefinition`s into a `NormalizedDefinition`.
+ * Flatten a form's pages (and their nested fields) into a `NormalizedDefinition`.
  *
  * Every field (including section children) gets its own entry in `byId`,
- * linked by `parentId` / `childIds`. The original nested `fields` array
- * is stripped from the stored definition — use `childIds` instead.
+ * linked by `parentId` / `childIds`. Pages are stored in the `pages` array —
+ * they are not fields and do not appear in `byId`.
  *
- * @param fields - Top-level field definitions (e.g. `FormSchema.fields`).
+ * @param pages - The `pages` array from a `FormDefinition`.
  */
 export function normalizeDefinition(
-  fields: readonly FieldDefinition[]
+  pages: readonly PageEntry[]
 ): NormalizedDefinition {
   const byId: Record<string, FieldNode> = {};
-  const rootIds: string[] = [];
 
   function walk(
     defs: readonly FieldDefinition[],
     parentId: string | null
   ): string[] {
     const ids: string[] = [];
-
     for (let i = 0; i < defs.length; i++) {
       const def = defs[i];
-      // Cast to SectionFieldDefinition to destructure out the recursive `fields` array.
-      // For non-section fields the cast is safe at runtime (fields is absent/undefined).
       const { fields: children, ...rest } = def as SectionFieldDefinition;
-
       const childIds =
         def.fieldType === 'section' && Array.isArray(children)
           ? walk(children, def.id)
           : [];
-
       byId[def.id] = {
         definition: rest as FieldDefinition,
         parentId,
         childIds,
         index: i,
       };
-
       ids.push(def.id);
     }
-
     return ids;
   }
 
-  rootIds.push(...walk(fields, null));
+  const normalizedPages: NormalizedPage[] = pages.map((page) => {
+    const fieldIds = page.fields ? walk(page.fields, null) : [];
+    return {
+      id: page.id,
+      ...(page.title !== undefined && { title: page.title }),
+      ...(page.autoAdvance !== undefined && { autoAdvance: page.autoAdvance }),
+      fieldIds,
+    };
+  });
 
-  return { byId, rootIds };
+  return { byId, pages: normalizedPages };
 }
 
 // ---------------------------------------------------------------------------
@@ -87,22 +100,20 @@ export function normalizeDefinition(
 // ---------------------------------------------------------------------------
 
 /**
- * Reconstruct a tree of `FieldDefinition`s from a `NormalizedDefinition`.
+ * Reconstruct a `PageEntry[]` from a `NormalizedDefinition`.
  *
- * This is the inverse of `normalizeDefinition`. It walks `rootIds` (and
- * each section's `childIds`) to rebuild the nested `fields` arrays.
+ * This is the inverse of `normalizeDefinition`. It walks each page's `fieldIds`
+ * (and each section's `childIds`) to rebuild the nested `fields` arrays.
  *
  * @param normalized - The flat indexed form produced by `normalizeDefinition`.
  */
 export function hydrateDefinition(
   normalized: NormalizedDefinition
-): FieldDefinition[] {
+): PageEntry[] {
   function build(ids: readonly string[]): FieldDefinition[] {
     return ids.map((id) => {
       const node = normalized.byId[id];
       if (!node) return { id, fieldType: 'text' } as FieldDefinition;
-
-      // Use an intersection type to allow adding the recursive `fields` array for sections.
       const def = { ...node.definition } as FieldDefinition & {
         fields?: FieldDefinition[];
       };
@@ -113,5 +124,10 @@ export function hydrateDefinition(
     });
   }
 
-  return build(normalized.rootIds);
+  return normalized.pages.map((page) => ({
+    id: page.id,
+    ...(page.title !== undefined && { title: page.title }),
+    ...(page.autoAdvance !== undefined && { autoAdvance: page.autoAdvance }),
+    ...(page.fieldIds.length > 0 && { fields: build(page.fieldIds) }),
+  }));
 }

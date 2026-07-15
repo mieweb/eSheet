@@ -97,6 +97,7 @@ export {
   hydrateDefinition,
   type FieldNode,
   type NormalizedDefinition,
+  type NormalizedPage,
 } from './lib/functions/normalize.js';
 
 export { hydrateResponse } from './lib/functions/hydrate-response.js';
@@ -145,3 +146,10 @@ export {
 } from './lib/stores/ui-store.js';
 
 export { type FieldComponentProps } from './lib/field-component-props.js';
+
+export {
+  buildRenderTree,
+  applyComputedValues,
+  type RenderFieldNode,
+  type RenderTreeOptions,
+} from './lib/functions/render-tree.js';

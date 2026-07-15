@@ -18,7 +18,7 @@ describe('schema types', () => {
     expect(FIELD_TYPES).toContain('display');
     expect(FIELD_TYPES).toContain('file');
     expect(FIELD_TYPES).toContain('openchoice');
-    expect(FIELD_TYPES).toHaveLength(21);
+    expect(FIELD_TYPES).toHaveLength(22);
   });
 
   it('should allow constructing a valid FormDefinition', () => {
@@ -31,10 +31,10 @@ describe('schema types', () => {
     const form: FormDefinition = {
       id: 'test-form',
       title: 'Test Form',
-      fields: [field],
+      pages: [{ id: 'page-1', fields: [field] }],
     };
 
-    expect(form.fields).toHaveLength(1);
+    expect(form.pages[0].fields).toHaveLength(1);
   });
 
   it('should allow constructing a response map', () => {
@@ -80,7 +80,7 @@ describe('schema types', () => {
     const result = formDefinitionSchema.safeParse({
       id: 'comprehensive',
       unknown: true,
-      fields: [],
+      pages: [],
     });
 
     expect(result.success).toBe(false);
@@ -118,14 +118,19 @@ describe('custom field type validation', () => {
 
     const result = formDefinitionSchema.safeParse({
       id: 'form',
-      fields: [
+      pages: [
         {
-          id: 'v1',
-          fieldType: 'vitals',
-          question: 'Vitals',
-          // custom types may carry arbitrary configuration props
-          units: 'metric',
-          panels: ['bp', 'pulse'],
+          id: 'page-1',
+          fields: [
+            {
+              id: 'v1',
+              fieldType: 'vitals',
+              question: 'Vitals',
+              // custom types may carry arbitrary configuration props
+              units: 'metric',
+              panels: ['bp', 'pulse'],
+            },
+          ],
         },
       ],
     });
@@ -136,7 +141,9 @@ describe('custom field type validation', () => {
   it('should reject an unregistered field type', () => {
     const result = formDefinitionSchema.safeParse({
       id: 'form',
-      fields: [{ id: 'x1', fieldType: 'notRegistered' }],
+      pages: [
+        { id: 'page-1', fields: [{ id: 'x1', fieldType: 'notRegistered' }] },
+      ],
     });
 
     expect(result.success).toBe(false);

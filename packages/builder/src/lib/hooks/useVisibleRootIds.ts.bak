@@ -3,9 +3,9 @@ import { useStore } from 'zustand';
 import { useFormStore, useUI } from '@esheet/fields';
 
 /**
- * useVisibleRootIds — returns the page-root field IDs to render for the active page.
+ * useVisibleRootIds â€” returns the root field IDs to render.
  *
- * In build/code mode: all field IDs from the active page (via UIStore.activePagesId).
+ * In build/code mode: all root IDs.
  * In preview mode: only IDs whose visibility rules evaluate to true.
  *
  * Requires both FormStoreContext and UIContext providers.
@@ -18,20 +18,14 @@ export function useVisibleRootIds(): readonly string[] {
   const normalized = useStore(form, (s) => s.normalized);
   const responses = useStore(form, (s) => s.responses);
   const mode = useStore(ui, (s) => s.mode);
-  const activePagesId = useStore(ui, (s) => s.activePagesId);
 
   const cacheRef = React.useRef<readonly string[]>([]);
 
   return React.useMemo(() => {
-    const activePage = activePagesId
-      ? normalized.pages.find((p) => p.id === activePagesId)
-      : normalized.pages[0];
-    const fieldIds = activePage?.fieldIds ?? [];
-
     const rootIds =
       mode !== 'preview'
-        ? fieldIds
-        : fieldIds.filter((id) => form.getState().isVisible(id));
+        ? normalized.rootIds
+        : normalized.rootIds.filter((id) => form.getState().isVisible(id));
 
     const prev = cacheRef.current;
     if (
@@ -42,5 +36,5 @@ export function useVisibleRootIds(): readonly string[] {
     }
     cacheRef.current = rootIds;
     return rootIds;
-  }, [normalized, responses, mode, form, activePagesId]);
+  }, [normalized, responses, mode, form]);
 }

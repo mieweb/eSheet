@@ -32,7 +32,7 @@ function makeRule(
 
 /** Quick normalized state from a flat field list. */
 function norm(fields: FieldDefinition[]) {
-  return normalizeDefinition(fields);
+  return normalizeDefinition([{ id: 'test-page', fields }]);
 }
 
 // ---------------------------------------------------------------------------

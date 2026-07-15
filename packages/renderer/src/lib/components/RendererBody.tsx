@@ -1,5 +1,6 @@
-import React from 'react';
+﻿import React from 'react';
 import type { FormStore, UIStore } from '@esheet/core';
+import { PageNavigator } from '@esheet/fields';
 import { FieldNode } from './FieldNode.js';
 
 export interface RendererBodyProps {
@@ -8,14 +9,12 @@ export interface RendererBodyProps {
 }
 
 /**
- * RendererBody - Iterates over visible root fields and renders them
+ * RendererBody - Iterates over pages and renders visible fields.
  *
- * Respects conditional visibility logic from form store.
- * Only renders fields where isVisible() returns true.
- * Sections recursively render their visible children.
+ * Single-page forms render fields directly.
+ * Multi-page forms use PageNavigator for bottom-only Prev / X of Y / Next navigation.
  */
 export function RendererBody({ form, ui }: RendererBodyProps) {
-  // Subscribe to form state for visibility updates and responses
   const normalized = React.useSyncExternalStore(
     (cb) => form.subscribe(cb),
     () => form.getState().normalized,
@@ -27,48 +26,85 @@ export function RendererBody({ form, ui }: RendererBodyProps) {
     () => form.getState().responses
   );
 
-  // Compute visible root fields
-  const visibleRootIds = React.useMemo(() => {
-    const cache = new Map<string, boolean>();
+  const [currentPagesIdx, setCurrentPagesIdx] = React.useState(0);
 
-    const isFieldRenderable = (fieldId: string): boolean => {
-      const cached = cache.get(fieldId);
-      if (cached !== undefined) return cached;
+  const pages = normalized.pages;
 
-      const isVisible = form.getState().isVisible(fieldId);
-      if (!isVisible) {
-        cache.set(fieldId, false);
-        return false;
+  React.useEffect(() => {
+    if (pages.length > 0 && currentPagesIdx >= pages.length) {
+      setCurrentPagesIdx(pages.length - 1);
+    }
+  }, [pages.length, currentPagesIdx]);
+
+  const isMultiPage = pages.length > 1;
+
+  const handlePrev = React.useCallback(
+    () => setCurrentPagesIdx((p) => Math.max(p - 1, 0)),
+    []
+  );
+  const handleNext = React.useCallback(
+    () => setCurrentPagesIdx((p) => Math.min(p + 1, pages.length - 1)),
+    [pages.length]
+  );
+
+  const visibleFieldIds = React.useMemo(() => {
+    const page = pages[currentPagesIdx];
+    if (!page) return [];
+    return page.fieldIds.filter((id) => form.getState().isVisible(id));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form, pages, currentPagesIdx, responses]);
+
+  /**
+   * Count of hard-required visible leaf fields on the current page that have
+   * no response. Sections are traversed to find their required children.
+   * Uses getFieldErrors() — the same validation path as form submit.
+   */
+  const unfilledRequiredCount = React.useMemo(() => {
+    const { normalized } = form.getState();
+    let count = 0;
+    const walk = (ids: readonly string[]) => {
+      for (const id of ids) {
+        const node = normalized.byId[id];
+        if (!node) continue;
+        if (node.definition.fieldType === 'section') {
+          walk(node.childIds);
+        } else {
+          const errors = form.getState().getFieldErrors(id);
+          if (
+            errors.some((e) => e.severity === 'hard' && e.rule === 'required')
+          ) {
+            count += 1;
+          }
+        }
       }
-
-      const node = normalized.byId[fieldId];
-      if (!node) {
-        cache.set(fieldId, false);
-        return false;
-      }
-
-      // Non-section fields are renderable if visible
-      if (node.definition.fieldType !== 'section') {
-        cache.set(fieldId, true);
-        return true;
-      }
-
-      // Sections are renderable only if they have at least one renderable child
-      const hasRenderableChild = node.childIds.some((childId) =>
-        isFieldRenderable(childId)
-      );
-      cache.set(fieldId, hasRenderableChild);
-      return hasRenderableChild;
     };
+    const page = pages[currentPagesIdx];
+    if (page) walk(page.fieldIds);
+    return count;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form, pages, currentPagesIdx, responses]);
 
-    return normalized.rootIds.filter((id) => isFieldRenderable(id));
-  }, [form, normalized, responses]);
+  const fields = visibleFieldIds.map((id) => (
+    <FieldNode key={id} id={id} form={form} ui={ui} />
+  ));
+
+  if (!isMultiPage) {
+    return (
+      <div className="canvas-fields renderer-body ms:space-y-0">{fields}</div>
+    );
+  }
 
   return (
-    <div className="canvas-fields renderer-body ms:space-y-0">
-      {visibleRootIds.map((id) => (
-        <FieldNode key={id} id={id} form={form} ui={ui} />
-      ))}
-    </div>
+    <PageNavigator
+      currentIdx={currentPagesIdx}
+      total={pages.length}
+      onPrev={handlePrev}
+      onNext={handleNext}
+      blockedCount={unfilledRequiredCount}
+    >
+      <div className="canvas-fields renderer-body ms:space-y-0 ms:px-0">
+        {fields}
+      </div>
+    </PageNavigator>
   );
 }

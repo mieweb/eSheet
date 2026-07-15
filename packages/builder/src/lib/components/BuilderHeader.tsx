@@ -110,7 +110,8 @@ function extractExpressionFieldRefs(expression: string): string[] {
   return Array.from(refs);
 }
 
-function collectImportWarnings(fields: FieldDefinition[]): string[] {
+function collectImportWarnings(def: FormDefinition): string[] {
+  const fields = def.pages.flatMap((p) => p.fields ?? []);
   const warnings: string[] = [];
   const flat = flattenFields(fields);
   const allIds = new Set(flat.map((entry) => entry.field.id));
@@ -412,7 +413,9 @@ export function BuilderHeader({
             showFeedback(
               'success',
               'Import Successful',
-              `Loaded ${formDef.fields.length} field(s) from MCP elicitation schema.`
+              `Loaded ${
+                formDef.pages.flatMap((p) => p.fields ?? []).length
+              } field(s) from MCP elicitation schema.`
             );
             return;
           }
@@ -430,7 +433,9 @@ export function BuilderHeader({
             showFeedback(
               'success',
               'Import Successful',
-              `Loaded ${formDef.fields.length} field(s) from MCP elicitation schema.`
+              `Loaded ${
+                formDef.pages.flatMap((p) => p.fields ?? []).length
+              } field(s) from MCP elicitation schema.`
             );
             return;
           }
@@ -463,7 +468,9 @@ export function BuilderHeader({
               hasActualWarnings
                 ? 'Import Successful (with warnings)'
                 : 'Import Successful',
-              `Loaded ${formDef.fields.length} field(s) from FHIR Questionnaire.`,
+              `Loaded ${
+                formDef.pages.flatMap((p) => p.fields ?? []).length
+              } field(s) from FHIR Questionnaire.`,
               undefined,
               items.map(
                 (w) =>
@@ -477,7 +484,9 @@ export function BuilderHeader({
             showFeedback(
               'success',
               'Import Successful',
-              `Loaded ${formDef.fields.length} field(s) from FHIR Questionnaire.`
+              `Loaded ${
+                formDef.pages.flatMap((p) => p.fields ?? []).length
+              } field(s) from FHIR Questionnaire.`
             );
           }
           return;
@@ -491,7 +500,9 @@ export function BuilderHeader({
           showFeedback(
             'success',
             'Import Successful',
-            `Loaded ${formDef.fields.length} field(s) from SurveyJS schema.`
+            `Loaded ${
+              formDef.pages.flatMap((p) => p.fields ?? []).length
+            } field(s) from SurveyJS schema.`
           );
           return;
         }
@@ -515,7 +526,7 @@ export function BuilderHeader({
           return;
         }
 
-        const importWarnings = collectImportWarnings(validated.data.fields);
+        const importWarnings = collectImportWarnings(validated.data);
         if (importWarnings.length > 0) {
           const shownWarnings = importWarnings.slice(0, 10);
           showFeedback(
@@ -536,7 +547,9 @@ export function BuilderHeader({
         showFeedback(
           'success',
           'Import Successful',
-          `Loaded ${validated.data.fields.length} field(s).`
+          `Loaded ${
+            validated.data.pages.flatMap((p) => p.fields ?? []).length
+          } field(s).`
         );
       } catch {
         showFeedback(

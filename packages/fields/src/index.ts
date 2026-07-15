@@ -82,3 +82,7 @@ export {
 
 // Touch mode
 export * from './lib/touch-mode/index.js';
+
+// Page navigation
+export { PageNavigator } from './lib/PageNavigator.js';
+export type { PageNavigatorProps } from './lib/PageNavigator.js';

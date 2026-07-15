@@ -51,7 +51,7 @@ describe('EsheetBuilder', () => {
 
     function Inspector() {
       const form = useFormStore();
-      engineFields = form.getState().normalized.rootIds;
+      engineFields = form.getState().normalized.pages[0]?.fieldIds ?? [];
       return null;
     }
 
@@ -59,7 +59,12 @@ describe('EsheetBuilder', () => {
       <EsheetBuilder
         definition={{
           id: 'initial-form',
-          fields: [{ id: 'q1', fieldType: 'text', question: 'Name?' }],
+          pages: [
+            {
+              id: 'page-1',
+              fields: [{ id: 'q1', fieldType: 'text', question: 'Name?' }],
+            },
+          ],
         }}
       >
         <Inspector />
@@ -88,7 +93,7 @@ describe('EsheetBuilder', () => {
     act(() => {
       form!.getState().loadDefinition({
         id: 'change-form',
-        fields: [{ id: 'f1', fieldType: 'text' }],
+        pages: [{ id: 'page-1', fields: [{ id: 'f1', fieldType: 'text' }] }],
       });
     });
 
@@ -162,7 +167,7 @@ describe('BuilderHeader import feedback', () => {
       expect(screen.getByText('Invalid JSON file format.')).toBeTruthy();
     });
 
-    expect(form.getState().normalized.rootIds.length).toBe(0);
+    expect(form.getState().normalized.pages[0]?.fieldIds.length ?? 0).toBe(0);
   });
 
   it('shows error modal for schema-invalid import', async () => {
@@ -195,7 +200,7 @@ describe('BuilderHeader import feedback', () => {
       ).toBeTruthy();
     });
 
-    expect(form.getState().normalized.rootIds.length).toBe(0);
+    expect(form.getState().normalized.pages[0]?.fieldIds.length ?? 0).toBe(0);
   });
 
   it('blocks import when runtime-quality issues are detected', async () => {
@@ -203,17 +208,22 @@ describe('BuilderHeader import feedback', () => {
     const ui = createUIStore();
     mockFileContent = JSON.stringify({
       id: 'with-warnings',
-      fields: [
-        { id: 'a', fieldType: 'text', question: 'A' },
+      pages: [
         {
-          id: 'b',
-          fieldType: 'text',
-          question: 'B',
-          rules: [
+          id: 'page-1',
+          fields: [
+            { id: 'a', fieldType: 'text', question: 'A' },
             {
-              effect: 'visible',
-              logic: 'AND',
-              conditions: [{ conditionType: 'field' }],
+              id: 'b',
+              fieldType: 'text',
+              question: 'B',
+              rules: [
+                {
+                  effect: 'visible',
+                  logic: 'AND',
+                  conditions: [{ conditionType: 'field' }],
+                },
+              ],
             },
           ],
         },
@@ -241,7 +251,7 @@ describe('BuilderHeader import feedback', () => {
       expect(screen.getByText(/is missing targetId/)).toBeTruthy();
     });
 
-    expect(form.getState().normalized.rootIds.length).toBe(0);
+    expect(form.getState().normalized.pages[0]?.fieldIds.length ?? 0).toBe(0);
   });
 
   it('shows success modal for clean import', async () => {
@@ -249,7 +259,12 @@ describe('BuilderHeader import feedback', () => {
     const ui = createUIStore();
     mockFileContent = JSON.stringify({
       id: 'good-form',
-      fields: [{ id: 'ok', fieldType: 'text', question: 'OK' }],
+      pages: [
+        {
+          id: 'page-1',
+          fields: [{ id: 'ok', fieldType: 'text', question: 'OK' }],
+        },
+      ],
     });
 
     renderWithContexts(form, ui, <BuilderHeader />);
@@ -268,7 +283,7 @@ describe('BuilderHeader import feedback', () => {
       expect(screen.getByText('Loaded 1 field(s).')).toBeTruthy();
     });
 
-    expect(form.getState().normalized.rootIds).toContain('ok');
+    expect(form.getState().normalized.pages[0]?.fieldIds ?? []).toContain('ok');
   });
 });
 
@@ -276,12 +291,17 @@ describe('BuilderHeader dry run submit', () => {
   function createRequiredTextDefinition() {
     return {
       id: 'dry-run-form',
-      fields: [
+      pages: [
         {
-          id: 'q1',
-          fieldType: 'text' as const,
-          question: 'Name?',
-          required: true,
+          id: 'page-1',
+          fields: [
+            {
+              id: 'q1',
+              fieldType: 'text' as const,
+              question: 'Name?',
+              required: true,
+            },
+          ],
         },
       ],
     };
@@ -363,26 +383,31 @@ describe('BuilderHeader dry run submit', () => {
   it('dry run excludes disabled answers from the serialized response payload', async () => {
     const form = createFormStore({
       id: 'conditional-form',
-      fields: [
+      pages: [
         {
-          id: 'trigger',
-          fieldType: 'text',
-          question: 'Trigger?',
-        },
-        {
-          id: 'q1',
-          fieldType: 'text',
-          question: 'Name?',
-          required: true,
-          rules: [
+          id: 'page-1',
+          fields: [
             {
-              effect: 'enable',
-              logic: 'AND',
-              conditions: [
+              id: 'trigger',
+              fieldType: 'text',
+              question: 'Trigger?',
+            },
+            {
+              id: 'q1',
+              fieldType: 'text',
+              question: 'Name?',
+              required: true,
+              rules: [
                 {
-                  targetId: 'trigger',
-                  operator: 'equals',
-                  expected: 'enabled',
+                  effect: 'enable',
+                  logic: 'AND',
+                  conditions: [
+                    {
+                      targetId: 'trigger',
+                      operator: 'equals',
+                      expected: 'enabled',
+                    },
+                  ],
                 },
               ],
             },
