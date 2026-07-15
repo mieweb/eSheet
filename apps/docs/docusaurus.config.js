@@ -10,7 +10,7 @@ dotenv.config({ path: resolve(process.cwd(), '.env.local') });
 
 const isDev = process.env.NODE_ENV !== 'production';
 const siteOrigin =
-  process.env.ESHEET_SITE_ORIGIN || 'https://esheet.os.mieweb.org';
+  process.env.ESHEET_SITE_ORIGIN || 'https://esheet.mieweb.org';
 const baseUrl = '/';
 const demoUrl = isDev ? 'http://localhost:3001/' : `${siteOrigin}/demo/`;
 
