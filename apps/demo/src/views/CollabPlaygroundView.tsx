@@ -277,9 +277,9 @@ export function CollabPlaygroundView() {
                 </p>
                 <p>
                   <strong className="text-foreground">Same-page:</strong> both
-                  renderers share a React state atom. The Patient&apos;s form
+                  renderers share a React state atom. The Consumer&apos;s form
                   store diffs each response against the last canonical, turning
-                  any change into a proposal on the Physician&apos;s{' '}
+                  any change into a proposal on the Main renderer&apos;s{' '}
                   <code className="rounded bg-muted px-1 text-xs">collab</code>{' '}
                   prop.
                 </p>
@@ -288,7 +288,7 @@ export function CollabPlaygroundView() {
                   localStorage writes dispatch a{' '}
                   <code className="rounded bg-muted px-1 text-xs">storage</code>{' '}
                   event to all same-origin tabs. Each tab listens and
-                  imperatively syncs the Physician renderer via{' '}
+                  imperatively syncs the Main renderer via{' '}
                   <code className="rounded bg-muted px-1 text-xs">
                     setResponse
                   </code>
