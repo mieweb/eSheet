@@ -288,3 +288,126 @@ describe('EsheetRenderer display markdown', () => {
     expect(em?.textContent).toBe('fancy');
   });
 });
+
+describe('EsheetRenderer collab decorations', () => {
+  const FORM = {
+    id: 'collab-form',
+    title: 'Test',
+    pages: [
+      {
+        id: 'page-1',
+        fields: [{ id: 'q1', fieldType: 'text', question: 'Name?' }],
+      },
+    ],
+  };
+
+  async function renderWithCollab(
+    collab: React.ComponentProps<typeof EsheetRenderer>['collab']
+  ) {
+    await act(async () => {
+      render(<EsheetRenderer formDataInput={FORM} collab={collab} />);
+    });
+    return document.body as HTMLElement;
+  }
+
+  it('renders presence dots for peers focused on a field', async () => {
+    const body = await renderWithCollab({
+      presenceByField: {
+        q1: [
+          { name: 'Ada', color: '#ff0000' },
+          { name: 'Grace', color: '#00ff00' },
+        ],
+      },
+    });
+    const presence = body.querySelector('.collab-presence');
+    expect(presence).not.toBeNull();
+    expect(presence?.getAttribute('aria-label')).toBe('Ada, Grace');
+    expect(presence?.querySelectorAll('span')).toHaveLength(2);
+    expect(presence?.querySelector('span[title="Ada"]')).not.toBeNull();
+  });
+
+  it('renders a proposal adornment linked from the input, without buttons when canResolve is false', async () => {
+    const body = await renderWithCollab({
+      proposalsByField: {
+        q1: [
+          {
+            id: 'p1',
+            proposedValue: ['Ada', 'Marie'],
+            actor: 'User 7',
+            status: 'proposed',
+          },
+        ],
+      },
+      formatValue: (value) =>
+        Array.isArray(value) ? value.join(' ') : String(value),
+    });
+    const adornment = body.querySelector('.collab-proposals');
+    expect(adornment).not.toBeNull();
+    expect(adornment?.textContent).toContain('Ada Marie');
+    expect(adornment?.textContent).toContain('by User 7');
+    expect(adornment?.querySelector('button')).toBeNull();
+    // aria-describedby links the answer input to the adornment.
+    const input = body.querySelector('input[id$="-answer-q1"]');
+    expect(input?.getAttribute('aria-describedby')).toBe(adornment?.id);
+    expect(adornment?.id).toMatch(/-proposal-q1$/);
+  });
+
+  it('fires onProposalAction with accept and reject from the adornment buttons', async () => {
+    const actions: unknown[] = [];
+    const body = await renderWithCollab({
+      proposalsByField: {
+        q1: [
+          {
+            id: 'p1',
+            proposedValue: 'Ada',
+            actor: 'User 7',
+            status: 'proposed',
+          },
+        ],
+      },
+      canResolve: true,
+      onProposalAction: (...args) => actions.push(args),
+    });
+    const accept = body.querySelector<HTMLButtonElement>(
+      'button[aria-label="Accept proposal for Name?"]'
+    );
+    const reject = body.querySelector<HTMLButtonElement>(
+      'button[aria-label="Reject proposal for Name?"]'
+    );
+    expect(accept?.textContent).toBe('Accept');
+    await act(async () => accept?.click());
+    await act(async () => reject?.click());
+    expect(actions).toEqual([
+      ['q1', 'p1', 'accept'],
+      ['q1', 'p1', 'reject'],
+    ]);
+  });
+
+  it('offers Accept anyway and shows the current value on conflicted proposals', async () => {
+    const actions: unknown[] = [];
+    const body = await renderWithCollab({
+      proposalsByField: {
+        q1: [
+          {
+            id: 'p1',
+            proposedValue: 'Ada',
+            actor: 'User 7',
+            status: 'proposed',
+            conflict: { currentValue: 'Grace' },
+          },
+        ],
+      },
+      canResolve: true,
+      onProposalAction: (...args) => actions.push(args),
+    });
+    expect(
+      body.querySelector('.collab-proposal-conflict')?.textContent
+    ).toContain('Grace');
+    const accept = body.querySelector<HTMLButtonElement>(
+      'button[aria-label="Accept anyway proposal for Name?"]'
+    );
+    expect(accept?.textContent).toBe('Accept anyway');
+    await act(async () => accept?.click());
+    expect(actions).toEqual([['q1', 'p1', 'accept-anyway']]);
+  });
+});

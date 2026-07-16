@@ -145,7 +145,12 @@ export {
   type EditTab,
 } from './lib/stores/ui-store.js';
 
-export { type FieldComponentProps } from './lib/field-component-props.js';
+export {
+  type FieldComponentProps,
+  type FieldPresence,
+  type FieldProposal,
+  type CollabDecorations,
+} from './lib/field-component-props.js';
 
 export {
   buildRenderTree,
