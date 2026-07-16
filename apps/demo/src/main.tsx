@@ -48,7 +48,7 @@ function App() {
         />
         <Route path="/builder" element={<BuilderView />} />
         <Route path="/renderer" element={<RendererView />} />
-        <Route path="/collab" element={<CollabPlaygroundView />} />
+        <Route path="/collab-live" element={<CollabPlaygroundView />} />
       </Routes>
     </BrowserRouter>
   );
