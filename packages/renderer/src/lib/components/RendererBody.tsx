@@ -17,8 +17,6 @@ export interface RendererBodyProps {
  * Multi-page forms use PageNavigator for bottom-only Prev / X of Y / Next navigation.
  */
 export function RendererBody({ form, ui, collab }: RendererBodyProps) {
-  // Subscribe to form state for visibility updates and responses
-export function RendererBody({ form, ui }: RendererBodyProps) {
   const normalized = React.useSyncExternalStore(
     (cb) => form.subscribe(cb),
     () => form.getState().normalized,
@@ -89,7 +87,7 @@ export function RendererBody({ form, ui }: RendererBodyProps) {
   }, [form, pages, currentPagesIdx, responses]);
 
   const fields = visibleFieldIds.map((id) => (
-    <FieldNode key={id} id={id} form={form} ui={ui} />
+    <FieldNode key={id} id={id} form={form} ui={ui} collab={collab} />
   ));
 
   if (!isMultiPage) {
@@ -99,11 +97,6 @@ export function RendererBody({ form, ui }: RendererBodyProps) {
   }
 
   return (
-    <div className="canvas-fields renderer-body ms:space-y-0">
-      {visibleRootIds.map((id) => (
-        <FieldNode key={id} id={id} form={form} ui={ui} collab={collab} />
-      ))}
-    </div>
     <PageNavigator
       currentIdx={currentPagesIdx}
       total={pages.length}
