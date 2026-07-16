@@ -80,6 +80,12 @@ export interface EsheetRendererProps {
    * it is given — the host owns the collaboration transport.
    */
   collab?: CollabDecorations;
+  /**
+   * When true, the renderer fills its host container with no max-width cap,
+   * no auto-centering, and no built-in padding. Use this when the host layout
+   * already controls sizing. Defaults to `true`.
+   */
+  fitToContainer?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -225,6 +231,7 @@ const EsheetRendererInner = React.forwardRef<
     onTouchModeChange,
     allowDangerousJS = false,
     collab,
+    fitToContainer = true,
   },
   ref
 ) {
@@ -354,7 +361,9 @@ const EsheetRendererInner = React.forwardRef<
     'esheet-renderer-root',
     applyTouchClass && 'esheet-touch-active',
     applyDisabledClass && 'touch-mode-disabled',
-    'ms:w-full ms:max-w-2xl ms:mx-auto ms:p-4 ms:text-mstext',
+    fitToContainer
+      ? 'ms:w-full ms:text-mstext'
+      : 'ms:w-full ms:max-w-2xl ms:mx-auto ms:p-4 ms:text-mstext',
     className,
   ]
     .filter(Boolean)

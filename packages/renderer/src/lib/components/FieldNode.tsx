@@ -204,23 +204,14 @@ export const FieldNode = React.memo(function FieldNode({
       form.getState().setResponse(field.definition.id, value),
   };
 
-  const isSection = field.definition.fieldType === 'section';
   const parentNode = field.parentId
     ? form.getState().getField(field.parentId)
     : null;
   const isChildOfSection = parentNode?.definition.fieldType === 'section';
 
-  const wrapperClass = `field-wrapper ms:relative ms:bg-mssurface${
-    isSection ? ' ms:mb-2 ms:border ms:border-msborder ms:rounded' : ''
-  }${
-    !isSection && !isChildOfSection
-      ? ' ms:mb-2 ms:p-4 ms:border ms:border-msborder ms:rounded'
-      : ''
-  }${
-    isChildOfSection
-      ? ' ms:p-4 ms:border-b ms:border-msborder ms:last:border-b-0'
-      : ''
-  }${!isEnabled ? ' ms:opacity-50 ms:pointer-events-none' : ''}`;
+  const wrapperClass = `field-wrapper${isChildOfSection ? ' ms:py-1' : ''}${
+    !isEnabled ? ' ms:opacity-50 ms:pointer-events-none' : ''
+  }`;
 
   const fieldLabel = field.definition.question || field.definition.id;
 
