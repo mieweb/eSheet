@@ -18,6 +18,7 @@ const isDev = import.meta.env.DEV;
 const landingUrl = isDev ? 'http://localhost:3000/' : '/';
 const docsUrl = isDev ? 'http://localhost:3000/docs/intro' : '/docs/intro';
 const demoUrl = isDev ? 'http://localhost:3001/' : '/demo/';
+const collabUrl = isDev ? 'http://localhost:3001/collab' : '/demo/collab';
 
 export function Navbar() {
   const { theme, setTheme } = useTheme();
@@ -96,6 +97,12 @@ export function Navbar() {
             >
               Playground
             </a>
+            <a
+              href={collabUrl}
+              className="text-sm text-muted-foreground hover:text-primary-600 no-underline transition-colors"
+            >
+              Collaboration
+            </a>
           </div>
 
           <div className="ml-auto flex items-center gap-1">
@@ -162,6 +169,13 @@ export function Navbar() {
               onClick={closeMobileMenu}
             >
               Playground
+            </a>
+            <a
+              href={collabUrl}
+              className="px-4 py-3 text-sm text-foreground border-b border-border hover:bg-muted no-underline transition-colors"
+              onClick={closeMobileMenu}
+            >
+              Collaboration
             </a>
             <button
               className="px-4 py-3 text-sm text-foreground border-b border-border hover:bg-muted text-left flex items-center gap-2 transition-colors w-full"

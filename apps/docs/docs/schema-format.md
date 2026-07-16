@@ -64,6 +64,8 @@ interface FieldDefinition {
   required?: boolean;
   /** Conditional rules (see Conditional Logic) */
   rules?: ConditionalRule[];
+  /** Width occupied by the field in the layout grid */
+  width?: FieldWidth;
 
   // --- Text fields ---
   /** Input type variant for text fields */
@@ -74,6 +76,8 @@ interface FieldDefinition {
   // --- Choice fields ---
   /** Options for radio, check, dropdown, multiselect, multitext, rating, ranking */
   options?: FieldOption[];
+  /** Layout direction for fields that display options */
+  optionLayout?: OptionLayout;
 
   // --- Matrix fields ---
   /** Rows for singlematrix and multimatrix */
@@ -101,6 +105,36 @@ interface FieldDefinition {
   /** Nested child fields */
   fields?: FieldDefinition[];
 }
+```
+
+## Field Layout
+
+### FieldWidth
+
+The optional `width` property controls how much of a row a field occupies:
+
+| Value   | Description                       |
+| ------- | --------------------------------- |
+| `full`  | Uses the full row width (default) |
+| `half`  | Uses half of the row              |
+| `third` | Uses one third of the row         |
+
+```ts
+type FieldWidth = 'full' | 'half' | 'third';
+```
+
+### OptionLayout
+
+The optional `optionLayout` property controls how a field's options are
+arranged:
+
+| Value   | Description                                         |
+| ------- | --------------------------------------------------- |
+| `stack` | Displays one option per line (default)              |
+| `wrap`  | Displays options horizontally and wraps as required |
+
+```ts
+type OptionLayout = 'stack' | 'wrap';
 ```
 
 ## Field Types

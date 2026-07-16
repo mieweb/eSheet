@@ -62,6 +62,7 @@ function SurveyPage() {
 | `touchMode`            | `boolean \| 'auto'`              | --         | Touch mode: `true`, `false`, `'auto'`, or omit for CSS-only                                                                                                                                |
 | `onTouchModeChange`    | `(enabled: boolean) => void`     | --         | Callback when touch mode changes                                                                                                                                                           |
 | `onRendererToolsReady` | `(tools: RendererTools) => void` | --         | Called with MCP tool handler when ready                                                                                                                                                    |
+| `collab`               | `CollabDecorations`              | --         | Host-supplied presence and proposal decorations — see [Collaboration](../advanced/collaboration.md)                                                                                        |
 | `ref`                  | `Ref<EsheetRendererHandle>`      | --         | Imperative handle for accessing responses and stores                                                                                                                                       |
 
 ## Ref API (`EsheetRendererHandle`)

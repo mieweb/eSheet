@@ -49,7 +49,7 @@ export function LandingPage() {
           </p>
         </div>
 
-        <div className="demo-landing-cards grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+        <div className="demo-landing-cards grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
           <DemoCard
             title="Form Builder"
             desc="Build and modify questionnaire structures with an intuitive visual editor."
@@ -59,6 +59,11 @@ export function LandingPage() {
             title="Form Renderer"
             desc="Fill out questionnaires and see collected form responses."
             to="/renderer"
+          />
+          <DemoCard
+            title="Collaboration"
+            desc="Explore simulated presence, proposals, conflicts, and review actions."
+            to="/collab"
           />
         </div>
       </div>

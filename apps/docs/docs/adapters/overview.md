@@ -142,4 +142,4 @@ import {
 } from '@esheet/adapters';
 ```
 
-See the [SurveyJS Adapter](./surveyjs.md), [MCP Adapter](./mcp.md), and [FHIR Adapter](./fhir.md) pages for detailed documentation.
+See the [SurveyJS Adapter](./surveyjs.md), [MCP Adapter](./mcp.md), and [FHIR Adapter](./fhir/fhir-adapter.md) pages for detailed documentation.
