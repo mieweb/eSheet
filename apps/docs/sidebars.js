@@ -129,6 +129,7 @@ const sidebars = {
         'advanced/custom-field-types',
         'advanced/store-architecture',
         'advanced/expression-system',
+        'advanced/collaboration',
         {
           type: 'category',
           label: 'Dangerous JS',

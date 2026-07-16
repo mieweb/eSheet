@@ -5,6 +5,7 @@ import {
   normalizeResponses,
   hydrateDefinition,
   validateForm,
+  type CollabDecorations,
   type FormResponse,
   type FormStore,
   type UIStore,
@@ -73,6 +74,18 @@ export interface EsheetRendererProps {
    * Useful for syncing external UI with the renderer's touch state.
    */
   onTouchModeChange?: (enabled: boolean) => void;
+  /**
+   * Optional host-supplied collaboration decorations (presence dots and
+   * change-proposal adornments per field). The renderer only displays what
+   * it is given — the host owns the collaboration transport.
+   */
+  collab?: CollabDecorations;
+  /**
+   * When true, the renderer fills its host container with no max-width cap,
+   * no auto-centering, and no built-in padding. Use this when the host layout
+   * already controls sizing. Defaults to `true`.
+   */
+  fitToContainer?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -217,6 +230,8 @@ const EsheetRendererInner = React.forwardRef<
     touchMode,
     onTouchModeChange,
     allowDangerousJS = false,
+    collab,
+    fitToContainer = true,
   },
   ref
 ) {
@@ -346,7 +361,9 @@ const EsheetRendererInner = React.forwardRef<
     'esheet-renderer-root',
     applyTouchClass && 'esheet-touch-active',
     applyDisabledClass && 'touch-mode-disabled',
-    'ms:w-full ms:max-w-2xl ms:mx-auto ms:p-4 ms:text-mstext',
+    fitToContainer
+      ? 'ms:w-full ms:text-mstext'
+      : 'ms:w-full ms:max-w-2xl ms:mx-auto ms:p-4 ms:text-mstext',
     className,
   ]
     .filter(Boolean)
@@ -355,7 +372,7 @@ const EsheetRendererInner = React.forwardRef<
   return (
     <div className={rootClasses}>
       <ZodIssuesPanel issues={validationErrors} />
-      <RendererBody form={formStore} ui={uiStore} />
+      <RendererBody form={formStore} ui={uiStore} collab={collab} />
       {onSubmit && (
         <div className="renderer-submit ms:mt-6 ms:flex ms:justify-end">
           <button

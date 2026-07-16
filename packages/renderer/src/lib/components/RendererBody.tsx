@@ -1,11 +1,13 @@
-﻿import React from 'react';
-import type { FormStore, UIStore } from '@esheet/core';
+import React from 'react';
+import type { CollabDecorations, FormStore, UIStore } from '@esheet/core';
 import { PageNavigator } from '@esheet/fields';
 import { FieldNode } from './FieldNode.js';
 
 export interface RendererBodyProps {
   form: FormStore;
   ui: UIStore;
+  /** Optional host-supplied collaboration decorations (see EsheetRendererProps). */
+  collab?: CollabDecorations;
 }
 
 /**
@@ -14,7 +16,7 @@ export interface RendererBodyProps {
  * Single-page forms render fields directly.
  * Multi-page forms use PageNavigator for bottom-only Prev / X of Y / Next navigation.
  */
-export function RendererBody({ form, ui }: RendererBodyProps) {
+export function RendererBody({ form, ui, collab }: RendererBodyProps) {
   const normalized = React.useSyncExternalStore(
     (cb) => form.subscribe(cb),
     () => form.getState().normalized,
@@ -85,7 +87,7 @@ export function RendererBody({ form, ui }: RendererBodyProps) {
   }, [form, pages, currentPagesIdx, responses]);
 
   const fields = visibleFieldIds.map((id) => (
-    <FieldNode key={id} id={id} form={form} ui={ui} />
+    <FieldNode key={id} id={id} form={form} ui={ui} collab={collab} />
   ));
 
   if (!isMultiPage) {

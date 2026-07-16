@@ -69,7 +69,7 @@ export function Navbar() {
     <>
       {/* ── Main navbar bar ── */}
       <nav className="demo-navbar bg-card border-b border-border sticky top-0 z-50">
-        <div className="flex items-center gap-3 px-4 h-14">
+        <div className="flex items-center gap-3 px-6 h-14">
           {/* Hamburger — mobile only, left side (matches Docusaurus) */}
           <button
             onClick={() => openMobileMenu()}
@@ -94,7 +94,7 @@ export function Navbar() {
               href={demoUrl}
               className="text-sm text-muted-foreground hover:text-primary-600 no-underline transition-colors"
             >
-              Playground
+              Demo
             </a>
           </div>
 
@@ -161,7 +161,7 @@ export function Navbar() {
               className="px-4 py-3 text-sm text-foreground border-b border-border hover:bg-muted no-underline transition-colors"
               onClick={closeMobileMenu}
             >
-              Playground
+              Demo
             </a>
             <button
               className="px-4 py-3 text-sm text-foreground border-b border-border hover:bg-muted text-left flex items-center gap-2 transition-colors w-full"

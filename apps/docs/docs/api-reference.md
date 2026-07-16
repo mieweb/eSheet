@@ -350,7 +350,7 @@ See the **[Adapters](/docs/adapters/overview)** section in the sidebar for detai
 - [Adapters Overview](/docs/adapters/overview) — Installation, auto-detection, and all exports
 - [SurveyJS Adapter](/docs/adapters/surveyjs) — Import/export, type mapping, conditional logic
 - [MCP Adapter](/docs/adapters/mcp) — Import/export, constraints, type mapping
-- [FHIR Adapter](/docs/adapters/fhir) — Import/export FHIR R4 Questionnaire resources and QuestionnaireResponse
+- [FHIR Adapter](/docs/adapters/fhir/fhir-adapter) — Import/export FHIR R4 Questionnaire resources and QuestionnaireResponse
 
 ---
 

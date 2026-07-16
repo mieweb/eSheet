@@ -12,6 +12,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { LandingPage } from './views/LandingPage';
 import { BuilderView } from './views/BuilderView';
 import { RendererView } from './views/RendererView';
+import { CollabPlaygroundView } from './views/CollabPlaygroundView';
 import { Navbar } from './components/Navbar';
 import { BrandInitializer } from './components/BrandInitializer';
 
@@ -47,6 +48,7 @@ function App() {
         />
         <Route path="/builder" element={<BuilderView />} />
         <Route path="/renderer" element={<RendererView />} />
+        <Route path="/collab-live" element={<CollabPlaygroundView />} />
       </Routes>
     </BrowserRouter>
   );
