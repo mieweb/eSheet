@@ -1,124 +1,129 @@
-{
+﻿{
   "id": "bmi-calculator",
   "title": "BMI Calculator",
   "dangerouslyAllowJS": true,
-  "fields": [
+  "pages": [
     {
-      "id": "intro",
-      "fieldType": "display",
-      "content": "Enter your height and weight below. BMI and category will be calculated automatically."
-    },
-    {
-      "id": "height-cm",
-      "fieldType": "text",
-      "question": "Height (cm)",
-      "required": false
-    },
-    {
-      "id": "weight-kg",
-      "fieldType": "text",
-      "question": "Weight (kg)",
-      "required": false
-    },
-    {
-      "id": "bmi",
-      "fieldType": "text",
-      "question": "BMI (calculated)",
-      "required": false,
-      "calculation": "(responses['height-cm'] > 0 && responses['weight-kg'] > 0) ? String(Math.round((responses['weight-kg'] / Math.pow(responses['height-cm'] / 100, 2)) * 10) / 10) : ''",
-      "rules": [
+      "id": "page-1",
+      "fields": [
         {
-          "effect": "visible",
-          "logic": "AND",
-          "conditions": [
+          "id": "intro",
+          "fieldType": "display",
+          "content": "Enter your height and weight below. BMI and category will be calculated automatically."
+        },
+        {
+          "id": "height-cm",
+          "fieldType": "text",
+          "question": "Height (cm)",
+          "required": false
+        },
+        {
+          "id": "weight-kg",
+          "fieldType": "text",
+          "question": "Weight (kg)",
+          "required": false
+        },
+        {
+          "id": "bmi",
+          "fieldType": "text",
+          "question": "BMI (calculated)",
+          "required": false,
+          "calculation": "(responses[\u0027height-cm\u0027] \u003e 0 \u0026\u0026 responses[\u0027weight-kg\u0027] \u003e 0) ? String(Math.round((responses[\u0027weight-kg\u0027] / Math.pow(responses[\u0027height-cm\u0027] / 100, 2)) * 10) / 10) : \u0027\u0027",
+          "rules": [
             {
-              "conditionType": "js",
-              "expression": "responses['height-cm'] > 0 && responses['weight-kg'] > 0"
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "responses[\u0027height-cm\u0027] \u003e 0 \u0026\u0026 responses[\u0027weight-kg\u0027] \u003e 0"
+                }
+              ]
             }
           ]
-        }
-      ]
-    },
-    {
-      "id": "bmi-category",
-      "fieldType": "display",
-      "content": "BMI Category",
-      "rules": [
+        },
         {
-          "effect": "visible",
-          "logic": "AND",
-          "conditions": [
+          "id": "bmi-category",
+          "fieldType": "display",
+          "content": "BMI Category",
+          "rules": [
             {
-              "conditionType": "js",
-              "expression": "responses['height-cm'] > 0 && responses['weight-kg'] > 0"
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "responses[\u0027height-cm\u0027] \u003e 0 \u0026\u0026 responses[\u0027weight-kg\u0027] \u003e 0"
+                }
+              ]
             }
           ]
-        }
-      ]
-    },
-    {
-      "id": "bmi-underweight",
-      "fieldType": "display",
-      "content": "⚠️ Underweight (BMI < 18.5)",
-      "rules": [
+        },
         {
-          "effect": "visible",
-          "logic": "AND",
-          "conditions": [
+          "id": "bmi-underweight",
+          "fieldType": "display",
+          "content": "âš ï¸ Underweight (BMI \u003c 18.5)",
+          "rules": [
             {
-              "conditionType": "js",
-              "expression": "responses['height-cm'] > 0 && responses['weight-kg'] > 0 && (responses['weight-kg'] / Math.pow(responses['height-cm'] / 100, 2)) < 18.5"
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "responses[\u0027height-cm\u0027] \u003e 0 \u0026\u0026 responses[\u0027weight-kg\u0027] \u003e 0 \u0026\u0026 (responses[\u0027weight-kg\u0027] / Math.pow(responses[\u0027height-cm\u0027] / 100, 2)) \u003c 18.5"
+                }
+              ]
             }
           ]
-        }
-      ]
-    },
-    {
-      "id": "bmi-normal",
-      "fieldType": "display",
-      "content": "✅ Normal weight (BMI 18.5 – 24.9)",
-      "rules": [
+        },
         {
-          "effect": "visible",
-          "logic": "AND",
-          "conditions": [
+          "id": "bmi-normal",
+          "fieldType": "display",
+          "content": "âœ… Normal weight (BMI 18.5 â€“ 24.9)",
+          "rules": [
             {
-              "conditionType": "js",
-              "expression": "(function(){ var bmi = responses['weight-kg'] / Math.pow(responses['height-cm'] / 100, 2); return bmi >= 18.5 && bmi < 25; })()"
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "(function(){ var bmi = responses[\u0027weight-kg\u0027] / Math.pow(responses[\u0027height-cm\u0027] / 100, 2); return bmi \u003e= 18.5 \u0026\u0026 bmi \u003c 25; })()"
+                }
+              ]
             }
           ]
-        }
-      ]
-    },
-    {
-      "id": "bmi-overweight",
-      "fieldType": "display",
-      "content": "⚠️ Overweight (BMI 25 – 29.9)",
-      "rules": [
+        },
         {
-          "effect": "visible",
-          "logic": "AND",
-          "conditions": [
+          "id": "bmi-overweight",
+          "fieldType": "display",
+          "content": "âš ï¸ Overweight (BMI 25 â€“ 29.9)",
+          "rules": [
             {
-              "conditionType": "js",
-              "expression": "(function(){ var bmi = responses['weight-kg'] / Math.pow(responses['height-cm'] / 100, 2); return bmi >= 25 && bmi < 30; })()"
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "(function(){ var bmi = responses[\u0027weight-kg\u0027] / Math.pow(responses[\u0027height-cm\u0027] / 100, 2); return bmi \u003e= 25 \u0026\u0026 bmi \u003c 30; })()"
+                }
+              ]
             }
           ]
-        }
-      ]
-    },
-    {
-      "id": "bmi-obese",
-      "fieldType": "display",
-      "content": "🔴 Obese (BMI ≥ 30)",
-      "rules": [
+        },
         {
-          "effect": "visible",
-          "logic": "AND",
-          "conditions": [
+          "id": "bmi-obese",
+          "fieldType": "display",
+          "content": "ðŸ”´ Obese (BMI â‰¥ 30)",
+          "rules": [
             {
-              "conditionType": "js",
-              "expression": "responses['height-cm'] > 0 && responses['weight-kg'] > 0 && (responses['weight-kg'] / Math.pow(responses['height-cm'] / 100, 2)) >= 30"
+              "effect": "visible",
+              "logic": "AND",
+              "conditions": [
+                {
+                  "conditionType": "js",
+                  "expression": "responses[\u0027height-cm\u0027] \u003e 0 \u0026\u0026 responses[\u0027weight-kg\u0027] \u003e 0 \u0026\u0026 (responses[\u0027weight-kg\u0027] / Math.pow(responses[\u0027height-cm\u0027] / 100, 2)) \u003e= 30"
+                }
+              ]
             }
           ]
         }

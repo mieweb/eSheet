@@ -5,14 +5,15 @@
 import { createStore } from 'zustand/vanilla';
 import type { StoreApi } from 'zustand/vanilla';
 import type {
-  FormDefinition,
   FieldResponseMap,
   FieldResponse,
-  FieldDefinition,
   FieldType,
   FieldOption,
   MatrixRow,
   MatrixColumn,
+  FormResponse,
+  FormDefinition,
+  FieldDefinition,
 } from '../types.js';
 import { getFieldTypeMeta } from '../registry.js';
 import {
@@ -21,20 +22,25 @@ import {
   generateRowId,
   generateColumnId,
 } from '../functions/ids.js';
-import type {
-  NormalizedDefinition,
-  FieldNode,
-} from '../functions/normalize.js';
 import {
+  type NormalizedDefinition,
+  type NormalizedPage,
+  type FieldNode,
   normalizeDefinition,
   hydrateDefinition,
 } from '../functions/normalize.js';
 import { hydrateResponse } from '../functions/hydrate-response.js';
-import type { FormResponse } from '../types.js';
 import { resolveEffect } from '../logic/resolve.js';
 import { evaluateJsExpression } from '../logic/conditions.js';
-import { validateField, validateForm } from '../logic/validate.js';
-import type { ValidationError } from '../logic/validate.js';
+import {
+  validateField,
+  validateForm,
+  type ValidationError,
+} from '../logic/validate.js';
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
 // Types
@@ -42,7 +48,9 @@ import type { ValidationError } from '../logic/validate.js';
 
 /** Options for the `addField` builder action. */
 export interface AddFieldOptions {
-  /** Insert as child of this section. If omitted, insert at root level. */
+  /** ID of the page to add the field to. Defaults to first page. */
+  pageId?: string;
+  /** Insert as child of this section. If omitted, inserts at page root level. */
   parentId?: string;
   /** Insert at this index among siblings. If omitted, append at end. */
   index?: number;
@@ -92,11 +100,24 @@ export interface FormState {
 
   // --- Builder Actions ---
   /** Add a new field. Returns the generated field ID, or `null` if the type is unknown. */
-  addField: (fieldType: FieldType, options?: AddFieldOptions) => string | null;
+  addField: (
+    fieldType: Exclude<FieldType, 'pages'>,
+    options?: AddFieldOptions
+  ) => string | null;
   /** Patch a field's definition. Returns `false` if not found or rename collided. */
   updateField: (fieldId: string, patch: Record<string, unknown>) => boolean;
   /** Remove a field (and its children if it is a section). */
   removeField: (fieldId: string) => boolean;
+  /** Add a new page. Returns the generated page ID. */
+  addPage: (options?: { title?: string; index?: number }) => string;
+  /** Remove a page and all its fields. Returns `false` if the page is not found or it is the last page (minimum 1 required). */
+  removePage: (pageId: string) => boolean;
+  /** Move a page to a new index. Returns `false` if the page is not found. */
+  movePage: (pageId: string, toIndex: number) => boolean;
+  /** Update a page's title. Returns `false` if the page is not found. */
+  updatePageTitle: (pageId: string, title: string) => boolean;
+  /** Toggle auto-advance for a page. Returns `false` if the page is not found. */
+  setPageAutoAdvance: (pageId: string, autoAdvance: boolean) => boolean;
   /** Move a field to a new position/parent. `toParentId` defaults to current parent; pass `null` for root. */
   moveField: (
     fieldId: string,
@@ -170,7 +191,7 @@ export type FormStore = StoreApi<FormState>;
 // Empty normalized definition (used before any definition is loaded).
 // ---------------------------------------------------------------------------
 
-const EMPTY_NORMALIZED: NormalizedDefinition = { byId: {}, rootIds: [] };
+const EMPTY_NORMALIZED: NormalizedDefinition = { byId: {}, pages: [] };
 
 // ---------------------------------------------------------------------------
 // Private helpers
@@ -276,9 +297,9 @@ function rewriteFieldRefs(
   if (!changed) return def;
   return {
     ...def,
-    ...(updatedRules ? { rules: updatedRules } : {}),
-    ...(updatedContent !== content ? { content: updatedContent } : {}),
-    ...(updatedCalc !== calc ? { calculation: updatedCalc } : {}),
+    ...(updatedRules && { rules: updatedRules }),
+    ...(updatedContent !== content && { content: updatedContent }),
+    ...(updatedCalc !== calc && { calculation: updatedCalc }),
   } as FieldDefinition;
 }
 
@@ -376,9 +397,7 @@ export function createFormStore(
     formDescription: initial?.description,
     formSourceData: initial?._sourceData,
     dangerouslyAllowJS: (initial?.dangerouslyAllowJS ?? false) && _hostAllowsJS,
-    normalized: initial
-      ? normalizeDefinition(initial.fields)
-      : EMPTY_NORMALIZED,
+    normalized: initial ? normalizeDefinition(initial.pages) : EMPTY_NORMALIZED,
     responses: {},
     userEditedFields: new Set<string>(),
 
@@ -391,7 +410,7 @@ export function createFormStore(
         formSourceData: definition._sourceData,
         dangerouslyAllowJS:
           (definition.dangerouslyAllowJS ?? false) && _hostAllowsJS,
-        normalized: normalizeDefinition(definition.fields),
+        normalized: normalizeDefinition(definition.pages),
         responses: {},
         userEditedFields: new Set<string>(),
       }),
@@ -533,7 +552,7 @@ export function createFormStore(
 
       // Insert into normalized map
       const byId: Record<string, FieldNode> = { ...normalized.byId };
-      let rootIds: readonly string[] = normalized.rootIds;
+      let pages = normalized.pages;
 
       if (parentId) {
         const parent = byId[parentId];
@@ -542,12 +561,21 @@ export function createFormStore(
         byId[id] = { definition, parentId, childIds: [], index: 0 };
         reindexChildren(byId, childIds);
       } else {
-        rootIds = insertAt(normalized.rootIds, id, options?.index);
+        // Add to page root — find target page
+        const targetPage =
+          (options?.pageId
+            ? normalized.pages.find((p) => p.id === options.pageId)
+            : undefined) ?? normalized.pages[0];
+        if (!targetPage) return null; // no pages defined
+        const fieldIds = insertAt(targetPage.fieldIds, id, options?.index);
+        pages = pages.map((p) =>
+          p.id === targetPage.id ? { ...p, fieldIds } : p
+        );
         byId[id] = { definition, parentId: null, childIds: [], index: 0 };
-        reindexChildren(byId, rootIds);
+        reindexChildren(byId, fieldIds);
       }
 
-      set({ normalized: { byId, rootIds } });
+      set({ normalized: { byId, pages } });
       return id;
     },
 
@@ -570,7 +598,7 @@ export function createFormStore(
           [newId!]: { ...node, definition: newDef },
         };
 
-        let rootIds = normalized.rootIds;
+        let pages = normalized.pages;
         if (node.parentId) {
           const parent = byId[node.parentId];
           if (parent) {
@@ -582,7 +610,11 @@ export function createFormStore(
             };
           }
         } else {
-          rootIds = rootIds.map((r) => (r === fieldId ? newId! : r));
+          // Page-root field — update fieldId in whichever page contains it
+          pages = pages.map((p) => ({
+            ...p,
+            fieldIds: p.fieldIds.map((r) => (r === fieldId ? newId! : r)),
+          }));
         }
 
         // Update children's parentId when renaming a section
@@ -601,7 +633,7 @@ export function createFormStore(
           }
         }
 
-        set({ normalized: { byId, rootIds } });
+        set({ normalized: { byId, pages } });
         return true;
       }
 
@@ -635,18 +667,110 @@ export function createFormStore(
         if (!toRemove.has(id)) byId[id] = n;
       }
 
-      let rootIds: readonly string[] = normalized.rootIds;
+      let pages = normalized.pages;
       if (node.parentId && byId[node.parentId]) {
+        // Remove from section
         const parent = byId[node.parentId];
         const childIds = parent.childIds.filter((c) => c !== fieldId);
         byId[node.parentId] = { ...parent, childIds };
         reindexChildren(byId, childIds);
       } else {
-        rootIds = rootIds.filter((r) => r !== fieldId);
-        reindexChildren(byId, rootIds);
+        // Remove from page root
+        pages = normalized.pages.map((page) => {
+          if (!page.fieldIds.includes(fieldId)) return page;
+          const fieldIds = page.fieldIds.filter((id) => id !== fieldId);
+          reindexChildren(byId, fieldIds);
+          return { ...page, fieldIds };
+        });
       }
 
-      set({ normalized: { byId, rootIds } });
+      set({ normalized: { byId, pages } });
+      return true;
+    },
+
+    addPage: (options) => {
+      const { normalized } = get();
+      const existingIds = new Set([
+        ...Object.keys(normalized.byId),
+        ...normalized.pages.map((p) => p.id),
+      ]);
+      const id = generateFieldId('page', existingIds);
+      const newPage: NormalizedPage = {
+        id,
+        ...(options?.title !== undefined && { title: options.title }),
+        fieldIds: [],
+      };
+      const pages =
+        options?.index !== undefined
+          ? insertAt(normalized.pages, newPage, options.index)
+          : [...normalized.pages, newPage];
+      set({ normalized: { ...normalized, pages } });
+      return id;
+    },
+
+    removePage: (pageId) => {
+      const { normalized } = get();
+      const page = normalized.pages.find((p) => p.id === pageId);
+      if (!page) return false;
+      // Enforce minimum 1 page.
+      if (normalized.pages.length <= 1) return false;
+
+      // Remove all fields on this page and their descendants
+      const toRemove = new Set<string>();
+      for (const fieldId of page.fieldIds) {
+        toRemove.add(fieldId);
+        for (const d of collectDescendants(normalized.byId, fieldId)) {
+          toRemove.add(d);
+        }
+      }
+      const byId: Record<string, FieldNode> = {};
+      for (const [id, n] of Object.entries(normalized.byId)) {
+        if (!toRemove.has(id)) byId[id] = n;
+      }
+      const pages = normalized.pages.filter((p) => p.id !== pageId);
+      set({ normalized: { byId, pages } });
+      return true;
+    },
+
+    movePage: (pageId, toIndex) => {
+      const { normalized } = get();
+      const fromIndex = normalized.pages.findIndex((p) => p.id === pageId);
+      if (fromIndex === -1) return false;
+      const clamped = Math.max(
+        0,
+        Math.min(toIndex, normalized.pages.length - 1)
+      );
+      if (fromIndex === clamped) return true;
+      const pages = [...normalized.pages];
+      const [page] = pages.splice(fromIndex, 1);
+      pages.splice(clamped, 0, page);
+      set({ normalized: { ...normalized, pages } });
+      return true;
+    },
+
+    updatePageTitle: (pageId, title) => {
+      const { normalized } = get();
+      const idx = normalized.pages.findIndex((p) => p.id === pageId);
+      if (idx === -1) return false;
+      const pages = normalized.pages.map((p) =>
+        p.id === pageId ? { ...p, title: title || undefined } : p
+      );
+      set({ normalized: { ...normalized, pages } });
+      return true;
+    },
+
+    setPageAutoAdvance: (pageId, autoAdvance) => {
+      const { normalized } = get();
+      const idx = normalized.pages.findIndex((p) => p.id === pageId);
+      if (idx === -1) return false;
+      const pages = normalized.pages.map((p) =>
+        p.id === pageId
+          ? autoAdvance
+            ? { ...p, autoAdvance: true }
+            : (({ autoAdvance: _aa, ...rest }) => rest)(p)
+          : p
+      );
+      set({ normalized: { ...normalized, pages } });
       return true;
     },
 
@@ -660,40 +784,56 @@ export function createFormStore(
         toParentId === undefined ? fromParentId : toParentId;
 
       if (targetParentId === fieldId) return false;
-      if (targetParentId && !normalized.byId[targetParentId]) return false;
-      if (targetParentId) {
+      // targetParentId can be a section ID (in byId) or a page ID (not in byId but in pages)
+      if (targetParentId && normalized.byId[targetParentId]) {
         const desc = collectDescendants(normalized.byId, fieldId);
         if (desc.includes(targetParentId)) return false;
       }
 
       const byId: Record<string, FieldNode> = { ...normalized.byId };
-      let rootIds = [...normalized.rootIds] as string[];
+      let pages = [...normalized.pages] as NormalizedPage[];
 
       // Remove from old position
       if (fromParentId && byId[fromParentId]) {
+        // Old position: inside a section
         const parent = byId[fromParentId];
         const childIds = parent.childIds.filter((c) => c !== fieldId);
         byId[fromParentId] = { ...parent, childIds };
         reindexChildren(byId, childIds);
       } else {
-        rootIds = rootIds.filter((r) => r !== fieldId);
-        reindexChildren(byId, rootIds);
+        // Old position: page root
+        pages = pages.map((p) => {
+          if (!p.fieldIds.includes(fieldId)) return p;
+          const fieldIds = p.fieldIds.filter((id) => id !== fieldId);
+          reindexChildren(byId, fieldIds);
+          return { ...p, fieldIds };
+        });
       }
 
       // Insert at new position
-      if (targetParentId) {
+      if (targetParentId && normalized.byId[targetParentId]) {
+        // New position: inside a section
         const parent = byId[targetParentId];
         const childIds = insertAt(parent.childIds, fieldId, toIndex);
         byId[targetParentId] = { ...parent, childIds };
         byId[fieldId] = { ...node, parentId: targetParentId };
         reindexChildren(byId, childIds);
       } else {
-        rootIds = insertAt(rootIds, fieldId, toIndex) as string[];
+        // New position: page root (targetParentId is a page ID or null)
+        const targetPage = targetParentId
+          ? pages.find((p) => p.id === targetParentId)
+          : pages[0];
+        if (!targetPage) return false;
+        pages = pages.map((p) => {
+          if (p.id !== targetPage.id) return p;
+          const fieldIds = insertAt(p.fieldIds, fieldId, toIndex) as string[];
+          reindexChildren(byId, fieldIds);
+          return { ...p, fieldIds };
+        });
         byId[fieldId] = { ...node, parentId: null };
-        reindexChildren(byId, rootIds);
       }
 
-      set({ normalized: { byId, rootIds } });
+      set({ normalized: { byId, pages } });
       return true;
     },
 
@@ -1013,18 +1153,16 @@ export function createFormStore(
         formSourceData,
         dangerouslyAllowJS,
       } = get();
+
+      const pages = hydrateDefinition(normalized);
       return {
         id: formId,
-        ...(formTitle !== undefined ? { title: formTitle } : {}),
-        ...(formDescription !== undefined
-          ? { description: formDescription }
-          : {}),
-        ...(dangerouslyAllowJS ? { dangerouslyAllowJS: true } : {}),
-        ...(formSourceData !== undefined
-          ? { _sourceData: formSourceData }
-          : {}),
-        fields: hydrateDefinition(normalized),
-      };
+        ...(formTitle !== undefined && { title: formTitle }),
+        ...(formDescription !== undefined && { description: formDescription }),
+        ...(dangerouslyAllowJS && { dangerouslyAllowJS: true }),
+        ...(formSourceData !== undefined && { _sourceData: formSourceData }),
+        pages,
+      } as FormDefinition;
     },
 
     hydrateResponse: (options) => {

@@ -97,6 +97,7 @@ export {
   hydrateDefinition,
   type FieldNode,
   type NormalizedDefinition,
+  type NormalizedPage,
 } from './lib/functions/normalize.js';
 
 export { hydrateResponse } from './lib/functions/hydrate-response.js';
@@ -150,3 +151,11 @@ export {
   type FieldProposal,
   type CollabDecorations,
 } from './lib/field-component-props.js';
+export { type FieldComponentProps } from './lib/field-component-props.js';
+
+export {
+  buildRenderTree,
+  applyComputedValues,
+  type RenderFieldNode,
+  type RenderTreeOptions,
+} from './lib/functions/render-tree.js';

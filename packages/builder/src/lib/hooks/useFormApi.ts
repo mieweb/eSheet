@@ -121,7 +121,7 @@ export function useFormApi(fieldId?: string): FormApi {
 
       form: {
         addField: (type: FieldType, opts?: AddFieldOptions) =>
-          form.getState().addField(type, opts),
+          form.getState().addField(type as Exclude<FieldType, 'pages'>, opts),
         loadDefinition: form.getState().loadDefinition,
         setFormId: form.getState().setFormId,
         hydrateDefinition: () => form.getState().hydrateDefinition(),

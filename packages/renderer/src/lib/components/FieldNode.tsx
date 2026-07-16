@@ -50,7 +50,7 @@ export const FieldNode = React.memo(function FieldNode({
     () => form.getState().responses
   );
 
-  // Get visible children for sections
+  // Get visible children for sections and pages
   const visibleChildIds = React.useMemo(() => {
     if (!field || field.definition.fieldType !== 'section') return [];
 
@@ -99,7 +99,6 @@ export const FieldNode = React.memo(function FieldNode({
     ) {
       return null;
     }
-
     const containerClass =
       depth === 1
         ? 'section-children ms:space-y-2'
@@ -251,11 +250,11 @@ export const FieldNode = React.memo(function FieldNode({
       )}
       {field.definition.fieldType === 'section' ? (
         (() => {
-          const SectionComponent = Component as React.ComponentType<
+          const ContainerComponent = Component as React.ComponentType<
             FieldComponentProps & { nestedChildren?: React.ReactNode }
           >;
           return (
-            <SectionComponent {...props} nestedChildren={nestedChildren} />
+            <ContainerComponent {...props} nestedChildren={nestedChildren} />
           );
         })()
       ) : (

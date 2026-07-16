@@ -10,6 +10,8 @@ REL_DIR="$RELEASES_DIR/$SHA"
 
 cd "$REPO_ROOT"
 
+export ESHEET_SITE_ORIGIN="${ESHEET_SITE_ORIGIN:-https://esheet.os.mieweb.org}"
+
 CI=1 NX_INTERACTIVE=false npx nx build app-docs --outputStyle=static
 CI=1 NX_INTERACTIVE=false npx nx build app-demo --outputStyle=static
 

@@ -1,13 +1,11 @@
 import React from 'react';
 import type { FieldComponentProps, FormStore, UIStore } from '@esheet/core';
-import { hydrateDefinition } from '@esheet/core';
-import { renderer } from '@esheet/renderer';
+import { buildRenderTree } from '@esheet/core';
 import Sortable from 'sortablejs';
 import { useFormApi } from '../hooks/useFormApi.js';
 import { useUiApi } from '../hooks/useUiApi.js';
-import { useVisibleRootIds } from '../hooks/useVisibleRootIds.js';
 import { FieldWrapper } from './FieldWrapper.js';
-import { getFieldComponent } from '@esheet/fields';
+import { getFieldComponent, PageNavigator } from '@esheet/fields';
 import { ViewBigIcon, ViewSmallIcon } from '../icons.js';
 
 // ---------------------------------------------------------------------------
@@ -30,7 +28,11 @@ const PREVIEW_GRID_STYLE: React.CSSProperties = {
 function previewColSpan(field: {
   definition: { fieldType: string; width?: 'full' | 'half' | 'third' };
 }): number {
-  if (field.definition.fieldType === 'section') return 6;
+  if (
+    field.definition.fieldType === 'section' ||
+    field.definition.fieldType === 'pages'
+  )
+    return 6;
   switch (field.definition.width) {
     case 'half':
       return 3;
@@ -112,13 +114,23 @@ function DraggableFieldItem({
   const handleRef = React.useRef<HTMLDivElement | null>(null);
   const field = form.getState().getField(id);
 
+  // True when parentId refers to a section field (in normalized.byId), not a page.
+  const parentIsSectionField = parentId
+    ? !!form.getState().normalized.byId[parentId]
+    : false;
+
   const handleSelectOverride = React.useCallback(
     (e: React.MouseEvent) => {
       if (!parentId) return;
       e.stopPropagation();
-      ui.getState().selectFieldChild(parentId, id);
+      // parentId is a section ID (in byId) → selectFieldChild; page ID (not in byId) → selectField
+      if (form.getState().normalized.byId[parentId]) {
+        ui.getState().selectFieldChild(parentId, id);
+      } else {
+        ui.getState().selectField(id);
+      }
     },
-    [id, parentId, ui]
+    [id, parentId, form, ui]
   );
 
   if (!field) return null;
@@ -145,9 +157,11 @@ function DraggableFieldItem({
         dragHandleRef={handleRef}
         forceExpandVersion={forceExpandVersion}
         forceCollapseVersion={forceCollapseVersion}
-        isSelectedOverride={parentId ? isActiveChild : undefined}
-        onSelectOverride={parentId ? handleSelectOverride : undefined}
-        selectedVariant={parentId ? 'nested' : 'default'}
+        isSelectedOverride={parentIsSectionField ? isActiveChild : undefined}
+        onSelectOverride={
+          parentIsSectionField ? handleSelectOverride : undefined
+        }
+        selectedVariant={parentIsSectionField ? 'nested' : 'default'}
         computedValue={computedValue}
       >
         {(props) => {
@@ -165,11 +179,11 @@ function DraggableFieldItem({
           }
 
           if (props.field.definition.fieldType === 'section') {
-            const SectionComponent = Component as React.ComponentType<
+            const ContainerComponent = Component as React.ComponentType<
               FieldComponentProps & { nestedChildren?: React.ReactNode }
             >;
             return (
-              <SectionComponent {...props} nestedChildren={nestedChildren} />
+              <ContainerComponent {...props} nestedChildren={nestedChildren} />
             );
           }
           return <Component {...props} />;
@@ -189,7 +203,6 @@ export const Canvas = React.memo(function Canvas({
   dragEnabled = true,
 }: CanvasProps) {
   const canvasRef = React.useRef<HTMLDivElement | null>(null);
-  const rootIds = useVisibleRootIds();
   const { normalized, responses } = useFormApi();
   const { mode, selectedFieldId, selectedFieldChildId } = useUiApi();
   const isNarrowPreview = useIsNarrowPreview();
@@ -204,7 +217,16 @@ export const Canvas = React.memo(function Canvas({
   const [collapseAllVersion, setCollapseAllVersion] = React.useState<
     number | undefined
   >(undefined);
-  const [allExpanded, setAllExpanded] = React.useState(false);
+  const [allExpanded, setAllExpanded] = React.useState(true);
+  const [currentPagesIdx, setCurrentPagesIdx] = React.useState(0);
+  const [editingPageId, setEditingPageId] = React.useState<string | null>(null);
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+  const activeTabRef = React.useRef<HTMLDivElement>(null);
+  const [editingTitle, setEditingTitle] = React.useState('');
+  const [dragPageIdx, setDragPageIdx] = React.useState<number | null>(null);
+  const [dragOverPageIdx, setDragOverPageIdx] = React.useState<number | null>(
+    null
+  );
   const normalizedRef = React.useRef(normalized);
 
   React.useEffect(() => {
@@ -357,8 +379,8 @@ export const Canvas = React.memo(function Canvas({
 
           form.getState().moveField(sourceId, newIndex, toParentId);
 
-          // Update selection to follow the moved field to its new location.
-          if (toParentId !== null) {
+          // Update selection: section parent → selectFieldChild, page parent → selectField
+          if (toParentId !== null && normalizedRef.current.byId[toParentId]) {
             setSectionExpandSignal((prev) => ({
               sectionId: toParentId,
               version: (prev?.version ?? 0) + 1,
@@ -418,14 +440,80 @@ export const Canvas = React.memo(function Canvas({
   }, [form, mode, normalized, responses]);
 
   const items = React.useMemo(() => {
-    if (mode !== 'preview' || !previewRenderableMap) return [...rootIds];
-    return rootIds.filter((id) => previewRenderableMap.get(id) === true);
-  }, [mode, previewRenderableMap, rootIds]);
+    const activePage = normalized.pages[currentPagesIdx];
+    const fieldIds = activePage?.fieldIds ?? [];
+    if (mode !== 'preview' || !previewRenderableMap) return [...fieldIds];
+    return fieldIds.filter((id) => previewRenderableMap.get(id) === true);
+  }, [mode, previewRenderableMap, normalized.pages, currentPagesIdx]);
+
+  // Pages come from normalized.pages (not from the field tree)
+  const pagesIds = React.useMemo(
+    () => normalized.pages.map((p) => p.id),
+    [normalized.pages]
+  );
+
+  const isMultiPage = pagesIds.length > 1;
+
+  // Clamp index when pages are added or removed
+  React.useEffect(() => {
+    if (pagesIds.length > 0 && currentPagesIdx >= pagesIds.length) {
+      setCurrentPagesIdx(pagesIds.length - 1);
+    }
+  }, [pagesIds.length, currentPagesIdx]);
+
+  const pageLabels = React.useMemo(
+    () =>
+      pagesIds.map((id, i) => {
+        const page = normalized.pages.find((p) => p.id === id);
+        return page?.title || `Sheet ${i + 1}`;
+      }),
+    [pagesIds, normalized.pages]
+  );
+
+  const handlePrevPage = React.useCallback(
+    () => setCurrentPagesIdx((p) => Math.max(p - 1, 0)),
+    []
+  );
+  const handleNextPage = React.useCallback(
+    () => setCurrentPagesIdx((p) => Math.min(p + 1, pagesIds.length - 1)),
+    [pagesIds.length]
+  );
+
+  // Scroll active tab into view whenever the active page changes
+  React.useEffect(() => {
+    const el = activeTabRef.current;
+    if (el && typeof el.scrollIntoView === 'function') {
+      el.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'nearest',
+      });
+    }
+  }, [currentPagesIdx]);
+
+  // When pages exist, the canvas IS the active page — show its children directly.
+  const hasPages = pagesIds.length > 0;
+  const activePagesId = hasPages ? pagesIds[currentPagesIdx] ?? null : null;
+
+  // Keep UIStore in sync so ToolPanel always knows which page is active
+  React.useEffect(() => {
+    ui.getState().setActivePagesId(activePagesId);
+  }, [activePagesId, ui]);
+
+  // Active page's field IDs for display
+  const displayItems = React.useMemo(() => {
+    const page = normalized.pages[currentPagesIdx];
+    if (!page) return [];
+    if (mode !== 'preview' || !previewRenderableMap) return [...page.fieldIds];
+    return page.fieldIds.filter((id) => previewRenderableMap.get(id) === true);
+  }, [normalized.pages, currentPagesIdx, mode, previewRenderableMap]);
 
   // Build render tree to extract computed values from setValue effects
   const computedValuesMap = React.useMemo(() => {
-    const hydratedFields = hydrateDefinition(normalized);
-    const tree = renderer({ id: 'canvas', fields: hydratedFields }, responses);
+    const tree = buildRenderTree(
+      form.getState().hydrateDefinition(),
+      responses
+    );
 
     const buildMap = (
       nodes: typeof tree
@@ -552,74 +640,300 @@ export const Canvas = React.memo(function Canvas({
   return (
     <div className="ms:flex ms:flex-col ms:flex-1 ms:min-h-0">
       {mode === 'build' && (
-        <div className="ms:bg-mssurface ms:border-b ms:border-msborder ms:px-4 ms:py-4 ms:flex ms:items-center ms:justify-between ms:gap-2">
-          <span className="ms:text-sm ms:font-semibold ms:text-mstext ms:select-none">
-            Fields
+        <div className="ms:bg-mssurface ms:border-b ms:border-msborder ms:px-4 ms:py-[0.88rem] ms:flex ms:items-center ms:gap-2 ">
+          <span className="ms:text-sm ms:font-semibold ms:text-mstext ms:select-none ms:shrink-0">
+            Sheets
           </span>
-          {items.length > 0 && (
-            <div className="ms:flex ms:items-center ms:gap-1">
-              <button
-                type="button"
-                title={allExpanded ? 'Collapse all' : 'Expand all'}
-                className="ms:flex ms:items-center ms:gap-1 ms:px-2 ms:py-1 ms:text-xs ms:text-mstextmuted ms:hover:text-mstext ms:rounded ms:hover:bg-msbackgroundhover ms:transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (allExpanded) {
-                    setCollapseAllVersion((v) => (v ?? 0) + 1);
-                  } else {
-                    setExpandAllVersion((v) => (v ?? 0) + 1);
+          {hasPages && (
+            <>
+              <div className="ms:w-px ms:h-4 ms:bg-msborder ms:shrink-0" />
+              {isMultiPage && (
+                <button
+                  type="button"
+                  aria-label="Previous sheet"
+                  disabled={currentPagesIdx === 0}
+                  onClick={handlePrevPage}
+                  className="ms:inline-flex ms:items-center ms:justify-center ms:h-7 ms:w-7 ms:rounded ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:transition-colors ms:hover:bg-msbackgroundhover ms:disabled:opacity-40 ms:disabled:cursor-not-allowed ms:outline-none ms:cursor-pointer ms:shrink-0 ms:text-base ms:leading-none"
+                >
+                  ‹
+                </button>
+              )}
+              <div className="ms:flex-1 ms:min-w-0 ms:overflow-hidden">
+                <div
+                  ref={scrollContainerRef}
+                  className="ms:flex ms:items-center ms:gap-1 ms:flex-nowrap ms:overflow-x-auto ms:h-7"
+                  style={
+                    {
+                      scrollbarWidth: 'none',
+                      msOverflowStyle: 'none',
+                    } as React.CSSProperties
                   }
-                  setAllExpanded((v) => !v);
-                }}
-              >
-                {allExpanded ? (
-                  <ViewSmallIcon className="ms:w-3.5 ms:h-3.5" />
-                ) : (
-                  <ViewBigIcon className="ms:w-3.5 ms:h-3.5" />
-                )}
-                {allExpanded ? 'Collapse all' : 'Expand all'}
-              </button>
-            </div>
+                  onWheel={(e) => {
+                    const el = scrollContainerRef.current;
+                    if (!el) return;
+                    e.preventDefault();
+                    el.scrollLeft += e.deltaY || e.deltaX;
+                  }}
+                >
+                  {pageLabels.map((label, i) => {
+                    const pageId = pagesIds[i];
+                    const isActive = i === currentPagesIdx;
+                    const isDragOver =
+                      dragOverPageIdx === i && dragPageIdx !== i;
+                    const isEditing = editingPageId === pageId;
+
+                    return (
+                      <div
+                        ref={isActive ? activeTabRef : undefined}
+                        key={pageId}
+                        draggable={mode === 'build'}
+                        onDragStart={() => {
+                          setDragPageIdx(i);
+                          setDragOverPageIdx(null);
+                        }}
+                        onDragOver={(e) => {
+                          if (dragPageIdx === null || dragPageIdx === i) return;
+                          e.preventDefault();
+                          setDragOverPageIdx(i);
+                        }}
+                        onDragLeave={() => {
+                          setDragOverPageIdx((prev) =>
+                            prev === i ? null : prev
+                          );
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          if (dragPageIdx !== null && dragPageIdx !== i) {
+                            form.getState().movePage(pagesIds[dragPageIdx], i);
+                            setCurrentPagesIdx(i);
+                          }
+                          setDragPageIdx(null);
+                          setDragOverPageIdx(null);
+                        }}
+                        onDragEnd={() => {
+                          setDragPageIdx(null);
+                          setDragOverPageIdx(null);
+                        }}
+                        className={`ms:inline-flex ms:items-center ms:h-7 ms:rounded ms:border ms:text-xs ms:font-medium ms:transition-colors ms:shrink-0 ${
+                          isDragOver
+                            ? 'ms:border-msprimary ms:bg-msprimary/20 ms:text-msprimary'
+                            : isActive
+                            ? 'ms:border-msprimary ms:bg-msprimary/10 ms:text-msprimary'
+                            : 'ms:border-msborder ms:bg-mssurface ms:text-mstext'
+                        } ${mode === 'build' ? 'ms:cursor-grab' : ''}`}
+                      >
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={editingTitle}
+                            autoFocus
+                            aria-label={`Rename sheet ${i + 1}`}
+                            className="ms:h-full ms:min-w-[4rem] ms:max-w-[120px] ms:px-2 ms:bg-transparent ms:outline-none ms:text-xs ms:font-medium ms:text-msprimary"
+                            onChange={(e) =>
+                              setEditingTitle(e.currentTarget.value)
+                            }
+                            onBlur={() => {
+                              form
+                                .getState()
+                                .updatePageTitle(pageId, editingTitle.trim());
+                              setEditingPageId(null);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') e.currentTarget.blur();
+                              if (e.key === 'Escape') {
+                                setEditingPageId(null);
+                              }
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              aria-label={`Go to ${label}`}
+                              aria-current={isActive ? 'page' : undefined}
+                              onClick={() => {
+                                setCurrentPagesIdx(i);
+                                ui.getState().selectField(null);
+                              }}
+                              onDoubleClick={() => {
+                                if (mode !== 'build') return;
+                                setEditingPageId(pageId);
+                                setEditingTitle(
+                                  normalized.pages[i]?.title ?? ''
+                                );
+                              }}
+                              className="ms:h-full ms:px-2 ms:outline-none ms:cursor-pointer ms:bg-transparent ms:min-w-[2rem]"
+                            >
+                              {label}
+                            </button>
+                            {mode === 'build' && isActive && (
+                              <button
+                                type="button"
+                                aria-label={`Edit title of ${label}`}
+                                title="Edit sheet title"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingPageId(pageId);
+                                  setEditingTitle(
+                                    normalized.pages[i]?.title ?? ''
+                                  );
+                                }}
+                                className="ms:inline-flex ms:items-center ms:justify-center ms:w-5 ms:h-5 ms:mr-1 ms:rounded ms:text-msprimary/60 ms:hover:text-msprimary ms:hover:bg-msprimary/10 ms:transition-colors ms:outline-none ms:cursor-pointer ms:bg-transparent ms:shrink-0"
+                              >
+                                ✎
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              {isMultiPage && (
+                <button
+                  type="button"
+                  aria-label="Next sheet"
+                  disabled={currentPagesIdx === pagesIds.length - 1}
+                  onClick={handleNextPage}
+                  className="ms:inline-flex ms:items-center ms:justify-center ms:h-7 ms:w-7 ms:rounded ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:transition-colors ms:hover:bg-msbackgroundhover ms:disabled:opacity-40 ms:disabled:cursor-not-allowed ms:outline-none ms:cursor-pointer ms:shrink-0 ms:text-base ms:leading-none"
+                >
+                  ›
+                </button>
+              )}
+            </>
           )}
+          <div className="ms:ml-auto ms:flex ms:items-center ms:gap-1 ms:shrink-0">
+            {hasPages && (
+              <>
+                <button
+                  type="button"
+                  aria-label="Add sheet"
+                  onClick={() => {
+                    const newId = form.getState().addPage();
+                    setCurrentPagesIdx(pagesIds.length);
+                    ui.getState().selectField(null);
+                    void newId;
+                  }}
+                  className="ms:inline-flex ms:items-center ms:justify-center ms:h-7 ms:px-2 ms:rounded ms:border ms:border-msprimary/50 ms:bg-mssurface ms:text-msprimary ms:text-xs ms:transition-colors ms:hover:bg-msprimary/10 ms:outline-none ms:cursor-pointer ms:shrink-0"
+                >
+                  + Sheet
+                </button>
+                <button
+                  type="button"
+                  aria-label="Delete current sheet"
+                  disabled={pagesIds.length <= 1}
+                  onClick={() => {
+                    const nextIdx = Math.max(currentPagesIdx - 1, 0);
+                    if (!activePagesId) return;
+                    form.getState().removePage(activePagesId);
+                    setCurrentPagesIdx(nextIdx);
+                    ui.getState().selectField(null);
+                  }}
+                  className="ms:inline-flex ms:items-center ms:justify-center ms:h-7 ms:px-2 ms:rounded ms:border ms:border-msdanger/50 ms:bg-mssurface ms:text-msdanger ms:text-xs ms:transition-colors ms:hover:bg-msdanger/10 ms:outline-none ms:cursor-pointer ms:shrink-0 ms:disabled:opacity-40 ms:disabled:cursor-not-allowed"
+                >
+                  Delete sheet
+                </button>
+                <span className="ms:inline-flex ms:items-center ms:h-7 ms:text-xs ms:text-mstextmuted ms:shrink-0">
+                  {currentPagesIdx + 1} / {pagesIds.length}
+                </span>
+                <div className="ms:w-px ms:h-4 ms:bg-msborder ms:shrink-0" />
+              </>
+            )}
+            <button
+              type="button"
+              title={allExpanded ? 'Collapse all' : 'Expand all'}
+              disabled={displayItems.length === 0}
+              className="ms:flex ms:items-center ms:gap-1 ms:px-2 ms:py-1 ms:text-xs ms:text-mstextmuted ms:hover:text-mstext ms:rounded ms:hover:bg-msbackgroundhover ms:transition-colors ms:disabled:opacity-40 ms:disabled:cursor-not-allowed"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (allExpanded) {
+                  setCollapseAllVersion((v) => (v ?? 0) + 1);
+                } else {
+                  setExpandAllVersion((v) => (v ?? 0) + 1);
+                }
+                setAllExpanded((v) => !v);
+              }}
+            >
+              {allExpanded ? (
+                <ViewSmallIcon className="ms:w-3.5 ms:h-3.5" />
+              ) : (
+                <ViewBigIcon className="ms:w-3.5 ms:h-3.5" />
+              )}
+              {allExpanded ? 'Collapse all' : 'Expand all'}
+            </button>
+          </div>
         </div>
       )}
-      {items.length === 0 ? (
-        <div className="canvas-empty ms:flex ms:flex-1 ms:items-center ms:justify-center ms:min-h-[200px] ms:text-mstextmuted ms:text-sm">
-          No fields yet. Add a field from the Tool Panel to get started.
-        </div>
-      ) : (
-        <div
-          ref={canvasRef}
-          className={`canvas-fields ${
-            showPreviewGrid ? PREVIEW_GRID_CLASS : 'ms:space-y-0'
-          } ms:flex-1 ms:min-h-0 ms:overflow-y-auto ms:px-4 ms:pt-3 ms:pb-4`}
-          style={showPreviewGrid ? PREVIEW_GRID_STYLE : undefined}
-          data-sortable-list={dragEnabled ? 'true' : undefined}
-          data-parent-id=""
-        >
-          {items.map((id) => (
-            <DraggableFieldItem
-              key={id}
-              id={id}
-              form={form}
-              ui={ui}
-              dragEnabled={dragEnabled}
-              previewGrid={showPreviewGrid}
-              isSelected={
-                selectedFieldId === id && selectedFieldChildId === null
-              }
-              forceExpandVersion={
-                sectionExpandSignal?.sectionId === id
-                  ? sectionExpandSignal.version
-                  : expandAllVersion
-              }
-              forceCollapseVersion={collapseAllVersion}
-              nestedChildren={renderNestedChildren(id)}
-              computedValue={computedValuesMap.get(id)}
-            />
-          ))}
-        </div>
-      )}
+      {(() => {
+        const fieldsContent =
+          items.length === 0 ? (
+            <div className="canvas-empty ms:flex ms:flex-1 ms:items-center ms:justify-center ms:min-h-[200px] ms:text-mstextmuted ms:text-sm">
+              No fields yet. Add a field from the Tool Panel to get started.
+            </div>
+          ) : (
+            <div
+              ref={canvasRef}
+              className={`canvas-fields ${
+                showPreviewGrid ? PREVIEW_GRID_CLASS : 'ms:space-y-0'
+              } ms:flex-1 ms:min-h-0 ms:overflow-y-auto ms:px-4 ms:pt-3 ms:pb-4`}
+              style={showPreviewGrid ? PREVIEW_GRID_STYLE : undefined}
+              data-sortable-list={dragEnabled ? 'true' : undefined}
+              data-parent-id={activePagesId ?? ''}
+            >
+              {displayItems.length === 0 && hasPages && mode !== 'preview' ? (
+                <div className="section-empty-placeholder ms:flex ms:flex-col ms:items-center ms:justify-center ms:p-8 ms:text-center ms:pointer-events-none ms:select-none ms:rounded-lg ms:border-2 ms:border-dashed ms:border-msprimary/30 ms:bg-gradient-to-br ms:from-msbackground ms:to-msbackgroundsecondary">
+                  <p className="ms:text-sm ms:font-semibold ms:text-mstext ms:mb-2">
+                    No fields on this page
+                  </p>
+                  <p className="ms:text-xs ms:text-mstextmuted ms:leading-relaxed">
+                    Use the Tool Panel on the left to add fields.
+                  </p>
+                </div>
+              ) : (
+                displayItems.map((id) => (
+                  <DraggableFieldItem
+                    key={id}
+                    id={id}
+                    form={form}
+                    ui={ui}
+                    parentId={activePagesId ?? undefined}
+                    dragEnabled={dragEnabled}
+                    previewGrid={showPreviewGrid}
+                    isSelected={
+                      selectedFieldId === id && selectedFieldChildId === null
+                    }
+                    isActiveChild={false}
+                    forceExpandVersion={
+                      sectionExpandSignal?.sectionId === id
+                        ? sectionExpandSignal.version
+                        : expandAllVersion
+                    }
+                    forceCollapseVersion={collapseAllVersion}
+                    nestedChildren={renderNestedChildren(id)}
+                    computedValue={computedValuesMap.get(id)}
+                  />
+                ))
+              )}
+            </div>
+          );
+
+        if (mode === 'preview' && isMultiPage) {
+          return (
+            <PageNavigator
+              currentIdx={currentPagesIdx}
+              total={pagesIds.length}
+              onPrev={handlePrevPage}
+              onNext={handleNextPage}
+            >
+              {fieldsContent}
+            </PageNavigator>
+          );
+        }
+
+        return fieldsContent;
+      })()}
     </div>
   );
 });

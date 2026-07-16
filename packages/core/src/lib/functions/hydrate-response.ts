@@ -103,7 +103,10 @@ export function hydrateResponse(
     }
   }
 
-  walk(normalized.rootIds);
+  // Walk all pages in order
+  for (const page of normalized.pages) {
+    walk(page.fieldIds);
+  }
 
   return {
     id: options?.id ?? crypto.randomUUID(),

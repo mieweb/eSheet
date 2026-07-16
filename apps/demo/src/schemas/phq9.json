@@ -1,207 +1,321 @@
 {
   "id": "phq9",
   "title": "PHQ-9 Patient Health Questionnaire",
-  "fields": [
+  "pages": [
     {
-      "id": "phq-intro",
-      "fieldType": "html",
-      "htmlContent": "<h2 style='margin:0 0 8px'>PHQ-9 Depression Screening</h2><p>Over the <strong>last 2 weeks</strong>, how often have you been bothered by any of the following problems?</p><table style='font-size:12px;border-collapse:collapse;width:100%'><tr><td style='padding:2px 8px;border:1px solid #ccc'>0</td><td style='padding:2px 8px;border:1px solid #ccc'>Not at all</td><td style='padding:2px 8px;border:1px solid #ccc'>1</td><td style='padding:2px 8px;border:1px solid #ccc'>Several days</td><td style='padding:2px 8px;border:1px solid #ccc'>2</td><td style='padding:2px 8px;border:1px solid #ccc'>More than half the days</td><td style='padding:2px 8px;border:1px solid #ccc'>3</td><td style='padding:2px 8px;border:1px solid #ccc'>Nearly every day</td></tr></table>",
-      "iframeHeight": 130
-    },
-
-    {
-      "id": "section-phq",
-      "fieldType": "section",
-      "title": "Symptom Questions",
+      "id": "page-1",
       "fields": [
         {
-          "id": "phq-q1",
-          "fieldType": "radio",
-          "question": "1. Little interest or pleasure in doing things",
-          "required": true,
-          "options": [
-            { "id": "phq-q1-0", "value": "0", "text": "Not at all" },
-            { "id": "phq-q1-1", "value": "1", "text": "Several days" },
-            {
-              "id": "phq-q1-2",
-              "value": "2",
-              "text": "More than half the days"
-            },
-            { "id": "phq-q1-3", "value": "3", "text": "Nearly every day" }
-          ]
+          "id": "phq-intro",
+          "fieldType": "html",
+          "htmlContent": "<h2 style='margin:0 0 8px'>PHQ-9 Depression Screening</h2><p>Over the <strong>last 2 weeks</strong>, how often have you been bothered by any of the following problems?</p><table style='font-size:12px;border-collapse:collapse;width:100%'><tr><td style='padding:2px 8px;border:1px solid #ccc'>0</td><td style='padding:2px 8px;border:1px solid #ccc'>Not at all</td><td style='padding:2px 8px;border:1px solid #ccc'>1</td><td style='padding:2px 8px;border:1px solid #ccc'>Several days</td><td style='padding:2px 8px;border:1px solid #ccc'>2</td><td style='padding:2px 8px;border:1px solid #ccc'>More than half the days</td><td style='padding:2px 8px;border:1px solid #ccc'>3</td><td style='padding:2px 8px;border:1px solid #ccc'>Nearly every day</td></tr></table>",
+          "iframeHeight": 130
         },
         {
-          "id": "phq-q2",
-          "fieldType": "radio",
-          "question": "2. Feeling down, depressed, or hopeless",
-          "required": true,
-          "options": [
-            { "id": "phq-q2-0", "value": "0", "text": "Not at all" },
-            { "id": "phq-q2-1", "value": "1", "text": "Several days" },
+          "id": "section-phq",
+          "fieldType": "section",
+          "title": "Symptom Questions",
+          "fields": [
             {
-              "id": "phq-q2-2",
-              "value": "2",
-              "text": "More than half the days"
-            },
-            { "id": "phq-q2-3", "value": "3", "text": "Nearly every day" }
-          ]
-        },
-        {
-          "id": "phq-q3",
-          "fieldType": "radio",
-          "question": "3. Trouble falling or staying asleep, or sleeping too much",
-          "required": true,
-          "options": [
-            { "id": "phq-q3-0", "value": "0", "text": "Not at all" },
-            { "id": "phq-q3-1", "value": "1", "text": "Several days" },
-            {
-              "id": "phq-q3-2",
-              "value": "2",
-              "text": "More than half the days"
-            },
-            { "id": "phq-q3-3", "value": "3", "text": "Nearly every day" }
-          ]
-        },
-        {
-          "id": "phq-q4",
-          "fieldType": "radio",
-          "question": "4. Feeling tired or having little energy",
-          "required": true,
-          "options": [
-            { "id": "phq-q4-0", "value": "0", "text": "Not at all" },
-            { "id": "phq-q4-1", "value": "1", "text": "Several days" },
-            {
-              "id": "phq-q4-2",
-              "value": "2",
-              "text": "More than half the days"
-            },
-            { "id": "phq-q4-3", "value": "3", "text": "Nearly every day" }
-          ]
-        },
-        {
-          "id": "phq-q5",
-          "fieldType": "radio",
-          "question": "5. Poor appetite or overeating",
-          "required": true,
-          "options": [
-            { "id": "phq-q5-0", "value": "0", "text": "Not at all" },
-            { "id": "phq-q5-1", "value": "1", "text": "Several days" },
-            {
-              "id": "phq-q5-2",
-              "value": "2",
-              "text": "More than half the days"
-            },
-            { "id": "phq-q5-3", "value": "3", "text": "Nearly every day" }
-          ]
-        },
-        {
-          "id": "phq-q6",
-          "fieldType": "radio",
-          "question": "6. Feeling bad about yourself — or feeling like a failure or that you have let yourself or your family down",
-          "required": true,
-          "options": [
-            { "id": "phq-q6-0", "value": "0", "text": "Not at all" },
-            { "id": "phq-q6-1", "value": "1", "text": "Several days" },
-            {
-              "id": "phq-q6-2",
-              "value": "2",
-              "text": "More than half the days"
-            },
-            { "id": "phq-q6-3", "value": "3", "text": "Nearly every day" }
-          ]
-        },
-        {
-          "id": "phq-q7",
-          "fieldType": "radio",
-          "question": "7. Trouble concentrating on things, such as reading the newspaper or watching television",
-          "required": true,
-          "options": [
-            { "id": "phq-q7-0", "value": "0", "text": "Not at all" },
-            { "id": "phq-q7-1", "value": "1", "text": "Several days" },
-            {
-              "id": "phq-q7-2",
-              "value": "2",
-              "text": "More than half the days"
-            },
-            { "id": "phq-q7-3", "value": "3", "text": "Nearly every day" }
-          ]
-        },
-        {
-          "id": "phq-q8",
-          "fieldType": "radio",
-          "question": "8. Moving or speaking so slowly that other people could have noticed — or being so fidgety or restless that you have been moving around much more than usual",
-          "required": true,
-          "options": [
-            { "id": "phq-q8-0", "value": "0", "text": "Not at all" },
-            { "id": "phq-q8-1", "value": "1", "text": "Several days" },
-            {
-              "id": "phq-q8-2",
-              "value": "2",
-              "text": "More than half the days"
-            },
-            { "id": "phq-q8-3", "value": "3", "text": "Nearly every day" }
-          ]
-        },
-        {
-          "id": "phq-q9",
-          "fieldType": "radio",
-          "question": "9. Thoughts that you would be better off dead, or of hurting yourself in some way",
-          "required": true,
-          "options": [
-            { "id": "phq-q9-0", "value": "0", "text": "Not at all" },
-            { "id": "phq-q9-1", "value": "1", "text": "Several days" },
-            {
-              "id": "phq-q9-2",
-              "value": "2",
-              "text": "More than half the days"
-            },
-            { "id": "phq-q9-3", "value": "3", "text": "Nearly every day" }
-          ]
-        }
-      ]
-    },
-
-    {
-      "id": "section-impairment",
-      "fieldType": "section",
-      "title": "Functional Impairment",
-      "fields": [
-        {
-          "id": "phq-impairment",
-          "fieldType": "radio",
-          "question": "If you checked any problem above, how difficult have these problems made it for you to do your work, take care of things at home, or get along with other people?",
-          "options": [
-            {
-              "id": "phq-imp-none",
-              "value": "not-difficult",
-              "text": "Not difficult at all"
+              "id": "phq-q1",
+              "fieldType": "radio",
+              "question": "1. Little interest or pleasure in doing things",
+              "required": true,
+              "options": [
+                {
+                  "id": "phq-q1-0",
+                  "value": "0",
+                  "text": "Not at all"
+                },
+                {
+                  "id": "phq-q1-1",
+                  "value": "1",
+                  "text": "Several days"
+                },
+                {
+                  "id": "phq-q1-2",
+                  "value": "2",
+                  "text": "More than half the days"
+                },
+                {
+                  "id": "phq-q1-3",
+                  "value": "3",
+                  "text": "Nearly every day"
+                }
+              ]
             },
             {
-              "id": "phq-imp-some",
-              "value": "somewhat",
-              "text": "Somewhat difficult"
+              "id": "phq-q2",
+              "fieldType": "radio",
+              "question": "2. Feeling down, depressed, or hopeless",
+              "required": true,
+              "options": [
+                {
+                  "id": "phq-q2-0",
+                  "value": "0",
+                  "text": "Not at all"
+                },
+                {
+                  "id": "phq-q2-1",
+                  "value": "1",
+                  "text": "Several days"
+                },
+                {
+                  "id": "phq-q2-2",
+                  "value": "2",
+                  "text": "More than half the days"
+                },
+                {
+                  "id": "phq-q2-3",
+                  "value": "3",
+                  "text": "Nearly every day"
+                }
+              ]
             },
-            { "id": "phq-imp-very", "value": "very", "text": "Very difficult" },
             {
-              "id": "phq-imp-extreme",
-              "value": "extremely",
-              "text": "Extremely difficult"
+              "id": "phq-q3",
+              "fieldType": "radio",
+              "question": "3. Trouble falling or staying asleep, or sleeping too much",
+              "required": true,
+              "options": [
+                {
+                  "id": "phq-q3-0",
+                  "value": "0",
+                  "text": "Not at all"
+                },
+                {
+                  "id": "phq-q3-1",
+                  "value": "1",
+                  "text": "Several days"
+                },
+                {
+                  "id": "phq-q3-2",
+                  "value": "2",
+                  "text": "More than half the days"
+                },
+                {
+                  "id": "phq-q3-3",
+                  "value": "3",
+                  "text": "Nearly every day"
+                }
+              ]
+            },
+            {
+              "id": "phq-q4",
+              "fieldType": "radio",
+              "question": "4. Feeling tired or having little energy",
+              "required": true,
+              "options": [
+                {
+                  "id": "phq-q4-0",
+                  "value": "0",
+                  "text": "Not at all"
+                },
+                {
+                  "id": "phq-q4-1",
+                  "value": "1",
+                  "text": "Several days"
+                },
+                {
+                  "id": "phq-q4-2",
+                  "value": "2",
+                  "text": "More than half the days"
+                },
+                {
+                  "id": "phq-q4-3",
+                  "value": "3",
+                  "text": "Nearly every day"
+                }
+              ]
+            },
+            {
+              "id": "phq-q5",
+              "fieldType": "radio",
+              "question": "5. Poor appetite or overeating",
+              "required": true,
+              "options": [
+                {
+                  "id": "phq-q5-0",
+                  "value": "0",
+                  "text": "Not at all"
+                },
+                {
+                  "id": "phq-q5-1",
+                  "value": "1",
+                  "text": "Several days"
+                },
+                {
+                  "id": "phq-q5-2",
+                  "value": "2",
+                  "text": "More than half the days"
+                },
+                {
+                  "id": "phq-q5-3",
+                  "value": "3",
+                  "text": "Nearly every day"
+                }
+              ]
+            },
+            {
+              "id": "phq-q6",
+              "fieldType": "radio",
+              "question": "6. Feeling bad about yourself — or feeling like a failure or that you have let yourself or your family down",
+              "required": true,
+              "options": [
+                {
+                  "id": "phq-q6-0",
+                  "value": "0",
+                  "text": "Not at all"
+                },
+                {
+                  "id": "phq-q6-1",
+                  "value": "1",
+                  "text": "Several days"
+                },
+                {
+                  "id": "phq-q6-2",
+                  "value": "2",
+                  "text": "More than half the days"
+                },
+                {
+                  "id": "phq-q6-3",
+                  "value": "3",
+                  "text": "Nearly every day"
+                }
+              ]
+            },
+            {
+              "id": "phq-q7",
+              "fieldType": "radio",
+              "question": "7. Trouble concentrating on things, such as reading the newspaper or watching television",
+              "required": true,
+              "options": [
+                {
+                  "id": "phq-q7-0",
+                  "value": "0",
+                  "text": "Not at all"
+                },
+                {
+                  "id": "phq-q7-1",
+                  "value": "1",
+                  "text": "Several days"
+                },
+                {
+                  "id": "phq-q7-2",
+                  "value": "2",
+                  "text": "More than half the days"
+                },
+                {
+                  "id": "phq-q7-3",
+                  "value": "3",
+                  "text": "Nearly every day"
+                }
+              ]
+            },
+            {
+              "id": "phq-q8",
+              "fieldType": "radio",
+              "question": "8. Moving or speaking so slowly that other people could have noticed — or being so fidgety or restless that you have been moving around much more than usual",
+              "required": true,
+              "options": [
+                {
+                  "id": "phq-q8-0",
+                  "value": "0",
+                  "text": "Not at all"
+                },
+                {
+                  "id": "phq-q8-1",
+                  "value": "1",
+                  "text": "Several days"
+                },
+                {
+                  "id": "phq-q8-2",
+                  "value": "2",
+                  "text": "More than half the days"
+                },
+                {
+                  "id": "phq-q8-3",
+                  "value": "3",
+                  "text": "Nearly every day"
+                }
+              ]
+            },
+            {
+              "id": "phq-q9",
+              "fieldType": "radio",
+              "question": "9. Thoughts that you would be better off dead, or of hurting yourself in some way",
+              "required": true,
+              "options": [
+                {
+                  "id": "phq-q9-0",
+                  "value": "0",
+                  "text": "Not at all"
+                },
+                {
+                  "id": "phq-q9-1",
+                  "value": "1",
+                  "text": "Several days"
+                },
+                {
+                  "id": "phq-q9-2",
+                  "value": "2",
+                  "text": "More than half the days"
+                },
+                {
+                  "id": "phq-q9-3",
+                  "value": "3",
+                  "text": "Nearly every day"
+                }
+              ]
             }
           ]
-        }
-      ]
-    },
-
-    {
-      "id": "section-phq-score",
-      "fieldType": "section",
-      "title": "Score Guide",
-      "fields": [
+        },
         {
-          "id": "phq-score-display",
-          "fieldType": "html",
-          "htmlContent": "<table style='font-size:13px;border-collapse:collapse;width:100%'><thead><tr style='background:#f1f5f9'><th style='padding:6px 10px;border:1px solid #cbd5e1;text-align:left'>Total Score</th><th style='padding:6px 10px;border:1px solid #cbd5e1;text-align:left'>Depression Severity</th></tr></thead><tbody><tr><td style='padding:5px 10px;border:1px solid #e2e8f0'>1–4</td><td style='padding:5px 10px;border:1px solid #e2e8f0'>Minimal</td></tr><tr><td style='padding:5px 10px;border:1px solid #e2e8f0'>5–9</td><td style='padding:5px 10px;border:1px solid #e2e8f0'>Mild</td></tr><tr><td style='padding:5px 10px;border:1px solid #e2e8f0'>10–14</td><td style='padding:5px 10px;border:1px solid #e2e8f0'>Moderate</td></tr><tr><td style='padding:5px 10px;border:1px solid #e2e8f0'>15–19</td><td style='padding:5px 10px;border:1px solid #e2e8f0'>Moderately severe</td></tr><tr><td style='padding:5px 10px;border:1px solid #e2e8f0'>20–27</td><td style='padding:5px 10px;border:1px solid #e2e8f0'>Severe</td></tr></tbody></table><p style='font-size:12px;color:#64748b;margin-top:8px'>Score is the sum of responses to questions 1–9. Your clinician will review the results.</p>",
-          "iframeHeight": 230
+          "id": "section-impairment",
+          "fieldType": "section",
+          "title": "Functional Impairment",
+          "fields": [
+            {
+              "id": "phq-impairment",
+              "fieldType": "radio",
+              "question": "If you checked any problem above, how difficult have these problems made it for you to do your work, take care of things at home, or get along with other people?",
+              "options": [
+                {
+                  "id": "phq-imp-none",
+                  "value": "not-difficult",
+                  "text": "Not difficult at all"
+                },
+                {
+                  "id": "phq-imp-some",
+                  "value": "somewhat",
+                  "text": "Somewhat difficult"
+                },
+                {
+                  "id": "phq-imp-very",
+                  "value": "very",
+                  "text": "Very difficult"
+                },
+                {
+                  "id": "phq-imp-extreme",
+                  "value": "extremely",
+                  "text": "Extremely difficult"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "section-phq-score",
+          "fieldType": "section",
+          "title": "Score Guide",
+          "fields": [
+            {
+              "id": "phq-score-display",
+              "fieldType": "html",
+              "htmlContent": "<table style='font-size:13px;border-collapse:collapse;width:100%'><thead><tr style='background:#f1f5f9'><th style='padding:6px 10px;border:1px solid #cbd5e1;text-align:left'>Total Score</th><th style='padding:6px 10px;border:1px solid #cbd5e1;text-align:left'>Depression Severity</th></tr></thead><tbody><tr><td style='padding:5px 10px;border:1px solid #e2e8f0'>1–4</td><td style='padding:5px 10px;border:1px solid #e2e8f0'>Minimal</td></tr><tr><td style='padding:5px 10px;border:1px solid #e2e8f0'>5–9</td><td style='padding:5px 10px;border:1px solid #e2e8f0'>Mild</td></tr><tr><td style='padding:5px 10px;border:1px solid #e2e8f0'>10–14</td><td style='padding:5px 10px;border:1px solid #e2e8f0'>Moderate</td></tr><tr><td style='padding:5px 10px;border:1px solid #e2e8f0'>15–19</td><td style='padding:5px 10px;border:1px solid #e2e8f0'>Moderately severe</td></tr><tr><td style='padding:5px 10px;border:1px solid #e2e8f0'>20–27</td><td style='padding:5px 10px;border:1px solid #e2e8f0'>Severe</td></tr></tbody></table><p style='font-size:12px;color:#64748b;margin-top:8px'>Score is the sum of responses to questions 1–9. Your clinician will review the results.</p>",
+              "iframeHeight": 230
+            }
+          ]
         }
       ]
     }

@@ -1,352 +1,435 @@
 {
   "id": "expression-functions",
   "title": "Expression Functions Test Suite",
-  "fields": [
+  "pages": [
     {
-      "id": "intro",
-      "fieldType": "html",
-      "htmlContent": "<h2 style='margin:0 0 8px'>Expression Functions Test Suite</h2><p>Demonstrates the built-in expression engine functions: <strong>date arithmetic</strong> (<code>addDays</code>, <code>subDays</code>, <code>diffDays</code>, <code>today</code>, <code>year</code>), <strong>numeric helpers</strong> (<code>min</code>, <code>max</code>, <code>round</code>, <code>floor</code>, <code>ceil</code>, <code>abs</code>), and <strong>conditional</strong> (<code>if</code>). Fill in the input fields and watch the results update live.</p>",
-      "iframeHeight": 110
-    },
-
-    {
-      "id": "section-date",
-      "fieldType": "section",
-      "title": "1 — Date Arithmetic",
+      "id": "page-1",
       "fields": [
         {
-          "id": "start-date",
-          "fieldType": "text",
-          "question": "Start Date",
-          "inputType": "date",
-          "required": true
+          "id": "intro",
+          "fieldType": "html",
+          "htmlContent": "<h2 style='margin:0 0 8px'>Expression Functions Test Suite</h2><p>Demonstrates the built-in expression engine functions: <strong>date arithmetic</strong> (<code>addDays</code>, <code>subDays</code>, <code>diffDays</code>, <code>today</code>, <code>year</code>), <strong>numeric helpers</strong> (<code>min</code>, <code>max</code>, <code>round</code>, <code>floor</code>, <code>ceil</code>, <code>abs</code>), and <strong>conditional</strong> (<code>if</code>). Fill in the input fields and watch the results update live.</p>",
+          "iframeHeight": 110
         },
         {
-          "id": "end-date",
-          "fieldType": "text",
-          "question": "End Date",
-          "inputType": "date",
-          "required": true
-        },
-        {
-          "id": "date-results",
-          "fieldType": "display",
-          "content": "**14 days after start:** <addDays({start-date}, 14)>\n\n**7 days before start:** <subDays({start-date}, 7)>\n\n**Days between start → end:** <diffDays({end-date}, {start-date})>\n\n**Year of start date:** <year({start-date})>\n\n**Today:** <today()>",
-          "rules": [
+          "id": "section-date",
+          "fieldType": "section",
+          "title": "1 — Date Arithmetic",
+          "fields": [
             {
-              "effect": "visible",
-              "logic": "AND",
-              "conditions": [
+              "id": "start-date",
+              "fieldType": "text",
+              "question": "Start Date",
+              "inputType": "date",
+              "required": true
+            },
+            {
+              "id": "end-date",
+              "fieldType": "text",
+              "question": "End Date",
+              "inputType": "date",
+              "required": true
+            },
+            {
+              "id": "date-results",
+              "fieldType": "display",
+              "content": "**14 days after start:** <addDays({start-date}, 14)>\n\n**7 days before start:** <subDays({start-date}, 7)>\n\n**Days between start → end:** <diffDays({end-date}, {start-date})>\n\n**Year of start date:** <year({start-date})>\n\n**Today:** <today()>",
+              "rules": [
                 {
-                  "conditionType": "expression",
-                  "expression": "{start-date} !== '' && {end-date} !== ''"
+                  "effect": "visible",
+                  "logic": "AND",
+                  "conditions": [
+                    {
+                      "conditionType": "expression",
+                      "expression": "{start-date} !== '' && {end-date} !== ''"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "date-gap-warning",
+              "fieldType": "display",
+              "content": "⚠️ End date is more than 30 days after start.",
+              "rules": [
+                {
+                  "effect": "visible",
+                  "logic": "AND",
+                  "conditions": [
+                    {
+                      "conditionType": "expression",
+                      "expression": "{start-date} !== '' && {end-date} !== '' && diffDays({end-date}, {start-date}) > 30"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "date-order-warning",
+              "fieldType": "display",
+              "content": "⚠️ End date is before start date.",
+              "rules": [
+                {
+                  "effect": "visible",
+                  "logic": "AND",
+                  "conditions": [
+                    {
+                      "conditionType": "expression",
+                      "expression": "{start-date} !== '' && {end-date} !== '' && diffDays({end-date}, {start-date}) < 0"
+                    }
+                  ]
                 }
               ]
             }
           ]
         },
         {
-          "id": "date-gap-warning",
-          "fieldType": "display",
-          "content": "⚠️ End date is more than 30 days after start.",
-          "rules": [
+          "id": "section-today",
+          "fieldType": "section",
+          "title": "2 — today() Comparisons",
+          "fields": [
             {
-              "effect": "visible",
-              "logic": "AND",
-              "conditions": [
+              "id": "event-date",
+              "fieldType": "text",
+              "question": "Event Date",
+              "inputType": "date",
+              "required": true
+            },
+            {
+              "id": "event-timing",
+              "fieldType": "display",
+              "content": "**Days until/since event:** <diffDays({event-date}, today())>\n\n**Event year:** <year({event-date})>",
+              "rules": [
                 {
-                  "conditionType": "expression",
-                  "expression": "{start-date} !== '' && {end-date} !== '' && diffDays({end-date}, {start-date}) > 30"
+                  "effect": "visible",
+                  "logic": "AND",
+                  "conditions": [
+                    {
+                      "conditionType": "expression",
+                      "expression": "{event-date} !== ''"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "event-past",
+              "fieldType": "display",
+              "content": "✅ This event is in the past.",
+              "rules": [
+                {
+                  "effect": "visible",
+                  "logic": "AND",
+                  "conditions": [
+                    {
+                      "conditionType": "expression",
+                      "expression": "{event-date} !== '' && diffDays({event-date}, today()) < 0"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "event-future",
+              "fieldType": "display",
+              "content": "📅 This event is in the future.",
+              "rules": [
+                {
+                  "effect": "visible",
+                  "logic": "AND",
+                  "conditions": [
+                    {
+                      "conditionType": "expression",
+                      "expression": "{event-date} !== '' && diffDays({event-date}, today()) > 0"
+                    }
+                  ]
                 }
               ]
             }
           ]
         },
         {
-          "id": "date-order-warning",
-          "fieldType": "display",
-          "content": "⚠️ End date is before start date.",
-          "rules": [
+          "id": "section-numeric",
+          "fieldType": "section",
+          "title": "3 — Numeric Functions",
+          "fields": [
             {
-              "effect": "visible",
-              "logic": "AND",
-              "conditions": [
-                {
-                  "conditionType": "expression",
-                  "expression": "{start-date} !== '' && {end-date} !== '' && diffDays({end-date}, {start-date}) < 0"
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    },
-
-    {
-      "id": "section-today",
-      "fieldType": "section",
-      "title": "2 — today() Comparisons",
-      "fields": [
-        {
-          "id": "event-date",
-          "fieldType": "text",
-          "question": "Event Date",
-          "inputType": "date",
-          "required": true
-        },
-        {
-          "id": "event-timing",
-          "fieldType": "display",
-          "content": "**Days until/since event:** <diffDays({event-date}, today())>\n\n**Event year:** <year({event-date})>",
-          "rules": [
+              "id": "num-a",
+              "fieldType": "text",
+              "question": "Number A",
+              "inputType": "number"
+            },
             {
-              "effect": "visible",
-              "logic": "AND",
-              "conditions": [
+              "id": "num-b",
+              "fieldType": "text",
+              "question": "Number B",
+              "inputType": "number"
+            },
+            {
+              "id": "num-c",
+              "fieldType": "text",
+              "question": "Number C",
+              "inputType": "number"
+            },
+            {
+              "id": "numeric-results",
+              "fieldType": "display",
+              "content": "**min(A, B, C):** <min({num-a}, {num-b}, {num-c})>\n\n**max(A, B, C):** <max({num-a}, {num-b}, {num-c})>\n\n**round(A / B):** <round({num-a} / {num-b})>\n\n**floor(A / B):** <floor({num-a} / {num-b})>\n\n**ceil(A / B):** <ceil({num-a} / {num-b})>\n\n**abs(A − B):** <abs({num-a} - {num-b})>",
+              "rules": [
                 {
-                  "conditionType": "expression",
-                  "expression": "{event-date} !== ''"
+                  "effect": "visible",
+                  "logic": "AND",
+                  "conditions": [
+                    {
+                      "conditionType": "expression",
+                      "expression": "{num-a} !== '' && {num-b} !== '' && {num-c} !== '' && {num-b} !== 0"
+                    }
+                  ]
                 }
               ]
             }
           ]
         },
         {
-          "id": "event-past",
-          "fieldType": "display",
-          "content": "✅ This event is in the past.",
-          "rules": [
+          "id": "section-bmi",
+          "fieldType": "section",
+          "title": "4 — BMI Calculator (round + if)",
+          "fields": [
             {
-              "effect": "visible",
-              "logic": "AND",
-              "conditions": [
+              "id": "weight-kg",
+              "fieldType": "text",
+              "question": "Weight",
+              "inputType": "number",
+              "unit": "kg",
+              "required": true
+            },
+            {
+              "id": "height-cm",
+              "fieldType": "text",
+              "question": "Height",
+              "inputType": "number",
+              "unit": "cm",
+              "required": true
+            },
+            {
+              "id": "bmi-result",
+              "fieldType": "display",
+              "content": "**BMI:** <round({weight-kg} / (({height-cm} / 100) * ({height-cm} / 100)))>\n\n**Category:** <if(round({weight-kg} / (({height-cm} / 100) * ({height-cm} / 100))) >= 30, 'Obese', if(round({weight-kg} / (({height-cm} / 100) * ({height-cm} / 100))) >= 25, 'Overweight', if(round({weight-kg} / (({height-cm} / 100) * ({height-cm} / 100))) >= 18.5, 'Normal weight', 'Underweight')))>",
+              "rules": [
                 {
-                  "conditionType": "expression",
-                  "expression": "{event-date} !== '' && diffDays({event-date}, today()) < 0"
+                  "effect": "visible",
+                  "logic": "AND",
+                  "conditions": [
+                    {
+                      "conditionType": "expression",
+                      "expression": "{weight-kg} > 0 && {height-cm} > 0"
+                    }
+                  ]
                 }
               ]
             }
           ]
         },
         {
-          "id": "event-future",
-          "fieldType": "display",
-          "content": "📅 This event is in the future.",
-          "rules": [
+          "id": "section-if",
+          "fieldType": "section",
+          "title": "5 — Conditional (if)",
+          "fields": [
             {
-              "effect": "visible",
-              "logic": "AND",
-              "conditions": [
+              "id": "phq-score",
+              "fieldType": "slider",
+              "question": "PHQ-9 Total Score",
+              "options": [
                 {
-                  "conditionType": "expression",
-                  "expression": "{event-date} !== '' && diffDays({event-date}, today()) > 0"
+                  "id": "s0",
+                  "value": "0"
+                },
+                {
+                  "id": "s1",
+                  "value": "1"
+                },
+                {
+                  "id": "s2",
+                  "value": "2"
+                },
+                {
+                  "id": "s3",
+                  "value": "3"
+                },
+                {
+                  "id": "s4",
+                  "value": "4"
+                },
+                {
+                  "id": "s5",
+                  "value": "5"
+                },
+                {
+                  "id": "s6",
+                  "value": "6"
+                },
+                {
+                  "id": "s7",
+                  "value": "7"
+                },
+                {
+                  "id": "s8",
+                  "value": "8"
+                },
+                {
+                  "id": "s9",
+                  "value": "9"
+                },
+                {
+                  "id": "s10",
+                  "value": "10"
+                },
+                {
+                  "id": "s11",
+                  "value": "11"
+                },
+                {
+                  "id": "s12",
+                  "value": "12"
+                },
+                {
+                  "id": "s13",
+                  "value": "13"
+                },
+                {
+                  "id": "s14",
+                  "value": "14"
+                },
+                {
+                  "id": "s15",
+                  "value": "15"
+                },
+                {
+                  "id": "s16",
+                  "value": "16"
+                },
+                {
+                  "id": "s17",
+                  "value": "17"
+                },
+                {
+                  "id": "s18",
+                  "value": "18"
+                },
+                {
+                  "id": "s19",
+                  "value": "19"
+                },
+                {
+                  "id": "s20",
+                  "value": "20"
+                },
+                {
+                  "id": "s21",
+                  "value": "21"
+                },
+                {
+                  "id": "s22",
+                  "value": "22"
+                },
+                {
+                  "id": "s23",
+                  "value": "23"
+                },
+                {
+                  "id": "s24",
+                  "value": "24"
+                },
+                {
+                  "id": "s25",
+                  "value": "25"
+                },
+                {
+                  "id": "s26",
+                  "value": "26"
+                },
+                {
+                  "id": "s27",
+                  "value": "27"
                 }
               ]
-            }
-          ]
-        }
-      ]
-    },
-
-    {
-      "id": "section-numeric",
-      "fieldType": "section",
-      "title": "3 — Numeric Functions",
-      "fields": [
-        {
-          "id": "num-a",
-          "fieldType": "text",
-          "question": "Number A",
-          "inputType": "number"
-        },
-        {
-          "id": "num-b",
-          "fieldType": "text",
-          "question": "Number B",
-          "inputType": "number"
-        },
-        {
-          "id": "num-c",
-          "fieldType": "text",
-          "question": "Number C",
-          "inputType": "number"
-        },
-        {
-          "id": "numeric-results",
-          "fieldType": "display",
-          "content": "**min(A, B, C):** <min({num-a}, {num-b}, {num-c})>\n\n**max(A, B, C):** <max({num-a}, {num-b}, {num-c})>\n\n**round(A / B):** <round({num-a} / {num-b})>\n\n**floor(A / B):** <floor({num-a} / {num-b})>\n\n**ceil(A / B):** <ceil({num-a} / {num-b})>\n\n**abs(A − B):** <abs({num-a} - {num-b})>",
-          "rules": [
+            },
             {
-              "effect": "visible",
-              "logic": "AND",
-              "conditions": [
+              "id": "phq-severity",
+              "fieldType": "display",
+              "content": "**Severity:** <if({phq-score} >= 20, 'Severe', if({phq-score} >= 15, 'Moderately Severe', if({phq-score} >= 10, 'Moderate', if({phq-score} >= 5, 'Mild', 'Minimal'))))>\n\n**Recommendation:** <if({phq-score} >= 10, 'Refer for clinical evaluation.', 'No immediate referral needed.')>",
+              "rules": [
                 {
-                  "conditionType": "expression",
-                  "expression": "{num-a} !== '' && {num-b} !== '' && {num-c} !== '' && {num-b} !== 0"
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    },
-
-    {
-      "id": "section-bmi",
-      "fieldType": "section",
-      "title": "4 — BMI Calculator (round + if)",
-      "fields": [
-        {
-          "id": "weight-kg",
-          "fieldType": "text",
-          "question": "Weight",
-          "inputType": "number",
-          "unit": "kg",
-          "required": true
-        },
-        {
-          "id": "height-cm",
-          "fieldType": "text",
-          "question": "Height",
-          "inputType": "number",
-          "unit": "cm",
-          "required": true
-        },
-        {
-          "id": "bmi-result",
-          "fieldType": "display",
-          "content": "**BMI:** <round({weight-kg} / (({height-cm} / 100) * ({height-cm} / 100)))>\n\n**Category:** <if(round({weight-kg} / (({height-cm} / 100) * ({height-cm} / 100))) >= 30, 'Obese', if(round({weight-kg} / (({height-cm} / 100) * ({height-cm} / 100))) >= 25, 'Overweight', if(round({weight-kg} / (({height-cm} / 100) * ({height-cm} / 100))) >= 18.5, 'Normal weight', 'Underweight')))>",
-          "rules": [
-            {
-              "effect": "visible",
-              "logic": "AND",
-              "conditions": [
-                {
-                  "conditionType": "expression",
-                  "expression": "{weight-kg} > 0 && {height-cm} > 0"
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    },
-
-    {
-      "id": "section-if",
-      "fieldType": "section",
-      "title": "5 — Conditional (if)",
-      "fields": [
-        {
-          "id": "phq-score",
-          "fieldType": "slider",
-          "question": "PHQ-9 Total Score",
-          "options": [
-            { "id": "s0", "value": "0" },
-            { "id": "s1", "value": "1" },
-            { "id": "s2", "value": "2" },
-            { "id": "s3", "value": "3" },
-            { "id": "s4", "value": "4" },
-            { "id": "s5", "value": "5" },
-            { "id": "s6", "value": "6" },
-            { "id": "s7", "value": "7" },
-            { "id": "s8", "value": "8" },
-            { "id": "s9", "value": "9" },
-            { "id": "s10", "value": "10" },
-            { "id": "s11", "value": "11" },
-            { "id": "s12", "value": "12" },
-            { "id": "s13", "value": "13" },
-            { "id": "s14", "value": "14" },
-            { "id": "s15", "value": "15" },
-            { "id": "s16", "value": "16" },
-            { "id": "s17", "value": "17" },
-            { "id": "s18", "value": "18" },
-            { "id": "s19", "value": "19" },
-            { "id": "s20", "value": "20" },
-            { "id": "s21", "value": "21" },
-            { "id": "s22", "value": "22" },
-            { "id": "s23", "value": "23" },
-            { "id": "s24", "value": "24" },
-            { "id": "s25", "value": "25" },
-            { "id": "s26", "value": "26" },
-            { "id": "s27", "value": "27" }
-          ]
-        },
-        {
-          "id": "phq-severity",
-          "fieldType": "display",
-          "content": "**Severity:** <if({phq-score} >= 20, 'Severe', if({phq-score} >= 15, 'Moderately Severe', if({phq-score} >= 10, 'Moderate', if({phq-score} >= 5, 'Mild', 'Minimal'))))>\n\n**Recommendation:** <if({phq-score} >= 10, 'Refer for clinical evaluation.', 'No immediate referral needed.')>",
-          "rules": [
-            {
-              "effect": "visible",
-              "logic": "AND",
-              "conditions": [
-                {
-                  "conditionType": "expression",
-                  "expression": "{phq-score} >= 0"
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    },
-
-    {
-      "id": "section-nested",
-      "fieldType": "section",
-      "title": "6 — Nested Functions (diffDays + addDays)",
-      "fields": [
-        {
-          "id": "baseline-date",
-          "fieldType": "text",
-          "question": "Baseline Date",
-          "inputType": "date",
-          "required": true
-        },
-        {
-          "id": "offset-days",
-          "fieldType": "text",
-          "question": "Offset Days",
-          "inputType": "number",
-          "required": true
-        },
-        {
-          "id": "target-date",
-          "fieldType": "text",
-          "question": "Target Date",
-          "inputType": "date",
-          "required": true
-        },
-        {
-          "id": "nested-result",
-          "fieldType": "display",
-          "content": "**Baseline + offset:** <addDays({baseline-date}, {offset-days})>\n\n**Days from (baseline + offset) to target:** <diffDays({target-date}, addDays({baseline-date}, {offset-days}))>",
-          "rules": [
-            {
-              "effect": "visible",
-              "logic": "AND",
-              "conditions": [
-                {
-                  "conditionType": "expression",
-                  "expression": "{baseline-date} !== '' && {offset-days} !== '' && {target-date} !== ''"
+                  "effect": "visible",
+                  "logic": "AND",
+                  "conditions": [
+                    {
+                      "conditionType": "expression",
+                      "expression": "{phq-score} >= 0"
+                    }
+                  ]
                 }
               ]
             }
           ]
         },
         {
-          "id": "nested-match",
-          "fieldType": "display",
-          "content": "✅ Target date exactly matches baseline + offset.",
-          "rules": [
+          "id": "section-nested",
+          "fieldType": "section",
+          "title": "6 — Nested Functions (diffDays + addDays)",
+          "fields": [
             {
-              "effect": "visible",
-              "logic": "AND",
-              "conditions": [
+              "id": "baseline-date",
+              "fieldType": "text",
+              "question": "Baseline Date",
+              "inputType": "date",
+              "required": true
+            },
+            {
+              "id": "offset-days",
+              "fieldType": "text",
+              "question": "Offset Days",
+              "inputType": "number",
+              "required": true
+            },
+            {
+              "id": "target-date",
+              "fieldType": "text",
+              "question": "Target Date",
+              "inputType": "date",
+              "required": true
+            },
+            {
+              "id": "nested-result",
+              "fieldType": "display",
+              "content": "**Baseline + offset:** <addDays({baseline-date}, {offset-days})>\n\n**Days from (baseline + offset) to target:** <diffDays({target-date}, addDays({baseline-date}, {offset-days}))>",
+              "rules": [
                 {
-                  "conditionType": "expression",
-                  "expression": "{baseline-date} !== '' && {offset-days} !== '' && {target-date} !== '' && diffDays({target-date}, addDays({baseline-date}, {offset-days})) === 0"
+                  "effect": "visible",
+                  "logic": "AND",
+                  "conditions": [
+                    {
+                      "conditionType": "expression",
+                      "expression": "{baseline-date} !== '' && {offset-days} !== '' && {target-date} !== ''"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "nested-match",
+              "fieldType": "display",
+              "content": "✅ Target date exactly matches baseline + offset.",
+              "rules": [
+                {
+                  "effect": "visible",
+                  "logic": "AND",
+                  "conditions": [
+                    {
+                      "conditionType": "expression",
+                      "expression": "{baseline-date} !== '' && {offset-days} !== '' && {target-date} !== '' && diffDays({target-date}, addDays({baseline-date}, {offset-days})) === 0"
+                    }
+                  ]
                 }
               ]
             }

@@ -18,10 +18,28 @@ interface FormDefinition {
   title?: string;
   /** Optional form description */
   description?: string;
-  /** Array of field definitions */
-  fields: FieldDefinition[];
+  /** When true, enables dangerously embedded JS for calculations and conditions */
+  dangerouslyAllowJS?: boolean;
+  /** Pages — every form has at least one page; fields live inside pages */
+  pages: PageEntry[];
+}
+
+interface PageEntry {
+  /** Unique page identifier */
+  id: string;
+  /** Optional display title (shown as tab label in the builder) */
+  title?: string;
+  /**
+   * Reserved: automatically advance to the next page when all fields are answered.
+   * Not yet active in the renderer.
+   */
+  autoAdvance?: boolean;
+  /** Fields rendered on this page */
+  fields?: FieldDefinition[];
 }
 ```
+
+A form with a **single page** renders as a normal single-scroll form — no navigation UI is shown. A form with **multiple pages** shows a Previous / N of total / Next navigation bar in the renderer. See [Pages](/docs/field-types/pages) for full details.
 
 ### Example
 
@@ -30,19 +48,25 @@ interface FormDefinition {
   "id": "patient-intake-form",
   "title": "Patient Intake Form",
   "description": "Please fill out all required fields",
-  "fields": [
+  "pages": [
     {
-      "id": "name",
-      "fieldType": "text",
-      "question": "Full Name",
-      "required": true,
-      "inputType": "string"
-    },
-    {
-      "id": "dob",
-      "fieldType": "text",
-      "question": "Date of Birth",
-      "inputType": "date"
+      "id": "page_1",
+      "title": "Demographics",
+      "fields": [
+        {
+          "id": "name",
+          "fieldType": "text",
+          "question": "Full Name",
+          "required": true,
+          "inputType": "string"
+        },
+        {
+          "id": "dob",
+          "fieldType": "text",
+          "question": "Date of Birth",
+          "inputType": "date"
+        }
+      ]
     }
   ]
 }

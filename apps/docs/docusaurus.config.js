@@ -10,9 +10,16 @@ dotenv.config({ path: resolve(process.cwd(), '.env.local') });
 
 const isDev = process.env.NODE_ENV !== 'production';
 const siteOrigin =
-  process.env.ESHEET_SITE_ORIGIN || 'https://esheet.os.mieweb.org';
+  process.env.ESHEET_SITE_ORIGIN || 'https://esheet.mieweb.org';
 const baseUrl = '/';
-const demoUrl = isDev ? 'http://localhost:3001/' : `${siteOrigin}/demo/`;
+const cloudflarePreviewUrl =
+  process.env.CF_PAGES === '1' && process.env.CF_PAGES_BRANCH !== 'main'
+    ? process.env.CF_PAGES_URL
+    : undefined;
+const deploymentOrigin = cloudflarePreviewUrl || siteOrigin;
+const demoUrl = isDev
+  ? 'http://localhost:3001/'
+  : `${deploymentOrigin.replace(/\/$/, '')}/demo/`;
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {

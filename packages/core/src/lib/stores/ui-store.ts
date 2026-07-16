@@ -33,6 +33,8 @@ export interface UIState {
   dragTargetId: string | null;
   /** Section ancestor highlighted when dragging over a child. */
   dragHighlightedSectionId: string | null;
+  /** The pages field id that is currently active in the canvas (set by Canvas). */
+  activePagesId: string | null;
 
   // --- Actions ---
   selectField: (fieldId: string | null) => void;
@@ -45,6 +47,7 @@ export interface UIState {
   setDragTarget: (targetId: string | null) => void;
   setDragHighlightedSection: (sectionId: string | null) => void;
   clearDragState: () => void;
+  setActivePagesId: (id: string | null) => void;
 }
 
 /** Store handle returned by `createUIStore`. */
@@ -66,6 +69,7 @@ export function createUIStore() {
     dragSourceState: null,
     dragTargetId: null,
     dragHighlightedSectionId: null,
+    activePagesId: null,
 
     selectField: (fieldId) =>
       set((state) => ({
@@ -104,5 +108,7 @@ export function createUIStore() {
         dragTargetId: null,
         dragHighlightedSectionId: null,
       }),
+
+    setActivePagesId: (id) => set({ activePagesId: id }),
   }));
 }

@@ -209,7 +209,7 @@ export function CodeView({ form, ui }: CodeViewProps) {
         const currentId = fs.getState().hydrateDefinition().id;
         fs.getState().loadDefinition({
           id: currentId,
-          fields: [],
+          pages: [],
         });
         return;
       }
