@@ -151,7 +151,6 @@ export {
   type FieldProposal,
   type CollabDecorations,
 } from './lib/field-component-props.js';
-export { type FieldComponentProps } from './lib/field-component-props.js';
 
 export {
   buildRenderTree,

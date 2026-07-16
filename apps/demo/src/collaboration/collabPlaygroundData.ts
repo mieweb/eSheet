@@ -11,23 +11,28 @@ export const COLLAB_FORM: FormDefinition = {
   title: 'Patient intake review',
   description:
     'Review a shared patient record while teammates suggest corrections.',
-  fields: [
+  pages: [
     {
-      id: 'patient-name',
-      fieldType: 'text',
-      question: 'Patient name',
-      required: true,
-    },
-    {
-      id: 'patient-phone',
-      fieldType: 'text',
-      question: 'Phone number',
-      inputType: 'tel',
-    },
-    {
-      id: 'patient-notes',
-      fieldType: 'longtext',
-      question: 'Care notes',
+      id: 'page-1',
+      fields: [
+        {
+          id: 'patient-name',
+          fieldType: 'text',
+          question: 'Patient name',
+          required: true,
+        },
+        {
+          id: 'patient-phone',
+          fieldType: 'text',
+          question: 'Phone number',
+          inputType: 'tel',
+        },
+        {
+          id: 'patient-notes',
+          fieldType: 'longtext',
+          question: 'Care notes',
+        },
+      ],
     },
   ],
 };

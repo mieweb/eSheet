@@ -293,7 +293,12 @@ describe('EsheetRenderer collab decorations', () => {
   const FORM = {
     id: 'collab-form',
     title: 'Test',
-    fields: [{ id: 'q1', fieldType: 'text', question: 'Name?' }],
+    pages: [
+      {
+        id: 'page-1',
+        fields: [{ id: 'q1', fieldType: 'text', question: 'Name?' }],
+      },
+    ],
   };
 
   async function renderWithCollab(
