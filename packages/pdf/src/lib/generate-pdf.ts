@@ -2,6 +2,7 @@ import type {
   FieldDefinition,
   FieldOption,
   FieldResponse,
+  FieldWidth,
   FormDefinition,
 } from '@esheet/core';
 import {
@@ -66,6 +67,10 @@ interface RenderContext {
   page: PDFPage;
   pageIndex: number;
   y: number;
+  /** Left edge of the current column in points. */
+  columnX: number;
+  /** Width of the current column in points. */
+  columnWidth: number;
 }
 
 const PAGE_SIZES: Record<PdfPageSize, [number, number]> = {
@@ -86,6 +91,68 @@ const LABEL_SIZE = 10.5;
 const LINE_HEIGHT = 14;
 const FIELD_GAP = 16;
 const INPUT_HEIGHT = 24;
+/** Gap between adjacent columns in a multi-column row (points). */
+const COL_GAP = 10;
+
+// ---------------------------------------------------------------------------
+// Column layout (mirrors the 6-col grid used in the renderer Canvas)
+// ---------------------------------------------------------------------------
+
+function fieldColSpan(field: { fieldType: string; width?: FieldWidth }): number {
+  if (field.fieldType === 'section' || field.fieldType === 'pages') return 6;
+  switch (field.width) {
+    case 'half':
+      return 3;
+    case 'third':
+      return 2;
+    default:
+      return 6;
+  }
+}
+
+interface RowEntry {
+  field: FieldDefinition;
+  colStart: number;
+  colSpan: number;
+}
+
+function groupIntoRows(fields: FieldDefinition[]): RowEntry[][] {
+  const rows: RowEntry[][] = [];
+  let row: RowEntry[] = [];
+  let col = 0;
+  for (const field of fields) {
+    const span = fieldColSpan(field);
+    if (span === 6 || col + span > 6) {
+      if (row.length > 0) rows.push(row);
+      row = [];
+      col = 0;
+    }
+    row.push({ field, colStart: col, colSpan: span });
+    col += span;
+    if (col >= 6) {
+      rows.push(row);
+      row = [];
+      col = 0;
+    }
+  }
+  if (row.length > 0) rows.push(row);
+  return rows;
+}
+
+function colGeometry(
+  pageWidth: number,
+  margin: number,
+  colStart: number,
+  colSpan: number
+): { x: number; width: number } {
+  const totalContent = pageWidth - margin * 2;
+  const totalGaps = COL_GAP * 5; // 5 gaps for 6 columns
+  const unit = (totalContent - totalGaps) / 6;
+  return {
+    x: margin + colStart * (unit + COL_GAP),
+    width: colSpan * unit + (colSpan - 1) * COL_GAP,
+  };
+}
 
 function hashString(value: string): string {
   let hash = 0x811c9dc5;
@@ -204,14 +271,13 @@ function drawLines(
   const font = options.font ?? context.font;
   const size = options.size ?? BODY_SIZE;
   const indent = options.indent ?? 0;
-  const width =
-    context.page.getWidth() - context.options.margin * 2 - Math.max(0, indent);
+  const width = context.columnWidth - Math.max(0, indent);
   const lines = wrapText(text, font, size, width);
   const height = Math.max(LINE_HEIGHT, lines.length * LINE_HEIGHT);
   ensureSpace(context, height);
   for (const line of lines) {
     context.page.drawText(line, {
-      x: context.options.margin + indent,
+      x: context.columnX + indent,
       y: context.y,
       size,
       font,
@@ -261,9 +327,9 @@ function addTextField(
 ): void {
   const height = multiline ? 58 : INPUT_HEIGHT;
   ensureSpace(context, height + FIELD_GAP);
-  const x = context.options.margin;
+  const x = context.columnX;
   const y = context.y - height;
-  const width = context.page.getWidth() - context.options.margin * 2;
+  const width = context.columnWidth;
   const pdfField = context.form.createTextField(name);
   if (multiline) pdfField.enableMultiline();
   if (value) pdfField.setText(pdfText(value, context, field.id));
@@ -319,7 +385,7 @@ function addCheckboxes(
     ensureSpace(context, 24);
     const name = fieldName(field.id, option.id);
     const checkbox = context.form.createCheckBox(name);
-    const x = context.options.margin;
+    const x = context.columnX;
     const y = context.y - boxSize + 2;
     checkbox.addToPage(context.page, {
       x,
@@ -338,7 +404,7 @@ function addCheckboxes(
       option.value,
       x + boxSize + 7,
       y + 2,
-      context.page.getWidth() - context.options.margin * 2 - boxSize - 7
+      context.columnWidth - boxSize - 7
     );
     context.mappings.push({
       esheetFieldId: field.id,
@@ -361,7 +427,7 @@ function addBoolean(
   ensureSpace(context, 28);
   const name = fieldName(field.id);
   const checkbox = context.form.createCheckBox(name);
-  const x = context.options.margin;
+  const x = context.columnX;
   const size = 16;
   const y = context.y - size + 2;
   checkbox.addToPage(context.page, {
@@ -404,7 +470,7 @@ function addRadioGroup(
   let selectedOptionId: string | undefined;
   for (const option of options) {
     ensureSpace(context, 24);
-    const x = context.options.margin;
+    const x = context.columnX;
     const y = context.y - size + 2;
     group.addOptionToPage(option.id, context.page, {
       x,
@@ -423,7 +489,7 @@ function addRadioGroup(
       option.value,
       x + size + 7,
       y + 2,
-      context.page.getWidth() - context.options.margin * 2 - size - 7
+      context.columnWidth - size - 7
     );
     context.mappings.push({
       esheetFieldId: field.id,
@@ -454,9 +520,9 @@ function addDropdown(
     (option) => selected.includes(option.id) || selected.includes(option.value)
   );
   if (selectedOption) dropdown.select(selectedOption.value);
-  const x = context.options.margin;
+  const x = context.columnX;
   const y = context.y - INPUT_HEIGHT;
-  const width = context.page.getWidth() - context.options.margin * 2;
+  const width = context.columnWidth;
   dropdown.addToPage(context.page, {
     x,
     y,
@@ -515,7 +581,7 @@ function renderField(context: RenderContext, field: FieldDefinition): void {
       color: COLORS.primary,
       spacingAfter: 8,
     });
-    for (const child of field.fields ?? []) renderField(context, child);
+    renderFields(context, field.fields ?? []);
     return;
   }
 
@@ -592,6 +658,43 @@ function renderField(context: RenderContext, field: FieldDefinition): void {
   }
 }
 
+/**
+ * Render an array of fields grouped into rows by their `width` property,
+ * mirroring the 6-column grid used in the renderer Canvas.
+ */
+function renderFields(context: RenderContext, fields: FieldDefinition[]): void {
+  const rows = groupIntoRows(fields);
+  for (const row of rows) {
+    const pageWidth = context.page.getWidth();
+    const margin = context.options.margin;
+    if (row.length === 1) {
+      const { field, colStart, colSpan } = row[0];
+      const { x, width } = colGeometry(pageWidth, margin, colStart, colSpan);
+      context.columnX = x;
+      context.columnWidth = width;
+      renderField(context, field);
+    } else {
+      // Multi-column row: ensure enough space for at least one field, then
+      // render each field from the same Y start, advancing Y by the max drop.
+      ensureSpace(context, INPUT_HEIGHT + LINE_HEIGHT + FIELD_GAP);
+      const startY = context.y;
+      let minY = startY;
+      for (const { field, colStart, colSpan } of row) {
+        context.y = startY;
+        const { x, width } = colGeometry(pageWidth, margin, colStart, colSpan);
+        context.columnX = x;
+        context.columnWidth = width;
+        renderField(context, field);
+        if (context.y < minY) minY = context.y;
+      }
+      context.y = minY;
+    }
+    // Restore full-width defaults after each row
+    context.columnX = margin;
+    context.columnWidth = pageWidth - margin * 2;
+  }
+}
+
 function addPageFooters(context: RenderContext): void {
   const pages = context.document.getPages();
   for (let index = 0; index < pages.length; index += 1) {
@@ -629,6 +732,7 @@ export async function generatePdf(
   const form = document.getForm();
   const [pageWidth, pageHeight] = PAGE_SIZES[options.pageSize ?? 'letter'];
   const firstPage = document.addPage([pageWidth, pageHeight]);
+  const resolvedMargin = options.margin ?? 48;
   const context: RenderContext = {
     document,
     form,
@@ -636,7 +740,7 @@ export async function generatePdf(
     boldFont,
     options: {
       pageSize: options.pageSize ?? 'letter',
-      margin: options.margin ?? 48,
+      margin: resolvedMargin,
     },
     responses: options.responses ?? {},
     mappings: [],
@@ -644,7 +748,9 @@ export async function generatePdf(
     warnedFields: new Set<string>(),
     page: firstPage,
     pageIndex: 0,
-    y: firstPage.getHeight() - (options.margin ?? 48),
+    y: firstPage.getHeight() - resolvedMargin,
+    columnX: resolvedMargin,
+    columnWidth: pageWidth - resolvedMargin * 2,
   };
 
   const title = pdfText(
@@ -674,9 +780,7 @@ export async function generatePdf(
         spacingAfter: 12,
       });
     }
-    for (const field of definitionPage.fields ?? []) {
-      renderField(context, field);
-    }
+    renderFields(context, definitionPage.fields ?? []);
   }
 
   if (definition.pages.length === 0) {

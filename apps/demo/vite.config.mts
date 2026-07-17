@@ -69,6 +69,10 @@ export default defineConfig(({ command }) => ({
         import.meta.dirname,
         '../../packages/renderer/src/index.ts'
       ),
+      '@esheet/pdf': resolve(
+        import.meta.dirname,
+        '../../packages/pdf/src/index.ts'
+      ),
       '@esheet/field-kerebron': resolve(
         import.meta.dirname,
         '../../packages/field-kerebron/src/index.ts'
