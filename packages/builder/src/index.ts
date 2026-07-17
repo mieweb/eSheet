@@ -43,6 +43,7 @@ export {
 } from './lib/components/BuilderHeader.js';
 
 export { CodeView, type CodeViewProps } from './lib/components/CodeView.js';
+export { PdfView } from './lib/components/PdfView.js';
 
 export {
   useFormApi,

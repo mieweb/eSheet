@@ -287,6 +287,18 @@ describe('BuilderHeader import feedback', () => {
   });
 });
 
+describe('BuilderHeader PDF mode', () => {
+  it('switches the builder into the dedicated PDF workflow', () => {
+    const form = createFormStore();
+    const ui = createUIStore();
+
+    renderWithContexts(form, ui, <BuilderHeader />);
+    fireEvent.click(screen.getByRole('button', { name: 'PDF' }));
+
+    expect(ui.getState().mode).toBe('pdf');
+  });
+});
+
 describe('BuilderHeader dry run submit', () => {
   function createRequiredTextDefinition() {
     return {

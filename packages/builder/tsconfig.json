@@ -4,6 +4,9 @@
   "include": ["../../types/**/*.d.ts"],
   "references": [
     {
+      "path": "../pdf"
+    },
+    {
       "path": "../fields"
     },
     {

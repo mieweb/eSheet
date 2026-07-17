@@ -49,6 +49,7 @@ export default defineConfig(() => ({
     inlineCssBuilder(),
   ],
   build: {
+    assetsInlineLimit: 0,
     lib: {
       entry: resolve(import.meta.dirname, 'src/index.ts'),
       name: 'EsheetBuilder',
@@ -61,6 +62,7 @@ export default defineConfig(() => ({
         'react-dom',
         'react/jsx-runtime',
         '@esheet/core',
+        '@esheet/pdf',
         'zustand',
         'tslib',
       ],

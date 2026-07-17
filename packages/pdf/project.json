@@ -1,0 +1,14 @@
+{
+  "name": "@esheet/pdf",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "targets": {
+    "typecheck": {
+      "command": "tsc --build tsconfig.lib.json --emitDeclarationOnly",
+      "options": {
+        "cwd": "{projectRoot}"
+      },
+      "dependsOn": ["^typecheck"]
+    }
+  },
+  "tags": ["scope:esheet", "scope:pdf", "type:lib"]
+}

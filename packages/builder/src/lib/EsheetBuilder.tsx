@@ -34,6 +34,7 @@ import { PlusIcon } from './icons.js';
 import { ensureDefaultFieldComponentsRegistered } from './register-defaults.js';
 import { MobileBottomDrawer } from './components/MobileBottomDrawer.js';
 import { Switch } from '@mieweb/ui';
+import { PdfView } from './components/PdfView.js';
 
 // ---------------------------------------------------------------------------
 // Contexts
@@ -306,6 +307,11 @@ export const EsheetBuilder = React.forwardRef<
                   />
                 </div>
                 <Canvas form={form} ui={ui} dragEnabled={false} />
+              </div>
+            )}
+            {mode === 'pdf' && (
+              <div className="pdf-layout ms:h-[calc(100dvh-12.5rem)] ms:max-h-[calc(100dvh-12.5rem)] ms:flex-none ms:min-h-0 ms:min-w-0 ms:w-full ms:overflow-hidden">
+                <PdfView />
               </div>
             )}
           </div>

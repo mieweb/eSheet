@@ -5,7 +5,7 @@ import { createStore } from 'zustand/vanilla';
 // ---------------------------------------------------------------------------
 
 /** Editor mode — which panel layout is active. */
-export type BuilderMode = 'build' | 'code' | 'preview';
+export type BuilderMode = 'build' | 'code' | 'preview' | 'pdf';
 
 /** Active tab inside the edit panel. */
 export type EditTab = 'edit' | 'logic';

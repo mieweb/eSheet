@@ -53,6 +53,7 @@ export default [
                 'scope:builder',
                 'scope:fields',
                 'scope:adapters',
+                'scope:pdf',
               ],
             },
             {
@@ -68,6 +69,10 @@ export default [
               onlyDependOnLibsWithTags: ['scope:core'],
             },
             {
+              sourceTag: 'scope:pdf',
+              onlyDependOnLibsWithTags: ['scope:core'],
+            },
+            {
               // Private apps can depend on any internal library
               sourceTag: 'npm:private',
               onlyDependOnLibsWithTags: [
@@ -77,6 +82,7 @@ export default [
                 'scope:builder',
                 'scope:renderer',
                 'scope:adapters',
+                'scope:pdf',
               ],
             },
           ],

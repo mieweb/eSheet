@@ -31,6 +31,7 @@ import {
   PreviewIcon,
   UploadIcon,
   DownloadIcon,
+  PdfIcon,
 } from '../icons.js';
 import { FeedbackModal, type FeedbackModalVariant } from './FeedbackModal.js';
 import { useUiApi } from '../hooks/useUiApi.js';
@@ -60,6 +61,7 @@ const MODES: {
   { value: 'build', label: 'Build', Icon: VEditorIcon },
   { value: 'code', label: 'Code', Icon: CodeIcon },
   { value: 'preview', label: 'Preview', Icon: PreviewIcon },
+  { value: 'pdf', label: 'PDF', Icon: PdfIcon },
 ];
 
 function sanitizeFormId(value: string): string {

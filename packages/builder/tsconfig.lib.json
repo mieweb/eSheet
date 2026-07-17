@@ -8,7 +8,7 @@
     "forceConsistentCasingInFileNames": true,
     "jsx": "react-jsx",
     "lib": ["es2022", "dom", "dom.iterable"],
-    "types": ["node"]
+    "types": ["node", "vite/client"]
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "../../types/**/*.d.ts"],
   "references": [
@@ -20,6 +20,9 @@
     },
     {
       "path": "../adapters/tsconfig.lib.json"
+    },
+    {
+      "path": "../pdf/tsconfig.lib.json"
     }
   ],
   "exclude": [
