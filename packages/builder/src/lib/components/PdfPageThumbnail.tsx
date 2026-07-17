@@ -1,8 +1,5 @@
 import React from 'react';
-import type {
-  PDFDocumentProxy,
-  RenderTask,
-} from 'pdfjs-dist';
+import type { PDFDocumentProxy, RenderTask } from 'pdfjs-dist';
 
 export interface PdfPageThumbnailProps {
   document: PDFDocumentProxy;
@@ -53,7 +50,10 @@ export function PdfPageThumbnail({
       void renderTask.promise.catch((reason: unknown) => {
         if (
           !cancelled &&
-          !(reason instanceof Error && reason.name === 'RenderingCancelledException')
+          !(
+            reason instanceof Error &&
+            reason.name === 'RenderingCancelledException'
+          )
         ) {
           console.error('Unable to render PDF page thumbnail.', reason);
         }

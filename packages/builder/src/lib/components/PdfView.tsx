@@ -5,10 +5,7 @@ import {
   type GeneratedPdf,
   type PdfFieldMapping,
 } from '@esheet/pdf';
-import type {
-  PDFDocumentLoadingTask,
-  PDFDocumentProxy,
-} from 'pdfjs-dist';
+import type { PDFDocumentLoadingTask, PDFDocumentProxy } from 'pdfjs-dist';
 import type { FieldResponse } from '@esheet/core';
 import { DownloadIcon, PdfIcon, XIcon } from '../icons.js';
 import { useFormApi } from '../hooks/useFormApi.js';
@@ -158,9 +155,7 @@ export function PdfView() {
   const updateMapping = React.useCallback(
     (index: number, mapping: PdfFieldMapping) => {
       setMappings((current) =>
-        current.map((item, itemIndex) =>
-          itemIndex === index ? mapping : item
-        )
+        current.map((item, itemIndex) => (itemIndex === index ? mapping : item))
       );
     },
     []
@@ -249,7 +244,9 @@ export function PdfView() {
     let closestDistance = Number.POSITIVE_INFINITY;
 
     for (const [pageIndex, element] of pageRefs.current) {
-      const distance = Math.abs(element.getBoundingClientRect().top - containerTop - 24);
+      const distance = Math.abs(
+        element.getBoundingClientRect().top - containerTop - 24
+      );
       if (distance < closestDistance) {
         closestDistance = distance;
         closestPage = pageIndex;
@@ -323,7 +320,14 @@ export function PdfView() {
   );
 
   const indexedMappingsByPage = React.useMemo(() => {
-    const byPage = new Map<number, { mapping: PdfFieldMapping; index: number; preview: { value?: string; checked?: boolean } }[]>();
+    const byPage = new Map<
+      number,
+      {
+        mapping: PdfFieldMapping;
+        index: number;
+        preview: { value?: string; checked?: boolean };
+      }[]
+    >();
     for (let i = 0; i < mappings.length; i++) {
       const mapping = mappings[i];
       const preview = previewForMapping(mapping);
@@ -436,7 +440,10 @@ export function PdfView() {
       </div>
 
       {error && (
-        <div role="alert" className="ms:border-b ms:border-red-300 ms:bg-red-50 ms:px-4 ms:py-2 ms:text-xs ms:text-red-700">
+        <div
+          role="alert"
+          className="ms:border-b ms:border-red-300 ms:bg-red-50 ms:px-4 ms:py-2 ms:text-xs ms:text-red-700"
+        >
           {error}
         </div>
       )}
@@ -497,7 +504,9 @@ export function PdfView() {
                     document={document}
                     pageIndex={pageIndex}
                     scale={zoom}
-                    mappings={indexedMappingsByPage.get(pageIndex) ?? EMPTY_MAPPINGS}
+                    mappings={
+                      indexedMappingsByPage.get(pageIndex) ?? EMPTY_MAPPINGS
+                    }
                     selectedIndex={selectedIndex}
                     onSelect={setSelectedIndex}
                     onChange={updateMapping}
@@ -543,23 +552,29 @@ export function PdfView() {
                     {selectedMapping.page + 1}
                   </dd>
                 </div>
-                {(['x', 'y', 'width', 'height'] as const).map((label, rectIndex) => (
-                  <div key={label}>
-                    <dt className="ms:capitalize ms:text-mstextmuted">{label}</dt>
-                    <dd className="ms:mt-1 ms:font-mono ms:text-mstext">
-                      {selectedMapping.rect[rectIndex].toFixed(1)}
-                    </dd>
-                  </div>
-                ))}
+                {(['x', 'y', 'width', 'height'] as const).map(
+                  (label, rectIndex) => (
+                    <div key={label}>
+                      <dt className="ms:capitalize ms:text-mstextmuted">
+                        {label}
+                      </dt>
+                      <dd className="ms:mt-1 ms:font-mono ms:text-mstext">
+                        {selectedMapping.rect[rectIndex].toFixed(1)}
+                      </dd>
+                    </div>
+                  )
+                )}
               </dl>
               <p className="ms:text-xs ms:leading-relaxed ms:text-mstextmuted">
                 Drag the move handle or resize from the lower-right corner. The
-                edited rectangle is written back to the AcroForm when downloaded.
+                edited rectangle is written back to the AcroForm when
+                downloaded.
               </p>
             </div>
           ) : (
             <div className="ms:text-sm ms:text-mstextmuted">
-              Select an AcroForm field on the page to edit its position and size.
+              Select an AcroForm field on the page to edit its position and
+              size.
             </div>
           )}
         </aside>

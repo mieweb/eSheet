@@ -1,9 +1,5 @@
 import React from 'react';
-import type {
-  PDFDocumentProxy,
-  PDFPageProxy,
-  PageViewport,
-} from 'pdfjs-dist';
+import type { PDFDocumentProxy, PDFPageProxy, PageViewport } from 'pdfjs-dist';
 import type { PdfFieldMapping } from '@esheet/pdf';
 
 interface IndexedMapping {
@@ -136,7 +132,10 @@ export const PdfCanvasPage = React.memo(function PdfCanvasPage({
       .catch((reason: unknown) => {
         if (
           !disposed &&
-          !(reason instanceof Error && reason.name === 'RenderingCancelledException')
+          !(
+            reason instanceof Error &&
+            reason.name === 'RenderingCancelledException'
+          )
         ) {
           console.error('Unable to render PDF canvas page.', reason);
         }
@@ -199,7 +198,11 @@ export const PdfCanvasPage = React.memo(function PdfCanvasPage({
             pageWidth - original.rect[0]
           );
           const originalTop = original.rect[1] + original.rect[3];
-          const height = clamp(original.rect[3] + deltaY / scale, 12, originalTop);
+          const height = clamp(
+            original.rect[3] + deltaY / scale,
+            12,
+            originalTop
+          );
           const y = originalTop - height;
           onChange(indexed.index, {
             ...original,
@@ -240,13 +243,18 @@ export const PdfCanvasPage = React.memo(function PdfCanvasPage({
       >
         <canvas ref={canvasRef} className="ms:block" />
         {viewport && (
-          <div className="ms:absolute ms:inset-0" aria-label="AcroForm field layer">
+          <div
+            className="ms:absolute ms:inset-0"
+            aria-label="AcroForm field layer"
+          >
             {mappings.map((indexed) => {
               const box = viewportRect(viewport, indexed.mapping.rect);
               const selected = indexed.index === selectedIndex;
               return (
                 <div
-                  key={`${indexed.mapping.pdfFieldName}:${indexed.mapping.optionId ?? indexed.index}`}
+                  key={`${indexed.mapping.pdfFieldName}:${
+                    indexed.mapping.optionId ?? indexed.index
+                  }`}
                   role="button"
                   tabIndex={0}
                   aria-label={`PDF field ${indexed.mapping.esheetFieldId}`}

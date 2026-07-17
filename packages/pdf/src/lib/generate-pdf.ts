@@ -18,11 +18,7 @@ export type PdfPageSize = 'letter' | 'a4';
 
 export type PdfResponseMap = Record<string, FieldResponse>;
 
-export type PdfFieldKind =
-  | 'text'
-  | 'checkbox'
-  | 'radio'
-  | 'dropdown';
+export type PdfFieldKind = 'text' | 'checkbox' | 'radio' | 'dropdown';
 
 export interface PdfFieldMapping {
   esheetFieldId: string;
@@ -98,7 +94,10 @@ const COL_GAP = 10;
 // Column layout (mirrors the 6-col grid used in the renderer Canvas)
 // ---------------------------------------------------------------------------
 
-function fieldColSpan(field: { fieldType: string; width?: FieldWidth }): number {
+function fieldColSpan(field: {
+  fieldType: string;
+  width?: FieldWidth;
+}): number {
   if (field.fieldType === 'section' || field.fieldType === 'pages') return 6;
   switch (field.width) {
     case 'half':
@@ -553,7 +552,11 @@ function addUnsupported(
   const answer = response?.answer;
   drawLines(
     context,
-    pdfText(answer ? `Response: ${answer}` : 'Not editable in PDF yet.', context, field.id),
+    pdfText(
+      answer ? `Response: ${answer}` : 'Not editable in PDF yet.',
+      context,
+      field.id
+    ),
     { color: COLORS.muted, spacingAfter: FIELD_GAP }
   );
   context.warnings.push({
@@ -598,13 +601,7 @@ function renderField(context: RenderContext, field: FieldDefinition): void {
       );
       break;
     case 'longtext':
-      addTextField(
-        context,
-        field,
-        fieldName(field.id),
-        response?.answer,
-        true
-      );
+      addTextField(context, field, fieldName(field.id), response?.answer, true);
       break;
     case 'multitext':
       for (const option of field.options ?? []) {

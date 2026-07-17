@@ -136,9 +136,11 @@ describe('generatePdf', () => {
     const second = await generatePdf(definition);
 
     expect(first.mappings).toEqual(second.mappings);
-    expect(first.mappings.every((mapping) => mapping.pdfFieldName.startsWith('esheet_'))).toBe(
-      true
-    );
+    expect(
+      first.mappings.every((mapping) =>
+        mapping.pdfFieldName.startsWith('esheet_')
+      )
+    ).toBe(true);
   });
 
   it('paginates long forms and reports unsupported fields', async () => {
