@@ -16,6 +16,41 @@ function getRendererHandle(ref: React.RefObject<EsheetRendererHandle | null>) {
 }
 
 describe('EsheetRenderer', () => {
+  it('uses builder row widths to lay fields out on a six-column grid', async () => {
+    const { container } = render(
+      <EsheetRenderer
+        formDataInput={{
+          id: 'row-width-form',
+          pages: [
+            {
+              id: 'page-1',
+              fields: [
+                { id: 'full', fieldType: 'text', width: 'full' },
+                { id: 'half', fieldType: 'text', width: 'half' },
+                { id: 'third', fieldType: 'text', width: 'third' },
+              ],
+            },
+          ],
+        }}
+      />
+    );
+
+    const body = container.querySelector<HTMLElement>('.renderer-body');
+    expect(body?.style.gridTemplateColumns).toBe('repeat(6, minmax(0, 1fr))');
+    expect(
+      container.querySelector<HTMLElement>('[data-field-id="full"]')?.style
+        .gridColumn
+    ).toBe('span 6');
+    expect(
+      container.querySelector<HTMLElement>('[data-field-id="half"]')?.style
+        .gridColumn
+    ).toBe('span 3');
+    expect(
+      container.querySelector<HTMLElement>('[data-field-id="third"]')?.style
+        .gridColumn
+    ).toBe('span 2');
+  });
+
   it('mounts and exposes ref handle', async () => {
     const ref = React.createRef<EsheetRendererHandle>();
     await act(async () => {
