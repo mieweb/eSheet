@@ -231,47 +231,50 @@ export const FieldNode = React.memo(function FieldNode({
         data-field-id={field.definition.id}
         aria-disabled={!isEnabled || undefined}
       >
-      {presence.length > 0 && (
-        <div
-          className="collab-presence ms:absolute ms:top-2 ms:right-2 ms:flex ms:gap-1"
-          role="img"
-          aria-label={presence.map((peer) => peer.name).join(', ')}
-        >
-          {presence.map((peer) => (
-            <span
-              key={peer.name}
-              title={peer.name}
-              className="ms:inline-block ms:w-2.5 ms:h-2.5 ms:rounded-full ms:border ms:border-mssurface"
-              style={{ backgroundColor: peer.color }}
-            />
-          ))}
-        </div>
-      )}
-      {field.definition.fieldType === 'section' ? (
-        (() => {
-          const ContainerComponent = Component as React.ComponentType<
-            FieldComponentProps & { nestedChildren?: React.ReactNode }
-          >;
-          return (
-            <ContainerComponent {...props} nestedChildren={nestedChildren} />
-          );
-        })()
-      ) : (
-        <Component {...props} />
-      )}
-      {hasProposals && (
-        <div id={adornmentId} className="collab-proposals ms:mt-2 ms:space-y-1">
-          {proposals.map((proposal) => (
-            <ProposalAdornment
-              key={proposal.id}
-              proposal={proposal}
-              fieldId={id}
-              fieldLabel={fieldLabel}
-              collab={collab}
-            />
-          ))}
-        </div>
-      )}
+        {presence.length > 0 && (
+          <div
+            className="collab-presence ms:absolute ms:top-2 ms:right-2 ms:flex ms:gap-1"
+            role="img"
+            aria-label={presence.map((peer) => peer.name).join(', ')}
+          >
+            {presence.map((peer) => (
+              <span
+                key={peer.name}
+                title={peer.name}
+                className="ms:inline-block ms:w-2.5 ms:h-2.5 ms:rounded-full ms:border ms:border-mssurface"
+                style={{ backgroundColor: peer.color }}
+              />
+            ))}
+          </div>
+        )}
+        {field.definition.fieldType === 'section' ? (
+          (() => {
+            const ContainerComponent = Component as React.ComponentType<
+              FieldComponentProps & { nestedChildren?: React.ReactNode }
+            >;
+            return (
+              <ContainerComponent {...props} nestedChildren={nestedChildren} />
+            );
+          })()
+        ) : (
+          <Component {...props} />
+        )}
+        {hasProposals && (
+          <div
+            id={adornmentId}
+            className="collab-proposals ms:mt-2 ms:space-y-1"
+          >
+            {proposals.map((proposal) => (
+              <ProposalAdornment
+                key={proposal.id}
+                proposal={proposal}
+                fieldId={id}
+                fieldLabel={fieldLabel}
+                collab={collab}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </FieldGridItem>
   );

@@ -87,13 +87,7 @@ export function RendererBody({ form, ui, collab }: RendererBodyProps) {
   }, [form, pages, currentPagesIdx, responses]);
 
   const fields = visibleFieldIds.map((id) => (
-    <FieldNode
-      key={id}
-      id={id}
-      form={form}
-      ui={ui}
-      collab={collab}
-    />
+    <FieldNode key={id} id={id} form={form} ui={ui} collab={collab} />
   ));
 
   if (!isMultiPage) {

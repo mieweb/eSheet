@@ -38,22 +38,14 @@ function useIsNarrowGrid(): boolean {
   return isNarrow;
 }
 
-export interface FieldGridProps
-  extends React.ComponentPropsWithoutRef<'div'> {
+export interface FieldGridProps extends React.ComponentPropsWithoutRef<'div'> {
   enabled?: boolean;
   stackedClassName?: string;
 }
 
 export const FieldGrid = React.forwardRef<HTMLDivElement, FieldGridProps>(
   function FieldGrid(
-    {
-      children,
-      className,
-      enabled = true,
-      stackedClassName,
-      style,
-      ...props
-    },
+    { children, className, enabled = true, stackedClassName, style, ...props },
     ref
   ) {
     const useGridLayout = enabled && !useIsNarrowGrid();

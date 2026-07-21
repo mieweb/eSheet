@@ -127,7 +127,10 @@ function DraggableFieldItem({
                 FieldComponentProps & { nestedChildren?: React.ReactNode }
               >;
               return (
-                <ContainerComponent {...props} nestedChildren={nestedChildren} />
+                <ContainerComponent
+                  {...props}
+                  nestedChildren={nestedChildren}
+                />
               );
             }
             return <Component {...props} />;
