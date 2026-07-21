@@ -48,7 +48,8 @@ export const FieldGrid = React.forwardRef<HTMLDivElement, FieldGridProps>(
     { children, className, enabled = true, stackedClassName, style, ...props },
     ref
   ) {
-    const useGridLayout = enabled && !useIsNarrowGrid();
+    const isNarrowGrid = useIsNarrowGrid();
+    const useGridLayout = enabled && !isNarrowGrid;
     const containerClassName = [
       className,
       useGridLayout ? 'ms:gap-3' : stackedClassName,
