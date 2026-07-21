@@ -5,71 +5,14 @@ import Sortable from 'sortablejs';
 import { useFormApi } from '../hooks/useFormApi.js';
 import { useUiApi } from '../hooks/useUiApi.js';
 import { FieldWrapper } from './FieldWrapper.js';
-import { getFieldComponent, PageNavigator } from '@esheet/fields';
+import {
+  FieldGrid,
+  FieldGridItem,
+  getFieldComponent,
+  PageNavigator,
+  useFieldGridLayout,
+} from '@esheet/fields';
 import { ViewBigIcon, ViewSmallIcon } from '../icons.js';
-
-// ---------------------------------------------------------------------------
-// Preview row grid
-// ---------------------------------------------------------------------------
-// Preview lays fields out on a 6-column grid so fields can share rows. Each
-// field's `width` decides how many columns it spans; the grid packs them left
-// to right and wraps automatically. On narrow screens the grid collapses to a
-// single stacked column.
-//   full  -> 6 cols (whole row)   half -> 3 cols (2/row)   third -> 2 cols (3/row)
-// The 6-column track is applied via inline style because Tailwind's responsive
-// display utilities (`ms:sm:grid`) are not reliably generated for these packages.
-const PREVIEW_GRID_CLASS = 'ms:gap-3';
-const PREVIEW_GRID_STYLE: React.CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(6, minmax(0, 1fr))',
-  alignItems: 'start',
-};
-
-function previewColSpan(field: {
-  definition: { fieldType: string; width?: 'full' | 'half' | 'third' };
-}): number {
-  if (
-    field.definition.fieldType === 'section' ||
-    field.definition.fieldType === 'pages'
-  )
-    return 6;
-  switch (field.definition.width) {
-    case 'half':
-      return 3;
-    case 'third':
-      return 2;
-    default:
-      return 6;
-  }
-}
-
-// Below this viewport width the preview collapses to a single stacked column
-// (all fields full width), regardless of each field's chosen row width.
-const PREVIEW_STACK_MEDIA_QUERY = '(max-width: 900px)';
-
-/** True when the viewport is at tablet width or narrower. */
-function useIsNarrowPreview(): boolean {
-  const getMatches = () =>
-    typeof window !== 'undefined' &&
-    typeof window.matchMedia === 'function' &&
-    window.matchMedia(PREVIEW_STACK_MEDIA_QUERY).matches;
-
-  const [isNarrow, setIsNarrow] = React.useState(getMatches);
-
-  React.useEffect(() => {
-    if (
-      typeof window === 'undefined' ||
-      typeof window.matchMedia !== 'function'
-    )
-      return;
-    const mq = window.matchMedia(PREVIEW_STACK_MEDIA_QUERY);
-    const handler = (e: MediaQueryListEvent) => setIsNarrow(e.matches);
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
-
-  return isNarrow;
-}
 
 export interface CanvasProps {
   /** The form store */
@@ -95,7 +38,6 @@ function DraggableFieldItem({
   forceExpandVersion,
   forceCollapseVersion,
   nestedChildren,
-  previewGrid = false,
   computedValue,
 }: {
   id: string;
@@ -108,11 +50,11 @@ function DraggableFieldItem({
   forceExpandVersion?: number;
   forceCollapseVersion?: number;
   nestedChildren?: React.ReactNode;
-  previewGrid?: boolean;
   computedValue?: string | number | null;
 }) {
   const handleRef = React.useRef<HTMLDivElement | null>(null);
   const field = form.getState().getField(id);
+  const useGridLayout = useFieldGridLayout();
 
   // True when parentId refers to a section field (in normalized.byId), not a page.
   const parentIsSectionField = parentId
@@ -135,61 +77,64 @@ function DraggableFieldItem({
 
   if (!field) return null;
 
-  const wrapperClass = previewGrid
+  const wrapperClass = useGridLayout
     ? 'field-canvas-wrapper ms:relative'
     : 'field-canvas-wrapper ms:relative ms:pb-1 ms:last:pb-0';
-  const wrapperStyle = previewGrid
-    ? { gridColumn: `span ${previewColSpan(field)}` }
-    : undefined;
 
   return (
-    <div
-      className={wrapperClass}
-      style={wrapperStyle}
-      data-field-id={id}
-      data-field-type={field.definition.fieldType}
-      data-selected={isSelected ? 'true' : 'false'}
+    <FieldGridItem
+      fieldType={field.definition.fieldType}
+      width={field.definition.width}
     >
-      <FieldWrapper
-        fieldId={id}
-        form={form}
-        ui={ui}
-        dragHandleRef={handleRef}
-        forceExpandVersion={forceExpandVersion}
-        forceCollapseVersion={forceCollapseVersion}
-        isSelectedOverride={parentIsSectionField ? isActiveChild : undefined}
-        onSelectOverride={
-          parentIsSectionField ? handleSelectOverride : undefined
-        }
-        selectedVariant={parentIsSectionField ? 'nested' : 'default'}
-        computedValue={computedValue}
+      <div
+        className={wrapperClass}
+        data-field-id={id}
+        data-field-type={field.definition.fieldType}
+        data-selected={isSelected ? 'true' : 'false'}
       >
-        {(props) => {
-          const Component = getFieldComponent(props.field.definition.fieldType);
-
-          if (!Component) {
-            return (
-              <p className="ms:text-sm ms:text-mstextmuted ms:p-2">
-                Unknown field type:{' '}
-                <code className="ms:font-mono">
-                  {props.field.definition.fieldType}
-                </code>
-              </p>
-            );
+        <FieldWrapper
+          fieldId={id}
+          form={form}
+          ui={ui}
+          dragHandleRef={handleRef}
+          forceExpandVersion={forceExpandVersion}
+          forceCollapseVersion={forceCollapseVersion}
+          isSelectedOverride={parentIsSectionField ? isActiveChild : undefined}
+          onSelectOverride={
+            parentIsSectionField ? handleSelectOverride : undefined
           }
-
-          if (props.field.definition.fieldType === 'section') {
-            const ContainerComponent = Component as React.ComponentType<
-              FieldComponentProps & { nestedChildren?: React.ReactNode }
-            >;
-            return (
-              <ContainerComponent {...props} nestedChildren={nestedChildren} />
+          selectedVariant={parentIsSectionField ? 'nested' : 'default'}
+          computedValue={computedValue}
+        >
+          {(props) => {
+            const Component = getFieldComponent(
+              props.field.definition.fieldType
             );
-          }
-          return <Component {...props} />;
-        }}
-      </FieldWrapper>
-    </div>
+
+            if (!Component) {
+              return (
+                <p className="ms:text-sm ms:text-mstextmuted ms:p-2">
+                  Unknown field type:{' '}
+                  <code className="ms:font-mono">
+                    {props.field.definition.fieldType}
+                  </code>
+                </p>
+              );
+            }
+
+            if (props.field.definition.fieldType === 'section') {
+              const ContainerComponent = Component as React.ComponentType<
+                FieldComponentProps & { nestedChildren?: React.ReactNode }
+              >;
+              return (
+                <ContainerComponent {...props} nestedChildren={nestedChildren} />
+              );
+            }
+            return <Component {...props} />;
+          }}
+        </FieldWrapper>
+      </div>
+    </FieldGridItem>
   );
 }
 
@@ -205,8 +150,6 @@ export const Canvas = React.memo(function Canvas({
   const canvasRef = React.useRef<HTMLDivElement | null>(null);
   const { normalized, responses } = useFormApi();
   const { mode, selectedFieldId, selectedFieldChildId } = useUiApi();
-  const isNarrowPreview = useIsNarrowPreview();
-  const showPreviewGrid = mode === 'preview' && !isNarrowPreview;
   const [sectionExpandSignal, setSectionExpandSignal] = React.useState<{
     sectionId: string;
     version: number;
@@ -555,19 +498,19 @@ export const Canvas = React.memo(function Canvas({
       if (mode === 'preview' && childIds.length === 0) return null;
 
       const isEmpty = mode !== 'preview' && childIds.length === 0;
-      const previewGridClass = showPreviewGrid ? ` ${PREVIEW_GRID_CLASS}` : '';
       const containerClass =
         depth === 1
-          ? `section-children${previewGridClass}`
-          : `section-children ms:border-l ms:border-msborder ms:pl-3${previewGridClass}`;
+          ? 'section-children'
+          : 'section-children ms:border-l ms:border-msborder ms:pl-3';
       const emptyClass = isEmpty
         ? ' ms:rounded-lg ms:border-2 ms:border-dashed ms:border-msprimary/30 ms:bg-gradient-to-br ms:from-msbackground ms:to-msbackgroundsecondary'
         : ' ms:min-h-[2rem]';
 
       return (
-        <div
+        <FieldGrid
+          enabled={mode === 'preview'}
           className={`${containerClass}${emptyClass}`}
-          style={showPreviewGrid ? PREVIEW_GRID_STYLE : undefined}
+          stackedClassName="ms:space-y-0"
           data-depth={depth}
           data-sortable-list={dragEnabled ? 'true' : undefined}
           data-parent-id={parentId}
@@ -590,7 +533,6 @@ export const Canvas = React.memo(function Canvas({
               ui={ui}
               parentId={parentId}
               dragEnabled={dragEnabled}
-              previewGrid={showPreviewGrid}
               isSelected={
                 selectedFieldId === parentId && selectedFieldChildId === childId
               }
@@ -607,7 +549,7 @@ export const Canvas = React.memo(function Canvas({
               computedValue={computedValuesMap.get(childId)}
             />
           ))}
-        </div>
+        </FieldGrid>
       );
     },
     [
@@ -620,7 +562,6 @@ export const Canvas = React.memo(function Canvas({
       sectionExpandSignal,
       selectedFieldChildId,
       selectedFieldId,
-      showPreviewGrid,
       ui,
     ]
   );
@@ -873,12 +814,11 @@ export const Canvas = React.memo(function Canvas({
               No fields yet. Add a field from the Tool Panel to get started.
             </div>
           ) : (
-            <div
+            <FieldGrid
               ref={canvasRef}
-              className={`canvas-fields ${
-                showPreviewGrid ? PREVIEW_GRID_CLASS : 'ms:space-y-0'
-              } ms:flex-1 ms:min-h-0 ms:overflow-y-auto ms:px-4 ms:pt-3 ms:pb-4`}
-              style={showPreviewGrid ? PREVIEW_GRID_STYLE : undefined}
+              enabled={mode === 'preview'}
+              className="canvas-fields ms:flex-1 ms:min-h-0 ms:overflow-y-auto ms:px-4 ms:pt-3 ms:pb-4"
+              stackedClassName="ms:space-y-0"
               data-sortable-list={dragEnabled ? 'true' : undefined}
               data-parent-id={activePagesId ?? ''}
             >
@@ -900,7 +840,6 @@ export const Canvas = React.memo(function Canvas({
                     ui={ui}
                     parentId={activePagesId ?? undefined}
                     dragEnabled={dragEnabled}
-                    previewGrid={showPreviewGrid}
                     isSelected={
                       selectedFieldId === id && selectedFieldChildId === null
                     }
@@ -916,7 +855,7 @@ export const Canvas = React.memo(function Canvas({
                   />
                 ))
               )}
-            </div>
+            </FieldGrid>
           );
 
         if (mode === 'preview' && isMultiPage) {

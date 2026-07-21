@@ -6,7 +6,7 @@ import type {
   FormStore,
   UIStore,
 } from '@esheet/core';
-import { getFieldComponent } from '@esheet/fields';
+import { FieldGrid, FieldGridItem, getFieldComponent } from '@esheet/fields';
 
 export interface FieldNodeProps {
   id: string;
@@ -101,11 +101,15 @@ export const FieldNode = React.memo(function FieldNode({
     }
     const containerClass =
       depth === 1
-        ? 'section-children ms:space-y-2'
-        : 'section-children ms:space-y-2 ms:border-l ms:border-msborder ms:pl-3';
+        ? 'section-children'
+        : 'section-children ms:border-l ms:border-msborder ms:pl-3';
 
     return (
-      <div className={containerClass} data-depth={depth}>
+      <FieldGrid
+        className={containerClass}
+        stackedClassName="ms:space-y-2"
+        data-depth={depth}
+      >
         {visibleChildIds.map((childId) => (
           <FieldNode
             key={childId}
@@ -116,7 +120,7 @@ export const FieldNode = React.memo(function FieldNode({
             collab={collab}
           />
         ))}
-      </div>
+      </FieldGrid>
     );
   }, [field, visibleChildIds, id, form, ui, depth, collab]);
 
@@ -216,13 +220,17 @@ export const FieldNode = React.memo(function FieldNode({
   const fieldLabel = field.definition.question || field.definition.id;
 
   return (
-    <div
-      ref={wrapperRef}
-      className={wrapperClass}
-      data-field-type={field.definition.fieldType}
-      data-field-id={field.definition.id}
-      aria-disabled={!isEnabled || undefined}
+    <FieldGridItem
+      fieldType={field.definition.fieldType}
+      width={field.definition.width}
     >
+      <div
+        ref={wrapperRef}
+        className={wrapperClass}
+        data-field-type={field.definition.fieldType}
+        data-field-id={field.definition.id}
+        aria-disabled={!isEnabled || undefined}
+      >
       {presence.length > 0 && (
         <div
           className="collab-presence ms:absolute ms:top-2 ms:right-2 ms:flex ms:gap-1"
@@ -264,7 +272,8 @@ export const FieldNode = React.memo(function FieldNode({
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </FieldGridItem>
   );
 });
 
