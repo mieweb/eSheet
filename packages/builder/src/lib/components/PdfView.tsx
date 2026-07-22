@@ -1,18 +1,124 @@
 import React from 'react';
 import {
+  applyPdfPlacementOverrides,
   applyPdfFieldLayout,
   generatePdf,
+  importPdf,
   type GeneratedPdf,
+  type PdfImportWarning,
   type PdfFieldMapping,
+  type PdfFieldKind,
+  type PdfPlacement,
 } from '@esheet/pdf';
 import type { PDFDocumentLoadingTask, PDFDocumentProxy } from 'pdfjs-dist';
-import type { FieldResponse } from '@esheet/core';
+import type {
+  FieldOption,
+  FieldResponse,
+  NormalizedDefinition,
+} from '@esheet/core';
 import { DownloadIcon, PdfIcon, XIcon } from '../icons.js';
 import { useFormApi } from '../hooks/useFormApi.js';
 import { PdfCanvasPage } from './PdfCanvasPage.js';
 import { PdfPageThumbnail } from './PdfPageThumbnail.js';
 
 const EMPTY_MAPPINGS: never[] = [];
+
+const PDF_FIELD_TYPES = [
+  { kind: 'text', fieldType: 'text', label: 'Text field' },
+  { kind: 'checkbox', fieldType: 'boolean', label: 'Checkbox' },
+  { kind: 'radio', fieldType: 'radio', label: 'Radio button' },
+] as const satisfies readonly {
+  kind: PdfFieldKind;
+  fieldType: 'text' | 'boolean' | 'radio';
+  label: string;
+}[];
+
+export interface ImportedPdfSession {
+  sourcePdf: Uint8Array;
+  mappings: PdfFieldMapping[];
+  sourceFieldNames?: string[];
+  warnings: PdfImportWarning[];
+  pageCount: number;
+}
+
+export interface PdfViewProps {
+  importedSession?: ImportedPdfSession | null;
+  onImportedSessionChange?: (session: ImportedPdfSession | null) => void;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function withPdfPlacement(
+  sourceData: unknown,
+  placement: PdfPlacement
+): Record<string, unknown> {
+  const source = isRecord(sourceData) ? sourceData : {};
+  const esheet = isRecord(source['esheet']) ? source['esheet'] : {};
+  const pdf = isRecord(esheet['pdf']) ? esheet['pdf'] : {};
+  return {
+    ...source,
+    esheet: { ...esheet, pdf: { ...pdf, placement } },
+  };
+}
+
+function withoutPdfPlacement(sourceData: unknown): unknown {
+  if (!isRecord(sourceData) || !isRecord(sourceData['esheet'])) {
+    return sourceData;
+  }
+  const esheet = sourceData['esheet'];
+  if (!isRecord(esheet['pdf']) || !('placement' in esheet['pdf'])) {
+    return sourceData;
+  }
+  const { placement: _placement, ...pdf } = esheet['pdf'];
+  void _placement;
+  const { pdf: _pdf, ...restEheet } = esheet;
+  void _pdf;
+  const nextEsheet =
+    Object.keys(pdf).length > 0 ? { ...restEheet, pdf } : restEheet;
+  const { esheet: _esheet, ...restSource } = sourceData;
+  void _esheet;
+  return Object.keys(nextEsheet).length > 0
+    ? { ...restSource, esheet: nextEsheet }
+    : restSource;
+}
+
+function pdfPlacement(sourceData: unknown): PdfPlacement | undefined {
+  if (!isRecord(sourceData) || !isRecord(sourceData['esheet'])) {
+    return undefined;
+  }
+  const pdf = sourceData['esheet']['pdf'];
+  if (!isRecord(pdf) || !isRecord(pdf['placement'])) return undefined;
+  const placement = pdf['placement'];
+  const page = placement['page'];
+  const rect = placement['rect'];
+  if (
+    typeof page !== 'number' ||
+    !Array.isArray(rect) ||
+    rect.length !== 4 ||
+    !rect.every((value) => typeof value === 'number')
+  ) {
+    return undefined;
+  }
+  return { page, rect: [rect[0], rect[1], rect[2], rect[3]] };
+}
+
+function pdfSourceFieldName(sourceData: unknown): string | undefined {
+  if (!isRecord(sourceData)) return undefined;
+  const fieldName = sourceData['fieldName'];
+  return typeof fieldName === 'string' ? fieldName : undefined;
+}
+
+function sameGeometry(
+  first: PdfFieldMapping,
+  second: PdfFieldMapping
+): boolean {
+  return (
+    first.page === second.page &&
+    first.rect.every((value, index) => value === second.rect[index])
+  );
+}
 
 function bytesToBlob(bytes: Uint8Array): Blob {
   const copy = new Uint8Array(bytes.byteLength);
@@ -34,6 +140,52 @@ function mappingLabel(mapping: PdfFieldMapping): string {
   return `${mapping.esheetFieldId}${suffix}`;
 }
 
+function addedFieldName(
+  fieldId: string,
+  mappings: readonly PdfFieldMapping[]
+): string {
+  const base = fieldId;
+  let name = base;
+  let suffix = 2;
+  const names = new Set(mappings.map((mapping) => mapping.pdfFieldName));
+  while (names.has(name)) {
+    name = `${base}_${suffix}`;
+    suffix += 1;
+  }
+  return name;
+}
+
+function synchronizeRenamedMappings(
+  mappings: readonly PdfFieldMapping[],
+  normalized: NormalizedDefinition
+): PdfFieldMapping[] {
+  return mappings.flatMap((mapping) => {
+    if (normalized.byId[mapping.esheetFieldId]) return mapping;
+    const renamed = Object.values(normalized.byId).find(
+      (node) =>
+        pdfSourceFieldName(node.definition._sourceData) ===
+        mapping.pdfFieldName
+    );
+    if (renamed) {
+      return { ...mapping, esheetFieldId: renamed.definition.id };
+    }
+    const placedField = Object.values(normalized.byId).find((node) => {
+      const placement = pdfPlacement(node.definition._sourceData);
+      return (
+        placement?.page === mapping.page &&
+        placement?.rect.every(
+          (value, rectIndex) => value === mapping.rect[rectIndex]
+        )
+      );
+    });
+    if (!placedField) return [];
+    return {
+      ...mapping,
+      esheetFieldId: placedField.definition.id,
+    };
+  });
+}
+
 function selectedValues(response: FieldResponse | undefined): string[] {
   const selected = response?.selected;
   if (!selected) return [];
@@ -51,39 +203,154 @@ function selectedValues(response: FieldResponse | undefined): string[] {
   return [];
 }
 
-export function PdfView() {
-  const { normalized, responses, _form: form } = useFormApi();
+export function PdfView({
+  importedSession,
+  onImportedSessionChange,
+}: PdfViewProps) {
+  const { instanceId, normalized, responses, _form: form } = useFormApi();
   const [generated, setGenerated] = React.useState<GeneratedPdf | null>(null);
+  const [localImported, setLocalImported] =
+    React.useState<ImportedPdfSession | null>(null);
   const [document, setDocument] = React.useState<PDFDocumentProxy | null>(null);
   const [mappings, setMappings] = React.useState<PdfFieldMapping[]>([]);
-  const [addedFieldNames, setAddedFieldNames] = React.useState<Set<string>>(
-    () => new Set()
-  );
   const [selectedIndex, setSelectedIndex] = React.useState<number | null>(null);
   const [activePage, setActivePage] = React.useState(0);
   const [zoom, setZoom] = React.useState(1);
   const [error, setError] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isDownloading, setIsDownloading] = React.useState(false);
+  const [isImporting, setIsImporting] = React.useState(false);
+  const [isAddFieldMenuOpen, setIsAddFieldMenuOpen] = React.useState(false);
+  const [pendingFile, setPendingFile] = React.useState<File | null>(null);
+  const [isDraggingFile, setIsDraggingFile] = React.useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
   const pageSelectorRef = React.useRef<HTMLElement>(null);
   const pageRefs = React.useRef(new Map<number, HTMLDivElement>());
   const thumbnailRefs = React.useRef(new Map<number, HTMLDivElement>());
   const pendingNavigationPageRef = React.useRef<number | null>(null);
   const scrollSettleTimeoutRef = React.useRef<number | null>(null);
+  const skipPlacementRegenerationRef = React.useRef(false);
+
+  const imported =
+    importedSession === undefined ? localImported : importedSession;
+  const setImported = onImportedSessionChange ?? setLocalImported;
+  const sourceBytes = imported?.sourcePdf ?? generated?.bytes;
+  const isImported = imported !== null;
+  const fieldCount = Object.keys(normalized.byId).length;
+
+  const importFile = React.useCallback(
+    async (file: File) => {
+      setIsImporting(true);
+      setError(null);
+      try {
+        const result = await importPdf(file);
+        form
+          .getState()
+          .replaceDefinitionAndResponses(result.definition, result.responses);
+        setImported({
+          sourcePdf: result.sourcePdf,
+          mappings: result.mappings,
+          sourceFieldNames: Array.from(
+            new Set(result.mappings.map((mapping) => mapping.pdfFieldName))
+          ),
+          warnings: result.warnings,
+          pageCount: result.pageCount,
+        });
+        setGenerated(null);
+        setMappings(result.mappings);
+        setSelectedIndex(null);
+        setActivePage(0);
+        setZoom(1);
+      } catch (reason) {
+        setError(
+          reason instanceof Error
+            ? reason.message
+            : 'The PDF could not be imported.'
+        );
+      } finally {
+        setPendingFile(null);
+        setIsImporting(false);
+      }
+    },
+    [form]
+  );
+
+  const selectFile = React.useCallback(
+    (file: File | undefined) => {
+      if (!file) return;
+      if (
+        file.type !== 'application/pdf' &&
+        !file.name.toLocaleLowerCase().endsWith('.pdf')
+      ) {
+        setError('Choose a PDF file to import.');
+        return;
+      }
+      if (fieldCount > 0 || generated || imported) {
+        setPendingFile(file);
+        return;
+      }
+      void importFile(file);
+    },
+    [fieldCount, generated, importFile, imported]
+  );
+
+  const handleFileChange = React.useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      selectFile(event.currentTarget.files?.[0]);
+      event.currentTarget.value = '';
+    },
+    [selectFile]
+  );
+
+  const handleDrop = React.useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      setIsDraggingFile(false);
+      selectFile(event.dataTransfer.files[0]);
+    },
+    [selectFile]
+  );
 
   React.useEffect(() => {
+    if (!imported) return;
+    setMappings(imported.mappings);
+  }, [imported]);
+
+  React.useEffect(() => {
+    if (!imported) return;
+    const nextMappings = synchronizeRenamedMappings(
+      imported.mappings,
+      normalized
+    );
+    if (
+      nextMappings.length === imported.mappings.length &&
+      nextMappings.every(
+        (mapping, index) => mapping === imported.mappings[index]
+      )
+    ) {
+      return;
+    }
+    setMappings(nextMappings);
+    setImported({ ...imported, mappings: nextMappings });
+  }, [imported, normalized, setImported]);
+
+  React.useEffect(() => {
+    if (imported) return;
+    if (skipPlacementRegenerationRef.current) {
+      skipPlacementRegenerationRef.current = false;
+      return;
+    }
     let cancelled = false;
     const timeoutId = window.setTimeout(() => {
       setIsLoading(true);
       setError(null);
       const definition = form.getState().hydrateDefinition();
-      void generatePdf(definition, { responses })
+      void generatePdf(definition)
         .then((result) => {
           if (cancelled) return;
           setGenerated(result);
-          setMappings(result.mappings);
-          setAddedFieldNames(new Set());
+          setMappings(applyPdfPlacementOverrides(definition, result.mappings));
           setSelectedIndex(null);
           setActivePage(0);
         })
@@ -103,10 +370,10 @@ export function PdfView() {
       cancelled = true;
       window.clearTimeout(timeoutId);
     };
-  }, [form, normalized, responses]);
+  }, [form, imported, normalized]);
 
   React.useEffect(() => {
-    if (!generated) return;
+    if (!sourceBytes) return;
     let cancelled = false;
     let loadingTask: PDFDocumentLoadingTask | undefined;
 
@@ -117,7 +384,7 @@ export function PdfView() {
       .then(([pdfjs, workerModule]) => {
         if (cancelled) return;
         pdfjs.GlobalWorkerOptions.workerSrc = workerModule.default;
-        loadingTask = pdfjs.getDocument({ data: generated.bytes.slice() });
+        loadingTask = pdfjs.getDocument({ data: sourceBytes.slice() });
         void loadingTask.promise
           .then((loadedDocument) => {
             if (cancelled) return;
@@ -150,53 +417,178 @@ export function PdfView() {
       setDocument(null);
       void loadingTask?.destroy();
     };
-  }, [generated]);
+  }, [sourceBytes]);
 
-  const updateMapping = React.useCallback(
+  const commitMapping = React.useCallback(
     (index: number, mapping: PdfFieldMapping) => {
       setMappings((current) =>
         current.map((item, itemIndex) => (itemIndex === index ? mapping : item))
       );
+      if (isImported && imported) {
+        const field = form
+          .getState()
+          .getField(mapping.esheetFieldId)?.definition;
+        if (field && !mapping.optionId) {
+          form.getState().updateField(mapping.esheetFieldId, {
+            _sourceData: withPdfPlacement(field._sourceData, {
+              page: mapping.page,
+              rect: mapping.rect,
+            }),
+          });
+        }
+        setImported({
+          ...imported,
+          mappings: imported.mappings.map((item, itemIndex) =>
+            itemIndex === index ? mapping : item
+          ),
+        });
+        return;
+      }
+      const baseline = generated?.mappings.find(
+        (candidate) =>
+          candidate.esheetFieldId === mapping.esheetFieldId &&
+          candidate.optionId === mapping.optionId &&
+          candidate.pdfFieldName === mapping.pdfFieldName
+      );
+      const field = form.getState().getField(mapping.esheetFieldId)?.definition;
+      if (!field) return;
+      skipPlacementRegenerationRef.current = true;
+      const placement =
+        baseline && sameGeometry(mapping, baseline)
+          ? undefined
+          : { page: mapping.page, rect: mapping.rect };
+
+      if (mapping.optionId) {
+        const options = (field as { options?: FieldOption[] }).options;
+        if (!options) return;
+        form.getState().updateField(mapping.esheetFieldId, {
+          options: options.map((option) =>
+            option.id !== mapping.optionId
+              ? option
+              : {
+                  ...option,
+                  _sourceData: placement
+                    ? withPdfPlacement(option._sourceData, placement)
+                    : withoutPdfPlacement(option._sourceData),
+                }
+          ),
+        });
+        return;
+      }
+
+      form.getState().updateField(mapping.esheetFieldId, {
+        _sourceData: placement
+          ? withPdfPlacement(field._sourceData, placement)
+          : withoutPdfPlacement(field._sourceData),
+      });
     },
-    []
+    [form, generated, imported, isImported, setImported]
   );
 
-  const addTextField = React.useCallback(() => {
-    const suffix = `${Date.now().toString(36)}_${mappings.length}`;
-    const name = `esheet_custom_${suffix}`;
-    const mapping: PdfFieldMapping = {
-      esheetFieldId: `pdf-custom-${suffix}`,
-      pdfFieldName: name,
-      kind: 'text',
+  const addPdfField = React.useCallback((fieldType: (typeof PDF_FIELD_TYPES)[number]) => {
+    const placement = {
       page: activePage,
-      rect: [72, 620, 220, 28],
+      rect: [72, 620, 220, 28] as PdfFieldMapping['rect'],
     };
-    setMappings((current) => {
-      setSelectedIndex(current.length);
-      return [...current, mapping];
+    if (isImported && imported) {
+      const fieldId = form.getState().addField(fieldType.fieldType, {
+        patch: {
+          question: fieldType.label,
+          _sourceData: withPdfPlacement(undefined, placement),
+          ...(fieldType.kind === 'radio'
+            ? { options: [{ id: 'option-1', value: 'Option 1' }] }
+            : {}),
+        },
+      });
+      if (!fieldId) return;
+      const mapping: PdfFieldMapping = {
+        esheetFieldId: fieldId,
+        pdfFieldName: addedFieldName(fieldId, mappings),
+        kind: fieldType.kind,
+        ...placement,
+        ...(fieldType.kind === 'radio' ? { optionId: 'option-1' } : {}),
+      };
+      const nextMappings = [...mappings, mapping];
+      setMappings(nextMappings);
+      setImported({ ...imported, mappings: nextMappings });
+      setSelectedIndex(nextMappings.length - 1);
+      setIsAddFieldMenuOpen(false);
+      return;
+    }
+    form.getState().addField(fieldType.fieldType, {
+      patch: {
+        question: fieldType.label,
+        _sourceData: withPdfPlacement(undefined, placement),
+        ...(fieldType.kind === 'radio'
+          ? { options: [{ id: 'option-1', value: 'Option 1' }] }
+          : {}),
+      },
     });
-    setAddedFieldNames((current) => new Set(current).add(name));
-  }, [activePage, mappings.length]);
+    setIsAddFieldMenuOpen(false);
+  }, [
+    activePage,
+    form,
+    imported,
+    isImported,
+    mappings,
+    setImported,
+  ]);
 
   const resetLayout = React.useCallback(() => {
-    if (!generated) return;
+    if (!generated || isImported) return;
+    skipPlacementRegenerationRef.current = true;
+    for (const node of Object.values(form.getState().normalized.byId)) {
+      const field = node.definition;
+      const fieldSourceData = withoutPdfPlacement(field._sourceData);
+      const options = (field as { options?: FieldOption[] }).options;
+      const nextOptions = options?.map((option) => ({
+        ...option,
+        _sourceData: withoutPdfPlacement(option._sourceData),
+      }));
+      const optionsChanged = nextOptions?.some(
+        (option, index) => option._sourceData !== options?.[index]._sourceData
+      );
+      if (fieldSourceData === field._sourceData && !optionsChanged) {
+        continue;
+      }
+      form.getState().updateField(field.id, {
+        _sourceData: fieldSourceData,
+        ...(optionsChanged && nextOptions ? { options: nextOptions } : {}),
+      });
+    }
     setMappings(generated.mappings);
-    setAddedFieldNames(new Set());
     setSelectedIndex(null);
-  }, [generated]);
+  }, [form, generated, isImported]);
 
   const handleDownload = React.useCallback(async () => {
-    if (!generated || isDownloading) return;
+    if (isDownloading) return;
     setIsDownloading(true);
     setError(null);
     try {
-      const addedFields = mappings.filter((mapping) =>
-        addedFieldNames.has(mapping.pdfFieldName)
-      );
-      const bytes = await applyPdfFieldLayout(generated.bytes, mappings, {
-        addedFields,
-      });
+      if (isImported && imported) {
+        const sourceFieldNames = new Set(imported.sourceFieldNames);
+        const definition = form.getState().hydrateDefinition();
+        const bytes = await applyPdfFieldLayout(imported.sourcePdf, mappings, {
+          addedFields: mappings.filter(
+            (mapping) => !sourceFieldNames.has(mapping.pdfFieldName)
+          ),
+          definition,
+        });
+        const url = URL.createObjectURL(bytesToBlob(bytes));
+        const anchor = window.document.createElement('a');
+        anchor.href = url;
+        anchor.download = safeFilename(definition.title ?? definition.id);
+        anchor.click();
+        window.setTimeout(() => URL.revokeObjectURL(url), 0);
+        return;
+      }
+      if (!generated) return;
       const definition = form.getState().hydrateDefinition();
+      const current = await generatePdf(definition, { responses });
+      const bytes = await applyPdfFieldLayout(
+        current.bytes,
+        applyPdfPlacementOverrides(definition, current.mappings)
+      );
       const url = URL.createObjectURL(bytesToBlob(bytes));
       const anchor = window.document.createElement('a');
       anchor.href = url;
@@ -212,11 +604,18 @@ export function PdfView() {
     } finally {
       setIsDownloading(false);
     }
-  }, [addedFieldNames, form, generated, isDownloading, mappings]);
+  }, [
+    form,
+    generated,
+    imported,
+    isDownloading,
+    isImported,
+    mappings,
+    responses,
+  ]);
 
   const selectedMapping =
     selectedIndex === null ? undefined : mappings[selectedIndex];
-  const fieldCount = Object.keys(normalized.byId).length;
 
   const goToPage = React.useCallback((pageIndex: number) => {
     pendingNavigationPageRef.current = pageIndex;
@@ -338,58 +737,63 @@ export function PdfView() {
     return byPage;
   }, [mappings, previewForMapping]);
 
-  if (fieldCount === 0 && !isLoading) {
-    return (
-      <div className="ms:flex ms:h-full ms:min-h-[24rem] ms:items-center ms:justify-center ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:p-8">
-        <div className="ms:max-w-md ms:text-center">
-          <PdfIcon className="ms:mx-auto ms:mb-3 ms:h-10 ms:w-10 ms:text-mstextmuted" />
-          <h2 className="ms:text-base ms:font-semibold ms:text-mstext">
-            Add fields to generate a PDF
-          </h2>
-          <p className="ms:mt-2 ms:text-sm ms:text-mstextmuted">
-            Build your questionnaire first, then return here to design its
-            fillable AcroForm PDF.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error && !generated) {
-    return (
-      <div
-        role="alert"
-        className="ms:flex ms:h-full ms:min-h-[24rem] ms:items-center ms:justify-center ms:rounded-lg ms:border ms:border-red-300 ms:bg-red-50 ms:p-8"
-      >
-        <div className="ms:max-w-lg ms:text-center">
-          <h2 className="ms:text-base ms:font-semibold ms:text-red-800">
-            PDF workspace unavailable
-          </h2>
-          <p className="ms:mt-2 ms:text-sm ms:text-red-700">{error}</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="ms:flex ms:h-full ms:max-h-full ms:min-h-[24rem] ms:flex-col ms:overflow-hidden ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
+    <div
+      onDragEnter={(event) => {
+        event.preventDefault();
+        setIsDraggingFile(true);
+      }}
+      onDragOver={(event) => event.preventDefault()}
+      onDragLeave={(event) => {
+        if (event.currentTarget === event.target) setIsDraggingFile(false);
+      }}
+      onDrop={handleDrop}
+      className={`ms:relative ms:flex ms:h-full ms:max-h-full ms:min-h-[24rem] ms:flex-col ms:overflow-hidden ms:rounded-lg ms:border ms:bg-mssurface ${
+        isDraggingFile
+          ? 'ms:border-msprimary ms:ring-2 ms:ring-msprimary/30'
+          : 'ms:border-msborder'
+      }`}
+    >
+      <input
+        ref={fileInputRef}
+        id={`${instanceId}-pdf-import-file`}
+        aria-label="Open PDF"
+        type="file"
+        accept="application/pdf,.pdf"
+        onChange={handleFileChange}
+        className="ms:hidden"
+      />
       <div className="ms:flex ms:min-h-14 ms:flex-wrap ms:items-center ms:justify-between ms:gap-3 ms:border-b ms:border-msborder ms:px-4 ms:py-2">
         <div className="ms:min-w-0">
           <div className="ms:flex ms:items-center ms:gap-2 ms:text-sm ms:font-semibold ms:text-mstext">
             <PdfIcon className="ms:h-4 ms:w-4 ms:text-msprimary" />
             PDF designer
           </div>
-          {generated && (
+          {(generated || imported) && (
             <p className="ms:mt-0.5 ms:text-xs ms:text-mstextmuted">
-              {generated.pageCount} page{generated.pageCount === 1 ? '' : 's'}
+              {imported?.pageCount ?? generated?.pageCount ?? 0} page
+              {(imported?.pageCount ?? generated?.pageCount ?? 0) === 1
+                ? ''
+                : 's'}
               {' · '}
               {mappings.length} field{mappings.length === 1 ? '' : 's'}
-              {' · Canvas and AcroForm layers'}
+              {' · '}
+              {isImported
+                ? 'Imported source and field layer'
+                : 'Canvas and AcroForm layers'}
             </p>
           )}
         </div>
 
         <div className="ms:flex ms:flex-wrap ms:items-center ms:gap-2">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isImporting}
+            className="ms:h-9 ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackground ms:px-3 ms:text-xs ms:font-medium ms:text-mstext ms:disabled:cursor-not-allowed ms:disabled:opacity-50"
+          >
+            {isImporting ? 'Opening…' : 'Open PDF'}
+          </button>
           <div className="ms:flex ms:items-center ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackground">
             <button
               type="button"
@@ -411,18 +815,40 @@ export function PdfView() {
               +
             </button>
           </div>
-          <button
-            type="button"
-            onClick={addTextField}
-            disabled={!document}
-            className="ms:inline-flex ms:h-9 ms:items-center ms:gap-2 ms:rounded-lg ms:border ms:border-msprimary ms:bg-msprimary ms:px-3 ms:text-xs ms:font-medium ms:text-white ms:disabled:cursor-not-allowed ms:disabled:opacity-50"
-          >
-            + Text field
-          </button>
+          <div className="ms:relative">
+            <button
+              type="button"
+              aria-haspopup="menu"
+              aria-expanded={isAddFieldMenuOpen}
+              onClick={() => setIsAddFieldMenuOpen((open) => !open)}
+              disabled={!document}
+              className="ms:inline-flex ms:h-9 ms:items-center ms:gap-2 ms:rounded-lg ms:border ms:border-msprimary ms:bg-msprimary ms:px-3 ms:text-xs ms:font-medium ms:text-white ms:disabled:cursor-not-allowed ms:disabled:opacity-50"
+            >
+              + Add field
+            </button>
+            {isAddFieldMenuOpen && (
+              <div
+                role="menu"
+                className="ms:absolute ms:right-0 ms:top-10 ms:z-30 ms:min-w-36 ms:overflow-hidden ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:p-1 ms:shadow-lg"
+              >
+                {PDF_FIELD_TYPES.map((fieldType) => (
+                  <button
+                    key={fieldType.kind}
+                    type="button"
+                    role="menuitem"
+                    onClick={() => addPdfField(fieldType)}
+                    className="ms:flex ms:w-full ms:items-center ms:px-3 ms:py-2 ms:text-left ms:text-xs ms:text-mstext ms:hover:bg-msbackgroundhover"
+                  >
+                    {fieldType.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <button
             type="button"
             onClick={resetLayout}
-            disabled={!generated}
+            disabled={!generated || isImported}
             className="ms:h-9 ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackground ms:px-3 ms:text-xs ms:font-medium ms:text-mstext ms:disabled:opacity-50"
           >
             Reset layout
@@ -430,7 +856,7 @@ export function PdfView() {
           <button
             type="button"
             onClick={() => void handleDownload()}
-            disabled={!generated || isLoading || isDownloading}
+            disabled={(!generated && !imported) || isLoading || isDownloading}
             className="ms:inline-flex ms:h-9 ms:items-center ms:gap-2 ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackground ms:px-3 ms:text-xs ms:font-medium ms:text-mstext ms:transition-colors ms:hover:border-msprimary ms:hover:bg-msprimary ms:hover:text-white ms:disabled:cursor-not-allowed ms:disabled:opacity-50"
           >
             <DownloadIcon className="ms:h-4 ms:w-4" />
@@ -445,6 +871,15 @@ export function PdfView() {
           className="ms:border-b ms:border-red-300 ms:bg-red-50 ms:px-4 ms:py-2 ms:text-xs ms:text-red-700"
         >
           {error}
+        </div>
+      )}
+
+      {imported && imported.warnings.length > 0 && (
+        <div
+          role="status"
+          className="ms:border-b ms:border-amber-300 ms:bg-amber-50 ms:px-4 ms:py-2 ms:text-xs ms:text-amber-800"
+        >
+          {imported.warnings.map((warning) => warning.message).join(' ')}
         </div>
       )}
 
@@ -489,6 +924,20 @@ export function PdfView() {
               Rendering PDF canvas…
             </div>
           )}
+          {!document && !isLoading && fieldCount === 0 && !error && (
+            <div className="ms:absolute ms:inset-0 ms:flex ms:items-center ms:justify-center ms:p-8">
+              <div className="ms:max-w-md ms:text-center">
+                <PdfIcon className="ms:mx-auto ms:mb-3 ms:h-10 ms:w-10 ms:text-mstextmuted" />
+                <h2 className="ms:text-base ms:font-semibold ms:text-mstext">
+                  Open a PDF or add fields
+                </h2>
+                <p className="ms:mt-2 ms:text-sm ms:text-mstextmuted">
+                  Drop a PDF anywhere in this workspace, or choose one to import
+                  its AcroForm fields.
+                </p>
+              </div>
+            </div>
+          )}
           {document && (
             <div className="ms:flex ms:flex-col ms:items-center ms:gap-8">
               {Array.from({ length: document.numPages }, (_, pageIndex) => (
@@ -508,8 +957,9 @@ export function PdfView() {
                       indexedMappingsByPage.get(pageIndex) ?? EMPTY_MAPPINGS
                     }
                     selectedIndex={selectedIndex}
+                    editable
                     onSelect={setSelectedIndex}
-                    onChange={updateMapping}
+                    onChange={commitMapping}
                     onActivatePage={setActivePage}
                   />
                 </div>
@@ -566,9 +1016,9 @@ export function PdfView() {
                 )}
               </dl>
               <p className="ms:text-xs ms:leading-relaxed ms:text-mstextmuted">
-                Drag the move handle or resize from the lower-right corner. The
-                edited rectangle is written back to the AcroForm when
-                downloaded.
+                {isImported
+                  ? 'Select a text field in Build mode, then add it here. Drag or resize mapped widgets before downloading the enhanced PDF.'
+                  : 'Drag the move handle or resize from the lower-right corner. The edited rectangle is written back to the AcroForm when downloaded.'}
               </p>
             </div>
           ) : (
@@ -579,6 +1029,44 @@ export function PdfView() {
           )}
         </aside>
       </div>
+
+      {pendingFile && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={`${instanceId}-pdf-import-title`}
+          className="ms:absolute ms:inset-0 ms:z-30 ms:flex ms:items-center ms:justify-center ms:bg-black/40 ms:p-4"
+        >
+          <div className="ms:w-full ms:max-w-md ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:p-5 ms:shadow-xl">
+            <h2
+              id={`${instanceId}-pdf-import-title`}
+              className="ms:text-base ms:font-semibold ms:text-mstext"
+            >
+              Replace the current questionnaire?
+            </h2>
+            <p className="ms:mt-2 ms:text-sm ms:text-mstextmuted">
+              Opening {pendingFile.name} replaces the current questionnaire and
+              its responses.
+            </p>
+            <div className="ms:mt-4 ms:flex ms:justify-end ms:gap-2">
+              <button
+                type="button"
+                onClick={() => setPendingFile(null)}
+                className="ms:h-9 ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackground ms:px-3 ms:text-xs ms:font-medium ms:text-mstext"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void importFile(pendingFile)}
+                className="ms:h-9 ms:rounded-lg ms:border ms:border-msprimary ms:bg-msprimary ms:px-3 ms:text-xs ms:font-medium ms:text-white"
+              >
+                Replace and open
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

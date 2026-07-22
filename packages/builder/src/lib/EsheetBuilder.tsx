@@ -34,7 +34,7 @@ import { PlusIcon } from './icons.js';
 import { ensureDefaultFieldComponentsRegistered } from './register-defaults.js';
 import { MobileBottomDrawer } from './components/MobileBottomDrawer.js';
 import { Switch } from '@mieweb/ui';
-import { PdfView } from './components/PdfView.js';
+import { PdfView, type ImportedPdfSession } from './components/PdfView.js';
 
 // ---------------------------------------------------------------------------
 // Contexts
@@ -184,6 +184,8 @@ export const EsheetBuilder = React.forwardRef<
     () => ui.getState().editModalOpen
   );
   const [toolsModalOpen, setToolsModalOpen] = React.useState(false);
+  const [importedPdfSession, setImportedPdfSession] =
+    React.useState<ImportedPdfSession | null>(null);
 
   // Touch mode state using shared hook
   const { isTouchEnabled, isManualOverride, setTouchMode, resetTouchMode } =
@@ -311,7 +313,10 @@ export const EsheetBuilder = React.forwardRef<
             )}
             {mode === 'pdf' && (
               <div className="pdf-layout ms:h-[calc(100dvh-12.5rem)] ms:max-h-[calc(100dvh-12.5rem)] ms:flex-none ms:min-h-0 ms:min-w-0 ms:w-full ms:overflow-hidden">
-                <PdfView />
+                <PdfView
+                  importedSession={importedPdfSession}
+                  onImportedSessionChange={setImportedPdfSession}
+                />
               </div>
             )}
           </div>

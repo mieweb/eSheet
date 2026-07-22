@@ -7,6 +7,9 @@ import type {
 } from '@esheet/core';
 import {
   PDFDocument,
+  PDFHexString,
+  PDFName,
+  PDFString,
   type PDFFont,
   type PDFForm,
   type PDFPage,
@@ -29,6 +32,11 @@ export interface PdfFieldMapping {
   optionId?: string;
 }
 
+export interface PdfPlacement {
+  page: number;
+  rect: [x: number, y: number, width: number, height: number];
+}
+
 export interface PdfGenerationWarning {
   fieldId?: string;
   code: 'unsupported-field' | 'unsupported-character';
@@ -48,6 +56,12 @@ export interface GeneratedPdf {
   mappings: PdfFieldMapping[];
   warnings: PdfGenerationWarning[];
   pageCount: number;
+}
+
+export interface EsheetPdfManifest {
+  version: 1;
+  definition: FormDefinition;
+  mappings: PdfFieldMapping[];
 }
 
 interface RenderContext {
@@ -89,6 +103,7 @@ const FIELD_GAP = 16;
 const INPUT_HEIGHT = 24;
 /** Gap between adjacent columns in a multi-column row (points). */
 const COL_GAP = 10;
+const ESHEET_MANIFEST_KEY = PDFName.of('eSheet');
 
 // ---------------------------------------------------------------------------
 // Column layout (mirrors the 6-col grid used in the renderer Canvas)
@@ -174,6 +189,68 @@ function safeName(value: string): string {
 function fieldName(fieldId: string, suffix?: string): string {
   const base = `esheet_${safeName(fieldId)}`;
   return suffix ? `${base}_${safeName(suffix)}` : base;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function pdfPlacement(value: unknown): PdfPlacement | undefined {
+  if (!isRecord(value) || !isRecord(value['esheet'])) return undefined;
+  const pdf = value['esheet']['pdf'];
+  if (!isRecord(pdf) || !isRecord(pdf['placement'])) return undefined;
+  const placement = pdf['placement'];
+  const page = placement['page'];
+  const rect = placement['rect'];
+  if (
+    typeof page !== 'number' ||
+    !Array.isArray(rect) ||
+    rect.length !== 4 ||
+    !rect.every((coordinate) => typeof coordinate === 'number')
+  ) {
+    return undefined;
+  }
+  return {
+    page,
+    rect: [rect[0], rect[1], rect[2], rect[3]],
+  };
+}
+
+function findField(
+  fields: readonly FieldDefinition[],
+  fieldId: string
+): FieldDefinition | undefined {
+  for (const field of fields) {
+    if (field.id === fieldId) return field;
+    if (field.fieldType === 'section' || field.fieldType === 'pages') {
+      const nested = findField(field.fields ?? [], fieldId);
+      if (nested) return nested;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Merges sparse eSheet PDF placement metadata onto generated baseline mappings.
+ * Fields without metadata retain the deterministic generator geometry.
+ */
+export function applyPdfPlacementOverrides(
+  definition: FormDefinition,
+  mappings: readonly PdfFieldMapping[]
+): PdfFieldMapping[] {
+  return mappings.map((mapping) => {
+    const field = definition.pages
+      .map((page) => findField(page.fields ?? [], mapping.esheetFieldId))
+      .find((candidate) => candidate !== undefined);
+    if (!field) return mapping;
+    const option = mapping.optionId
+      ? (field as { options?: FieldOption[] }).options?.find(
+          (candidate) => candidate.id === mapping.optionId
+        )
+      : undefined;
+    const placement = pdfPlacement(option?._sourceData ?? field._sourceData);
+    return placement ? { ...mapping, ...placement } : mapping;
+  });
 }
 
 function pdfText(
@@ -316,6 +393,21 @@ function drawQuestion(context: RenderContext, field: FieldDefinition): void {
   );
 }
 
+function questionFor(field: FieldDefinition): string {
+  return 'question' in field && field.question
+    ? field.question
+    : `Untitled ${field.fieldType} field`;
+}
+
+function setFieldLabel(
+  field: {
+    acroField: { dict: { set: (key: PDFName, value: PDFString) => void } };
+  },
+  label: string
+): void {
+  field.acroField.dict.set(PDFName.of('TU'), PDFString.of(label));
+}
+
 function addTextField(
   context: RenderContext,
   field: FieldDefinition,
@@ -330,6 +422,7 @@ function addTextField(
   const y = context.y - height;
   const width = context.columnWidth;
   const pdfField = context.form.createTextField(name);
+  setFieldLabel(pdfField, questionFor(field));
   if (multiline) pdfField.enableMultiline();
   if (value) pdfField.setText(pdfText(value, context, field.id));
   pdfField.addToPage(context.page, {
@@ -384,6 +477,7 @@ function addCheckboxes(
     ensureSpace(context, 24);
     const name = fieldName(field.id, option.id);
     const checkbox = context.form.createCheckBox(name);
+    setFieldLabel(checkbox, `${questionFor(field)}: ${option.value}`);
     const x = context.columnX;
     const y = context.y - boxSize + 2;
     checkbox.addToPage(context.page, {
@@ -426,6 +520,7 @@ function addBoolean(
   ensureSpace(context, 28);
   const name = fieldName(field.id);
   const checkbox = context.form.createCheckBox(name);
+  setFieldLabel(checkbox, questionFor(field));
   const x = context.columnX;
   const size = 16;
   const y = context.y - size + 2;
@@ -465,6 +560,7 @@ function addRadioGroup(
 ): void {
   const name = fieldName(field.id);
   const group = context.form.createRadioGroup(name);
+  setFieldLabel(group, questionFor(field));
   const size = 14;
   let selectedOptionId: string | undefined;
   for (const option of options) {
@@ -513,6 +609,7 @@ function addDropdown(
   ensureSpace(context, INPUT_HEIGHT + FIELD_GAP);
   const name = fieldName(field.id);
   const dropdown = context.form.createDropdown(name);
+  setFieldLabel(dropdown, questionFor(field));
   const values = options.map((option) => option.value);
   if (values.length > 0) dropdown.addOptions(values);
   const selectedOption = options.find(
@@ -708,6 +805,18 @@ function addPageFooters(context: RenderContext): void {
   }
 }
 
+export function embedEsheetManifest(
+  document: PDFDocument,
+  definition: FormDefinition,
+  mappings: PdfFieldMapping[]
+): void {
+  const manifest: EsheetPdfManifest = { version: 1, definition, mappings };
+  document.catalog.set(
+    ESHEET_MANIFEST_KEY,
+    PDFHexString.fromText(JSON.stringify(manifest))
+  );
+}
+
 /**
  * Generate a deterministic, fillable PDF from an eSheet definition.
  *
@@ -788,6 +897,7 @@ export async function generatePdf(
 
   addPageFooters(context);
   form.updateFieldAppearances(font);
+  embedEsheetManifest(document, definition, context.mappings);
   const bytes = await document.save();
   return {
     bytes,

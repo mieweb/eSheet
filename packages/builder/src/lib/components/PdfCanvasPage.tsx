@@ -17,6 +17,7 @@ export interface PdfCanvasPageProps {
   scale: number;
   mappings: IndexedMapping[];
   selectedIndex: number | null;
+  editable?: boolean;
   onSelect: (index: number) => void;
   onChange: (index: number, mapping: PdfFieldMapping) => void;
   onActivatePage: (pageIndex: number) => void;
@@ -94,12 +95,16 @@ export const PdfCanvasPage = React.memo(function PdfCanvasPage({
   scale,
   mappings,
   selectedIndex,
+  editable = true,
   onSelect,
   onChange,
   onActivatePage,
 }: PdfCanvasPageProps) {
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const [pageState, setPageState] = React.useState<PageState | null>(null);
+  const [draftMapping, setDraftMapping] = React.useState<IndexedMapping | null>(
+    null
+  );
 
   React.useEffect(() => {
     let disposed = false;
@@ -153,7 +158,7 @@ export const PdfCanvasPage = React.memo(function PdfCanvasPage({
       indexed: IndexedMapping,
       interaction: 'move' | 'resize'
     ) => {
-      if (!pageState) return;
+      if (!editable || !pageState) return;
       event.preventDefault();
       event.stopPropagation();
       onSelect(indexed.index);
@@ -169,6 +174,7 @@ export const PdfCanvasPage = React.memo(function PdfCanvasPage({
       const [pageX1, pageY1, pageX2, pageY2] = pageState.viewport.viewBox;
       const pageWidth = Math.abs(pageX2 - pageX1);
       const pageHeight = Math.abs(pageY2 - pageY1);
+      let current = original;
 
       const handleMove = (moveEvent: PointerEvent) => {
         const deltaX = moveEvent.clientX - startX;
@@ -182,7 +188,7 @@ export const PdfCanvasPage = React.memo(function PdfCanvasPage({
           );
           const width = original.rect[2];
           const height = original.rect[3];
-          onChange(indexed.index, {
+          current = {
             ...original,
             rect: [
               clamp(pdfX, 0, pageWidth - width),
@@ -190,7 +196,7 @@ export const PdfCanvasPage = React.memo(function PdfCanvasPage({
               width,
               height,
             ],
-          });
+          };
         } else {
           const width = clamp(
             original.rect[2] + deltaX / scale,
@@ -204,22 +210,25 @@ export const PdfCanvasPage = React.memo(function PdfCanvasPage({
             originalTop
           );
           const y = originalTop - height;
-          onChange(indexed.index, {
+          current = {
             ...original,
             rect: [original.rect[0], y, width, height],
-          });
+          };
         }
+        setDraftMapping({ ...indexed, mapping: current });
       };
 
       const handleUp = () => {
         window.removeEventListener('pointermove', handleMove);
         window.removeEventListener('pointerup', handleUp);
+        setDraftMapping(null);
+        onChange(indexed.index, current);
       };
 
       window.addEventListener('pointermove', handleMove);
       window.addEventListener('pointerup', handleUp, { once: true });
     },
-    [onChange, onSelect, pageState, scale]
+    [editable, onChange, onSelect, pageState, scale]
   );
 
   const viewport = pageState?.viewport;
@@ -248,12 +257,14 @@ export const PdfCanvasPage = React.memo(function PdfCanvasPage({
             aria-label="AcroForm field layer"
           >
             {mappings.map((indexed) => {
-              const box = viewportRect(viewport, indexed.mapping.rect);
+              const displayed =
+                draftMapping?.index === indexed.index ? draftMapping : indexed;
+              const box = viewportRect(viewport, displayed.mapping.rect);
               const selected = indexed.index === selectedIndex;
               return (
                 <div
-                  key={`${indexed.mapping.pdfFieldName}:${
-                    indexed.mapping.optionId ?? indexed.index
+                  key={`${displayed.mapping.pdfFieldName}:${
+                    displayed.mapping.optionId ?? displayed.index
                   }`}
                   role="button"
                   tabIndex={0}
@@ -275,10 +286,10 @@ export const PdfCanvasPage = React.memo(function PdfCanvasPage({
                   }}
                 >
                   <OverlayPreview
-                    mapping={indexed.mapping}
-                    preview={indexed.preview}
+                    mapping={displayed.mapping}
+                    preview={displayed.preview}
                   />
-                  {selected && (
+                  {selected && editable && (
                     <>
                       <button
                         type="button"

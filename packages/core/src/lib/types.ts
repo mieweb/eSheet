@@ -97,6 +97,8 @@ export const fieldOptionSchema = z.object({
   text: z.optional(z.string()),
   /** Numeric score for scored surveys (PHQ-9, GAD-7, etc.). */
   score: z.optional(z.number()),
+  /** Adapter or feature metadata associated with this option. */
+  _sourceData: z.optional(z.unknown()),
 });
 export type FieldOption = z.infer<typeof fieldOptionSchema>;
 

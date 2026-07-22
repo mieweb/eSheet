@@ -1,6 +1,10 @@
-import type { FormDefinition } from '@esheet/core';
+import type { FieldOption, FormDefinition } from '@esheet/core';
 import { PDFDocument } from 'pdf-lib';
-import { generatePdf, type PdfFieldMapping } from './generate-pdf.js';
+import {
+  applyPdfPlacementOverrides,
+  generatePdf,
+  type PdfFieldMapping,
+} from './generate-pdf.js';
 import { applyPdfFieldLayout } from './apply-pdf-layout.js';
 
 const definition: FormDefinition = {
@@ -141,6 +145,124 @@ describe('generatePdf', () => {
         mapping.pdfFieldName.startsWith('esheet_')
       )
     ).toBe(true);
+  });
+
+  it('merges sparse placement overrides without changing untouched mappings', async () => {
+    const definitionWithPlacement: FormDefinition = {
+      ...definition,
+      pages: [
+        {
+          ...definition.pages[0],
+          fields: definition.pages[0].fields?.map((field) => {
+            if (field.id === 'full-name') {
+              return {
+                ...field,
+                _sourceData: {
+                  esheet: {
+                    pdf: { placement: { page: 0, rect: [72, 500, 260, 32] } },
+                  },
+                },
+              };
+            }
+            if (field.id === 'services') {
+              return {
+                ...field,
+                options: (field as { options?: FieldOption[] }).options?.map(
+                  (option) =>
+                    option.id === 'consult'
+                      ? {
+                          ...option,
+                          _sourceData: {
+                            esheet: {
+                              pdf: {
+                                placement: {
+                                  page: 0,
+                                  rect: [320, 420, 18, 18],
+                                },
+                              },
+                            },
+                          },
+                        }
+                      : option
+                ),
+              };
+            }
+            return field;
+          }),
+        },
+      ],
+    };
+    const baseline = await generatePdf(definitionWithPlacement);
+    const mappings = applyPdfPlacementOverrides(
+      definitionWithPlacement,
+      baseline.mappings
+    );
+
+    expect(
+      mappings.find((mapping) => mapping.esheetFieldId === 'full-name')?.rect
+    ).toEqual([72, 500, 260, 32]);
+    expect(
+      mappings.find(
+        (mapping) =>
+          mapping.esheetFieldId === 'services' && mapping.optionId === 'consult'
+      )?.rect
+    ).toEqual([320, 420, 18, 18]);
+    expect(
+      mappings.find(
+        (mapping) =>
+          mapping.esheetFieldId === 'services' &&
+          mapping.optionId === 'follow-up'
+      )
+    ).toEqual(
+      baseline.mappings.find(
+        (mapping) =>
+          mapping.esheetFieldId === 'services' &&
+          mapping.optionId === 'follow-up'
+      )
+    );
+  });
+
+  it('keeps custom placement stable when responses change', async () => {
+    const definitionWithPlacement: FormDefinition = {
+      ...definition,
+      pages: [
+        {
+          ...definition.pages[0],
+          fields: definition.pages[0].fields?.map((field) =>
+            field.id === 'full-name'
+              ? {
+                  ...field,
+                  _sourceData: {
+                    esheet: {
+                      pdf: {
+                        placement: { page: 0, rect: [72, 500, 260, 32] },
+                      },
+                    },
+                  },
+                }
+              : field
+          ),
+        },
+      ],
+    };
+    const empty = applyPdfPlacementOverrides(
+      definitionWithPlacement,
+      (await generatePdf(definitionWithPlacement)).mappings
+    );
+    const answered = applyPdfPlacementOverrides(
+      definitionWithPlacement,
+      (
+        await generatePdf(definitionWithPlacement, {
+          responses: { 'full-name': { answer: 'Ada Lovelace' } },
+        })
+      ).mappings
+    );
+
+    expect(
+      answered.find((mapping) => mapping.esheetFieldId === 'full-name')?.rect
+    ).toEqual(
+      empty.find((mapping) => mapping.esheetFieldId === 'full-name')?.rect
+    );
   });
 
   it('paginates long forms and reports unsupported fields', async () => {

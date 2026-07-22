@@ -1,16 +1,20 @@
+import type { FormDefinition } from '@esheet/core';
 import { PDFDocument, rgb } from 'pdf-lib';
-import type { PdfFieldMapping } from './generate-pdf.js';
+import { embedEsheetManifest, type PdfFieldMapping } from './generate-pdf.js';
 
 export interface ApplyPdfLayoutOptions {
   /** New editor-created fields that are not present in the source PDF yet. */
   addedFields?: PdfFieldMapping[];
+  /** Serialized eSheet definition to retain in an enhanced source PDF. */
+  definition?: FormDefinition;
 }
 
 /**
  * Apply editor-controlled AcroForm widget rectangles to a PDF.
  *
- * Existing fields are matched by their PDF field names. Text and checkbox
- * mappings supplied through `addedFields` are created when they do not exist.
+ * Existing fields are matched by their PDF field names. Text, checkbox, and
+ * radio mappings supplied through `addedFields` are created when they do not
+ * exist.
  */
 export async function applyPdfFieldLayout(
   source: Uint8Array,
@@ -63,6 +67,10 @@ export async function applyPdfFieldLayout(
 
     if (mapping.kind === 'checkbox') {
       form.createCheckBox(name).addToPage(page, appearance);
+    } else if (mapping.kind === 'radio') {
+      form
+        .createRadioGroup(name)
+        .addOptionToPage(mapping.optionId ?? 'option-1', page, appearance);
     } else {
       const textField = form.createTextField(name);
       textField.addToPage(page, appearance);
@@ -70,5 +78,8 @@ export async function applyPdfFieldLayout(
     }
   }
 
+  if (options.definition) {
+    embedEsheetManifest(document, options.definition, mappings);
+  }
   return document.save();
 }

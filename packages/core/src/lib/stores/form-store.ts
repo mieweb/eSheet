@@ -83,6 +83,11 @@ export interface FormState {
   // --- Lifecycle Actions ---
   /** Load a form definition (tree), normalizing it into the flat index. */
   loadDefinition: (definition: FormDefinition) => void;
+  /** Replace the form definition and imported responses in one store update. */
+  replaceDefinitionAndResponses: (
+    definition: FormDefinition,
+    responses: FieldResponseMap
+  ) => void;
   /** Update the top-level form id without replacing fields. */
   setFormId: (id: string) => void;
   /** Update the form title. */
@@ -412,6 +417,19 @@ export function createFormStore(
           (definition.dangerouslyAllowJS ?? false) && _hostAllowsJS,
         normalized: normalizeDefinition(definition.pages),
         responses: {},
+        userEditedFields: new Set<string>(),
+      }),
+
+    replaceDefinitionAndResponses: (definition, responses) =>
+      set({
+        formId: definition.id,
+        formTitle: definition.title,
+        formDescription: definition.description,
+        formSourceData: definition._sourceData,
+        dangerouslyAllowJS:
+          (definition.dangerouslyAllowJS ?? false) && _hostAllowsJS,
+        normalized: normalizeDefinition(definition.pages),
+        responses,
         userEditedFields: new Set<string>(),
       }),
 

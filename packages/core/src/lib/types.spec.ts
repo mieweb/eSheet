@@ -96,6 +96,51 @@ describe('schema types', () => {
 
     expect(result.success).toBe(false);
   });
+
+  it('preserves PDF placement metadata through schema serialization', () => {
+    const definition = {
+      id: 'pdf-placement',
+      pages: [
+        {
+          id: 'page-1',
+          fields: [
+            {
+              id: 'text-1',
+              fieldType: 'text',
+              _sourceData: {
+                esheet: {
+                  pdf: { placement: { page: 0, rect: [72, 500, 260, 32] } },
+                },
+              },
+            },
+            {
+              id: 'radio-1',
+              fieldType: 'radio',
+              options: [
+                {
+                  id: 'yes',
+                  value: 'Yes',
+                  _sourceData: {
+                    esheet: {
+                      pdf: {
+                        placement: { page: 0, rect: [320, 420, 18, 18] },
+                      },
+                    },
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const reloaded = formDefinitionSchema.parse(
+      JSON.parse(JSON.stringify(definition))
+    );
+
+    expect(reloaded).toEqual(definition);
+    expect(JSON.stringify(reloaded)).not.toContain('base64');
+  });
 });
 
 describe('custom field type validation', () => {
