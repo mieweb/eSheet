@@ -4,15 +4,6 @@
   "include": ["../../types/**/*.d.ts"],
   "references": [
     {
-      "path": "../fields"
-    },
-    {
-      "path": "../core"
-    },
-    {
-      "path": "../adapters"
-    },
-    {
       "path": "./tsconfig.lib.json"
     },
     {

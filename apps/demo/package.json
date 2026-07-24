@@ -9,6 +9,7 @@
     "@esheet/adapters": "*",
     "@esheet/builder": "*",
     "@esheet/core": "*",
+    "@esheet/field-health": "*",
     "@esheet/field-kerebron": "*",
     "@esheet/fields": "*",
     "@esheet/renderer": "*",
