@@ -7,6 +7,7 @@ export const PACKAGES = [
   'packages/core',
   'packages/fields',
   'packages/field-kerebron',
+  'packages/field-health',
   'packages/adapters',
   'packages/renderer',
   'packages/builder',
