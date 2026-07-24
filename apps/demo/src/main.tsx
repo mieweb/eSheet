@@ -5,6 +5,7 @@ import {
   RichTextEditorField,
   configureRichTextField,
 } from '@esheet/field-kerebron';
+import { registerHealthFieldTypes } from '@esheet/field-health';
 import { createAssetLoad } from '@kerebron/wasm/web';
 import { StrictMode } from 'react';
 import * as ReactDOM from 'react-dom/client';
@@ -18,6 +19,9 @@ import { BrandInitializer } from './components/BrandInitializer';
 
 // Register plugin fields (imports also self-register metadata + Zod schema)
 registerFieldComponents({ richtext: RichTextEditorField });
+registerHealthFieldTypes({
+  indexUrl: `${import.meta.env.BASE_URL}codify`.replace(/\/$/, ''),
+});
 
 // The Vite plugin serves and emits these assets from the installed package.
 configureRichTextField({
