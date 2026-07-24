@@ -2,39 +2,63 @@
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
-import { copyFileSync, mkdirSync, readdirSync } from 'fs';
-import { dirname, join, resolve } from 'path';
+import { existsSync, readFileSync, readdirSync } from 'fs';
+import { join, resolve } from 'path';
 
 /**
- * Copies all .wasm files from @kerebron/wasm/assets (nested) into
- * public/kerebron-wasm/ (flat) so createAssetLoad('/kerebron-wasm') can fetch
- * them. Runs on every dev server start and production build.
+ * Serves Kerebron WASM directly from its npm package during development and
+ * emits the assets into production builds without creating a local copy.
  */
 function kerebronWasmPlugin(): Plugin {
   const assetsDir = resolve(
     import.meta.dirname,
     '../../node_modules/@kerebron/wasm/assets'
   );
-  const destDir = resolve(import.meta.dirname, 'public/kerebron-wasm');
 
-  function syncWasm() {
-    mkdirSync(destDir, { recursive: true });
-    function walk(dir: string, relPath: string) {
-      for (const ent of readdirSync(dir, { withFileTypes: true })) {
-        const full = join(dir, ent.name);
-        const rel = relPath ? `${relPath}/${ent.name}` : ent.name;
-        if (ent.isDirectory()) walk(full, rel);
-        else if (ent.name.endsWith('.wasm')) {
-          const dest = join(destDir, rel);
-          mkdirSync(dirname(dest), { recursive: true });
-          copyFileSync(full, dest);
-        }
+  function visitWasm(
+    dir: string,
+    relativePath: string,
+    visit: (path: string, relativePath: string) => void
+  ) {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = join(dir, entry.name);
+      const nextRelativePath = relativePath
+        ? `${relativePath}/${entry.name}`
+        : entry.name;
+      if (entry.isDirectory()) {
+        visitWasm(path, nextRelativePath, visit);
+      } else if (entry.name.endsWith('.wasm')) {
+        visit(path, nextRelativePath);
       }
     }
-    walk(assetsDir, '');
   }
 
-  return { name: 'kerebron-wasm', buildStart: syncWasm };
+  return {
+    name: 'kerebron-wasm',
+    configureServer(server) {
+      server.middlewares.use('/kerebron-wasm', (request, response, next) => {
+        const relativePath = decodeURIComponent(
+          request.url?.split('?')[0] ?? ''
+        ).replace(/^\/+/, '');
+        const assetPath = resolve(assetsDir, relativePath);
+        if (relativePath.includes('..') || !existsSync(assetPath)) {
+          next();
+          return;
+        }
+        response.setHeader('Content-Type', 'application/wasm');
+        response.end(readFileSync(assetPath));
+      });
+    },
+    buildStart() {
+      visitWasm(assetsDir, '', (path, relativePath) => {
+        this.emitFile({
+          type: 'asset',
+          fileName: `kerebron-wasm/${relativePath}`,
+          source: readFileSync(path),
+        });
+      });
+    },
+  };
 }
 
 export default defineConfig(({ command }) => ({
