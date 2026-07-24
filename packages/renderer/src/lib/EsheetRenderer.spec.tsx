@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { render, act, cleanup, fireEvent } from '@testing-library/react';
+import { render, act, cleanup } from '@testing-library/react';
 import { EsheetRenderer, type EsheetRendererHandle } from './EsheetRenderer.js';
 
 const mockImportPdf = vi.hoisted(() => vi.fn());

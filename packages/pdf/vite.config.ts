@@ -9,7 +9,7 @@ const projectRoot = dirname(fileURLToPath(import.meta.url));
 export default defineConfig(() => ({
   root: projectRoot,
   cacheDir: '../../node_modules/.vite/packages/pdf',
-  plugins: [dts({ tsconfigPath: './tsconfig.lib.json', rollupTypes: true })],
+  plugins: [dts({ tsconfigPath: './tsconfig.lib.json' })],
   build: {
     lib: {
       entry: resolve(projectRoot, 'src/index.ts'),
