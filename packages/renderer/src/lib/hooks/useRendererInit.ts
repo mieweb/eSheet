@@ -35,13 +35,15 @@ export function useRendererInit(
   onValidationError?: (errors: string[]) => void,
   strict = false,
   onReady?: () => void,
-  allowDangerousJS = false
+  allowDangerousJS = false,
+  enabled = true
 ): void {
   // Store onReady in a ref so it never causes the effect to re-run
   const onReadyRef = React.useRef(onReady);
   onReadyRef.current = onReady;
 
   React.useEffect(() => {
+    if (!enabled) return;
     try {
       // Parse input if string
       let parsed: unknown;
@@ -124,5 +126,13 @@ export function useRendererInit(
       });
       ui.getState().setMode('preview');
     }
-  }, [form, ui, formData, initialResponses, onValidationError, strict]);
+  }, [
+    enabled,
+    form,
+    ui,
+    formData,
+    initialResponses,
+    onValidationError,
+    strict,
+  ]);
 }

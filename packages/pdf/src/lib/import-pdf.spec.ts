@@ -1,4 +1,4 @@
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, PDFName, PDFString } from 'pdf-lib';
 import { applyPdfFieldLayout } from './apply-pdf-layout.js';
 import { generatePdf } from './generate-pdf.js';
 import { importPdf } from './import-pdf.js';
@@ -74,6 +74,16 @@ describe('importPdf', () => {
       },
     });
     expect(imported.mappings).toHaveLength(5);
+    expect(
+      imported.mappings
+        .filter((mapping) => mapping.pdfFieldName === 'contact')
+        .map((mapping) => mapping.optionId)
+    ).toEqual(
+      expect.arrayContaining([
+        expect.stringMatching(/^option-/),
+        expect.stringMatching(/^option-/),
+      ])
+    );
   });
 
   it('retains fieldless PDFs with a warning', async () => {
@@ -230,5 +240,94 @@ describe('importPdf', () => {
     expect(document.getForm().getTextField('name')).toBeDefined();
     expect(imported.definition).toEqual(definition);
     expect(imported.mappings).toEqual([mapping]);
+  });
+
+  it('adds dropdown widgets with eSheet options to an enhanced source PDF', async () => {
+    const source = await PDFDocument.create();
+    source.addPage([612, 792]);
+    const definition = {
+      id: 'enhanced-source-dropdown',
+      pages: [
+        {
+          id: 'page-1',
+          fields: [
+            {
+              id: 'location',
+              fieldType: 'dropdown' as const,
+              question: 'Location',
+              options: [
+                { id: 'north', value: 'North' },
+                { id: 'south', value: 'South' },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const mapping = {
+      esheetFieldId: 'location',
+      pdfFieldName: 'location',
+      kind: 'dropdown' as const,
+      page: 0,
+      rect: [72, 680, 240, 24] as [number, number, number, number],
+    };
+
+    const enhanced = await applyPdfFieldLayout(await source.save(), [mapping], {
+      addedFields: [mapping],
+      definition,
+    });
+    const document = await PDFDocument.load(enhanced);
+    const imported = await importPdf(enhanced);
+
+    expect(document.getForm().getDropdown('location').getOptions()).toEqual([
+      'North',
+      'South',
+    ]);
+    expect(imported.definition).toEqual(definition);
+    expect(imported.mappings).toEqual([mapping]);
+  });
+
+  it('writes eSheet labels and required state to mapped source fields', async () => {
+    const source = await PDFDocument.create();
+    const page = source.addPage([612, 792]);
+    const sourceField = source.getForm().createTextField('name');
+    sourceField.addToPage(page, { x: 72, y: 680, width: 240, height: 24 });
+    const definition = {
+      id: 'source-field-metadata',
+      pages: [
+        {
+          id: 'page-1',
+          fields: [
+            {
+              id: 'name',
+              fieldType: 'text' as const,
+              question: 'Applicant name',
+              required: true,
+            },
+          ],
+        },
+      ],
+    };
+    const mapping = {
+      esheetFieldId: 'name',
+      pdfFieldName: 'name',
+      kind: 'text' as const,
+      page: 0,
+      rect: [72, 680, 240, 24] as [number, number, number, number],
+    };
+
+    const enhanced = await applyPdfFieldLayout(await source.save(), [mapping], {
+      definition,
+    });
+    const updatedField = (await PDFDocument.load(enhanced))
+      .getForm()
+      .getTextField('name');
+
+    expect(updatedField.isRequired()).toBe(true);
+    expect(
+      updatedField.acroField.dict
+        .lookup(PDFName.of('TU'), PDFString)
+        .decodeText()
+    ).toBe('Applicant name');
   });
 });

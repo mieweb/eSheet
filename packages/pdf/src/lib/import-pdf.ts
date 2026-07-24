@@ -299,7 +299,11 @@ function widgetMappings(
   const pageIndexes = new Map(
     pages.map((page, index) => [page.ref.toString(), index])
   );
-  return field.acroField.getWidgets().flatMap((widget) => {
+  const optionIds =
+    field instanceof PDFRadioGroup
+      ? field.getOptions().map((option) => optionFor(option).id)
+      : [];
+  return field.acroField.getWidgets().flatMap((widget, index) => {
     const page = pageIndexes.get(widget.P()?.toString() ?? '');
     const rectangle = widget.getRectangle();
     if (page === undefined || !rectangle) return [];
@@ -310,6 +314,9 @@ function widgetMappings(
         kind,
         page,
         rect: [rectangle.x, rectangle.y, rectangle.width, rectangle.height],
+        ...(kind === 'radio' && optionIds[index]
+          ? { optionId: optionIds[index] }
+          : {}),
       },
     ];
   });

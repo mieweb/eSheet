@@ -149,7 +149,7 @@ export const CONDITIONAL_EFFECTS = [
   'required',
   'visible',
   'enable',
-  // 'readOnly', // TODO: implement readOnly properly (see INTERNAL-TICKETS/readonly-fields.md)
+  // 'readOnly', // TODO: implement readOnly properly (see INTERNAL-TICKETS/tickets/readonly-fields.md)
   'setValue',
 ] as const;
 export const conditionalEffectSchema = z.enum(CONDITIONAL_EFFECTS);
@@ -290,7 +290,7 @@ interface BaseFieldDefinition {
    * - `false` / omitted - not required.
    */
   required?: boolean | 'soft';
-  // readOnly?: boolean; // TODO: implement readOnly properly (see INTERNAL-TICKETS/readonly-fields.md)
+  // readOnly?: boolean; // TODO: implement readOnly properly (see INTERNAL-TICKETS/tickets/readonly-fields.md)
   /** Layout width in a row grid (`full` | `half` | `third`). Defaults to `full`. */
   width?: FieldWidth;
   /** Validation rules applied to the field's response. */

@@ -8,10 +8,13 @@
     "emitDeclarationOnly": false,
     "forceConsistentCasingInFileNames": true,
     "lib": ["es2022", "dom", "dom.iterable"],
-    "types": ["node"]
+    "types": ["node", "vite/client"]
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "../../types/**/*.d.ts"],
   "references": [
+    {
+      "path": "../pdf/tsconfig.lib.json"
+    },
     {
       "path": "../fields/tsconfig.lib.json"
     },

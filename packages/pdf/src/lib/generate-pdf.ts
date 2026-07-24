@@ -186,8 +186,24 @@ function safeName(value: string): string {
   return `${readable || 'field'}_${hashString(value)}`;
 }
 
-function fieldName(fieldId: string, suffix?: string): string {
-  const base = `esheet_${safeName(fieldId)}`;
+function pdfFieldName(sourceData: unknown): string | undefined {
+  if (!isRecord(sourceData) || !isRecord(sourceData['esheet'])) {
+    return undefined;
+  }
+  const pdf = sourceData['esheet']['pdf'];
+  if (!isRecord(pdf) || typeof pdf['fieldName'] !== 'string') {
+    return undefined;
+  }
+  const name = pdf['fieldName'].trim();
+  return name || undefined;
+}
+
+function fieldName(
+  fieldId: string,
+  suffix?: string,
+  sourceData?: unknown
+): string {
+  const base = pdfFieldName(sourceData) ?? `esheet_${safeName(fieldId)}`;
   return suffix ? `${base}_${safeName(suffix)}` : base;
 }
 
@@ -249,7 +265,16 @@ export function applyPdfPlacementOverrides(
         )
       : undefined;
     const placement = pdfPlacement(option?._sourceData ?? field._sourceData);
-    return placement ? { ...mapping, ...placement } : mapping;
+    const name = fieldName(
+      field.id,
+      mapping.kind === 'radio' ? undefined : mapping.optionId,
+      field._sourceData
+    );
+    return {
+      ...mapping,
+      ...(placement ?? {}),
+      pdfFieldName: name,
+    };
   });
 }
 
@@ -475,7 +500,7 @@ function addCheckboxes(
   const boxSize = 14;
   for (const option of options) {
     ensureSpace(context, 24);
-    const name = fieldName(field.id, option.id);
+    const name = fieldName(field.id, option.id, field._sourceData);
     const checkbox = context.form.createCheckBox(name);
     setFieldLabel(checkbox, `${questionFor(field)}: ${option.value}`);
     const x = context.columnX;
@@ -518,7 +543,7 @@ function addBoolean(
   response: FieldResponse | undefined
 ): void {
   ensureSpace(context, 28);
-  const name = fieldName(field.id);
+  const name = fieldName(field.id, undefined, field._sourceData);
   const checkbox = context.form.createCheckBox(name);
   setFieldLabel(checkbox, questionFor(field));
   const x = context.columnX;
@@ -558,7 +583,7 @@ function addRadioGroup(
   options: FieldOption[],
   selected: string[]
 ): void {
-  const name = fieldName(field.id);
+  const name = fieldName(field.id, undefined, field._sourceData);
   const group = context.form.createRadioGroup(name);
   setFieldLabel(group, questionFor(field));
   const size = 14;
@@ -607,7 +632,7 @@ function addDropdown(
   selected: string[]
 ): void {
   ensureSpace(context, INPUT_HEIGHT + FIELD_GAP);
-  const name = fieldName(field.id);
+  const name = fieldName(field.id, undefined, field._sourceData);
   const dropdown = context.form.createDropdown(name);
   setFieldLabel(dropdown, questionFor(field));
   const values = options.map((option) => option.value);
@@ -692,13 +717,19 @@ function renderField(context: RenderContext, field: FieldDefinition): void {
       addTextField(
         context,
         field,
-        fieldName(field.id),
+        fieldName(field.id, undefined, field._sourceData),
         response?.answer,
         false
       );
       break;
     case 'longtext':
-      addTextField(context, field, fieldName(field.id), response?.answer, true);
+      addTextField(
+        context,
+        field,
+        fieldName(field.id, undefined, field._sourceData),
+        response?.answer,
+        true
+      );
       break;
     case 'multitext':
       for (const option of field.options ?? []) {
@@ -710,7 +741,7 @@ function renderField(context: RenderContext, field: FieldDefinition): void {
         addTextField(
           context,
           field,
-          fieldName(field.id, option.id),
+          fieldName(field.id, option.id, field._sourceData),
           response?.multitextAnswers?.[option.id],
           false,
           option.id

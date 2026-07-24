@@ -56,13 +56,16 @@ export function LandingPage() {
             desc="Fill out questionnaires and see collected form responses."
             to="/renderer"
           />
-          <div className="md:col-span-2">
-            <DemoCard
-              title="Collaboration"
-              desc="Explore simulated presence, proposals, conflicts, and review actions."
-              to="/collab-live"
-            />
-          </div>
+          <DemoCard
+            title="Form Renderer PDF"
+            desc="Complete imported PDF forms with editable AcroForm fields."
+            to="/renderer-pdf"
+          />
+          <DemoCard
+            title="Collaboration"
+            desc="Explore simulated presence, proposals, conflicts, and review actions."
+            to="/collab-live"
+          />
         </div>
       </div>
     </div>

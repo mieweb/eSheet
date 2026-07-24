@@ -35,6 +35,13 @@ import { ensureDefaultFieldComponentsRegistered } from './register-defaults.js';
 import { MobileBottomDrawer } from './components/MobileBottomDrawer.js';
 import { Switch } from '@mieweb/ui';
 import { PdfView, type ImportedPdfSession } from './components/PdfView.js';
+import {
+  applyPdfFieldLayout,
+  applyPdfPlacementOverrides,
+  generatePdf,
+  importPdf,
+  type PdfSource,
+} from '@esheet/pdf';
 
 // ---------------------------------------------------------------------------
 // Contexts
@@ -97,6 +104,10 @@ export interface EsheetBuilderProps {
 }
 
 export interface EsheetBuilderHandle {
+  /** Imports a PDF into the builder and returns its retained document session. */
+  loadPdf: (source: PdfSource) => Promise<ImportedPdfSession>;
+  /** Returns a PDF containing the current eSheet responses and PDF layout edits. */
+  exportPdf: () => Promise<Uint8Array>;
   /** Returns true if touch mode is currently enabled */
   isTouchModeEnabled: () => boolean;
   /** Toggle touch mode on/off. Only works when touchMode prop is 'auto' or undefined. */
@@ -104,6 +115,8 @@ export interface EsheetBuilderHandle {
   /** Reset to auto-detection mode (clears manual override). Only works when touchMode='auto'. */
   resetTouchMode: () => void;
 }
+
+type FormRepresentation = 'esheet' | 'pdf';
 
 // ---------------------------------------------------------------------------
 // Component
@@ -186,6 +199,59 @@ export const EsheetBuilder = React.forwardRef<
   const [toolsModalOpen, setToolsModalOpen] = React.useState(false);
   const [importedPdfSession, setImportedPdfSession] =
     React.useState<ImportedPdfSession | null>(null);
+  const [representation, setRepresentation] = React.useState<{
+    build: FormRepresentation;
+    preview: FormRepresentation;
+  }>({ build: 'esheet', preview: 'esheet' });
+  const activeRepresentation =
+    mode === 'preview' ? representation.preview : representation.build;
+
+  const loadPdf = React.useCallback(
+    async (source: PdfSource): Promise<ImportedPdfSession> => {
+      const result = await importPdf(source);
+      const session: ImportedPdfSession = {
+        sourcePdf: result.sourcePdf,
+        mappings: result.mappings,
+        sourceFieldNames: Array.from(
+          new Set(result.mappings.map((mapping) => mapping.pdfFieldName))
+        ),
+        warnings: result.warnings,
+        pageCount: result.pageCount,
+      };
+      form
+        .getState()
+        .replaceDefinitionAndResponses(result.definition, result.responses);
+      setImportedPdfSession(session);
+      setRepresentation((current) => ({ ...current, build: 'pdf' }));
+      return session;
+    },
+    [form]
+  );
+
+  const exportPdf = React.useCallback(async (): Promise<Uint8Array> => {
+    const definition = form.getState().hydrateDefinition();
+    const responses = form.getState().responses;
+    if (importedPdfSession) {
+      const sourceFieldNames = new Set(importedPdfSession.sourceFieldNames);
+      return applyPdfFieldLayout(
+        importedPdfSession.sourcePdf,
+        importedPdfSession.mappings,
+        {
+          addedFields: importedPdfSession.mappings.filter(
+            (mapping) => !sourceFieldNames.has(mapping.pdfFieldName)
+          ),
+          definition,
+          responses,
+        }
+      );
+    }
+    const generated = await generatePdf(definition, { responses });
+    return applyPdfFieldLayout(
+      generated.bytes,
+      applyPdfPlacementOverrides(definition, generated.mappings),
+      { responses }
+    );
+  }, [form, importedPdfSession]);
 
   // Touch mode state using shared hook
   const { isTouchEnabled, isManualOverride, setTouchMode, resetTouchMode } =
@@ -195,11 +261,13 @@ export const EsheetBuilder = React.forwardRef<
   React.useImperativeHandle(
     ref,
     () => ({
+      loadPdf,
+      exportPdf,
       isTouchModeEnabled: () => isTouchEnabled,
       setTouchMode,
       resetTouchMode,
     }),
-    [isTouchEnabled, setTouchMode, resetTouchMode]
+    [exportPdf, isTouchEnabled, loadPdf, setTouchMode, resetTouchMode]
   );
 
   React.useEffect(() => {
@@ -250,10 +318,20 @@ export const EsheetBuilder = React.forwardRef<
         <InstanceIdContext.Provider value={instanceId}>
           <div className={rootClasses}>
             <div className="ms:sticky ms:top-0 ms:z-40 ms:bg-msbackground">
-              <BuilderHeader allowDangerousJS={allowDangerousJS} />
+              <BuilderHeader
+                allowDangerousJS={allowDangerousJS}
+                representation={activeRepresentation}
+                onRepresentationChange={(nextRepresentation) => {
+                  if (mode !== 'build' && mode !== 'preview') return;
+                  setRepresentation((current) => ({
+                    ...current,
+                    [mode]: nextRepresentation,
+                  }));
+                }}
+              />
             </div>
             {children}
-            {mode === 'build' && (
+            {mode === 'build' && activeRepresentation === 'esheet' && (
               <div className="builder-layout ms:grid ms:min-w-0 ms:grid-cols-1 ms:lg:grid-cols-[18rem_minmax(0,1fr)_340px] ms:gap-3">
                 <aside className="panel-tools-wrap panel-tools ms:hidden ms:lg:flex ms:self-start ms:min-h-0 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto ms:flex-col ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
                   <ToolPanel />
@@ -298,7 +376,7 @@ export const EsheetBuilder = React.forwardRef<
                 <CodeView form={form} ui={ui} />
               </div>
             )}
-            {mode === 'preview' && (
+            {mode === 'preview' && activeRepresentation === 'esheet' && (
               <div className="preview-layout ms:flex-1 ms:min-h-0 ms:min-w-0 ms:w-full ms:max-w-5xl ms:mx-auto ms:p-4 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto">
                 <div className="ms:flex ms:items-center ms:justify-end ms:mb-3">
                   <Switch
@@ -311,14 +389,16 @@ export const EsheetBuilder = React.forwardRef<
                 <Canvas form={form} ui={ui} dragEnabled={false} />
               </div>
             )}
-            {mode === 'pdf' && (
-              <div className="pdf-layout ms:h-[calc(100dvh-12.5rem)] ms:max-h-[calc(100dvh-12.5rem)] ms:flex-none ms:min-h-0 ms:min-w-0 ms:w-full ms:overflow-hidden">
-                <PdfView
-                  importedSession={importedPdfSession}
-                  onImportedSessionChange={setImportedPdfSession}
-                />
-              </div>
-            )}
+            {(mode === 'build' || mode === 'preview') &&
+              activeRepresentation === 'pdf' && (
+                <div className="pdf-layout ms:h-[calc(100dvh-12.5rem)] ms:max-h-[calc(100dvh-12.5rem)] ms:flex-none ms:min-h-0 ms:min-w-0 ms:w-full ms:overflow-hidden">
+                  <PdfView
+                    authoring={mode === 'build'}
+                    importedSession={importedPdfSession}
+                    onImportedSessionChange={setImportedPdfSession}
+                  />
+                </div>
+              )}
           </div>
         </InstanceIdContext.Provider>
       </UIContext.Provider>

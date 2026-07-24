@@ -4,8 +4,8 @@ import { createStore } from 'zustand/vanilla';
 // Types
 // ---------------------------------------------------------------------------
 
-/** Editor mode — which panel layout is active. */
-export type BuilderMode = 'build' | 'code' | 'preview' | 'pdf';
+/** Editor mode — which primary activity layout is active. */
+export type BuilderMode = 'build' | 'code' | 'preview';
 
 /** Active tab inside the edit panel. */
 export type EditTab = 'edit' | 'logic';

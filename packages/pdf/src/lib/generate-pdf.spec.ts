@@ -147,6 +147,44 @@ describe('generatePdf', () => {
     ).toBe(true);
   });
 
+  it('uses a custom PDF field name from eSheet metadata', async () => {
+    const definitionWithCustomName: FormDefinition = {
+      ...definition,
+      pages: [
+        {
+          ...definition.pages[0],
+          fields: definition.pages[0].fields?.map((field) =>
+            field.id === 'contact-method'
+              ? {
+                  ...field,
+                  _sourceData: {
+                    esheet: { pdf: { fieldName: 'preferred_contact' } },
+                  },
+                }
+              : field
+          ),
+        },
+      ],
+    };
+
+    const generated = await generatePdf(definitionWithCustomName);
+    const radioMappings = generated.mappings.filter(
+      (mapping) => mapping.esheetFieldId === 'contact-method'
+    );
+
+    expect(radioMappings).toHaveLength(2);
+    expect(
+      radioMappings.every(
+        (mapping) => mapping.pdfFieldName === 'preferred_contact'
+      )
+    ).toBe(true);
+    await expect(
+      PDFDocument.load(generated.bytes).then((pdf) =>
+        pdf.getForm().getRadioGroup('preferred_contact')
+      )
+    ).resolves.toBeDefined();
+  });
+
   it('merges sparse placement overrides without changing untouched mappings', async () => {
     const definitionWithPlacement: FormDefinition = {
       ...definition,
@@ -336,5 +374,82 @@ describe('generatePdf', () => {
       height: 32,
     });
     expect(form.getTextField(added.pdfFieldName)).toBeDefined();
+  });
+
+  it('writes current responses into mapped AcroForm fields', async () => {
+    const generated = await generatePdf(definition);
+    const bytes = await applyPdfFieldLayout(
+      generated.bytes,
+      generated.mappings,
+      {
+        responses: {
+          'full-name': { answer: 'Grace Hopper' },
+          consent: { selected: { id: 'yes', value: 'Yes' } },
+          'contact-method': {
+            selected: { id: 'phone', value: 'Phone' },
+          },
+          location: {
+            selected: { id: 'north', value: 'North office' },
+          },
+        },
+      }
+    );
+    const document = await PDFDocument.load(bytes);
+    const form = document.getForm();
+    const mappingFor = (fieldId: string) => {
+      const mapping = generated.mappings.find(
+        (candidate) => candidate.esheetFieldId === fieldId
+      );
+      if (!mapping) throw new Error(`Missing mapping for ${fieldId}`);
+      return mapping;
+    };
+
+    expect(
+      form.getTextField(mappingFor('full-name').pdfFieldName).getText()
+    ).toBe('Grace Hopper');
+    expect(
+      form.getCheckBox(mappingFor('consent').pdfFieldName).isChecked()
+    ).toBe(true);
+    expect(
+      form
+        .getRadioGroup(mappingFor('contact-method').pdfFieldName)
+        .getSelected()
+    ).toBe('phone');
+    expect(
+      form.getDropdown(mappingFor('location').pdfFieldName).getSelected()
+    ).toEqual(['North office']);
+  });
+
+  it('creates a widget for every option in an added radio group', async () => {
+    const source = await PDFDocument.create();
+    source.addPage();
+    const mappings: PdfFieldMapping[] = [
+      {
+        esheetFieldId: 'contact-method',
+        pdfFieldName: 'esheet_contact_method',
+        kind: 'radio',
+        page: 0,
+        rect: [72, 500, 16, 16],
+        optionId: 'email',
+      },
+      {
+        esheetFieldId: 'contact-method',
+        pdfFieldName: 'esheet_contact_method',
+        kind: 'radio',
+        page: 0,
+        rect: [72, 470, 16, 16],
+        optionId: 'phone',
+      },
+    ];
+
+    const bytes = await applyPdfFieldLayout(await source.save(), mappings, {
+      addedFields: mappings,
+    });
+    const document = await PDFDocument.load(bytes);
+    const radioGroup = document
+      .getForm()
+      .getRadioGroup('esheet_contact_method');
+
+    expect(radioGroup.acroField.getWidgets()).toHaveLength(2);
   });
 });

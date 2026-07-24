@@ -21,6 +21,7 @@ export {
   useUI,
   useInstanceId,
   type EsheetBuilderProps,
+  type EsheetBuilderHandle,
   type BuilderTools,
   type FieldSummary,
 } from './lib/EsheetBuilder.js';

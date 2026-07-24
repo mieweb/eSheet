@@ -98,6 +98,7 @@ export function RichTextEditorField({
   // Suppress the transaction handler while we are programmatically loading
   // content so the load doesn't echo back into the response store.
   const isLoadingRef = React.useRef(false);
+  const emittedContentRef = React.useRef<string | null>(null);
 
   // --- Mount / unmount the Kerebron editor (runs once in preview mode) ---
   React.useEffect(() => {
@@ -125,7 +126,9 @@ export function RichTextEditorField({
       if (isLoadingRef.current) return;
       try {
         const buf = await editor.saveDocument('text/x-markdown');
-        onResponseRef.current({ answer: new TextDecoder().decode(buf) });
+        const content = new TextDecoder().decode(buf);
+        emittedContentRef.current = content;
+        onResponseRef.current({ answer: content });
       } catch {
         // ignore
       }
@@ -178,6 +181,10 @@ export function RichTextEditorField({
     }
     const editor = editorRef.current;
     if (!editor) return;
+    if (emittedContentRef.current === externalContent) {
+      emittedContentRef.current = null;
+      return;
+    }
     isLoadingRef.current = true;
     editor
       .loadDocument(

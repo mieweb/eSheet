@@ -1,7 +1,26 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { render, act, cleanup } from '@testing-library/react';
+import { render, act, cleanup, fireEvent } from '@testing-library/react';
 import { EsheetRenderer, type EsheetRendererHandle } from './EsheetRenderer.js';
+
+const mockImportPdf = vi.hoisted(() => vi.fn());
+const mockGetDocument = vi.hoisted(() => vi.fn());
+
+vi.mock('@esheet/pdf', () => ({
+  applyPdfFieldLayout: vi.fn().mockResolvedValue(new Uint8Array([1])),
+  applyPdfPlacementOverrides: vi.fn((_, mappings) => mappings),
+  generatePdf: vi.fn(),
+  importPdf: mockImportPdf,
+}));
+
+vi.mock('pdfjs-dist', () => ({
+  GlobalWorkerOptions: {},
+  getDocument: mockGetDocument,
+}));
+
+vi.mock('pdfjs-dist/build/pdf.worker.min.mjs?url', () => ({
+  default: 'pdf-worker.js',
+}));
 
 afterEach(cleanup);
 
@@ -16,6 +35,72 @@ function getRendererHandle(ref: React.RefObject<EsheetRendererHandle | null>) {
 }
 
 describe('EsheetRenderer', () => {
+  it('imports and renders a PDF representation through component props', async () => {
+    const ref = React.createRef<EsheetRendererHandle>();
+    mockImportPdf.mockResolvedValue({
+      definition: {
+        id: 'pdf-form',
+        pages: [
+          {
+            id: 'page-1',
+            fields: [{ id: 'name', fieldType: 'text', question: 'Name' }],
+          },
+        ],
+      },
+      responses: { name: { answer: 'Ada Lovelace' } },
+      mappings: [
+        {
+          esheetFieldId: 'name',
+          pdfFieldName: 'name',
+          kind: 'text',
+          page: 0,
+          rect: [72, 620, 220, 28],
+        },
+      ],
+      sourcePdf: new Uint8Array([37, 80, 68, 70]),
+      warnings: [],
+      pageCount: 1,
+    });
+    mockGetDocument.mockReturnValue({
+      destroy: vi.fn(),
+      promise: Promise.resolve({
+        numPages: 1,
+        getPage: vi.fn().mockResolvedValue({
+          getViewport: () => ({
+            width: 612,
+            height: 792,
+            convertToViewportPoint: (x: number, y: number) => [x, y],
+          }),
+          render: () => ({ cancel: vi.fn(), promise: Promise.resolve() }),
+        }),
+      }),
+    });
+
+    const { findByLabelText, findByText } = render(
+      <EsheetRenderer
+        ref={ref}
+        representation="pdf"
+        pdfSource={new Uint8Array([37, 80, 68, 70])}
+      />
+    );
+
+    await findByText('Page 1 of 1');
+    expect(mockImportPdf).toHaveBeenCalledWith(expect.any(Uint8Array));
+    expect(getRendererHandle(ref).getRawResponse()).toEqual({
+      name: { answer: 'Ada Lovelace' },
+    });
+    expect(
+      getRendererHandle(ref).getFormStore().getState().normalized.pages[0]
+        ?.fieldIds
+    ).toContain('name');
+    fireEvent.change(await findByLabelText('PDF text field name'), {
+      target: { value: 'Grace Hopper' },
+    });
+    expect(getRendererHandle(ref).getRawResponse()).toEqual({
+      name: { answer: 'Grace Hopper' },
+    });
+  });
+
   it('mounts and exposes ref handle', async () => {
     const ref = React.createRef<EsheetRendererHandle>();
     await act(async () => {

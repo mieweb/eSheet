@@ -12,6 +12,7 @@ import {
 } from '@esheet/pdf';
 import type { PDFDocumentLoadingTask, PDFDocumentProxy } from 'pdfjs-dist';
 import type {
+  FieldDefinition,
   FieldOption,
   FieldResponse,
   NormalizedDefinition,
@@ -27,9 +28,10 @@ const PDF_FIELD_TYPES = [
   { kind: 'text', fieldType: 'text', label: 'Text field' },
   { kind: 'checkbox', fieldType: 'boolean', label: 'Checkbox' },
   { kind: 'radio', fieldType: 'radio', label: 'Radio button' },
+  { kind: 'dropdown', fieldType: 'dropdown', label: 'Dropdown' },
 ] as const satisfies readonly {
   kind: PdfFieldKind;
-  fieldType: 'text' | 'boolean' | 'radio';
+  fieldType: 'text' | 'boolean' | 'radio' | 'dropdown';
   label: string;
 }[];
 
@@ -42,6 +44,8 @@ export interface ImportedPdfSession {
 }
 
 export interface PdfViewProps {
+  /** Enables PDF field authoring controls. Defaults to true for standalone use. */
+  authoring?: boolean;
   importedSession?: ImportedPdfSession | null;
   onImportedSessionChange?: (session: ImportedPdfSession | null) => void;
 }
@@ -63,6 +67,19 @@ function withPdfPlacement(
   };
 }
 
+function withPdfFieldName(
+  sourceData: unknown,
+  fieldName: string
+): Record<string, unknown> {
+  const source = isRecord(sourceData) ? sourceData : {};
+  const esheet = isRecord(source['esheet']) ? source['esheet'] : {};
+  const pdf = isRecord(esheet['pdf']) ? esheet['pdf'] : {};
+  return {
+    ...source,
+    esheet: { ...esheet, pdf: { ...pdf, fieldName } },
+  };
+}
+
 function withoutPdfPlacement(sourceData: unknown): unknown {
   if (!isRecord(sourceData) || !isRecord(sourceData['esheet'])) {
     return sourceData;
@@ -73,6 +90,27 @@ function withoutPdfPlacement(sourceData: unknown): unknown {
   }
   const { placement: _placement, ...pdf } = esheet['pdf'];
   void _placement;
+  const { pdf: _pdf, ...restEheet } = esheet;
+  void _pdf;
+  const nextEsheet =
+    Object.keys(pdf).length > 0 ? { ...restEheet, pdf } : restEheet;
+  const { esheet: _esheet, ...restSource } = sourceData;
+  void _esheet;
+  return Object.keys(nextEsheet).length > 0
+    ? { ...restSource, esheet: nextEsheet }
+    : restSource;
+}
+
+function withoutPdfFieldName(sourceData: unknown): unknown {
+  if (!isRecord(sourceData) || !isRecord(sourceData['esheet'])) {
+    return sourceData;
+  }
+  const esheet = sourceData['esheet'];
+  if (!isRecord(esheet['pdf']) || !('fieldName' in esheet['pdf'])) {
+    return sourceData;
+  }
+  const { fieldName: _fieldName, ...pdf } = esheet['pdf'];
+  void _fieldName;
   const { pdf: _pdf, ...restEheet } = esheet;
   void _pdf;
   const nextEsheet =
@@ -108,6 +146,10 @@ function pdfSourceFieldName(sourceData: unknown): string | undefined {
   if (!isRecord(sourceData)) return undefined;
   const fieldName = sourceData['fieldName'];
   return typeof fieldName === 'string' ? fieldName : undefined;
+}
+
+function isImportedPdfField(sourceData: unknown): boolean {
+  return isRecord(sourceData) && sourceData['source'] === 'pdf';
 }
 
 function sameGeometry(
@@ -155,6 +197,22 @@ function addedFieldName(
   return name;
 }
 
+function nextRadioPlacement(mapping: PdfFieldMapping): PdfPlacement {
+  const [x, y, width, height] = mapping.rect;
+  return {
+    page: mapping.page,
+    rect: [x, Math.max(0, y - height - 12), width, height],
+  };
+}
+
+function duplicatePlacement(mapping: PdfFieldMapping): PdfPlacement {
+  const [x, y, width, height] = mapping.rect;
+  return {
+    page: mapping.page,
+    rect: [x + 16, Math.max(0, y - 16), width, height],
+  };
+}
+
 function synchronizeRenamedMappings(
   mappings: readonly PdfFieldMapping[],
   normalized: NormalizedDefinition
@@ -163,8 +221,7 @@ function synchronizeRenamedMappings(
     if (normalized.byId[mapping.esheetFieldId]) return mapping;
     const renamed = Object.values(normalized.byId).find(
       (node) =>
-        pdfSourceFieldName(node.definition._sourceData) ===
-        mapping.pdfFieldName
+        pdfSourceFieldName(node.definition._sourceData) === mapping.pdfFieldName
     );
     if (renamed) {
       return { ...mapping, esheetFieldId: renamed.definition.id };
@@ -204,6 +261,7 @@ function selectedValues(response: FieldResponse | undefined): string[] {
 }
 
 export function PdfView({
+  authoring = true,
   importedSession,
   onImportedSessionChange,
 }: PdfViewProps) {
@@ -279,6 +337,7 @@ export function PdfView({
   const selectFile = React.useCallback(
     (file: File | undefined) => {
       if (!file) return;
+      if (!authoring) return;
       if (
         file.type !== 'application/pdf' &&
         !file.name.toLocaleLowerCase().endsWith('.pdf')
@@ -292,7 +351,7 @@ export function PdfView({
       }
       void importFile(file);
     },
-    [fieldCount, generated, importFile, imported]
+    [authoring, fieldCount, generated, importFile, imported]
   );
 
   const handleFileChange = React.useCallback(
@@ -307,9 +366,10 @@ export function PdfView({
     (event: React.DragEvent<HTMLDivElement>) => {
       event.preventDefault();
       setIsDraggingFile(false);
+      if (!authoring) return;
       selectFile(event.dataTransfer.files[0]);
     },
-    [selectFile]
+    [authoring, selectFile]
   );
 
   React.useEffect(() => {
@@ -485,54 +545,50 @@ export function PdfView({
     [form, generated, imported, isImported, setImported]
   );
 
-  const addPdfField = React.useCallback((fieldType: (typeof PDF_FIELD_TYPES)[number]) => {
-    const placement = {
-      page: activePage,
-      rect: [72, 620, 220, 28] as PdfFieldMapping['rect'],
-    };
-    if (isImported && imported) {
-      const fieldId = form.getState().addField(fieldType.fieldType, {
+  const addPdfField = React.useCallback(
+    (fieldType: (typeof PDF_FIELD_TYPES)[number]) => {
+      const placement = {
+        page: activePage,
+        rect: [72, 620, 220, 28] as PdfFieldMapping['rect'],
+      };
+      if (isImported && imported) {
+        const fieldId = form.getState().addField(fieldType.fieldType, {
+          patch: {
+            question: fieldType.label,
+            _sourceData: withPdfPlacement(undefined, placement),
+            ...(fieldType.kind === 'radio' || fieldType.kind === 'dropdown'
+              ? { options: [{ id: 'option-1', value: 'Option 1' }] }
+              : {}),
+          },
+        });
+        if (!fieldId) return;
+        const mapping: PdfFieldMapping = {
+          esheetFieldId: fieldId,
+          pdfFieldName: addedFieldName(fieldId, mappings),
+          kind: fieldType.kind,
+          ...placement,
+          ...(fieldType.kind === 'radio' ? { optionId: 'option-1' } : {}),
+        };
+        const nextMappings = [...mappings, mapping];
+        setMappings(nextMappings);
+        setImported({ ...imported, mappings: nextMappings });
+        setSelectedIndex(nextMappings.length - 1);
+        setIsAddFieldMenuOpen(false);
+        return;
+      }
+      form.getState().addField(fieldType.fieldType, {
         patch: {
           question: fieldType.label,
           _sourceData: withPdfPlacement(undefined, placement),
-          ...(fieldType.kind === 'radio'
+          ...(fieldType.kind === 'radio' || fieldType.kind === 'dropdown'
             ? { options: [{ id: 'option-1', value: 'Option 1' }] }
             : {}),
         },
       });
-      if (!fieldId) return;
-      const mapping: PdfFieldMapping = {
-        esheetFieldId: fieldId,
-        pdfFieldName: addedFieldName(fieldId, mappings),
-        kind: fieldType.kind,
-        ...placement,
-        ...(fieldType.kind === 'radio' ? { optionId: 'option-1' } : {}),
-      };
-      const nextMappings = [...mappings, mapping];
-      setMappings(nextMappings);
-      setImported({ ...imported, mappings: nextMappings });
-      setSelectedIndex(nextMappings.length - 1);
       setIsAddFieldMenuOpen(false);
-      return;
-    }
-    form.getState().addField(fieldType.fieldType, {
-      patch: {
-        question: fieldType.label,
-        _sourceData: withPdfPlacement(undefined, placement),
-        ...(fieldType.kind === 'radio'
-          ? { options: [{ id: 'option-1', value: 'Option 1' }] }
-          : {}),
-      },
-    });
-    setIsAddFieldMenuOpen(false);
-  }, [
-    activePage,
-    form,
-    imported,
-    isImported,
-    mappings,
-    setImported,
-  ]);
+    },
+    [activePage, form, imported, isImported, mappings, setImported]
+  );
 
   const resetLayout = React.useCallback(() => {
     if (!generated || isImported) return;
@@ -573,6 +629,7 @@ export function PdfView({
             (mapping) => !sourceFieldNames.has(mapping.pdfFieldName)
           ),
           definition,
+          responses,
         });
         const url = URL.createObjectURL(bytesToBlob(bytes));
         const anchor = window.document.createElement('a');
@@ -587,7 +644,8 @@ export function PdfView({
       const current = await generatePdf(definition, { responses });
       const bytes = await applyPdfFieldLayout(
         current.bytes,
-        applyPdfPlacementOverrides(definition, current.mappings)
+        applyPdfPlacementOverrides(definition, current.mappings),
+        { responses }
       );
       const url = URL.createObjectURL(bytesToBlob(bytes));
       const anchor = window.document.createElement('a');
@@ -616,6 +674,297 @@ export function PdfView({
 
   const selectedMapping =
     selectedIndex === null ? undefined : mappings[selectedIndex];
+  const selectedField = selectedMapping
+    ? form.getState().getField(selectedMapping.esheetFieldId)?.definition
+    : undefined;
+  const selectedOptions =
+    selectedField && 'options' in selectedField
+      ? selectedField.options ?? []
+      : [];
+  const canDeleteSelectedField =
+    !!selectedMapping &&
+    (!isImported ||
+      (!isImportedPdfField(selectedField?._sourceData) &&
+        !imported?.sourceFieldNames?.includes(selectedMapping.pdfFieldName)));
+  const canEditSelectedOptions =
+    !!selectedField &&
+    (!isImported ||
+      (!isImportedPdfField(selectedField._sourceData) &&
+        !imported?.sourceFieldNames?.includes(
+          selectedMapping?.pdfFieldName ?? ''
+        )));
+  const canEditSelectedFieldName = canDeleteSelectedField;
+  const selectedNode = selectedMapping
+    ? normalized.byId[selectedMapping.esheetFieldId]
+    : undefined;
+  const selectedNodeId = selectedNode?.definition.id;
+  const selectedPage = selectedNode?.parentId
+    ? undefined
+    : normalized.pages.find(
+        (page) =>
+          selectedNodeId !== undefined && page.fieldIds.includes(selectedNodeId)
+      );
+  const selectedSiblingIds = selectedNode?.parentId
+    ? normalized.byId[selectedNode.parentId]?.childIds ?? []
+    : selectedPage?.fieldIds ?? [];
+  const selectedFieldIndex = selectedMapping
+    ? selectedSiblingIds.indexOf(selectedMapping.esheetFieldId)
+    : -1;
+  const selectedFieldMappings = selectedMapping
+    ? mappings.filter(
+        (mapping) => mapping.esheetFieldId === selectedMapping.esheetFieldId
+      )
+    : [];
+  const selectedWidgetPages = [
+    ...new Set(selectedFieldMappings.map((mapping) => mapping.page + 1)),
+  ];
+  const radioGroupSize = selectedMapping
+    ? mappings.filter(
+        (mapping) =>
+          mapping.kind === 'radio' &&
+          mapping.pdfFieldName === selectedMapping.pdfFieldName
+      ).length
+    : 0;
+
+  const addRadioGroupOption = React.useCallback(() => {
+    if (!selectedMapping || selectedMapping.kind !== 'radio') return;
+    const field = form
+      .getState()
+      .getField(selectedMapping.esheetFieldId)?.definition;
+    if (!field || field.fieldType !== 'radio') return;
+
+    const placement = nextRadioPlacement(selectedMapping);
+    const optionId = form
+      .getState()
+      .addOption(field.id, `Option ${(field.options?.length ?? 0) + 1}`);
+    if (!optionId) return;
+
+    const updatedField = form.getState().getField(field.id)?.definition;
+    if (!updatedField || updatedField.fieldType !== 'radio') return;
+    form.getState().updateField(field.id, {
+      options: updatedField.options?.map((option) =>
+        option.id === optionId
+          ? {
+              ...option,
+              _sourceData: withPdfPlacement(option._sourceData, placement),
+            }
+          : option
+      ),
+    });
+
+    const mapping: PdfFieldMapping = {
+      esheetFieldId: field.id,
+      pdfFieldName: selectedMapping.pdfFieldName,
+      kind: 'radio',
+      ...placement,
+      optionId,
+    };
+    const nextMappings = [...mappings, mapping];
+    setMappings(nextMappings);
+    if (isImported && imported) {
+      setImported({ ...imported, mappings: nextMappings });
+    }
+    setSelectedIndex(nextMappings.length - 1);
+  }, [form, imported, isImported, mappings, selectedMapping, setImported]);
+
+  const addDropdownOption = React.useCallback(() => {
+    if (!selectedField || selectedField.fieldType !== 'dropdown') return;
+    form
+      .getState()
+      .addOption(
+        selectedField.id,
+        `Option ${(selectedField.options?.length ?? 0) + 1}`
+      );
+  }, [form, selectedField]);
+
+  const removeOption = React.useCallback(
+    (optionId: string) => {
+      if (
+        !selectedField ||
+        !canEditSelectedOptions ||
+        selectedOptions.length <= 1
+      ) {
+        return;
+      }
+      if (!form.getState().removeOption(selectedField.id, optionId)) return;
+      if (selectedField.fieldType !== 'radio') return;
+
+      const nextMappings = mappings.filter(
+        (mapping) =>
+          mapping.esheetFieldId !== selectedField.id ||
+          mapping.optionId !== optionId
+      );
+      setMappings(nextMappings);
+      if (isImported && imported) {
+        setImported({ ...imported, mappings: nextMappings });
+      }
+      setSelectedIndex(null);
+    },
+    [
+      canEditSelectedOptions,
+      form,
+      imported,
+      isImported,
+      mappings,
+      selectedField,
+      selectedOptions.length,
+      setImported,
+    ]
+  );
+
+  const deleteSelectedField = React.useCallback(() => {
+    if (!selectedMapping) return;
+    const field = form
+      .getState()
+      .getField(selectedMapping.esheetFieldId)?.definition;
+    if (
+      !field ||
+      (isImported &&
+        (isImportedPdfField(field._sourceData) ||
+          imported?.sourceFieldNames?.includes(selectedMapping.pdfFieldName)))
+    ) {
+      return;
+    }
+    if (!form.getState().removeField(selectedMapping.esheetFieldId)) return;
+
+    const nextMappings = mappings.filter(
+      (mapping) => mapping.esheetFieldId !== selectedMapping.esheetFieldId
+    );
+    setMappings(nextMappings);
+    if (isImported && imported) {
+      setImported({ ...imported, mappings: nextMappings });
+    }
+    setSelectedIndex(null);
+  }, [form, imported, isImported, mappings, selectedMapping, setImported]);
+
+  const renameSelectedField = React.useCallback(
+    (value: string) => {
+      if (!selectedMapping || !canEditSelectedFieldName) return;
+      const pdfFieldName = value.trim();
+      if (!pdfFieldName) return;
+      const hasConflict = mappings.some(
+        (mapping) =>
+          mapping.esheetFieldId !== selectedMapping.esheetFieldId &&
+          mapping.pdfFieldName === pdfFieldName
+      );
+      if (hasConflict) return;
+      const field = form
+        .getState()
+        .getField(selectedMapping.esheetFieldId)?.definition;
+      if (!field) return;
+
+      const nextMappings = mappings.map((mapping) =>
+        mapping.esheetFieldId === selectedMapping.esheetFieldId
+          ? { ...mapping, pdfFieldName }
+          : mapping
+      );
+      form.getState().updateField(field.id, {
+        _sourceData: withPdfFieldName(field._sourceData, pdfFieldName),
+      });
+      setMappings(nextMappings);
+      if (isImported && imported) {
+        setImported({ ...imported, mappings: nextMappings });
+      }
+    },
+    [
+      canEditSelectedFieldName,
+      form,
+      imported,
+      isImported,
+      mappings,
+      selectedMapping,
+      setImported,
+    ]
+  );
+
+  const updateSelectedDimension = React.useCallback(
+    (rectIndex: 2 | 3, value: string) => {
+      if (selectedIndex === null || !selectedMapping) return;
+      const dimension = Number(value);
+      if (!Number.isFinite(dimension)) return;
+      const rect = [...selectedMapping.rect] as PdfFieldMapping['rect'];
+      rect[rectIndex] = Math.max(12, dimension);
+      commitMapping(selectedIndex, { ...selectedMapping, rect });
+    },
+    [commitMapping, selectedIndex, selectedMapping]
+  );
+
+  const moveSelectedField = React.useCallback(
+    (direction: -1 | 1) => {
+      if (!selectedNode || selectedFieldIndex === -1) return;
+      const toIndex = selectedFieldIndex + direction;
+      if (toIndex < 0 || toIndex >= selectedSiblingIds.length) return;
+      const targetParentId = selectedNode.parentId ?? selectedPage?.id;
+      if (!targetParentId) return;
+      form
+        .getState()
+        .moveField(selectedNode.definition.id, toIndex, targetParentId);
+    },
+    [form, selectedFieldIndex, selectedNode, selectedPage, selectedSiblingIds]
+  );
+
+  const duplicateSelectedField = React.useCallback(() => {
+    if (!selectedMapping || !canDeleteSelectedField) return;
+    const state = form.getState();
+    const field = state.getField(selectedMapping.esheetFieldId)?.definition;
+    const node = state.normalized.byId[selectedMapping.esheetFieldId];
+    if (!field || field.fieldType === 'pages' || !node) return;
+
+    const fieldMappings = mappings.filter(
+      (mapping) => mapping.esheetFieldId === field.id
+    );
+    if (fieldMappings.length === 0) return;
+
+    const { id: _id, fieldType: _fieldType, _sourceData, ...patch } = field;
+    void _id;
+    void _fieldType;
+    const duplicatedId = state.addField(field.fieldType, {
+      parentId: node.parentId ?? undefined,
+      pageId: state.normalized.pages.find((page) =>
+        page.fieldIds.includes(field.id)
+      )?.id,
+      index: node.index + 1,
+      patch: {
+        ...patch,
+        _sourceData: withoutPdfFieldName(withoutPdfPlacement(_sourceData)),
+        ...('options' in field &&
+          field.options && {
+            options: field.options.map((option) => ({
+              ...option,
+              _sourceData: withoutPdfPlacement(option._sourceData),
+            })),
+          }),
+      } as Omit<FieldDefinition, 'id' | 'fieldType'>,
+    });
+    if (!duplicatedId) return;
+
+    const pdfFieldName = addedFieldName(duplicatedId, mappings);
+    const nextMappings = [
+      ...mappings,
+      ...fieldMappings.map((mapping) => {
+        const placement = duplicatePlacement(mapping);
+        return {
+          ...mapping,
+          esheetFieldId: duplicatedId,
+          pdfFieldName,
+          ...placement,
+        };
+      }),
+    ];
+    setMappings(nextMappings);
+    if (isImported && imported) {
+      setImported({ ...imported, mappings: nextMappings });
+    }
+    setSelectedIndex(nextMappings.length - fieldMappings.length);
+  }, [
+    canDeleteSelectedField,
+    form,
+    imported,
+    isImported,
+    mappings,
+    selectedMapping,
+    setImported,
+  ]);
 
   const goToPage = React.useCallback((pageIndex: number) => {
     pendingNavigationPageRef.current = pageIndex;
@@ -718,33 +1067,50 @@ export function PdfView({
     [responses]
   );
 
+  const updateResponse = React.useCallback(
+    (index: number, response: FieldResponse) => {
+      const mapping = mappings[index];
+      if (!mapping) return;
+      form.getState().setResponse(mapping.esheetFieldId, response);
+    },
+    [form, mappings]
+  );
+
   const indexedMappingsByPage = React.useMemo(() => {
     const byPage = new Map<
       number,
       {
         mapping: PdfFieldMapping;
         index: number;
+        options?: FieldOption[];
         preview: { value?: string; checked?: boolean };
       }[]
     >();
     for (let i = 0; i < mappings.length; i++) {
       const mapping = mappings[i];
       const preview = previewForMapping(mapping);
+      const field = normalized.byId[mapping.esheetFieldId]?.definition;
+      const options = (field as { options?: FieldOption[] } | undefined)
+        ?.options;
       const list = byPage.get(mapping.page) ?? [];
-      list.push({ mapping, index: i, preview });
+      list.push({ mapping, index: i, options, preview });
       byPage.set(mapping.page, list);
     }
     return byPage;
-  }, [mappings, previewForMapping]);
+  }, [mappings, normalized, previewForMapping]);
 
   return (
     <div
       onDragEnter={(event) => {
+        if (!authoring) return;
         event.preventDefault();
         setIsDraggingFile(true);
       }}
-      onDragOver={(event) => event.preventDefault()}
+      onDragOver={(event) => {
+        if (authoring) event.preventDefault();
+      }}
       onDragLeave={(event) => {
+        if (!authoring) return;
         if (event.currentTarget === event.target) setIsDraggingFile(false);
       }}
       onDrop={handleDrop}
@@ -754,20 +1120,22 @@ export function PdfView({
           : 'ms:border-msborder'
       }`}
     >
-      <input
-        ref={fileInputRef}
-        id={`${instanceId}-pdf-import-file`}
-        aria-label="Open PDF"
-        type="file"
-        accept="application/pdf,.pdf"
-        onChange={handleFileChange}
-        className="ms:hidden"
-      />
+      {authoring && (
+        <input
+          ref={fileInputRef}
+          id={`${instanceId}-pdf-import-file`}
+          aria-label="Open PDF"
+          type="file"
+          accept="application/pdf,.pdf"
+          onChange={handleFileChange}
+          className="ms:hidden"
+        />
+      )}
       <div className="ms:flex ms:min-h-14 ms:flex-wrap ms:items-center ms:justify-between ms:gap-3 ms:border-b ms:border-msborder ms:px-4 ms:py-2">
         <div className="ms:min-w-0">
           <div className="ms:flex ms:items-center ms:gap-2 ms:text-sm ms:font-semibold ms:text-mstext">
             <PdfIcon className="ms:h-4 ms:w-4 ms:text-msprimary" />
-            PDF designer
+            {authoring ? 'PDF designer' : 'PDF preview'}
           </div>
           {(generated || imported) && (
             <p className="ms:mt-0.5 ms:text-xs ms:text-mstextmuted">
@@ -786,14 +1154,16 @@ export function PdfView({
         </div>
 
         <div className="ms:flex ms:flex-wrap ms:items-center ms:gap-2">
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isImporting}
-            className="ms:h-9 ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackground ms:px-3 ms:text-xs ms:font-medium ms:text-mstext ms:disabled:cursor-not-allowed ms:disabled:opacity-50"
-          >
-            {isImporting ? 'Opening…' : 'Open PDF'}
-          </button>
+          {authoring && (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isImporting}
+              className="ms:h-9 ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackground ms:px-3 ms:text-xs ms:font-medium ms:text-mstext ms:disabled:cursor-not-allowed ms:disabled:opacity-50"
+            >
+              {isImporting ? 'Opening…' : 'Open PDF'}
+            </button>
+          )}
           <div className="ms:flex ms:items-center ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackground">
             <button
               type="button"
@@ -815,44 +1185,48 @@ export function PdfView({
               +
             </button>
           </div>
-          <div className="ms:relative">
+          {authoring && (
+            <div className="ms:relative">
+              <button
+                type="button"
+                aria-haspopup="menu"
+                aria-expanded={isAddFieldMenuOpen}
+                onClick={() => setIsAddFieldMenuOpen((open) => !open)}
+                disabled={!document}
+                className="ms:inline-flex ms:h-9 ms:items-center ms:gap-2 ms:rounded-lg ms:border ms:border-msprimary ms:bg-msprimary ms:px-3 ms:text-xs ms:font-medium ms:text-white ms:disabled:cursor-not-allowed ms:disabled:opacity-50"
+              >
+                + Add field
+              </button>
+              {isAddFieldMenuOpen && (
+                <div
+                  role="menu"
+                  className="ms:absolute ms:right-0 ms:top-10 ms:z-30 ms:min-w-36 ms:overflow-hidden ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:p-1 ms:shadow-lg"
+                >
+                  {PDF_FIELD_TYPES.map((fieldType) => (
+                    <button
+                      key={fieldType.kind}
+                      type="button"
+                      role="menuitem"
+                      onClick={() => addPdfField(fieldType)}
+                      className="ms:flex ms:w-full ms:items-center ms:px-3 ms:py-2 ms:text-left ms:text-xs ms:text-mstext ms:hover:bg-msbackgroundhover"
+                    >
+                      {fieldType.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          {authoring && (
             <button
               type="button"
-              aria-haspopup="menu"
-              aria-expanded={isAddFieldMenuOpen}
-              onClick={() => setIsAddFieldMenuOpen((open) => !open)}
-              disabled={!document}
-              className="ms:inline-flex ms:h-9 ms:items-center ms:gap-2 ms:rounded-lg ms:border ms:border-msprimary ms:bg-msprimary ms:px-3 ms:text-xs ms:font-medium ms:text-white ms:disabled:cursor-not-allowed ms:disabled:opacity-50"
+              onClick={resetLayout}
+              disabled={!generated || isImported}
+              className="ms:h-9 ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackground ms:px-3 ms:text-xs ms:font-medium ms:text-mstext ms:disabled:opacity-50"
             >
-              + Add field
+              Reset layout
             </button>
-            {isAddFieldMenuOpen && (
-              <div
-                role="menu"
-                className="ms:absolute ms:right-0 ms:top-10 ms:z-30 ms:min-w-36 ms:overflow-hidden ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:p-1 ms:shadow-lg"
-              >
-                {PDF_FIELD_TYPES.map((fieldType) => (
-                  <button
-                    key={fieldType.kind}
-                    type="button"
-                    role="menuitem"
-                    onClick={() => addPdfField(fieldType)}
-                    className="ms:flex ms:w-full ms:items-center ms:px-3 ms:py-2 ms:text-left ms:text-xs ms:text-mstext ms:hover:bg-msbackgroundhover"
-                  >
-                    {fieldType.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={resetLayout}
-            disabled={!generated || isImported}
-            className="ms:h-9 ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackground ms:px-3 ms:text-xs ms:font-medium ms:text-mstext ms:disabled:opacity-50"
-          >
-            Reset layout
-          </button>
+          )}
           <button
             type="button"
             onClick={() => void handleDownload()}
@@ -957,9 +1331,16 @@ export function PdfView({
                       indexedMappingsByPage.get(pageIndex) ?? EMPTY_MAPPINGS
                     }
                     selectedIndex={selectedIndex}
-                    editable
-                    onSelect={setSelectedIndex}
+                    selectedRadioGroupName={
+                      selectedMapping?.kind === 'radio'
+                        ? selectedMapping.pdfFieldName
+                        : undefined
+                    }
+                    editable={authoring}
+                    fillable={!authoring}
+                    onSelect={authoring ? setSelectedIndex : () => undefined}
                     onChange={commitMapping}
+                    onResponseChange={updateResponse}
                     onActivatePage={setActivePage}
                   />
                 </div>
@@ -968,66 +1349,291 @@ export function PdfView({
           )}
         </div>
 
-        <aside className="ms:hidden ms:w-72 ms:shrink-0 ms:border-l ms:border-msborder ms:bg-mssurface ms:p-4 ms:lg:block">
-          {selectedMapping && selectedIndex !== null ? (
-            <div className="ms:flex ms:flex-col ms:gap-4">
-              <div className="ms:flex ms:items-start ms:justify-between ms:gap-2">
-                <div className="ms:min-w-0">
-                  <div className="ms:text-xs ms:font-semibold ms:uppercase ms:tracking-wide ms:text-msprimary">
-                    Selected field
+        {authoring && (
+          <aside className="ms:hidden ms:w-72 ms:shrink-0 ms:border-l ms:border-msborder ms:bg-mssurface ms:p-4 ms:lg:block">
+            {selectedMapping && selectedIndex !== null ? (
+              <div className="ms:flex ms:flex-col ms:gap-4">
+                <div className="ms:flex ms:items-start ms:justify-between ms:gap-2">
+                  <div className="ms:min-w-0">
+                    <div className="ms:text-xs ms:font-semibold ms:uppercase ms:tracking-wide ms:text-msprimary">
+                      Selected field
+                    </div>
+                    <div className="ms:mt-1 ms:truncate ms:text-sm ms:font-medium ms:text-mstext">
+                      {mappingLabel(selectedMapping)}
+                    </div>
                   </div>
-                  <div className="ms:mt-1 ms:truncate ms:text-sm ms:font-medium ms:text-mstext">
-                    {mappingLabel(selectedMapping)}
+                  <button
+                    type="button"
+                    aria-label="Deselect PDF field"
+                    onClick={() => setSelectedIndex(null)}
+                    className="ms:flex ms:h-7 ms:w-7 ms:items-center ms:justify-center ms:rounded-md ms:border ms:border-msborder ms:bg-msbackground"
+                  >
+                    <XIcon className="ms:h-3.5 ms:w-3.5" />
+                  </button>
+                </div>
+                <dl className="ms:grid ms:grid-cols-2 ms:gap-3 ms:text-xs">
+                  <div>
+                    <dt className="ms:text-mstextmuted">Type</dt>
+                    <dd className="ms:mt-1 ms:font-medium ms:text-mstext">
+                      {selectedMapping.kind}
+                    </dd>
                   </div>
+                  {selectedMapping.kind === 'radio' && (
+                    <div>
+                      <dt className="ms:text-mstextmuted">Group</dt>
+                      <dd className="ms:mt-1 ms:font-medium ms:text-mstext">
+                        {radioGroupSize} option{radioGroupSize === 1 ? '' : 's'}
+                      </dd>
+                    </div>
+                  )}
+                  <div>
+                    <dt className="ms:text-mstextmuted">Page</dt>
+                    <dd className="ms:mt-1 ms:font-medium ms:text-mstext">
+                      {selectedMapping.page + 1}
+                    </dd>
+                  </div>
+                  {(['x', 'y', 'width', 'height'] as const).map(
+                    (label, rectIndex) => (
+                      <div key={label}>
+                        <dt className="ms:capitalize ms:text-mstextmuted">
+                          {label}
+                        </dt>
+                        <dd className="ms:mt-1 ms:font-mono ms:text-mstext">
+                          {selectedMapping.rect[rectIndex].toFixed(1)}
+                        </dd>
+                      </div>
+                    )
+                  )}
+                </dl>
+                <div className="ms:grid ms:grid-cols-2 ms:gap-2">
+                  {(['width', 'height'] as const).map((label, index) => {
+                    const rectIndex = (index + 2) as 2 | 3;
+                    return (
+                      <div key={label}>
+                        <label
+                          htmlFor={`${instanceId}-pdf-${label}-${selectedMapping.esheetFieldId}`}
+                          className="ms:mb-1 ms:block ms:text-xs ms:font-medium ms:text-mstext"
+                        >
+                          {label === 'width' ? 'Width' : 'Height'} (pt)
+                        </label>
+                        <input
+                          id={`${instanceId}-pdf-${label}-${selectedMapping.esheetFieldId}`}
+                          type="number"
+                          min="12"
+                          step="1"
+                          value={selectedMapping.rect[rectIndex]}
+                          onChange={(event) =>
+                            updateSelectedDimension(
+                              rectIndex,
+                              event.currentTarget.value
+                            )
+                          }
+                          className="ms:h-9 ms:w-full ms:border ms:border-msborder ms:bg-msbackground ms:px-2 ms:text-xs ms:text-mstext ms:outline-none ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+                {selectedFieldMappings.length > 1 && (
+                  <p className="ms:text-xs ms:leading-relaxed ms:text-mstextmuted">
+                    {selectedFieldMappings.length} PDF widgets across page
+                    {selectedWidgetPages.length === 1 ? '' : 's'}{' '}
+                    {selectedWidgetPages.join(', ')} share this questionnaire
+                    response.
+                  </p>
+                )}
+                {selectedField && 'question' in selectedField && (
+                  <div>
+                    <label
+                      htmlFor={`${instanceId}-pdf-label-${selectedField.id}`}
+                      className="ms:mb-1 ms:block ms:text-xs ms:font-medium ms:text-mstext"
+                    >
+                      PDF field label
+                    </label>
+                    <input
+                      id={`${instanceId}-pdf-label-${selectedField.id}`}
+                      type="text"
+                      value={selectedField.question ?? ''}
+                      onChange={(event) =>
+                        form.getState().updateField(selectedField.id, {
+                          question: event.currentTarget.value,
+                        })
+                      }
+                      className="ms:h-9 ms:w-full ms:border ms:border-msborder ms:bg-msbackground ms:px-2 ms:text-xs ms:text-mstext ms:outline-none ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary"
+                    />
+                  </div>
+                )}
+                <div>
+                  <label
+                    htmlFor={`${instanceId}-pdf-name-${selectedMapping.esheetFieldId}`}
+                    className="ms:mb-1 ms:block ms:text-xs ms:font-medium ms:text-mstext"
+                  >
+                    PDF field name
+                  </label>
+                  <input
+                    key={selectedMapping.pdfFieldName}
+                    id={`${instanceId}-pdf-name-${selectedMapping.esheetFieldId}`}
+                    aria-label="PDF field name"
+                    type="text"
+                    defaultValue={selectedMapping.pdfFieldName}
+                    disabled={!canEditSelectedFieldName}
+                    onBlur={(event) =>
+                      renameSelectedField(event.currentTarget.value)
+                    }
+                    className="ms:h-9 ms:w-full ms:border ms:border-msborder ms:bg-msbackground ms:px-2 ms:text-xs ms:text-mstext ms:outline-none ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary ms:disabled:cursor-not-allowed ms:disabled:opacity-50"
+                  />
+                  {!canEditSelectedFieldName && (
+                    <p className="ms:mt-1 ms:text-xs ms:text-mstextmuted">
+                      Original PDF field names cannot be changed here.
+                    </p>
+                  )}
+                </div>
+                {selectedField && (
+                  <label className="ms:flex ms:items-center ms:gap-2 ms:text-xs ms:text-mstext">
+                    <input
+                      id={`${instanceId}-pdf-required-${selectedField.id}`}
+                      aria-label="Required PDF field"
+                      type="checkbox"
+                      checked={
+                        selectedField.required === true ||
+                        selectedField.required === 'soft'
+                      }
+                      onChange={(event) =>
+                        form.getState().updateField(selectedField.id, {
+                          required: event.currentTarget.checked,
+                        })
+                      }
+                      className="ms:h-3.5 ms:w-3.5 ms:accent-msprimary"
+                    />
+                    Required
+                  </label>
+                )}
+                {(selectedField?.fieldType === 'radio' ||
+                  selectedField?.fieldType === 'dropdown') && (
+                  <div className="ms:space-y-2">
+                    <div className="ms:text-xs ms:font-medium ms:text-mstext">
+                      Options
+                    </div>
+                    {selectedOptions.map((option, index) => (
+                      <div
+                        key={option.id}
+                        className="ms:flex ms:items-center ms:gap-1"
+                      >
+                        <input
+                          id={`${instanceId}-pdf-option-${selectedField.id}-${option.id}`}
+                          aria-label={`PDF option ${index + 1}`}
+                          type="text"
+                          value={option.value}
+                          disabled={!canEditSelectedOptions}
+                          onChange={(event) =>
+                            form
+                              .getState()
+                              .updateOption(
+                                selectedField.id,
+                                option.id,
+                                event.currentTarget.value
+                              )
+                          }
+                          className="ms:h-8 ms:min-w-0 ms:flex-1 ms:border ms:border-msborder ms:bg-msbackground ms:px-2 ms:text-xs ms:text-mstext ms:outline-none ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary ms:disabled:cursor-not-allowed ms:disabled:opacity-50"
+                        />
+                        <button
+                          type="button"
+                          title="Remove option"
+                          aria-label={`Remove PDF option ${index + 1}`}
+                          disabled={
+                            !canEditSelectedOptions ||
+                            selectedOptions.length <= 1
+                          }
+                          onClick={() => removeOption(option.id)}
+                          className="ms:flex ms:h-8 ms:w-8 ms:items-center ms:justify-center ms:border ms:border-msdanger ms:bg-msbackground ms:text-msdanger ms:hover:bg-msdanger ms:hover:text-white ms:disabled:cursor-not-allowed ms:disabled:opacity-50"
+                        >
+                          <XIcon className="ms:h-3.5 ms:w-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                    {selectedField.fieldType === 'dropdown' && (
+                      <button
+                        type="button"
+                        onClick={addDropdownOption}
+                        disabled={!canEditSelectedOptions}
+                        className="ms:h-8 ms:w-full ms:rounded-lg ms:border ms:border-msprimary ms:bg-msbackground ms:px-3 ms:text-xs ms:font-medium ms:text-msprimary ms:hover:bg-msprimary ms:hover:text-white"
+                      >
+                        Add dropdown option
+                      </button>
+                    )}
+                    {!canEditSelectedOptions && (
+                      <p className="ms:text-xs ms:text-mstextmuted">
+                        Original PDF options cannot be changed here.
+                      </p>
+                    )}
+                  </div>
+                )}
+                {selectedMapping.kind === 'radio' && (
+                  <button
+                    type="button"
+                    onClick={addRadioGroupOption}
+                    className="ms:h-9 ms:rounded-lg ms:border ms:border-msprimary ms:bg-msbackground ms:px-3 ms:text-xs ms:font-medium ms:text-msprimary ms:hover:bg-msprimary ms:hover:text-white"
+                  >
+                    Add option to group
+                  </button>
+                )}
+                <div className="ms:grid ms:grid-cols-2 ms:gap-2">
+                  <button
+                    type="button"
+                    aria-label="Move PDF field earlier"
+                    onClick={() => moveSelectedField(-1)}
+                    disabled={selectedFieldIndex <= 0}
+                    className="ms:h-9 ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackground ms:px-3 ms:text-xs ms:font-medium ms:text-mstext ms:disabled:cursor-not-allowed ms:disabled:opacity-50"
+                  >
+                    Move earlier
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Move PDF field later"
+                    onClick={() => moveSelectedField(1)}
+                    disabled={
+                      selectedFieldIndex === -1 ||
+                      selectedFieldIndex >= selectedSiblingIds.length - 1
+                    }
+                    className="ms:h-9 ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackground ms:px-3 ms:text-xs ms:font-medium ms:text-mstext ms:disabled:cursor-not-allowed ms:disabled:opacity-50"
+                  >
+                    Move later
+                  </button>
                 </div>
                 <button
                   type="button"
-                  aria-label="Deselect PDF field"
-                  onClick={() => setSelectedIndex(null)}
-                  className="ms:flex ms:h-7 ms:w-7 ms:items-center ms:justify-center ms:rounded-md ms:border ms:border-msborder ms:bg-msbackground"
+                  aria-label="Delete PDF field"
+                  onClick={deleteSelectedField}
+                  disabled={!canDeleteSelectedField}
+                  className="ms:h-9 ms:rounded-lg ms:border ms:border-msdanger ms:bg-msbackground ms:px-3 ms:text-xs ms:font-medium ms:text-msdanger ms:hover:bg-msdanger ms:hover:text-white ms:disabled:cursor-not-allowed ms:disabled:opacity-50"
                 >
-                  <XIcon className="ms:h-3.5 ms:w-3.5" />
+                  Delete field
                 </button>
+                <button
+                  type="button"
+                  aria-label="Duplicate PDF field"
+                  onClick={duplicateSelectedField}
+                  disabled={!canDeleteSelectedField}
+                  className="ms:h-9 ms:rounded-lg ms:border ms:border-msprimary ms:bg-msbackground ms:px-3 ms:text-xs ms:font-medium ms:text-msprimary ms:hover:bg-msprimary ms:hover:text-white ms:disabled:cursor-not-allowed ms:disabled:opacity-50"
+                >
+                  Duplicate field
+                </button>
+                <p className="ms:text-xs ms:leading-relaxed ms:text-mstextmuted">
+                  {isImported
+                    ? canDeleteSelectedField
+                      ? 'Drag or resize mapped widgets before downloading the enhanced PDF. Original PDF fields cannot be deleted here.'
+                      : 'Original PDF fields cannot be deleted here. Drag or resize mapped widgets before downloading the enhanced PDF.'
+                    : 'Drag the move handle or resize from the lower-right corner. The edited rectangle is written back to the AcroForm when downloaded.'}
+                </p>
               </div>
-              <dl className="ms:grid ms:grid-cols-2 ms:gap-3 ms:text-xs">
-                <div>
-                  <dt className="ms:text-mstextmuted">Type</dt>
-                  <dd className="ms:mt-1 ms:font-medium ms:text-mstext">
-                    {selectedMapping.kind}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="ms:text-mstextmuted">Page</dt>
-                  <dd className="ms:mt-1 ms:font-medium ms:text-mstext">
-                    {selectedMapping.page + 1}
-                  </dd>
-                </div>
-                {(['x', 'y', 'width', 'height'] as const).map(
-                  (label, rectIndex) => (
-                    <div key={label}>
-                      <dt className="ms:capitalize ms:text-mstextmuted">
-                        {label}
-                      </dt>
-                      <dd className="ms:mt-1 ms:font-mono ms:text-mstext">
-                        {selectedMapping.rect[rectIndex].toFixed(1)}
-                      </dd>
-                    </div>
-                  )
-                )}
-              </dl>
-              <p className="ms:text-xs ms:leading-relaxed ms:text-mstextmuted">
-                {isImported
-                  ? 'Select a text field in Build mode, then add it here. Drag or resize mapped widgets before downloading the enhanced PDF.'
-                  : 'Drag the move handle or resize from the lower-right corner. The edited rectangle is written back to the AcroForm when downloaded.'}
-              </p>
-            </div>
-          ) : (
-            <div className="ms:text-sm ms:text-mstextmuted">
-              Select an AcroForm field on the page to edit its position and
-              size.
-            </div>
-          )}
-        </aside>
+            ) : (
+              <div className="ms:text-sm ms:text-mstextmuted">
+                Select an AcroForm field on the page to edit its position and
+                size.
+              </div>
+            )}
+          </aside>
+        )}
       </div>
 
       {pendingFile && (
