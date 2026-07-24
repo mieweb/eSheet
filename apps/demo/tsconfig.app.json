@@ -52,6 +52,9 @@
       "path": "../../packages/field-kerebron/tsconfig.lib.json"
     },
     {
+      "path": "../../packages/field-health/tsconfig.lib.json"
+    },
+    {
       "path": "../../packages/core/tsconfig.lib.json"
     },
     {
