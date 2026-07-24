@@ -1,6 +1,6 @@
 import React from 'react';
 import type { CollabDecorations, FormStore, UIStore } from '@esheet/core';
-import { PageNavigator } from '@esheet/fields';
+import { FieldGrid, PageNavigator } from '@esheet/fields';
 import { FieldNode } from './FieldNode.js';
 
 export interface RendererBodyProps {
@@ -92,7 +92,12 @@ export function RendererBody({ form, ui, collab }: RendererBodyProps) {
 
   if (!isMultiPage) {
     return (
-      <div className="canvas-fields renderer-body ms:space-y-0">{fields}</div>
+      <FieldGrid
+        className="canvas-fields renderer-body"
+        stackedClassName="ms:space-y-0"
+      >
+        {fields}
+      </FieldGrid>
     );
   }
 
@@ -104,9 +109,12 @@ export function RendererBody({ form, ui, collab }: RendererBodyProps) {
       onNext={handleNext}
       blockedCount={unfilledRequiredCount}
     >
-      <div className="canvas-fields renderer-body ms:space-y-0 ms:px-0">
+      <FieldGrid
+        className="canvas-fields renderer-body ms:px-0"
+        stackedClassName="ms:space-y-0"
+      >
         {fields}
-      </div>
+      </FieldGrid>
     </PageNavigator>
   );
 }

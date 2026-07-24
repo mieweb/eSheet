@@ -39,9 +39,9 @@ configureRichTextField({
 ```
 
 The path (`'/kerebron-wasm'`) must point to the directory where the
-`@kerebron/wasm` assets are served. Copy the assets from
-`node_modules/@kerebron/wasm/dist/web/` to your public directory as part of
-your build pipeline.
+`@kerebron/wasm/assets` files are served. Configure your build tool to serve
+these files directly during development and emit them at that path for
+production; a checked-in public copy is not required.
 
 ### 2. Register the field component
 

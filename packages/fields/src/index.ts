@@ -86,3 +86,11 @@ export * from './lib/touch-mode/index.js';
 // Page navigation
 export { PageNavigator } from './lib/PageNavigator.js';
 export type { PageNavigatorProps } from './lib/PageNavigator.js';
+
+// Field grid layout
+export {
+  FieldGrid,
+  FieldGridItem,
+  useFieldGridLayout,
+} from './lib/FieldGrid.js';
+export type { FieldGridItemProps, FieldGridProps } from './lib/FieldGrid.js';

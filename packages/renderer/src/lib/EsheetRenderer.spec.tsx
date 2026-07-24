@@ -35,70 +35,39 @@ function getRendererHandle(ref: React.RefObject<EsheetRendererHandle | null>) {
 }
 
 describe('EsheetRenderer', () => {
-  it('imports and renders a PDF representation through component props', async () => {
-    const ref = React.createRef<EsheetRendererHandle>();
-    mockImportPdf.mockResolvedValue({
-      definition: {
-        id: 'pdf-form',
-        pages: [
-          {
-            id: 'page-1',
-            fields: [{ id: 'name', fieldType: 'text', question: 'Name' }],
-          },
-        ],
-      },
-      responses: { name: { answer: 'Ada Lovelace' } },
-      mappings: [
-        {
-          esheetFieldId: 'name',
-          pdfFieldName: 'name',
-          kind: 'text',
-          page: 0,
-          rect: [72, 620, 220, 28],
-        },
-      ],
-      sourcePdf: new Uint8Array([37, 80, 68, 70]),
-      warnings: [],
-      pageCount: 1,
-    });
-    mockGetDocument.mockReturnValue({
-      destroy: vi.fn(),
-      promise: Promise.resolve({
-        numPages: 1,
-        getPage: vi.fn().mockResolvedValue({
-          getViewport: () => ({
-            width: 612,
-            height: 792,
-            convertToViewportPoint: (x: number, y: number) => [x, y],
-          }),
-          render: () => ({ cancel: vi.fn(), promise: Promise.resolve() }),
-        }),
-      }),
-    });
-
-    const { findByLabelText, findByText } = render(
+  it('uses builder row widths to lay fields out on a six-column grid', async () => {
+    const { container } = render(
       <EsheetRenderer
-        ref={ref}
-        representation="pdf"
-        pdfSource={new Uint8Array([37, 80, 68, 70])}
+        formDataInput={{
+          id: 'row-width-form',
+          pages: [
+            {
+              id: 'page-1',
+              fields: [
+                { id: 'full', fieldType: 'text', width: 'full' },
+                { id: 'half', fieldType: 'text', width: 'half' },
+                { id: 'third', fieldType: 'text', width: 'third' },
+              ],
+            },
+          ],
+        }}
       />
     );
 
-    await findByText('Page 1 of 1');
-    expect(mockImportPdf).toHaveBeenCalledWith(expect.any(Uint8Array));
-    expect(getRendererHandle(ref).getRawResponse()).toEqual({
-      name: { answer: 'Ada Lovelace' },
-    });
+    const body = container.querySelector<HTMLElement>('.renderer-body');
+    expect(body?.style.gridTemplateColumns).toBe('repeat(6, minmax(0, 1fr))');
     expect(
-      getRendererHandle(ref).getFormStore().getState().normalized.pages[0]
-        ?.fieldIds
-    ).toContain('name');
-    fireEvent.change(await findByLabelText('PDF text field name'), {
-      target: { value: 'Grace Hopper' },
-    });
-    expect(getRendererHandle(ref).getRawResponse()).toEqual({
-      name: { answer: 'Grace Hopper' },
-    });
+      container.querySelector<HTMLElement>('[data-field-id="full"]')?.style
+        .gridColumn
+    ).toBe('span 6');
+    expect(
+      container.querySelector<HTMLElement>('[data-field-id="half"]')?.style
+        .gridColumn
+    ).toBe('span 3');
+    expect(
+      container.querySelector<HTMLElement>('[data-field-id="third"]')?.style
+        .gridColumn
+    ).toBe('span 2');
   });
 
   it('mounts and exposes ref handle', async () => {

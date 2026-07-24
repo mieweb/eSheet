@@ -20,8 +20,7 @@ import { BrandInitializer } from './components/BrandInitializer';
 // Register plugin fields (imports also self-register metadata + Zod schema)
 registerFieldComponents({ richtext: RichTextEditorField });
 
-// Configure Kerebron's markdown parser with the WASM asset loader.
-// WASM files are copied to public/kerebron-wasm/ at build time.
+// The Vite plugin serves and emits these assets from the installed package.
 configureRichTextField({
   assetLoad: createAssetLoad(
     `${import.meta.env.BASE_URL}kerebron-wasm`.replace(/\/\//g, '/')
