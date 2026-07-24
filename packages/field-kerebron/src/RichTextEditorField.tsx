@@ -93,11 +93,12 @@ export function RichTextEditorField({
   // The content we want the editor to display. Matches DrawingPad's existingData pattern:
   // response takes priority, then defaultContent.
   const externalContent =
-    (response?.answer as string | undefined) || def.defaultContent || '';
+    (response?.answer as string | undefined) ?? def.defaultContent ?? '';
 
   // Suppress the transaction handler while we are programmatically loading
   // content so the load doesn't echo back into the response store.
   const isLoadingRef = React.useRef(false);
+  const pendingResponsesRef = React.useRef(new WeakSet<object>());
 
   // --- Mount / unmount the Kerebron editor (runs once in preview mode) ---
   React.useEffect(() => {
@@ -125,7 +126,10 @@ export function RichTextEditorField({
       if (isLoadingRef.current) return;
       try {
         const buf = await editor.saveDocument('text/x-markdown');
-        onResponseRef.current({ answer: new TextDecoder().decode(buf) });
+        const answer = new TextDecoder().decode(buf);
+        const nextResponse = { answer };
+        pendingResponsesRef.current.add(nextResponse);
+        onResponseRef.current(nextResponse);
       } catch {
         // ignore
       }
@@ -151,7 +155,7 @@ export function RichTextEditorField({
         }
       }
       if (destroyed) return;
-      editor.addEventListener('transaction', handler);
+      editor.addEventListener('changed', handler);
       listening = true;
     };
 
@@ -159,7 +163,7 @@ export function RichTextEditorField({
 
     return () => {
       destroyed = true;
-      if (listening) editor.removeEventListener('transaction', handler);
+      if (listening) editor.removeEventListener('changed', handler);
       editor.destroy();
       editorRef.current = null;
       host.replaceChildren();
@@ -178,6 +182,7 @@ export function RichTextEditorField({
     }
     const editor = editorRef.current;
     if (!editor) return;
+    if (response && pendingResponsesRef.current.delete(response)) return;
     isLoadingRef.current = true;
     editor
       .loadDocument(
