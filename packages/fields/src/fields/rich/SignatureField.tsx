@@ -77,6 +77,7 @@ export const SignatureField = React.memo(function SignatureField({
             hasEraser: false,
             backgroundColor: isDark ? '#404040' : '#ffffff',
           }}
+          colorInputId={`${instanceId}-signature-color-${def.id}`}
           placeholder={def.padPlaceholder || 'Sign here'}
           existingData={response?.signatureData}
           onChange={handleChange}

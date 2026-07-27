@@ -115,6 +115,7 @@ export const DiagramField = React.memo(function DiagramField({
             hasEraser: true,
             backgroundColor: isDark ? '#404040' : '#ffffff',
           }}
+          colorInputId={`${instanceId}-diagram-color-${def.id}`}
           backgroundImage={def.imageUri}
           placeholder={def.padPlaceholder || 'Draw on the diagram'}
           existingData={response?.markupData}
@@ -207,6 +208,8 @@ export const DiagramField = React.memo(function DiagramField({
         ) : (
           <>
             <input
+              id={`${instanceId}-canvas-background-image-${def.id}`}
+              aria-label="Upload background image"
               ref={fileInputRef}
               type="file"
               accept="image/*"
