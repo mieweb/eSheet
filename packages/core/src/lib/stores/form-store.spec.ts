@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createFormStore } from './form-store.js';
 import type { FormStore } from './form-store.js';
 import type {
@@ -11,6 +11,8 @@ import type {
   SingleMatrixFieldDefinition,
   TextFieldDefinition,
 } from '../types.js';
+
+const instanceIdCounterKey = Symbol.for('@esheet/instance-id-counter');
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -64,6 +66,27 @@ describe('createFormStore', () => {
   // -----------------------------------------------------------------------
 
   describe('factory', () => {
+    it('uses a page-global instance ID counter across module evaluations', async () => {
+      const globalState = globalThis as typeof globalThis &
+        Record<symbol, number | undefined>;
+      const previousCounter = globalState[instanceIdCounterKey];
+
+      try {
+        globalState[instanceIdCounterKey] = 1000;
+        expect(createFormStore().getState().instanceId).toBe('ms-1000');
+
+        vi.resetModules();
+        const { createFormStore: createStoreFromSecondBundle } = await import(
+          './form-store.js'
+        );
+        expect(createStoreFromSecondBundle().getState().instanceId).toBe(
+          'ms-1001'
+        );
+      } finally {
+        globalState[instanceIdCounterKey] = previousCounter;
+      }
+    });
+
     it('creates store with no initial definition', () => {
       store = createFormStore();
       const s = store.getState();

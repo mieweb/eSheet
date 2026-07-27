@@ -11,6 +11,7 @@ type SectionFieldProps = FieldComponentProps & {
  */
 export const SectionField = React.memo(function SectionField({
   field,
+  form,
   isPreview,
   isRequired,
   isSoftRequired,
@@ -18,6 +19,7 @@ export const SectionField = React.memo(function SectionField({
   nestedChildren,
 }: SectionFieldProps) {
   const def = field.definition as SectionFieldDefinition;
+  const instanceId = form.getState().instanceId;
   const title = def.title || 'Section';
   const bodyId = React.useId();
   const sectionCollapse = def.sectionCollapse ?? 'disabled';
@@ -93,13 +95,13 @@ export const SectionField = React.memo(function SectionField({
       <div className="section-field-header ms:flex ms:justify-between ms:items-center ms:gap-2">
         <div className="ms:flex-1">
           <label
-            htmlFor={`field-title-${def.id}`}
+            htmlFor={`${instanceId}-editor-section-title-${def.id}`}
             className="ms:block ms:text-sm ms:font-medium ms:text-mstextmuted ms:mb-1"
           >
             Section Title
           </label>
           <input
-            id={`field-title-${def.id}`}
+            id={`${instanceId}-editor-section-title-${def.id}`}
             aria-label="Section Title"
             className="ms:px-3 ms:py-2 ms:h-10 ms:w-full ms:min-w-0 ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:rounded-lg ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary/30 ms:outline-none"
             type="text"

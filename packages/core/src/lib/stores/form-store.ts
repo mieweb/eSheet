@@ -372,8 +372,17 @@ function getDefaultOptionValue(
  *
  * @param initial - Optional initial form definition to load immediately.
  */
-let nextInstanceId = 1;
+const instanceIdCounterKey = Symbol.for('@esheet/instance-id-counter');
 let nextTemporaryFormId = 1;
+
+function createInstanceId(): string {
+  const globalState = globalThis as typeof globalThis &
+    Record<symbol, number | undefined>;
+  const nextInstanceId = globalState[instanceIdCounterKey] ?? 1;
+
+  globalState[instanceIdCounterKey] = nextInstanceId + 1;
+  return `ms-${nextInstanceId}`;
+}
 
 function createTemporaryFormId(): string {
   const id = `tmp-form-${nextTemporaryFormId}`;
@@ -391,7 +400,7 @@ export function createFormStore(
 
   const store = createStore<FormState>()((set, get) => ({
     // --- Data ---
-    instanceId: `ms-${nextInstanceId++}`,
+    instanceId: createInstanceId(),
     formId: initialFormId,
     formTitle: initial?.title,
     formDescription: initial?.description,
