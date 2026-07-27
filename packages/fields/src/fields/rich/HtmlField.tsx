@@ -242,6 +242,7 @@ export const HtmlField = React.memo(function HtmlField({
         </label>
         <div className="ms:flex ms:items-center ms:gap-2">
           <input
+            id={`${instanceId}-canvas-iframe-height-slider-${def.id}`}
             type="range"
             min={50}
             max={800}

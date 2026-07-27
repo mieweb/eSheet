@@ -65,6 +65,7 @@ export interface DrawingPadConfig {
 
 export interface DrawingPadProps {
   config?: DrawingPadConfig;
+  colorInputId?: string;
   /** Optional background image (base64 data-URL or remote URL) drawn beneath user strokes. */
   backgroundImage?: string;
   /** Text shown centred on an empty canvas. */
@@ -84,6 +85,7 @@ export interface DrawingPadProps {
 
 export const DrawingPad = React.memo(function DrawingPad({
   config = {},
+  colorInputId,
   backgroundImage,
   placeholder = 'Draw here',
   existingData,
@@ -953,6 +955,8 @@ export const DrawingPad = React.memo(function DrawingPad({
                 }}
               >
                 <input
+                  id={colorInputId}
+                  aria-label="Custom colour"
                   type="color"
                   value={
                     COLOR_PALETTE.includes(currentColor)
