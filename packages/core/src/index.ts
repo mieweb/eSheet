@@ -39,6 +39,7 @@ export {
   type FieldDefinition,
   type FieldWidth,
   type OptionLayout,
+  type RelativeDateRange,
   type OptionBearingFieldDefinition,
   hasOptions,
   // Per-field-type interfaces (discriminated union members)

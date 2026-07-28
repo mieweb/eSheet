@@ -269,6 +269,12 @@ export type FieldWidth = 'full' | 'half' | 'third';
  */
 export type OptionLayout = 'stack' | 'wrap';
 
+/** A symmetric date range resolved relative to the day the form is rendered. */
+export interface RelativeDateRange {
+  amount: number;
+  unit: 'days' | 'months' | 'years';
+}
+
 // ---------------------------------------------------------------------------
 // Base Interfaces
 // ---------------------------------------------------------------------------
@@ -311,12 +317,16 @@ export interface TextFieldDefinition extends BaseFieldDefinition {
   fieldType: 'text';
   inputType?: TextInputType;
   unit?: string;
+  dateRange?: RelativeDateRange;
+  timeFormat?: '12-hour' | '24-hour';
 }
 
 export interface LongtextFieldDefinition extends BaseFieldDefinition {
   fieldType: 'longtext';
   inputType?: TextInputType;
   unit?: string;
+  dateRange?: RelativeDateRange;
+  timeFormat?: '12-hour' | '24-hour';
 }
 
 export interface MultitextFieldDefinition extends BaseFieldDefinition {
@@ -567,8 +577,8 @@ export function hasOptions(
 /** Properties allowed for each field type (beyond base properties). */
 const FIELD_TYPE_PROPERTIES: Record<FieldType, readonly string[]> = {
   // Text category
-  text: ['inputType', 'unit'],
-  longtext: ['inputType', 'unit'],
+  text: ['inputType', 'unit', 'dateRange', 'timeFormat'],
+  longtext: ['inputType', 'unit', 'dateRange', 'timeFormat'],
   multitext: ['options', 'optionLayout'],
   // Selection category
   radio: ['options', 'optionLayout'],
@@ -581,15 +591,15 @@ const FIELD_TYPE_PROPERTIES: Record<FieldType, readonly string[]> = {
   ranking: ['options'],
   slider: ['options'],
   // Matrix category
-  singlematrix: ['rows', 'columns'],
-  multimatrix: ['rows', 'columns'],
+  singlematrix: ['rows', 'columns', 'scored', 'scoreStart'],
+  multimatrix: ['rows', 'columns', 'scored', 'scoreStart'],
   // Rich category
   image: ['imageUri', 'altText', 'caption'],
   html: ['htmlContent', 'iframeHeight'],
   signature: ['padPlaceholder'],
   diagram: ['imageUri', 'padPlaceholder'],
   file: ['accept', 'maxFileSize', 'maxFiles'],
-  openchoice: ['options', 'maxCustomOptions', 'otherLabel'],
+  openchoice: ['options', 'maxCustomOptions', 'otherLabel', 'optionLayout'],
   display: ['content'],
   // Organization category
   section: ['title', 'fields', 'sectionCollapse'],
@@ -729,12 +739,19 @@ const baseFieldProps = {
   _conversionWarnings: z.optional(z.array(z.unknown())),
 };
 
+const relativeDateRangeSchema = z.object({
+  amount: z.number(),
+  unit: z.enum(['days', 'months', 'years']),
+});
+
 // Text category schemas
 const textFieldSchema = z.strictObject({
   ...baseFieldProps,
   fieldType: z.literal('text'),
   inputType: z.optional(textInputTypeSchema),
   unit: z.optional(z.string()),
+  dateRange: z.optional(relativeDateRangeSchema),
+  timeFormat: z.optional(z.enum(['12-hour', '24-hour'])),
 });
 
 const longtextFieldSchema = z.strictObject({
@@ -742,6 +759,8 @@ const longtextFieldSchema = z.strictObject({
   fieldType: z.literal('longtext'),
   inputType: z.optional(textInputTypeSchema),
   unit: z.optional(z.string()),
+  dateRange: z.optional(relativeDateRangeSchema),
+  timeFormat: z.optional(z.enum(['12-hour', '24-hour'])),
 });
 
 const multitextFieldSchema = z.strictObject({
@@ -809,6 +828,8 @@ const singleMatrixFieldSchema = z.strictObject({
   fieldType: z.literal('singlematrix'),
   rows: z.optional(z.array(matrixRowSchema)),
   columns: z.optional(z.array(matrixColumnSchema)),
+  scored: z.optional(z.boolean()),
+  scoreStart: z.optional(z.number()),
 });
 
 const multiMatrixFieldSchema = z.strictObject({
@@ -816,6 +837,8 @@ const multiMatrixFieldSchema = z.strictObject({
   fieldType: z.literal('multimatrix'),
   rows: z.optional(z.array(matrixRowSchema)),
   columns: z.optional(z.array(matrixColumnSchema)),
+  scored: z.optional(z.boolean()),
+  scoreStart: z.optional(z.number()),
 });
 
 // Rich category schemas
@@ -861,6 +884,7 @@ const openChoiceFieldSchema = z.strictObject({
   options: z.optional(z.array(fieldOptionSchema)),
   maxCustomOptions: z.optional(z.number()),
   otherLabel: z.optional(z.string()),
+  optionLayout: z.optional(z.enum(['stack', 'wrap'])),
 });
 
 const displayBaseFieldProps = {
@@ -883,6 +907,19 @@ const sectionFieldSchema = z.strictObject({
   ...baseFieldProps,
   fieldType: z.literal('section'),
   title: z.optional(z.string()),
+  sectionCollapse: z.optional(z.enum(['collapsed', 'expanded', 'disabled'])),
+  fields: z.optional(
+    z.lazy(
+      (): z.ZodMiniType<FieldDefinition[]> => z.array(fieldDefinitionSchema)
+    )
+  ),
+});
+
+const pagesFieldSchema = z.strictObject({
+  ...baseFieldProps,
+  fieldType: z.literal('pages'),
+  title: z.optional(z.string()),
+  autoAdvance: z.optional(z.boolean()),
   fields: z.optional(
     z.lazy(
       (): z.ZodMiniType<FieldDefinition[]> => z.array(fieldDefinitionSchema)
@@ -919,6 +956,7 @@ const builtInFieldDefinitionSchema = z.discriminatedUnion('fieldType', [
   displayFieldSchema,
   // Organization
   sectionFieldSchema,
+  pagesFieldSchema,
 ]);
 
 /**
