@@ -1,14 +1,20 @@
 import React from 'react';
-import type { FieldComponentProps } from '@esheet/core';
+import {
+  normalizeResponses,
+  type FieldComponentProps,
+} from '@esheet/core';
+
 import { CoreEditor } from '@kerebron/editor';
+import { fromJSON, stringify } from '@kerebron/editor/yaml';
 import { AdvancedEditorKit } from '@kerebron/editor-kits/AdvancedEditorKit';
-import { ExtensionHistory } from '@kerebron/extension-basic-editor/ExtensionHistory';
+
 import { getAssetLoad } from './asset-load.js';
 // Core editor styles (--kb-* variables + base/ProseMirror styles).
 // index-light.css pins the light theme so the editor matches the host app
 // regardless of OS dark-mode preference.
 import '@kerebron/editor/assets/index-light.css';
 import '@kerebron/editor-kits/assets/AdvancedEditorKit.css';
+import { ESheetEditorKit } from './ESheetEditorKit.ts';
 
 // Base content styles for the ProseMirror editable area (headings, lists, etc.)
 const CONTENT_STYLES = `
@@ -22,6 +28,19 @@ const CONTENT_STYLES = `
   .richtext-field .ProseMirror strong { font-weight: bold; }
   .richtext-field .ProseMirror em { font-style: italic; }
   .richtext-field .ProseMirror code { font-family: monospace; background: #f4f4f4; padding: 0.1em 0.3em; border-radius: 3px; }
+
+  .richtext-field span.esheet {
+    display: inline;
+    padding: 0 0.25em;
+    border-radius: 3px;
+    background: color-mix(in srgb, #3b82f6 15%, transparent);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .richtext-field span.esheet[data-error]:not([data-error=""]) {
+    background: color-mix(in srgb, #ef4444 15%, transparent);
+    text-decoration: underline wavy;
+  }
 
   /* Upstream fix: base .kb-icon keeps 48px touch-target min sizing, which
      overflows the 32px overflow-menu buttons and misaligns icons from their
@@ -60,6 +79,25 @@ export interface RichTextFieldDefinition {
   required?: boolean;
   /** Markdown content used as the default/initial value. */
   defaultContent?: string;
+}
+
+/**
+ * Build .mdy-style answer frontmatter:
+ *   field_id:
+ *     value: ...
+ * Skip this richtext field so body not mirrored into meta.
+ */
+function answersToFrontmatterMeta(
+  responses: Parameters<typeof normalizeResponses>[0],
+  omitFieldId: string
+): Record<string, { value: unknown }> {
+  const flat = normalizeResponses(responses);
+  const meta: Record<string, { value: unknown }> = {};
+  for (const [fieldId, value] of Object.entries(flat)) {
+    if (fieldId === omitFieldId) continue;
+    meta[fieldId] = { value };
+  }
+  return meta;
 }
 
 /**
@@ -116,7 +154,7 @@ export function RichTextEditorField({
       assetLoad: getAssetLoad(),
       editorKits: [
         new AdvancedEditorKit(),
-        { getExtensions: () => [new ExtensionHistory()] },
+        new ESheetEditorKit()
       ],
     });
     editorRef.current = editor;
@@ -139,6 +177,25 @@ export function RichTextEditorField({
     // itself never emits a phantom response for an untouched field.
     let listening = false;
     let destroyed = false;
+    let lastFormYaml = '';
+    let unsubForm: (() => void) | undefined;
+
+    const applyFormMeta = () => {
+      const answers = answersToFrontmatterMeta(
+        form.getState().responses,
+        def.id
+      );
+      const yaml = stringify(answers);
+      if (yaml === lastFormYaml) return;
+      lastFormYaml = yaml;
+      isLoadingRef.current = true;
+      try {
+        editor.run.setMeta(fromJSON(answers));
+        editor.run.refreshEsheetFieldsFromMeta();
+      } finally {
+        isLoadingRef.current = false;
+      }
+    };
 
     const loadInitial = async () => {
       if (externalContent) {
@@ -155,6 +212,10 @@ export function RichTextEditorField({
         }
       }
       if (destroyed) return;
+      applyFormMeta();
+      unsubForm = form.subscribe(() => {
+        if (!destroyed) applyFormMeta();
+      });
       editor.addEventListener('changed', handler);
       listening = true;
     };
@@ -163,6 +224,7 @@ export function RichTextEditorField({
 
     return () => {
       destroyed = true;
+      unsubForm?.();
       if (listening) editor.removeEventListener('changed', handler);
       editor.destroy();
       editorRef.current = null;
@@ -190,7 +252,15 @@ export function RichTextEditorField({
         new TextEncoder().encode(externalContent)
       )
       .then(() => {
-        isLoadingRef.current = false;
+        try {
+          editor.run.setMeta(
+            fromJSON(
+              answersToFrontmatterMeta(form.getState().responses, def.id)
+            )
+          );
+        } finally {
+          isLoadingRef.current = false;
+        }
       })
       .catch(() => {
         isLoadingRef.current = false;
