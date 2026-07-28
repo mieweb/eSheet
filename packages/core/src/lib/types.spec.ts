@@ -2,6 +2,7 @@ import {
   FIELD_TYPES,
   formDefinitionSchema,
   fieldDefinitionSchema,
+  normalizeFormDefinition,
 } from './types.js';
 import { registerFieldType, resetFieldTypeRegistry } from './registry.js';
 import type {
@@ -95,6 +96,106 @@ describe('schema types', () => {
     });
 
     expect(result.success).toBe(false);
+  });
+
+  it('should preserve supported field properties during normalization', () => {
+    const normalized = normalizeFormDefinition({
+      id: 'form',
+      pages: [
+        {
+          id: 'page-1',
+          fields: [
+            {
+              id: 'text',
+              fieldType: 'text',
+              inputType: 'datetime-local',
+              dateRange: { amount: 2, unit: 'years' },
+              timeFormat: '12-hour',
+            },
+            {
+              id: 'longtext',
+              fieldType: 'longtext',
+              dateRange: { amount: 1, unit: 'months' },
+            },
+            {
+              id: 'matrix',
+              fieldType: 'singlematrix',
+              scored: true,
+              scoreStart: 1,
+            },
+            {
+              id: 'multimatrix',
+              fieldType: 'multimatrix',
+              scored: true,
+              scoreStart: 1,
+            },
+            {
+              id: 'openchoice',
+              fieldType: 'openchoice',
+              optionLayout: 'wrap',
+            },
+            {
+              id: 'section',
+              fieldType: 'section',
+              sectionCollapse: 'collapsed',
+            },
+            {
+              id: 'pages',
+              fieldType: 'pages',
+              autoAdvance: true,
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(formDefinitionSchema.safeParse(normalized).success).toBe(true);
+    expect(normalized.pages).toEqual([
+      {
+        id: 'page-1',
+        fields: [
+          {
+            id: 'text',
+            fieldType: 'text',
+            inputType: 'datetime-local',
+            dateRange: { amount: 2, unit: 'years' },
+            timeFormat: '12-hour',
+          },
+          {
+            id: 'longtext',
+            fieldType: 'longtext',
+            dateRange: { amount: 1, unit: 'months' },
+          },
+          {
+            id: 'matrix',
+            fieldType: 'singlematrix',
+            scored: true,
+            scoreStart: 1,
+          },
+          {
+            id: 'multimatrix',
+            fieldType: 'multimatrix',
+            scored: true,
+            scoreStart: 1,
+          },
+          {
+            id: 'openchoice',
+            fieldType: 'openchoice',
+            optionLayout: 'wrap',
+          },
+          {
+            id: 'section',
+            fieldType: 'section',
+            sectionCollapse: 'collapsed',
+          },
+          {
+            id: 'pages',
+            fieldType: 'pages',
+            autoAdvance: true,
+          },
+        ],
+      },
+    ]);
   });
 });
 
