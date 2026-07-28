@@ -106,6 +106,19 @@ export function CommonEditor({
             (def as { inputType?: TextInputType }).inputType ?? 'string'
           }
           unit={(def as { unit?: string }).unit}
+          dateRange={
+            (
+              def as {
+                dateRange?: {
+                  amount: number;
+                  unit: 'days' | 'months' | 'years';
+                };
+              }
+            ).dateRange
+          }
+          timeFormat={
+            (def as { timeFormat?: '12-hour' | '24-hour' }).timeFormat
+          }
           onChange={(patch) =>
             onUpdate(patch as Parameters<typeof onUpdate>[0])
           }
