@@ -81,24 +81,47 @@ export interface RichTextFieldDefinition {
   defaultContent?: string;
 }
 
+function toMetaEntry(raw: unknown): { value: unknown; display?: string } {
+  // single selection { id, value }
+  if (
+    raw &&
+    typeof raw === 'object' &&
+    !Array.isArray(raw) &&
+    'id' in raw &&
+    'value' in raw
+  ) {
+    const opt = raw as { id: string; value: string };
+    return { value: opt.value, display: opt.value };
+    // or value: opt.id, display: opt.value  — pick canonical
+  }
+
+  // multi selection
+  if (Array.isArray(raw) && raw.every((x) => x && typeof x === 'object' && 'value' in x)) {
+    const labels = (raw as { value: string }[]).map((x) => String(x.value));
+    return { value: labels, display: labels.join(', ') };
+  }
+
+  return { value: raw };
+}
+
 /**
  * Build .mdy-style answer frontmatter:
  *   field_id:
  *     value: ...
  * Skip this richtext field so body not mirrored into meta.
  */
-function answersToFrontmatterMeta(
-  responses: Parameters<typeof normalizeResponses>[0],
-  omitFieldId: string
-): Record<string, { value: unknown }> {
-  const flat = normalizeResponses(responses);
-  const meta: Record<string, { value: unknown }> = {};
-  for (const [fieldId, value] of Object.entries(flat)) {
-    if (fieldId === omitFieldId) continue;
-    meta[fieldId] = { value };
-  }
-  return meta;
-}
+ function answersToFrontmatterMeta(
+   responses: Parameters<typeof normalizeResponses>[0],
+   omitFieldId: string,
+ ): Record<string, { value: unknown; display?: string }> {
+   const flat = normalizeResponses(responses);
+   const meta: Record<string, { value: unknown; display?: string }> = {};
+   for (const [fieldId, raw] of Object.entries(flat)) {
+     if (fieldId === omitFieldId) continue;
+     meta[fieldId] = toMetaEntry(raw);
+   }
+   return meta;
+ }
 
 /**
  * RichTextEditorField — a Kerebron/ProseMirror-based rich text editor field.
