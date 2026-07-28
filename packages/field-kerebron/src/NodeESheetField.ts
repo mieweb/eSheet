@@ -143,7 +143,7 @@ export class NodeESheetField extends Node {
   override getInputRules(type: NodeType): InputRule[] {
     return [
       replaceInlineNode(
-        /(?:\[([^\]]+)\])?\(#([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)\)/,
+        /(?:\[([^\]]+)\])?\(#([a-zA-Z_-][a-zA-Z0-9_-]*(?:\.[a-zA-Z_-][a-zA-Z0-9_-]*)*)\)/,
         type,
         (match: RegExpMatchArray) => {
           const id = match[2];
