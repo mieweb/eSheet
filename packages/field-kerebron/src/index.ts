@@ -30,3 +30,14 @@ registerFieldType('richtext', {
 
 export { RichTextEditorField } from './RichTextEditorField.js';
 export type { RichTextFieldDefinition } from './RichTextEditorField.js';
+export {
+  answersToFrontmatterMeta,
+  buildRichTextAnswer,
+  getRichTextBody,
+  isRichTextAnswer,
+  rewriteEsheetMarkdownRefs,
+  rewriteRichTextAnswerRefs,
+  stripFrontmatter,
+  toMetaEntry,
+} from './richtext-mdy.js';
+export type { RichTextFrontmatterEntry } from './richtext-mdy.js';

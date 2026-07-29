@@ -136,7 +136,7 @@ npx nx run-many -t lint
 npx nx run-many -t typecheck
 
 # Serve the demo app locally
-npx nx serve demo
+npx nx serve app-demo
 
 # Run only tasks affected by your changes
 npx nx affected -t lint,test,build

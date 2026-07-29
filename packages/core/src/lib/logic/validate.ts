@@ -173,13 +173,19 @@ const NON_INPUT_TYPES = new Set(['section', 'expression', 'html', 'image']);
 function isResponseEmpty(response: FieldResponse | undefined): boolean {
   if (!response) return true;
 
-  // answer — text, number, boolean
+  // answer — text, number, boolean, or structured richtext
   if (response.answer !== undefined && response.answer !== null) {
-    const a =
-      typeof response.answer === 'string'
-        ? response.answer.trim()
-        : response.answer;
-    if (a !== '') return false;
+    if (typeof response.answer === 'string') {
+      if (response.answer.trim() !== '') return false;
+    } else if (
+      typeof response.answer === 'object' &&
+      'body' in response.answer &&
+      typeof (response.answer as { body: unknown }).body === 'string'
+    ) {
+      if ((response.answer as { body: string }).body.trim() !== '') return false;
+    } else {
+      return false;
+    }
   }
 
   // selected — single or multi-select, or matrix record
@@ -223,7 +229,16 @@ function isResponseEmpty(response: FieldResponse | undefined): boolean {
 
 function getRawAnswer(response: FieldResponse | undefined): string {
   if (!response) return '';
-  return typeof response.answer === 'string' ? response.answer.trim() : '';
+  if (typeof response.answer === 'string') return response.answer.trim();
+  if (
+    response.answer &&
+    typeof response.answer === 'object' &&
+    'body' in response.answer &&
+    typeof (response.answer as { body: unknown }).body === 'string'
+  ) {
+    return (response.answer as { body: string }).body.trim();
+  }
+  return '';
 }
 
 /** Parse a date string in MM-DD-YYYY or ISO format. Returns null on failure. */

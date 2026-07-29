@@ -14,6 +14,7 @@ import type {
   FormResponse,
   FormDefinition,
   FieldDefinition,
+  RichTextAnswer,
 } from '../types.js';
 import { getFieldTypeMeta } from '../registry.js';
 import {
@@ -236,12 +237,84 @@ function reindexChildren(
 }
 
 /**
+ * Rewrite markdown eSheet field links: `[label](#oldId)` → `[label](#newId)`.
+ * Also handles dotted suffixes: `[label](#oldId.child)` → `[label](#newId.child)`.
+ */
+function rewriteMarkdownFieldRefs(
+  markdown: string,
+  oldId: string,
+  newId: string
+): string {
+  const escaped = oldId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const pattern = new RegExp(`(\\[[^\\]]*\\]\\(#)${escaped}(?=\\)|\\.)`, 'g');
+  return markdown.replace(pattern, `$1${newId}`);
+}
+
+function isRichTextAnswer(raw: unknown): raw is RichTextAnswer {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return false;
+  const obj = raw as Record<string, unknown>;
+  return (
+    typeof obj['body'] === 'string' &&
+    obj['frontmatter'] !== null &&
+    typeof obj['frontmatter'] === 'object' &&
+    !Array.isArray(obj['frontmatter'])
+  );
+}
+
+/** Rewrite field ids inside a stored response answer (string or richtext). */
+function rewriteResponseAnswer(
+  answer: FieldResponse['answer'],
+  oldId: string,
+  newId: string
+): FieldResponse['answer'] {
+  if (answer == null) return answer;
+  if (typeof answer === 'string') {
+    return rewriteMarkdownFieldRefs(answer, oldId, newId);
+  }
+  if (!isRichTextAnswer(answer)) return answer;
+
+  const body = rewriteMarkdownFieldRefs(answer.body, oldId, newId);
+  const frontmatter: RichTextAnswer['frontmatter'] = {};
+  for (const [key, entry] of Object.entries(answer.frontmatter)) {
+    frontmatter[key === oldId ? newId : key] = entry;
+  }
+  return { frontmatter, body };
+}
+
+function rewriteResponsesOnRename(
+  responses: FieldResponseMap,
+  oldId: string,
+  newId: string
+): FieldResponseMap {
+  const next: FieldResponseMap = {};
+  for (const [id, response] of Object.entries(responses)) {
+    const key = id === oldId ? newId : id;
+    if (response.answer === undefined) {
+      next[key] = response;
+      continue;
+    }
+    const rewrittenAnswer = rewriteResponseAnswer(
+      response.answer,
+      oldId,
+      newId
+    );
+    next[key] =
+      rewrittenAnswer === response.answer
+        ? response
+        : { ...response, answer: rewrittenAnswer };
+  }
+  return next;
+}
+
+/**
  * Replace all references to `oldId` with `newId` in a single field definition.
  * Handles:
  *  - condition.targetId  (field-condition direct reference)
  *  - condition.expression  (expression language: `{oldId}` → `{newId}`)
  *  - definition.content  (display field inline expressions: `<fn({oldId})>`)
+ *  - definition.defaultContent  (richtext markdown body / MDY links)
  *  - definition.calculation  (JS: `responses['oldId']` / `responses["oldId"]`)
+ *  - markdown eSheet links `[label](#oldId)` in content / defaultContent
  */
 function rewriteFieldRefs(
   def: FieldDefinition,
@@ -258,6 +331,8 @@ function rewriteFieldRefs(
     s
       .replace(jsPatternSingle, `responses['${newId}']`)
       .replace(jsPatternDouble, `responses["${newId}"]`);
+  const replaceMarkdown = (s: string) =>
+    rewriteMarkdownFieldRefs(replaceExpr(s), oldId, newId);
 
   let changed = false;
 
@@ -284,10 +359,17 @@ function rewriteFieldRefs(
   }));
 
   // Update display field content (inline `{fieldId}` expression placeholders)
+  // and richtext defaultContent (markdown body + `[label](#fieldId)` links).
   const defAny = def as unknown as Record<string, unknown>;
   const content = defAny['content'] as string | undefined;
-  const updatedContent = content ? replaceExpr(content) : content;
+  const updatedContent = content ? replaceMarkdown(content) : content;
   if (updatedContent !== content) changed = true;
+
+  const defaultContent = defAny['defaultContent'] as string | undefined;
+  const updatedDefaultContent = defaultContent
+    ? replaceMarkdown(defaultContent)
+    : defaultContent;
+  if (updatedDefaultContent !== defaultContent) changed = true;
 
   // Update calculation (JS)
   const calc = def.calculation;
@@ -299,6 +381,9 @@ function rewriteFieldRefs(
     ...def,
     ...(updatedRules && { rules: updatedRules }),
     ...(updatedContent !== content && { content: updatedContent }),
+    ...(updatedDefaultContent !== defaultContent && {
+      defaultContent: updatedDefaultContent,
+    }),
     ...(updatedCalc !== calc && { calculation: updatedCalc }),
   } as FieldDefinition;
 }
@@ -642,7 +727,12 @@ export function createFormStore(
           }
         }
 
-        set({ normalized: { byId, pages } });
+        const responses = rewriteResponsesOnRename(
+          get().responses,
+          fieldId,
+          newId!
+        );
+        set({ normalized: { byId, pages }, responses });
         return true;
       }
 

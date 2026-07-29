@@ -1013,9 +1013,19 @@ export interface SelectedOption {
  * It lives in `FieldDefinition.question` and is joined at export
  * time (Phase 4) for human-readable output.
  */
+/**
+ * Structured rich-text (MDY) answer.
+ * Front matter is a snapshot of referenced eSheet field values;
+ * body is markdown (with `[label](#fieldId)` chips), not a full MDY blob.
+ */
+export interface RichTextAnswer {
+  frontmatter: Record<string, { value: unknown; display?: string }>;
+  body: string;
+}
+
 export interface FieldResponse {
-  /** Text answer (text and longtext fields). */
-  answer?: string;
+  /** Text answer (text/longtext) or structured richtext answer. */
+  answer?: string | RichTextAnswer;
   /**
    * Selected option(s).
    * - `SelectedOption` for single-select (radio, dropdown, boolean, rating, slider)
@@ -1235,6 +1245,7 @@ export type AnswerValue =
   | number
   | boolean
   | null
+  | RichTextAnswer
   | { id: string; value: string }
   | Array<{ id: string; value: string }>
   | RankedAnswer[]
