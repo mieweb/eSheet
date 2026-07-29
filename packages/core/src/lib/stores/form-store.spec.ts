@@ -474,6 +474,32 @@ describe('createFormStore', () => {
         );
       });
 
+      it('updates structured richtext response body + frontmatter on rename', () => {
+        store = createFormStore(
+          form([
+            field('q1', 'text'),
+            field('notes', 'richtext'),
+          ])
+        );
+        store.getState().setResponse('q1', { answer: 'John' });
+        store.getState().setResponse('notes', {
+          answer: {
+            frontmatter: { q1: { value: 'John' } },
+            body: 'Name: [John](#q1)\n',
+          },
+        });
+        store.getState().updateField('q1', { id: 'patient-name' });
+        const notes = store.getState().responses['notes'];
+        expect(notes.answer).toEqual({
+          frontmatter: { 'patient-name': { value: 'John' } },
+          body: 'Name: [John](#patient-name)\n',
+        });
+        expect(store.getState().responses['patient-name']).toEqual({
+          answer: 'John',
+        });
+        expect(store.getState().responses['q1']).toBeUndefined();
+      });
+
       it('does not corrupt unrelated field references on rename', () => {
         store = createFormStore(
           form([

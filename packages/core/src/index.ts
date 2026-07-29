@@ -64,6 +64,7 @@ export {
   type DisplayFieldDefinition,
   type SectionFieldDefinition,
   type FieldResponse,
+  type RichTextAnswer,
   type FormDefinition,
   type FieldResponseMap as FormResponse,
   type SelectedOption,

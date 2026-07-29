@@ -16,6 +16,19 @@ describe('extractResponseValue', () => {
     expect(extractResponseValue(response)).toBe('Hello');
   });
 
+  it('extracts structured richtext answer', () => {
+    const response: FieldResponse = {
+      answer: {
+        frontmatter: { q1: { value: 'John' } },
+        body: 'Name: [John](#q1)\n',
+      },
+    };
+    expect(extractResponseValue(response)).toEqual({
+      frontmatter: { q1: { value: 'John' } },
+      body: 'Name: [John](#q1)\n',
+    });
+  });
+
   it('extracts empty string answer', () => {
     const response: FieldResponse = { answer: '' };
     expect(extractResponseValue(response)).toBe('');

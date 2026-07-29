@@ -4,7 +4,11 @@ import type { FieldNode, FormState } from '@esheet/core';
 import {
   ESHEET_FIELD_ID_RE,
   answersToFrontmatterMeta,
+  buildRichTextAnswer,
+  getRichTextBody,
+  isRichTextAnswer,
   rewriteEsheetMarkdownRefs,
+  rewriteRichTextAnswerRefs,
   stripFrontmatter,
   toMetaEntry,
 } from './richtext-mdy.js';
@@ -100,7 +104,11 @@ describe('answersToFrontmatterMeta', () => {
     const state = mockFormState(
       {
         'what-is-your-email': { answer: 'user@example.com' },
-        notes: { answer: 'body' },
+        notes: {
+          answer: buildRichTextAnswer('body', {
+            'what-is-your-email': { value: 'user@example.com' },
+          }),
+        },
       },
       {
         'what-is-your-email': fieldNode('what-is-your-email', 'text'),
@@ -114,20 +122,19 @@ describe('answersToFrontmatterMeta', () => {
   });
 
   it('omits self and peer richtext fields (no nested MDY / bodies)', () => {
-    const mdy = [
-      '---',
-      'what-is-your-email:',
-      '  value: a@b.com',
-      '---',
-      '',
-      'Other note body',
-    ].join('\n');
-
     const state = mockFormState(
       {
         'what-is-your-email': { answer: 'a@b.com' },
-        notes_a: { answer: 'Note A body' },
-        notes_b: { answer: mdy },
+        notes_a: {
+          answer: buildRichTextAnswer('Note A body', {
+            'what-is-your-email': { value: 'a@b.com' },
+          }),
+        },
+        notes_b: {
+          answer: buildRichTextAnswer('Other note body', {
+            'what-is-your-email': { value: 'a@b.com' },
+          }),
+        },
         choice: { selected: { id: 'y', value: 'Yes' } },
       },
       {
@@ -161,7 +168,11 @@ describe('answersToFrontmatterMeta', () => {
             { id: 'g', value: 'Green' },
           ],
         },
-        essay: { answer: 'text' },
+        essay: {
+          answer: buildRichTextAnswer('text', {
+            color: { value: ['Red', 'Green'], display: 'Red, Green' },
+          }),
+        },
       },
       {
         color: fieldNode('color', 'check'),
@@ -171,6 +182,42 @@ describe('answersToFrontmatterMeta', () => {
 
     expect(answersToFrontmatterMeta(state, 'essay')).toEqual({
       color: { value: ['Red', 'Green'], display: 'Red, Green' },
+    });
+  });
+});
+
+describe('structured richtext answer', () => {
+  it('builds { frontmatter, body } payload', () => {
+    expect(
+      buildRichTextAnswer('Name: [John](#q1)\n', {
+        q1: { value: 'John' },
+      }),
+    ).toEqual({
+      frontmatter: { q1: { value: 'John' } },
+      body: 'Name: [John](#q1)\n',
+    });
+  });
+
+  it('detects structured answers and reads body', () => {
+    const answer = buildRichTextAnswer('Hello', { q1: { value: 'John' } });
+    expect(isRichTextAnswer(answer)).toBe(true);
+    expect(isRichTextAnswer('plain')).toBe(false);
+    expect(getRichTextBody(answer)).toBe('Hello');
+    expect(getRichTextBody('---\nx: 1\n---\n\nLegacy')).toBe('Legacy');
+    expect(getRichTextBody(undefined, 'fallback')).toBe('fallback');
+  });
+
+  it('rewrites body links and frontmatter keys on field rename', () => {
+    const answer = buildRichTextAnswer('Name: [John](#q1)\n', {
+      q1: { value: 'John' },
+      other: { value: 'x' },
+    });
+    expect(rewriteRichTextAnswerRefs(answer, 'q1', 'patient-name')).toEqual({
+      frontmatter: {
+        'patient-name': { value: 'John' },
+        other: { value: 'x' },
+      },
+      body: 'Name: [John](#patient-name)\n',
     });
   });
 });

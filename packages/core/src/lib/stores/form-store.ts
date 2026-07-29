@@ -14,6 +14,7 @@ import type {
   FormResponse,
   FormDefinition,
   FieldDefinition,
+  RichTextAnswer,
 } from '../types.js';
 import { getFieldTypeMeta } from '../registry.js';
 import {
@@ -247,6 +248,62 @@ function rewriteMarkdownFieldRefs(
   const escaped = oldId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const pattern = new RegExp(`(\\[[^\\]]*\\]\\(#)${escaped}(?=\\)|\\.)`, 'g');
   return markdown.replace(pattern, `$1${newId}`);
+}
+
+function isRichTextAnswer(raw: unknown): raw is RichTextAnswer {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return false;
+  const obj = raw as Record<string, unknown>;
+  return (
+    typeof obj['body'] === 'string' &&
+    obj['frontmatter'] !== null &&
+    typeof obj['frontmatter'] === 'object' &&
+    !Array.isArray(obj['frontmatter'])
+  );
+}
+
+/** Rewrite field ids inside a stored response answer (string or richtext). */
+function rewriteResponseAnswer(
+  answer: FieldResponse['answer'],
+  oldId: string,
+  newId: string
+): FieldResponse['answer'] {
+  if (answer == null) return answer;
+  if (typeof answer === 'string') {
+    return rewriteMarkdownFieldRefs(answer, oldId, newId);
+  }
+  if (!isRichTextAnswer(answer)) return answer;
+
+  const body = rewriteMarkdownFieldRefs(answer.body, oldId, newId);
+  const frontmatter: RichTextAnswer['frontmatter'] = {};
+  for (const [key, entry] of Object.entries(answer.frontmatter)) {
+    frontmatter[key === oldId ? newId : key] = entry;
+  }
+  return { frontmatter, body };
+}
+
+function rewriteResponsesOnRename(
+  responses: FieldResponseMap,
+  oldId: string,
+  newId: string
+): FieldResponseMap {
+  const next: FieldResponseMap = {};
+  for (const [id, response] of Object.entries(responses)) {
+    const key = id === oldId ? newId : id;
+    if (response.answer === undefined) {
+      next[key] = response;
+      continue;
+    }
+    const rewrittenAnswer = rewriteResponseAnswer(
+      response.answer,
+      oldId,
+      newId
+    );
+    next[key] =
+      rewrittenAnswer === response.answer
+        ? response
+        : { ...response, answer: rewrittenAnswer };
+  }
+  return next;
 }
 
 /**
@@ -670,7 +727,12 @@ export function createFormStore(
           }
         }
 
-        set({ normalized: { byId, pages } });
+        const responses = rewriteResponsesOnRename(
+          get().responses,
+          fieldId,
+          newId!
+        );
+        set({ normalized: { byId, pages }, responses });
         return true;
       }
 

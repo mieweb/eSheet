@@ -941,7 +941,7 @@ function getExpressionFieldValue(
   if (!response) return '';
 
   if (definition.fieldType === 'text' || definition.fieldType === 'longtext') {
-    const raw = response.answer ?? '';
+    const raw = typeof response.answer === 'string' ? response.answer : '';
     // Date/time input types must stay as strings so date functions (addDays,
     // diffDays, …) can parse them; numeric coercion would turn '2026-01-01'
     // into 2026 via parseFloat's leading-number behavior.
@@ -1030,7 +1030,7 @@ function getActualValue(
   switch (definition.fieldType) {
     case 'text':
     case 'longtext':
-      return response.answer ?? '';
+      return typeof response.answer === 'string' ? response.answer : '';
 
     case 'multitext':
       return response.multitextAnswers

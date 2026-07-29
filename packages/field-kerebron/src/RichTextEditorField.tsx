@@ -14,6 +14,8 @@ import '@kerebron/editor-kits/assets/AdvancedEditorKit.css';
 import { ESheetEditorKit } from './ESheetEditorKit.ts';
 import {
   answersToFrontmatterMeta,
+  buildRichTextAnswer,
+  getRichTextBody,
   stripFrontmatter,
 } from './richtext-mdy.js';
 
@@ -110,10 +112,12 @@ export function RichTextEditorField({
     onResponseRef.current = onResponse;
   }, [onResponse]);
 
-  // The content we want the editor to display. Matches DrawingPad's existingData pattern:
-  // response takes priority, then defaultContent.
-  const externalContent =
-    (response?.answer as string | undefined) ?? def.defaultContent ?? '';
+  // Body markdown for the editor. Structured answer preferred; legacy string OK.
+  // Full MDY is reconstructed only when talking to Kerebron (body load + setMeta).
+  const externalContent = getRichTextBody(
+    response?.answer,
+    def.defaultContent ?? '',
+  );
 
   // Suppress the transaction handler while we are programmatically loading
   // content so the load doesn't echo back into the response store.
@@ -146,9 +150,11 @@ export function RichTextEditorField({
       if (isLoadingRef.current) return;
       try {
         const buf = await editor.saveDocument('text/x-markdown');
-        // Store body-only; full MDY (front matter + body) is rebuilt for Kerebron.
-        const answer = stripFrontmatter(new TextDecoder().decode(buf));
-        const nextResponse = { answer };
+        const body = stripFrontmatter(new TextDecoder().decode(buf));
+        const frontmatter = answersToFrontmatterMeta(form.getState(), def.id);
+        const nextResponse = {
+          answer: buildRichTextAnswer(body, frontmatter),
+        };
         pendingResponsesRef.current.add(nextResponse);
         onResponseRef.current(nextResponse);
       } catch {
