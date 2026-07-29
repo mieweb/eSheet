@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  FormState,
   normalizeResponses,
   type FieldComponentProps,
 } from '@esheet/core';
@@ -104,6 +105,30 @@ function toMetaEntry(raw: unknown): { value: unknown; display?: string } {
   return { value: raw };
 }
 
+function buildFieldTypeById(
+  fields: ReadonlyArray<{
+    id?: string;
+    fieldType?: string;
+    definition?: { id?: string; fieldType?: string };
+  }>,
+): Record<string, string | undefined> {
+  const map: Record<string, string | undefined> = {};
+  for (const f of fields) {
+    const id = f.definition?.id ?? f.id;
+    const fieldType = f.definition?.fieldType ?? f.fieldType;
+    if (id) map[id] = fieldType;
+  }
+  return map;
+}
+
+/** Strip leading YAML frontmatter block so stored answers stay body-only. */
+function stripFrontmatter(markdown: string): string {
+  if (!markdown.startsWith('---\n')) return markdown;
+  const end = markdown.indexOf('\n---\n', 4);
+  if (end === -1) return markdown;
+  return markdown.slice(end + 5);
+}
+
 /**
  * Build .mdy-style answer frontmatter:
  *   field_id:
@@ -111,13 +136,22 @@ function toMetaEntry(raw: unknown): { value: unknown; display?: string } {
  * Skip this richtext field so body not mirrored into meta.
  */
  function answersToFrontmatterMeta(
-   responses: Parameters<typeof normalizeResponses>[0],
-   omitFieldId: string,
+   formState: FormState,   omitFieldId: string,
  ): Record<string, { value: unknown; display?: string }> {
+   const responses: Parameters<typeof normalizeResponses>[0] = formState.responses;
+   console.log('aaa', omitFieldId);
    const flat = normalizeResponses(responses);
    const meta: Record<string, { value: unknown; display?: string }> = {};
    for (const [fieldId, raw] of Object.entries(flat)) {
-     if (fieldId === omitFieldId) continue;
+     if (fieldId === omitFieldId) {
+       continue;
+     }
+
+     const field = formState.getField(fieldId);
+     if (field?.definition.fieldType === 'richtext') {
+       meta[fieldId] = toMetaEntry(stripFrontmatter(String(raw)));
+       continue;
+     }
      meta[fieldId] = toMetaEntry(raw);
    }
    return meta;
@@ -204,10 +238,7 @@ export function RichTextEditorField({
     let unsubForm: (() => void) | undefined;
 
     const applyFormMeta = () => {
-      const answers = answersToFrontmatterMeta(
-        form.getState().responses,
-        def.id
-      );
+      const answers = answersToFrontmatterMeta(form.getState(), def.id);
       const yaml = stringify(answers);
       if (yaml === lastFormYaml) return;
       lastFormYaml = yaml;
@@ -276,11 +307,9 @@ export function RichTextEditorField({
       )
       .then(() => {
         try {
-          editor.run.setMeta(
-            fromJSON(
-              answersToFrontmatterMeta(form.getState().responses, def.id)
-            )
-          );
+          const answers = answersToFrontmatterMeta(form.getState(), def.id);
+          editor.run.setMeta(fromJSON(answers));
+          // and same for answersToFrontmatterMeta(...) elsewhere
         } finally {
           isLoadingRef.current = false;
         }
