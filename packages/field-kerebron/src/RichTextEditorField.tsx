@@ -1,9 +1,5 @@
 import React from 'react';
-import {
-  FormState,
-  normalizeResponses,
-  type FieldComponentProps,
-} from '@esheet/core';
+import { type FieldComponentProps } from '@esheet/core';
 
 import { CoreEditor } from '@kerebron/editor';
 import { fromJSON, stringify } from '@kerebron/editor/yaml';
@@ -16,6 +12,10 @@ import { getAssetLoad } from './asset-load.js';
 import '@kerebron/editor/assets/index-light.css';
 import '@kerebron/editor-kits/assets/AdvancedEditorKit.css';
 import { ESheetEditorKit } from './ESheetEditorKit.ts';
+import {
+  answersToFrontmatterMeta,
+  stripFrontmatter,
+} from './richtext-mdy.js';
 
 // Base content styles for the ProseMirror editable area (headings, lists, etc.)
 const CONTENT_STYLES = `
@@ -82,81 +82,6 @@ export interface RichTextFieldDefinition {
   defaultContent?: string;
 }
 
-function toMetaEntry(raw: unknown): { value: unknown; display?: string } {
-  // single selection { id, value }
-  if (
-    raw &&
-    typeof raw === 'object' &&
-    !Array.isArray(raw) &&
-    'id' in raw &&
-    'value' in raw
-  ) {
-    const opt = raw as { id: string; value: string };
-    return { value: opt.value, display: opt.value };
-    // or value: opt.id, display: opt.value  — pick canonical
-  }
-
-  // multi selection
-  if (Array.isArray(raw) && raw.every((x) => x && typeof x === 'object' && 'value' in x)) {
-    const labels = (raw as { value: string }[]).map((x) => String(x.value));
-    return { value: labels, display: labels.join(', ') };
-  }
-
-  return { value: raw };
-}
-
-function buildFieldTypeById(
-  fields: ReadonlyArray<{
-    id?: string;
-    fieldType?: string;
-    definition?: { id?: string; fieldType?: string };
-  }>,
-): Record<string, string | undefined> {
-  const map: Record<string, string | undefined> = {};
-  for (const f of fields) {
-    const id = f.definition?.id ?? f.id;
-    const fieldType = f.definition?.fieldType ?? f.fieldType;
-    if (id) map[id] = fieldType;
-  }
-  return map;
-}
-
-/** Strip leading YAML frontmatter block so stored answers stay body-only. */
-function stripFrontmatter(markdown: string): string {
-  if (!markdown.startsWith('---\n')) return markdown;
-  const end = markdown.indexOf('\n---\n', 4);
-  if (end === -1) return markdown;
-  return markdown.slice(end + 5);
-}
-
-/**
- * Build .mdy-style answer frontmatter:
- *   field_id:
- *     value: ...
- * Skip this richtext field so body not mirrored into meta.
- */
- function answersToFrontmatterMeta(
-   formState: FormState,   omitFieldId: string,
- ): Record<string, { value: unknown; display?: string }> {
-   const responses: Parameters<typeof normalizeResponses>[0] = formState.responses;
-   console.log('aaa', omitFieldId);
-   const flat = normalizeResponses(responses);
-   const meta: Record<string, { value: unknown; display?: string }> = {};
-   for (const [fieldId, raw] of Object.entries(flat)) {
-     if (fieldId === omitFieldId) {
-       continue;
-     }
-
-     const field = formState.getField(fieldId);
-     if (field?.definition.fieldType === 'richtext') {
-       meta[fieldId] = toMetaEntry(stripFrontmatter(String(raw)));
-       continue;
-     }
-     meta[fieldId] = toMetaEntry(raw);
-   }
-   return meta;
- }
-
 /**
  * RichTextEditorField — a Kerebron/ProseMirror-based rich text editor field.
  *
@@ -221,7 +146,8 @@ export function RichTextEditorField({
       if (isLoadingRef.current) return;
       try {
         const buf = await editor.saveDocument('text/x-markdown');
-        const answer = new TextDecoder().decode(buf);
+        // Store body-only; full MDY (front matter + body) is rebuilt for Kerebron.
+        const answer = stripFrontmatter(new TextDecoder().decode(buf));
         const nextResponse = { answer };
         pendingResponsesRef.current.add(nextResponse);
         onResponseRef.current(nextResponse);
@@ -309,7 +235,7 @@ export function RichTextEditorField({
         try {
           const answers = answersToFrontmatterMeta(form.getState(), def.id);
           editor.run.setMeta(fromJSON(answers));
-          // and same for answersToFrontmatterMeta(...) elsewhere
+          editor.run.refreshEsheetFieldsFromMeta();
         } finally {
           isLoadingRef.current = false;
         }

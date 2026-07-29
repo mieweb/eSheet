@@ -451,6 +451,29 @@ describe('createFormStore', () => {
         expect(content).toBe('BMI: <round({weight-kg} / 1.8)>');
       });
 
+      it('updates markdown eSheet links in richtext defaultContent on rename', () => {
+        store = createFormStore(
+          form([
+            field('what-is-your-email', 'text'),
+            field('notes', 'richtext', {
+              defaultContent:
+                'Contact: [email](#what-is-your-email) thanks',
+            } as Partial<FieldDefinition>),
+          ])
+        );
+        store
+          .getState()
+          .updateField('what-is-your-email', { id: 'patient-email' });
+        const defaultContent = (
+          store.getState().normalized.byId['notes'].definition as unknown as {
+            defaultContent: string;
+          }
+        ).defaultContent;
+        expect(defaultContent).toBe(
+          'Contact: [email](#patient-email) thanks'
+        );
+      });
+
       it('does not corrupt unrelated field references on rename', () => {
         store = createFormStore(
           form([

@@ -1,3 +1,4 @@
+/// <reference types='vitest' />
 import { defineConfig, type LibraryFormats } from 'vite';
 import react from '@vitejs/plugin-react';
 import dts from 'vite-plugin-dts';
@@ -63,5 +64,17 @@ export default defineConfig(() => ({
     },
     cssCodeSplit: false,
     sourcemap: false,
+  },
+  test: {
+    name: '@esheet/field-kerebron',
+    watch: false,
+    globals: true,
+    environment: 'node',
+    include: ['{src,tests}/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    reporters: ['default'],
+    coverage: {
+      reportsDirectory: './test-output/vitest/coverage',
+      provider: 'v8' as const,
+    },
   },
 }));

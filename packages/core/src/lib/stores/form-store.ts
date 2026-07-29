@@ -236,12 +236,28 @@ function reindexChildren(
 }
 
 /**
+ * Rewrite markdown eSheet field links: `[label](#oldId)` → `[label](#newId)`.
+ * Also handles dotted suffixes: `[label](#oldId.child)` → `[label](#newId.child)`.
+ */
+function rewriteMarkdownFieldRefs(
+  markdown: string,
+  oldId: string,
+  newId: string
+): string {
+  const escaped = oldId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const pattern = new RegExp(`(\\[[^\\]]*\\]\\(#)${escaped}(?=\\)|\\.)`, 'g');
+  return markdown.replace(pattern, `$1${newId}`);
+}
+
+/**
  * Replace all references to `oldId` with `newId` in a single field definition.
  * Handles:
  *  - condition.targetId  (field-condition direct reference)
  *  - condition.expression  (expression language: `{oldId}` → `{newId}`)
  *  - definition.content  (display field inline expressions: `<fn({oldId})>`)
+ *  - definition.defaultContent  (richtext markdown body / MDY links)
  *  - definition.calculation  (JS: `responses['oldId']` / `responses["oldId"]`)
+ *  - markdown eSheet links `[label](#oldId)` in content / defaultContent
  */
 function rewriteFieldRefs(
   def: FieldDefinition,
@@ -258,6 +274,8 @@ function rewriteFieldRefs(
     s
       .replace(jsPatternSingle, `responses['${newId}']`)
       .replace(jsPatternDouble, `responses["${newId}"]`);
+  const replaceMarkdown = (s: string) =>
+    rewriteMarkdownFieldRefs(replaceExpr(s), oldId, newId);
 
   let changed = false;
 
@@ -284,10 +302,17 @@ function rewriteFieldRefs(
   }));
 
   // Update display field content (inline `{fieldId}` expression placeholders)
+  // and richtext defaultContent (markdown body + `[label](#fieldId)` links).
   const defAny = def as unknown as Record<string, unknown>;
   const content = defAny['content'] as string | undefined;
-  const updatedContent = content ? replaceExpr(content) : content;
+  const updatedContent = content ? replaceMarkdown(content) : content;
   if (updatedContent !== content) changed = true;
+
+  const defaultContent = defAny['defaultContent'] as string | undefined;
+  const updatedDefaultContent = defaultContent
+    ? replaceMarkdown(defaultContent)
+    : defaultContent;
+  if (updatedDefaultContent !== defaultContent) changed = true;
 
   // Update calculation (JS)
   const calc = def.calculation;
@@ -299,6 +324,9 @@ function rewriteFieldRefs(
     ...def,
     ...(updatedRules && { rules: updatedRules }),
     ...(updatedContent !== content && { content: updatedContent }),
+    ...(updatedDefaultContent !== defaultContent && {
+      defaultContent: updatedDefaultContent,
+    }),
     ...(updatedCalc !== calc && { calculation: updatedCalc }),
   } as FieldDefinition;
 }

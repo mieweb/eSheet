@@ -13,6 +13,8 @@ import {
   replaceInlineNode,
 } from '@kerebron/editor/plugins/input-rules';
 
+import { ESHEET_FIELD_ID_RE } from './richtext-mdy.js';
+
 export function fixCharacters(text: string) {
   return text
     .replace(/’/g, "'")
@@ -246,7 +248,8 @@ export class NodeESheetField extends Node {
         const href = String(mark.attrs.href || '');
         if (!href.startsWith('#')) return;
         const id = href.slice(1);
-        if (!/^[a-zA-Z_][\w.]*$/.test(id)) return;
+        // Allow hyphenated eSheet ids (e.g. what-is-your-email) and dotted paths.
+        if (!ESHEET_FIELD_ID_RE.test(id)) return;
         hits.push({ pos, size: node.nodeSize, id, text: node.text || '' });
       });
       if (!hits.length) return false;
