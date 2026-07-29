@@ -124,36 +124,64 @@ export default defineConfig(({ command, mode }) => {
     // Explicit aliases are needed because Vite's commonjs resolver doesn't respect
     // custom export conditions (@esheet/source) during production builds.
     resolve: {
-      alias: {
-        '@esheet/adapters': resolve(
-          import.meta.dirname,
-          '../../packages/adapters/src/index.ts'
-        ),
-        '@esheet/core': resolve(
-          import.meta.dirname,
-          '../../packages/core/src/index.ts'
-        ),
-        '@esheet/fields': resolve(
-          import.meta.dirname,
-          '../../packages/fields/src/index.ts'
-        ),
-        '@esheet/builder': resolve(
-          import.meta.dirname,
-          '../../packages/builder/src/index.ts'
-        ),
-        '@esheet/renderer': resolve(
-          import.meta.dirname,
-          '../../packages/renderer/src/index.ts'
-        ),
-        '@esheet/field-kerebron': resolve(
-          import.meta.dirname,
-          '../../packages/field-kerebron/src/index.ts'
-        ),
-        '@esheet/field-health': resolve(
-          import.meta.dirname,
-          '../../packages/field-health/src/index.ts'
-        ),
-      },
+      alias: [
+        {
+          find: '@esheet/adapters',
+          replacement: resolve(
+            import.meta.dirname,
+            '../../packages/adapters/src/index.ts'
+          ),
+        },
+        {
+          find: '@esheet/core',
+          replacement: resolve(
+            import.meta.dirname,
+            '../../packages/core/src/index.ts'
+          ),
+        },
+        {
+          find: '@esheet/fields',
+          replacement: resolve(
+            import.meta.dirname,
+            '../../packages/fields/src/index.ts'
+          ),
+        },
+        {
+          find: '@esheet/builder',
+          replacement: resolve(
+            import.meta.dirname,
+            '../../packages/builder/src/index.ts'
+          ),
+        },
+        {
+          find: '@esheet/renderer',
+          replacement: resolve(
+            import.meta.dirname,
+            '../../packages/renderer/src/index.ts'
+          ),
+        },
+        {
+          find: '@esheet/field-kerebron',
+          replacement: resolve(
+            import.meta.dirname,
+            '../../packages/field-kerebron/src/index.ts'
+          ),
+        },
+        {
+          find: '@esheet/field-health',
+          replacement: resolve(
+            import.meta.dirname,
+            '../../packages/field-health/src/index.ts'
+          ),
+        },
+        {
+          find: /^@mieweb\/ui$/,
+          replacement: resolve(
+            import.meta.dirname,
+            '../../node_modules/@mieweb/ui'
+          ),
+        },
+      ],
     },
     optimizeDeps: {
       entries: ['index.html', '../../packages/field-health/src/index.ts'],

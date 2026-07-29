@@ -13,7 +13,7 @@
     "@esheet/field-kerebron": "*",
     "@esheet/fields": "*",
     "@esheet/renderer": "*",
-    "@mieweb/ui": "^0.6.1",
+    "@mieweb/ui": "0.7.0-dev.184",
     "react-router-dom": "^7.11.0"
   }
 }
