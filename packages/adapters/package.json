@@ -1,6 +1,6 @@
 {
   "name": "@esheet/adapters",
-  "version": "0.0.4-3",
+  "version": "0.0.4-4",
   "description": "Convert external form schemas (SurveyJS, etc.) to eSheet FormDefinition",
   "repository": {
     "type": "git",
@@ -32,7 +32,7 @@
     ]
   },
   "dependencies": {
-    "@esheet/core": "0.0.4-3",
+    "@esheet/core": "0.0.4-4",
     "tslib": "^2.3.0"
   },
   "devDependencies": {}
