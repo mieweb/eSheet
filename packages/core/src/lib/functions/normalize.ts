@@ -4,6 +4,7 @@
 
 import type {
   FieldDefinition,
+  FieldWidth,
   PageEntry,
   SectionFieldDefinition,
 } from '../types.js';
@@ -93,6 +94,30 @@ export function normalizeDefinition(
   });
 
   return { byId, pages: normalizedPages };
+}
+
+/** Resolve the nearest defined section width for a field. */
+export function getInheritedSectionWidth(
+  normalized: NormalizedDefinition,
+  fieldId: string
+): FieldWidth | undefined {
+  let parentId = normalized.byId[fieldId]?.parentId;
+
+  while (parentId) {
+    const parent = normalized.byId[parentId];
+    if (!parent) return undefined;
+
+    if (
+      parent.definition.fieldType === 'section' &&
+      parent.definition.width !== undefined
+    ) {
+      return parent.definition.width;
+    }
+
+    parentId = parent.parentId;
+  }
+
+  return undefined;
 }
 
 // ---------------------------------------------------------------------------

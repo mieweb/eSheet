@@ -83,6 +83,7 @@ export function registerMedicationListFieldType(options: {
       hasMatrix: false,
       defaultProps: {
         question: 'Presenting medications',
+        width: 'full',
         quickAddOptions: [
           'aspirin 81 mg tablet',
           'atorvastatin 20 mg tablet',

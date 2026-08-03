@@ -5,6 +5,7 @@ import type {
   OpenChoiceFieldDefinition,
   FieldOption,
 } from '@esheet/core';
+import { getDefaultProp } from '@esheet/core';
 import { RadioGroup, Radio } from '@mieweb/ui';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 
@@ -34,7 +35,10 @@ export const OpenChoiceField = React.memo(function OpenChoiceField({
   if (isPreview) {
     const otherText =
       selectedId === otherOptionId && selected?.value ? selected.value : '';
-    const isWrap = def.optionLayout === 'wrap';
+    const optionLayout =
+      def.optionLayout ??
+      getDefaultProp<'stack' | 'wrap'>(def.fieldType, 'optionLayout');
+    const isWrap = optionLayout === 'wrap';
 
     return (
       <div className="openchoice-field-preview ms:space-y-1.5">

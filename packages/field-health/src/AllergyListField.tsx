@@ -96,6 +96,7 @@ export function registerAllergyListFieldType(options: {
       hasMatrix: false,
       defaultProps: {
         question: 'Allergies',
+        width: 'full',
       },
       component: Field,
     },

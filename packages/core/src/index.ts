@@ -80,6 +80,7 @@ export {
 export {
   registerFieldType,
   getFieldTypeMeta,
+  getDefaultProp,
   getRegisteredFieldTypes,
   registerFieldElements,
   // NOTE: resetFieldTypeRegistry intentionally not exported - internal/test-only
@@ -96,6 +97,7 @@ export {
 export {
   normalizeDefinition,
   hydrateDefinition,
+  getInheritedSectionWidth,
   type FieldNode,
   type NormalizedDefinition,
   type NormalizedPage,
