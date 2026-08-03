@@ -1,5 +1,5 @@
 import React from 'react';
-import type { FieldWidth } from '@esheet/core';
+import { getDefaultProp, type FieldWidth } from '@esheet/core';
 
 const GRID_STYLE: React.CSSProperties = {
   display: 'grid',
@@ -76,22 +76,29 @@ export interface FieldGridItemProps {
   children: React.ReactElement<{ style?: React.CSSProperties }>;
   fieldType: string;
   width?: FieldWidth;
+  inheritedWidth?: FieldWidth;
+}
+
+function getDefaultWidth(fieldType: string): FieldWidth {
+  return getDefaultProp<FieldWidth>(fieldType, 'width') ?? 'full';
 }
 
 export function FieldGridItem({
   children,
   fieldType,
   width,
+  inheritedWidth,
 }: FieldGridItemProps) {
   const useGridLayout = useFieldGridLayout();
   if (!useGridLayout) return children;
 
+  const effectiveWidth = inheritedWidth ?? width ?? getDefaultWidth(fieldType);
   const columnSpan =
     fieldType === 'section' || fieldType === 'pages'
       ? 6
-      : width === 'half'
+      : effectiveWidth === 'half'
       ? 3
-      : width === 'third'
+      : effectiveWidth === 'third'
       ? 2
       : 6;
 

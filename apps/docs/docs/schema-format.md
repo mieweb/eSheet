@@ -137,11 +137,14 @@ interface FieldDefinition {
 
 The optional `width` property controls how much of a row a field occupies:
 
-| Value   | Description                       |
-| ------- | --------------------------------- |
-| `full`  | Uses the full row width (default) |
-| `half`  | Uses half of the row              |
-| `third` | Uses one third of the row         |
+| Value   | Description               |
+| ------- | ------------------------- |
+| `full`  | Uses the full row width   |
+| `half`  | Uses half of the row      |
+| `third` | Uses one third of the row |
+
+Text, selection, and rating fields default to `third`. Rich, matrix, and
+organization fields default to `full`.
 
 ```ts
 type FieldWidth = 'full' | 'half' | 'third';
@@ -154,8 +157,10 @@ arranged:
 
 | Value   | Description                                         |
 | ------- | --------------------------------------------------- |
-| `stack` | Displays one option per line (default)              |
+| `stack` | Displays one option per line                        |
 | `wrap`  | Displays options horizontally and wraps as required |
+
+Fields that support `optionLayout` default to `wrap`.
 
 ```ts
 type OptionLayout = 'stack' | 'wrap';

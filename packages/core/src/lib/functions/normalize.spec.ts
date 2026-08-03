@@ -1,4 +1,4 @@
-import { normalizeDefinition } from './normalize.js';
+import { getInheritedSectionWidth, normalizeDefinition } from './normalize.js';
 import type {
   FieldDefinition,
   SectionFieldDefinition,
@@ -164,6 +164,55 @@ describe('normalizeDefinition', () => {
 
     expect(result.byId['deep'].childIds).toEqual([]);
     expect(result.byId['deep'].parentId).toBe('inner');
+  });
+
+  it('should resolve the nearest defined section width for descendants', () => {
+    const result = normalizeDefinition([
+      {
+        id: 'page-1',
+        fields: [
+          {
+            id: 'outer',
+            fieldType: 'section',
+            width: 'half',
+            fields: [
+              {
+                id: 'inner',
+                fieldType: 'section',
+                fields: [{ id: 'deep', fieldType: 'text' }],
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    expect(getInheritedSectionWidth(result, 'deep')).toBe('half');
+  });
+
+  it('should prefer an inner section width over an outer section width', () => {
+    const result = normalizeDefinition([
+      {
+        id: 'page-1',
+        fields: [
+          {
+            id: 'outer',
+            fieldType: 'section',
+            width: 'half',
+            fields: [
+              {
+                id: 'inner',
+                fieldType: 'section',
+                width: 'third',
+                fields: [{ id: 'deep', fieldType: 'text' }],
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    expect(getInheritedSectionWidth(result, 'deep')).toBe('third');
   });
 
   it('should handle section with empty fields array', () => {

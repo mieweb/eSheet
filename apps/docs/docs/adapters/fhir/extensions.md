@@ -20,11 +20,12 @@ Controls the column width a questionnaire item occupies in a row-based layout gr
 
 | `valueCode` | Description                             |
 | ----------- | --------------------------------------- |
-| `full`      | Spans the full row width (default)      |
+| `full`      | Spans the full row width                |
 | `half`      | Takes up half the row (2 per row)       |
 | `third`     | Takes up a third of the row (3 per row) |
 
-When absent the field renders at `full` width.
+When absent, text, selection, and rating fields render at `third` width.
+Rich, matrix, and organization fields render at `full` width.
 
 ### Example
 
@@ -58,10 +59,10 @@ Controls how the answer options of a choice item are rendered. Corresponds to th
 
 | `valueCode` | Description                                         |
 | ----------- | --------------------------------------------------- |
-| `stack`     | One option per line, stacked vertically (default)   |
+| `stack`     | One option per line, stacked vertically             |
 | `wrap`      | Options flow horizontally and wrap to the next line |
 
-When absent the options render in `stack` layout.
+When absent, fields that support this property render options in `wrap` layout.
 
 ### Example
 

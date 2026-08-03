@@ -2,6 +2,7 @@ import React from 'react';
 import {
   getFieldTypeMeta,
   type FieldDefinition,
+  type FieldWidth,
   type FieldOption,
   type MatrixColumn,
   type MatrixRow,
@@ -249,6 +250,43 @@ interface SectionEditContentProps {
   onRenameId: (newId: string) => boolean;
 }
 
+interface SectionWidthEditorProps {
+  fieldId: string;
+  width?: FieldWidth;
+  onUpdate: (patch: Partial<Omit<FieldDefinition, 'fields'>>) => void;
+}
+
+function SectionWidthEditor({
+  fieldId,
+  width,
+  onUpdate,
+}: SectionWidthEditorProps) {
+  const instanceId = useInstanceId();
+
+  return (
+    <div>
+      <label
+        htmlFor={`${instanceId}-editor-child-width-${fieldId}`}
+        className="edit-label ms:block ms:text-sm ms:font-medium ms:text-mstext ms:mb-1"
+      >
+        Child row width
+      </label>
+      <select
+        id={`${instanceId}-editor-child-width-${fieldId}`}
+        value={width ?? 'full'}
+        onChange={(e) =>
+          onUpdate({ width: e.currentTarget.value as FieldWidth })
+        }
+        className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
+      >
+        <option value="full">Full (whole row)</option>
+        <option value="half">Half (2 per row)</option>
+        <option value="third">Third (3 per row)</option>
+      </select>
+    </div>
+  );
+}
+
 function SectionEditContent({
   fieldId,
   def,
@@ -401,6 +439,12 @@ function SectionEditContent({
         </select>
       </div>
 
+      <SectionWidthEditor
+        fieldId={fieldId}
+        width={def.width}
+        onUpdate={onUpdate}
+      />
+
       <div className="ms:space-y-2">
         <div className="ms:flex ms:items-center ms:justify-between ms:gap-2">
           <span className="ms:text-sm ms:font-medium ms:text-mstext">
@@ -492,6 +536,11 @@ function SectionEditContent({
                   className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:placeholder:text-mstextmuted ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
                 />
               </div>
+              <SectionWidthEditor
+                fieldId={activeChildDef.id}
+                width={activeChildDef.width}
+                onUpdate={handleUpdateChild}
+              />
             </div>
           ) : (
             <CommonEditor

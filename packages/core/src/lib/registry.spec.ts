@@ -1,5 +1,6 @@
 import {
   registerFieldType,
+  getDefaultProp,
   getFieldTypeMeta,
   getRegisteredFieldTypes,
   resetFieldTypeRegistry,
@@ -98,6 +99,60 @@ describe('field type registry', () => {
     // Non-option fields should not have defaultOptionCount
     const text = getFieldTypeMeta('text')!;
     expect(text.defaultOptionCount).toBeUndefined();
+  });
+
+  it('should define the default layout for built-in field types', () => {
+    const thirdWidthTypes = [
+      'text',
+      'longtext',
+      'multitext',
+      'radio',
+      'check',
+      'boolean',
+      'dropdown',
+      'multiselectdropdown',
+      'openchoice',
+      'rating',
+      'ranking',
+      'slider',
+    ];
+    for (const fieldType of thirdWidthTypes) {
+      expect(getFieldTypeMeta(fieldType)?.defaultProps.width).toBe('third');
+    }
+
+    for (const fieldType of ['multitext', 'radio', 'check', 'openchoice']) {
+      expect(getFieldTypeMeta(fieldType)?.defaultProps.optionLayout).toBe(
+        'wrap'
+      );
+    }
+
+    for (const fieldType of [
+      'singlematrix',
+      'multimatrix',
+      'image',
+      'html',
+      'signature',
+      'diagram',
+      'file',
+      'display',
+      'section',
+      'pages',
+    ]) {
+      expect(getFieldTypeMeta(fieldType)?.defaultProps.width).toBe('full');
+    }
+  });
+
+  it('should resolve option layout defaults from field metadata', () => {
+    expect(getDefaultProp('radio', 'optionLayout')).toBe('wrap');
+    expect(getDefaultProp('check', 'optionLayout')).toBe('wrap');
+    expect(getDefaultProp('signature', 'optionLayout')).toBeUndefined();
+    expect(getDefaultProp('unknown', 'optionLayout')).toBeUndefined();
+  });
+
+  it('should resolve any default property from field metadata', () => {
+    expect(getDefaultProp('text', 'inputType')).toBe('string');
+    expect(getDefaultProp('text', 'width')).toBe('third');
+    expect(getDefaultProp('signature', 'width')).toBe('full');
   });
 
   it('should batch-register element classes via registerFieldElements', () => {

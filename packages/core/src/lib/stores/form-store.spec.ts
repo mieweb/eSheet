@@ -210,6 +210,23 @@ describe('createFormStore', () => {
         expect(s.normalized.byId[id!].parentId).toBeNull();
       });
 
+      it('applies the field layout defaults', () => {
+        store = createFormStore(form([]));
+        const radioId = store.getState().addField('radio');
+        const matrixId = store.getState().addField('singlematrix');
+        const signatureId = store.getState().addField('signature');
+
+        expect(
+          store.getState().normalized.byId[radioId!].definition
+        ).toMatchObject({ width: 'third', optionLayout: 'wrap' });
+        expect(
+          store.getState().normalized.byId[matrixId!].definition
+        ).toMatchObject({ width: 'full' });
+        expect(
+          store.getState().normalized.byId[signatureId!].definition
+        ).toMatchObject({ width: 'full' });
+      });
+
       it('inserts at specific root index', () => {
         store = createFormStore(form([field('a'), field('b')]));
         const id = store

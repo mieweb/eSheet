@@ -5,7 +5,7 @@ import type {
   OptionLayout,
   TextInputType,
 } from '@esheet/core';
-import { slugifyQuestion } from '@esheet/core';
+import { getDefaultProp, slugifyQuestion } from '@esheet/core';
 import { useFormStore } from '@esheet/fields';
 import { useInstanceId } from '../../EsheetBuilder.js';
 import { DraftIdEditor } from './DraftIdEditor.js';
@@ -36,15 +36,22 @@ export function CommonEditor({
     def.fieldType === 'text' || def.fieldType === 'longtext';
   const formStore = useFormStore();
   const dangerouslyAllowJS = useStore(formStore, (s) => s.dangerouslyAllowJS);
+  const defaultWidth = getDefaultProp<FieldWidth>(def.fieldType, 'width');
   const calculation = (def as { calculation?: string }).calculation ?? '';
-  const width = (def as { width?: FieldWidth }).width ?? 'full';
+  const width = (def as { width?: FieldWidth }).width ?? defaultWidth ?? 'full';
   const showOptionLayout =
     def.fieldType === 'radio' ||
     def.fieldType === 'check' ||
     def.fieldType === 'multitext' ||
     def.fieldType === 'openchoice';
+  const defaultOptionLayout = getDefaultProp<OptionLayout>(
+    def.fieldType,
+    'optionLayout'
+  );
   const optionLayout =
-    (def as { optionLayout?: OptionLayout }).optionLayout ?? 'stack';
+    (def as { optionLayout?: OptionLayout }).optionLayout ??
+    defaultOptionLayout ??
+    'stack';
   const question = (def as { question?: string }).question ?? '';
   const suggestedId = slugifyQuestion(question);
   const showSuggestion = suggestedId !== '' && suggestedId !== def.id;
@@ -136,14 +143,13 @@ export function CommonEditor({
         <select
           id={`${instanceId}-editor-width-${fieldId}`}
           value={width}
-          onChange={(e) =>
+          onChange={(e) => {
+            const nextWidth = e.currentTarget.value as FieldWidth;
             onUpdate({
               width:
-                e.currentTarget.value === 'full'
-                  ? undefined
-                  : (e.currentTarget.value as FieldWidth),
-            } as Parameters<typeof onUpdate>[0])
-          }
+                nextWidth === (defaultWidth ?? 'full') ? undefined : nextWidth,
+            } as Parameters<typeof onUpdate>[0]);
+          }}
           className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
         >
           <option value="full">Full (whole row)</option>
@@ -164,14 +170,15 @@ export function CommonEditor({
           <select
             id={`${instanceId}-editor-optionlayout-${fieldId}`}
             value={optionLayout}
-            onChange={(e) =>
+            onChange={(e) => {
+              const nextOptionLayout = e.currentTarget.value as OptionLayout;
               onUpdate({
                 optionLayout:
-                  e.currentTarget.value === 'stack'
+                  nextOptionLayout === (defaultOptionLayout ?? 'stack')
                     ? undefined
-                    : (e.currentTarget.value as OptionLayout),
-              } as Parameters<typeof onUpdate>[0])
-            }
+                    : nextOptionLayout,
+              } as Parameters<typeof onUpdate>[0]);
+            }}
             className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
           >
             <option value="stack">Stack (one per line)</option>
