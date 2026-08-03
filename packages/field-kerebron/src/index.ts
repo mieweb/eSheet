@@ -24,7 +24,7 @@ registerFieldType('richtext', {
   answerType: 'text',
   hasOptions: false,
   hasMatrix: false,
-  defaultProps: {},
+  defaultProps: { width: 'full' },
   placeholder: { question: 'Enter your question...' },
 });
 

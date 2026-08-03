@@ -51,6 +51,34 @@ describe('EsheetRenderer', () => {
     ).toBe('span 2');
   });
 
+  it('uses a section row width for all of its children', () => {
+    const { container } = render(
+      <EsheetRenderer
+        formDataInput={{
+          id: 'section-width-form',
+          pages: [
+            {
+              id: 'page-1',
+              fields: [
+                {
+                  id: 'section',
+                  fieldType: 'section',
+                  width: 'half',
+                  fields: [{ id: 'child', fieldType: 'text', width: 'third' }],
+                },
+              ],
+            },
+          ],
+        }}
+      />
+    );
+
+    expect(
+      container.querySelector<HTMLElement>('[data-field-id="child"]')?.style
+        .gridColumn
+    ).toBe('span 3');
+  });
+
   it('mounts and exposes ref handle', async () => {
     const ref = React.createRef<EsheetRendererHandle>();
     await act(async () => {

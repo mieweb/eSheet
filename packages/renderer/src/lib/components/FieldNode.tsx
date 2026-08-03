@@ -6,6 +6,7 @@ import type {
   FormStore,
   UIStore,
 } from '@esheet/core';
+import { getInheritedSectionWidth } from '@esheet/core';
 import { FieldGrid, FieldGridItem, getFieldComponent } from '@esheet/fields';
 
 export interface FieldNodeProps {
@@ -223,6 +224,7 @@ export const FieldNode = React.memo(function FieldNode({
     <FieldGridItem
       fieldType={field.definition.fieldType}
       width={field.definition.width}
+      inheritedWidth={getInheritedSectionWidth(normalized, field.definition.id)}
     >
       <div
         ref={wrapperRef}

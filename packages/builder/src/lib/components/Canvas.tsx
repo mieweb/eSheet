@@ -1,6 +1,6 @@
 import React from 'react';
 import type { FieldComponentProps, FormStore, UIStore } from '@esheet/core';
-import { buildRenderTree } from '@esheet/core';
+import { buildRenderTree, getInheritedSectionWidth } from '@esheet/core';
 import Sortable from 'sortablejs';
 import { useFormApi } from '../hooks/useFormApi.js';
 import { useUiApi } from '../hooks/useUiApi.js';
@@ -85,6 +85,7 @@ function DraggableFieldItem({
     <FieldGridItem
       fieldType={field.definition.fieldType}
       width={field.definition.width}
+      inheritedWidth={getInheritedSectionWidth(form.getState().normalized, id)}
     >
       <div
         className={wrapperClass}

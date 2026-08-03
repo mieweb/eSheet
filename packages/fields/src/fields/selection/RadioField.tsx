@@ -4,6 +4,7 @@ import type {
   SelectedOption,
   RadioFieldDefinition,
 } from '@esheet/core';
+import { getDefaultProp } from '@esheet/core';
 import { RadioGroup, Radio } from '@mieweb/ui';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 
@@ -21,7 +22,10 @@ export const RadioField = React.memo(function RadioField({
   const def = field.definition as RadioFieldDefinition;
   const instanceId = form.getState().instanceId;
   const options = def.options || [];
-  const isWrap = def.optionLayout === 'wrap';
+  const optionLayout =
+    def.optionLayout ??
+    getDefaultProp<'stack' | 'wrap'>(def.fieldType, 'optionLayout');
+  const isWrap = optionLayout === 'wrap';
   const selectedId =
     (response?.selected as SelectedOption | undefined)?.id ?? null;
 

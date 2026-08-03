@@ -295,7 +295,7 @@ interface BaseFieldDefinition {
    */
   required?: boolean | 'soft';
   // readOnly?: boolean; // TODO: implement readOnly properly (see INTERNAL-TICKETS/readonly-fields.md)
-  /** Layout width in a row grid (`full` | `half` | `third`). Defaults to `full`. */
+  /** Layout width in a row grid (`full` | `half` | `third`). Defaults by field category. */
   width?: FieldWidth;
   /** Validation rules applied to the field's response. */
   validators?: FieldValidator[];
@@ -332,7 +332,7 @@ export interface LongtextFieldDefinition extends BaseFieldDefinition {
 export interface MultitextFieldDefinition extends BaseFieldDefinition {
   fieldType: 'multitext';
   options?: FieldOption[];
-  /** How inputs are arranged (`stack` | `wrap`). Defaults to `stack`. */
+  /** How inputs are arranged (`stack` | `wrap`). Defaults to `wrap`. */
   optionLayout?: OptionLayout;
 }
 
@@ -343,14 +343,14 @@ export interface MultitextFieldDefinition extends BaseFieldDefinition {
 export interface RadioFieldDefinition extends BaseFieldDefinition {
   fieldType: 'radio';
   options?: FieldOption[];
-  /** How options are arranged (`stack` | `wrap`). Defaults to `stack`. */
+  /** How options are arranged (`stack` | `wrap`). Defaults to `wrap`. */
   optionLayout?: OptionLayout;
 }
 
 export interface CheckFieldDefinition extends BaseFieldDefinition {
   fieldType: 'check';
   options?: FieldOption[];
-  /** How options are arranged (`stack` | `wrap`). Defaults to `stack`. */
+  /** How options are arranged (`stack` | `wrap`). Defaults to `wrap`. */
   optionLayout?: OptionLayout;
 }
 
@@ -459,7 +459,7 @@ export interface OpenChoiceFieldDefinition extends BaseFieldDefinition {
   maxCustomOptions?: number;
   /** Label for the "Other, please specify" option (optional). */
   otherLabel?: string;
-  /** Controls whether options flow horizontally (wrap) or stack vertically (default). */
+  /** Controls whether options flow horizontally (wrap) or stack vertically. Defaults to `wrap`. */
   optionLayout?: OptionLayout;
 }
 
@@ -472,7 +472,7 @@ export interface DisplayFieldDefinition {
   content?: string;
   /** Display fields are never required. */
   required?: never;
-  /** Layout width in a row grid (`full` | `half` | `third`). Defaults to `full`. */
+  /** Layout width in a row grid (`full` | `half` | `third`). Defaults by field category. */
   width?: FieldWidth;
   /** Conditional rules controlling visibility. */
   rules?: ConditionalRule[];

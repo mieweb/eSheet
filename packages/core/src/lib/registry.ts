@@ -18,6 +18,14 @@ export function getFieldTypeMeta(key: string): FieldTypeMeta | undefined {
   return registry[key];
 }
 
+/** Get a configured default property for a field type. */
+export function getDefaultProp<T = unknown>(
+  fieldType: string,
+  property: string
+): T | undefined {
+  return registry[fieldType]?.defaultProps[property] as T | undefined;
+}
+
 /** Get all currently registered field type keys. */
 export function getRegisteredFieldTypes(): string[] {
   return Object.keys(registry);
@@ -56,7 +64,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     answerType: 'text',
     hasOptions: false,
     hasMatrix: false,
-    defaultProps: { inputType: 'string' },
+    defaultProps: { inputType: 'string', width: 'third' },
     placeholder: {
       question: 'Enter your question...',
       answer: 'Enter answer...',
@@ -68,7 +76,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     answerType: 'text',
     hasOptions: false,
     hasMatrix: false,
-    defaultProps: {},
+    defaultProps: { width: 'third' },
     placeholder: {
       question: 'Enter your question...',
       answer: 'Enter detailed answer...',
@@ -80,7 +88,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     answerType: 'multitext',
     hasOptions: true,
     hasMatrix: false,
-    defaultProps: {},
+    defaultProps: { width: 'third', optionLayout: 'wrap' },
     placeholder: {
       question: 'Enter your question...',
       options: 'Enter option text...',
@@ -93,7 +101,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     answerType: 'selection',
     hasOptions: true,
     hasMatrix: false,
-    defaultProps: {},
+    defaultProps: { width: 'third', optionLayout: 'wrap' },
     placeholder: {
       question: 'Enter your question...',
       options: 'Enter option text...',
@@ -106,7 +114,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     answerType: 'multiselection',
     hasOptions: true,
     hasMatrix: false,
-    defaultProps: {},
+    defaultProps: { width: 'third', optionLayout: 'wrap' },
     placeholder: {
       question: 'Enter your question...',
       options: 'Enter option text...',
@@ -120,7 +128,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     hasOptions: true,
     hasMatrix: false,
     defaultOptionCount: 2,
-    defaultProps: {},
+    defaultProps: { width: 'third' },
     placeholder: { question: 'Enter your question...' },
   },
   dropdown: {
@@ -129,7 +137,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     answerType: 'selection',
     hasOptions: true,
     hasMatrix: false,
-    defaultProps: {},
+    defaultProps: { width: 'third' },
     placeholder: {
       question: 'Enter your question...',
       options: 'Enter option text...',
@@ -142,7 +150,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     answerType: 'multiselection',
     hasOptions: true,
     hasMatrix: false,
-    defaultProps: {},
+    defaultProps: { width: 'third' },
     placeholder: {
       question: 'Enter your question...',
       options: 'Enter option text...',
@@ -155,7 +163,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     answerType: 'selection',
     hasOptions: true,
     hasMatrix: false,
-    defaultProps: {},
+    defaultProps: { width: 'third', optionLayout: 'wrap' },
     placeholder: {
       question: 'Enter your question...',
       options: 'Enter option text...',
@@ -168,7 +176,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     answerType: 'selection',
     hasOptions: true,
     hasMatrix: false,
-    defaultProps: {},
+    defaultProps: { width: 'third' },
     placeholder: {
       question: 'Enter your question...',
       options: 'Enter rating level...',
@@ -181,7 +189,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     answerType: 'multiselection',
     hasOptions: true,
     hasMatrix: false,
-    defaultProps: {},
+    defaultProps: { width: 'third' },
     placeholder: {
       question: 'Enter your question...',
       options: 'Enter item to rank...',
@@ -194,7 +202,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     answerType: 'selection',
     hasOptions: true,
     hasMatrix: false,
-    defaultProps: {},
+    defaultProps: { width: 'third' },
     placeholder: {
       question: 'Enter your question...',
       options: 'Enter scale label...',
@@ -207,7 +215,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     answerType: 'matrix',
     hasOptions: false,
     hasMatrix: true,
-    defaultProps: {},
+    defaultProps: { width: 'full' },
     placeholder: {
       question: 'Enter your question...',
       rows: 'Enter row label...',
@@ -221,7 +229,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     answerType: 'matrix',
     hasOptions: false,
     hasMatrix: true,
-    defaultProps: {},
+    defaultProps: { width: 'full' },
     placeholder: {
       question: 'Enter your question...',
       rows: 'Enter row label...',
@@ -235,7 +243,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     answerType: 'display',
     hasOptions: false,
     hasMatrix: false,
-    defaultProps: {},
+    defaultProps: { width: 'full' },
     placeholder: { question: 'Image Block' },
   },
   html: {
@@ -244,7 +252,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     answerType: 'display',
     hasOptions: false,
     hasMatrix: false,
-    defaultProps: {},
+    defaultProps: { width: 'full' },
     placeholder: { htmlContent: '<p>Enter your HTML content here...</p>' },
   },
   signature: {
@@ -253,7 +261,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     answerType: 'media',
     hasOptions: false,
     hasMatrix: false,
-    defaultProps: {},
+    defaultProps: { width: 'full' },
     placeholder: { question: 'Enter your question...', pad: 'Sign here' },
   },
   diagram: {
@@ -262,7 +270,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     answerType: 'media',
     hasOptions: false,
     hasMatrix: false,
-    defaultProps: {},
+    defaultProps: { width: 'full' },
     placeholder: {
       question: 'Enter your question...',
       pad: 'Draw on the diagram',
@@ -274,7 +282,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     answerType: 'media',
     hasOptions: false,
     hasMatrix: false,
-    defaultProps: {},
+    defaultProps: { width: 'full' },
     placeholder: { question: 'Upload a file' },
   },
   display: {
@@ -283,7 +291,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     answerType: 'display',
     hasOptions: false,
     hasMatrix: false,
-    defaultProps: {},
+    defaultProps: { width: 'full' },
     placeholder: {
       content:
         'Your BMI is **{weight-kg} / (({height-cm}/100) * ({height-cm}/100))**',
@@ -295,7 +303,11 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     answerType: 'container',
     hasOptions: false,
     hasMatrix: false,
-    defaultProps: { fields: [], sectionCollapse: 'expanded' },
+    defaultProps: {
+      fields: [],
+      sectionCollapse: 'expanded',
+      width: 'full',
+    },
     placeholder: { title: 'Enter section title...' },
   },
   pages: {
@@ -304,7 +316,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     answerType: 'container',
     hasOptions: false,
     hasMatrix: false,
-    defaultProps: { fields: [], autoAdvance: false },
+    defaultProps: { fields: [], autoAdvance: false, width: 'full' },
     placeholder: { title: 'Enter pages title...' },
   },
 };
