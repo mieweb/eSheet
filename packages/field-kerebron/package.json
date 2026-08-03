@@ -1,6 +1,6 @@
 {
   "name": "@esheet/field-kerebron",
-  "version": "0.0.4-3",
+  "version": "0.0.4-4",
   "repository": {
     "type": "git",
     "url": "https://github.com/mieweb/eSheet"
@@ -31,7 +31,7 @@
     ]
   },
   "dependencies": {
-    "@esheet/core": "0.0.4-3",
+    "@esheet/core": "0.0.4-4",
     "@kerebron/editor": "^0.8.6",
     "@kerebron/editor-kits": "^0.8.6",
     "@kerebron/editor-react": "^0.8.6",
