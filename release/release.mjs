@@ -56,7 +56,13 @@ const currentVersion =
 
 console.log(`Last tag:        ${lastTag || '(none)'}`);
 console.log(`Package version: ${pkgVersion}`);
-console.log(`Current version: ${currentVersion}  ${currentVersion === pkgVersion && tagVersion ? '(from package.json — ahead of tag)' : '(from tag)'}`);
+console.log(
+  `Current version: ${currentVersion}  ${
+    currentVersion === pkgVersion && tagVersion
+      ? '(from package.json — ahead of tag)'
+      : '(from tag)'
+  }`
+);
 
 // ---------------------------------------------------------------------------
 // 2. Collect + parse conventional commits since last tag
@@ -294,4 +300,17 @@ if (IS_PRERELEASE) {
   }
 }
 
-console.log(`\n✅  Released v${newVersion}`);
+const releaseStatus = DRY_RUN
+  ? `Dry run complete: would release v${newVersion}`
+  : `Release complete: published v${newVersion}`;
+
+console.log(`\n✅  ${releaseStatus}`);
+
+if (process.env.GITHUB_ACTIONS === 'true') {
+  console.log(`::notice title=Release status::${releaseStatus}`);
+  writeFileSync(
+    process.env.GITHUB_STEP_SUMMARY,
+    `## Release status\n\n${releaseStatus}\n`,
+    { flag: 'a' }
+  );
+}
