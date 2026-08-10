@@ -5,6 +5,7 @@
  */
 
 import React from 'react';
+import { Clipboard, Folder, Info, Minus, Plus } from 'lucide-react';
 
 type IconProps = { className?: string };
 
@@ -30,25 +31,8 @@ export const TrashIcon = React.memo(
   eq
 );
 
-export const PlusIcon = React.memo(
-  ({ className = '' }: IconProps) => (
-    <svg
-      className={className}
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      width="24"
-      height="24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M12 4v16m8-8H4" />
-    </svg>
-  ),
-  eq
-);
+export const PlusIcon = Plus;
+export const MinusIcon = Minus;
 
 export const ArrowUpIcon = React.memo(
   ({ className = '' }: IconProps) => (
@@ -176,3 +160,7 @@ export const UploadIcon = React.memo(
   ),
   eq
 );
+
+export const FolderIcon = Folder;
+export const InfoIcon = Info;
+export const ClipboardIcon = Clipboard;

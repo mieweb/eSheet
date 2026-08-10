@@ -17,6 +17,8 @@ export interface CommonEditorProps {
   onUpdate: (patch: Partial<Omit<FieldDefinition, 'fields'>>) => void;
   /** Called to rename the field ID. Returns false if the name collides. */
   onRenameId: (newId: string) => boolean;
+  /** Whether this field is being edited as a child of a section. */
+  isNestedChild?: boolean;
 }
 
 /**
@@ -30,6 +32,7 @@ export function CommonEditor({
   def,
   onUpdate,
   onRenameId,
+  isNestedChild = false,
 }: CommonEditorProps) {
   const instanceId = useInstanceId();
   const showInputType =
@@ -156,6 +159,25 @@ export function CommonEditor({
           <option value="half">Half (2 per row)</option>
           <option value="third">Third (3 per row)</option>
         </select>
+        {isNestedChild && (
+          <label
+            htmlFor={`${instanceId}-editor-override-width-${fieldId}`}
+            className="ms:mt-2 ms:flex ms:items-center ms:gap-2 ms:text-sm ms:text-mstext ms:cursor-pointer"
+          >
+            <input
+              id={`${instanceId}-editor-override-width-${fieldId}`}
+              type="checkbox"
+              checked={def.overrideSectionWidth === true}
+              onChange={(e) =>
+                onUpdate({
+                  overrideSectionWidth: e.currentTarget.checked || undefined,
+                } as Parameters<typeof onUpdate>[0])
+              }
+              className="ms:h-4 ms:w-4 ms:accent-msprimary"
+            />
+            Override parent width
+          </label>
+        )}
       </div>
 
       {/* Options layout (radio / check / multitext only) */}

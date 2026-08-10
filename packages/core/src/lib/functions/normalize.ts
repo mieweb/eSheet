@@ -101,6 +101,10 @@ export function getInheritedSectionWidth(
   normalized: NormalizedDefinition,
   fieldId: string
 ): FieldWidth | undefined {
+  if (normalized.byId[fieldId]?.definition.overrideSectionWidth === true) {
+    return undefined;
+  }
+
   let parentId = normalized.byId[fieldId]?.parentId;
 
   while (parentId) {
