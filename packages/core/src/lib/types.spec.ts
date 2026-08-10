@@ -1,5 +1,7 @@
 import {
   FIELD_TYPES,
+  SECTION_ICON_GROUPS,
+  SECTION_ICON_NAMES,
   formDefinitionSchema,
   fieldDefinitionSchema,
   normalizeFormDefinition,
@@ -111,6 +113,7 @@ describe('schema types', () => {
               inputType: 'datetime-local',
               dateRange: { amount: 2, unit: 'years' },
               timeFormat: '12-hour',
+              overrideSectionWidth: true,
             },
             {
               id: 'longtext',
@@ -137,6 +140,7 @@ describe('schema types', () => {
             {
               id: 'section',
               fieldType: 'section',
+              sectionIcon: 'folder',
               sectionCollapse: 'collapsed',
             },
             {
@@ -160,6 +164,7 @@ describe('schema types', () => {
             inputType: 'datetime-local',
             dateRange: { amount: 2, unit: 'years' },
             timeFormat: '12-hour',
+            overrideSectionWidth: true,
           },
           {
             id: 'longtext',
@@ -186,6 +191,7 @@ describe('schema types', () => {
           {
             id: 'section',
             fieldType: 'section',
+            sectionIcon: 'folder',
             sectionCollapse: 'collapsed',
           },
           {
@@ -196,6 +202,61 @@ describe('schema types', () => {
         ],
       },
     ]);
+  });
+});
+
+describe('section icon validation', () => {
+  it('validates representative icons from every requested group', () => {
+    expect(SECTION_ICON_GROUPS).toHaveLength(7);
+    expect(SECTION_ICON_GROUPS.map((group) => group.label)).toEqual([
+      'User & Account',
+      'Media & Files',
+      'Time & Calendar',
+      'Layout & View',
+      'Security',
+      'Healthcare & Medical',
+      'Misc',
+    ]);
+
+    for (const group of SECTION_ICON_GROUPS) {
+      for (const icon of group.icons) {
+        expect(SECTION_ICON_NAMES).toContain(icon.name);
+        expect(
+          fieldDefinitionSchema.safeParse({
+            id: 'section',
+            fieldType: 'section',
+            sectionIcon: icon.name,
+          }).success
+        ).toBe(true);
+      }
+    }
+
+    const groupedNames = SECTION_ICON_GROUPS.flatMap((group) =>
+      group.icons.map((icon) => icon.name)
+    );
+    expect(new Set(SECTION_ICON_NAMES).size).toBe(SECTION_ICON_NAMES.length);
+    expect(new Set(groupedNames).size).toBe(groupedNames.length);
+    expect(new Set(groupedNames)).toEqual(new Set(SECTION_ICON_NAMES));
+  });
+
+  it('accepts canonical section icons and rejects unknown values', () => {
+    for (const sectionIcon of ['folder', 'info', 'clipboard'] as const) {
+      expect(
+        fieldDefinitionSchema.safeParse({
+          id: 'section',
+          fieldType: 'section',
+          sectionIcon,
+        }).success
+      ).toBe(true);
+    }
+
+    expect(
+      fieldDefinitionSchema.safeParse({
+        id: 'section',
+        fieldType: 'section',
+        sectionIcon: 'custom-svg',
+      }).success
+    ).toBe(false);
   });
 });
 

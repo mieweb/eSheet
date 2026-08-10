@@ -10,9 +10,13 @@ export { CustomDropdown } from './controls/CustomDropdown.js';
 export {
   TrashIcon,
   PlusIcon,
+  MinusIcon,
   ArrowUpIcon,
   ArrowDownIcon,
   UpDownArrowIcon,
+  FolderIcon,
+  InfoIcon,
+  ClipboardIcon,
 } from './icons.js';
 
 // Field components

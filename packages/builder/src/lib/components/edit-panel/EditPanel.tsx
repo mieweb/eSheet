@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  SECTION_ICON_GROUPS,
   getFieldTypeMeta,
   type FieldDefinition,
   type FieldWidth,
@@ -7,6 +8,7 @@ import {
   type MatrixColumn,
   type MatrixRow,
   type EditTab,
+  type SectionIconName,
 } from '@esheet/core';
 import { useInstanceId } from '../../EsheetBuilder.js';
 import { EditIcon, LogicIcon } from '../../icons.js';
@@ -254,12 +256,16 @@ interface SectionWidthEditorProps {
   fieldId: string;
   width?: FieldWidth;
   onUpdate: (patch: Partial<Omit<FieldDefinition, 'fields'>>) => void;
+  showOverride?: boolean;
+  overrideSectionWidth?: boolean;
 }
 
 function SectionWidthEditor({
   fieldId,
   width,
   onUpdate,
+  showOverride = false,
+  overrideSectionWidth = false,
 }: SectionWidthEditorProps) {
   const instanceId = useInstanceId();
 
@@ -283,6 +289,25 @@ function SectionWidthEditor({
         <option value="half">Half (2 per row)</option>
         <option value="third">Third (3 per row)</option>
       </select>
+      {showOverride && (
+        <label
+          htmlFor={`${instanceId}-editor-override-width-${fieldId}`}
+          className="ms:mt-2 ms:flex ms:items-center ms:gap-2 ms:text-sm ms:text-mstext ms:cursor-pointer"
+        >
+          <input
+            id={`${instanceId}-editor-override-width-${fieldId}`}
+            type="checkbox"
+            checked={overrideSectionWidth}
+            onChange={(e) =>
+              onUpdate({
+                overrideSectionWidth: e.currentTarget.checked || undefined,
+              })
+            }
+            className="ms:h-4 ms:w-4 ms:accent-msprimary"
+          />
+          Override parent width
+        </label>
+      )}
     </div>
   );
 }
@@ -439,6 +464,38 @@ function SectionEditContent({
         </select>
       </div>
 
+      {/* Section icon */}
+      <div>
+        <label
+          htmlFor={`${instanceId}-editor-icon-${fieldId}`}
+          className="edit-label ms:block ms:text-sm ms:font-medium ms:text-mstext ms:mb-1"
+        >
+          Section icon
+        </label>
+        <select
+          id={`${instanceId}-editor-icon-${fieldId}`}
+          value={(def as { sectionIcon?: SectionIconName }).sectionIcon ?? ''}
+          onChange={(e) => {
+            const value = e.currentTarget.value as SectionIconName | '';
+            onUpdate({
+              sectionIcon: value || undefined,
+            } as Parameters<typeof onUpdate>[0]);
+          }}
+          className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
+        >
+          <option value="">No icon</option>
+          {SECTION_ICON_GROUPS.map((group) => (
+            <optgroup key={group.label} label={group.label}>
+              {group.icons.map((icon) => (
+                <option key={icon.name} value={icon.name}>
+                  {icon.label}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
+      </div>
+
       <SectionWidthEditor
         fieldId={fieldId}
         width={def.width}
@@ -540,6 +597,10 @@ function SectionEditContent({
                 fieldId={activeChildDef.id}
                 width={activeChildDef.width}
                 onUpdate={handleUpdateChild}
+                showOverride
+                overrideSectionWidth={
+                  activeChildDef.overrideSectionWidth === true
+                }
               />
             </div>
           ) : (
@@ -548,6 +609,7 @@ function SectionEditContent({
               def={activeChildDef}
               onUpdate={handleUpdateChild}
               onRenameId={handleRenameChildId}
+              isNestedChild
             />
           )}
 

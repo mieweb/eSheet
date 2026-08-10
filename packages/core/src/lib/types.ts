@@ -34,6 +34,239 @@ export const FIELD_TYPES = [
 export const fieldTypeSchema = z.enum(FIELD_TYPES);
 export type FieldType = z.infer<typeof fieldTypeSchema>;
 
+export const SECTION_ICON_NAMES = [
+  'user',
+  'users',
+  'userPlus',
+  'userMinus',
+  'userCheck',
+  'circleUser',
+  'logIn',
+  'logOut',
+  'file',
+  'fileText',
+  'folder',
+  'folderOpen',
+  'image',
+  'camera',
+  'paperclip',
+  'calendar',
+  'calendarClock',
+  'timer',
+  'history',
+  'grid',
+  'list',
+  'table',
+  'columns',
+  'maximize',
+  'minimize',
+  'eye',
+  'eyeOff',
+  'search',
+  'shield',
+  'shieldCheck',
+  'shieldPlus',
+  'lock',
+  'unlock',
+  'key',
+  'hospital',
+  'ambulance',
+  'stethoscope',
+  'briefcaseMedical',
+  'heartPulse',
+  'activity',
+  'pill',
+  'tablets',
+  'syringe',
+  'testTube',
+  'testTubes',
+  'flaskConical',
+  'microscope',
+  'dna',
+  'brain',
+  'bone',
+  'bandage',
+  'thermometer',
+  'droplet',
+  'droplets',
+  'bed',
+  'bedDouble',
+  'baby',
+  'accessibility',
+  'ear',
+  'glasses',
+  'scan',
+  'scanEye',
+  'radiation',
+  'biohazard',
+  'weight',
+  'ruler',
+  'clipboard',
+  'clipboardPlus',
+  'clipboardCheck',
+  'fileHeart',
+  'filePlus',
+  'fileCheck',
+  'heart',
+  'star',
+  'bookmark',
+  'flag',
+  'tag',
+  'hash',
+  'atSign',
+  'link',
+  'clipboardList',
+  'mapPin',
+  'globe',
+  'building',
+  'briefcase',
+  'creditCard',
+  'dollarSign',
+  'zap',
+  'sparkles',
+  'info',
+] as const;
+export const sectionIconSchema = z.enum(SECTION_ICON_NAMES);
+export type SectionIconName = z.infer<typeof sectionIconSchema>;
+
+export interface SectionIconOption {
+  readonly name: SectionIconName;
+  readonly label: string;
+}
+
+export interface SectionIconGroup {
+  readonly label: string;
+  readonly icons: readonly SectionIconOption[];
+}
+
+export const SECTION_ICON_GROUPS = [
+  {
+    label: 'User & Account',
+    icons: [
+      { name: 'user', label: 'User' },
+      { name: 'users', label: 'Users' },
+      { name: 'userPlus', label: 'User plus' },
+      { name: 'userMinus', label: 'User minus' },
+      { name: 'userCheck', label: 'User check' },
+      { name: 'circleUser', label: 'User circle' },
+      { name: 'logIn', label: 'Log in' },
+      { name: 'logOut', label: 'Log out' },
+    ],
+  },
+  {
+    label: 'Media & Files',
+    icons: [
+      { name: 'file', label: 'File' },
+      { name: 'fileText', label: 'Text file' },
+      { name: 'folder', label: 'Folder' },
+      { name: 'folderOpen', label: 'Open folder' },
+      { name: 'image', label: 'Image' },
+      { name: 'camera', label: 'Camera' },
+      { name: 'paperclip', label: 'Paperclip' },
+    ],
+  },
+  {
+    label: 'Time & Calendar',
+    icons: [
+      { name: 'calendar', label: 'Calendar' },
+      { name: 'calendarClock', label: 'Calendar clock' },
+      { name: 'timer', label: 'Timer' },
+      { name: 'history', label: 'History' },
+    ],
+  },
+  {
+    label: 'Layout & View',
+    icons: [
+      { name: 'grid', label: 'Grid' },
+      { name: 'list', label: 'List' },
+      { name: 'table', label: 'Table' },
+      { name: 'columns', label: 'Columns' },
+      { name: 'maximize', label: 'Maximize' },
+      { name: 'minimize', label: 'Minimize' },
+      { name: 'eye', label: 'Eye' },
+      { name: 'eyeOff', label: 'Eye off' },
+      { name: 'search', label: 'Search' },
+    ],
+  },
+  {
+    label: 'Security',
+    icons: [
+      { name: 'shield', label: 'Shield' },
+      { name: 'shieldCheck', label: 'Shield check' },
+      { name: 'shieldPlus', label: 'Shield plus' },
+      { name: 'lock', label: 'Lock' },
+      { name: 'unlock', label: 'Unlock' },
+      { name: 'key', label: 'Key' },
+    ],
+  },
+  {
+    label: 'Healthcare & Medical',
+    icons: [
+      { name: 'hospital', label: 'Hospital' },
+      { name: 'ambulance', label: 'Ambulance' },
+      { name: 'stethoscope', label: 'Stethoscope' },
+      { name: 'briefcaseMedical', label: 'Medical briefcase' },
+      { name: 'heartPulse', label: 'Heart pulse' },
+      { name: 'activity', label: 'Activity' },
+      { name: 'pill', label: 'Pill' },
+      { name: 'tablets', label: 'Tablets' },
+      { name: 'syringe', label: 'Syringe' },
+      { name: 'testTube', label: 'Test tube' },
+      { name: 'testTubes', label: 'Test tubes' },
+      { name: 'flaskConical', label: 'Flask' },
+      { name: 'microscope', label: 'Microscope' },
+      { name: 'dna', label: 'DNA' },
+      { name: 'brain', label: 'Brain' },
+      { name: 'bone', label: 'Bone' },
+      { name: 'bandage', label: 'Bandage' },
+      { name: 'thermometer', label: 'Thermometer' },
+      { name: 'droplet', label: 'Droplet' },
+      { name: 'droplets', label: 'Droplets' },
+      { name: 'bed', label: 'Bed' },
+      { name: 'bedDouble', label: 'Double bed' },
+      { name: 'baby', label: 'Baby' },
+      { name: 'accessibility', label: 'Accessibility' },
+      { name: 'ear', label: 'Ear' },
+      { name: 'glasses', label: 'Glasses' },
+      { name: 'scan', label: 'Scan' },
+      { name: 'scanEye', label: 'Eye scan' },
+      { name: 'radiation', label: 'Radiation' },
+      { name: 'biohazard', label: 'Biohazard' },
+      { name: 'weight', label: 'Weight' },
+      { name: 'ruler', label: 'Ruler' },
+      { name: 'clipboard', label: 'Clipboard' },
+      { name: 'clipboardPlus', label: 'Clipboard plus' },
+      { name: 'clipboardCheck', label: 'Clipboard check' },
+      { name: 'fileHeart', label: 'Heart file' },
+      { name: 'filePlus', label: 'File plus' },
+      { name: 'fileCheck', label: 'File check' },
+    ],
+  },
+  {
+    label: 'Misc',
+    icons: [
+      { name: 'heart', label: 'Heart' },
+      { name: 'star', label: 'Star' },
+      { name: 'bookmark', label: 'Bookmark' },
+      { name: 'flag', label: 'Flag' },
+      { name: 'tag', label: 'Tag' },
+      { name: 'hash', label: 'Hash' },
+      { name: 'atSign', label: 'At sign' },
+      { name: 'link', label: 'Link' },
+      { name: 'clipboardList', label: 'Clipboard list' },
+      { name: 'mapPin', label: 'Map pin' },
+      { name: 'globe', label: 'Globe' },
+      { name: 'building', label: 'Building' },
+      { name: 'briefcase', label: 'Briefcase' },
+      { name: 'creditCard', label: 'Credit card' },
+      { name: 'dollarSign', label: 'Dollar sign' },
+      { name: 'zap', label: 'Zap' },
+      { name: 'sparkles', label: 'Sparkles' },
+      { name: 'info', label: 'Info' },
+    ],
+  },
+] as const satisfies readonly SectionIconGroup[];
+
 /** Category groupings for field types. */
 export type FieldCategory =
   | 'text'
@@ -297,6 +530,8 @@ interface BaseFieldDefinition {
   // readOnly?: boolean; // TODO: implement readOnly properly (see INTERNAL-TICKETS/readonly-fields.md)
   /** Layout width in a row grid (`full` | `half` | `third`). Defaults by field category. */
   width?: FieldWidth;
+  /** When true, the field does not inherit its containing section's width. */
+  overrideSectionWidth?: boolean;
   /** Validation rules applied to the field's response. */
   validators?: FieldValidator[];
   /** Conditional rules that control visibility, enabled state, or required state. */
@@ -474,6 +709,8 @@ export interface DisplayFieldDefinition {
   required?: never;
   /** Layout width in a row grid (`full` | `half` | `third`). Defaults by field category. */
   width?: FieldWidth;
+  /** When true, the field does not inherit its containing section's width. */
+  overrideSectionWidth?: boolean;
   /** Conditional rules controlling visibility. */
   rules?: ConditionalRule[];
   /** @deprecated Display fields do not accept answers; calculation has no effect. */
@@ -489,6 +726,7 @@ export interface DisplayFieldDefinition {
 export interface SectionFieldDefinition extends BaseFieldDefinition {
   fieldType: 'section';
   title?: string;
+  sectionIcon?: SectionIconName;
   /**
    * Collapse behaviour of the section in preview.
    * - `'collapsed'` — collapsible, starts collapsed.
@@ -602,7 +840,7 @@ const FIELD_TYPE_PROPERTIES: Record<FieldType, readonly string[]> = {
   openchoice: ['options', 'maxCustomOptions', 'otherLabel', 'optionLayout'],
   display: ['content'],
   // Organization category
-  section: ['title', 'fields', 'sectionCollapse'],
+  section: ['title', 'fields', 'sectionIcon', 'sectionCollapse'],
   pages: ['title', 'fields', 'autoAdvance'],
 };
 
@@ -614,6 +852,7 @@ const BASE_PROPERTIES = [
   'required',
   // 'readOnly', // TODO: implement readOnly properly
   'width',
+  'overrideSectionWidth',
   'validators',
   'calculation',
   'rules',
@@ -731,6 +970,7 @@ const baseFieldProps = {
   required: z.optional(z.union([z.boolean(), z.literal('soft')])),
   // readOnly: z.optional(z.boolean()), // TODO: implement readOnly properly
   width: z.optional(z.enum(['full', 'half', 'third'])),
+  overrideSectionWidth: z.optional(z.boolean()),
   validators: z.optional(z.array(fieldValidatorSchema)),
   rules: z.optional(z.array(conditionalRuleSchema)),
   /** JS expression that auto-computes this field's value (requires dangerouslyAllowJS on form). */
@@ -890,6 +1130,7 @@ const openChoiceFieldSchema = z.strictObject({
 const displayBaseFieldProps = {
   id: z.string(),
   width: z.optional(z.enum(['full', 'half', 'third'])),
+  overrideSectionWidth: z.optional(z.boolean()),
   rules: z.optional(z.array(conditionalRuleSchema)),
   _sourceData: z.optional(z.unknown()),
   _conversionWarnings: z.optional(z.array(z.unknown())),
@@ -907,6 +1148,7 @@ const sectionFieldSchema = z.strictObject({
   ...baseFieldProps,
   fieldType: z.literal('section'),
   title: z.optional(z.string()),
+  sectionIcon: z.optional(sectionIconSchema),
   sectionCollapse: z.optional(z.enum(['collapsed', 'expanded', 'disabled'])),
   fields: z.optional(
     z.lazy(

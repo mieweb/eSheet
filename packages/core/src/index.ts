@@ -1,6 +1,8 @@
 export {
   // Constants
   FIELD_TYPES,
+  SECTION_ICON_NAMES,
+  SECTION_ICON_GROUPS,
   TEXT_INPUT_TYPES,
   CONDITION_OPERATORS,
   CONDITIONAL_EFFECTS,
@@ -8,6 +10,7 @@ export {
 
   // Zod schemas
   fieldTypeSchema,
+  sectionIconSchema,
   textInputTypeSchema,
   fieldOptionSchema,
   matrixRowSchema,
@@ -23,6 +26,9 @@ export {
 
   // Types
   type FieldType,
+  type SectionIconName,
+  type SectionIconOption,
+  type SectionIconGroup,
   type FieldCategory,
   type AnswerType,
   type TextInputType,

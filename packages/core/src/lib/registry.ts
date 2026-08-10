@@ -305,6 +305,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     hasMatrix: false,
     defaultProps: {
       fields: [],
+      sectionIcon: 'folder',
       sectionCollapse: 'expanded',
       width: 'full',
     },
