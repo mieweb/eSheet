@@ -1,6 +1,6 @@
 {
   "name": "@esheet/renderer",
-  "version": "0.0.4-4",
+  "version": "0.0.5",
   "repository": {
     "type": "git",
     "url": "https://github.com/mieweb/eSheet"
@@ -38,9 +38,9 @@
     ]
   },
   "dependencies": {
-    "@esheet/adapters": "0.0.4-4",
-    "@esheet/core": "0.0.4-4",
-    "@esheet/fields": "0.0.4-4",
+    "@esheet/adapters": "0.0.5",
+    "@esheet/core": "0.0.5",
+    "@esheet/fields": "0.0.5",
     "js-yaml": "^4.1.0"
   },
   "peerDependencies": {
