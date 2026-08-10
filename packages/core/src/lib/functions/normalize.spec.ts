@@ -215,6 +215,56 @@ describe('normalizeDefinition', () => {
     expect(getInheritedSectionWidth(result, 'deep')).toBe('third');
   });
 
+  it('should inherit section width when the child override is false', () => {
+    const result = normalizeDefinition([
+      {
+        id: 'page-1',
+        fields: [
+          {
+            id: 'section',
+            fieldType: 'section',
+            width: 'half',
+            fields: [
+              {
+                id: 'child',
+                fieldType: 'text',
+                width: 'third',
+                overrideSectionWidth: false,
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    expect(getInheritedSectionWidth(result, 'child')).toBe('half');
+  });
+
+  it('should not inherit section width when the child opts out', () => {
+    const result = normalizeDefinition([
+      {
+        id: 'page-1',
+        fields: [
+          {
+            id: 'section',
+            fieldType: 'section',
+            width: 'half',
+            fields: [
+              {
+                id: 'child',
+                fieldType: 'text',
+                width: 'third',
+                overrideSectionWidth: true,
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    expect(getInheritedSectionWidth(result, 'child')).toBeUndefined();
+  });
+
   it('should handle section with empty fields array', () => {
     const fields: FieldDefinition[] = [
       { id: 's1', fieldType: 'section', fields: [] },
