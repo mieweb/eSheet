@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { render, act, cleanup } from '@testing-library/react';
+import { fireEvent } from '@testing-library/react';
 import { EsheetRenderer, type EsheetRendererHandle } from './EsheetRenderer.js';
 
 afterEach(cleanup);
@@ -313,6 +314,170 @@ describe('EsheetRenderer', () => {
 
     expect(result.errors).toEqual([]);
     expect(result.response).toEqual({ trigger: { answer: 'disabled' } });
+  });
+
+  it('renders independently configured top and bottom navigation', async () => {
+    const formDataInput = {
+      id: 'navigation-visibility',
+      pages: [
+        { id: 'page-1', title: 'Case', fields: [] },
+        { id: 'page-2', title: 'Absence & Restrictions', fields: [] },
+      ],
+    };
+
+    const { container, rerender } = render(
+      <EsheetRenderer
+        formDataInput={formDataInput}
+        topNavigation
+        bottomNavigation={false}
+      />
+    );
+
+    expect(container.querySelector('.pages-nav-top')).not.toBeNull();
+    expect(container.querySelector('.pages-nav-footer')).toBeNull();
+
+    rerender(
+      <EsheetRenderer
+        formDataInput={formDataInput}
+        topNavigation={false}
+        bottomNavigation={false}
+      />
+    );
+
+    expect(container.querySelector('.pages-nav-top')).toBeNull();
+    expect(container.querySelector('.pages-nav-footer')).toBeNull();
+  });
+
+  it('uses page titles and shares navigation validation across both controls', async () => {
+    const formDataInput = {
+      id: 'navigation-validation',
+      pages: [
+        {
+          id: 'page-1',
+          title: 'Case',
+          fields: [
+            {
+              id: 'required-field',
+              fieldType: 'text',
+              question: 'Required field',
+              required: true,
+            },
+          ],
+        },
+        {
+          id: 'page-2',
+          title: 'Absence & Restrictions',
+          fields: [
+            { id: 'second-field', fieldType: 'text', question: 'Second' },
+          ],
+        },
+        { id: 'page-3', fields: [] },
+      ],
+    };
+
+    const { container, rerender } = render(
+      <EsheetRenderer
+        formDataInput={formDataInput}
+        topNavigation
+        bottomNavigation
+        validateNavigation
+      />
+    );
+
+    const topNavigationButton = container.querySelector(
+      '.pages-nav-top button:nth-child(2)'
+    );
+    expect(topNavigationButton?.textContent).toBe('Absence & Restrictions');
+
+    await act(async () => {
+      fireEvent.click(topNavigationButton as HTMLButtonElement);
+    });
+
+    expect(
+      container.querySelector('[data-field-id="required-field"]')
+    ).not.toBeNull();
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain(
+      '1 required field'
+    );
+
+    const bottomNextButton = Array.from(
+      container.querySelectorAll('.pages-nav-footer button')
+    ).find((button) => button.textContent?.includes('Next'));
+
+    await act(async () => {
+      fireEvent.click(bottomNextButton as HTMLButtonElement);
+    });
+
+    expect(
+      container.querySelector('[data-field-id="required-field"]')
+    ).not.toBeNull();
+
+    rerender(
+      <EsheetRenderer
+        formDataInput={formDataInput}
+        topNavigation
+        bottomNavigation
+        validateNavigation={false}
+      />
+    );
+
+    const nextButtonWithoutValidation = Array.from(
+      container.querySelectorAll('.pages-nav-footer button')
+    ).find((button) => button.textContent?.includes('Next'));
+
+    await act(async () => {
+      fireEvent.click(nextButtonWithoutValidation as HTMLButtonElement);
+    });
+
+    expect(
+      container.querySelector('[data-field-id="second-field"]')
+    ).not.toBeNull();
+
+    await act(async () => {
+      fireEvent.click(
+        container.querySelector(
+          '.pages-nav-top button:first-child'
+        ) as HTMLButtonElement
+      );
+    });
+
+    expect(
+      container.querySelector('[data-field-id="required-field"]')
+    ).not.toBeNull();
+  });
+
+  it('keeps submit validation independent from navigation validation', async () => {
+    const onSubmit = vi.fn();
+    const { container } = render(
+      <EsheetRenderer
+        formDataInput={{
+          id: 'submit-validation',
+          pages: [
+            {
+              id: 'page-1',
+              fields: [
+                {
+                  id: 'required-field',
+                  fieldType: 'text',
+                  question: 'Required field',
+                  required: true,
+                },
+              ],
+            },
+          ],
+        }}
+        validateNavigation={false}
+        onSubmit={onSubmit}
+      />
+    );
+
+    await act(async () => {
+      fireEvent.click(
+        container.querySelector('.renderer-submit button') as HTMLButtonElement
+      );
+    });
+
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 });
 

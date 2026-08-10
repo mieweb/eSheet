@@ -6,7 +6,7 @@ slug: /field-types/pages
 
 Pages are a built-in form structure that divides a form into multiple navigable sheets. Unlike field types such as `section`, pages are a **first-class form primitive** — they live at the top level of every form definition rather than inside the field tree.
 
-Every form definition has a `pages` array. A form with a single page behaves identically to a traditional single-scroll form. A form with multiple pages gets automatic Previous / Next navigation in the renderer.
+Every form definition has a `pages` array. A form with a single page behaves identically to a traditional single-scroll form. A multi-page renderer can show page-title tabs at the top, Previous / Next controls at the bottom, or both.
 
 ## Page Entry Properties
 
@@ -58,7 +58,7 @@ A form with one page behaves exactly like a classic single-scroll form — no na
 
 ### Multi-page form
 
-A form with two or more pages shows a navigation bar (← Previous · X / Y · Next →) at the bottom of the renderer.
+A form with two or more pages can show top page tabs and/or a navigation bar (← Previous · X / Y · Next →) at the bottom of the renderer.
 
 ```json
 {
@@ -96,12 +96,31 @@ A form with two or more pages shows a navigation bar (← Previous · X / Y · N
 
 Implemented in [`RendererBody`](../../../packages/renderer/src/lib/components/RendererBody.tsx) and [`PageNavigator`](../../../packages/fields/src/lib/PageNavigator.tsx).
 
-| Condition            | Behavior                                                                                     |
-| -------------------- | -------------------------------------------------------------------------------------------- |
-| `pages.length === 1` | Fields render directly, no navigation UI shown                                               |
-| `pages.length > 1`   | `PageNavigator` wraps the active page with a bottom bar: **← Previous · N / total · Next →** |
-| First page           | "Previous" button is disabled                                                                |
-| Last page            | "Next →" button is replaced with "Last page" text                                            |
+Configure navigation on the renderer component:
+
+```tsx
+<EsheetRenderer
+  formDataInput={formDefinition}
+  topNavigation={true}
+  bottomNavigation={false}
+  validateNavigation={true}
+/>
+```
+
+| Prop                 | Default | Behavior                                                                                                        |
+| -------------------- | ------- | --------------------------------------------------------------------------------------------------------------- |
+| `topNavigation`      | `false` | Shows page-title tabs above the active page.                                                                    |
+| `bottomNavigation`   | `true`  | Shows Previous / page count / Next controls below the active page.                                              |
+| `validateNavigation` | `true`  | Blocks forward movement from either navigation surface when required fields on the current page are unanswered. |
+
+Navigation validation is separate from submit validation. Turning `validateNavigation` off allows page changes but does not allow an invalid form to submit or change the behavior of `getValidResponse()`.
+
+| Condition            | Behavior                                                       |
+| -------------------- | -------------------------------------------------------------- |
+| `pages.length === 1` | Fields render directly, no navigation UI shown                 |
+| `pages.length > 1`   | `PageNavigator` renders the enabled top tabs and/or bottom bar |
+| First page           | "Previous" button is disabled                                  |
+| Last page            | "Next →" button is replaced with "Last page" text              |
 
 Visibility rules (`rules`) on individual fields are evaluated per page — hidden fields are excluded from the rendered output on that page.
 

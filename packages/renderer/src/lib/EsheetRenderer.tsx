@@ -86,6 +86,12 @@ export interface EsheetRendererProps {
    * already controls sizing. Defaults to `true`.
    */
   fitToContainer?: boolean;
+  /** Show page tabs above the active page when rendering multiple pages. */
+  topNavigation?: boolean;
+  /** Show Previous / Next controls below the active page. */
+  bottomNavigation?: boolean;
+  /** Block forward page navigation while required fields on the current page are unanswered. */
+  validateNavigation?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -232,6 +238,9 @@ const EsheetRendererInner = React.forwardRef<
     allowDangerousJS = false,
     collab,
     fitToContainer = true,
+    topNavigation = false,
+    bottomNavigation = true,
+    validateNavigation = true,
   },
   ref
 ) {
@@ -372,7 +381,14 @@ const EsheetRendererInner = React.forwardRef<
   return (
     <div className={rootClasses}>
       <ZodIssuesPanel issues={validationErrors} />
-      <RendererBody form={formStore} ui={uiStore} collab={collab} />
+      <RendererBody
+        form={formStore}
+        ui={uiStore}
+        collab={collab}
+        topNavigation={topNavigation}
+        bottomNavigation={bottomNavigation}
+        validateNavigation={validateNavigation}
+      />
       {onSubmit && (
         <div className="renderer-submit ms:mt-6 ms:flex ms:justify-end">
           <button
