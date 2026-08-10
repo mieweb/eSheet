@@ -19,6 +19,24 @@ function createProps(definition: Record<string, unknown>): FieldComponentProps {
 }
 
 describe('SectionField', () => {
+  it('defaults absent sectionCollapse to an expanded collapsible section', () => {
+    render(
+      <SectionField
+        {...createProps({
+          id: 'details',
+          fieldType: 'section',
+          title: 'Details',
+        })}
+        nestedChildren={<div>Child field</div>}
+      />
+    );
+
+    expect(
+      screen.getByRole('button', { name: 'Collapse Details' })
+    ).toBeTruthy();
+    expect(screen.queryByText('Child field')).not.toBeNull();
+  });
+
   it('renders the configured Lucide icon and expanded indicator', () => {
     const { container } = render(
       <SectionField
