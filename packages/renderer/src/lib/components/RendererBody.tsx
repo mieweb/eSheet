@@ -8,15 +8,28 @@ export interface RendererBodyProps {
   ui: UIStore;
   /** Optional host-supplied collaboration decorations (see EsheetRendererProps). */
   collab?: CollabDecorations;
+  /** Show page tabs above the active page. */
+  topNavigation?: boolean;
+  /** Show Previous / Next controls below the active page. */
+  bottomNavigation?: boolean;
+  /** Block forward navigation when required fields on the current page are unanswered. */
+  validateNavigation?: boolean;
 }
 
 /**
  * RendererBody - Iterates over pages and renders visible fields.
  *
  * Single-page forms render fields directly.
- * Multi-page forms use PageNavigator for bottom-only Prev / X of Y / Next navigation.
+ * Multi-page forms use PageNavigator for optional top tabs and bottom navigation.
  */
-export function RendererBody({ form, ui, collab }: RendererBodyProps) {
+export function RendererBody({
+  form,
+  ui,
+  collab,
+  topNavigation = false,
+  bottomNavigation = true,
+  validateNavigation = true,
+}: RendererBodyProps) {
   const normalized = React.useSyncExternalStore(
     (cb) => form.subscribe(cb),
     () => form.getState().normalized,
@@ -39,6 +52,7 @@ export function RendererBody({ form, ui, collab }: RendererBodyProps) {
   }, [pages.length, currentPagesIdx]);
 
   const isMultiPage = pages.length > 1;
+  const hasPageNavigation = topNavigation || bottomNavigation;
 
   const handlePrev = React.useCallback(
     () => setCurrentPagesIdx((p) => Math.max(p - 1, 0)),
@@ -90,7 +104,7 @@ export function RendererBody({ form, ui, collab }: RendererBodyProps) {
     <FieldNode key={id} id={id} form={form} ui={ui} collab={collab} />
   ));
 
-  if (!isMultiPage) {
+  if (!isMultiPage || !hasPageNavigation) {
     return (
       <FieldGrid
         className="canvas-fields renderer-body"
@@ -105,9 +119,16 @@ export function RendererBody({ form, ui, collab }: RendererBodyProps) {
     <PageNavigator
       currentIdx={currentPagesIdx}
       total={pages.length}
+      pageTitles={pages.map(
+        (page, index) => page.title?.trim() || `Sheet ${index + 1}`
+      )}
       onPrev={handlePrev}
       onNext={handleNext}
+      onPageChange={setCurrentPagesIdx}
       blockedCount={unfilledRequiredCount}
+      topNavigation={topNavigation}
+      bottomNavigation={bottomNavigation}
+      validateNavigation={validateNavigation}
     >
       <FieldGrid
         className="canvas-fields renderer-body ms:px-0"

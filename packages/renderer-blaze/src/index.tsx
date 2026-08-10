@@ -32,11 +32,24 @@ function toRendererProps(data: unknown): EsheetRendererProps {
   const initialResponses = isRecord(data.initialResponses)
     ? (data.initialResponses as EsheetRendererProps['initialResponses'])
     : undefined;
+  const topNavigation =
+    typeof data.topNavigation === 'boolean' ? data.topNavigation : undefined;
+  const bottomNavigation =
+    typeof data.bottomNavigation === 'boolean'
+      ? data.bottomNavigation
+      : undefined;
+  const validateNavigation =
+    typeof data.validateNavigation === 'boolean'
+      ? data.validateNavigation
+      : undefined;
 
   return {
     formDataInput: formDataInput as EsheetRendererProps['formDataInput'],
     className,
     initialResponses,
+    topNavigation,
+    bottomNavigation,
+    validateNavigation,
   };
 }
 
