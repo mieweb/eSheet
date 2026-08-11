@@ -79,10 +79,3 @@
     font: inherit;
   }
 }
-
-@media (width >= 64rem) {
-  .ms-builder-root .panel-tools-wrap,
-  .ms-builder-root .panel-editor-wrap {
-    display: flex;
-  }
-}
