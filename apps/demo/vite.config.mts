@@ -2,8 +2,21 @@
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
-import { existsSync, readFileSync, readdirSync } from 'fs';
+import { createRequire } from 'module';
+import { existsSync, readFileSync, readdirSync, realpathSync } from 'fs';
 import { join, resolve } from 'path';
+
+const require = createRequire(import.meta.url);
+const prosemirrorModelPath = require.resolve('prosemirror-model', {
+  paths: [
+    realpathSync(
+      resolve(
+        import.meta.dirname,
+        '../../packages/field-kerebron/node_modules/@kerebron/editor'
+      )
+    ),
+  ],
+});
 
 /**
  * Serves Kerebron WASM directly from its npm package during development and
@@ -124,7 +137,12 @@ export default defineConfig(({ command, mode }) => {
     // Explicit aliases are needed because Vite's commonjs resolver doesn't respect
     // custom export conditions (@esheet/source) during production builds.
     resolve: {
+      dedupe: ['prosemirror-model'],
       alias: [
+        {
+          find: 'prosemirror-model',
+          replacement: prosemirrorModelPath,
+        },
         {
           find: '@esheet/adapters',
           replacement: resolve(
