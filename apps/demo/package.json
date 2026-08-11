@@ -2,18 +2,27 @@
   "name": "@esheet/demo",
   "version": "0.0.1",
   "private": true,
-  "nx": {
-    "name": "demo"
+  "scripts": {
+    "build": "pnpm build:css && vite build",
+    "build:css": "pnpm --filter @esheet/builder --filter @esheet/fields --filter @esheet/renderer build:css",
+    "dev": "pnpm build:css && vite",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "typecheck": "tsc --build --emitDeclarationOnly --force"
   },
   "dependencies": {
-    "@esheet/adapters": "*",
-    "@esheet/builder": "*",
-    "@esheet/core": "*",
-    "@esheet/field-health": "*",
-    "@esheet/field-kerebron": "*",
-    "@esheet/fields": "*",
-    "@esheet/renderer": "*",
+    "@esheet/adapters": "workspace:*",
+    "@esheet/builder": "workspace:*",
+    "@esheet/core": "workspace:*",
+    "@esheet/field-health": "workspace:*",
+    "@esheet/field-kerebron": "workspace:*",
+    "@esheet/fields": "workspace:*",
+    "@esheet/renderer": "workspace:*",
+    "@kerebron/wasm": "^0.8.9",
     "@mieweb/ui": "0.7.1",
+    "lucide-react": "^1.31.0",
+    "mermaid": "^11.16.1",
+    "papaparse": "^5.5.4",
     "react-router-dom": "^7.18.2"
   }
 }

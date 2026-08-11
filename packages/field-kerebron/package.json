@@ -8,6 +8,11 @@
   "publishConfig": {
     "access": "public"
   },
+  "scripts": {
+    "build": "vite build",
+    "lint": "eslint .",
+    "typecheck": "tsc --build --emitDeclarationOnly"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -25,13 +30,8 @@
     "dist",
     "!**/*.tsbuildinfo"
   ],
-  "nx": {
-    "tags": [
-      "scope:field-kerebron"
-    ]
-  },
   "dependencies": {
-    "@esheet/core": "0.0.5",
+    "@esheet/core": "workspace:*",
     "@kerebron/editor": "^0.8.9",
     "@kerebron/editor-kits": "^0.8.9",
     "@kerebron/editor-react": "^0.8.9",

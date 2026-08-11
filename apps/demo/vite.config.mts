@@ -12,7 +12,7 @@ import { join, resolve } from 'path';
 function kerebronWasmPlugin(command: 'build' | 'serve'): Plugin {
   const assetsDir = resolve(
     import.meta.dirname,
-    '../../node_modules/@kerebron/wasm/assets'
+    'node_modules/@kerebron/wasm/assets'
   );
 
   function visitWasm(
@@ -180,6 +180,14 @@ export default defineConfig(({ command, mode }) => {
             import.meta.dirname,
             '../../node_modules/@mieweb/ui'
           ),
+        },
+        {
+          find: 'mermaid',
+          replacement: resolve(import.meta.dirname, 'node_modules/mermaid'),
+        },
+        {
+          find: 'papaparse',
+          replacement: resolve(import.meta.dirname, 'node_modules/papaparse'),
         },
       ],
     },

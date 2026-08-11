@@ -1,24 +1,30 @@
 {
   "name": "@esheet/source",
   "version": "0.0.0",
+  "packageManager": "pnpm@10.34.5",
   "license": "MIT",
   "scripts": {
+    "build": "pnpm --filter './packages/**' --recursive --if-present build",
     "build:cf": "bash deploy/scripts/cf-build.sh",
-    "postinstall": "node -e \"const fs=require('fs');const src='node_modules/@mieweb/ui/dist/index.d.cts';const dst=src.replace('.d.cts','.d.ts');if(fs.existsSync(src)&&!fs.existsSync(dst))fs.copyFileSync(src,dst);\""
+    "build:demo": "pnpm --filter @esheet/demo... --recursive --if-present build",
+    "build:docs": "pnpm --filter esheet-docs build",
+    "dev:demo": "pnpm --filter @esheet/demo dev",
+    "dev:docs": "pnpm --filter esheet-docs dev",
+    "dev:main": "pnpm --parallel --filter './apps/*' run dev",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "pnpm --recursive --if-present lint",
+    "postinstall": "node -e \"const fs=require('fs');const src='node_modules/@mieweb/ui/dist/index.d.cts';const dst=src.replace('.d.cts','.d.ts');if(fs.existsSync(src)&&!fs.existsSync(dst))fs.copyFileSync(src,dst);\"",
+    "pretest": "pnpm build",
+    "test": "pnpm --filter './packages/**' --recursive --if-present test",
+    "typecheck": "pnpm --recursive --workspace-concurrency=1 --if-present typecheck"
   },
   "private": true,
   "devDependencies": {
-    "@microsoft/api-extractor": "7.58.12",
     "@babel/core": "^7.29.0",
     "@babel/preset-react": "^7.28.5",
     "@eslint/js": "^9.8.0",
-    "@nx/eslint": "23.1.1",
-    "@nx/eslint-plugin": "23.1.1",
-    "@nx/js": "23.1.1",
-    "@nx/react": "23.1.1",
-    "@nx/vite": "23.1.1",
-    "@nx/vitest": "23.1.1",
-    "@nx/web": "23.1.1",
+    "@microsoft/api-extractor": "7.58.12",
     "@swc-node/register": "1.11.1",
     "@swc/cli": "~0.8.0",
     "@swc/core": "1.15.8",
@@ -43,33 +49,14 @@
     "jiti": "2.4.2",
     "jsdom": "^29.1.1",
     "jsonc-eslint-parser": "^2.1.0",
-    "nx": "23.1.1",
     "prettier": "^2.6.2",
     "tailwindcss": "^4.3.3",
     "tslib": "^2.3.0",
     "typescript": "~5.9.2",
     "typescript-eslint": "^8.40.0",
-    "verdaccio": "6.9.2",
     "vite": "^8.2.1",
     "vite-plugin-dts": "^5.0.3",
     "vitest": "4.1.10"
-  },
-  "workspaces": [
-    "packages/*",
-    "apps/*"
-  ],
-  "nx": {
-    "includedScripts": [],
-    "targets": {
-      "local-registry": {
-        "executor": "@nx/js:verdaccio",
-        "options": {
-          "port": 4873,
-          "config": ".verdaccio/config.yml",
-          "storage": "tmp/local-registry/storage"
-        }
-      }
-    }
   },
   "dependencies": {
     "@mieweb/ui": "0.7.1",
@@ -86,5 +73,20 @@
     "@xhmikosr/decompress": "11.1.4",
     "shell-quote": "1.10.0",
     "websocket-driver": "0.7.5"
+  },
+  "pnpm": {
+    "overrides": {
+      "axios": "1.13.6",
+      "@xhmikosr/decompress": "11.1.4",
+      "shell-quote": "1.10.0",
+      "websocket-driver": "0.7.5"
+    },
+    "ignoredBuiltDependencies": [
+      "@mieweb/ui",
+      "@parcel/watcher",
+      "@swc/core",
+      "core-js",
+      "protobufjs"
+    ]
   }
 }

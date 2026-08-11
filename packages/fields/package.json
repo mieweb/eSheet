@@ -27,20 +27,20 @@
     "**/component-registry.js"
   ],
   "scripts": {
-    "build:css": "cd ../.. && npx @tailwindcss/cli -i packages/fields/src/index.css -o packages/fields/src/index.output.css",
-    "build:css:watch": "cd ../.. && npx @tailwindcss/cli -i packages/fields/src/index.css -o packages/fields/src/index.output.css --watch"
+    "prebuild": "pnpm build:css",
+    "build": "vite build",
+    "build:css": "tailwindcss -i src/index.css -o src/index.output.css",
+    "build:css:watch": "tailwindcss -i src/index.css -o src/index.output.css --watch",
+    "lint": "eslint .",
+    "test": "vitest",
+    "typecheck": "tsc --build --emitDeclarationOnly"
   },
   "files": [
     "dist",
     "!**/*.tsbuildinfo"
   ],
-  "nx": {
-    "tags": [
-      "scope:fields"
-    ]
-  },
   "dependencies": {
-    "@esheet/core": "0.0.5",
+    "@esheet/core": "workspace:*",
     "@mieweb/ui": "0.7.1",
     "lucide-react": "^1.31.0",
     "react": "^19.2.4",

@@ -5,14 +5,7 @@
     "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo",
     "jsx": "react-jsx",
     "lib": ["dom"],
-    "types": [
-      "node",
-      "react",
-      "react-dom",
-      "@nx/react/typings/cssmodule.d.ts",
-      "@nx/react/typings/image.d.ts",
-      "vite/client"
-    ],
+    "types": ["node", "react", "react-dom", "vite/client"],
     "rootDir": "src",
     "module": "esnext",
     "moduleResolution": "bundler",

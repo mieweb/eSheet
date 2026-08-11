@@ -34,10 +34,6 @@ permissions:
   id-token: write
 
 jobs:
-  # ------------------------------------------------------------------
-  # Job 1: quality gate — must pass before the bot is allowed to push.
-  # Only runs for a real full-release dispatch; dry-run skips it.
-  # ------------------------------------------------------------------
   check:
     if: github.event_name == 'workflow_dispatch' && inputs.mode == 'full-release'
     runs-on: ubuntu-latest
@@ -49,23 +45,22 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'npm'
 
-      - run: npm ci --legacy-peer-deps
+      - name: Enable pinned pnpm
+        run: |
+          corepack enable
+          corepack install
+          pnpm --version
 
-      - name: Lint, test, typecheck
-        run: npx nx run-many -t lint test typecheck
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm test
+      - run: pnpm typecheck
+      - run: pnpm build
 
-  # ------------------------------------------------------------------
-  # Job 2: release — only runs after `check` succeeds (or is skipped
-  # for dry-run / PR-merge paths).  The bot can NEVER push to main
-  # unless this job runs, and it will not run if `check` failed.
-  # ------------------------------------------------------------------
   release:
     needs: [check]
-    # `check` is skipped for dry-run and PR-merge; treat skipped as success.
-    # The bot can NEVER push to main unless this job runs, and it will not
-    # run if `check` failed.
     if: >-
       always() && (
         needs.check.result == 'success' ||
@@ -86,10 +81,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'npm'
           registry-url: 'https://registry.npmjs.org'
 
-      - run: npm ci --legacy-peer-deps
+      - name: Enable pinned pnpm
+        run: |
+          corepack enable
+          corepack install
+          pnpm --version
+
+      - run: pnpm install --frozen-lockfile
 
       - name: Configure git identity
         if: github.event_name == 'workflow_dispatch' && inputs.mode == 'full-release'
@@ -114,3 +114,4 @@ jobs:
         run: node release/release.mjs --bump=${{ inputs.bump }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

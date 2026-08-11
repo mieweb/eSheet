@@ -25,22 +25,23 @@
     "**/*.css"
   ],
   "scripts": {
-    "build:css": "cd ../.. && npx @tailwindcss/cli -i packages/builder/src/index.css -o packages/builder/src/index.output.css",
-    "build:css:watch": "cd ../.. && npx @tailwindcss/cli -i packages/builder/src/index.css -o packages/builder/src/index.output.css --watch"
+    "prebuild": "pnpm build:css",
+    "build": "vite build",
+    "build:css": "tailwindcss -i src/index.css -o src/index.output.css",
+    "build:css:watch": "tailwindcss -i src/index.css -o src/index.output.css --watch",
+    "lint": "eslint .",
+    "pretypecheck": "pnpm --filter @esheet/fields build",
+    "test": "vitest",
+    "typecheck": "tsc --build --emitDeclarationOnly --force"
   },
   "files": [
     "dist",
     "!**/*.tsbuildinfo"
   ],
-  "nx": {
-    "tags": [
-      "scope:builder"
-    ]
-  },
   "dependencies": {
-    "@esheet/adapters": "0.0.5",
-    "@esheet/core": "0.0.5",
-    "@esheet/fields": "0.0.5",
+    "@esheet/adapters": "workspace:*",
+    "@esheet/core": "workspace:*",
+    "@esheet/fields": "workspace:*",
     "@mieweb/ui": "0.7.1",
     "@monaco-editor/react": "^4.7.0",
     "js-yaml": "^5.2.3",

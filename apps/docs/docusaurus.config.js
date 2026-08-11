@@ -4,7 +4,7 @@ import { resolve } from 'path';
 import { themes as prismThemes } from 'prism-react-renderer';
 
 // Load .env.local from workspace root — try __dirname-relative first,
-// then fall back to CWD-relative (handles nx run-many from repo root).
+// then fall back to CWD-relative for direct and workspace script execution.
 dotenv.config({ path: resolve(__dirname, '../../.env.local') });
 dotenv.config({ path: resolve(process.cwd(), '.env.local') });
 

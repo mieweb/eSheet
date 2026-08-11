@@ -9,6 +9,12 @@
   "publishConfig": {
     "access": "public"
   },
+  "scripts": {
+    "build": "tsc --build tsconfig.lib.json",
+    "lint": "eslint .",
+    "test": "vitest",
+    "typecheck": "tsc --build --emitDeclarationOnly"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -26,14 +32,11 @@
     "dist",
     "!**/*.tsbuildinfo"
   ],
-  "nx": {
-    "tags": [
-      "scope:adapters"
-    ]
-  },
   "dependencies": {
-    "@esheet/core": "0.0.5",
+    "@esheet/core": "workspace:*",
     "tslib": "^2.3.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "vitest": "4.1.10"
+  }
 }

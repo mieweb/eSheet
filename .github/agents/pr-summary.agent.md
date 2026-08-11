@@ -37,7 +37,7 @@ You are a PR documentation helper subagent. Produce a PR description by inspecti
 
 ## How to Test
 
-{Step-by-step reviewer instructions. Include Nx commands, e.g. `pnpm nx run builder:test`.}
+{Step-by-step reviewer instructions. Include pnpm commands, e.g. `pnpm --filter @esheet/builder test`.}
 
 ## Related Issues
 

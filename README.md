@@ -9,7 +9,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-first-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=061b23)](https://react.dev/)
 
-eSheet is a TypeScript-first Nx monorepo providing composable packages for embedding a visual form builder and renderer into any React application — no lock-in, no required backend.
+eSheet is a TypeScript-first pnpm workspace providing composable packages for embedding a visual form builder and renderer into any React application — no lock-in, no required backend.
 
 - **[Live Demo](https://esheet.mieweb.org/demo/)** — builder + renderer playground
 - **[Documentation](https://esheet.mieweb.org/)** — full API & usage docs
@@ -107,122 +107,108 @@ mSheet/
 
 ## Development
 
-This workspace uses [Nx](https://nx.dev). All tasks run through Nx — do not invoke `tsc`, `vite`, or `vitest` directly.
+This repository uses pnpm workspaces with explicit package scripts.
 
 ### Prerequisites
 
 - Node.js ≥ 20
-- npm workspaces (builtin)
+- Corepack
 
 ### Install
 
 ```bash
-npm install
+corepack enable
+pnpm install
 ```
 
 ### Common tasks
 
 ```bash
 # Build all packages
-npx nx run-many -t build
+pnpm build
 
 # Run tests across all packages
-npx nx run-many -t test
+pnpm test
 
 # Lint all projects
-npx nx run-many -t lint
+pnpm lint
 
 # Type-check all projects
-npx nx run-many -t typecheck
+pnpm typecheck
 
 # Serve the demo app locally
-npx nx serve demo
+pnpm dev:demo
 
-# Run only tasks affected by your changes
-npx nx affected -t lint,test,build
+# Check formatting
+pnpm format:check
 ```
 
 ### Build a single package
 
 ```bash
 # Build a single package
-npx nx build @esheet/core
-npx nx build @esheet/builder
+pnpm --filter @esheet/core build
+pnpm --filter @esheet/builder build
 ```
 
 ### Test your changes against GitHub Actions workflows locally
 
-Before committing, test your changes locally using `gh act`. This validates formatting, linting, tests, and (optionally) deployment.
+Before committing, test your changes locally using `gh act`. This validates formatting, linting, tests, builds, typechecks, and release dry-runs.
 
 Quick commands:
 
 ```bash
-# Test CI workflow (lint, test, build, typecheck)
-gh act push -W .github/workflows/ci.yml --pull=false
+# Test CI workflow (format, lint, test, build, typecheck)
+gh act pull_request -W .github/workflows/ci.yml --pull=false
 
-# Test release workflow (all checks + dry-run release — does not publish)
-gh act push -W .github/workflows/release.yml --pull=false
+# Test release workflow (dry-run release — does not publish)
+gh act workflow_dispatch -W .github/workflows/release.yml -e release/act-dry-run-event.json --pull=false
 
 # Test PR title validation
 printf '{"pull_request":{"title":"fix(core): my change","number":1}}\n' > /tmp/pr-event.json
 gh act pull_request -e /tmp/pr-event.json -W .github/workflows/pr-title-check.yml --pull=false
 ```
 
-For full setup instructions, deploy testing against a local Docker container, and troubleshooting, see [.github/workflows/TESTING-LOCALLY.md](.github/workflows/TESTING-LOCALLY.md).
+For full setup instructions and troubleshooting, see [.github/workflows/TESTING-LOCALLY.md](.github/workflows/TESTING-LOCALLY.md).
 
 ### Run the demo app
 
 ```bash
-npx nx serve demo
-# → http://localhost:4200
+pnpm dev:demo
+# → http://localhost:5173
 ```
 
 ### Run the docs site
 
 ```bash
-npx nx serve docs
+pnpm dev:docs
 # → http://localhost:3000
 ```
 
 ### Run docs and demo together
 
 ```bash
-npx nx run-many -t dev -p app-*
-# Demo → http://localhost:4200
+pnpm --parallel --filter @esheet/demo --filter esheet-docs dev
+# Demo → http://localhost:5173
 # Docs → http://localhost:3000
 ```
 
 This runs both local dev servers at the same time in one terminal. Use Ctrl+C to stop both.
 
-### Production Static Deploy (Nginx)
-
-```bash
-chmod +x deploy/scripts/manual/setup-nginx.sh
-./deploy/scripts/manual/setup-nginx.sh
-
-chmod +x deploy/scripts/workflow/atomic-deploy.sh
-./deploy/scripts/workflow/atomic-deploy.sh
-```
-
-- Nginx config in repo: `deploy/nginx/default.conf`
-- Deploy script in repo: `deploy/scripts/workflow/atomic-deploy.sh`
-- Setup helper in repo: `deploy/scripts/manual/setup-nginx.sh`
-- Runbook in repo: `deploy/RUNBOOK-nginx-atomic.md`
-
 ### Production Static Deploy (Cloudflare Pages)
 
-Cloudflare Pages publishes the same combined URL layout as the Nginx deployment:
+Cloudflare Pages publishes the combined documentation and demo layout:
 
 - Documentation at `/`
 - Demo at `/demo/`
 
-Use `npm run build:cf` as the build command and `dist` as the output directory. See [the Cloudflare Pages runbook](deploy/RUNBOOK-cloudflare-pages.md) for the complete project settings, environment variables, routing behavior, and verification steps.
+Use `pnpm build:cf` as the build command and `dist` as the output directory. See [the Cloudflare Pages runbook](deploy/RUNBOOK-cloudflare-pages.md) for the complete project settings, environment variables, routing behavior, and verification steps.
 
 ---
 
 ## Releasing
 
-Packages are versioned together using [`nx release`](https://nx.dev/features/manage-releases) with [conventional commits](https://www.conventionalcommits.org/).
+Packages are versioned together by the custom release script using conventional commits.
 
 | Commit prefix                  | Version bump |
 | ------------------------------ | ------------ |
@@ -232,25 +218,25 @@ Packages are versioned together using [`nx release`](https://nx.dev/features/man
 
 ```bash
 # Preview what would change (no files written)
-npx nx release --dry-run
+node release/release.mjs --dry-run
 
 # First-ever release (before any git tag exists)
-npx nx release --first-release
+node release/release.mjs --dry-run --bump=patch
 
 # Subsequent releases (bump auto-determined from commits since last tag)
-npx nx release
+node release/release.mjs --bump=patch
 ```
 
-A GitHub Release and `CHANGELOG.md` are generated automatically. Set `GITHUB_TOKEN` in your environment before running `nx release` to enable GitHub Release creation.
+A GitHub Release and `CHANGELOG.md` are generated automatically. Set `GITHUB_TOKEN` in your environment before running a full release.
 
 ---
 
 ## Contributing
 
 1. Fork and clone the repo
-2. `npm install`
+2. `corepack enable && pnpm install`
 3. Create a branch: `git checkout -b feat/my-feature`
-4. Make changes — run `npx nx affected -t lint,test,build` before committing
+4. Make changes — run `pnpm lint && pnpm test && pnpm typecheck && pnpm build` before committing
 5. Use [conventional commits](https://www.conventionalcommits.org/) in your commit messages
 6. Open a pull request
 
