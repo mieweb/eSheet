@@ -41,22 +41,22 @@
     "@esheet/adapters": "0.0.5",
     "@esheet/core": "0.0.5",
     "@esheet/fields": "0.0.5",
-    "@mieweb/ui": "0.7.1-dev.13",
+    "@mieweb/ui": "0.7.1",
     "@monaco-editor/react": "^4.7.0",
-    "js-yaml": "^4.1.1",
+    "js-yaml": "^5.2.3",
     "react": "^19.2.4",
     "sortablejs": "^1.15.7",
     "tslib": "^2.3.0",
-    "zustand": "^5.0.11"
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
-    "@tailwindcss/cli": "^4.2.1",
+    "@tailwindcss/cli": "^4.3.3",
     "@testing-library/react": "^16.3.2",
     "@types/js-yaml": "^4.0.9",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^5.1.4",
-    "jsdom": "^28.1.0",
-    "tailwindcss": "^4.2.1"
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.0.5",
+    "jsdom": "^29.1.1",
+    "tailwindcss": "^4.3.3"
   }
 }

@@ -41,7 +41,7 @@
     "@esheet/adapters": "0.0.5",
     "@esheet/core": "0.0.5",
     "@esheet/fields": "0.0.5",
-    "js-yaml": "^4.1.0"
+    "js-yaml": "^5.2.3"
   },
   "peerDependencies": {
     "react": ">=19.0.0"
@@ -52,7 +52,7 @@
     }
   },
   "devDependencies": {
-    "@tailwindcss/cli": "^4.2.1",
-    "tailwindcss": "^4.2.1"
+    "@tailwindcss/cli": "^4.3.3",
+    "tailwindcss": "^4.3.3"
   }
 }

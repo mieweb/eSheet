@@ -31,8 +31,8 @@
   "dependencies": {
     "@esheet/core": "0.0.5",
     "@esheet/fields": "0.0.5",
-    "@mieweb/ui": "0.7.1-dev.13",
-    "lucide-react": "^0.562.0",
+    "@mieweb/ui": "0.7.1",
+    "lucide-react": "^1.31.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "tslib": "^2.3.0"

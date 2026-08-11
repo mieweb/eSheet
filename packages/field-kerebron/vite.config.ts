@@ -42,7 +42,7 @@ export default defineConfig(() => ({
   cacheDir: '../../node_modules/.vite/packages/field-kerebron',
   plugins: [
     react(),
-    dts({ tsconfigPath: './tsconfig.lib.json', rollupTypes: true }),
+    dts({ tsconfigPath: './tsconfig.lib.json', bundleTypes: true }),
     inlineCssFieldKerebron(),
   ],
   build: {
@@ -52,7 +52,7 @@ export default defineConfig(() => ({
       fileName: 'index',
       formats: ['es'] as LibraryFormats[],
     },
-    rollupOptions: {
+    rolldownOptions: {
       external: [
         'react',
         'react/jsx-runtime',

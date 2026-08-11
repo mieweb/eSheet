@@ -32,18 +32,18 @@
   },
   "dependencies": {
     "@esheet/core": "0.0.5",
-    "@kerebron/editor": "^0.8.6",
-    "@kerebron/editor-kits": "^0.8.6",
-    "@kerebron/editor-react": "^0.8.6",
-    "@kerebron/extension-basic-editor": "^0.8.6",
-    "@kerebron/extension-menu": "^0.8.6",
+    "@kerebron/editor": "^0.8.9",
+    "@kerebron/editor-kits": "^0.8.9",
+    "@kerebron/editor-react": "^0.8.9",
+    "@kerebron/extension-basic-editor": "^0.8.9",
+    "@kerebron/extension-menu": "^0.8.9",
     "react": "^19.2.4",
     "tslib": "^2.3.0"
   },
   "devDependencies": {
-    "@types/react": "^19.2.14",
-    "@vitejs/plugin-react": "^5.1.4",
-    "vite-plugin-dts": "^4.5.4"
+    "@types/react": "^19.2.18",
+    "@vitejs/plugin-react": "^6.0.5",
+    "vite-plugin-dts": "^5.0.3"
   },
   "peerDependencies": {
     "react": "^19.2.4"

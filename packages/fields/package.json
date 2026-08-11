@@ -41,19 +41,19 @@
   },
   "dependencies": {
     "@esheet/core": "0.0.5",
-    "@mieweb/ui": "0.7.1-dev.13",
-    "lucide-react": "^0.562.0",
+    "@mieweb/ui": "0.7.1",
+    "lucide-react": "^1.31.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "sortablejs": "^1.15.7",
     "tslib": "^2.3.0"
   },
   "devDependencies": {
-    "@tailwindcss/cli": "^4.2.1",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^5.1.4",
-    "jsdom": "^28.1.0",
-    "tailwindcss": "^4.2.1"
+    "@tailwindcss/cli": "^4.3.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.0.5",
+    "jsdom": "^29.1.1",
+    "tailwindcss": "^4.3.3"
   }
 }

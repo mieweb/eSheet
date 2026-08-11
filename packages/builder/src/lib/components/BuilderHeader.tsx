@@ -1,5 +1,5 @@
 import React from 'react';
-import YAML from 'js-yaml';
+import { load } from 'js-yaml';
 import {
   formatZodValidationError,
   formDefinitionSchema,
@@ -382,7 +382,7 @@ export function BuilderHeader({
     reader.onload = (ev) => {
       try {
         const content = ev.target?.result as string;
-        const parsed = isYaml ? YAML.load(content) : JSON.parse(content);
+        const parsed = isYaml ? load(content) : JSON.parse(content);
 
         // Auto-detect MCP elicitation schema (JSON only).
         // Accepts: full elicitation/create envelope or raw requestedSchema object.

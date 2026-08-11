@@ -41,7 +41,7 @@ export default defineConfig(() => ({
   cacheDir: '../../node_modules/.vite/packages/fields',
   plugins: [
     react(),
-    dts({ tsconfigPath: './tsconfig.lib.json', rollupTypes: true }),
+    dts({ tsconfigPath: './tsconfig.lib.json', bundleTypes: true }),
     inlineCssFields(),
   ],
   build: {
@@ -51,7 +51,7 @@ export default defineConfig(() => ({
       fileName: 'index',
       formats: ['es'] as LibraryFormats[],
     },
-    rollupOptions: {
+    rolldownOptions: {
       external: [
         'react',
         'react-dom',
