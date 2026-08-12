@@ -108,7 +108,7 @@ export const FieldNode = React.memo(function FieldNode({
     return (
       <FieldGrid
         className={containerClass}
-        stackedClassName="ms:space-y-2"
+        stackedClassName="ms:space-y-2 ms:lg:space-y-3"
         data-depth={depth}
       >
         {visibleChildIds.map((childId) => (
