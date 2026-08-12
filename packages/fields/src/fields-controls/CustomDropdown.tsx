@@ -224,7 +224,7 @@ export function CustomDropdown(props: CustomDropdownProps) {
           aria-expanded={isOpen}
           aria-controls={listboxId}
           aria-disabled={disabled || undefined}
-          className={`custom-dropdown-trigger ms:w-full ms:min-h-[38px] ms:px-3 ms:py-2 ms:text-sm ms:shadow ms:border ms:border-msborder ms:rounded-lg ms:cursor-pointer ms:bg-mssurface ms:flex ms:gap-2 ms:items-center ms:hover:border-msprimary/50 ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary ms:transition-colors ${
+          className={`custom-dropdown-trigger ms:w-full ms:min-h-[38px] ms:px-3 ms:py-2 ms:text-sm ms:shadow ms:border ms:border-msborder ms:rounded-lg ms:cursor-pointer ms:bg-mssurface ms:flex ms:gap-2 ms:items-start ms:hover:border-msprimary/50 ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary ms:transition-colors ${
             disabled
               ? 'ms:opacity-50 ms:cursor-not-allowed ms:bg-msbackground ms:border-msborder'
               : ''
