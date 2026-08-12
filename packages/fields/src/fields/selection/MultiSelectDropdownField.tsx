@@ -4,7 +4,7 @@ import type {
   SelectedOption,
   MultiselectDropdownFieldDefinition,
 } from '@esheet/core';
-import { CustomDropdown } from '../../controls/CustomDropdown.js';
+import { CustomDropdown } from '../../fields-controls/CustomDropdown.js';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 
 export const MultiSelectDropdownField = React.memo(
