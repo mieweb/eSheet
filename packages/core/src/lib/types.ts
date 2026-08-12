@@ -380,7 +380,6 @@ export const CONDITIONAL_EFFECTS = [
   'required',
   'visible',
   'enable',
-  // 'readOnly', // TODO: implement readOnly properly (see INTERNAL-TICKETS/readonly-fields.md)
   'setValue',
 ] as const;
 export const conditionalEffectSchema = z.enum(CONDITIONAL_EFFECTS);
@@ -527,7 +526,6 @@ interface BaseFieldDefinition {
    * - `false` / omitted - not required.
    */
   required?: boolean | 'soft';
-  // readOnly?: boolean; // TODO: implement readOnly properly (see INTERNAL-TICKETS/readonly-fields.md)
   /** Layout width in a row grid (`full` | `half` | `third`). Defaults by field category. */
   width?: FieldWidth;
   /** When true, the field does not inherit its containing section's width. */
@@ -850,7 +848,6 @@ const BASE_PROPERTIES = [
   'fieldType',
   'question',
   'required',
-  // 'readOnly', // TODO: implement readOnly properly
   'width',
   'overrideSectionWidth',
   'validators',
@@ -968,7 +965,6 @@ const baseFieldProps = {
   id: z.string(),
   question: z.optional(z.string()),
   required: z.optional(z.union([z.boolean(), z.literal('soft')])),
-  // readOnly: z.optional(z.boolean()), // TODO: implement readOnly properly
   width: z.optional(z.enum(['full', 'half', 'third'])),
   overrideSectionWidth: z.optional(z.boolean()),
   validators: z.optional(z.array(fieldValidatorSchema)),

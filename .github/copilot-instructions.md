@@ -22,7 +22,7 @@ Before making code edits, inspect the relevant graph context first, then make th
 
 ## Project Context
 
-This is an **Nx monorepo** for the **vNext** rewrite of the Questionnaire Builder packages, written in **TypeScript**.  
+This is a **pnpm workspace** for the **vNext** rewrite of the Questionnaire Builder packages, written in **TypeScript**.
 Packages live in `packages/` and are pure TypeScript libraries (no React, no UI).
 
 ---
@@ -70,12 +70,12 @@ When proposing code, **adhere to all of the following**:
    - Mirror existing naming, file layout, import style, and error handling patterns.
    - Keep public API shapes and function signatures stable unless a bug requires change.
 
-3. **Always Emit Code That Passes `npx nx format:check`**
+3. **Always Emit Code That Passes `pnpm format:check`**
 
-   - `npx nx format` uses Prettier under the hood. The project config is `.prettierrc`: `singleQuote: true`, all other options are Prettier defaults.
-   - Apply correct indentation, trailing commas, bracket spacing, and line length so that running `npx nx format:check` produces zero diffs.
+  - The project uses Prettier with `.prettierrc`: `singleQuote: true`, all other options are Prettier defaults.
+  - Apply correct indentation, trailing commas, bracket spacing, and line length so that running `pnpm format:check` produces zero diffs.
 
-- When the user asks for a format check, always run `npx nx format:check` first; if it fails, run `npx nx format --base="remotes/origin/main"`, then rerun `npx nx format:check` and report the final status.
+- When the user asks for a format check, run `pnpm format:check`; if migration-touched files fail, format only those files with Prettier and rerun the check.
 - This applies to every file type handled in this repo: `.ts`, `.tsx`, `.js`, `.jsx`, `.json`, `.md`, `.css`.
 - Do **not** rely on a post-write format step — emit correctly formatted code the first time.
 
@@ -84,7 +84,7 @@ When proposing code, **adhere to all of the following**:
    - Do not create new modules unless duplication or complexity becomes worse without them.
    - Never create standalone markdown documentation files (e.g., PR tickets, feature docs, summaries).
    - Embed all information directly into code comments or verbally respond to user.
-   - **Exception:** Internal tickets can be created in `.github/INTERNAL-TICKETS/` for feature planning (gitignored, local only).
+    - **Exception:** Workspace documentation and tickets can be created in `.github/workspace-doc/` for feature planning (gitignored, local only).
 
 5. **Zero Surprises**
 
@@ -103,7 +103,7 @@ When proposing code, **adhere to all of the following**:
 
 - Make file changes using direct file patch/edit tools (for example, `apply_patch` / editor patch tools).
 - Do NOT edit files by running shell/terminal write commands (for example PowerShell replacement scripts, `sed`, or inline command-based rewrites).
-- Terminal commands are allowed for read-only inspection and for running Nx/git verification tasks.
+- Terminal commands are allowed for read-only inspection and for running pnpm/git verification tasks.
 
 ---
 
@@ -139,12 +139,12 @@ If any box is unchecked, **simplify**.
 - **No enums** — use `const` objects with `as const` or string literal unions instead.
 - **Use `readonly` where appropriate** — for function parameters that shouldn't be mutated and immutable data structures.
 
-### Nx Monorepo Specific
+### pnpm Workspace Specific
 
-- **Always run tasks through Nx** — use `npx nx run`, `npx nx run-many`, `npx nx affected` instead of running tools directly.
-- **Don't modify `project.json` directly** — targets are inferred by plugins (`@nx/js/typescript`, `@nx/vite`, `@nx/eslint`, `@nx/vitest`). Use `nx show project <name> --json` to see resolved config.
+- **Use root scripts for repository checks** — `pnpm build`, `pnpm test`, `pnpm lint`, and `pnpm typecheck`.
+- **Use package scripts for package tasks** — run them with `pnpm --filter <package> <script>`.
 - **Package exports use `@esheet/source` custom condition** — for dev-time TS source imports between packages.
-- **Respect module boundaries** — `@nx/enforce-module-boundaries` is enforced. Check tags before adding cross-package imports.
+- **Respect package boundaries** — declare every cross-package import in the consuming package with `workspace:*`.
 - **Use `tslib`** — `importHelpers: true` is set in `tsconfig.base.json`. All packages depend on `tslib`.
 
 ### React & UI Packages
@@ -355,12 +355,13 @@ function getTotal(items) {
 - Keep changes local.
 - Use existing helpers and error patterns.
 - Write short, obvious code.
-- Run `npx nx affected -t lint test build` to verify changes.
+- Use one local development server and reuse its existing port; restart the existing server when needed instead of starting additional servers on new ports. Only use another port when the existing server cannot be reused or the user explicitly requests it.
+- Run `pnpm lint && pnpm test && pnpm typecheck && pnpm build` to verify changes.
 - **Run local CI/CD via `gh act`** — when asked to test CI/CD locally, always follow `.github/workflows/TESTING-LOCALLY.md`. The canonical command for the CI workflow is:
   ```bash
   gh act pull_request -W .github/workflows/ci.yml --pull=false
   ```
-  Use `--pull=false` on all runs after the first (avoids Docker Hub rate-limiting). Never substitute manual `nx run-many` chains as a CI equivalent — use `gh act` so the exact workflow contract is exercised.
+  Use `--pull=false` on all runs after the first (avoids Docker Hub rate-limiting). Use `gh act` when validating the exact workflow contract.
 
 **Don't**
 
@@ -369,16 +370,16 @@ function getTotal(items) {
 - Create new architectural layers.
 - Use `any` — use `unknown` and narrow.
 - Run `git add`, `git commit`, or `git push` — never stage, commit, or push changes.
-- Run `npm ci` locally — it wipes and reinstalls `node_modules`, which breaks locked native binaries (e.g. `esbuild.exe`) on Windows when VS Code or dev servers hold file locks. Use `npm install` to repair dependencies in place.
+- Do not run npm installation commands locally. Use `pnpm install --frozen-lockfile` from the repository root when dependencies need repair.
 
 ---
 
 ## Internal Planning & Tickets
 
-For feature planning and TODO tracking, use the local-only internal tickets directory:
+For repository documentation, feature planning, and TODO tracking, use the local-only workspace documentation directory:
 
-- **Location:** `.github/INTERNAL-TICKETS/`
-- **Purpose:** Track feature ideas, implementation plans, and technical debt
+- **Location:** `.github/workspace-doc/`
+- **Subfolders:** `docs/` for repository documentation, `tickets/` for feature work and technical debt, and `todo/` for lightweight follow-up tasks
 - **Format:** Markdown files with descriptive names (e.g., `forms-engine-schema.md`)
 - **Status:** Gitignored (local only, never committed)
 - **Usage:**
@@ -387,14 +388,14 @@ For feature planning and TODO tracking, use the local-only internal tickets dire
   - Reference related files and existing code patterns
   - Include success criteria and testing requirements
 
-**Migration Roadmap** (`.github/INTERNAL-TICKETS/mSheet-RoadMap.md`):
+**Migration Roadmap** (`.github/workspace-doc/docs/mSheet-RoadMap.md`):
 
 - This is the **single source of truth** for QB → mSheet migration status. **Update it whenever implementation work changes the status of a tracked feature** (e.g., a field component is completed, a gap is filled, completion percentages change).
 - After completing a task that corresponds to an item in the roadmap, mark it done immediately and update progress summaries.
 - Keep completion percentages, gap lists, and timeline estimates current so the roadmap always reflects reality.
 - When architectural decisions are made that eliminate "gaps" (e.g., feature implemented differently), update the roadmap to clarify what's a true gap vs architectural change.
 
-**@mieweb/ui Capability Audit** (`.github/INTERNAL-TICKETS/mieweb-ui-capability-audit.md`):
+**@mieweb/ui Capability Audit** (`.github/workspace-doc/docs/mieweb-ui-capability-audit.md`):
 
 - This is the source-of-truth snapshot for @mieweb/ui exports, `*Props` interfaces, and key variant names.
 - When using or refactoring @mieweb/ui components in mSheet, consult this ticket before choosing `variant`, `size`, or component-specific props.

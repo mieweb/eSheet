@@ -8,6 +8,12 @@
   "publishConfig": {
     "access": "public"
   },
+  "scripts": {
+    "build": "tsc --build tsconfig.lib.json",
+    "lint": "eslint .",
+    "test": "vitest",
+    "typecheck": "tsc --build --emitDeclarationOnly"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -25,14 +31,12 @@
     "dist",
     "!**/*.tsbuildinfo"
   ],
-  "nx": {
-    "tags": [
-      "scope:core"
-    ]
-  },
   "dependencies": {
     "tslib": "^2.3.0",
     "zod": "^4.3.6",
-    "zustand": "^5.0.11"
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "vitest": "4.1.10"
   }
 }

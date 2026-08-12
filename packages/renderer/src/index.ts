@@ -1,5 +1,3 @@
-import './index.output.css';
-
 // Main renderer component
 export {
   EsheetRenderer,

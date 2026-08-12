@@ -25,23 +25,24 @@
     "**/*.css"
   ],
   "scripts": {
-    "build:css": "cd ../.. && npx @tailwindcss/cli -i packages/renderer/src/index.css -o packages/renderer/src/index.output.css",
-    "build:css:watch": "cd ../.. && npx @tailwindcss/cli -i packages/renderer/src/index.css -o packages/renderer/src/index.output.css --watch"
+    "prebuild": "pnpm build:css",
+    "build": "vite build",
+    "build:css": "tailwindcss -i src/index.css -o src/index.output.css",
+    "build:css:watch": "tailwindcss -i src/index.css -o src/index.output.css --watch",
+    "lint": "eslint .",
+    "pretypecheck": "pnpm --filter @esheet/fields build",
+    "test": "vitest",
+    "typecheck": "tsc --build --emitDeclarationOnly --force"
   },
   "files": [
     "dist",
     "!**/*.tsbuildinfo"
   ],
-  "nx": {
-    "tags": [
-      "scope:renderer"
-    ]
-  },
   "dependencies": {
-    "@esheet/adapters": "0.0.5",
-    "@esheet/core": "0.0.5",
-    "@esheet/fields": "0.0.5",
-    "js-yaml": "^4.1.0"
+    "@esheet/adapters": "workspace:*",
+    "@esheet/core": "workspace:*",
+    "@esheet/fields": "workspace:*",
+    "js-yaml": "^5.2.3"
   },
   "peerDependencies": {
     "react": ">=19.0.0"
@@ -52,7 +53,7 @@
     }
   },
   "devDependencies": {
-    "@tailwindcss/cli": "^4.2.1",
-    "tailwindcss": "^4.2.1"
+    "@tailwindcss/cli": "^4.3.3",
+    "tailwindcss": "^4.3.3"
   }
 }

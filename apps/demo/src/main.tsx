@@ -30,11 +30,6 @@ configureRichTextField({
   ),
 });
 
-if (import.meta.env.DEV) {
-  await import('../../../packages/builder/src/index.output.css');
-  await import('../../../packages/renderer/src/index.output.css');
-}
-
 function App() {
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>

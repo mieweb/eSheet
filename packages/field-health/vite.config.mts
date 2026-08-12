@@ -59,7 +59,7 @@ export default defineConfig(() => ({
       fileName: 'index',
       formats: ['es' as const],
     },
-    rollupOptions: {
+    rolldownOptions: {
       external: [
         '@esheet/core',
         '@esheet/fields',

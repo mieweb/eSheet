@@ -20,7 +20,7 @@ mSheet/
 |  |- renderer/      # @esheet/renderer - form fill-out (React)
 |  |- renderer-standalone/ # @esheet/renderer-standalone - non-React mount API
 |  `- renderer-blaze/ # @esheet/renderer-blaze - Meteor Blaze integration
-|- nx.json
+|- pnpm-workspace.yaml
 |- tsconfig.base.json
 `- package.json
 ```
@@ -44,50 +44,43 @@ mSheet/
 ### Prerequisites
 
 - Node.js 20+
-- npm (workspace-aware)
+- Corepack
 
 ### Install
 
 ```bash
-npm install
+corepack enable
+pnpm install
 ```
 
 ### Run the Demo App
 
 ```bash
-npx nx serve demo
+pnpm dev:demo
 ```
 
 ### Run the Docs Site
 
 ```bash
-npx nx serve docs
+pnpm dev:docs
 ```
 
 ### Build All Packages
 
 ```bash
-npx nx run-many -t build
+pnpm build
 ```
 
 ### Run Tests
 
 ```bash
-npx nx run-many -t test
+pnpm test
 ```
 
 ### Lint
 
 ```bash
-npx nx run-many -t lint
-```
-
-### Run Affected (CI-friendly)
-
-Only build/test/lint projects affected by your changes:
-
-```bash
-npx nx affected -t lint test build
+pnpm lint
 ```
 
 ## 📐 Code Style
@@ -111,19 +104,18 @@ npx nx affected -t lint test build
 
 - Tests use **Vitest** with `globals: true` (no need to import `describe`/`it`/`expect`)
 - Test files live next to source: `foo.ts` -> `foo.spec.ts`
-- Run specific package tests: `npx nx test core`
+- Run specific package tests: `pnpm --filter @esheet/core test`
 
-## 🛠️ Nx Commands
+## 🛠️ Workspace Commands
 
-All tasks should be run through Nx:
+Workspace tasks are exposed through root scripts and package filters:
 
-| Command                              | Description                |
-| ------------------------------------ | -------------------------- |
-| `npx nx serve demo`                  | Start demo app dev server  |
-| `npx nx serve docs`                  | Start docs dev server      |
-| `npx nx run-many -t build`           | Build all packages         |
-| `npx nx run-many -t test`            | Run all tests              |
-| `npx nx run-many -t lint`            | Lint all packages          |
-| `npx nx affected -t build test lint` | Run affected targets       |
-| `npx nx show project <name> --json`  | Show project configuration |
-| `npx nx graph`                       | Visualize dependency graph |
+| Command                               | Description               |
+| ------------------------------------- | ------------------------- |
+| `pnpm dev:demo`                       | Start demo app dev server |
+| `pnpm dev:docs`                       | Start docs dev server     |
+| `pnpm build`                          | Build all packages        |
+| `pnpm test`                           | Run all package tests     |
+| `pnpm lint`                           | Lint all workspaces       |
+| `pnpm --filter @esheet/core test`     | Test one package          |
+| `pnpm --filter @esheet/demo... build` | Build an app and its deps |

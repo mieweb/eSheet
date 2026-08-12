@@ -7,23 +7,26 @@ permissions:
   contents: read
 
 jobs:
-  main:
+  quality:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Resolve Nx base ref
-        run: |
-          echo "NX_BASE=$(git rev-parse origin/main)" >> "$GITHUB_ENV"
-
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'npm'
 
-      - run: npm ci --include=optional
+      - name: Enable pinned pnpm
+        run: |
+          corepack enable
+          corepack install
+          pnpm --version
 
-      - run: npx nx format:check --base="$NX_BASE"
-      - run: npx nx run-many -t lint test build typecheck --exclude=app-docs
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm test
+      - run: pnpm typecheck
+      - run: pnpm build

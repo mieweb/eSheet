@@ -112,8 +112,8 @@ The builder uses Tailwind CSS v4 with `ms:` prefix. CSS is compiled via `@tailwi
 
 ## Building
 
-Run `nx build @esheet/builder` to build the library.
+Run `pnpm --filter @esheet/builder build` to build the library.
 
 ## Running unit tests
 
-Run `nx test @esheet/builder` to execute the unit tests via [Vitest](https://vitest.dev/).
+Run `pnpm --filter @esheet/builder test` to execute the unit tests via [Vitest](https://vitest.dev/).

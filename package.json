@@ -1,38 +1,45 @@
 {
   "name": "@esheet/source",
   "version": "0.0.0",
+  "packageManager": "pnpm@10.34.5",
   "license": "MIT",
   "scripts": {
+    "build": "pnpm --filter './packages/**' --recursive --if-present build",
     "build:cf": "bash deploy/scripts/cf-build.sh",
-    "postinstall": "node -e \"const fs=require('fs');const src='node_modules/@mieweb/ui/dist/index.d.cts';const dst=src.replace('.d.cts','.d.ts');if(fs.existsSync(src)&&!fs.existsSync(dst))fs.copyFileSync(src,dst);\""
+    "build:demo": "pnpm --filter @esheet/demo... --recursive --if-present build",
+    "build:docs": "pnpm --filter esheet-docs build",
+    "dev:demo": "pnpm --filter @esheet/demo dev",
+    "dev:docs": "pnpm --filter esheet-docs dev",
+    "dev:main": "pnpm --parallel --filter './apps/*' run dev",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "pnpm --recursive --if-present lint",
+    "postinstall": "node -e \"const fs=require('fs');const src='node_modules/@mieweb/ui/dist/index.d.cts';const dst=src.replace('.d.cts','.d.ts');if(fs.existsSync(src)&&!fs.existsSync(dst))fs.copyFileSync(src,dst);\"",
+    "pretest": "pnpm build",
+    "test": "pnpm --filter './packages/**' --recursive --if-present test",
+    "typecheck": "pnpm --recursive --workspace-concurrency=1 --if-present typecheck"
   },
   "private": true,
   "devDependencies": {
-    "@babel/core": "^7.14.5",
-    "@babel/preset-react": "^7.14.5",
+    "@babel/core": "^7.29.0",
+    "@babel/preset-react": "^7.28.5",
     "@eslint/js": "^9.8.0",
-    "@nx/eslint": "22.7.1",
-    "@nx/eslint-plugin": "22.7.1",
-    "@nx/js": "22.7.1",
-    "@nx/react": "22.7.1",
-    "@nx/vite": "22.7.1",
-    "@nx/vitest": "22.7.1",
-    "@nx/web": "22.7.1",
+    "@microsoft/api-extractor": "7.58.12",
     "@swc-node/register": "1.11.1",
     "@swc/cli": "~0.8.0",
     "@swc/core": "1.15.8",
     "@swc/helpers": "0.5.18",
-    "@tailwindcss/postcss": "^4.2.2",
-    "@tailwindcss/vite": "^4.2.2",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@tailwindcss/vite": "^4.3.3",
     "@testing-library/dom": "10.4.0",
     "@testing-library/react": "16.3.0",
     "@types/node": "20.19.9",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
     "@types/sortablejs": "^1.15.9",
-    "@vitejs/plugin-react": "^4.2.0",
-    "@vitest/coverage-v8": "4.0.9",
-    "@vitest/ui": "4.0.9",
+    "@vitejs/plugin-react": "^6.0.5",
+    "@vitest/coverage-v8": "4.1.10",
+    "@vitest/ui": "4.1.10",
     "ajv": "^8.0.0",
     "eslint": "~8.57.0",
     "eslint-plugin-import": "2.31.0",
@@ -40,40 +47,21 @@
     "eslint-plugin-react": "7.35.0",
     "eslint-plugin-react-hooks": "5.0.0",
     "jiti": "2.4.2",
-    "jsdom": "~22.1.0",
+    "jsdom": "^29.1.1",
     "jsonc-eslint-parser": "^2.1.0",
-    "nx": "22.7.1",
     "prettier": "^2.6.2",
-    "tailwindcss": "^4.2.2",
+    "tailwindcss": "^4.3.3",
     "tslib": "^2.3.0",
     "typescript": "~5.9.2",
     "typescript-eslint": "^8.40.0",
-    "verdaccio": "6.3.2",
-    "vite": "^7.0.0",
-    "vite-plugin-dts": "~4.5.0",
-    "vitest": "4.0.9"
-  },
-  "workspaces": [
-    "packages/*",
-    "apps/*"
-  ],
-  "nx": {
-    "includedScripts": [],
-    "targets": {
-      "local-registry": {
-        "executor": "@nx/js:verdaccio",
-        "options": {
-          "port": 4873,
-          "config": ".verdaccio/config.yml",
-          "storage": "tmp/local-registry/storage"
-        }
-      }
-    }
+    "vite": "^8.2.1",
+    "vite-plugin-dts": "^5.0.3",
+    "vitest": "4.1.10"
   },
   "dependencies": {
-    "@mieweb/ui": "0.7.1-dev.13",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "@mieweb/ui": "0.7.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
   },
   "optionalDependencies": {
     "@parcel/watcher-darwin-arm64": "^2.5.6",
@@ -81,6 +69,31 @@
     "@parcel/watcher-linux-x64-glibc": "^2.5.6"
   },
   "overrides": {
-    "axios": "1.13.5"
+    "axios": "1.13.6",
+    "@xhmikosr/decompress": "11.1.4",
+    "shell-quote": "1.10.0",
+    "websocket-driver": "0.7.5"
+  },
+  "pnpm": {
+    "overrides": {
+      "axios": "1.13.6",
+      "@xhmikosr/decompress": "11.1.4",
+      "shell-quote": "1.10.0",
+      "websocket-driver": "0.7.5",
+      "serialize-javascript@<=7.0.2": ">=7.0.3",
+      "serialize-javascript@>=5.0.0 <7.0.5": ">=7.0.5",
+      "uuid@<11.1.1": ">=11.1.1",
+      "dompurify@<=3.4.11": ">=3.4.12",
+      "dompurify@<=3.4.10": ">=3.4.11",
+      "dompurify@<3.4.9": ">=3.4.9",
+      "dompurify@<=3.4.12": ">=3.4.13"
+    },
+    "ignoredBuiltDependencies": [
+      "@mieweb/ui",
+      "@parcel/watcher",
+      "@swc/core",
+      "core-js",
+      "protobufjs"
+    ]
   }
 }

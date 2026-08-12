@@ -1,7 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore — generated CSS asset, no type declarations needed
-import './index.output.css';
-
 // Re-export UIStore from core for backward compat
 export {
   createUIStore,

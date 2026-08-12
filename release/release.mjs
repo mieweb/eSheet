@@ -56,7 +56,13 @@ const currentVersion =
 
 console.log(`Last tag:        ${lastTag || '(none)'}`);
 console.log(`Package version: ${pkgVersion}`);
-console.log(`Current version: ${currentVersion}  ${currentVersion === pkgVersion && tagVersion ? '(from package.json — ahead of tag)' : '(from tag)'}`);
+console.log(
+  `Current version: ${currentVersion}  ${
+    currentVersion === pkgVersion && tagVersion
+      ? '(from package.json — ahead of tag)'
+      : '(from tag)'
+  }`
+);
 
 // ---------------------------------------------------------------------------
 // 2. Collect + parse conventional commits since last tag
@@ -141,7 +147,7 @@ if (DRY_RUN) {
   console.log(`\n[DRY RUN] Would build: ${pkgNames}`);
 } else {
   console.log('\nBuilding packages...');
-  exec(`npx nx run-many -t build --projects=${pkgNames} --skip-nx-cache`);
+  exec(`pnpm --filter './packages/**' --recursive --if-present build`);
 }
 
 // ---------------------------------------------------------------------------
@@ -252,18 +258,18 @@ if (DRY_RUN) {
   );
 } else {
   // Sync lockfile with the updated package.json cross-dep versions.
-  console.log('Updating package-lock.json...');
-  exec('npm install --package-lock-only --legacy-peer-deps');
+  console.log('Updating pnpm-lock.yaml...');
+  exec('pnpm install --lockfile-only --ignore-scripts');
 
   if (IS_PRERELEASE) {
     const changedFiles = PACKAGES.map((p) => `${p}/package.json`).join(' ');
-    run(`git add ${changedFiles} package-lock.json`);
+    run(`git add ${changedFiles} pnpm-lock.yaml`);
     run(`git commit -m "chore(release): bump to ${newVersion} [prerelease]"`);
     run('git push origin main');
     console.log(`📦 Committed version bumps for ${newVersion} (no tag)`);
   } else {
     const changedFiles = PACKAGES.map((p) => `${p}/package.json`).join(' ');
-    run(`git add ${changedFiles} CHANGELOG.md package-lock.json`);
+    run(`git add ${changedFiles} CHANGELOG.md pnpm-lock.yaml`);
     run(`git commit -m "chore(release): publish ${newVersion}"`);
     run(`git tag v${newVersion}`);
     run('git push origin main');
