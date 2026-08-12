@@ -204,20 +204,17 @@ if (DRY_RUN) {
     const pkg = readPkg(pkgDir);
     process.stdout.write(`  checking ${pkg.name}@${newVersion} ... `);
 
-    // 1. Verify the package already exists on the registry.
-    //    A brand-new package (never published) will 404 on the real publish
-    //    with OIDC provenance — catch it here with a clear message.
+    // 1. Verify the package can be read from the registry.
     const registryInfo = tryRun(`npm view ${pkg.name} --json`);
     if (!registryInfo) {
-      console.log('✗ (not on registry)');
+      console.log('✗ (registry lookup failed)');
       preflight.push({
         pkgDir,
         pkg,
         ok: false,
         err: new Error(
-          `'${pkg.name}' has never been published. ` +
-            `Run 'npm publish --access public' from ${pkgDir} once manually to register it, ` +
-            `then re-run the release.`
+          `Could not verify '${pkg.name}' with npm. ` +
+            `Check the npm registry output above and re-run the release.`
         ),
       });
       continue;
