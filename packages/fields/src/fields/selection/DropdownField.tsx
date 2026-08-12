@@ -32,7 +32,7 @@ export const DropdownField = React.memo(function DropdownField({
     ];
 
     return (
-      <div className="dropdown-field-preview ms:space-y-1.5">
+      <div className="dropdown-field-preview ms:space-y-1.5 ms:[&_[data-slot=select-trigger]]:h-[38px]">
         <div className="ms:text-sm ms:font-medium ms:text-mstext ms:break-words ms:overflow-hidden">
           {def.question || 'Question'}
           {(isRequired || isSoftRequired) && (
@@ -48,6 +48,7 @@ export const DropdownField = React.memo(function DropdownField({
         <Select
           id={`${instanceId}-dropdown-answer-${def.id}`}
           aria-label={def.question || 'Question'}
+          size="sm"
           options={selectOptions}
           value={selectedId || ''}
           onValueChange={(val) => {
