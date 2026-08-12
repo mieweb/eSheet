@@ -1,7 +1,4 @@
 import './styles.css';
-import '../../../packages/builder/src/index.output.css';
-import '../../../packages/fields/src/index.output.css';
-import '../../../packages/renderer/src/index.output.css';
 import './ozwell-setup.js';
 import { registerFieldComponents } from '@esheet/fields';
 import {

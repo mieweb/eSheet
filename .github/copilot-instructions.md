@@ -355,6 +355,7 @@ function getTotal(items) {
 - Keep changes local.
 - Use existing helpers and error patterns.
 - Write short, obvious code.
+- Use one local development server and reuse its existing port; restart the existing server when needed instead of starting additional servers on new ports. Only use another port when the existing server cannot be reused or the user explicitly requests it.
 - Run `pnpm lint && pnpm test && pnpm typecheck && pnpm build` to verify changes.
 - **Run local CI/CD via `gh act`** — when asked to test CI/CD locally, always follow `.github/workflows/TESTING-LOCALLY.md`. The canonical command for the CI workflow is:
   ```bash

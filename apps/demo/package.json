@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "pnpm build:css && vite build",
-    "build:css": "pnpm --filter @esheet/builder --filter @esheet/fields --filter @esheet/renderer build:css",
+    "build:css": "pnpm --filter @esheet/builder exec tailwindcss -i ../../apps/demo/src/esheet.css -o ../../apps/demo/src/index.output.css",
     "dev": "pnpm build:css && vite",
     "lint": "eslint .",
     "preview": "vite preview",
