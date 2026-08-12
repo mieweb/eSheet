@@ -1,6 +1,6 @@
 {
   "name": "@esheet/fields",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "repository": {
     "type": "git",
     "url": "https://github.com/mieweb/eSheet"
@@ -40,7 +40,7 @@
     "!**/*.tsbuildinfo"
   ],
   "dependencies": {
-    "@esheet/core": "workspace:*",
+    "@esheet/core": "0.0.6",
     "@mieweb/ui": "0.7.1",
     "lucide-react": "^1.31.0",
     "react": "^19.2.4",

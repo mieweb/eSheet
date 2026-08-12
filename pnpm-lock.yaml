@@ -232,8 +232,8 @@ importers:
   packages/adapters:
     dependencies:
       '@esheet/core':
-        specifier: workspace:*
-        version: link:../core
+        specifier: 0.0.6
+        version: 0.0.6(@types/react@19.2.18)(react@19.2.8)
       tslib:
         specifier: ^2.3.0
         version: 2.8.1
@@ -245,14 +245,14 @@ importers:
   packages/builder:
     dependencies:
       '@esheet/adapters':
-        specifier: workspace:*
-        version: link:../adapters
+        specifier: 0.0.6
+        version: 0.0.6(@types/react@19.2.18)(react@19.2.8)
       '@esheet/core':
-        specifier: workspace:*
-        version: link:../core
+        specifier: 0.0.6
+        version: 0.0.6(@types/react@19.2.18)(react@19.2.8)
       '@esheet/fields':
-        specifier: workspace:*
-        version: link:../fields
+        specifier: 0.0.6
+        version: 0.0.6(@kerebron/editor-kits@0.8.9(svelte@5.56.8(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.9)(@kerebron/wasm@0.8.9)(@types/react@19.2.18)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(remark-gfm@4.0.1)
       '@mieweb/ui':
         specifier: 0.7.1
         version: 0.7.1(@kerebron/editor-kits@0.8.9(svelte@5.56.8(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.9)(@kerebron/wasm@0.8.9)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(remark-gfm@4.0.1)
@@ -319,11 +319,11 @@ importers:
   packages/field-health:
     dependencies:
       '@esheet/core':
-        specifier: workspace:*
-        version: link:../core
+        specifier: 0.0.6
+        version: 0.0.6(@types/react@19.2.18)(react@19.2.8)
       '@esheet/fields':
-        specifier: workspace:*
-        version: link:../fields
+        specifier: 0.0.6
+        version: 0.0.6(@kerebron/editor-kits@0.8.9(svelte@5.56.8(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.9)(@kerebron/wasm@0.8.9)(@types/react@19.2.18)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(remark-gfm@4.0.1)
       '@mieweb/ui':
         specifier: 0.7.1
         version: 0.7.1(@kerebron/editor-kits@0.8.9(svelte@5.56.8(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.9)(@kerebron/wasm@0.8.9)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(remark-gfm@4.0.1)
@@ -343,8 +343,8 @@ importers:
   packages/field-kerebron:
     dependencies:
       '@esheet/core':
-        specifier: workspace:*
-        version: link:../core
+        specifier: 0.0.6
+        version: 0.0.6(@types/react@19.2.18)(react@19.2.8)
       '@kerebron/editor':
         specifier: ^0.8.9
         version: 0.8.9
@@ -380,8 +380,8 @@ importers:
   packages/fields:
     dependencies:
       '@esheet/core':
-        specifier: workspace:*
-        version: link:../core
+        specifier: 0.0.6
+        version: 0.0.6(@types/react@19.2.18)(react@19.2.8)
       '@mieweb/ui':
         specifier: 0.7.1
         version: 0.7.1(@kerebron/editor-kits@0.8.9(svelte@5.56.8(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.9)(@kerebron/wasm@0.8.9)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(remark-gfm@4.0.1)
@@ -423,14 +423,14 @@ importers:
   packages/renderer:
     dependencies:
       '@esheet/adapters':
-        specifier: workspace:*
-        version: link:../adapters
+        specifier: 0.0.6
+        version: 0.0.6(@types/react@19.2.18)(react@19.2.8)
       '@esheet/core':
-        specifier: workspace:*
-        version: link:../core
+        specifier: 0.0.6
+        version: 0.0.6(@types/react@19.2.18)(react@19.2.8)
       '@esheet/fields':
-        specifier: workspace:*
-        version: link:../fields
+        specifier: 0.0.6
+        version: 0.0.6(@kerebron/editor-kits@0.8.9(svelte@5.56.8(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.9)(@kerebron/wasm@0.8.9)(@types/react@19.2.18)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(remark-gfm@4.0.1)
       js-yaml:
         specifier: ^5.2.3
         version: 5.2.3
@@ -448,8 +448,8 @@ importers:
   packages/renderer-blaze:
     dependencies:
       '@esheet/renderer':
-        specifier: workspace:*
-        version: link:../renderer
+        specifier: 0.0.6
+        version: 0.0.6(@kerebron/editor-kits@0.8.9(svelte@5.56.8(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.9)(@kerebron/wasm@0.8.9)(@types/react@19.2.18)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react@19.2.8)(remark-gfm@4.0.1)
       react:
         specifier: ^19.2.4
         version: 19.2.8
@@ -463,8 +463,8 @@ importers:
   packages/renderer-standalone:
     dependencies:
       '@esheet/renderer':
-        specifier: workspace:*
-        version: link:../renderer
+        specifier: 0.0.6
+        version: 0.0.6(@kerebron/editor-kits@0.8.9(svelte@5.56.8(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.9)(@kerebron/wasm@0.8.9)(@types/react@19.2.18)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react@19.2.8)(remark-gfm@4.0.1)
       react:
         specifier: ^19.2.4
         version: 19.2.8
@@ -1751,6 +1751,23 @@ packages:
 
   '@emnapi/wasi-threads@1.2.3':
     resolution: {integrity: sha512-ELEBe8PsLvvJ6QMr0zLt8ffvOHW/dc1m3CEzNMg7aJUv3bMaoDtw2TXyDAwkYBuroxxuHEwhRTLJSe5sya547g==}
+
+  '@esheet/adapters@0.0.6':
+    resolution: {integrity: sha512-saJohz1QQLjWowb7BpWqGwxyn20wYO1oRU33lzLVMiHN97Bcs/Cs+12FM52wLN5NJRLDlmKl8Q7f1flGATnQOA==}
+
+  '@esheet/core@0.0.6':
+    resolution: {integrity: sha512-J3QO4M0Rc6PX+MRiXbk/rY7DSF85zx1I6/8FOeREgI1sLvt1LNk/HWSLELlq4ek9FRKriw0r/pdk8oYYzzCoYA==}
+
+  '@esheet/fields@0.0.6':
+    resolution: {integrity: sha512-pZMLc424Fx4TmGI0KXYJlgnxOTVGcrApFx8xp3MTsFbUdQWeMTsJkCD4mYhFoH5UWGwI47GaJ3AboVWNAqvVhw==}
+
+  '@esheet/renderer@0.0.6':
+    resolution: {integrity: sha512-VjTwXBtMELyY1HTh77SLNepRo1TxuiitvsSf/6chWmemqyd/NWJGurftnw3M6ttHHmhcoOrw7lCb0n7UPZmzVA==}
+    peerDependencies:
+      react: '>=19.0.0'
+    peerDependenciesMeta:
+      react:
+        optional: true
 
   '@eslint-community/eslint-utils@4.10.1':
     resolution: {integrity: sha512-cuadcxVFE8sDK6iWJbs8Sn0av2Nrh2QSGQhVlBW9AaAHqHwjWsZHT8LJ4hFGPh7ASBV2deFdM7H/DPjulmh8rg==}
@@ -11539,6 +11556,89 @@ snapshots:
     dependencies:
       tslib: 2.8.1
     optional: true
+
+  '@esheet/adapters@0.0.6(@types/react@19.2.18)(react@19.2.8)':
+    dependencies:
+      '@esheet/core': 0.0.6(@types/react@19.2.18)(react@19.2.8)
+      tslib: 2.8.1
+    transitivePeerDependencies:
+      - '@types/react'
+      - immer
+      - react
+      - use-sync-external-store
+
+  '@esheet/core@0.0.6(@types/react@19.2.18)(react@19.2.8)':
+    dependencies:
+      tslib: 2.8.1
+      zod: 4.4.3
+      zustand: 5.0.14(@types/react@19.2.18)(react@19.2.8)
+    transitivePeerDependencies:
+      - '@types/react'
+      - immer
+      - react
+      - use-sync-external-store
+
+  '@esheet/fields@0.0.6(@kerebron/editor-kits@0.8.9(svelte@5.56.8(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.9)(@kerebron/wasm@0.8.9)(@types/react@19.2.18)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(remark-gfm@4.0.1)':
+    dependencies:
+      '@esheet/core': 0.0.6(@types/react@19.2.18)(react@19.2.8)
+      '@mieweb/ui': 0.7.1(@kerebron/editor-kits@0.8.9(svelte@5.56.8(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.9)(@kerebron/wasm@0.8.9)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(remark-gfm@4.0.1)
+      lucide-react: 1.31.0(react@19.2.8)
+      react: 19.2.8
+      react-dom: 19.2.8(react@19.2.8)
+      sortablejs: 1.15.7
+      tslib: 2.8.1
+    transitivePeerDependencies:
+      - '@kerebron/editor'
+      - '@kerebron/editor-kits'
+      - '@kerebron/wasm'
+      - '@mieweb/datavis'
+      - '@types/react'
+      - ag-grid-community
+      - ag-grid-react
+      - datavis-ace
+      - immer
+      - js-yaml
+      - katex
+      - mermaid
+      - papaparse
+      - react-markdown
+      - rehype-highlight
+      - rehype-katex
+      - rehype-sanitize
+      - remark-gfm
+      - remark-math
+      - use-sync-external-store
+      - wavesurfer.js
+
+  '@esheet/renderer@0.0.6(@kerebron/editor-kits@0.8.9(svelte@5.56.8(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.9)(@kerebron/wasm@0.8.9)(@types/react@19.2.18)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react@19.2.8)(remark-gfm@4.0.1)':
+    dependencies:
+      '@esheet/adapters': 0.0.6(@types/react@19.2.18)(react@19.2.8)
+      '@esheet/core': 0.0.6(@types/react@19.2.18)(react@19.2.8)
+      '@esheet/fields': 0.0.6(@kerebron/editor-kits@0.8.9(svelte@5.56.8(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.9)(@kerebron/wasm@0.8.9)(@types/react@19.2.18)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(remark-gfm@4.0.1)
+      js-yaml: 5.2.3
+    optionalDependencies:
+      react: 19.2.8
+    transitivePeerDependencies:
+      - '@kerebron/editor'
+      - '@kerebron/editor-kits'
+      - '@kerebron/wasm'
+      - '@mieweb/datavis'
+      - '@types/react'
+      - ag-grid-community
+      - ag-grid-react
+      - datavis-ace
+      - immer
+      - katex
+      - mermaid
+      - papaparse
+      - react-markdown
+      - rehype-highlight
+      - rehype-katex
+      - rehype-sanitize
+      - remark-gfm
+      - remark-math
+      - use-sync-external-store
+      - wavesurfer.js
 
   '@eslint-community/eslint-utils@4.10.1(eslint@8.57.1)':
     dependencies:
