@@ -39,7 +39,7 @@ Run the manual dry-run path without publishing, committing, or tagging:
 gh act workflow_dispatch -W .github/workflows/release.yml -e release/act-dry-run-event.json --pull=false
 ```
 
-The dry-run path previews the calculated version, changelog entry, and packages that would be published. The full-release path is the only path that can update versions, changelogs, tags, or the npm registry.
+The manual dry-run path previews the calculated version, changelog entry, and packages that would be published. The full-release path and merged package-scoped PR path can update package versions and publish to the npm registry; only the full-release path updates changelogs and tags.
 
 ## Pull Request Title Check
 
