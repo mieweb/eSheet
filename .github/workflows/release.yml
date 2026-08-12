@@ -59,15 +59,45 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm build
 
+  package_scope:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      is_package_scope: ${{ steps.scope.outputs.is_package_scope }}
+    steps:
+      - name: Check PR title scope
+        id: scope
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -euo pipefail
+
+          REGEX='^(feat|enhance|fix|perf|refactor|docs|test|chore|ci|build|repo)\((package|core|fields|builder|renderer|renderer-standalone|renderer-blaze|adapters|field-kerebron|field-health)\): .+$'
+
+          if [[ "$PR_TITLE" =~ $REGEX ]]; then
+            echo "is_package_scope=true" >> "$GITHUB_OUTPUT"
+            echo "Package scope detected: $PR_TITLE"
+          else
+            echo "is_package_scope=false" >> "$GITHUB_OUTPUT"
+            echo "Non-package scope: $PR_TITLE"
+          fi
+
   release:
-    needs: [check]
+    needs: [check, package_scope]
     if: >-
       always() && (
-        needs.check.result == 'success' ||
-        needs.check.result == 'skipped'
-      ) && (
-        github.event_name == 'workflow_dispatch' ||
-        github.event.pull_request.merged == true
+        (
+          github.event_name == 'workflow_dispatch' &&
+          (
+            needs.check.result == 'success' ||
+            needs.check.result == 'skipped'
+          )
+        ) || (
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.merged == true &&
+          needs.package_scope.result == 'success' &&
+          needs.package_scope.outputs.is_package_scope == 'true'
+        )
       )
     runs-on: ubuntu-latest
     steps:
@@ -92,16 +122,19 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Configure git identity
-        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'full-release'
+        if: >-
+          (github.event_name == 'workflow_dispatch' && inputs.mode == 'full-release') ||
+          (github.event_name == 'pull_request' && needs.package_scope.outputs.is_package_scope == 'true')
         run: |
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
 
-      - name: Preview changelog (PR merge)
+      - name: Pre-release (package PR merge)
         if: github.event_name == 'pull_request'
-        run: node release/release.mjs --dry-run
+        run: node release/release.mjs --bump=prerelease
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Dry run
         if: github.event_name == 'workflow_dispatch' && inputs.mode == 'dry-run'
