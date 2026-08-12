@@ -1,7 +1,7 @@
 // Controls
 export { CustomRadio } from './controls/CustomRadio.js';
 export { CustomCheckbox } from './controls/CustomCheckbox.js';
-export { CustomDropdown } from './controls/CustomDropdown.js';
+export { CustomDropdown } from './fields-controls/CustomDropdown.js';
 export { CustomRadioButton } from './fields-controls/CustomRadioButton.js';
 export { CustomCheckboxButton } from './fields-controls/CustomCheckboxButton.js';
 
