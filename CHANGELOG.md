@@ -1,3 +1,9 @@
+## 0.0.6 (2026-08-12)
+
+### 🚀 Features
+
+- **fields:** redesign selection controls and dropdown behavior ([#150](https://github.com/mieweb/eSheet/pull/150))
+
 ## 0.0.5 (2026-08-10)
 
 ### 🚀 Features
