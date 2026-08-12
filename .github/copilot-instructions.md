@@ -84,7 +84,7 @@ When proposing code, **adhere to all of the following**:
    - Do not create new modules unless duplication or complexity becomes worse without them.
    - Never create standalone markdown documentation files (e.g., PR tickets, feature docs, summaries).
    - Embed all information directly into code comments or verbally respond to user.
-   - **Exception:** Internal tickets can be created in `.github/INTERNAL-TICKETS/` for feature planning (gitignored, local only).
+    - **Exception:** Workspace documentation and tickets can be created in `.github/workspace-doc/` for feature planning (gitignored, local only).
 
 5. **Zero Surprises**
 
@@ -376,10 +376,10 @@ function getTotal(items) {
 
 ## Internal Planning & Tickets
 
-For feature planning and TODO tracking, use the local-only internal tickets directory:
+For repository documentation, feature planning, and TODO tracking, use the local-only workspace documentation directory:
 
-- **Location:** `.github/INTERNAL-TICKETS/`
-- **Purpose:** Track feature ideas, implementation plans, and technical debt
+- **Location:** `.github/workspace-doc/`
+- **Subfolders:** `docs/` for repository documentation, `tickets/` for feature work and technical debt, and `todo/` for lightweight follow-up tasks
 - **Format:** Markdown files with descriptive names (e.g., `forms-engine-schema.md`)
 - **Status:** Gitignored (local only, never committed)
 - **Usage:**
@@ -388,14 +388,14 @@ For feature planning and TODO tracking, use the local-only internal tickets dire
   - Reference related files and existing code patterns
   - Include success criteria and testing requirements
 
-**Migration Roadmap** (`.github/INTERNAL-TICKETS/mSheet-RoadMap.md`):
+**Migration Roadmap** (`.github/workspace-doc/docs/mSheet-RoadMap.md`):
 
 - This is the **single source of truth** for QB → mSheet migration status. **Update it whenever implementation work changes the status of a tracked feature** (e.g., a field component is completed, a gap is filled, completion percentages change).
 - After completing a task that corresponds to an item in the roadmap, mark it done immediately and update progress summaries.
 - Keep completion percentages, gap lists, and timeline estimates current so the roadmap always reflects reality.
 - When architectural decisions are made that eliminate "gaps" (e.g., feature implemented differently), update the roadmap to clarify what's a true gap vs architectural change.
 
-**@mieweb/ui Capability Audit** (`.github/INTERNAL-TICKETS/mieweb-ui-capability-audit.md`):
+**@mieweb/ui Capability Audit** (`.github/workspace-doc/docs/mieweb-ui-capability-audit.md`):
 
 - This is the source-of-truth snapshot for @mieweb/ui exports, `*Props` interfaces, and key variant names.
 - When using or refactoring @mieweb/ui components in mSheet, consult this ticket before choosing `variant`, `size`, or component-specific props.

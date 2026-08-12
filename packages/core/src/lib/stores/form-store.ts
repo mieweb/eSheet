@@ -1139,7 +1139,6 @@ export function createFormStore(
 
     isReadOnly: (_fieldId) => {
       // readOnly is not yet implemented — always returns false.
-      // TODO: implement readOnly properly (see INTERNAL-TICKETS/readonly-fields.md)
       return false;
     },
 

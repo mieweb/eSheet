@@ -51,8 +51,8 @@ Thumbs.db
 # CSS build outputs
 **/src/index.output.css
 
-# Internal tickets (local only)
-.github/INTERNAL-TICKETS/
+# Workspace documentation and tickets (local only)
+.github/workspace-doc/
 /docs/SubAgent docs/
 
 # Docusaurus generated artifacts
