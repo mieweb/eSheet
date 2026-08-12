@@ -252,12 +252,12 @@ export const EsheetBuilder = React.forwardRef<
             {children}
             {mode === 'build' && (
               <div className="builder-layout ms:grid ms:min-w-0 ms:grid-cols-1 ms:lg:grid-cols-[18rem_minmax(0,1fr)_340px] ms:gap-3">
-                <aside className="panel-tools-wrap panel-tools ms:hidden ms:lg:flex ms:self-start ms:min-h-0 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto ms:flex-col ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
+                <aside className="panel-tools-wrap panel-tools ms:max-lg:hidden ms:lg:flex ms:self-start ms:min-h-0 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto ms:flex-col ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
                   <ToolPanel />
                 </aside>
                 <main className="panel-canvas ms:min-w-0 ms:self-start ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-hidden ms:flex ms:flex-col ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
                   <Canvas form={form} ui={ui} dragEnabled={dragEnabled} />
-                  <div className="ms:lg:hidden ms:sticky ms:bottom-0 ms:z-20 ms:pt-2 ms:pb-3 ms:flex ms:justify-center ms:pointer-events-none">
+                  <div className="ms:max-lg:flex ms:lg:hidden ms:sticky ms:bottom-0 ms:z-20 ms:pt-2 ms:pb-3 ms:justify-center ms:pointer-events-none">
                     <button
                       type="button"
                       onClick={() => setToolsModalOpen(true)}
@@ -269,7 +269,7 @@ export const EsheetBuilder = React.forwardRef<
                     </button>
                   </div>
                 </main>
-                <aside className="panel-editor-wrap panel-editor ms:hidden ms:lg:flex ms:self-start ms:min-h-0 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto ms:flex-col ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
+                <aside className="panel-editor-wrap panel-editor ms:max-lg:hidden ms:lg:flex ms:self-start ms:min-h-0 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto ms:flex-col ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
                   <EditPanel />
                 </aside>
 

@@ -16,6 +16,8 @@
 @source "../../../packages/renderer/src";
 @source "../../../packages/builder/src";
 
+@import './index.output.css';
+
 /* 5. Define dark mode variant for Tailwind 4 */
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 

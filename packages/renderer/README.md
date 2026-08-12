@@ -205,8 +205,8 @@ MIT
 
 ## Building
 
-Run `nx build @esheet/renderer` to build the library.
+Run `pnpm --filter @esheet/renderer build` to build the library.
 
 ## Running unit tests
 
-Run `nx test @esheet/renderer` to execute the unit tests via [Vitest](https://vitest.dev/).
+Run `pnpm --filter @esheet/renderer test` to execute the unit tests via [Vitest](https://vitest.dev/).

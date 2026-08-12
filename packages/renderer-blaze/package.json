@@ -8,6 +8,11 @@
   "publishConfig": {
     "access": "public"
   },
+  "scripts": {
+    "build": "vite build",
+    "lint": "eslint .",
+    "typecheck": "tsc --build --emitDeclarationOnly"
+  },
   "type": "module",
   "main": "./dist/blaze.js",
   "module": "./dist/blaze.js",
@@ -25,15 +30,10 @@
     "dist",
     "!**/*.tsbuildinfo"
   ],
-  "nx": {
-    "tags": [
-      "scope:renderer"
-    ]
-  },
   "dependencies": {
-    "@esheet/renderer": "0.0.5",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "@esheet/renderer": "workspace:*",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
     "tslib": "^2.3.0"
   }
 }

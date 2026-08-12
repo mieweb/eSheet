@@ -8,8 +8,10 @@ set -euo pipefail
 
 export ESHEET_SITE_ORIGIN="${ESHEET_SITE_ORIGIN:-https://esheet.mieweb.org}"
 
-npx nx build app-docs --outputStyle=static
-npx nx build app-demo --outputStyle=static
+corepack enable
+pnpm install --frozen-lockfile
+pnpm build:docs
+pnpm build:demo
 
 rm -rf dist
 mkdir -p dist/demo

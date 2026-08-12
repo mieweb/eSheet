@@ -1,6 +1,14 @@
 # Add files here to ignore them from prettier formatting
-/dist
-/coverage
-/.nx/cache
-/.nx/workspace-data
-.nx/self-healing
+**/dist
+**/build
+**/coverage
+**/out-tsc
+**/src/index.output.css
+**/.docusaurus
+**/.pnpm-store
+.nx/
+pnpm-lock.yaml
+apps/docs/static/doc-content.json
+.github/copilot-instructions.md
+CHANGELOG.md
+release/versions.mjs

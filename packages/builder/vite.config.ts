@@ -3,23 +3,21 @@ import { defineConfig, type LibraryFormats } from 'vite';
 import react from '@vitejs/plugin-react';
 import dts from 'vite-plugin-dts';
 import { resolve } from 'path';
-import { readFileSync, writeFileSync, existsSync, unlinkSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
 
 // ---------------------------------------------------------------------------
 // Inline-CSS plugin (production build only)
 // ---------------------------------------------------------------------------
-// After Vite writes dist/, reads the emitted CSS, prepends a self-injecting
-// IIFE to index.js, then removes the standalone CSS file so consumers never
-// need to import CSS separately.
+// After the CSS build writes src/index.output.css, prepend a self-injecting
+// IIFE to index.js so consumers never need to import CSS separately.
 // ---------------------------------------------------------------------------
 function inlineCssBuilder(): import('vite').Plugin {
   return {
     name: 'inline-css-builder',
     apply: 'build',
     closeBundle() {
-      const dir = resolve(import.meta.dirname, 'dist');
-      const cssPath = resolve(dir, 'index.css');
-      const jsPath = resolve(dir, 'index.js');
+      const cssPath = resolve(import.meta.dirname, 'src/index.output.css');
+      const jsPath = resolve(import.meta.dirname, 'dist/index.js');
       if (!existsSync(cssPath) || !existsSync(jsPath)) return;
       const cssContent = readFileSync(cssPath, 'utf-8');
       const jsContent = readFileSync(jsPath, 'utf-8');
@@ -35,7 +33,6 @@ function inlineCssBuilder(): import('vite').Plugin {
         `window.__ESHEET_BUILDER_CSS_INJECTED=true;` +
         `})();\n`;
       writeFileSync(jsPath, iife + jsContent);
-      unlinkSync(cssPath);
     },
   };
 }
@@ -45,7 +42,7 @@ export default defineConfig(() => ({
   cacheDir: '../../node_modules/.vite/packages/builder',
   plugins: [
     react(),
-    dts({ tsconfigPath: './tsconfig.lib.json', rollupTypes: true }),
+    dts({ tsconfigPath: './tsconfig.lib.json', bundleTypes: true }),
     inlineCssBuilder(),
   ],
   build: {
@@ -55,7 +52,7 @@ export default defineConfig(() => ({
       fileName: 'index',
       formats: ['es'] as LibraryFormats[],
     },
-    rollupOptions: {
+    rolldownOptions: {
       external: [
         'react',
         'react-dom',

@@ -16,9 +16,9 @@ You are a PR validation helper subagent. Execute local checks that mirror `.gith
 
 1. Run `git branch --show-current` and capture branch name.
 2. Run `git fetch origin main`.
-3. Run `npm ci`.
-4. Run `npx nx format:check --base="remotes/origin/main"`.
-5. Run `npx nx run-many -t lint test build typecheck`.
+3. Run `pnpm install --frozen-lockfile`.
+4. Run `pnpm format:check`.
+5. Run `pnpm lint`, `pnpm test`, `pnpm typecheck`, and `pnpm build`.
 
 ## Return Format
 
@@ -34,14 +34,14 @@ Status: PASS | FAIL
 ## Commands Executed
 
 1. git fetch origin main
-2. npm ci
-3. npx nx format:check --base="remotes/origin/main"
-4. npx nx run-many -t lint test build typecheck
+2. pnpm install --frozen-lockfile
+3. pnpm format:check
+4. pnpm lint, pnpm test, pnpm typecheck, pnpm build
 
 ## Results
 
 - format:check: PASS|FAIL
-- run-many(lint,test,build,typecheck): PASS|FAIL
+- workspace checks (lint, test, typecheck, build): PASS|FAIL
 
 ## Failure Details
 

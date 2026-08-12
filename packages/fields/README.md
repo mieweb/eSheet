@@ -57,8 +57,8 @@ Fields do **not** ship their own CSS resets or dark theme — they inherit from 
 
 ## Building
 
-Run `nx build @esheet/fields` to build the library.
+Run `pnpm --filter @esheet/fields build` to build the library.
 
 ## Running unit tests
 
-Run `nx test @esheet/fields` to execute the unit tests via [Vitest](https://vitest.dev/).
+Run `pnpm --filter @esheet/fields test` to execute the unit tests via [Vitest](https://vitest.dev/).

@@ -1,5 +1,5 @@
 import React from 'react';
-import YAML from 'js-yaml';
+import { load } from 'js-yaml';
 import {
   formatZodValidationError,
   formDefinitionSchema,
@@ -49,7 +49,7 @@ export function useRendererInit(
         const trimmed = formData.trim();
         // Detect format: YAML if starts with non-brace, JSON otherwise
         const isYaml = !trimmed.startsWith('{') && !trimmed.startsWith('[');
-        parsed = isYaml ? YAML.load(trimmed) : JSON.parse(trimmed);
+        parsed = isYaml ? load(trimmed) : JSON.parse(trimmed);
       } else {
         parsed = formData;
       }

@@ -38,7 +38,7 @@ export default defineConfig(() => ({
   cacheDir: '../../node_modules/.vite/packages/renderer-standalone',
   plugins: [
     react(),
-    dts({ tsconfigPath: './tsconfig.lib.json', rollupTypes: true }),
+    dts({ tsconfigPath: './tsconfig.lib.json', bundleTypes: true }),
     inlineCssStandalone(),
   ],
   build: {
@@ -48,7 +48,7 @@ export default defineConfig(() => ({
       fileName: 'standalone',
       formats: ['es'] as LibraryFormats[],
     },
-    rollupOptions: {
+    rolldownOptions: {
       external: [],
     },
     cssCodeSplit: false,

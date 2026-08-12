@@ -92,8 +92,8 @@ registerFieldType({
 
 ## Building
 
-Run `nx build @esheet/core` to build the library.
+Run `pnpm --filter @esheet/core build` to build the library.
 
 ## Running unit tests
 
-Run `nx test @esheet/core` to execute the unit tests via [Vitest](https://vitest.dev/).
+Run `pnpm --filter @esheet/core test` to execute the unit tests via [Vitest](https://vitest.dev/).

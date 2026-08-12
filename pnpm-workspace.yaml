@@ -1,0 +1,8 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+auditConfig:
+  ignoreCves:
+    - CVE-2025-71330 # image-size is build-only and has no patched release
+    - CVE-2025-71329 # image-size is build-only and has no patched release

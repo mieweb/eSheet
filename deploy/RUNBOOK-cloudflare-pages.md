@@ -5,17 +5,15 @@ Cloudflare Pages serves the documentation and demo from one static deployment:
 - `/` serves the Docusaurus documentation site.
 - `/demo/` serves the Vite demo application.
 
-This matches the URL layout used by the Nginx atomic deployment.
-
 ## Pages project settings
 
 Configure the Cloudflare Pages project from the repository root with these settings:
 
-| Setting                | Value              |
-| ---------------------- | ------------------ |
-| Build command          | `npm run build:cf` |
-| Build output directory | `dist`             |
-| Root directory         | Repository root    |
+| Setting                | Value           |
+| ---------------------- | --------------- |
+| Build command          | `pnpm build:cf` |
+| Build output directory | `dist`          |
+| Root directory         | Repository root |
 
 The Cloudflare build script defaults the Docusaurus canonical site origin to the Cloudflare custom domain. You can set `ESHEET_SITE_ORIGIN` explicitly to the same value, without a trailing slash:
 
@@ -23,15 +21,13 @@ The Cloudflare build script defaults the Docusaurus canonical site origin to the
 ESHEET_SITE_ORIGIN=https://esheet.mieweb.org
 ```
 
-The atomic OS deployment has its own canonical-origin default, `https://esheet.os.mieweb.org`, and can override it through the GitHub Actions `ESHEET_SITE_ORIGIN` environment secret.
-
-For non-`main` Cloudflare deployments, documentation-to-demo navigation uses Cloudflare's injected `CF_PAGES_URL`. This produces links on the deployment's unique hashed `*.pages.dev` hostname. Production Cloudflare and atomic deployments continue using their configured `ESHEET_SITE_ORIGIN` values.
+For non-`main` Cloudflare deployments, documentation-to-demo navigation uses Cloudflare's injected `CF_PAGES_URL`. This produces links on the deployment's unique hashed `*.pages.dev` hostname. Production uses the configured `ESHEET_SITE_ORIGIN` value.
 
 Attach the production custom domain to the Pages project in Cloudflare. A DNS record by itself does not associate the domain with the Pages project.
 
 ## Build output
 
-`npm run build:cf` runs `deploy/scripts/cf-build.sh`, which builds both Nx applications and merges their static output into `dist/`:
+`pnpm build:cf` runs `deploy/scripts/cf-build.sh`, which builds both applications and merges their static output into `dist/`:
 
 ```txt
 dist/
