@@ -108,7 +108,7 @@ export function RendererBody({
     return (
       <FieldGrid
         className="canvas-fields renderer-body"
-        stackedClassName="ms:space-y-0"
+        stackedClassName="ms:space-y-2 ms:lg:space-y-3"
       >
         {fields}
       </FieldGrid>
@@ -132,7 +132,7 @@ export function RendererBody({
     >
       <FieldGrid
         className="canvas-fields renderer-body ms:px-0"
-        stackedClassName="ms:space-y-0"
+        stackedClassName="ms:space-y-2 ms:lg:space-y-3"
       >
         {fields}
       </FieldGrid>
