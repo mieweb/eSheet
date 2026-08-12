@@ -112,7 +112,12 @@ function versionGt(a, b) {
   return false;
 }
 
-if (!versionGt(newVersion, pkgVersion)) {
+const isInitialPrerelease =
+  IS_PRERELEASE &&
+  !pkgVersion.includes('-') &&
+  newVersion.split('-')[0] === pkgVersion;
+
+if (!versionGt(newVersion, pkgVersion) && !isInitialPrerelease) {
   console.error(
     `\n❌  Version regression detected!\n` +
       `   Computed : ${newVersion}\n` +
@@ -147,7 +152,11 @@ if (DRY_RUN) {
   console.log(`\n[DRY RUN] Would build: ${pkgNames}`);
 } else {
   console.log('\nBuilding packages...');
-  exec(`pnpm --filter './packages/**' --recursive --if-present build`);
+  for (const pkgDir of PACKAGES) {
+    const pkg = readPkg(pkgDir);
+    console.log(`\nBuilding ${pkg.name}...`);
+    exec('pnpm build', { cwd: pkgDir });
+  }
 }
 
 // ---------------------------------------------------------------------------
