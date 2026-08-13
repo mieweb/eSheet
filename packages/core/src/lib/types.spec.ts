@@ -100,6 +100,50 @@ describe('schema types', () => {
     expect(result.success).toBe(false);
   });
 
+  it('should accept conditional rules on options', () => {
+    const result = formDefinitionSchema.safeParse({
+      id: 'option-rules',
+      pages: [
+        {
+          id: 'page-1',
+          fields: [
+            {
+              id: 'country',
+              fieldType: 'radio',
+              options: [{ id: 'us', value: 'United States' }],
+            },
+            {
+              id: 'location',
+              fieldType: 'dropdown',
+              options: [
+                {
+                  id: 'houston-hq',
+                  value: 'Houston HQ',
+                  rules: [
+                    {
+                      effect: 'visible',
+                      logic: 'AND',
+                      conditions: [
+                        {
+                          conditionType: 'field',
+                          targetId: 'country',
+                          operator: 'equals',
+                          expected: 'us',
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(result.success).toBe(true);
+  });
+
   it('should preserve supported field properties during normalization', () => {
     const normalized = normalizeFormDefinition({
       id: 'form',

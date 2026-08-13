@@ -25,8 +25,11 @@ import { useFormStore } from '@esheet/fields';
 export interface LogicEditorProps {
   fieldId: string;
   rules: readonly ConditionalRule[];
+  scope?: 'field' | 'option';
+  idPrefix?: string;
   def?: { required?: boolean | 'soft'; readOnly?: boolean };
   onUpdateDef?: (patch: Record<string, unknown>) => void;
+  onUpdateRules?: (rules: ConditionalRule[]) => void;
 }
 
 /**
@@ -40,8 +43,11 @@ export interface LogicEditorProps {
 export function LogicEditor({
   fieldId,
   rules,
+  scope = 'field',
+  idPrefix,
   def,
   onUpdateDef,
+  onUpdateRules,
 }: LogicEditorProps) {
   const instanceId = useInstanceId();
   const { normalized, field_ } = useFormApi(fieldId);
@@ -54,7 +60,11 @@ export function LogicEditor({
   );
 
   const updateRules = (next: ConditionalRule[]) => {
-    field_.update({ rules: next });
+    if (onUpdateRules) {
+      onUpdateRules(next);
+    } else {
+      field_.update({ rules: next });
+    }
   };
 
   // ── Handlers ────────────────────────────────────────────────
@@ -135,6 +145,33 @@ export function LogicEditor({
 
   // ── Group rules by effect ──────────────────────────────────
   const grouped = groupByEffect(rules);
+
+  if (scope === 'option') {
+    return (
+      <div className="logic-editor option-logic-editor ms:space-y-2">
+        {otherFields.length === 0 && (
+          <div className="ms:text-xs ms:text-mstextmuted ms:italic ms:pb-1">
+            Add more fields to create option visibility rules.
+          </div>
+        )}
+        <EffectSection
+          instanceId={instanceId}
+          fieldId={idPrefix ?? fieldId}
+          effect="visible"
+          ruleEntries={grouped.visible}
+          otherFields={otherFields}
+          dangerouslyAllowJS={dangerouslyAllowJS}
+          subject="option"
+          onAddRule={() => handleAddRule('visible')}
+          onRemoveRule={handleRemoveRule}
+          onUpdateRule={handleUpdateRule}
+          onAddCondition={handleAddCondition}
+          onRemoveCondition={handleRemoveCondition}
+          onUpdateCondition={handleUpdateCondition}
+        />
+      </div>
+    );
+  }
 
   const handleSetRequiredState = (state: 'off' | 'required' | 'soft') => {
     if (!onUpdateDef) return;
@@ -357,6 +394,7 @@ interface EffectSectionProps {
   ruleEntries: { rule: ConditionalRule; globalIdx: number }[];
   otherFields: readonly TargetField[];
   dangerouslyAllowJS: boolean;
+  subject?: 'field' | 'option';
   /** Static default value for effects that have one (required/softRequired/readOnly). */
   staticDefault?: boolean;
   /** Callback to flip the static default boolean on the field definition. */
@@ -394,6 +432,7 @@ function EffectSection({
   ruleEntries,
   otherFields,
   dangerouslyAllowJS,
+  subject = 'field',
   staticDefault,
   onToggleStaticDefault,
   onAddRule,
@@ -492,7 +531,9 @@ function EffectSection({
       {/* Hint when no rules */}
       {!hasRules && (
         <div className="ms:text-xs ms:text-mstextmuted ms:italic">
-          {EFFECT_DESCRIPTIONS[effect]}
+          {subject === 'option'
+            ? 'Show this option when…'
+            : EFFECT_DESCRIPTIONS[effect]}
         </div>
       )}
     </div>

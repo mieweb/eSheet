@@ -223,6 +223,8 @@ interface FieldOption {
   /** Optional numeric score for scored surveys (e.g. PHQ-9, GAD-7). When present on
    * any option, the field's answer value is the sum of scores for all selected options. */
   score?: number;
+  /** Conditional visibility rules for this option. Only the `visible` effect applies. */
+  rules?: ConditionalRule[];
 }
 ```
 

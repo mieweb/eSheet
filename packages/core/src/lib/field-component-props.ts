@@ -44,6 +44,30 @@ export interface FieldComponentProps {
   onResponse: (response: FieldResponse) => void;
 }
 
+export function getFieldForRender(
+  field: FieldNode,
+  form: FormStore,
+  isPreview: boolean
+): FieldNode {
+  const definition = field.definition;
+
+  if (
+    !isPreview ||
+    !('options' in definition) ||
+    !Array.isArray(definition.options)
+  ) {
+    return field;
+  }
+
+  return {
+    ...field,
+    definition: {
+      ...definition,
+      options: form.getState().getVisibleOptions(definition.id),
+    },
+  };
+}
+
 // ---------------------------------------------------------------------------
 // CollabDecorations — optional, host-supplied collaboration decorations
 // (presence + change proposals) that the renderer displays per field. eSheet

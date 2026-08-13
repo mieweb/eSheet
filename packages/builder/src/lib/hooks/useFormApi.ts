@@ -8,6 +8,7 @@ import type {
   FieldType,
   FormStore,
   NormalizedDefinition,
+  ConditionalRule,
 } from '@esheet/core';
 import { useFormStore } from '@esheet/fields';
 
@@ -50,6 +51,7 @@ export interface FormApi {
   option: {
     add: (value?: string) => string | null;
     update: (optId: string, value: string) => boolean;
+    updateRules: (optId: string, rules: ConditionalRule[]) => boolean;
     setScore: (optId: string, score: number | undefined) => boolean;
     remove: (optId: string) => boolean;
   };
@@ -148,6 +150,10 @@ export function useFormApi(fieldId?: string): FormApi {
           fieldId ? form.getState().addOption(fieldId, value) : null,
         update: (optId: string, value: string) =>
           fieldId ? form.getState().updateOption(fieldId, optId, value) : false,
+        updateRules: (optId: string, rules: ConditionalRule[]) =>
+          fieldId
+            ? form.getState().updateOptionRules(fieldId, optId, rules)
+            : false,
         setScore: (optId: string, score: number | undefined) =>
           fieldId
             ? form.getState().setOptionScore(fieldId, optId, score)

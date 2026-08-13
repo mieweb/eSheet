@@ -6,7 +6,7 @@ import type {
   FormStore,
   UIStore,
 } from '@esheet/core';
-import { getInheritedSectionWidth } from '@esheet/core';
+import { getFieldForRender, getInheritedSectionWidth } from '@esheet/core';
 import { FieldGrid, FieldGridItem, getFieldComponent } from '@esheet/fields';
 
 export interface FieldNodeProps {
@@ -192,8 +192,10 @@ export const FieldNode = React.memo(function FieldNode({
 
   if (!isVisible) return null;
 
+  const renderField = getFieldForRender(field, form, true);
+
   const props: FieldComponentProps = {
-    field,
+    field: renderField,
     form,
     ui,
     isSelected: false,

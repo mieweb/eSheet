@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   evaluateCondition,
+  evaluateOptionVisibility,
   evaluateRule,
   evaluateExpression,
 } from './conditions.js';
@@ -730,6 +731,56 @@ describe('evaluateRule', () => {
 
       expect(evaluateRule(rule, exprNormalized, {})).toBe(false);
     });
+  });
+});
+
+describe('evaluateOptionVisibility', () => {
+  const normalized = norm({
+    country: node(
+      radioDef('country', [
+        { id: 'us', value: 'United States' },
+        { id: 'ca', value: 'Canada' },
+      ])
+    ),
+  });
+
+  it('evaluates option rules against the controlling field response', () => {
+    const option: FieldOption = {
+      id: 'houston-hq',
+      value: 'Houston HQ',
+      rules: [
+        {
+          effect: 'visible',
+          logic: 'AND',
+          conditions: [cond('country', 'equals', 'us')],
+        },
+      ],
+    };
+
+    expect(
+      evaluateOptionVisibility(option, normalized, {
+        country: {
+          selected: { id: 'us', value: 'United States' },
+        },
+      })
+    ).toBe(true);
+    expect(
+      evaluateOptionVisibility(option, normalized, {
+        country: {
+          selected: { id: 'ca', value: 'Canada' },
+        },
+      })
+    ).toBe(false);
+  });
+
+  it('keeps options without visible rules visible', () => {
+    expect(
+      evaluateOptionVisibility(
+        { id: 'always-visible', value: 'Always visible' },
+        normalized,
+        {}
+      )
+    ).toBe(true);
   });
 });
 
