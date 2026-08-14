@@ -45,6 +45,7 @@ export {
   SignatureField,
   FileField,
   NotesField,
+  ActivityField,
   NoteCardList,
 } from './fields/index.js';
 export type {

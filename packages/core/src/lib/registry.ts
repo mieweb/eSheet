@@ -294,6 +294,15 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     defaultProps: { entryLabel: 'Note', sortOrder: 'newest', width: 'full' },
     placeholder: { question: 'Enter your question...' },
   },
+  activity: {
+    label: 'Activity',
+    category: 'rich',
+    answerType: 'display',
+    hasOptions: false,
+    hasMatrix: false,
+    defaultProps: { width: 'full' },
+    placeholder: { question: 'Activity' },
+  },
   display: {
     label: 'Display',
     category: 'rich',

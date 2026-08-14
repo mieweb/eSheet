@@ -26,6 +26,7 @@ export const FIELD_TYPES = [
   'diagram',
   'file',
   'notes',
+  'activity',
   'openchoice',
   'display',
   'section',
@@ -705,6 +706,15 @@ export interface NotesFieldDefinition extends BaseFieldDefinition {
   entryLabel?: string;
 }
 
+/**
+ * Read-only, append-only log of response changes over time. Rendered by the
+ * `activity` field; entries live under the reserved `_activity` response key
+ * and are GUID-keyed so the log union-merges exactly like notes.
+ */
+export interface ActivityFieldDefinition extends BaseFieldDefinition {
+  fieldType: 'activity';
+}
+
 export interface OpenChoiceFieldDefinition extends BaseFieldDefinition {
   fieldType: 'openchoice';
   /** Predefined selectable options. */
@@ -791,6 +801,7 @@ export type FieldDefinition =
   | ImageFieldDefinition
   | FileFieldDefinition
   | NotesFieldDefinition
+  | ActivityFieldDefinition
   | HtmlFieldDefinition
   | SignatureFieldDefinition
   | DiagramFieldDefinition
@@ -866,6 +877,7 @@ const FIELD_TYPE_PROPERTIES: Record<FieldType, readonly string[]> = {
     'sortOrder',
     'entryLabel',
   ],
+  activity: [],
   openchoice: ['options', 'maxCustomOptions', 'otherLabel', 'optionLayout'],
   display: ['content'],
   // Organization category
@@ -1157,6 +1169,11 @@ const notesFieldSchema = z.strictObject({
   entryLabel: z.optional(z.string()),
 });
 
+const activityFieldSchema = z.strictObject({
+  ...baseFieldProps,
+  fieldType: z.literal('activity'),
+});
+
 const openChoiceFieldSchema = z.strictObject({
   ...baseFieldProps,
   fieldType: z.literal('openchoice'),
@@ -1231,6 +1248,7 @@ const builtInFieldDefinitionSchema = z.discriminatedUnion('fieldType', [
   imageFieldSchema,
   fileFieldSchema,
   notesFieldSchema,
+  activityFieldSchema,
   htmlFieldSchema,
   signatureFieldSchema,
   diagramFieldSchema,
@@ -1322,6 +1340,8 @@ export interface FieldResponse {
   fileData?: AttachmentAnswer | AttachmentAnswer[];
   /** Note entries (notes field). A set keyed by `NoteEntry.id`, not a positional array. */
   notes?: NoteEntry[];
+  /** Append-only response change log (reserved `_activity` key; activity field). */
+  activity?: ActivityEntry[];
   /** Set to true when the response was filled programmatically by an AI agent. */
   _ai?: boolean;
 }
@@ -1541,6 +1561,28 @@ export const noteEntrySchema = z.object({
   attachments: z.optional(z.array(attachmentAnswerSchema)),
 });
 export type NoteEntry = z.infer<typeof noteEntrySchema>;
+
+/**
+ * One entry in the append-only response change log (activity page type).
+ * GUID-keyed so concurrent logs union-merge exactly like notes.
+ */
+export const activityEntrySchema = z.object({
+  /** GUID (crypto.randomUUID()). */
+  id: z.string(),
+  /** ISO 8601 timestamp of the change. */
+  at: z.string(),
+  /** From renderer identity, when present. */
+  author: z.optional(z.string()),
+  /** Which response changed. */
+  fieldId: z.string(),
+  /** Field label at time of change. */
+  question: z.optional(z.string()),
+  /** Display form of the previous value. */
+  from: z.optional(z.string()),
+  /** Display form of the new value. */
+  to: z.optional(z.string()),
+});
+export type ActivityEntry = z.infer<typeof activityEntrySchema>;
 
 /** All possible answer value shapes in a submission payload. */
 export type AnswerValue =

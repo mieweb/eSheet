@@ -11,6 +11,7 @@ export { DiagramField } from './DiagramField.js';
 export { DisplayField } from './DisplayField.js';
 export { FileField } from './FileField.js';
 export { NotesField } from './NotesField.js';
+export { ActivityField } from './ActivityField.js';
 export { NoteCardList } from './NoteCardList.js';
 export type { NoteCardItem, NoteCardListProps } from './NoteCardList.js';
 export { HtmlField } from './HtmlField.js';
