@@ -2,3 +2,10 @@
 @import 'tailwindcss/utilities';
 
 @source "./**/*.{ts,tsx}";
+
+/* Touch mode forces `padding: .75rem !important` on all inputs, which would
+   put the placeholder under the leading search icon — keep the icon gutter. */
+.esheet-renderer-root input.code-lookup-input[type='text'],
+.ms-builder-root input.code-lookup-input[type='text'] {
+  padding-left: 2.25rem !important;
+}

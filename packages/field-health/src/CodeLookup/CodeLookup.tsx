@@ -349,7 +349,7 @@ export const CodeLookup = React.forwardRef<HTMLDivElement, CodeLookupProps>(
       <div className="relative" ref={anchorRef}>
         <SearchIcon
           size={16}
-          className="text-muted-foreground absolute top-5 left-3 -translate-y-1/2"
+          className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 -translate-y-1/2"
         />
         <input
           type="text"
@@ -372,6 +372,7 @@ export const CodeLookup = React.forwardRef<HTMLDivElement, CodeLookupProps>(
           placeholder={effectivePlaceholder}
           disabled={status.state === 'error'}
           className={cn(
+            'code-lookup-input',
             'border-border bg-background text-foreground placeholder:text-muted-foreground',
             'h-10 w-full rounded-md border pr-3 pl-9 text-sm',
             'focus:ring-ring focus:ring-2 focus:outline-none'
