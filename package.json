@@ -86,7 +86,8 @@
       "dompurify@<=3.4.11": ">=3.4.12",
       "dompurify@<=3.4.10": ">=3.4.11",
       "dompurify@<3.4.9": ">=3.4.9",
-      "dompurify@<=3.4.12": ">=3.4.13"
+      "dompurify@<=3.4.12": ">=3.4.13",
+      "prosemirror-model": "1.25.9"
     },
     "ignoredBuiltDependencies": [
       "@mieweb/ui",
