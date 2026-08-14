@@ -15,7 +15,7 @@ eSheet includes 19 built-in field types across six categories, plus **Pages** â€
 | Rating       | `rating`, `ranking`, `slider`                                  |
 | Matrix       | `singlematrix`, `multimatrix`                                  |
 | Organization | `section`, `pages` (form structure)                            |
-| Rich         | `display`, `html`, `image`, `signature`, `diagram`             |
+| Rich         | `display`, `html`, `image`, `signature`, `diagram`, `notes`, `activity` |
 
 ## Built-in Fields
 
@@ -56,6 +56,8 @@ eSheet includes 19 built-in field types across six categories, plus **Pages** â€
 - [image](/docs/field-types/image)
 - [signature](/docs/field-types/signature)
 - [diagram](/docs/field-types/diagram)
+- [notes](/docs/field-types/notes) â€” journal of markdown note entries
+- [activity](/docs/field-types/activity) â€” read-only response change log
 
 ## Custom
 
