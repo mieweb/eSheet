@@ -18,13 +18,14 @@ export const BooleanField = React.memo(function BooleanField({
 }: FieldComponentProps) {
   const def = field.definition as BooleanFieldDefinition;
   const instanceId = form.getState().instanceId;
-  const options =
+  const configuredOptions =
     def.options && def.options.length === 2
       ? def.options
       : [
           { id: 'yes', value: 'Yes' },
           { id: 'no', value: 'No' },
         ];
+  const options = isPreview && def.options ? def.options : configuredOptions;
   const selectedId =
     (response?.selected as SelectedOption | undefined)?.id ?? null;
 

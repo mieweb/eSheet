@@ -41,6 +41,42 @@ interface ConditionalRule {
 
 When a field has **multiple rules with the same effect**, they combine with **OR** semantics -- if any rule evaluates to true, the effect is applied.
 
+## Option-Scoped Visibility
+
+Rules can also be placed on an individual option. A rule inside `field.rules` affects the field; a rule inside `field.options[n].rules` affects only that option. In both cases, `condition.targetId` identifies the source field whose response is evaluated.
+
+Option rules use the existing `ConditionalRule` shape, but only the `visible` effect applies:
+
+```json
+{
+  "id": "incidentLocation",
+  "fieldType": "dropdown",
+  "question": "Incident location",
+  "options": [
+    {
+      "id": "houston-hq",
+      "value": "Houston HQ",
+      "rules": [
+        {
+          "effect": "visible",
+          "logic": "AND",
+          "conditions": [
+            {
+              "conditionType": "field",
+              "targetId": "incidentCountry",
+              "operator": "equals",
+              "expected": "us"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+Here, `incidentLocation` owns the option, `houston-hq` is the affected option, and `incidentCountry` is the controlling field. Options without a matching visible rule remain visible. Hidden selected options remain in the response and produce a hard availability validation error.
+
 ## Condition Types
 
 ### Field Conditions

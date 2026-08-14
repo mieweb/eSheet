@@ -119,6 +119,7 @@ export {
 export {
   evaluateCondition,
   evaluateRule,
+  evaluateOptionVisibility,
   isExpressionValid,
   evaluateExpression,
   evaluateJsExpression,
@@ -159,6 +160,7 @@ export {
   type FieldPresence,
   type FieldProposal,
   type CollabDecorations,
+  getFieldForRender,
 } from './lib/field-component-props.js';
 
 export {

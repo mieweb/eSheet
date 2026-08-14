@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createFormStore } from './form-store.js';
 import type { FormStore } from './form-store.js';
+import { getFieldForRender } from '../field-component-props.js';
 import type {
   FormDefinition,
   FieldDefinition,
@@ -424,6 +425,31 @@ describe('createFormStore', () => {
         expect(rule.conditions[0].targetId).toBe('q1-new');
       });
 
+      it('updates option rule condition.targetId on rename', () => {
+        store = createFormStore(
+          form([
+            field('q1', 'radio', {
+              options: [{ id: 'yes', value: 'Yes' }],
+            }),
+            field('q2', 'radio', {
+              options: [
+                {
+                  id: 'dependent',
+                  value: 'Dependent',
+                  rules: [visibleRule('q1', 'yes')],
+                },
+              ],
+            }),
+          ])
+        );
+        store.getState().updateField('q1', { id: 'q1-new' });
+        const option = (
+          store.getState().normalized.byId['q2']
+            .definition as RadioFieldDefinition
+        ).options![0];
+        expect(option.rules![0].conditions[0].targetId).toBe('q1-new');
+      });
+
       it('updates {fieldId} references in condition.expression on rename', () => {
         store = createFormStore(
           form([
@@ -645,6 +671,115 @@ describe('createFormStore', () => {
             .definition as RadioFieldDefinition
         ).options;
         expect(opts![0].value).toBe('New');
+      });
+
+      it('updates option rules and filters visible options', () => {
+        store = createFormStore(
+          form([
+            field('country', 'radio', {
+              options: [
+                { id: 'us', value: 'United States' },
+                { id: 'ca', value: 'Canada' },
+              ],
+            }),
+            field('location', 'radio', {
+              options: [
+                { id: 'houston', value: 'Houston', rules: [] },
+                { id: 'toronto', value: 'Toronto' },
+              ],
+            }),
+          ])
+        );
+        const rules = [visibleRule('country', 'us')];
+        expect(
+          store.getState().updateOptionRules('location', 'houston', rules)
+        ).toBe(true);
+        store.getState().setResponse('country', {
+          selected: { id: 'us', value: 'United States' },
+        });
+        expect(
+          store
+            .getState()
+            .getVisibleOptions('location')
+            .map((o) => o.id)
+        ).toEqual(['houston', 'toronto']);
+
+        store
+          .getState()
+          .setResponse('country', { selected: { id: 'ca', value: 'Canada' } });
+        expect(
+          store
+            .getState()
+            .getVisibleOptions('location')
+            .map((o) => o.id)
+        ).toEqual(['toronto']);
+      });
+
+      it('projects visible options only for preview rendering', () => {
+        store = createFormStore(
+          form([
+            field('country', 'radio', {
+              options: [
+                { id: 'us', value: 'United States' },
+                { id: 'ca', value: 'Canada' },
+              ],
+            }),
+            field('location', 'radio', {
+              options: [
+                {
+                  id: 'houston',
+                  value: 'Houston',
+                  rules: [visibleRule('country', 'us')],
+                },
+                { id: 'toronto', value: 'Toronto' },
+              ],
+            }),
+          ])
+        );
+        store.getState().setResponse('country', {
+          selected: { id: 'ca', value: 'Canada' },
+        });
+
+        const fieldNode = store.getState().getField('location');
+        expect(fieldNode).toBeDefined();
+        if (!fieldNode) return;
+
+        const projected = getFieldForRender(fieldNode, store, true)
+          .definition as RadioFieldDefinition;
+        expect(projected.options?.map((option) => option.id)).toEqual([
+          'toronto',
+        ]);
+        expect(getFieldForRender(fieldNode, store, false)).toBe(fieldNode);
+      });
+
+      it('projects visible multitext inputs only for preview rendering', () => {
+        store = createFormStore(
+          form([
+            field('country', 'text'),
+            field('contacts', 'multitext', {
+              options: [
+                {
+                  id: 'us-contact',
+                  value: 'United States contact',
+                  rules: [visibleRule('country', 'us')],
+                },
+                { id: 'general-contact', value: 'General contact' },
+              ],
+            }),
+          ])
+        );
+        store.getState().setResponse('country', { answer: 'ca' });
+
+        const fieldNode = store.getState().getField('contacts');
+        expect(fieldNode).toBeDefined();
+        if (!fieldNode) return;
+
+        const projected = getFieldForRender(fieldNode, store, true);
+        expect(
+          (projected.definition as { options?: { id: string }[] }).options?.map(
+            (option) => option.id
+          )
+        ).toEqual(['general-contact']);
       });
 
       it('removeOption deletes an option', () => {

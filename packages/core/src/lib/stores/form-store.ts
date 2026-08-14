@@ -14,6 +14,7 @@ import type {
   FormResponse,
   FormDefinition,
   FieldDefinition,
+  ConditionalRule,
 } from '../types.js';
 import { getFieldTypeMeta } from '../registry.js';
 import {
@@ -31,7 +32,10 @@ import {
 } from '../functions/normalize.js';
 import { hydrateResponse } from '../functions/hydrate-response.js';
 import { resolveEffect } from '../logic/resolve.js';
-import { evaluateJsExpression } from '../logic/conditions.js';
+import {
+  evaluateJsExpression,
+  evaluateOptionVisibility,
+} from '../logic/conditions.js';
 import {
   validateField,
   validateForm,
@@ -128,6 +132,12 @@ export interface FormState {
   addOption: (fieldId: string, value?: string) => string | null;
   /** Update an option's value. */
   updateOption: (fieldId: string, optionId: string, value: string) => boolean;
+  /** Update an option's conditional visibility rules. */
+  updateOptionRules: (
+    fieldId: string,
+    optionId: string,
+    rules: ConditionalRule[]
+  ) => boolean;
   /** Set or clear an option's numeric score. Pass `undefined` to remove. */
   setOptionScore: (
     fieldId: string,
@@ -160,6 +170,8 @@ export interface FormState {
   getField: (fieldId: string) => FieldNode | undefined;
   /** Look up a field's current response. */
   getResponse: (fieldId: string) => FieldResponse | undefined;
+  /** Return the options currently visible for a field. */
+  getVisibleOptions: (fieldId: string) => FieldOption[];
   /** Whether a field is currently visible. */
   isVisible: (fieldId: string) => boolean;
   /** Whether a field is currently enabled. */
@@ -261,27 +273,44 @@ function rewriteFieldRefs(
 
   let changed = false;
 
-  const updatedRules = def.rules?.map((rule) => ({
-    ...rule,
-    conditions: rule.conditions.map((cond) => {
-      let c = cond;
-      if (c.targetId === oldId) {
-        c = { ...c, targetId: newId };
-        changed = true;
-      }
-      if (c.expression) {
-        const next =
-          c.conditionType === 'js'
-            ? replaceJs(c.expression)
-            : replaceExpr(c.expression);
-        if (next !== c.expression) {
-          c = { ...c, expression: next };
+  const rewriteRules = (rules?: readonly ConditionalRule[]) => {
+    if (!rules) return rules;
+    let rulesChanged = false;
+    const nextRules = rules.map((rule) => ({
+      ...rule,
+      conditions: rule.conditions.map((cond) => {
+        let c = cond;
+        if (c.targetId === oldId) {
+          c = { ...c, targetId: newId };
+          rulesChanged = true;
           changed = true;
         }
-      }
-      return c;
-    }),
-  }));
+        if (c.expression) {
+          const next =
+            c.conditionType === 'js'
+              ? replaceJs(c.expression)
+              : replaceExpr(c.expression);
+          if (next !== c.expression) {
+            c = { ...c, expression: next };
+            rulesChanged = true;
+            changed = true;
+          }
+        }
+        return c;
+      }),
+    }));
+    return rulesChanged ? nextRules : rules;
+  };
+
+  const updatedRules = rewriteRules(def.rules);
+  const options = (def as unknown as { options?: FieldOption[] }).options;
+  const updatedOptions = options?.map((option) => {
+    const rules = rewriteRules(option.rules);
+    return rules === option.rules ? option : { ...option, rules };
+  });
+  const optionsChanged = updatedOptions?.some(
+    (option, index) => option !== options?.[index]
+  );
 
   // Update display field content (inline `{fieldId}` expression placeholders)
   const defAny = def as unknown as Record<string, unknown>;
@@ -298,6 +327,7 @@ function rewriteFieldRefs(
   return {
     ...def,
     ...(updatedRules && { rules: updatedRules }),
+    ...(optionsChanged && { options: updatedOptions }),
     ...(updatedContent !== content && { content: updatedContent }),
     ...(updatedCalc !== calc && { calculation: updatedCalc }),
   } as FieldDefinition;
@@ -894,6 +924,26 @@ export function createFormStore(
       return true;
     },
 
+    updateOptionRules: (fieldId, optionId, rules) => {
+      const result = patchField(get().normalized, fieldId, (def) => {
+        const opts = (def as unknown as { options?: FieldOption[] }).options;
+        if (!opts) return null;
+        let changed = false;
+        const next = opts.map((option) => {
+          if (option.id !== optionId) return option;
+          if (option.rules === rules) return option;
+          changed = true;
+          return { ...option, rules };
+        });
+        return changed
+          ? ({ ...def, options: next } as unknown as FieldDefinition)
+          : null;
+      });
+      if (!result) return false;
+      set({ normalized: result });
+      return true;
+    },
+
     setOptionScore: (fieldId, optionId, score) => {
       const result = patchField(get().normalized, fieldId, (def) => {
         const opts = (def as unknown as { options?: FieldOption[] }).options;
@@ -1082,6 +1132,22 @@ export function createFormStore(
     getField: (fieldId) => get().normalized.byId[fieldId],
 
     getResponse: (fieldId) => get().responses[fieldId],
+
+    getVisibleOptions: (fieldId) => {
+      const { normalized, responses, dangerouslyAllowJS } = get();
+      const node = normalized.byId[fieldId];
+      if (!node) return [];
+      const options = (node.definition as { options?: FieldOption[] }).options;
+      if (!options) return [];
+      return options.filter((option) =>
+        evaluateOptionVisibility(
+          option,
+          normalized,
+          responses,
+          dangerouslyAllowJS
+        )
+      );
+    },
 
     isVisible: (fieldId) => {
       const { normalized, responses, dangerouslyAllowJS } = get();

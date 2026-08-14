@@ -6,6 +6,7 @@ import type {
   Condition,
   ConditionalRule,
   FieldDefinition,
+  FieldOption,
   FieldResponse,
   FieldResponseMap,
   SelectedOption,
@@ -66,6 +67,22 @@ export function evaluateRule(
   });
 
   return rule.logic === 'OR' ? results.some(Boolean) : results.every(Boolean);
+}
+
+export function evaluateOptionVisibility(
+  option: FieldOption,
+  normalized: NormalizedDefinition,
+  responses: FieldResponseMap,
+  dangerouslyAllowJS?: boolean
+): boolean {
+  const visibilityRules = option.rules?.filter(
+    (rule) => rule.effect === 'visible'
+  );
+  if (!visibilityRules || visibilityRules.length === 0) return true;
+
+  return visibilityRules.some((rule) =>
+    evaluateRule(rule, normalized, responses, dangerouslyAllowJS)
+  );
 }
 
 // ---------------------------------------------------------------------------

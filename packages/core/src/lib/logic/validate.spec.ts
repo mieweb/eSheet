@@ -48,6 +48,108 @@ function enableRule(targetId: string, expected: string): ConditionalRule {
 // ---------------------------------------------------------------------------
 
 describe('validateField', () => {
+  describe('option visibility', () => {
+    it('reports a selected option that is no longer visible', () => {
+      const trigger = def('country', 'text');
+      const field = def('location', 'radio', {
+        options: [
+          {
+            id: 'houston-hq',
+            value: 'Houston HQ',
+            rules: [visibleRule('country', 'us')],
+          },
+        ],
+      });
+      const normalized = norm([trigger, field]);
+      const errors = validateField('location', normalized, {
+        country: { answer: 'ca' },
+        location: {
+          selected: { id: 'houston-hq', value: 'Houston HQ' },
+        },
+      });
+
+      expect(errors).toContainEqual({
+        fieldId: 'location',
+        rule: 'optionVisibility',
+        message: 'One or more selected options are no longer available',
+        severity: 'hard',
+      });
+    });
+
+    it('accepts a selected option that remains visible', () => {
+      const trigger = def('country', 'text');
+      const field = def('location', 'radio', {
+        options: [
+          {
+            id: 'houston-hq',
+            value: 'Houston HQ',
+            rules: [visibleRule('country', 'us')],
+          },
+        ],
+      });
+      const normalized = norm([trigger, field]);
+
+      expect(
+        validateField('location', normalized, {
+          country: { answer: 'us' },
+          location: {
+            selected: { id: 'houston-hq', value: 'Houston HQ' },
+          },
+        })
+      ).toEqual([]);
+    });
+
+    it('reports a non-empty hidden multitext answer', () => {
+      const trigger = def('country', 'text');
+      const field = def('contacts', 'multitext', {
+        options: [
+          {
+            id: 'us-contact',
+            value: 'United States contact',
+            rules: [visibleRule('country', 'us')],
+          },
+        ],
+      });
+      const normalized = norm([trigger, field]);
+      const errors = validateField('contacts', normalized, {
+        country: { answer: 'ca' },
+        contacts: {
+          multitextAnswers: { 'us-contact': 'Alice' },
+        },
+      });
+
+      expect(errors).toContainEqual({
+        fieldId: 'contacts',
+        rule: 'optionVisibility',
+        message: 'One or more selected options are no longer available',
+        severity: 'hard',
+      });
+    });
+
+    it('allows an empty hidden multitext answer', () => {
+      const trigger = def('country', 'text');
+      const field = def('contacts', 'multitext', {
+        options: [
+          {
+            id: 'us-contact',
+            value: 'United States contact',
+            rules: [visibleRule('country', 'us')],
+          },
+        ],
+      });
+      const normalized = norm([trigger, field]);
+
+      expect(
+        validateField('contacts', normalized, {
+          country: { answer: 'ca' },
+          contacts: {
+            multitextAnswers: { 'us-contact': '' },
+          },
+        })
+      ).toEqual([]);
+    });
+  });
+
   // -----------------------------------------------------------------------
   // Required — basic
   // -----------------------------------------------------------------------
