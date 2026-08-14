@@ -140,7 +140,7 @@ describe('field type registry', () => {
       expect(getFieldTypeMeta(fieldType)?.defaultProps.width).toBe('full');
     }
 
-    expect(getFieldTypeMeta('section')?.defaultProps.width).toBe('third');
+    expect(getFieldTypeMeta('section')?.defaultProps.width).toBe('none');
   });
 
   it('should resolve option layout defaults from field metadata', () => {
