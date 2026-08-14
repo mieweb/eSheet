@@ -22,6 +22,8 @@ export {
   fieldValidatorSchema,
   fieldDefinitionSchema,
   formDefinitionSchema,
+  attachmentAnswerSchema,
+  noteEntrySchema,
   getFormDefinitionJSONSchema,
 
   // Types
@@ -65,6 +67,7 @@ export {
   type MultiMatrixFieldDefinition,
   type ImageFieldDefinition,
   type FileFieldDefinition,
+  type NotesFieldDefinition,
   type HtmlFieldDefinition,
   type SignatureFieldDefinition,
   type DiagramFieldDefinition,
@@ -78,6 +81,7 @@ export {
   type FieldTypeRegistry,
   type RankedAnswer,
   type AttachmentAnswer,
+  type NoteEntry,
   type AnswerValue,
   type ResponseItem,
   type FormResponse as FormResponseEnvelope,
