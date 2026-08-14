@@ -950,6 +950,56 @@ describe('importResponseFromFhir', () => {
 // ---------------------------------------------------------------------------
 
 describe('exportResponseToFhir', () => {
+  it('flattens notes entries to repeating human-readable text answers', () => {
+    const form = {
+      id: 'test',
+      pages: [
+        {
+          id: 'page-1',
+          fields: [
+            {
+              id: 'journal',
+              fieldType: 'notes' as const,
+              question: 'Case notes',
+            },
+          ],
+        },
+      ],
+    };
+
+    const answers = {
+      journal: [
+        {
+          id: 'n1',
+          createdAt: '2026-01-01T10:00:00Z',
+          author: 'Dr. Demo',
+          markdown: 'First *note*',
+          attachments: [
+            { contentType: 'application/pdf', title: 'report.pdf' },
+          ],
+        },
+        {
+          id: 'n2',
+          createdAt: '2026-01-02T10:00:00Z',
+          markdown: 'Second note',
+        },
+      ],
+    };
+
+    const response = exportResponseToFhir(form, answers, {
+      questionnaireUrl: 'test',
+    });
+
+    const answerList = response.item?.[0].answer;
+    expect(answerList).toHaveLength(2);
+    expect(answerList?.[0].valueString).toBe(
+      'Dr. Demo — 2026-01-01T10:00:00Z\nFirst *note*\n[Attachments: report.pdf]'
+    );
+    expect(answerList?.[1].valueString).toBe(
+      '2026-01-02T10:00:00Z\nSecond note'
+    );
+  });
+
   it('exports simple answers to response', () => {
     const form = {
       id: 'test',
