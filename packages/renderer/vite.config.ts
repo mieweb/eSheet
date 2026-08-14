@@ -55,6 +55,10 @@ export default defineConfig(() => ({
         'react-dom',
         'react/jsx-runtime',
         '@esheet/core',
+        // Must stay external: the field component registry lives in
+        // @esheet/fields, and registerCustomFieldTypes() only reaches the
+        // renderer when host and renderer share one module instance.
+        '@esheet/fields',
         'tslib',
       ],
     },
