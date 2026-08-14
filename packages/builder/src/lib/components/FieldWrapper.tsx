@@ -1,5 +1,10 @@
 import React from 'react';
-import type { FieldComponentProps, FormStore, UIStore } from '@esheet/core';
+import {
+  getFieldForRender,
+  type FieldComponentProps,
+  type FormStore,
+  type UIStore,
+} from '@esheet/core';
 import { useFormApi } from '../hooks/useFormApi.js';
 import { useUiApi } from '../hooks/useUiApi.js';
 import {
@@ -140,6 +145,8 @@ export function FieldWrapper({
     return null;
   }
 
+  const renderField = getFieldForRender(field, form, isPreview);
+
   // In preview mode, hide fields whose visibility rules evaluate to false.
   if (isPreview && !isVisible) {
     return null;
@@ -160,7 +167,7 @@ export function FieldWrapper({
         aria-disabled={!isEnabled || undefined}
       >
         {children({
-          field,
+          field: renderField,
           form,
           ui,
           isSelected: false,
@@ -322,7 +329,7 @@ export function FieldWrapper({
         hidden={!effectiveExpanded || undefined}
       >
         {children({
-          field,
+          field: renderField,
           form,
           ui,
           isSelected,

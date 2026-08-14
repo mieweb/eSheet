@@ -178,18 +178,22 @@ if (IS_PRERELEASE) {
 }
 
 // ---------------------------------------------------------------------------
-// 7. npm publish — two-phase, all-or-nothing.
+// 7. pnpm publish — two-phase, all-or-nothing.
 //    Phase A: preflight checks (dry-run + registry existence).
 //             Any failure aborts before anything real is published.
 //    Phase B: only if every preflight passes, publish for real.
 //    Done BEFORE the git push so that if publish fails, nothing lands on main.
+//    pnpm resolves workspace:* dependencies to exact versions in the published
+//    package manifest while keeping workspace links in the repository.
 // ---------------------------------------------------------------------------
 
 const publishTag = IS_PRERELEASE ? '--tag next' : '';
 // Provenance flags are only used for the real publish — not dry-run.
 // --provenance requires OIDC at signing time; no need to exercise it twice.
-const publishFlags = `--provenance --access public ${publishTag}`.trim();
-const dryRunFlags = `--dry-run --access public ${publishTag}`.trim();
+const publishFlags =
+  `--provenance --access public --no-git-checks ${publishTag}`.trim();
+const dryRunFlags =
+  `--dry-run --access public --no-git-checks ${publishTag}`.trim();
 
 if (DRY_RUN) {
   for (const pkgDir of PACKAGES) {
@@ -222,7 +226,7 @@ if (DRY_RUN) {
 
     // 2. Dry-run publish (validates package structure and auth, no OIDC needed).
     try {
-      exec(`npm publish ${dryRunFlags}`, { cwd: pkgDir });
+      exec(`pnpm publish ${dryRunFlags}`, { cwd: pkgDir });
       console.log('✓');
       preflight.push({ pkgDir, pkg, ok: true });
     } catch (err) {
@@ -245,14 +249,12 @@ if (DRY_RUN) {
   // Phase B — all preflights passed; publish for real.
   for (const { pkgDir, pkg } of preflight) {
     console.log(`\nPublishing ${pkg.name}@${newVersion}...`);
-    exec(`npm publish ${publishFlags}`, { cwd: pkgDir });
+    exec(`pnpm publish ${publishFlags}`, { cwd: pkgDir });
   }
 }
 
 // ---------------------------------------------------------------------------
 // 8. Git commit + tag + push — only reached if publish succeeded above.
-//    Update the lockfile first so cross-package @esheet/* pinned versions
-//    stay consistent with the bumped package.json files.
 //    (prereleases: no tag, no changelog in commit)
 // ---------------------------------------------------------------------------
 
@@ -263,19 +265,15 @@ if (DRY_RUN) {
     } and push`
   );
 } else {
-  // Sync lockfile with the updated package.json cross-dep versions.
-  console.log('Updating pnpm-lock.yaml...');
-  exec('pnpm install --lockfile-only --ignore-scripts');
-
   if (IS_PRERELEASE) {
     const changedFiles = PACKAGES.map((p) => `${p}/package.json`).join(' ');
-    run(`git add ${changedFiles} pnpm-lock.yaml`);
+    run(`git add ${changedFiles}`);
     run(`git commit -m "chore(release): bump to ${newVersion} [prerelease]"`);
     run('git push origin main');
     console.log(`📦 Committed version bumps for ${newVersion} (no tag)`);
   } else {
     const changedFiles = PACKAGES.map((p) => `${p}/package.json`).join(' ');
-    run(`git add ${changedFiles} CHANGELOG.md pnpm-lock.yaml`);
+    run(`git add ${changedFiles} CHANGELOG.md`);
     run(`git commit -m "chore(release): publish ${newVersion}"`);
     run(`git tag v${newVersion}`);
     run('git push origin main');

@@ -3,11 +3,14 @@
 // ---------------------------------------------------------------------------
 
 import type {
+  FieldOption,
   FieldResponse,
   FieldResponseMap,
   FieldValidator,
+  SelectedOption,
 } from '../types.js';
 import type { NormalizedDefinition } from '../functions/normalize.js';
+import { evaluateOptionVisibility } from './conditions.js';
 import {
   isFieldEffectivelyActive,
   resolveEffect,
@@ -133,6 +136,38 @@ export function validateField(
     });
   }
 
+  const options = (definition as { options?: FieldOption[] }).options;
+  const selectedOptionIds = getSelectedOptionIds(response?.selected);
+  const answeredMultitextOptionIds = getAnsweredMultitextOptionIds(
+    response?.multitextAnswers
+  );
+  const answeredOptionIds = [
+    ...selectedOptionIds,
+    ...answeredMultitextOptionIds,
+  ];
+  if (options && answeredOptionIds.length > 0) {
+    const visibleOptionIds = new Set(
+      options
+        .filter((option) =>
+          evaluateOptionVisibility(
+            option,
+            normalized,
+            responses,
+            dangerouslyAllowJS
+          )
+        )
+        .map((option) => option.id)
+    );
+    if (answeredOptionIds.some((id) => !visibleOptionIds.has(id))) {
+      errors.push({
+        fieldId,
+        rule: 'optionVisibility',
+        message: 'One or more selected options are no longer available',
+        severity: 'hard',
+      });
+    }
+  }
+
   // --- Soft required check ---
   if (def.softRequired && isResponseEmpty(response)) {
     errors.push({
@@ -215,6 +250,29 @@ function isResponseEmpty(response: FieldResponse | undefined): boolean {
   if (response.markupData && response.markupData.trim() !== '') return false;
 
   return true;
+}
+
+function getSelectedOptionIds(selected: FieldResponse['selected']): string[] {
+  if (!selected) return [];
+  if (Array.isArray(selected)) {
+    return selected
+      .map((option) => option.id)
+      .filter((id): id is string => typeof id === 'string');
+  }
+  if ('id' in selected) {
+    const option = selected as SelectedOption;
+    return typeof option.id === 'string' ? [option.id] : [];
+  }
+  return [];
+}
+
+function getAnsweredMultitextOptionIds(
+  answers: FieldResponse['multitextAnswers']
+): string[] {
+  if (!answers) return [];
+  return Object.entries(answers)
+    .filter(([, value]) => value.trim() !== '')
+    .map(([optionId]) => optionId);
 }
 
 // ---------------------------------------------------------------------------
