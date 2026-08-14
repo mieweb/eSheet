@@ -5,9 +5,11 @@
 import type {
   FieldDefinition,
   FieldWidth,
+  OptionLayout,
   PageEntry,
   SectionFieldDefinition,
 } from '../types.js';
+import { getDefaultProp } from '../registry.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -68,12 +70,21 @@ export function normalizeDefinition(
     for (let i = 0; i < defs.length; i++) {
       const def = defs[i];
       const { fields: children, ...rest } = def as SectionFieldDefinition;
+      const width =
+        rest.width ?? getDefaultProp<FieldWidth>(def.fieldType, 'width');
+      const optionLayout =
+        (rest as { optionLayout?: OptionLayout }).optionLayout ??
+        getDefaultProp<OptionLayout>(def.fieldType, 'optionLayout');
       const childIds =
         def.fieldType === 'section' && Array.isArray(children)
           ? walk(children, def.id)
           : [];
       byId[def.id] = {
-        definition: rest as FieldDefinition,
+        definition: {
+          ...rest,
+          ...(width !== undefined && { width }),
+          ...(optionLayout !== undefined && { optionLayout }),
+        } as FieldDefinition,
         parentId,
         childIds,
         index: i,

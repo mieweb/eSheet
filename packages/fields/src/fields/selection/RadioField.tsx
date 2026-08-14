@@ -4,7 +4,6 @@ import type {
   SelectedOption,
   RadioFieldDefinition,
 } from '@esheet/core';
-import { getDefaultProp } from '@esheet/core';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 import { CustomRadioButton } from '../../fields-controls/CustomRadioButton.js';
 
@@ -22,11 +21,7 @@ export const RadioField = React.memo(function RadioField({
   const def = field.definition as RadioFieldDefinition;
   const instanceId = form.getState().instanceId;
   const options = def.options || [];
-  const optionLayout =
-    def.optionLayout ??
-    getDefaultProp<'stack' | 'wrap'>(def.fieldType, 'optionLayout') ??
-    'wrap';
-  const isWrap = optionLayout === 'wrap';
+  const isWrap = def.optionLayout === 'wrap';
   const optionContainerClass =
     isWrap && options.length > 1
       ? 'ms:flex ms:flex-wrap ms:gap-2'

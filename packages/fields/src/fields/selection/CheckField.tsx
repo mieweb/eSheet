@@ -4,7 +4,6 @@ import type {
   SelectedOption,
   CheckFieldDefinition,
 } from '@esheet/core';
-import { getDefaultProp } from '@esheet/core';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 import { CustomCheckboxButton } from '../../fields-controls/CustomCheckboxButton.js';
 
@@ -22,10 +21,7 @@ export const CheckField = React.memo(function CheckField({
   const def = field.definition as CheckFieldDefinition;
   const instanceId = form.getState().instanceId;
   const options = def.options || [];
-  const optionLayout =
-    def.optionLayout ??
-    getDefaultProp<'stack' | 'wrap'>(def.fieldType, 'optionLayout');
-  const isWrap = optionLayout === 'wrap';
+  const isWrap = def.optionLayout === 'wrap';
   const optionContainerClass =
     isWrap && options.length > 1
       ? 'ms:flex ms:flex-wrap ms:gap-2'

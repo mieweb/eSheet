@@ -307,7 +307,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
       fields: [],
       sectionIcon: 'folder',
       sectionCollapse: 'expanded',
-      width: 'full',
+      width: 'third',
     },
     placeholder: { title: 'Enter section title...' },
   },
