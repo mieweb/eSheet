@@ -345,6 +345,9 @@ importers:
       '@esheet/core':
         specifier: workspace:*
         version: link:../core
+      '@esheet/fields':
+        specifier: workspace:*
+        version: link:../fields
       '@kerebron/editor':
         specifier: ^0.8.9
         version: 0.8.9

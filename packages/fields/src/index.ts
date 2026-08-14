@@ -116,3 +116,12 @@ export {
   fileMatchesAccept,
   readFileAsAttachment,
 } from './lib/file-utils.js';
+
+// Pluggable notes composer (rich markdown editors, e.g. @esheet/field-kerebron)
+export {
+  registerNotesComposer,
+  getNotesComposer,
+  // NOTE: resetNotesComposer intentionally not exported - internal/test-only
+  type NotesComposerProps,
+  type NotesComposerComponent,
+} from './lib/notes-composer.js';
