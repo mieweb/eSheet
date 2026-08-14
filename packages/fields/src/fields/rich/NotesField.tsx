@@ -269,8 +269,7 @@ export const NotesField = React.memo(function NotesField({
   const entryLabel = def.entryLabel ?? 'Note';
   const readOnly = !(isPreview && isEnabled) || isReadOnly;
   // Renderer identity (when the host provides one) stamps `author`.
-  const identity = (form.getState() as { identity?: { name?: string } })
-    .identity;
+  const identity = form.getState().identity;
 
   const [composer, setComposer] = React.useState<ComposerState>({
     mode: 'closed',

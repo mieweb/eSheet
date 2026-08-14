@@ -17,6 +17,61 @@ function getRendererHandle(ref: React.RefObject<EsheetRendererHandle | null>) {
 }
 
 describe('EsheetRenderer', () => {
+  it('stamps notes authorship from the identity prop', () => {
+    const ref = React.createRef<EsheetRendererHandle>();
+    const notesForm = {
+      id: 'identity-form',
+      pages: [
+        {
+          id: 'page-1',
+          fields: [{ id: 'journal', fieldType: 'notes' }],
+        },
+      ],
+    };
+    const { getByRole } = render(
+      <EsheetRenderer
+        formDataInput={notesForm}
+        identity={{ name: 'Dr. Demo' }}
+        ref={ref}
+      />
+    );
+
+    fireEvent.click(getByRole('button', { name: 'Add note' }));
+    fireEvent.change(getByRole('textbox', { name: 'Note text' }), {
+      target: { value: 'Stamped note' },
+    });
+    fireEvent.click(getByRole('button', { name: 'Save' }));
+
+    const notes = getRendererHandle(ref).getRawResponse()['journal']?.notes;
+    expect(notes).toHaveLength(1);
+    expect(notes?.[0].author).toBe('Dr. Demo');
+  });
+
+  it('saves notes unstamped when no identity is provided', () => {
+    const ref = React.createRef<EsheetRendererHandle>();
+    const { getByRole } = render(
+      <EsheetRenderer
+        formDataInput={{
+          id: 'no-identity-form',
+          pages: [
+            { id: 'page-1', fields: [{ id: 'journal', fieldType: 'notes' }] },
+          ],
+        }}
+        ref={ref}
+      />
+    );
+
+    fireEvent.click(getByRole('button', { name: 'Add note' }));
+    fireEvent.change(getByRole('textbox', { name: 'Note text' }), {
+      target: { value: 'Anonymous note' },
+    });
+    fireEvent.click(getByRole('button', { name: 'Save' }));
+
+    const notes = getRendererHandle(ref).getRawResponse()['journal']?.notes;
+    expect(notes?.[0].author).toBeUndefined();
+    expect(notes?.[0].markdown).toBe('Anonymous note');
+  });
+
   it('uses builder row widths to lay fields out on a six-column grid', async () => {
     const { container } = render(
       <EsheetRenderer
