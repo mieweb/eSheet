@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { Clipboard, Folder, Info, Minus, Plus } from 'lucide-react';
+import { Clipboard, Folder, Info, Minus, Pencil, Plus } from 'lucide-react';
 
 type IconProps = { className?: string };
 
@@ -33,6 +33,7 @@ export const TrashIcon = React.memo(
 
 export const PlusIcon = Plus;
 export const MinusIcon = Minus;
+export const PencilIcon = Pencil;
 
 export const ArrowUpIcon = React.memo(
   ({ className = '' }: IconProps) => (

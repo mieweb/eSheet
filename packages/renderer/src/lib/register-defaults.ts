@@ -28,6 +28,7 @@ import {
   HtmlField,
   DisplayField,
   FileField,
+  NotesField,
 } from '@esheet/fields';
 
 let defaultsRegistered = false;
@@ -57,6 +58,7 @@ export function ensureDefaultFieldComponentsRegistered(): void {
     diagram: DiagramField,
     image: ImageField,
     file: FileField,
+    notes: NotesField,
     html: HtmlField,
     display: DisplayField,
   });
