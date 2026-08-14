@@ -190,8 +190,10 @@ if (IS_PRERELEASE) {
 const publishTag = IS_PRERELEASE ? '--tag next' : '';
 // Provenance flags are only used for the real publish — not dry-run.
 // --provenance requires OIDC at signing time; no need to exercise it twice.
-const publishFlags = `--provenance --access public ${publishTag}`.trim();
-const dryRunFlags = `--dry-run --access public ${publishTag}`.trim();
+const publishFlags =
+  `--provenance --access public --no-git-checks ${publishTag}`.trim();
+const dryRunFlags =
+  `--dry-run --access public --no-git-checks ${publishTag}`.trim();
 
 if (DRY_RUN) {
   for (const pkgDir of PACKAGES) {
