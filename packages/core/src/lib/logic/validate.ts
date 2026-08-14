@@ -207,6 +207,9 @@ function isResponseEmpty(response: FieldResponse | undefined): boolean {
     if (files.length > 0) return false;
   }
 
+  // notes — required means at least one entry
+  if (response.notes && response.notes.length > 0) return false;
+
   // signatureData
   if (response.signatureData && response.signatureData.trim() !== '')
     return false;
