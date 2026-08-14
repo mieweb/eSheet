@@ -484,6 +484,7 @@ export type FieldValidator = z.infer<typeof fieldValidatorSchema>;
 
 /**
  * Layout width a field occupies in a row-based preview/render grid.
+ * - `none`  - does not override child widths when used on a section.
  * - `full`  - spans the whole row (default).
  * - `half`  - two per row.
  * - `third` - three per row.
@@ -491,7 +492,7 @@ export type FieldValidator = z.infer<typeof fieldValidatorSchema>;
  * **FHIR extension:** serialised as `valueCode` on the item's `extension` array.
  * Definition: https://esheet.os.mieweb.org/docs/adapters/fhir/extensions#field-width
  */
-export type FieldWidth = 'full' | 'half' | 'third';
+export type FieldWidth = 'none' | 'full' | 'half' | 'third';
 
 /**
  * How a choice field arranges its options.
@@ -529,7 +530,7 @@ interface BaseFieldDefinition {
    * - `false` / omitted - not required.
    */
   required?: boolean | 'soft';
-  /** Layout width in a row grid (`full` | `half` | `third`). Defaults by field category. */
+  /** Layout width in a row grid. Defaults by field category. */
   width?: FieldWidth;
   /** When true, the field does not inherit its containing section's width. */
   overrideSectionWidth?: boolean;
@@ -968,7 +969,7 @@ const baseFieldProps = {
   id: z.string(),
   question: z.optional(z.string()),
   required: z.optional(z.union([z.boolean(), z.literal('soft')])),
-  width: z.optional(z.enum(['full', 'half', 'third'])),
+  width: z.optional(z.enum(['none', 'full', 'half', 'third'])),
   overrideSectionWidth: z.optional(z.boolean()),
   validators: z.optional(z.array(fieldValidatorSchema)),
   rules: z.optional(z.array(conditionalRuleSchema)),
@@ -1128,7 +1129,7 @@ const openChoiceFieldSchema = z.strictObject({
 
 const displayBaseFieldProps = {
   id: z.string(),
-  width: z.optional(z.enum(['full', 'half', 'third'])),
+  width: z.optional(z.enum(['none', 'full', 'half', 'third'])),
   overrideSectionWidth: z.optional(z.boolean()),
   rules: z.optional(z.array(conditionalRuleSchema)),
   _sourceData: z.optional(z.unknown()),

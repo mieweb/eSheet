@@ -123,7 +123,8 @@ export function getInheritedSectionWidth(
 
     if (
       parent.definition.fieldType === 'section' &&
-      parent.definition.width !== undefined
+      parent.definition.width !== undefined &&
+      parent.definition.width !== 'none'
     ) {
       return parent.definition.width;
     }

@@ -280,12 +280,13 @@ function SectionWidthEditor({
       </label>
       <select
         id={`${instanceId}-editor-child-width-${fieldId}`}
-        value={width ?? 'full'}
+        value={width ?? 'none'}
         onChange={(e) =>
           onUpdate({ width: e.currentTarget.value as FieldWidth })
         }
         className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
       >
+        <option value="none">None</option>
         <option value="full">Full (whole row)</option>
         <option value="half">Half (2 per row)</option>
         <option value="third">Third (3 per row)</option>

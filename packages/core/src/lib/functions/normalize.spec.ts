@@ -42,7 +42,7 @@ describe('normalizeDefinition', () => {
     ]);
 
     expect(result.byId['text'].definition.width).toBe('third');
-    expect(result.byId['section'].definition.width).toBe('third');
+    expect(result.byId['section'].definition.width).toBe('none');
     expect(
       (result.byId['section'].definition as SectionFieldDefinition)
         .sectionCollapse
@@ -234,7 +234,7 @@ describe('normalizeDefinition', () => {
       },
     ]);
 
-    expect(getInheritedSectionWidth(result, 'deep')).toBe('third');
+    expect(getInheritedSectionWidth(result, 'deep')).toBe('half');
   });
 
   it('should prefer an inner section width over an outer section width', () => {
