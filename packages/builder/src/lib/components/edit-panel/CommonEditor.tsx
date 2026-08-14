@@ -104,9 +104,7 @@ export function CommonEditor({
       {showInputType && (
         <InputTypeEditor
           fieldId={fieldId}
-          inputType={
-            (def as { inputType?: TextInputType }).inputType ?? 'string'
-          }
+          inputType={(def as unknown as { inputType: TextInputType }).inputType}
           unit={(def as { unit?: string }).unit}
           dateRange={
             (

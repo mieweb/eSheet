@@ -109,7 +109,7 @@ export const TextField = React.memo(function TextField({
 }: FieldComponentProps) {
   const def = field.definition as TextFieldDefinition | LongtextFieldDefinition;
   const instanceId = form.getState().instanceId;
-  const inputType = def.inputType || 'string';
+  const inputType = def.inputType as NonNullable<typeof def.inputType>;
   const unit = def.unit || '';
   const isTel = inputType === 'tel';
   const placeholder = PLACEHOLDER[inputType] || 'Type your answer';

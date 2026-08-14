@@ -19,13 +19,14 @@ function createProps(definition: Record<string, unknown>): FieldComponentProps {
 }
 
 describe('SectionField', () => {
-  it('defaults absent sectionCollapse to an expanded collapsible section', () => {
+  it('renders an expanded collapsible section when configured', () => {
     render(
       <SectionField
         {...createProps({
           id: 'details',
           fieldType: 'section',
           title: 'Details',
+          sectionCollapse: 'expanded',
         })}
         nestedChildren={<div>Child field</div>}
       />

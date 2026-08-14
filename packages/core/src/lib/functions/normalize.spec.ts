@@ -26,7 +26,7 @@ describe('normalizeDefinition', () => {
     expect(result.byId['q2'].definition.fieldType).toBe('radio');
   });
 
-  it('should materialize default widths for every field', () => {
+  it('should materialize registered defaults for every field', () => {
     const result = normalizeDefinition([
       {
         id: 'page-1',
@@ -43,7 +43,14 @@ describe('normalizeDefinition', () => {
 
     expect(result.byId['text'].definition.width).toBe('third');
     expect(result.byId['section'].definition.width).toBe('third');
+    expect(
+      (result.byId['section'].definition as SectionFieldDefinition)
+        .sectionCollapse
+    ).toBe('expanded');
     expect(result.byId['child'].definition.width).toBe('third');
+    expect(
+      (result.byId['child'].definition as { inputType?: string }).inputType
+    ).toBe('string');
   });
 
   it('should materialize default option layouts', () => {
