@@ -27,6 +27,7 @@ export {
   DisplayField,
   FileField,
   NotesField,
+  ActivityField,
   NoteCardList,
   HtmlField,
   ImageField,

@@ -31,6 +31,7 @@ import {
   hydrateDefinition,
 } from '../functions/normalize.js';
 import { hydrateResponse } from '../functions/hydrate-response.js';
+import { recordActivity } from '../functions/activity.js';
 import { resolveEffect } from '../logic/resolve.js';
 import {
   evaluateJsExpression,
@@ -589,7 +590,10 @@ export function createFormStore(
         const nextEdited = new Set(state.userEditedFields);
         nextEdited.add(fieldId);
         if (!state.dangerouslyAllowJS)
-          return { responses: updated, userEditedFields: nextEdited };
+          return {
+            responses: recordActivity(state, fieldId, updated),
+            userEditedFields: nextEdited,
+          };
         // Apply calculations for all fields that have a calculation string
         const calcResponses = { ...updated };
         for (const [calcId, node] of Object.entries(state.normalized.byId)) {
@@ -607,7 +611,10 @@ export function createFormStore(
             calcResponses[calcId] = { answer: String(result) };
           }
         }
-        return { responses: calcResponses, userEditedFields: nextEdited };
+        return {
+          responses: recordActivity(state, fieldId, calcResponses),
+          userEditedFields: nextEdited,
+        };
       }),
 
     clearResponse: (fieldId) =>

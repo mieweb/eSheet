@@ -24,6 +24,7 @@ export {
   formDefinitionSchema,
   attachmentAnswerSchema,
   noteEntrySchema,
+  activityEntrySchema,
   getFormDefinitionJSONSchema,
 
   // Types
@@ -68,6 +69,7 @@ export {
   type ImageFieldDefinition,
   type FileFieldDefinition,
   type NotesFieldDefinition,
+  type ActivityFieldDefinition,
   type HtmlFieldDefinition,
   type SignatureFieldDefinition,
   type DiagramFieldDefinition,
@@ -82,6 +84,7 @@ export {
   type RankedAnswer,
   type AttachmentAnswer,
   type NoteEntry,
+  type ActivityEntry,
   type AnswerValue,
   type ResponseItem,
   type FormResponse as FormResponseEnvelope,
@@ -125,6 +128,13 @@ export {
   collectAttachments,
   mapAttachments,
 } from './lib/functions/notes.js';
+
+export {
+  ACTIVITY_RESPONSE_KEY,
+  ACTIVITY_DEBOUNCE_MS,
+  mergeActivity,
+  formatActivityValue,
+} from './lib/functions/activity.js';
 
 export {
   evaluateCondition,

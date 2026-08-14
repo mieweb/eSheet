@@ -14,6 +14,33 @@ function noteMergeStamp(note: NoteEntry): string {
 }
 
 /**
+ * Merge two GUID-keyed entry arrays as a set: union by `id`, same-id
+ * conflicts resolve last-writer-wins on `stamp`, output sorted by `sortKey`
+ * (ties broken by id for determinism). Shared by notes and activity logs.
+ */
+export function mergeById<T extends { id: string }>(
+  a: T[] | undefined,
+  b: T[] | undefined,
+  stamp: (entry: T) => string,
+  sortKey: (entry: T) => string
+): T[] {
+  const byId = new Map<string, T>();
+  for (const entry of a ?? []) {
+    byId.set(entry.id, entry);
+  }
+  for (const entry of b ?? []) {
+    const existing = byId.get(entry.id);
+    if (!existing || stamp(entry) >= stamp(existing)) {
+      byId.set(entry.id, entry);
+    }
+  }
+  return [...byId.values()].sort(
+    (x, y) =>
+      sortKey(x).localeCompare(sortKey(y)) || x.id.localeCompare(y.id)
+  );
+}
+
+/**
  * Merge two `notes[]` arrays as a **set keyed by `id`**.
  *
  * - Entries present on only one side are kept (concurrent adds union cleanly
@@ -28,20 +55,7 @@ export function mergeNotes(
   a: NoteEntry[] | undefined,
   b: NoteEntry[] | undefined
 ): NoteEntry[] {
-  const byId = new Map<string, NoteEntry>();
-  for (const note of a ?? []) {
-    byId.set(note.id, note);
-  }
-  for (const note of b ?? []) {
-    const existing = byId.get(note.id);
-    if (!existing || noteMergeStamp(note) >= noteMergeStamp(existing)) {
-      byId.set(note.id, note);
-    }
-  }
-  return [...byId.values()].sort(
-    (x, y) =>
-      x.createdAt.localeCompare(y.createdAt) || x.id.localeCompare(y.id)
-  );
+  return mergeById(a, b, noteMergeStamp, (note) => note.createdAt);
 }
 
 /**
