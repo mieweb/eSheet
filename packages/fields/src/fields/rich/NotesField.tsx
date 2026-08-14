@@ -13,6 +13,7 @@ import {
   readFileAsAttachment,
 } from '../../lib/file-utils.js';
 import { NoteCardList, type NoteCardItem } from './NoteCardList.js';
+import { getNotesComposer } from '../../lib/notes-composer.js';
 
 // ---------------------------------------------------------------------------
 // NotesField — journal-style list of rich (markdown) note entries, each
@@ -105,6 +106,13 @@ function NoteComposer({
   const [tab, setTab] = React.useState<'write' | 'preview'>('write');
   const [errorMsg, setErrorMsg] = React.useState('');
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+  // Host-registered rich composer (e.g. Kerebron). It edits markdown
+  // in place, so the Write/Preview tabs only apply to the textarea default.
+  const RichComposer = getNotesComposer();
+  // The rich composer may debounce onChange; keep the latest markdown in a
+  // ref so Save never captures a stale value.
+  const markdownRef = React.useRef(initialMarkdown);
+  markdownRef.current = markdown;
 
   React.useEffect(() => {
     textareaRef.current?.focus();
@@ -145,55 +153,66 @@ function NoteComposer({
 
   return (
     <div className="note-composer ms:border ms:border-msprimary/50 ms:rounded-lg ms:p-3 ms:space-y-2">
-      <div
-        className="note-composer-tabs ms:flex ms:gap-2"
-        role="tablist"
-        aria-label={`${entryLabel} composer mode`}
-      >
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'write'}
-          className={`${buttonClass} ${
-            tab === 'write' ? 'ms:border-msprimary' : ''
-          }`}
-          onClick={() => setTab('write')}
-        >
-          Write
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'preview'}
-          className={`${buttonClass} ${
-            tab === 'preview' ? 'ms:border-msprimary' : ''
-          }`}
-          onClick={() => setTab('preview')}
-        >
-          Preview
-        </button>
-      </div>
-
-      {tab === 'write' ? (
-        <textarea
-          ref={textareaRef}
-          value={markdown}
-          onChange={(e) => setMarkdown(e.target.value)}
-          rows={5}
-          aria-label={`${entryLabel} text`}
-          placeholder={`Write a ${entryLabel.toLowerCase()}... (markdown supported)`}
-          className="note-composer-textarea ms:px-3 ms:py-2 ms:w-full ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:rounded-lg ms:text-sm ms:resize-y"
+      {RichComposer ? (
+        <RichComposer
+          value={initialMarkdown}
+          onChange={setMarkdown}
+          ariaLabel={`${entryLabel} text`}
+          placeholder={`Write a ${entryLabel.toLowerCase()}...`}
         />
       ) : (
-        <div className="note-composer-preview ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:p-3 ms:text-sm ms:text-mstext">
-          {markdown.trim() ? (
-            renderMarkdownContent(markdown)
+        <>
+          <div
+            className="note-composer-tabs ms:flex ms:gap-2"
+            role="tablist"
+            aria-label={`${entryLabel} composer mode`}
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === 'write'}
+              className={`${buttonClass} ${
+                tab === 'write' ? 'ms:border-msprimary' : ''
+              }`}
+              onClick={() => setTab('write')}
+            >
+              Write
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === 'preview'}
+              className={`${buttonClass} ${
+                tab === 'preview' ? 'ms:border-msprimary' : ''
+              }`}
+              onClick={() => setTab('preview')}
+            >
+              Preview
+            </button>
+          </div>
+
+          {tab === 'write' ? (
+            <textarea
+              ref={textareaRef}
+              value={markdown}
+              onChange={(e) => setMarkdown(e.target.value)}
+              rows={5}
+              aria-label={`${entryLabel} text`}
+              placeholder={`Write a ${entryLabel.toLowerCase()}... (markdown supported)`}
+              className="note-composer-textarea ms:px-3 ms:py-2 ms:w-full ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:rounded-lg ms:text-sm ms:resize-y"
+            />
           ) : (
-            <span className="ms:text-mstextmuted ms:italic">
-              Nothing to preview
-            </span>
+            <div className="note-composer-preview ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:p-3 ms:text-sm ms:text-mstext">
+              {markdown.trim() ? (
+                renderMarkdownContent(markdown)
+              ) : (
+                <span className="ms:text-mstextmuted ms:italic">
+                  Nothing to preview
+                </span>
+              )}
+            </div>
           )}
-        </div>
+        </>
       )}
 
       {def.allowAttachments && (
@@ -238,7 +257,7 @@ function NoteComposer({
           type="button"
           className={primaryButtonClass}
           disabled={!markdown.trim()}
-          onClick={() => onSave(markdown, attachments)}
+          onClick={() => onSave(markdownRef.current, attachments)}
         >
           Save
         </button>

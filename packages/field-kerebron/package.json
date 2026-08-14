@@ -32,6 +32,7 @@
   ],
   "dependencies": {
     "@esheet/core": "workspace:*",
+    "@esheet/fields": "workspace:*",
     "@kerebron/editor": "^0.8.9",
     "@kerebron/editor-kits": "^0.8.9",
     "@kerebron/editor-react": "^0.8.9",
