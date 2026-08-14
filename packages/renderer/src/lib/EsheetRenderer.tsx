@@ -92,6 +92,12 @@ export interface EsheetRendererProps {
   bottomNavigation?: boolean;
   /** Block forward page navigation while required fields on the current page are unanswered. */
   validateNavigation?: boolean;
+  /**
+   * Identity of the current user. When provided, fields that record
+   * authorship (e.g. `notes`) stamp new entries with `identity.name`.
+   * Absent → entries save unstamped.
+   */
+  identity?: { name: string };
 }
 
 // ---------------------------------------------------------------------------
@@ -241,6 +247,7 @@ const EsheetRendererInner = React.forwardRef<
     topNavigation = false,
     bottomNavigation = true,
     validateNavigation = true,
+    identity,
   },
   ref
 ) {
@@ -248,6 +255,11 @@ const EsheetRendererInner = React.forwardRef<
   const [softBypassOpen, setSoftBypassOpen] = React.useState(false);
   const [pendingResponse, setPendingResponse] =
     React.useState<FormResponse | null>(null);
+
+  // Keep the host-supplied identity in the form store (stamps notes authorship).
+  React.useEffect(() => {
+    formStore.getState().setIdentity(identity);
+  }, [formStore, identity]);
 
   const handleSubmitClick = () => {
     const state = formStore.getState();

@@ -77,6 +77,8 @@ export interface FormState {
   readonly normalized: NormalizedDefinition;
   /** Current responses keyed by field ID. */
   readonly responses: FieldResponseMap;
+  /** Host-supplied identity of the current user (stamps notes authorship). */
+  readonly identity?: { name: string };
   /** Field IDs that have been explicitly edited by the user (not auto-calculated). */
   readonly userEditedFields: ReadonlySet<string>;
 
@@ -91,6 +93,8 @@ export interface FormState {
   setFormDescription: (description: string | undefined) => void;
   /** Enable or disable dangerously embedded JS for this form. */
   setDangerouslyAllowJS: (enabled: boolean) => void;
+  /** Set the host-supplied identity of the current user. */
+  setIdentity: (identity: { name: string } | undefined) => void;
   /** Set (or replace) a single field's response. */
   setResponse: (fieldId: string, response: FieldResponse) => void;
   /** Remove a single field's response. */
@@ -408,6 +412,7 @@ export function createFormStore(
     dangerouslyAllowJS: (initial?.dangerouslyAllowJS ?? false) && _hostAllowsJS,
     normalized: initial ? normalizeDefinition(initial.pages) : EMPTY_NORMALIZED,
     responses: {},
+    identity: undefined,
     userEditedFields: new Set<string>(),
 
     // --- Actions ---
@@ -436,6 +441,8 @@ export function createFormStore(
 
     setDangerouslyAllowJS: (enabled) =>
       set({ dangerouslyAllowJS: enabled && _hostAllowsJS }),
+
+    setIdentity: (identity) => set({ identity }),
 
     setResponse: (fieldId, response) =>
       set((state) => {
