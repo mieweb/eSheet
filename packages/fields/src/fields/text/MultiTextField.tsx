@@ -3,7 +3,6 @@ import type {
   FieldComponentProps,
   MultitextFieldDefinition,
 } from '@esheet/core';
-import { getDefaultProp } from '@esheet/core';
 import { Input } from '@mieweb/ui';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 
@@ -21,10 +20,7 @@ export const MultiTextField = React.memo(function MultiTextField({
   const def = field.definition as MultitextFieldDefinition;
   const instanceId = form.getState().instanceId;
   const options = def.options || [];
-  const optionLayout =
-    def.optionLayout ??
-    getDefaultProp<'stack' | 'wrap'>(def.fieldType, 'optionLayout');
-  const isWrap = optionLayout === 'wrap';
+  const isWrap = def.optionLayout === 'wrap';
   const multitextAnswers = response?.multitextAnswers || {};
 
   if (isPreview) {

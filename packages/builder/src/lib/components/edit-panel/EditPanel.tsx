@@ -8,6 +8,7 @@ import {
   type MatrixColumn,
   type MatrixRow,
   type EditTab,
+  type SectionFieldDefinition,
   type SectionIconName,
 } from '@esheet/core';
 import { useInstanceId } from '../../EsheetBuilder.js';
@@ -319,6 +320,9 @@ function SectionEditContent({
   onRenameId,
 }: SectionEditContentProps) {
   const instanceId = useInstanceId();
+  const sectionCollapse = (
+    def as { sectionCollapse?: SectionFieldDefinition['sectionCollapse'] }
+  ).sectionCollapse;
   const {
     selectedFieldId,
     selectedFieldChildId,
@@ -447,9 +451,7 @@ function SectionEditContent({
         </label>
         <select
           id={`${instanceId}-editor-collapse-${fieldId}`}
-          value={
-            (def as { sectionCollapse?: string }).sectionCollapse ?? 'expanded'
-          }
+          value={sectionCollapse}
           onChange={(e) => {
             const value = e.currentTarget.value;
             onUpdate({

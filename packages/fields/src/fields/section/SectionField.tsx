@@ -215,7 +215,9 @@ export const SectionField = React.memo(function SectionField({
   const instanceId = form.getState().instanceId;
   const title = def.title || 'Section';
   const bodyId = React.useId();
-  const sectionCollapse = def.sectionCollapse ?? 'expanded';
+  const sectionCollapse = def.sectionCollapse as NonNullable<
+    SectionFieldDefinition['sectionCollapse']
+  >;
   const collapsible = sectionCollapse !== 'disabled';
   const defaultExpanded = collapsible ? sectionCollapse === 'expanded' : true;
   const [expanded, setExpanded] = React.useState(defaultExpanded);

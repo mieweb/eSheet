@@ -135,11 +135,12 @@ describe('field type registry', () => {
       'diagram',
       'file',
       'display',
-      'section',
       'pages',
     ]) {
       expect(getFieldTypeMeta(fieldType)?.defaultProps.width).toBe('full');
     }
+
+    expect(getFieldTypeMeta('section')?.defaultProps.width).toBe('third');
   });
 
   it('should resolve option layout defaults from field metadata', () => {

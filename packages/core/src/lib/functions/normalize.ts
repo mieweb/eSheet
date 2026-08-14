@@ -8,6 +8,7 @@ import type {
   PageEntry,
   SectionFieldDefinition,
 } from '../types.js';
+import { getFieldTypeMeta } from '../registry.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -68,12 +69,21 @@ export function normalizeDefinition(
     for (let i = 0; i < defs.length; i++) {
       const def = defs[i];
       const { fields: children, ...rest } = def as SectionFieldDefinition;
+      const { fields: _defaultFields, ...defaultProps } =
+        getFieldTypeMeta(def.fieldType)?.defaultProps ?? {};
+      void _defaultFields;
+      const definition = { ...rest } as FieldDefinition;
+      const definitionValues = definition as unknown as Record<string, unknown>;
+      for (const [property, value] of Object.entries(defaultProps)) {
+        if (definitionValues[property] === undefined)
+          definitionValues[property] = value;
+      }
       const childIds =
         def.fieldType === 'section' && Array.isArray(children)
           ? walk(children, def.id)
           : [];
       byId[def.id] = {
-        definition: rest as FieldDefinition,
+        definition,
         parentId,
         childIds,
         index: i,

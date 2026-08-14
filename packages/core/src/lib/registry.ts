@@ -76,7 +76,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     answerType: 'text',
     hasOptions: false,
     hasMatrix: false,
-    defaultProps: { width: 'third' },
+    defaultProps: { inputType: 'string', width: 'third' },
     placeholder: {
       question: 'Enter your question...',
       answer: 'Enter detailed answer...',
@@ -307,7 +307,7 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
       fields: [],
       sectionIcon: 'folder',
       sectionCollapse: 'expanded',
-      width: 'full',
+      width: 'third',
     },
     placeholder: { title: 'Enter section title...' },
   },

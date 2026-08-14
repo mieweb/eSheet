@@ -1,5 +1,5 @@
 import React from 'react';
-import { getDefaultProp, type FieldWidth } from '@esheet/core';
+import type { FieldWidth } from '@esheet/core';
 
 const GRID_STYLE: React.CSSProperties = {
   display: 'grid',
@@ -79,10 +79,6 @@ export interface FieldGridItemProps {
   inheritedWidth?: FieldWidth;
 }
 
-function getDefaultWidth(fieldType: string): FieldWidth {
-  return getDefaultProp<FieldWidth>(fieldType, 'width') ?? 'full';
-}
-
 export function FieldGridItem({
   children,
   fieldType,
@@ -92,15 +88,19 @@ export function FieldGridItem({
   const useGridLayout = useFieldGridLayout();
   if (!useGridLayout) return children;
 
-  const effectiveWidth = inheritedWidth ?? width ?? getDefaultWidth(fieldType);
+  if (fieldType === 'section' || fieldType === 'pages') {
+    return React.cloneElement(children, {
+      style: { ...children.props.style, gridColumn: 'span 6' },
+    });
+  }
+
+  const effectiveWidth = inheritedWidth ?? width;
+  if (effectiveWidth === undefined) {
+    throw new Error(`Missing width for field '${fieldType}'.`);
+  }
+
   const columnSpan =
-    fieldType === 'section' || fieldType === 'pages'
-      ? 6
-      : effectiveWidth === 'half'
-      ? 3
-      : effectiveWidth === 'third'
-      ? 2
-      : 6;
+    effectiveWidth === 'half' ? 3 : effectiveWidth === 'third' ? 2 : 6;
 
   return React.cloneElement(children, {
     style: { ...children.props.style, gridColumn: `span ${columnSpan}` },

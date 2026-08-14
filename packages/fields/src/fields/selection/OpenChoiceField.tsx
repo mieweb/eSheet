@@ -5,7 +5,6 @@ import type {
   OpenChoiceFieldDefinition,
   FieldOption,
 } from '@esheet/core';
-import { getDefaultProp } from '@esheet/core';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 import { CustomRadioButton } from '../../fields-controls/CustomRadioButton.js';
 
@@ -35,11 +34,7 @@ export const OpenChoiceField = React.memo(function OpenChoiceField({
   if (isPreview) {
     const otherText =
       selectedId === otherOptionId && selected?.value ? selected.value : '';
-    const optionLayout =
-      def.optionLayout ??
-      getDefaultProp<'stack' | 'wrap'>(def.fieldType, 'optionLayout') ??
-      'wrap';
-    const isWrap = optionLayout === 'wrap';
+    const isWrap = def.optionLayout === 'wrap';
     const optionContainerClass =
       isWrap && options.length + 1 > 1
         ? 'ms:flex ms:flex-wrap ms:gap-2'

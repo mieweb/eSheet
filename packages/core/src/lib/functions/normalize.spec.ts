@@ -26,6 +26,53 @@ describe('normalizeDefinition', () => {
     expect(result.byId['q2'].definition.fieldType).toBe('radio');
   });
 
+  it('should materialize registered defaults for every field', () => {
+    const result = normalizeDefinition([
+      {
+        id: 'page-1',
+        fields: [
+          { id: 'text', fieldType: 'text' },
+          {
+            id: 'section',
+            fieldType: 'section',
+            fields: [{ id: 'child', fieldType: 'longtext' }],
+          },
+        ],
+      },
+    ]);
+
+    expect(result.byId['text'].definition.width).toBe('third');
+    expect(result.byId['section'].definition.width).toBe('third');
+    expect(
+      (result.byId['section'].definition as SectionFieldDefinition)
+        .sectionCollapse
+    ).toBe('expanded');
+    expect(result.byId['child'].definition.width).toBe('third');
+    expect(
+      (result.byId['child'].definition as { inputType?: string }).inputType
+    ).toBe('string');
+  });
+
+  it('should materialize default option layouts', () => {
+    const result = normalizeDefinition([
+      {
+        id: 'page-1',
+        fields: [
+          { id: 'radio', fieldType: 'radio' },
+          { id: 'text', fieldType: 'text' },
+        ],
+      },
+    ]);
+
+    expect(
+      (result.byId['radio'].definition as { optionLayout?: string })
+        .optionLayout
+    ).toBe('wrap');
+    expect(
+      (result.byId['text'].definition as { optionLayout?: string }).optionLayout
+    ).toBeUndefined();
+  });
+
   it('should set parentId to null for top-level fields', () => {
     const fields: FieldDefinition[] = [{ id: 'q1', fieldType: 'text' }];
 
@@ -187,7 +234,7 @@ describe('normalizeDefinition', () => {
       },
     ]);
 
-    expect(getInheritedSectionWidth(result, 'deep')).toBe('half');
+    expect(getInheritedSectionWidth(result, 'deep')).toBe('third');
   });
 
   it('should prefer an inner section width over an outer section width', () => {
