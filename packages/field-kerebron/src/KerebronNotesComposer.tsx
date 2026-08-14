@@ -44,6 +44,11 @@ if (
   document.head.appendChild(style);
 }
 
+// Initial document loads are serialized across editor instances: the
+// markdown converter's tree-sitter WASM init is not concurrency-safe
+// (same pattern as echart-sim's DocumentComposeEditor).
+let initialLoadQueue: Promise<unknown> = Promise.resolve();
+
 export function KerebronNotesComposer({
   value,
   onChange,
@@ -95,15 +100,20 @@ export function KerebronNotesComposer({
     editor.addEventListener('changed', onChanged);
 
     void (async () => {
-      if (valueRef.current) {
-        try {
-          await editor.loadDocument(
-            'text/x-markdown',
-            new TextEncoder().encode(valueRef.current)
-          );
-        } catch (err) {
-          console.error('[KerebronNotesComposer] loadDocument failed:', err);
-        }
+      // Always load, even when empty — the editor needs an initial document
+      // before it will accept edits. Queued so parallel mounts (React
+      // StrictMode, several notes fields) don't race the WASM init.
+      const load = initialLoadQueue
+        .catch(() => undefined)
+        .then(async () => {
+          if (disposed) return;
+          await editor.loadDocumentText('text/x-markdown', valueRef.current);
+        });
+      initialLoadQueue = load;
+      try {
+        await load;
+      } catch (err) {
+        console.error('[KerebronNotesComposer] loadDocument failed:', err);
       }
       loading = false;
     })();
