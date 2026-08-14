@@ -121,6 +121,12 @@ export {
 } from './lib/functions/normalize-responses.js';
 
 export {
+  mergeNotes,
+  collectAttachments,
+  mapAttachments,
+} from './lib/functions/notes.js';
+
+export {
   evaluateCondition,
   evaluateRule,
   evaluateOptionVisibility,
