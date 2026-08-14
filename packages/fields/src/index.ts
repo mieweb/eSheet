@@ -10,6 +10,7 @@ export {
   TrashIcon,
   PlusIcon,
   MinusIcon,
+  PencilIcon,
   ArrowUpIcon,
   ArrowDownIcon,
   UpDownArrowIcon,
@@ -43,12 +44,16 @@ export {
   ImageField,
   SignatureField,
   FileField,
+  NotesField,
+  NoteCardList,
 } from './fields/index.js';
 export type {
   DrawingData,
   DrawingPadConfig,
   DrawingPadPayload,
   NormalizedPoint,
+  NoteCardItem,
+  NoteCardListProps,
   Stroke,
 } from './fields/index.js';
 
@@ -97,3 +102,16 @@ export {
   useFieldGridLayout,
 } from './lib/FieldGrid.js';
 export type { FieldGridItemProps, FieldGridProps } from './lib/FieldGrid.js';
+
+// Shared markdown-lite rendering
+export {
+  renderMarkdownContent,
+  renderMarkdownInline,
+} from './lib/markdown.js';
+
+// Shared file/attachment helpers
+export {
+  formatFileSize,
+  fileMatchesAccept,
+  readFileAsAttachment,
+} from './lib/file-utils.js';

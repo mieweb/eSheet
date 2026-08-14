@@ -39,9 +39,9 @@
     "!**/*.tsbuildinfo"
   ],
   "dependencies": {
-    "@esheet/adapters": "0.0.6",
-    "@esheet/core": "0.0.6",
-    "@esheet/fields": "0.0.6",
+    "@esheet/adapters": "workspace:*",
+    "@esheet/core": "workspace:*",
+    "@esheet/fields": "workspace:*",
     "js-yaml": "^5.2.3"
   },
   "peerDependencies": {

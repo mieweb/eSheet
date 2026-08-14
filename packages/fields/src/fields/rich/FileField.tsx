@@ -5,6 +5,7 @@ import type {
   FileFieldDefinition,
 } from '@esheet/core';
 import { TrashIcon, UploadIcon } from '../../icons.js';
+import { formatFileSize, fileMatchesAccept } from '../../lib/file-utils.js';
 
 const PREDEFINED_FILE_TYPES = [
   { label: 'JPEG', value: 'image/jpeg', accept: '.jpg,.jpeg' },
@@ -51,14 +52,6 @@ const getSelectedTypes = (acceptString?: string): string[] => {
     const ftParts = ft.accept.split(',').map((s) => s.trim());
     return ftParts.some((p) => parts.has(p)) || parts.has(ft.value);
   }).map((ft) => ft.value);
-};
-
-const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
 };
 
 const SIZE_UNITS = {
@@ -121,23 +114,11 @@ export const FileField = React.memo(function FileField({
       const maxFileSize = def.maxFileSize;
 
       // Validate file types against accept filter
-      const acceptParts = def.accept
-        ? def.accept.split(',').map((s) => s.trim())
-        : [];
       const rejectedTypes: string[] = [];
       const typeAccepted: File[] = [];
 
       filesToProcess.forEach((file) => {
-        const ok =
-          acceptParts.length === 0 ||
-          acceptParts.some((part) => {
-            if (part.startsWith('.'))
-              return file.name.toLowerCase().endsWith(part.toLowerCase());
-            if (part.endsWith('/*'))
-              return file.type.startsWith(part.slice(0, -1));
-            return file.type === part;
-          });
-        if (ok) typeAccepted.push(file);
+        if (fileMatchesAccept(file, def.accept)) typeAccepted.push(file);
         else rejectedTypes.push(file.name);
       });
 
