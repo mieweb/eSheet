@@ -15,13 +15,11 @@ Calculations require the [dual opt-in gate](./dangerous-js#the-dual-opt-in-gate)
 
 Add a `calculation` string to any field definition:
 
-```json
-{
-  "id": "bmi",
-  "fieldType": "text",
-  "question": "BMI",
-  "calculation": "Math.round((responses['weight'] / Math.pow(responses['height'] / 100, 2)) * 10) / 10"
-}
+```yaml
+id: bmi
+fieldType: text
+question: BMI
+calculation: Math.round((responses['weight'] / Math.pow(responses['height'] / 100, 2)) * 10) / 10
 ```
 
 The `calculation` is a **JavaScript expression** (not a statement). It is wrapped internally as:
@@ -84,46 +82,38 @@ Unanswered fields return an empty string `''`.
 
 ### BMI from weight and height
 
-```json
-{
-  "id": "bmi",
-  "fieldType": "text",
-  "question": "BMI",
-  "calculation": "Math.round((responses['weight'] / Math.pow(responses['height'] / 100, 2)) * 10) / 10"
-}
+```yaml
+id: bmi
+fieldType: text
+question: BMI
+calculation: Math.round((responses['weight'] / Math.pow(responses['height'] / 100, 2)) * 10) / 10
 ```
 
 ### Suggested follow-up date (6 months out)
 
-```json
-{
-  "id": "follow-up",
-  "fieldType": "text",
-  "question": "Suggested Follow-up Date",
-  "calculation": "(() => { const d = new Date(responses['last-encounter']); d.setMonth(d.getMonth() + 6); return d.toISOString().slice(0, 10); })()"
-}
+```yaml
+id: follow-up
+fieldType: text
+question: Suggested Follow-up Date
+calculation: (() => { const d = new Date(responses['last-encounter']); d.setMonth(d.getMonth() + 6); return d.toISOString().slice(0, 10); })()
 ```
 
 ### Age from date of birth
 
-```json
-{
-  "id": "calculated-age",
-  "fieldType": "text",
-  "question": "Age",
-  "calculation": "(() => { const dob = new Date(responses['dob']); if (!dob || isNaN(dob)) return ''; const today = new Date(); let age = today.getFullYear() - dob.getFullYear(); if (today < new Date(today.getFullYear(), dob.getMonth(), dob.getDate())) age--; return age; })()"
-}
+```yaml
+id: calculated-age
+fieldType: text
+question: Age
+calculation: (() => { const dob = new Date(responses['dob']); if (!dob || isNaN(dob)) return ''; const today = new Date(); let age = today.getFullYear() - dob.getFullYear(); if (today < new Date(today.getFullYear(), dob.getMonth(), dob.getDate())) age--; return age; })()
 ```
 
 ### Conditional label from another field
 
-```json
-{
-  "id": "risk-label",
-  "fieldType": "display",
-  "question": "Risk Level",
-  "calculation": "responses['total-risk-score'] >= 8 ? 'High Risk' : responses['total-risk-score'] >= 4 ? 'Moderate Risk' : 'Low Risk'"
-}
+```yaml
+id: risk-label
+fieldType: display
+question: Risk Level
+calculation: "responses['total-risk-score'] >= 8 ? 'High Risk' : responses['total-risk-score'] >= 4 ? 'Moderate Risk' : 'Low Risk'"
 ```
 
 ---

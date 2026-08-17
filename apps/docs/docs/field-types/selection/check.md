@@ -12,22 +12,25 @@ Multi-select checkbox field.
 
 ## Answer Format
 
-```json
-{ "selected": [{ "id": "optionId", "value": "Option Label" }] }
+```yaml
+selected:
+  - id: optionId
+    value: Option Label
 ```
 
 ## Example
 
-```json
-{
-  "id": "symptoms",
-  "fieldType": "check",
-  "question": "Current Symptoms",
-  "options": [
-    { "id": "s1", "value": "Headache" },
-    { "id": "s2", "value": "Nausea" },
-    { "id": "s3", "value": "Fatigue" },
-    { "id": "s4", "value": "Dizziness" }
-  ]
-}
+```yaml
+id: symptoms
+fieldType: check
+question: Current Symptoms
+options:
+  - id: s1
+    value: Headache
+  - id: s2
+    value: Nausea
+  - id: s3
+    value: Fatigue
+  - id: s4
+    value: Dizziness
 ```

@@ -8,9 +8,9 @@ Drag-and-drop questionnaire builder for eSheet. Provides a full editing UI for c
 - ✅ 19 built-in field types via `@esheet/fields`
 - ✅ Section nesting with drag-into-section support
 - ✅ Field editors (question text, options, matrix rows/columns, conditional logic)
-- ✅ Code view with Monaco editor (JSON/YAML toggle)
+- ✅ Code view with Monaco editor (YAML default, JSON toggle)
 - ✅ Live preview mode
-- ✅ Import/Export (JSON + YAML)
+- ✅ Import/Export (YAML default, JSON option)
 - ✅ Custom field type registration
 - ✅ Dark mode support
 - ✅ Mobile responsive (bottom drawer for panels)
@@ -19,7 +19,7 @@ Drag-and-drop questionnaire builder for eSheet. Provides a full editing UI for c
 ## Installation
 
 ```bash
-npm install @esheet/builder @esheet/fields @esheet/core
+npm install @esheet/builder @esheet/fields @esheet/core js-yaml
 ```
 
 ## Usage
@@ -42,18 +42,27 @@ function App() {
 ### With Initial Schema
 
 ```tsx
+import { load } from 'js-yaml';
 import { EsheetBuilder } from '@esheet/builder';
+import type { FormDefinition } from '@esheet/core';
 
-const initialForm: FormDefinition = {
-  id: 'patient-intake',
-  title: 'Patient Intake',
-  fields: [
-    { id: 'name', fieldType: 'text', question: 'Full Name', required: true },
-    { id: 'dob', fieldType: 'date', question: 'Date of Birth' },
-  ],
-};
+const initialForm = load(`
+id: patient-intake
+title: Patient Intake
+pages:
+  - id: patient-information
+    fields:
+      - id: name
+        fieldType: text
+        question: Full Name
+        required: true
+      - id: dob
+        fieldType: text
+        question: Date of Birth
+        inputType: date
+`) as FormDefinition;
 
-<EsheetBuilder initialDefinition={initialForm} onChange={handleChange} />;
+<EsheetBuilder definition={initialForm} onChange={handleChange} />;
 ```
 
 ### Dark Mode

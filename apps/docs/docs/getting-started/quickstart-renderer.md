@@ -14,7 +14,7 @@ Render a form and collect user responses in your React application.
 | Non-React / plain JS | [`@esheet/renderer-standalone`](./quickstart-standalone) |
 | Meteor Blaze         | [`@esheet/renderer-blaze`](./quickstart-blaze)           |
 
-> The example below imports `FormDefinition` from `@esheet/core`. Add `@esheet/core` as an explicit dependency only if your app imports core types or APIs directly. You can also pass plain objects, JSON strings, or YAML strings as `formData` without any core import.
+> YAML is eSheet's canonical format for committed form layouts. You can also pass plain objects or JSON strings, and the renderer auto-detects both serialization formats.
 
 ## Basic Example
 
@@ -22,38 +22,36 @@ Render a form and collect user responses in your React application.
 import { useRef } from 'react';
 import { EsheetRenderer } from '@esheet/renderer';
 import type { EsheetRendererHandle } from '@esheet/renderer';
-import type { FormDefinition } from '@esheet/core';
 
-const myForm: FormDefinition = {
-  id: 'feedback-survey',
-  title: 'Feedback Survey',
-  fields: [
-    {
-      id: 'name',
-      fieldType: 'text',
-      question: 'Your Name',
-      required: true,
-      inputType: 'string',
-    },
-    {
-      id: 'rating',
-      fieldType: 'rating',
-      question: 'How would you rate our service?',
-      options: [
-        { id: 'r1', value: '1' },
-        { id: 'r2', value: '2' },
-        { id: 'r3', value: '3' },
-        { id: 'r4', value: '4' },
-        { id: 'r5', value: '5' },
-      ],
-    },
-    {
-      id: 'comments',
-      fieldType: 'longtext',
-      question: 'Additional Comments',
-    },
-  ],
-};
+const myForm = `
+id: feedback-survey
+title: Feedback Survey
+pages:
+  - id: feedback
+    fields:
+      - id: name
+        fieldType: text
+        question: Your Name
+        required: true
+        inputType: string
+      - id: rating
+        fieldType: rating
+        question: How would you rate our service?
+        options:
+          - id: r1
+            value: '1'
+          - id: r2
+            value: '2'
+          - id: r3
+            value: '3'
+          - id: r4
+            value: '4'
+          - id: r5
+            value: '5'
+      - id: comments
+        fieldType: longtext
+        question: Additional Comments
+`;
 
 function App() {
   const rendererRef = useRef<EsheetRendererHandle>(null);
@@ -129,23 +127,23 @@ Pass `initialResponses` to pre-populate the form:
 />
 ```
 
-## Accepting JSON/YAML Strings
+## Accepting YAML/JSON Strings
 
-The renderer accepts form definitions as objects, JSON strings, or YAML strings:
+The renderer accepts form definitions as objects, YAML strings, or JSON strings. YAML is the recommended format for committed definitions:
 
 ```tsx
-// JSON string
-<EsheetRenderer formDataInput='{"id":"my-form","fields":[...]}' />
-
 // YAML string
 <EsheetRenderer formDataInput={yamlString} />
+
+// JSON string for wire/API interchange
+<EsheetRenderer formDataInput='{"id":"my-form","pages":[]}' />
 ```
 
 ## Props
 
 | Prop                   | Type                             | Default    | Description                                                 |
 | ---------------------- | -------------------------------- | ---------- | ----------------------------------------------------------- |
-| `formDataInput`        | `FormDefinition \| string`       | _required_ | Form definition (object, JSON, YAML, FHIR, MCP, SurveyJS)   |
+| `formDataInput`        | `FormDefinition \| string`       | _required_ | Form definition (object, YAML, JSON, FHIR, MCP, SurveyJS)   |
 | `className`            | `string`                         | `''`       | Additional CSS class for the root                           |
 | `initialResponses`     | `FormResponse`                   | --         | Pre-fill response data                                      |
 | `allowDangerousJS`     | `boolean`                        | `false`    | Allow JS calculations and `conditionType: 'js'`             |

@@ -17,17 +17,12 @@ Section itself stores no direct answer. Child fields store answers.
 
 ## Example
 
-```json
-{
-  "id": "personal_info",
-  "fieldType": "section",
-  "title": "Personal Information",
-  "fields": [
-    {
-      "id": "first_name",
-      "fieldType": "text",
-      "question": "First Name"
-    }
-  ]
-}
+```yaml
+id: personal_info
+fieldType: section
+title: Personal Information
+fields:
+  - id: first_name
+    fieldType: text
+    question: First Name
 ```

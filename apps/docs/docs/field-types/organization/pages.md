@@ -29,72 +29,49 @@ Pages store no answers. All answers live on individual fields within each page's
 
 A form with one page behaves exactly like a classic single-scroll form — no navigation UI is shown.
 
-```json
-{
-  "id": "intake-form",
-  "title": "Patient Intake",
-  "pages": [
-    {
-      "id": "page_1",
-      "title": "Demographics",
-      "fields": [
-        {
-          "id": "first_name",
-          "fieldType": "text",
-          "question": "First Name",
-          "required": true
-        },
-        {
-          "id": "dob",
-          "fieldType": "text",
-          "question": "Date of Birth",
-          "inputType": "date"
-        }
-      ]
-    }
-  ]
-}
+```yaml
+id: intake-form
+title: Patient Intake
+pages:
+  - id: page_1
+    title: Demographics
+    fields:
+      - id: first_name
+        fieldType: text
+        question: First Name
+        required: true
+      - id: dob
+        fieldType: text
+        question: Date of Birth
+        inputType: date
 ```
 
 ### Multi-page form
 
 A form with two or more pages can show top page tabs and/or a navigation bar (← Previous · X / Y · Next →) at the bottom of the renderer.
 
-```json
-{
-  "id": "intake-form",
-  "title": "Patient Intake",
-  "pages": [
-    {
-      "id": "page_1",
-      "title": "Demographics",
-      "fields": [
-        {
-          "id": "first_name",
-          "fieldType": "text",
-          "question": "First Name",
-          "required": true
-        }
-      ]
-    },
-    {
-      "id": "page_2",
-      "title": "Medical History",
-      "fields": [
-        {
-          "id": "allergies",
-          "fieldType": "longtext",
-          "question": "List any known allergies"
-        }
-      ]
-    }
-  ]
-}
+```yaml
+id: intake-form
+title: Patient Intake
+pages:
+  - id: page_1
+    title: Demographics
+    fields:
+      - id: first_name
+        fieldType: text
+        question: First Name
+        required: true
+  - id: page_2
+    title: Medical History
+    fields:
+      - id: allergies
+        fieldType: longtext
+        question: List any known allergies
 ```
 
 ## Renderer Behavior
 
-Implemented in [`RendererBody`](../../../packages/renderer/src/lib/components/RendererBody.tsx) and [`PageNavigator`](../../../packages/fields/src/lib/PageNavigator.tsx).
+Implemented in `RendererBody` and `PageNavigator`.
 
 Configure navigation on the renderer component:
 

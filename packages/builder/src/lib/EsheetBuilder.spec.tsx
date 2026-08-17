@@ -22,6 +22,7 @@ import {
 } from './EsheetBuilder.js';
 import { BuilderHeader } from './components/BuilderHeader.js';
 import type { StoreApi } from 'zustand';
+import { vi } from 'vitest';
 
 function renderWithContexts(
   form: FormStore,
@@ -284,6 +285,86 @@ describe('BuilderHeader import feedback', () => {
     });
 
     expect(form.getState().normalized.pages[0]?.fieldIds ?? []).toContain('ok');
+  });
+});
+
+describe('BuilderHeader export', () => {
+  const originalCreateObjectURL = URL.createObjectURL;
+  const originalRevokeObjectURL = URL.revokeObjectURL;
+  let createdBlobs: Blob[] = [];
+  let downloadedFilename = '';
+
+  beforeEach(() => {
+    createdBlobs = [];
+    downloadedFilename = '';
+    URL.createObjectURL = ((blob: Blob) => {
+      createdBlobs.push(blob);
+      return 'blob:esheet-test';
+    }) as typeof URL.createObjectURL;
+    URL.revokeObjectURL = vi.fn();
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+      this: HTMLAnchorElement
+    ) {
+      downloadedFilename = this.download;
+    });
+  });
+
+  afterEach(() => {
+    URL.createObjectURL = originalCreateObjectURL;
+    URL.revokeObjectURL = originalRevokeObjectURL;
+    vi.restoreAllMocks();
+  });
+
+  it('exports YAML by default with the canonical filename', async () => {
+    const form = createFormStore({
+      id: 'export-form',
+      pages: [{ id: 'page-1', fields: [] }],
+    });
+    const ui = createUIStore();
+
+    renderWithContexts(form, ui, <BuilderHeader />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Export' }));
+
+    expect(
+      (
+        screen.getByRole('radio', {
+          name: 'eSheet YAML (default)',
+        }) as HTMLInputElement
+      ).checked
+    ).toBe(true);
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Use This ID & Export YAML' })
+    );
+
+    expect(createdBlobs).toHaveLength(1);
+    expect(createdBlobs[0]?.type).toBe('application/yaml');
+    expect(await createdBlobs[0]?.text()).toContain('id: export-form');
+    expect(downloadedFilename).toBe('export-form.esheet.yaml');
+  });
+
+  it('exports JSON when explicitly selected', async () => {
+    const form = createFormStore({
+      id: 'export-form',
+      pages: [{ id: 'page-1', fields: [] }],
+    });
+    const ui = createUIStore();
+
+    renderWithContexts(form, ui, <BuilderHeader />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Export' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'eSheet JSON' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Use This ID & Export JSON' })
+    );
+
+    expect(createdBlobs).toHaveLength(1);
+    expect(createdBlobs[0]?.type).toBe('application/json');
+    expect(JSON.parse(await createdBlobs[0]?.text())).toMatchObject({
+      id: 'export-form',
+    });
+    expect(downloadedFilename).toBe('export-form.esheet.json');
   });
 });
 

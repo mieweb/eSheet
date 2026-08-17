@@ -12,21 +12,23 @@ Single-select dropdown field.
 
 ## Answer Format
 
-```json
-{ "selected": { "id": "optionId", "value": "Option Label" } }
+```yaml
+selected:
+  id: optionId
+  value: Option Label
 ```
 
 ## Example
 
-```json
-{
-  "id": "department",
-  "fieldType": "dropdown",
-  "question": "Department",
-  "options": [
-    { "id": "d1", "value": "Cardiology" },
-    { "id": "d2", "value": "Neurology" },
-    { "id": "d3", "value": "Orthopedics" }
-  ]
-}
+```yaml
+id: department
+fieldType: dropdown
+question: Department
+options:
+  - id: d1
+    value: Cardiology
+  - id: d2
+    value: Neurology
+  - id: d3
+    value: Orthopedics
 ```

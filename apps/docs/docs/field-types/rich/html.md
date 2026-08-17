@@ -16,10 +16,8 @@ Display-only field. No answer payload.
 
 ## Example
 
-```json
-{
-  "id": "notice",
-  "fieldType": "html",
-  "htmlContent": "<div><strong>Notice:</strong> Read before continuing.</div>"
-}
+```yaml
+id: notice
+fieldType: html
+htmlContent: <div><strong>Notice:</strong> Read before continuing.</div>
 ```

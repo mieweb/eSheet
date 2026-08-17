@@ -22,7 +22,7 @@ import {
  * Initialize renderer with form definition.
  *
  * Auto-detects and converts the following input formats:
- * - eSheet FormDefinition (object or JSON/YAML string)
+ * - eSheet FormDefinition (object or YAML/JSON string; YAML is canonical for committed layouts)
  * - FHIR R4 Questionnaire resource
  * - MCP elicitation/create envelope
  * - SurveyJS schema (has top-level `pages` or `elements` array)

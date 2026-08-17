@@ -1,0 +1,47 @@
+jsonrpc: '2.0'
+id: webapp-elicitation-001
+method: elicitation/create
+params:
+  message: Fill out the basic web app configuration
+  requestedSchema:
+    type: object
+    required:
+      - appName
+      - appType
+    properties:
+      appName:
+        type: string
+        title: App Name
+        minLength: 3
+        maxLength: 50
+      description:
+        type: string
+        title: Description
+        maxLength: 200
+      appType:
+        type: string
+        title: App Type
+        enum:
+          - SaaS
+          - Portfolio
+          - E-commerce
+          - Dashboard
+      features:
+        type: array
+        title: Select Features
+        items:
+          type: string
+          enum:
+            - Authentication
+            - Payments
+            - Analytics
+            - Notifications
+        uniqueItems: true
+      isPublic:
+        type: boolean
+        title: Publicly Accessible
+      userLimit:
+        type: integer
+        title: Max Users
+        minimum: 1
+        maximum: 100000

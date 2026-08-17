@@ -12,20 +12,16 @@ Markup and annotation drawing pad.
 
 ## Answer Format
 
-```json
-{
-  "markupData": "serialized-strokes",
-  "markupImage": "base64-png"
-}
+```yaml
+markupData: serialized-strokes
+markupImage: base64-png
 ```
 
 ## Example
 
-```json
-{
-  "id": "pain_diagram",
-  "fieldType": "diagram",
-  "question": "Mark the areas where you feel pain",
-  "padPlaceholder": "Draw on the diagram"
-}
+```yaml
+id: pain_diagram
+fieldType: diagram
+question: Mark the areas where you feel pain
+padPlaceholder: Draw on the diagram
 ```

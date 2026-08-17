@@ -8,16 +8,14 @@ Multi-line textarea for longer responses.
 
 ## Answer Format
 
-```json
-{ "answer": "string value" }
+```yaml
+answer: string value
 ```
 
 ## Example
 
-```json
-{
-  "id": "notes",
-  "fieldType": "longtext",
-  "question": "Additional Notes"
-}
+```yaml
+id: notes
+fieldType: longtext
+question: Additional Notes
 ```

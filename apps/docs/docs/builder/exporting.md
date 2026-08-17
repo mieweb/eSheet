@@ -6,6 +6,12 @@ sidebar_position: 5
 
 Get the current form definition from the builder for saving, storing, or transmitting to a server.
 
+## Choosing a serialization format
+
+The builder's **Export** action produces `*.esheet.yaml` by default. Choose **eSheet JSON** in the export dialog when a downstream system needs JSON; that produces `*.esheet.json`.
+
+Use YAML for committed form layouts. It produces reviewable diffs, supports comments, and keeps multi-line help text readable. Use JSON for API payloads and other machine-to-machine interchange. Both files contain the same `FormDefinition`, and existing `.esheet.json` layouts continue to import and render.
+
 ## Using the `onChange` Callback
 
 The simplest way to export is via the `onChange` prop:
@@ -25,23 +31,30 @@ The `onChange` callback fires on **every change** (field edits, reorder, add, re
 
 ## Export Format
 
-The exported `FormDefinition` contains only structural data:
+The exported `FormDefinition` contains only structural data. The on-disk YAML form looks like this:
 
-```json
-{
-  "id": "my-form",
-  "title": "My Form",
-  "description": "Optional description",
-  "fields": [
-    {
-      "id": "q1",
-      "fieldType": "text",
-      "question": "Your name",
-      "required": true,
-      "inputType": "string"
-    }
-  ]
-}
+```yaml
+id: my-form
+title: My Form
+description: Optional description
+pages:
+  - id: page-1
+    fields:
+      - id: q1
+        fieldType: text
+        question: Your name
+        required: true
+        inputType: string
+```
+
+For a wire/API payload, serialize the same object as JSON:
+
+```ts
+fetch('/api/forms', {
+  method: 'PUT',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify(definition),
+});
 ```
 
 **What's included:**

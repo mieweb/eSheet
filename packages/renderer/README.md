@@ -8,7 +8,7 @@ Read-only questionnaire form renderer for eSheet. Renders forms in fill-out mode
 - ✅ Conditional visibility enforcement (fields/sections hide based on logic rules)
 - ✅ Section nesting with recursive rendering
 - ✅ Initial response pre-fill support
-- ✅ YAML/JSON schema parsing with Zod validation
+- ✅ YAML-first JSON/YAML schema parsing with Zod validation
 - ✅ Ref API for collecting responses
 - ✅ TypeScript-first with full type safety
 
@@ -32,34 +32,32 @@ Migration for old subpath imports:
 
 ## Usage
 
+Committed form definitions should use YAML (`*.esheet.yaml`); JSON remains supported for API and other wire-format payloads. The renderer accepts either format and auto-detects string input.
+
 ### Basic Example
 
 ```tsx
 import { EsheetRenderer } from '@esheet/renderer';
-import type { FormDefinition } from '@esheet/core';
 
-const myForm: FormDefinition = {
-  id: 'patient-intake',
-  title: 'Patient Intake',
-  fields: [
-    {
-      id: 'name',
-      fieldType: 'text',
-      question: 'Full Name',
-      required: true,
-    },
-    {
-      id: 'age',
-      fieldType: 'text',
-      question: 'Age',
-    },
-  ],
-};
+const myForm = `
+id: patient-intake
+title: Patient Intake
+pages:
+  - id: patient-information
+    fields:
+      - id: name
+        fieldType: text
+        question: Full Name
+        required: true
+      - id: age
+        fieldType: text
+        question: Age
+`;
 
 function App() {
   return (
     <div className="app-container">
-      <EsheetRenderer formData={myForm} />
+      <EsheetRenderer formDataInput={myForm} />
     </div>
   );
 }
@@ -82,7 +80,7 @@ function App() {
 
   return (
     <>
-      <EsheetRenderer formData={myForm} ref={rendererRef} />
+      <EsheetRenderer formDataInput={myForm} ref={rendererRef} />
       <button onClick={handleSubmit}>Submit</button>
     </>
   );
@@ -93,7 +91,7 @@ function App() {
 
 ```tsx
 <EsheetRenderer
-  formData={myForm}
+  formDataInput={myForm}
   initialResponses={{
     name: 'John Doe',
     age: '42',
@@ -104,16 +102,21 @@ function App() {
 ### With YAML/JSON String
 
 ```tsx
-const yamlSchema = `
+const yamlDefinition = `
 id: simple-form
 title: Simple Form
-fields:
-  - id: q1
-    fieldType: text
-    question: Your name?
+pages:
+  - id: page-1
+    fields:
+      - id: q1
+        fieldType: text
+        question: Your name?
 `;
 
-<EsheetRenderer formData={yamlSchema} />;
+<EsheetRenderer formDataInput={yamlDefinition} />;
+
+// JSON is also accepted for wire/API interchange.
+<EsheetRenderer formDataInput='{"id":"simple-form","pages":[]}' />;
 ```
 
 ## API
@@ -122,7 +125,7 @@ fields:
 
 **Props:**
 
-- `formData: FormDefinition | string` - Form schema (object, JSON string, or YAML string)
+- `formDataInput: FormDefinition | string` - Form schema (object, YAML string, or JSON string)
 - `initialResponses?: FormResponse` - Pre-fill form with initial data
 - `className?: string` - Additional CSS classes for root container
 - `ref?: Ref<EsheetRendererHandle>` - Access ref API for collecting responses
@@ -142,7 +145,7 @@ interface EsheetRendererHandle {
 EsheetRenderer is a thin wrapper that:
 
 1. Creates form and UI stores (vanilla Zustand)
-2. Parses and validates input (YAML/JSON → Zod schema check)
+2. Parses and validates input (YAML/JSON → Zod schema check; YAML is the committed-layout default)
 3. Loads definition into store
 4. Sets preview mode (read-only, no editing UI)
 5. Iterates over visible fields via `RendererBody`
@@ -163,36 +166,30 @@ EsheetRenderer is a thin wrapper that:
 ## Example: Conditional Visibility
 
 ```tsx
-const conditionalForm: FormDefinition = {
-  id: 'conditional-form',
-  title: 'Conditional Form',
-  fields: [
-    {
-      id: 'hasAllergies',
-      fieldType: 'boolean',
-      question: 'Do you have any allergies?',
-    },
-    {
-      id: 'allergyList',
-      fieldType: 'longtext',
-      question: 'Please list your allergies',
-      visible: {
-        conditions: [
-          {
-            conditionType: 'comparison',
-            fieldId: 'hasAllergies',
-            operator: '==',
-            value: true,
-          },
-        ],
-        logicalOperator: 'AND',
-      },
-    },
-  ],
-};
+const conditionalForm = `
+id: conditional-form
+title: Conditional Form
+pages:
+  - id: patient-information
+    fields:
+      - id: hasAllergies
+        fieldType: boolean
+        question: Do you have any allergies?
+      - id: allergyList
+        fieldType: longtext
+        question: Please list your allergies
+        rules:
+          - effect: visible
+            logic: AND
+            conditions:
+              - conditionType: field
+                targetId: hasAllergies
+                operator: equals
+                expected: 'Yes'
+`;
 
 // "allergyList" only shows when "hasAllergies" is checked
-<EsheetRenderer formData={conditionalForm} />;
+<EsheetRenderer formDataInput={conditionalForm} />;
 ```
 
 ## CSS Architecture

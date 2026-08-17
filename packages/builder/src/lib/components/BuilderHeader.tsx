@@ -1,5 +1,5 @@
 import React from 'react';
-import { load } from 'js-yaml';
+import { dump, load } from 'js-yaml';
 import {
   formatZodValidationError,
   formDefinitionSchema,
@@ -230,8 +230,8 @@ export function BuilderHeader({
   const [exportIdInput, setExportIdInput] = React.useState('');
   const [exportIdError, setExportIdError] = React.useState('');
   const [exportFormat, setExportFormat] = React.useState<
-    'esheet' | 'mcp' | 'fhir'
-  >('esheet');
+    'yaml' | 'json' | 'mcp' | 'fhir'
+  >('yaml');
   const [feedback, setFeedback] = React.useState<FeedbackState>({
     open: false,
     title: '',
@@ -299,16 +299,25 @@ export function BuilderHeader({
     }
   }, [mode]);
 
-  const finalizeExport = React.useCallback((definition: FormDefinition) => {
-    const json = JSON.stringify(definition, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${definition.id}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }, []);
+  const finalizeExport = React.useCallback(
+    (definition: FormDefinition, format: 'yaml' | 'json') => {
+      const isYaml = format === 'yaml';
+      const content = isYaml
+        ? dump(definition, { indent: 2, lineWidth: -1 })
+        : JSON.stringify(definition, null, 2);
+      const blob = new Blob([content], {
+        type: isYaml ? 'application/yaml' : 'application/json',
+      });
+      const extension = isYaml ? 'yaml' : 'json';
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${definition.id}.esheet.${extension}`;
+      a.click();
+      URL.revokeObjectURL(url);
+    },
+    []
+  );
 
   const handleConfirmExportId = React.useCallback(() => {
     if (exportFormat === 'mcp') {
@@ -355,7 +364,7 @@ export function BuilderHeader({
 
     form.getState().setFormId(nextId);
     const definition = form.getState().hydrateDefinition();
-    finalizeExport(definition);
+    finalizeExport(definition, exportFormat);
     setExportIdModalOpen(false);
     setExportIdError('');
   }, [exportFormat, exportIdInput, finalizeExport, form]);
@@ -367,6 +376,7 @@ export function BuilderHeader({
       currentId || sanitizeFormId(definition.title ?? 'form') || 'form';
     setExportIdInput(suggested);
     setExportIdError('');
+    setExportFormat('yaml');
     setExportIdModalOpen(true);
   };
 
@@ -631,9 +641,19 @@ export function BuilderHeader({
                 <input
                   type="radio"
                   name="export-format"
-                  value="esheet"
-                  checked={exportFormat === 'esheet'}
-                  onChange={() => setExportFormat('esheet')}
+                  value="yaml"
+                  checked={exportFormat === 'yaml'}
+                  onChange={() => setExportFormat('yaml')}
+                />
+                eSheet YAML (default)
+              </label>
+              <label className="ms:flex ms:items-center ms:gap-2 ms:text-sm ms:text-mstext ms:cursor-pointer">
+                <input
+                  type="radio"
+                  name="export-format"
+                  value="json"
+                  checked={exportFormat === 'json'}
+                  onChange={() => setExportFormat('json')}
                 />
                 eSheet JSON
               </label>
@@ -658,7 +678,7 @@ export function BuilderHeader({
                 FHIR R4 Questionnaire
               </label>
             </div>
-            {exportFormat === 'esheet' && (
+            {(exportFormat === 'yaml' || exportFormat === 'json') && (
               <div className="ms:space-y-2">
                 <label
                   htmlFor={`${form.getState().instanceId}-export-form-id`}
@@ -712,7 +732,7 @@ export function BuilderHeader({
             ? 'Export MCP Schema'
             : exportFormat === 'fhir'
             ? 'Export FHIR Questionnaire'
-            : 'Use This ID & Export'
+            : `Use This ID & Export ${exportFormat.toUpperCase()}`
         }
         cancelLabel="Cancel"
         showCancel

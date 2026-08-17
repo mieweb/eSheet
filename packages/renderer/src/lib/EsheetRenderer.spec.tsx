@@ -108,6 +108,39 @@ describe('EsheetRenderer', () => {
     expect(typeof renderer.getUIStore).toBe('function');
   });
 
+  it('loads a YAML string definition', async () => {
+    const ref = React.createRef<EsheetRendererHandle>();
+    await act(async () => {
+      render(
+        <EsheetRenderer
+          ref={ref}
+          formDataInput={`
+id: yaml-form
+title: YAML Form
+pages:
+  - id: page-1
+    fields:
+      - id: q1
+        fieldType: text
+        question: Name?
+        width: full
+`}
+        />
+      );
+    });
+
+    const definition = getRendererHandle(ref)
+      .getFormStore()
+      .getState()
+      .hydrateDefinition();
+
+    expect(definition).toMatchObject({
+      id: 'yaml-form',
+      title: 'YAML Form',
+      pages: [{ id: 'page-1', fields: [{ id: 'q1' }] }],
+    });
+  });
+
   it('getRawResponse() returns initialResponses after mount', async () => {
     const ref = React.createRef<EsheetRendererHandle>();
     await act(async () => {
