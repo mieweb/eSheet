@@ -8,7 +8,7 @@ Read-only questionnaire form renderer for eSheet. Renders forms in fill-out mode
 - ✅ Conditional visibility enforcement (fields/sections hide based on logic rules)
 - ✅ Section nesting with recursive rendering
 - ✅ Initial response pre-fill support
-- ✅ YAML/JSON schema parsing with Zod validation
+- ✅ YAML-first JSON/YAML schema parsing with Zod validation
 - ✅ Ref API for collecting responses
 - ✅ TypeScript-first with full type safety
 
@@ -31,6 +31,8 @@ Migration for old subpath imports:
 - `@esheet/renderer/blaze` -> `@esheet/renderer-blaze`
 
 ## Usage
+
+Committed form definitions should use YAML (`*.esheet.yaml`); JSON remains supported for API and other wire-format payloads. The renderer accepts either format and auto-detects string input.
 
 ### Basic Example
 
@@ -104,16 +106,21 @@ function App() {
 ### With YAML/JSON String
 
 ```tsx
-const yamlSchema = `
+const yamlDefinition = `
 id: simple-form
 title: Simple Form
-fields:
-  - id: q1
-    fieldType: text
-    question: Your name?
+pages:
+  - id: page-1
+    fields:
+      - id: q1
+        fieldType: text
+        question: Your name?
 `;
 
-<EsheetRenderer formData={yamlSchema} />;
+<EsheetRenderer formDataInput={yamlDefinition} />;
+
+// JSON is also accepted for wire/API interchange.
+<EsheetRenderer formDataInput='{"id":"simple-form","pages":[]}' />;
 ```
 
 ## API
@@ -122,7 +129,7 @@ fields:
 
 **Props:**
 
-- `formData: FormDefinition | string` - Form schema (object, JSON string, or YAML string)
+- `formDataInput: FormDefinition | string` - Form schema (object, YAML string, or JSON string)
 - `initialResponses?: FormResponse` - Pre-fill form with initial data
 - `className?: string` - Additional CSS classes for root container
 - `ref?: Ref<EsheetRendererHandle>` - Access ref API for collecting responses
@@ -142,7 +149,7 @@ interface EsheetRendererHandle {
 EsheetRenderer is a thin wrapper that:
 
 1. Creates form and UI stores (vanilla Zustand)
-2. Parses and validates input (YAML/JSON → Zod schema check)
+2. Parses and validates input (YAML/JSON → Zod schema check; YAML is the committed-layout default)
 3. Loads definition into store
 4. Sets preview mode (read-only, no editing UI)
 5. Iterates over visible fields via `RendererBody`

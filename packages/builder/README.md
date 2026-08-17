@@ -8,9 +8,9 @@ Drag-and-drop questionnaire builder for eSheet. Provides a full editing UI for c
 - ✅ 19 built-in field types via `@esheet/fields`
 - ✅ Section nesting with drag-into-section support
 - ✅ Field editors (question text, options, matrix rows/columns, conditional logic)
-- ✅ Code view with Monaco editor (JSON/YAML toggle)
+- ✅ Code view with Monaco editor (YAML default, JSON toggle)
 - ✅ Live preview mode
-- ✅ Import/Export (JSON + YAML)
+- ✅ Import/Export (YAML default, JSON option)
 - ✅ Custom field type registration
 - ✅ Dark mode support
 - ✅ Mobile responsive (bottom drawer for panels)

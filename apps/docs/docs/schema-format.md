@@ -4,7 +4,13 @@ sidebar_position: 5
 
 # Schema Format
 
-eSheet uses a JSON schema format identified by the `id` field. This page documents the complete structure.
+eSheet's `FormDefinition` model is JSON-shaped and identified by the `id` field. **YAML is the canonical on-disk representation** for committed form layouts, while JSON is the wire/API representation. Both formats parse to the same model and are accepted by the builder and renderer. This page documents the complete structure.
+
+## Which format should I commit?
+
+Commit form layouts as `*.esheet.yaml`. YAML keeps diffs reviewable, supports comments, and preserves readable multi-line strings. The builder's Export action uses YAML by default.
+
+Use `*.esheet.json` when a downstream system requires JSON, or when sending a definition over an API. Existing `.esheet.json` layouts remain supported indefinitely; no migration is required.
 
 ## Form Definition
 
@@ -43,33 +49,24 @@ A form with a **single page** renders as a normal single-scroll form — no navi
 
 ### Example
 
-```json
-{
-  "id": "patient-intake-form",
-  "title": "Patient Intake Form",
-  "description": "Please fill out all required fields",
-  "pages": [
-    {
-      "id": "page_1",
-      "title": "Demographics",
-      "fields": [
-        {
-          "id": "name",
-          "fieldType": "text",
-          "question": "Full Name",
-          "required": true,
-          "inputType": "string"
-        },
-        {
-          "id": "dob",
-          "fieldType": "text",
-          "question": "Date of Birth",
-          "inputType": "date"
-        }
-      ]
-    }
-  ]
-}
+```yaml
+id: patient-intake-form
+title: Patient Intake Form
+description: Please fill out all required fields
+pages:
+  - id: page_1
+    title: Demographics
+    fields:
+      # Collect identity information before asking health questions.
+      - id: name
+        fieldType: text
+        question: Full Name
+        required: true
+        inputType: string
+      - id: dob
+        fieldType: text
+        question: Date of Birth
+        inputType: date
 ```
 
 ## Field Definition

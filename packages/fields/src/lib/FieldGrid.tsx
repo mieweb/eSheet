@@ -1,5 +1,5 @@
 import React from 'react';
-import type { FieldWidth } from '@esheet/core';
+import { getFieldTypeMeta, type FieldWidth } from '@esheet/core';
 
 const GRID_STYLE: React.CSSProperties = {
   display: 'grid',
@@ -94,10 +94,10 @@ export function FieldGridItem({
     });
   }
 
-  const effectiveWidth = inheritedWidth ?? width;
-  if (effectiveWidth === undefined) {
-    throw new Error(`Missing width for field '${fieldType}'.`);
-  }
+  const defaultWidth = getFieldTypeMeta(fieldType)?.defaultProps.width as
+    | FieldWidth
+    | undefined;
+  const effectiveWidth = inheritedWidth ?? width ?? defaultWidth ?? 'full';
 
   const columnSpan =
     effectiveWidth === 'half' ? 3 : effectiveWidth === 'third' ? 2 : 6;

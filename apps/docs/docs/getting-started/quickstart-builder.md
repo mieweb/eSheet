@@ -105,12 +105,12 @@ function App() {
 The builder has three modes accessible via the header tabs:
 
 1. **Build** -- Visual drag-and-drop editor (default)
-2. **Code** -- JSON/YAML editor with syntax highlighting (Monaco)
+2. **Code** -- YAML-first JSON/YAML editor with syntax highlighting (Monaco)
 3. **Preview** -- Read-only form preview (same rendering as the Renderer)
 
 ## What's Next
 
 - [Canvas & Drag-and-Drop](../builder/canvas) -- Learn about the visual editor
 - [Field Editing](../builder/editing) -- Customize field properties and logic
-- [Code View](../builder/code-view) -- Edit form definitions as JSON/YAML
+- [Code View](../builder/code-view) -- Edit form definitions as YAML (or JSON)
 - [Exporting](../builder/exporting) -- Get the form definition for saving

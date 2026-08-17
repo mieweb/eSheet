@@ -38,7 +38,7 @@ The builder header provides mode switching:
 | Mode        | Description                                                                                                                         |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | **Build**   | Visual editor -- drag-and-drop canvas with ToolPanel and EditPanel                                                                  |
-| **Code**    | JSON/YAML editor (Monaco) -- edit the form definition as text                                                                       |
+| **Code**    | YAML-first JSON/YAML editor (Monaco) -- edit the form definition as text                                                            |
 | **Preview** | Read-only preview -- same rendering as the Renderer component. Includes a **Touch Mode** toggle for testing mobile-friendly sizing. |
 
 ## Component API

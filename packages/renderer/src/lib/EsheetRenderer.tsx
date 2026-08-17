@@ -31,7 +31,8 @@ import { RendererBody } from './components/RendererBody.js';
 
 export interface EsheetRendererProps {
   /** Form definition — accepts FormDefinition, SurveyJS schema, MCP elicitation envelope,
-   *  or any of the above as a JSON/YAML string. Auto-detected and converted internally.
+   *  or any of the above as a YAML/JSON string. Auto-detected and converted internally.
+   *  YAML is canonical for committed layouts; JSON is intended for wire/API payloads.
    *  Set `strict` to disable auto-conversion and require a valid FormDefinition directly. */
   formDataInput: unknown;
   /** Additional CSS classes for root container */

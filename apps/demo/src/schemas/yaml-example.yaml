@@ -1,0 +1,17 @@
+id: yaml-example
+title: YAML Example Form
+pages:
+  - id: page-1
+    title: Contact
+    fields:
+      # YAML comments stay with the committed form layout.
+      - id: name
+        fieldType: text
+        question: Full name
+        required: true
+        width: full
+      - id: email
+        fieldType: text
+        question: Email address
+        inputType: email
+        width: full
