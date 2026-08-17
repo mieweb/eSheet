@@ -19,7 +19,7 @@ Drag-and-drop questionnaire builder for eSheet. Provides a full editing UI for c
 ## Installation
 
 ```bash
-npm install @esheet/builder @esheet/fields @esheet/core
+npm install @esheet/builder @esheet/fields @esheet/core js-yaml
 ```
 
 ## Usage
@@ -42,18 +42,27 @@ function App() {
 ### With Initial Schema
 
 ```tsx
+import { load } from 'js-yaml';
 import { EsheetBuilder } from '@esheet/builder';
+import type { FormDefinition } from '@esheet/core';
 
-const initialForm: FormDefinition = {
-  id: 'patient-intake',
-  title: 'Patient Intake',
-  fields: [
-    { id: 'name', fieldType: 'text', question: 'Full Name', required: true },
-    { id: 'dob', fieldType: 'date', question: 'Date of Birth' },
-  ],
-};
+const initialForm = load(`
+id: patient-intake
+title: Patient Intake
+pages:
+  - id: patient-information
+    fields:
+      - id: name
+        fieldType: text
+        question: Full Name
+        required: true
+      - id: dob
+        fieldType: text
+        question: Date of Birth
+        inputType: date
+`) as FormDefinition;
 
-<EsheetBuilder initialDefinition={initialForm} onChange={handleChange} />;
+<EsheetBuilder definition={initialForm} onChange={handleChange} />;
 ```
 
 ### Dark Mode

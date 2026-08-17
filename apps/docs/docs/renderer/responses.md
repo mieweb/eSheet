@@ -55,6 +55,8 @@ function MyForm() {
 
 ## Full Example Response
 
+Responses are returned as JSON-shaped wire data; YAML is the canonical format for committed form definitions.
+
 ```json
 {
   "patient_name": {

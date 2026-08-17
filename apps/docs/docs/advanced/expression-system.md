@@ -43,12 +43,18 @@ Supports standard JavaScript-like operators:
 
 Display fields support inline expression interpolation in their `content` property:
 
-```json
-{
-  "id": "summary",
-  "fieldType": "display",
-  "content": "# Summary\n\nPatient: *{name}*\nAge: *{age}*\n\nBMI: *<{weight} / (({height}/100) * ({height}/100))>*\n\nTotal symptoms: *<{symptoms}.length>*"
-}
+```yaml
+id: summary
+fieldType: display
+content: |-
+  # Summary
+
+  Patient: *{name}*
+  Age: *{age}*
+
+  BMI: *<{weight} / (({height}/100) * ({height}/100))>*
+
+  Total symptoms: *<{symptoms}.length>*
 ```
 
 ### Markdown + Expressions
@@ -82,32 +88,22 @@ Total: *<{price} * {quantity}>*
 
 **Conditional text (expression in condition rule, not in display):**
 
-```json
-{
-  "rules": [
-    {
-      "effect": "visible",
-      "logic": "AND",
-      "conditions": [
-        {
-          "conditionType": "expression",
-          "expression": "{age} >= 18"
-        }
-      ]
-    }
-  ]
-}
+```yaml
+rules:
+  - effect: visible
+    logic: AND
+    conditions:
+      - conditionType: expression
+        expression: '{age} >= 18'
 ```
 
 ## Use in Conditional Logic
 
 Expression conditions in rules allow complex logic beyond simple field comparisons:
 
-```json
-{
-  "conditionType": "expression",
-  "expression": "{weight} > 0 && {height} > 0"
-}
+```yaml
+conditionType: expression
+expression: '{weight} > 0 && {height} > 0'
 ```
 
 ### Expression Condition Examples

@@ -47,32 +47,21 @@ Rules can also be placed on an individual option. A rule inside `field.rules` af
 
 Option rules use the existing `ConditionalRule` shape, but only the `visible` effect applies:
 
-```json
-{
-  "id": "incidentLocation",
-  "fieldType": "dropdown",
-  "question": "Incident location",
-  "options": [
-    {
-      "id": "houston-hq",
-      "value": "Houston HQ",
-      "rules": [
-        {
-          "effect": "visible",
-          "logic": "AND",
-          "conditions": [
-            {
-              "conditionType": "field",
-              "targetId": "incidentCountry",
-              "operator": "equals",
-              "expected": "us"
-            }
-          ]
-        }
-      ]
-    }
-  ]
-}
+```yaml
+id: incidentLocation
+fieldType: dropdown
+question: Incident location
+options:
+  - id: houston-hq
+    value: Houston HQ
+    rules:
+      - effect: visible
+        logic: AND
+        conditions:
+          - conditionType: field
+            targetId: incidentCountry
+            operator: equals
+            expected: us
 ```
 
 Here, `incidentLocation` owns the option, `houston-hq` is the affected option, and `incidentCountry` is the controlling field. Options without a matching visible rule remain visible. Hidden selected options remain in the response and produce a hard availability validation error.
@@ -145,14 +134,12 @@ Access a specific property of the target field's response before comparing:
 | `length` | Length of text answer or array | Check if multi-select has >= 3 selections |
 | `count`  | Number of selected items       | Same as length for arrays                 |
 
-```json
-{
-  "conditionType": "field",
-  "targetId": "symptoms",
-  "propertyAccessor": "length",
-  "operator": "greaterThanOrEqual",
-  "expected": "3"
-}
+```yaml
+conditionType: field
+targetId: symptoms
+propertyAccessor: length
+operator: greaterThanOrEqual
+expected: '3'
 ```
 
 ## Expression Syntax Reference
@@ -163,11 +150,9 @@ Expression conditions (`conditionType: 'expression'`) support a JavaScript-like 
 
 Use `{fieldId}` to reference a field's answer value:
 
-```json
-{
-  "conditionType": "expression",
-  "expression": "{weight} > 100"
-}
+```yaml
+conditionType: expression
+expression: '{weight} > 100'
 ```
 
 ### Property Accessors in Expressions
@@ -177,11 +162,9 @@ Access properties on field values:
 - `{fieldId}.length` — Length of text or array
 - `{fieldId}.count` — Number of selected items (alias for length)
 
-```json
-{
-  "conditionType": "expression",
-  "expression": "{symptoms}.length >= 3"
-}
+```yaml
+conditionType: expression
+expression: '{symptoms}.length >= 3'
 ```
 
 ### Supported Operators
@@ -206,29 +189,23 @@ Access properties on field values:
 
 **BMI calculation check:**
 
-```json
-{
-  "conditionType": "expression",
-  "expression": "{weight} / (({height}/100) * ({height}/100)) > 25"
-}
+```yaml
+conditionType: expression
+expression: '{weight} / (({height}/100) * ({height}/100)) > 25'
 ```
 
 **Multiple field check:**
 
-```json
-{
-  "conditionType": "expression",
-  "expression": "{field1} > 0 && {field2} > 0 && {field3} != null"
-}
+```yaml
+conditionType: expression
+expression: '{field1} > 0 && {field2} > 0 && {field3} != null'
 ```
 
 **String comparison:**
 
-```json
-{
-  "conditionType": "expression",
-  "expression": "{status} == 'approved' || {override} == true"
-}
+```yaml
+conditionType: expression
+expression: "{status} == 'approved' || {override} == true"
 ```
 
 ## Examples
@@ -237,168 +214,117 @@ Access properties on field values:
 
 Show "Other reason" text field when the user selects "Other" in a radio:
 
-```json
-{
-  "id": "other_reason",
-  "fieldType": "text",
-  "question": "Please specify",
-  "inputType": "string",
-  "rules": [
-    {
-      "effect": "visible",
-      "logic": "AND",
-      "conditions": [
-        {
-          "conditionType": "field",
-          "targetId": "reason",
-          "operator": "equals",
-          "expected": "Other"
-        }
-      ]
-    }
-  ]
-}
+```yaml
+id: other_reason
+fieldType: text
+question: Please specify
+inputType: string
+rules:
+  - effect: visible
+    logic: AND
+    conditions:
+      - conditionType: field
+        targetId: reason
+        operator: equals
+        expected: Other
 ```
 
 ### Make a field required based on another answer
 
 Require email when the user answers "Yes" to receiving updates:
 
-```json
-{
-  "id": "email",
-  "fieldType": "text",
-  "question": "Email Address",
-  "inputType": "email",
-  "rules": [
-    {
-      "effect": "required",
-      "logic": "AND",
-      "conditions": [
-        {
-          "conditionType": "field",
-          "targetId": "wants_updates",
-          "operator": "equals",
-          "expected": "Yes"
-        }
-      ]
-    }
-  ]
-}
+```yaml
+id: email
+fieldType: text
+question: Email Address
+inputType: email
+rules:
+  - effect: required
+    logic: AND
+    conditions:
+      - conditionType: field
+        targetId: wants_updates
+        operator: equals
+        expected: 'Yes'
 ```
 
 ### Show field when ANY of multiple conditions are met (OR)
 
 Show follow-up when ANY high-severity symptom is reported:
 
-```json
-{
-  "id": "followup",
-  "fieldType": "longtext",
-  "question": "Please describe your symptoms in detail",
-  "rules": [
-    {
-      "effect": "visible",
-      "logic": "OR",
-      "conditions": [
-        {
-          "conditionType": "field",
-          "targetId": "headache_severity",
-          "operator": "equals",
-          "expected": "Severe"
-        },
-        {
-          "conditionType": "field",
-          "targetId": "back_pain_severity",
-          "operator": "equals",
-          "expected": "Severe"
-        }
-      ]
-    }
-  ]
-}
+```yaml
+id: followup
+fieldType: longtext
+question: Please describe your symptoms in detail
+rules:
+  - effect: visible
+    logic: OR
+    conditions:
+      - conditionType: field
+        targetId: headache_severity
+        operator: equals
+        expected: Severe
+      - conditionType: field
+        targetId: back_pain_severity
+        operator: equals
+        expected: Severe
 ```
 
 ### Enable based on numeric comparison
 
 Enable a section only when the patient's age is 18 or older:
 
-```json
-{
-  "id": "adult_section",
-  "fieldType": "section",
-  "title": "Adult Health History",
-  "rules": [
-    {
-      "effect": "enable",
-      "logic": "AND",
-      "conditions": [
-        {
-          "conditionType": "field",
-          "targetId": "age",
-          "operator": "greaterThanOrEqual",
-          "expected": "18"
-        }
-      ]
-    }
-  ],
-  "fields": [
-    { "id": "smoker", "fieldType": "boolean", "question": "Do you smoke?" }
-  ]
-}
+```yaml
+id: adult_section
+fieldType: section
+title: Adult Health History
+rules:
+  - effect: enable
+    logic: AND
+    conditions:
+      - conditionType: field
+        targetId: age
+        operator: greaterThanOrEqual
+        expected: '18'
+fields:
+  - id: smoker
+    fieldType: boolean
+    question: Do you smoke?
 ```
 
 ### Expression-based condition
 
 Show a BMI result field only when both weight and height have been filled:
 
-```json
-{
-  "id": "bmi_display",
-  "fieldType": "display",
-  "content": "Your BMI is: *<{weight} / (({height}/100) * ({height}/100))>*",
-  "rules": [
-    {
-      "effect": "visible",
-      "logic": "AND",
-      "conditions": [
-        {
-          "conditionType": "expression",
-          "expression": "{weight} > 0 && {height} > 0"
-        }
-      ]
-    }
-  ]
-}
+```yaml
+id: bmi_display
+fieldType: display
+content: 'Your BMI is: *<{weight} / (({height}/100) * ({height}/100))>*'
+rules:
+  - effect: visible
+    logic: AND
+    conditions:
+      - conditionType: expression
+        expression: '{weight} > 0 && {height} > 0'
 ```
 
 ### Multiple conditions with AND logic
 
 Show a field only when BOTH conditions are met:
 
-```json
-{
-  "rules": [
-    {
-      "effect": "visible",
-      "logic": "AND",
-      "conditions": [
-        {
-          "conditionType": "field",
-          "targetId": "has_insurance",
-          "operator": "equals",
-          "expected": "Yes"
-        },
-        {
-          "conditionType": "field",
-          "targetId": "insurance_type",
-          "operator": "notEquals",
-          "expected": "Medicare"
-        }
-      ]
-    }
-  ]
-}
+```yaml
+rules:
+  - effect: visible
+    logic: AND
+    conditions:
+      - conditionType: field
+        targetId: has_insurance
+        operator: equals
+        expected: 'Yes'
+      - conditionType: field
+        targetId: insurance_type
+        operator: notEquals
+        expected: Medicare
 ```
 
 ## How Rules Are Evaluated

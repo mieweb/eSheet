@@ -64,14 +64,12 @@ Call this once before your app mounts `EsheetBuilder` or `EsheetRenderer`.
 Use `fieldType: 'richtext'` in your `FormDefinition`. The optional
 `defaultContent` property pre-populates the editor with initial rich text:
 
-```json
-{
-  "id": "notes",
-  "fieldType": "richtext",
-  "question": "Clinical Notes",
-  "required": false,
-  "defaultContent": "<p>Enter your notes here.</p>"
-}
+```yaml
+id: notes
+fieldType: richtext
+question: Clinical Notes
+required: false
+defaultContent: <p>Enter your notes here.</p>
 ```
 
 ### Field definition properties
@@ -90,12 +88,9 @@ Use `fieldType: 'richtext'` in your `FormDefinition`. The optional
 
 Rich text answers are stored as a raw HTML string in `response.answer`:
 
-```json
-{
-  "notes": {
-    "answer": "<p>Patient reports mild discomfort.</p>"
-  }
-}
+```yaml
+notes:
+  answer: <p>Patient reports mild discomfort.</p>
 ```
 
 ---
@@ -119,7 +114,6 @@ import { createAssetLoad } from '@kerebron/wasm/web';
 import { registerFieldComponents } from '@esheet/fields';
 import { RichTextEditorField } from '@esheet/field-kerebron';
 import { EsheetRenderer } from '@esheet/renderer';
-import type { FormDefinition } from '@esheet/core';
 
 configureRichTextField({
   assetLoad: createAssetLoad('/kerebron-wasm'),
@@ -127,23 +121,20 @@ configureRichTextField({
 
 registerFieldComponents({ richtext: RichTextEditorField });
 
-const form: FormDefinition = {
-  id: 'intake-form',
-  title: 'Patient Intake',
-  fields: [
-    {
-      id: 'name',
-      fieldType: 'text',
-      question: 'Full Name',
-      required: true,
-    },
-    {
-      id: 'notes',
-      fieldType: 'richtext',
-      question: 'Additional Notes',
-    },
-  ],
-};
+const form = `
+id: intake-form
+title: Patient Intake
+pages:
+  - id: patient-information
+    fields:
+      - id: name
+        fieldType: text
+        question: Full Name
+        required: true
+      - id: notes
+        fieldType: richtext
+        question: Additional Notes
+`;
 
 export function IntakePage() {
   return <EsheetRenderer formDataInput={form} />;

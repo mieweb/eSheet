@@ -38,30 +38,26 @@ Committed form definitions should use YAML (`*.esheet.yaml`); JSON remains suppo
 
 ```tsx
 import { EsheetRenderer } from '@esheet/renderer';
-import type { FormDefinition } from '@esheet/core';
 
-const myForm: FormDefinition = {
-  id: 'patient-intake',
-  title: 'Patient Intake',
-  fields: [
-    {
-      id: 'name',
-      fieldType: 'text',
-      question: 'Full Name',
-      required: true,
-    },
-    {
-      id: 'age',
-      fieldType: 'text',
-      question: 'Age',
-    },
-  ],
-};
+const myForm = `
+id: patient-intake
+title: Patient Intake
+pages:
+  - id: patient-information
+    fields:
+      - id: name
+        fieldType: text
+        question: Full Name
+        required: true
+      - id: age
+        fieldType: text
+        question: Age
+`;
 
 function App() {
   return (
     <div className="app-container">
-      <EsheetRenderer formData={myForm} />
+      <EsheetRenderer formDataInput={myForm} />
     </div>
   );
 }
@@ -84,7 +80,7 @@ function App() {
 
   return (
     <>
-      <EsheetRenderer formData={myForm} ref={rendererRef} />
+      <EsheetRenderer formDataInput={myForm} ref={rendererRef} />
       <button onClick={handleSubmit}>Submit</button>
     </>
   );
@@ -95,7 +91,7 @@ function App() {
 
 ```tsx
 <EsheetRenderer
-  formData={myForm}
+  formDataInput={myForm}
   initialResponses={{
     name: 'John Doe',
     age: '42',
@@ -170,36 +166,30 @@ EsheetRenderer is a thin wrapper that:
 ## Example: Conditional Visibility
 
 ```tsx
-const conditionalForm: FormDefinition = {
-  id: 'conditional-form',
-  title: 'Conditional Form',
-  fields: [
-    {
-      id: 'hasAllergies',
-      fieldType: 'boolean',
-      question: 'Do you have any allergies?',
-    },
-    {
-      id: 'allergyList',
-      fieldType: 'longtext',
-      question: 'Please list your allergies',
-      visible: {
-        conditions: [
-          {
-            conditionType: 'comparison',
-            fieldId: 'hasAllergies',
-            operator: '==',
-            value: true,
-          },
-        ],
-        logicalOperator: 'AND',
-      },
-    },
-  ],
-};
+const conditionalForm = `
+id: conditional-form
+title: Conditional Form
+pages:
+  - id: patient-information
+    fields:
+      - id: hasAllergies
+        fieldType: boolean
+        question: Do you have any allergies?
+      - id: allergyList
+        fieldType: longtext
+        question: Please list your allergies
+        rules:
+          - effect: visible
+            logic: AND
+            conditions:
+              - conditionType: field
+                targetId: hasAllergies
+                operator: equals
+                expected: 'Yes'
+`;
 
 // "allergyList" only shows when "hasAllergies" is checked
-<EsheetRenderer formData={conditionalForm} />;
+<EsheetRenderer formDataInput={conditionalForm} />;
 ```
 
 ## CSS Architecture

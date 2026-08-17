@@ -39,12 +39,10 @@ renderTree(definition, responses, { allowDangerousJS: true });
 
 Set `dangerouslyAllowJS: true` at the top level of the `FormDefinition`:
 
-```json
-{
-  "id": "my-form",
-  "dangerouslyAllowJS": true,
-  "fields": []
-}
+```yaml
+id: my-form
+dangerouslyAllowJS: true
+fields: []
 ```
 
 If either is absent or `false`:
@@ -168,12 +166,10 @@ renderTree(definition, responses, { allowDangerousJS: true });
 
 Set `dangerouslyAllowJS: true` at the top level of your `FormDefinition`:
 
-```json
-{
-  "id": "my-form",
-  "dangerouslyAllowJS": true,
-  "fields": [...]
-}
+```yaml
+id: my-form
+dangerouslyAllowJS: true
+fields: [] # add the form fields here
 ```
 
 Both must be `true`. If either is missing or `false`:
@@ -198,13 +194,11 @@ A `calculation` is a JavaScript expression attached to a field. It is evaluated 
 
 Add a `calculation` string to any field definition:
 
-```json
-{
-  "id": "bmi",
-  "fieldType": "text",
-  "question": "BMI",
-  "calculation": "Math.round((responses['weight'] / Math.pow(responses['height'] / 100, 2)) * 10) / 10"
-}
+```yaml
+id: bmi
+fieldType: text
+question: BMI
+calculation: Math.round((responses['weight'] / Math.pow(responses['height'] / 100, 2)) * 10) / 10
 ```
 
 ### Context
@@ -255,13 +249,11 @@ So the calculation must be a returnable JavaScript expression:
 
 Add 6 months to a "last encounter" date field:
 
-```json
-{
-  "id": "follow-up-date",
-  "fieldType": "text",
-  "question": "Suggested Follow-up Date",
-  "calculation": "(() => { const d = new Date(responses['last-encounter']); d.setMonth(d.getMonth() + 6); return d.toISOString().slice(0, 10); })()"
-}
+```yaml
+id: follow-up-date
+fieldType: text
+question: Suggested Follow-up Date
+calculation: (() => { const d = new Date(responses['last-encounter']); d.setMonth(d.getMonth() + 6); return d.toISOString().slice(0, 10); })()
 ```
 
 ### Builder UI
@@ -289,11 +281,9 @@ Expression conditions use eSheet's safe expression evaluator.
 
 Example:
 
-```json
-{
-  "conditionType": "expression",
-  "expression": "{temperature} >= 38 && {symptoms}.count > 1"
-}
+```yaml
+conditionType: expression
+expression: '{temperature} >= 38 && {symptoms}.count > 1'
 ```
 
 ### JS Conditions (`conditionType: 'js'`)
@@ -302,23 +292,15 @@ A JS condition drives `visible` / `enable` / `required` using arbitrary JavaScri
 
 ### Schema
 
-```json
-{
-  "id": "followup-section",
-  "fieldType": "section",
-  "rules": [
-    {
-      "effect": "visible",
-      "logic": "AND",
-      "conditions": [
-        {
-          "conditionType": "js",
-          "expression": "requireTimeBetween(responses['encounter-date'], 30, 90)"
-        }
-      ]
-    }
-  ]
-}
+```yaml
+id: followup-section
+fieldType: section
+rules:
+  - effect: visible
+    logic: AND
+    conditions:
+      - conditionType: js
+        expression: requireTimeBetween(responses['encounter-date'], 30, 90)
 ```
 
 ### Context

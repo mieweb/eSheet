@@ -284,6 +284,8 @@ interface SelectedOption {
 
 ### Example Response
 
+Responses are wire/API payloads, so this example is shown in JSON. Form definitions above use YAML as the canonical committed format.
+
 ```json
 {
   "name": { "answer": "Jane Doe" },

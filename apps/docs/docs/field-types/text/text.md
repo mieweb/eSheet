@@ -15,19 +15,17 @@ Supported `inputType` values: `string`, `number`, `email`, `tel`, `date`, `datet
 
 ## Answer Format
 
-```json
-{ "answer": "string value" }
+```yaml
+answer: string value
 ```
 
 ## Example
 
-```json
-{
-  "id": "weight",
-  "fieldType": "text",
-  "question": "Patient Weight",
-  "inputType": "number",
-  "unit": "kg",
-  "required": true
-}
+```yaml
+id: weight
+fieldType: text
+question: Patient Weight
+inputType: number
+unit: kg
+required: true
 ```

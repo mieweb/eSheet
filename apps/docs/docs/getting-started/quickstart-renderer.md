@@ -143,7 +143,7 @@ The renderer accepts form definitions as objects, YAML strings, or JSON strings.
 
 | Prop                   | Type                             | Default    | Description                                                 |
 | ---------------------- | -------------------------------- | ---------- | ----------------------------------------------------------- |
-| `formDataInput`        | `FormDefinition \| string`       | _required_ | Form definition (object, JSON, YAML, FHIR, MCP, SurveyJS)   |
+| `formDataInput`        | `FormDefinition \| string`       | _required_ | Form definition (object, YAML, JSON, FHIR, MCP, SurveyJS)   |
 | `className`            | `string`                         | `''`       | Additional CSS class for the root                           |
 | `initialResponses`     | `FormResponse`                   | --         | Pre-fill response data                                      |
 | `allowDangerousJS`     | `boolean`                        | `false`    | Allow JS calculations and `conditionType: 'js'`             |
