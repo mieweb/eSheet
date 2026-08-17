@@ -179,6 +179,9 @@ importers:
       '@mieweb/ui':
         specifier: 0.7.1
         version: 0.7.1(@kerebron/editor-kits@0.8.9(svelte@5.56.8(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.9)(@kerebron/wasm@0.8.9)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(remark-gfm@4.0.1)
+      js-yaml:
+        specifier: ^5.2.3
+        version: 5.2.3
       lucide-react:
         specifier: ^1.31.0
         version: 1.31.0(react@19.2.8)
@@ -191,6 +194,10 @@ importers:
       react-router-dom:
         specifier: ^7.18.2
         version: 7.18.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+    devDependencies:
+      '@types/js-yaml':
+        specifier: ^4.0.9
+        version: 4.0.9
 
   apps/docs:
     dependencies:
@@ -375,7 +382,7 @@ importers:
         version: 6.0.5(vite@8.2.1(@types/node@20.19.9)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0))
       vite-plugin-dts:
         specifier: ^5.0.3
-        version: 5.0.3(@microsoft/api-extractor@7.58.12(@types/node@20.19.9))(@rspack/core@1.7.12(@swc/helpers@0.5.23))(rolldown@1.2.3)(typescript@6.0.3)(vite@8.2.1(@types/node@20.19.9)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0))(webpack@5.109.2(@swc/core@1.15.8(@swc/helpers@0.5.18)))
+        version: 5.0.3(@microsoft/api-extractor@7.58.12(@types/node@20.19.9))(@rspack/core@1.7.12(@swc/helpers@0.5.23))(rolldown@1.2.3)(typescript@5.9.3)(vite@8.2.1(@types/node@20.19.9)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0))(webpack@5.109.2(@swc/core@1.15.8(@swc/helpers@0.5.18)))
 
   packages/fields:
     dependencies:
@@ -13435,7 +13442,7 @@ snapshots:
       obug: 2.1.4
       std-env: 4.2.0
       tinyrainbow: 3.1.1
-      vitest: 4.1.10(@types/node@20.19.9)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@29.1.1)(vite@8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.0))
+      vitest: 4.1.10(@types/node@20.19.9)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@29.1.1)(vite@8.2.1(@types/node@20.19.9)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0))
 
   '@vitest/expect@4.1.10':
     dependencies:
@@ -13489,7 +13496,7 @@ snapshots:
       sirv: 3.0.2
       tinyglobby: 0.2.17
       tinyrainbow: 3.1.1
-      vitest: 4.1.10(@types/node@20.19.9)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@29.1.1)(vite@8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.0))
+      vitest: 4.1.10(@types/node@20.19.9)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@29.1.1)(vite@8.2.1(@types/node@20.19.9)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0))
 
   '@vitest/utils@4.1.10':
     dependencies:
@@ -19337,7 +19344,8 @@ snapshots:
 
   typescript@5.9.3: {}
 
-  typescript@6.0.3: {}
+  typescript@6.0.3:
+    optional: true
 
   ufo@1.6.4: {}
 
@@ -19439,7 +19447,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  unplugin-dts@1.0.3(@microsoft/api-extractor@7.58.12(@types/node@20.19.9))(@rspack/core@1.7.12(@swc/helpers@0.5.23))(rolldown@1.2.3)(typescript@6.0.3)(vite@8.2.1(@types/node@20.19.9)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0))(webpack@5.109.2(@swc/core@1.15.8(@swc/helpers@0.5.18))):
+  unplugin-dts@1.0.3(@microsoft/api-extractor@7.58.12(@types/node@20.19.9))(@rspack/core@1.7.12(@swc/helpers@0.5.23))(rolldown@1.2.3)(typescript@5.9.3)(vite@8.2.1(@types/node@20.19.9)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0))(webpack@5.109.2(@swc/core@1.15.8(@swc/helpers@0.5.18))):
     dependencies:
       '@rollup/pluginutils': 5.4.0
       '@volar/typescript': 2.4.28
@@ -19448,7 +19456,7 @@ snapshots:
       kolorist: 1.8.0
       local-pkg: 1.2.1
       magic-string: 0.30.21
-      typescript: 6.0.3
+      typescript: 5.9.3
       unplugin: 2.3.11
     optionalDependencies:
       '@microsoft/api-extractor': 7.58.12(@types/node@20.19.9)
@@ -19546,9 +19554,9 @@ snapshots:
       - typescript
       - webpack
 
-  vite-plugin-dts@5.0.3(@microsoft/api-extractor@7.58.12(@types/node@20.19.9))(@rspack/core@1.7.12(@swc/helpers@0.5.23))(rolldown@1.2.3)(typescript@6.0.3)(vite@8.2.1(@types/node@20.19.9)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0))(webpack@5.109.2(@swc/core@1.15.8(@swc/helpers@0.5.18))):
+  vite-plugin-dts@5.0.3(@microsoft/api-extractor@7.58.12(@types/node@20.19.9))(@rspack/core@1.7.12(@swc/helpers@0.5.23))(rolldown@1.2.3)(typescript@5.9.3)(vite@8.2.1(@types/node@20.19.9)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0))(webpack@5.109.2(@swc/core@1.15.8(@swc/helpers@0.5.18))):
     dependencies:
-      unplugin-dts: 1.0.3(@microsoft/api-extractor@7.58.12(@types/node@20.19.9))(@rspack/core@1.7.12(@swc/helpers@0.5.23))(rolldown@1.2.3)(typescript@6.0.3)(vite@8.2.1(@types/node@20.19.9)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0))(webpack@5.109.2(@swc/core@1.15.8(@swc/helpers@0.5.18)))
+      unplugin-dts: 1.0.3(@microsoft/api-extractor@7.58.12(@types/node@20.19.9))(@rspack/core@1.7.12(@swc/helpers@0.5.23))(rolldown@1.2.3)(typescript@5.9.3)(vite@8.2.1(@types/node@20.19.9)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0))(webpack@5.109.2(@swc/core@1.15.8(@swc/helpers@0.5.18)))
     optionalDependencies:
       '@microsoft/api-extractor': 7.58.12(@types/node@20.19.9)
       vite: 8.2.1(@types/node@20.19.9)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0)

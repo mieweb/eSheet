@@ -1,0 +1,358 @@
+id: employee-onboarding
+title: Employee Onboarding Form
+description: A complete onboarding workflow for collecting personal details, role information, equipment needs, and policy acknowledgements.
+pages:
+  - id: page-1
+    fields:
+      - id: eo-intro
+        fieldType: html
+        width: full
+        htmlContent: <h2 style='margin:0 0 8px'>Welcome to the Team!</h2><p>Please complete this form before your first day. All information is kept confidential and used only for HR purposes.</p>
+        iframeHeight: 90
+      - id: section-personal
+        fieldType: section
+        sectionIcon: user
+        sectionCollapse: expanded
+        title: Personal Details
+        fields:
+          - id: eo-first-name
+            fieldType: text
+            question: Legal first name
+            inputType: string
+            required: true
+          - id: eo-last-name
+            fieldType: text
+            question: Legal last name
+            inputType: string
+            required: true
+          - id: eo-preferred-name
+            fieldType: text
+            question: Preferred name (if different)
+            inputType: string
+          - id: eo-email
+            fieldType: text
+            question: Personal email address
+            inputType: email
+            required: true
+          - id: eo-phone
+            fieldType: text
+            question: Mobile phone number
+            inputType: tel
+            required: true
+          - id: eo-start-date
+            fieldType: text
+            question: Start date
+            inputType: date
+            required: true
+          - id: eo-emergency-name
+            fieldType: text
+            question: Emergency contact name
+            inputType: string
+          - id: eo-emergency-phone
+            fieldType: text
+            question: Emergency contact phone
+            inputType: tel
+      - id: section-role
+        fieldType: section
+        sectionIcon: briefcase
+        sectionCollapse: expanded
+        title: Role & Department
+        fields:
+          - id: eo-department
+            fieldType: dropdown
+            question: Department
+            required: true
+            options:
+              - id: eo-dept-eng
+                value: engineering
+                text: Engineering
+              - id: eo-dept-design
+                value: design
+                text: Design
+              - id: eo-dept-mktg
+                value: marketing
+                text: Marketing
+              - id: eo-dept-sales
+                value: sales
+                text: Sales
+              - id: eo-dept-hr
+                value: hr
+                text: People & HR
+              - id: eo-dept-finance
+                value: finance
+                text: Finance
+              - id: eo-dept-ops
+                value: ops
+                text: Operations
+              - id: eo-dept-legal
+                value: legal
+                text: Legal
+          - id: eo-job-title
+            fieldType: text
+            question: Job title
+            inputType: string
+            required: true
+          - id: eo-employment-type
+            fieldType: radio
+            question: Employment type
+            required: true
+            options:
+              - id: eo-et-ft
+                value: full-time
+                text: Full-time
+              - id: eo-et-pt
+                value: part-time
+                text: Part-time
+              - id: eo-et-contract
+                value: contractor
+                text: Contractor
+          - id: eo-hours-per-week
+            fieldType: text
+            question: Hours per week
+            inputType: number
+            unit: hrs/wk
+            rules:
+              - effect: visible
+                logic: AND
+                conditions:
+                  - conditionType: field
+                    targetId: eo-employment-type
+                    operator: equals
+                    expected: eo-et-pt
+          - id: eo-manager
+            fieldType: text
+            question: Direct manager name
+            inputType: string
+          - id: eo-work-location
+            fieldType: radio
+            question: Work arrangement
+            options:
+              - id: eo-wl-onsite
+                value: onsite
+                text: On-site
+              - id: eo-wl-remote
+                value: remote
+                text: Fully remote
+              - id: eo-wl-hybrid
+                value: hybrid
+                text: Hybrid
+          - id: eo-office-location
+            fieldType: dropdown
+            question: Office location
+            options:
+              - id: eo-ol-hq
+                value: hq
+                text: HQ — New York
+              - id: eo-ol-sf
+                value: sf
+                text: San Francisco
+              - id: eo-ol-lon
+                value: lon
+                text: London
+              - id: eo-ol-syd
+                value: syd
+                text: Sydney
+            rules:
+              - effect: visible
+                logic: OR
+                conditions:
+                  - conditionType: field
+                    targetId: eo-work-location
+                    operator: equals
+                    expected: eo-wl-onsite
+                  - conditionType: field
+                    targetId: eo-work-location
+                    operator: equals
+                    expected: eo-wl-hybrid
+      - id: section-equipment
+        fieldType: section
+        sectionIcon: clipboardPlus
+        sectionCollapse: expanded
+        title: Equipment & Setup
+        fields:
+          - id: eo-equipment
+            fieldType: check
+            question: Which equipment do you need? (select all that apply)
+            options:
+              - id: eo-eq-laptop
+                value: laptop
+                text: Laptop
+              - id: eo-eq-monitor
+                value: monitor
+                text: External monitor
+              - id: eo-eq-keyboard
+                value: keyboard
+                text: Keyboard
+              - id: eo-eq-mouse
+                value: mouse
+                text: Mouse
+              - id: eo-eq-headset
+                value: headset
+                text: Headset
+              - id: eo-eq-phone
+                value: desk-phone
+                text: Desk phone
+              - id: eo-eq-dock
+                value: dock
+                text: Docking station
+          - id: eo-os
+            fieldType: radio
+            question: Preferred operating system
+            options:
+              - id: eo-os-mac
+                value: macos
+                text: macOS
+              - id: eo-os-win
+                value: windows
+                text: Windows
+              - id: eo-os-linux
+                value: linux
+                text: Linux
+              - id: eo-os-none
+                value: no-preference
+                text: No preference
+            rules:
+              - effect: visible
+                logic: AND
+                conditions:
+                  - conditionType: field
+                    targetId: eo-equipment
+                    operator: includes
+                    expected: eo-eq-laptop
+          - id: eo-software
+            fieldType: multiselectdropdown
+            question: Software licenses required
+            options:
+              - id: eo-sw-office
+                value: ms-office
+                text: Microsoft 365
+              - id: eo-sw-figma
+                value: figma
+                text: Figma
+              - id: eo-sw-jira
+                value: jira
+                text: Jira
+              - id: eo-sw-slack
+                value: slack
+                text: Slack
+              - id: eo-sw-zoom
+                value: zoom
+                text: Zoom
+              - id: eo-sw-github
+                value: github
+                text: GitHub
+              - id: eo-sw-gsuite
+                value: gsuite
+                text: Google Workspace
+          - id: eo-setup-notes
+            fieldType: longtext
+            question: Any special setup requirements or accessibility needs?
+      - id: section-policies
+        fieldType: section
+        sectionIcon: shieldCheck
+        sectionCollapse: expanded
+        title: Policies & Compliance
+        fields:
+          - id: eo-policy-note
+            fieldType: html
+            htmlContent: <p style='font-size:13px;color:#555'>Please confirm that you have read and understood the following documents. Links will be sent to your email before your start date.</p>
+            iframeHeight: 55
+          - id: eo-handbook
+            fieldType: boolean
+            question: I have read and understood the Employee Handbook
+            required: true
+            options:
+              - id: eo-hb-yes
+                value: 'yes'
+                text: Yes, I confirm
+              - id: eo-hb-no
+                value: 'no'
+                text: No, I still need to read it
+          - id: eo-nda
+            fieldType: boolean
+            question: I have read and agree to the Non-Disclosure Agreement
+            required: true
+            options:
+              - id: eo-nda-yes
+                value: 'yes'
+                text: Yes, I agree
+              - id: eo-nda-no
+                value: 'no'
+                text: No, I have questions
+          - id: eo-nda-questions
+            fieldType: longtext
+            question: Please describe your NDA questions or concerns
+            rules:
+              - effect: visible
+                logic: AND
+                conditions:
+                  - conditionType: field
+                    targetId: eo-nda
+                    operator: equals
+                    expected: eo-nda-no
+              - effect: required
+                logic: AND
+                conditions:
+                  - conditionType: field
+                    targetId: eo-nda
+                    operator: equals
+                    expected: eo-nda-no
+          - id: eo-bg-check
+            fieldType: boolean
+            question: I consent to a pre-employment background check
+            required: true
+            options:
+              - id: eo-bg-yes
+                value: 'yes'
+                text: Yes, I consent
+              - id: eo-bg-no
+                value: 'no'
+                text: 'No'
+      - id: section-skills
+        fieldType: section
+        sectionIcon: star
+        sectionCollapse: expanded
+        title: Skills & Preferences
+        fields:
+          - id: eo-skill-ranking
+            fieldType: ranking
+            question: 'Rank your top work strengths (drag to reorder — #1 = strongest)'
+            options:
+              - id: eo-sk-collab
+                value: collaboration
+                text: Collaboration
+              - id: eo-sk-comms
+                value: communication
+                text: Communication
+              - id: eo-sk-problem
+                value: problem-solving
+                text: Problem solving
+              - id: eo-sk-creative
+                value: creativity
+                text: Creativity
+              - id: eo-sk-detail
+                value: attention-to-detail
+                text: Attention to detail
+          - id: eo-goals
+            fieldType: longtext
+            question: What are your top 3 goals for your first 90 days?
+      - id: section-signature
+        fieldType: section
+        sectionIcon: fileCheck
+        sectionCollapse: expanded
+        title: Declaration
+        fields:
+          - id: eo-declaration
+            fieldType: html
+            htmlContent: <p style='font-size:13px;color:#555'>By signing below, I confirm that all information provided is accurate and complete.</p>
+            iframeHeight: 50
+          - id: eo-signature
+            fieldType: signature
+            question: Your signature
+            required: true
+            padPlaceholder: Sign here
+          - id: eo-signed-date
+            fieldType: text
+            question: Date signed
+            inputType: date
+            required: true

@@ -1,0 +1,220 @@
+id: option-variety-showcase
+title: Option Variety and Visibility Showcase
+description: Demonstrates dropdowns, radio buttons, checkboxes, multi-select dropdowns, open choices, scored options, and conditional option visibility.
+pages:
+  - id: page-1
+    title: Options lab
+    fields:
+      - id: options-intro
+        fieldType: html
+        width: full
+        htmlContent: "<h2 style='margin:0 0 8px'>Options Lab</h2><p>Try each option control and change the region or request type to see choices appear and disappear dynamically.</p>"
+        iframeHeight: 90
+      - id: region
+        fieldType: dropdown
+        width: third
+        question: Which region should handle the request?
+        required: true
+        options:
+          - id: north
+            value: north
+            text: North
+          - id: south
+            value: south
+            text: South
+          - id: east
+            value: east
+            text: East
+          - id: west
+            value: west
+            text: West
+          - id: remote
+            value: remote
+            text: Remote or distributed
+      - id: office
+        fieldType: radio
+        width: third
+        question: Preferred office or service hub
+        optionLayout: wrap
+        options:
+          - id: north-hub
+            value: north-hub
+            text: North hub
+            rules:
+              - effect: visible
+                logic: AND
+                conditions:
+                  - conditionType: field
+                    targetId: region
+                    operator: equals
+                    expected: north
+          - id: south-hub
+            value: south-hub
+            text: South hub
+            rules:
+              - effect: visible
+                logic: AND
+                conditions:
+                  - conditionType: field
+                    targetId: region
+                    operator: equals
+                    expected: south
+          - id: east-hub
+            value: east-hub
+            text: East hub
+            rules:
+              - effect: visible
+                logic: AND
+                conditions:
+                  - conditionType: field
+                    targetId: region
+                    operator: equals
+                    expected: east
+          - id: west-hub
+            value: west-hub
+            text: West hub
+            rules:
+              - effect: visible
+                logic: AND
+                conditions:
+                  - conditionType: field
+                    targetId: region
+                    operator: equals
+                    expected: west
+          - id: virtual-hub
+            value: virtual-hub
+            text: Virtual service hub
+            rules:
+              - effect: visible
+                logic: AND
+                conditions:
+                  - conditionType: field
+                    targetId: region
+                    operator: equals
+                    expected: remote
+      - id: request-type
+        fieldType: dropdown
+        width: third
+        question: What kind of help is needed?
+        required: true
+        options:
+          - id: account
+            value: account
+            text: Account support
+          - id: training
+            value: training
+            text: Training
+          - id: technical
+            value: technical
+            text: Technical issue
+          - id: billing
+            value: billing
+            text: Billing question
+          - id: other
+            value: other
+            text: Other
+      - id: request-priority
+        fieldType: radio
+        width: third
+        question: How should this request be prioritized?
+        optionLayout: wrap
+        options:
+          - id: low
+            value: low
+            text: Low
+            score: 1
+          - id: normal
+            value: normal
+            text: Normal
+            score: 2
+          - id: high
+            value: high
+            text: High
+            score: 3
+          - id: urgent
+            value: urgent
+            text: Urgent
+            score: 4
+      - id: support-topics
+        fieldType: check
+        width: half
+        question: Which topics should be covered?
+        optionLayout: wrap
+        options:
+          - id: setup
+            value: setup
+            text: Setup
+          - id: permissions
+            value: permissions
+            text: Permissions
+          - id: reporting
+            value: reporting
+            text: Reporting
+          - id: integrations
+            value: integrations
+            text: Integrations
+          - id: accessibility
+            value: accessibility
+            text: Accessibility
+          - id: other-topic
+            value: other-topic
+            text: Other topic
+      - id: follow-up-window
+        fieldType: multiselectdropdown
+        width: half
+        question: Which follow-up windows work?
+        options:
+          - id: same-day
+            value: same-day
+            text: Same day
+            rules:
+              - effect: visible
+                logic: OR
+                conditions:
+                  - conditionType: field
+                    targetId: request-type
+                    operator: equals
+                    expected: technical
+                  - conditionType: field
+                    targetId: request-priority
+                    operator: equals
+                    expected: urgent
+          - id: this-week
+            value: this-week
+            text: This week
+          - id: next-week
+            value: next-week
+            text: Next week
+          - id: after-hours
+            value: after-hours
+            text: After hours
+            rules:
+              - effect: visible
+                logic: AND
+                conditions:
+                  - conditionType: field
+                    targetId: region
+                    operator: equals
+                    expected: remote
+      - id: preferred-channel
+        fieldType: openchoice
+        width: half
+        question: What is the preferred contact channel?
+        optionLayout: wrap
+        options:
+          - id: email
+            value: email
+            text: Email
+          - id: phone
+            value: phone
+            text: Phone
+          - id: video
+            value: video
+            text: Video call
+          - id: chat
+            value: chat
+            text: Chat
+      - id: details
+        fieldType: longtext
+        width: full
+        question: Add any context for the support team

@@ -1,9 +1,9 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { load } from 'js-yaml';
 import {
   EsheetRenderer,
   type EsheetRendererHandle,
   useRendererMcpToolHandler,
-  type FormDefinition,
   type ResponseFormat,
 } from '@esheet/renderer';
 import { Navbar } from '../components/Navbar';
@@ -51,35 +51,36 @@ interface SchemaOption {
 
 function toSchemaLabel(fileName: string): string {
   return fileName
-    .replace(/\.json$/i, '')
+    .replace(/\.(?:json|ya?ml)$/i, '')
     .split('-')
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ');
 }
 
-const schemaModules = import.meta.glob('../schemas/*.json', {
+const schemaModules = import.meta.glob('../schemas/*.yaml', {
   eager: true,
-}) as Record<string, { default?: FormDefinition } | FormDefinition>;
+  query: '?raw',
+  import: 'default',
+}) as Record<string, string>;
+
+function getSchemaTitle(rawSchema: string): string | undefined {
+  const parsed = load(rawSchema);
+  if (typeof parsed !== 'object' || parsed === null) return undefined;
+  const title = (parsed as Record<string, unknown>).title;
+  return typeof title === 'string' && title.trim() ? title.trim() : undefined;
+}
 
 const TEST_SCHEMAS: readonly SchemaOption[] = Object.entries(schemaModules)
-  .filter(([path]) => !path.endsWith('.context.json'))
-  .map(([path, mod]) => {
+  .map(([path, rawSchema]) => {
     const fileName = path.split('/').pop() ?? path;
-    const data =
-      typeof mod === 'object' && mod !== null && 'default' in mod
-        ? mod.default
-        : (mod as FormDefinition);
-
-    if (!data) return null;
 
     return {
-      label: data.title?.trim() || toSchemaLabel(fileName),
+      label: getSchemaTitle(rawSchema) || toSchemaLabel(fileName),
       value: fileName,
-      data: data as unknown,
+      data: rawSchema,
     };
   })
-  .filter((schema): schema is SchemaOption => schema !== null)
   .sort((a, b) => a.label.localeCompare(b.label));
 
 export function RendererView() {
@@ -130,7 +131,7 @@ export function RendererView() {
     const reader = new FileReader();
     reader.onload = (ev) => {
       try {
-        const data = JSON.parse(ev.target?.result as string);
+        const data = load(ev.target?.result as string);
         setRawInput(data);
         setSubmitResult(null);
         setActiveTab('form');
@@ -139,7 +140,7 @@ export function RendererView() {
         setSubmitResult({
           kind: 'error',
           title: 'Import failed',
-          message: 'Failed to parse JSON.',
+          message: 'Failed to parse YAML or JSON.',
           detail: err instanceof Error ? err.message : String(err),
         });
       }
@@ -193,7 +194,7 @@ export function RendererView() {
 
   const handlePasteApply = () => {
     try {
-      const data = JSON.parse(pasteText);
+      const data = load(pasteText);
       setRawInput(data);
       setSubmitResult(null);
       setActiveTab('form');
@@ -215,7 +216,7 @@ export function RendererView() {
       <input
         id="renderer-file-import"
         type="file"
-        accept=".json"
+        accept=".json,.yaml,.yml,application/json,application/yaml,text/yaml"
         onChange={handleFileImport}
         className="hidden"
       />
@@ -282,7 +283,7 @@ export function RendererView() {
                   setPasteOpen(true);
                 }}
               >
-                Paste JSON
+                Paste YAML/JSON
               </Button>
               <Button
                 variant="outline"
@@ -292,7 +293,7 @@ export function RendererView() {
                   document.getElementById('renderer-file-import')?.click()
                 }
               >
-                Import JSON
+                Import YAML/JSON
               </Button>
               <Button
                 onClick={handleSubmit}
@@ -349,8 +350,8 @@ export function RendererView() {
                   No Form Loaded
                 </h2>
                 <p className="text-muted-foreground mb-6">
-                  Select an example from the dropdown, or import your own JSON
-                  definition.
+                  Select an example from the dropdown, or import your own YAML
+                  or JSON definition.
                 </p>
                 <div className="flex flex-wrap justify-center gap-2">
                   {TEST_SCHEMAS.slice(0, 3).map((s) => (
@@ -469,14 +470,16 @@ export function RendererView() {
 
       <DialogOverlay isOpen={pasteOpen} onClose={() => setPasteOpen(false)}>
         <div className="flex flex-col gap-3 p-1">
-          <h2 className="text-base font-semibold">Paste JSON Definition</h2>
+          <h2 className="text-base font-semibold">
+            Paste YAML/JSON Definition
+          </h2>
           <Textarea
             value={pasteText}
             onChange={(e) => {
               setPasteText(e.target.value);
               setPasteError(null);
             }}
-            placeholder="Paste your eSheet / FHIR / SurveyJS JSON here…"
+            placeholder="Paste your eSheet YAML/JSON, FHIR, or SurveyJS definition here…"
             rows={14}
             className="font-mono text-xs"
             autoFocus
