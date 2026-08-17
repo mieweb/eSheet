@@ -2,6 +2,11 @@
 @import 'tailwindcss/utilities';
 
 @source "./**/*.{ts,tsx}";
+/* `visibility: 'hidden'` in useAnchoredPosition.ts makes the scanner emit an
+   unlayered `.hidden{display:none}` that overrides host-app `md:*` display
+   utilities (which live in @layer utilities). We never use the `hidden`
+   class, so exclude it. */
+@source not inline("hidden");
 
 /* Touch mode forces `padding: .75rem !important` on all inputs, which would
    put the placeholder under the leading search icon — keep the icon gutter. */
