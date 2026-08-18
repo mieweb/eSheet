@@ -193,6 +193,13 @@ export default defineConfig(({ command, mode }) => {
           ),
         },
         {
+          find: '@esheet/document-list-field',
+          replacement: resolve(
+            import.meta.dirname,
+            '../../packages/document-list-field/src/index.ts'
+          ),
+        },
+        {
           find: /^@mieweb\/ui$/,
           replacement: resolve(
             import.meta.dirname,

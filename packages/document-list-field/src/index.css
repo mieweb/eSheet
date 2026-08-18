@@ -1,0 +1,41 @@
+@import 'tailwindcss/theme';
+@import 'tailwindcss/utilities';
+
+@source './**/*.{ts,tsx}';
+
+.document-list-grid {
+  position: relative;
+  width: 100%;
+}
+
+.document-list-grid__title-actions {
+  position: absolute;
+  top: 0;
+  right: 2rem;
+  z-index: 5;
+  display: flex;
+  height: 1.8rem;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.document-list-grid__status,
+.document-list-grid__error {
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.document-list-grid__status {
+  color: var(--mieweb-muted-foreground, #64748b);
+}
+
+.document-list-grid__error {
+  color: var(--mieweb-destructive, #b42318);
+}
+
+.document-list-grid--loading {
+  min-height: 4rem;
+  display: grid;
+  place-items: center;
+  color: var(--mieweb-muted-foreground, #64748b);
+}

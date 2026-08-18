@@ -97,3 +97,10 @@ export {
   useFieldGridLayout,
 } from './lib/FieldGrid.js';
 export type { FieldGridItemProps, FieldGridProps } from './lib/FieldGrid.js';
+
+// Optional field extension providers
+export {
+  FieldProviderStack,
+  type FieldProvider,
+  type FieldProviderStackProps,
+} from './lib/FieldProviders.js';

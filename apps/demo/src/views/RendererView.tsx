@@ -6,6 +6,7 @@ import {
   useRendererMcpToolHandler,
   type ResponseFormat,
 } from '@esheet/renderer';
+import { createDocumentListFieldProvider } from '@esheet/document-list-field';
 import { Navbar } from '../components/Navbar';
 import {
   Alert,
@@ -30,6 +31,7 @@ import {
   TabsList,
   TabsTrigger,
   Textarea,
+  useToast,
 } from '@mieweb/ui';
 import { ClipboardList, SlidersHorizontal, Smartphone } from 'lucide-react';
 import { updateOzwellTools, FLOWIE_KEY } from '../ozwell-setup.js';
@@ -110,6 +112,9 @@ export function RendererView() {
   const [pasteOpen, setPasteOpen] = useState(false);
   const [pasteText, setPasteText] = useState('');
   const [pasteError, setPasteError] = useState<string | null>(null);
+  const [detailRowsExpanded, setDetailRowsExpanded] = useState(false);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
+  const { info } = useToast();
 
   const resetFormKey = useCallback(() => {
     setFormKey((prev) => prev + 1);
@@ -208,6 +213,47 @@ export function RendererView() {
   };
 
   const hasForm = rawInput != null;
+  const handleUpload = () => {
+    info('Choose a document to upload.', { title: 'Upload button clicked' });
+    uploadInputRef.current?.click();
+  };
+  const handleUploadChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) info(`${file.name} would be uploaded.`, { title: 'Upload' });
+    event.target.value = '';
+  };
+  const documentListProvider = createDocumentListFieldProvider({
+    detailRowsExpanded,
+    onToggleDetails: () => setDetailRowsExpanded((expanded) => !expanded),
+    onCompose: () =>
+      info('Your functionality goes here. Compose button clicked.', {
+        title: 'Compose',
+      }),
+    onUpload: handleUpload,
+    renderDetailRow: (row) => (
+      <div className="document-list-demo__detail px-4 py-3">
+        <strong className="block text-sm">{row.title}</strong>
+        <dl className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-sm text-muted-foreground">
+          <div>
+            <dt className="font-medium">Date</dt>
+            <dd>{row.date}</dd>
+          </div>
+          <div>
+            <dt className="font-medium">Subject</dt>
+            <dd>{row.subject}</dd>
+          </div>
+          <div>
+            <dt className="font-medium">Document type</dt>
+            <dd>{row.docType}</dd>
+          </div>
+          <div>
+            <dt className="font-medium">Source</dt>
+            <dd>{row.source}</dd>
+          </div>
+        </dl>
+      </div>
+    ),
+  });
 
   return (
     <>
@@ -219,6 +265,14 @@ export function RendererView() {
         accept=".json,.yaml,.yml,application/json,application/yaml,text/yaml"
         onChange={handleFileImport}
         className="hidden"
+      />
+      <input
+        ref={uploadInputRef}
+        id="renderer-document-upload"
+        type="file"
+        aria-label="Select a document to upload"
+        className="hidden"
+        onChange={handleUploadChange}
       />
 
       <Tabs
@@ -383,6 +437,7 @@ export function RendererView() {
                       bottomNavigation={bottomNavigation}
                       validateNavigation={validateNavigation}
                       onRendererToolsReady={onRendererToolsReady}
+                      fieldProviders={[documentListProvider]}
                       onReady={() => {
                         const def = rendererRef.current
                           ?.getFormStore()

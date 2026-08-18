@@ -7,6 +7,7 @@ export {
   type GetResponseResult,
   type ResponseFormat,
 } from './lib/EsheetRenderer.js';
+export type { FieldProvider } from '@esheet/fields';
 
 // Render tree builder (for computing setValue values in builder)
 export {

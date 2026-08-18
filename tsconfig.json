@@ -32,6 +32,9 @@
     },
     {
       "path": "./packages/field-health"
+    },
+    {
+      "path": "./packages/document-list-field"
     }
   ]
 }

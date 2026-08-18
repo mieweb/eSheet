@@ -6,6 +6,11 @@ import {
   type EsheetRendererProps,
 } from '@esheet/renderer';
 
+export interface BlazeRendererOptions {
+  /** Optional wrappers supplied by field add-ons. */
+  fieldProviders?: EsheetRendererProps['fieldProviders'];
+}
+
 type UnknownRecord = Record<string, unknown>;
 
 function isRecord(value: unknown): value is UnknownRecord {
@@ -54,7 +59,8 @@ function toRendererProps(data: unknown): EsheetRendererProps {
 }
 
 export function registerBlazeTemplate(
-  templateName = 'esheetRenderer'
+  templateName = 'esheetRenderer',
+  options: BlazeRendererOptions = {}
 ): boolean {
   const globals = globalThis as UnknownRecord;
   const templateApi = globals.Template;
@@ -108,7 +114,11 @@ export function registerBlazeTemplate(
       const data = isFunction(currentData) ? currentData() : undefined;
       const props = toRendererProps(data);
       root.render(
-        React.createElement(EsheetRenderer, { ...props, ref: rendererRef })
+        React.createElement(EsheetRenderer, {
+          ...props,
+          fieldProviders: options.fieldProviders,
+          ref: rendererRef,
+        })
       );
     };
 

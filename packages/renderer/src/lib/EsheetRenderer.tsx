@@ -20,10 +20,12 @@ import {
 import { createRendererTools, type RendererTools } from './renderer-tools.js';
 import {
   FormStoreContext,
+  FieldProviderStack,
   UIContext,
   ZodIssuesPanel,
   FeedbackModal,
   useTouchMode,
+  type FieldProvider,
 } from '@esheet/fields';
 import { ensureDefaultFieldComponentsRegistered } from './register-defaults.js';
 import { useRendererInit } from './hooks/useRendererInit.js';
@@ -93,6 +95,8 @@ export interface EsheetRendererProps {
   bottomNavigation?: boolean;
   /** Block forward page navigation while required fields on the current page are unanswered. */
   validateNavigation?: boolean;
+  /** Optional wrappers supplied by field add-ons. */
+  fieldProviders?: readonly FieldProvider[];
 }
 
 // ---------------------------------------------------------------------------
@@ -203,12 +207,14 @@ export const EsheetRenderer = React.forwardRef<
   return (
     <FormStoreContext.Provider value={formStore}>
       <UIContext.Provider value={uiStore}>
-        <EsheetRendererInner
-          {...props}
-          formStore={formStore}
-          uiStore={uiStore}
-          ref={ref}
-        />
+        <FieldProviderStack providers={props.fieldProviders}>
+          <EsheetRendererInner
+            {...props}
+            formStore={formStore}
+            uiStore={uiStore}
+            ref={ref}
+          />
+        </FieldProviderStack>
       </UIContext.Provider>
     </FormStoreContext.Provider>
   );
