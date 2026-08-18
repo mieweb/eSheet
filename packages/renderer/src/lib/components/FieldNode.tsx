@@ -216,9 +216,10 @@ export const FieldNode = React.memo(function FieldNode({
     : null;
   const isChildOfSection = parentNode?.definition.fieldType === 'section';
 
-  const wrapperClass = `field-wrapper${isChildOfSection ? ' ms:py-1' : ''}${
-    !isEnabled ? ' ms:opacity-50 ms:pointer-events-none' : ''
-  }`;
+  // Positioned so the absolutely placed presence dots land on the field.
+  const wrapperClass = `field-wrapper ms:relative${
+    isChildOfSection ? ' ms:py-1' : ''
+  }${!isEnabled ? ' ms:opacity-50 ms:pointer-events-none' : ''}`;
 
   const fieldLabel = field.definition.question || field.definition.id;
 
@@ -241,12 +242,18 @@ export const FieldNode = React.memo(function FieldNode({
             role="img"
             aria-label={presence.map((peer) => peer.name).join(', ')}
           >
-            {presence.map((peer) => (
+            {presence.map((peer, index) => (
+              // Two windows of one person share a name, so the name is no key.
               <span
-                key={peer.name}
+                key={`${peer.name}-${index}`}
                 title={peer.name}
-                className="ms:inline-block ms:w-2.5 ms:h-2.5 ms:rounded-full ms:border ms:border-mssurface"
-                style={{ backgroundColor: peer.color }}
+                className="ms:inline-block ms:rounded-full ms:border ms:border-mssurface"
+                // Sized inline: a host may load only the fields stylesheet.
+                style={{
+                  backgroundColor: peer.color,
+                  width: '0.625rem',
+                  height: '0.625rem',
+                }}
               />
             ))}
           </div>
