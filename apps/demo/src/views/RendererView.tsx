@@ -6,10 +6,7 @@ import {
   useRendererMcpToolHandler,
   type ResponseFormat,
 } from '@esheet/renderer';
-import {
-  createDocumentListFieldProvider,
-  type DocumentListRuntimeState,
-} from '@esheet/document-list-field';
+import { createDocumentListFieldProvider } from '@esheet/document-list-field';
 import { Navbar } from '../components/Navbar';
 import {
   Alert,
@@ -34,15 +31,10 @@ import {
   TabsList,
   TabsTrigger,
   Textarea,
-  useToast,
 } from '@mieweb/ui';
 import { ClipboardList, SlidersHorizontal, Smartphone } from 'lucide-react';
 import { updateOzwellTools, FLOWIE_KEY } from '../ozwell-setup.js';
-import {
-  createComposedDemoDocument,
-  createDemoDocumentListRepository,
-  documentFromUploadedFile,
-} from '../document-list-demo-repository.js';
+import { createDemoDocumentListRepository } from '../document-list-demo-repository.js';
 
 interface SubmitResult {
   readonly kind: 'success' | 'error';
@@ -120,14 +112,10 @@ export function RendererView() {
   const [pasteOpen, setPasteOpen] = useState(false);
   const [pasteText, setPasteText] = useState('');
   const [pasteError, setPasteError] = useState<string | null>(null);
-  const [detailRowsExpanded, setDetailRowsExpanded] = useState(false);
-  const uploadInputRef = useRef<HTMLInputElement>(null);
-  const activeRuntimeRef = useRef<DocumentListRuntimeState | null>(null);
   const documentRepository = useMemo(
     () => createDemoDocumentListRepository(),
     []
   );
-  const { info } = useToast();
 
   const resetFormKey = useCallback(() => {
     setFormKey((prev) => prev + 1);
@@ -226,66 +214,8 @@ export function RendererView() {
   };
 
   const hasForm = rawInput != null;
-  const handleUpload = (runtime: DocumentListRuntimeState) => {
-    activeRuntimeRef.current = runtime;
-    info('Choose a document to upload.', { title: 'Upload button clicked' });
-    uploadInputRef.current?.click();
-  };
-  const handleUploadChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    const runtime = activeRuntimeRef.current;
-    if (file && runtime) {
-      const document = documentFromUploadedFile(file);
-      documentRepository.setFile(document.id, file);
-      void runtime
-        .saveDocument(document)
-        .then(() => info(`${file.name} uploaded.`, { title: 'Upload' }))
-        .catch(() =>
-          info(`Could not upload ${file.name}.`, { title: 'Upload' })
-        );
-    }
-    activeRuntimeRef.current = null;
-    event.target.value = '';
-  };
-  const handleCompose = (runtime: DocumentListRuntimeState) => {
-    const document = createComposedDemoDocument();
-    void runtime
-      .saveDocument(document)
-      .then(() => info('Composed demo document added.', { title: 'Compose' }))
-      .catch(() =>
-        info('Could not compose the document.', { title: 'Compose' })
-      );
-  };
   const documentListProvider = createDocumentListFieldProvider(
-    {
-      detailRowsExpanded,
-      onToggleDetails: () => setDetailRowsExpanded((expanded) => !expanded),
-      onCompose: handleCompose,
-      onUpload: handleUpload,
-      renderDetailRow: (row) => (
-        <div className="document-list-demo__detail px-4 py-3">
-          <strong className="block text-sm">{row.title}</strong>
-          <dl className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-sm text-muted-foreground">
-            <div>
-              <dt className="font-medium">Date</dt>
-              <dd>{row.date}</dd>
-            </div>
-            <div>
-              <dt className="font-medium">Subject</dt>
-              <dd>{row.subject}</dd>
-            </div>
-            <div>
-              <dt className="font-medium">Document type</dt>
-              <dd>{row.docType}</dd>
-            </div>
-            <div>
-              <dt className="font-medium">Source</dt>
-              <dd>{row.source}</dd>
-            </div>
-          </dl>
-        </div>
-      ),
-    },
+    {},
     { repository: documentRepository }
   );
 
@@ -299,14 +229,6 @@ export function RendererView() {
         accept=".json,.yaml,.yml,application/json,application/yaml,text/yaml"
         onChange={handleFileImport}
         className="hidden"
-      />
-      <input
-        ref={uploadInputRef}
-        id="renderer-document-upload"
-        type="file"
-        aria-label="Select a document to upload"
-        className="hidden"
-        onChange={handleUploadChange}
       />
 
       <Tabs

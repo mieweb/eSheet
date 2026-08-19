@@ -1,8 +1,12 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import type { FieldComponentProps } from '@esheet/core';
+import { createFormStore, type FieldComponentProps } from '@esheet/core';
+import { FormStoreContext } from '@esheet/fields';
 import { DocumentListField } from './DocumentListField.js';
-import { DocumentListGrid } from './DocumentListGrid.js';
+import {
+  DocumentListFieldProvider,
+  DocumentListGrid,
+} from './DocumentListGrid.js';
 import type { DocumentListDocument } from './types.js';
 
 const captured = {
@@ -186,6 +190,57 @@ describe('DocumentListGrid host integration', () => {
           .getAttribute('aria-pressed')
       ).toBe('true')
     );
+  });
+
+  it('uses package workflow defaults with a repository-only runtime', async () => {
+    const formStore = createFormStore();
+    const customDetail = vi.fn(() => <div>Custom detail</div>);
+    const repository = {
+      load: vi.fn(async () => ({ documents: [row] })),
+      save: vi.fn(
+        async (_context: unknown, document: DocumentListDocument) => document
+      ),
+      remove: vi.fn(async () => undefined),
+      loadContent: vi.fn(async () => ({ text: 'Loaded content' })),
+    };
+    const field = {
+      definition: { id: 'documents', question: 'Documents' },
+    } as unknown as FieldComponentProps['field'];
+    const fieldProps = {
+      field,
+      form: formStore,
+      response: undefined,
+    } as unknown as FieldComponentProps;
+
+    render(
+      <FormStoreContext.Provider value={formStore}>
+        <DocumentListFieldProvider
+          host={{ renderDetailRow: customDetail }}
+          runtime={{ repository }}
+        >
+          <DocumentListField {...fieldProps} />
+        </DocumentListFieldProvider>
+      </FormStoreContext.Provider>
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', { name: 'Compose document' })
+      ).toBeTruthy()
+    );
+    expect(
+      screen.getByRole('button', { name: 'Upload document' })
+    ).toBeTruthy();
+
+    const props = captured.props as {
+      renderDetailRow: (tableRow: {
+        data: Record<string, unknown>;
+      }) => ReactNode;
+    };
+    expect(props.renderDetailRow({ data: tableData })).toEqual(
+      <div>Custom detail</div>
+    );
+    expect(customDetail).toHaveBeenCalledWith(row);
   });
 
   it('publishes an empty source for malformed field responses', async () => {

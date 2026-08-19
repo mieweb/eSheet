@@ -21,6 +21,12 @@ export interface DocumentListContent {
   readonly revision?: string;
 }
 
+export interface DocumentListContentInput {
+  readonly content: string | Blob;
+  readonly contentType?: string;
+  readonly size?: number;
+}
+
 export interface DocumentListRepository {
   seed?: (
     context: DocumentListRepositoryContext,
@@ -33,7 +39,8 @@ export interface DocumentListRepository {
   save: (
     context: DocumentListRepositoryContext,
     document: DocumentListDocument,
-    signal: AbortSignal
+    signal: AbortSignal,
+    content?: DocumentListContentInput
   ) => Promise<DocumentListDocument>;
   remove: (
     context: DocumentListRepositoryContext,
@@ -88,7 +95,8 @@ export interface DocumentListRuntimeState {
   applyRemoteSnapshot: (snapshot: DocumentListSnapshot) => void;
   upsertDocument: (document: DocumentListDocument) => void;
   saveDocument: (
-    document: DocumentListDocument
+    document: DocumentListDocument,
+    content?: DocumentListContentInput
   ) => Promise<DocumentListDocument>;
   removeDocument: (documentId: string) => Promise<void>;
   loadContent: (documentId: string) => Promise<DocumentListContent | undefined>;
@@ -252,7 +260,7 @@ export function createDocumentListRuntimeExtension(
       }));
     },
 
-    saveDocument: async (document) => {
+    saveDocument: async (document, content) => {
       const current = getState();
       if (!current || current.disposed) return document;
       current.upsertDocument(document);
@@ -275,11 +283,9 @@ export function createDocumentListRuntimeExtension(
       }));
 
       try {
-        const saved = await repository.save(
-          context,
-          document,
-          controller.signal
-        );
+        const saved = content
+          ? await repository.save(context, document, controller.signal, content)
+          : await repository.save(context, document, controller.signal);
         if (!getState() || operationRequestIds.get(operationKey) !== requestId)
           return saved;
         getState()?.upsertDocument(saved);

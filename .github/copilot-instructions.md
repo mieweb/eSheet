@@ -366,7 +366,7 @@ function getTotal(items) {
 - Keep changes local.
 - Use existing helpers and error patterns.
 - Write short, obvious code.
-- Use one local development server and reuse its existing port; restart the existing server when needed instead of starting additional servers on new ports. Only use another port when the existing server cannot be reused or the user explicitly requests it.
+- Use the pre-existing running application or development server for browser checks and reuse its URL and port.
 - Run `pnpm lint && pnpm test && pnpm typecheck && pnpm build` to verify changes.
 - **Run local CI/CD via `gh act`** — when asked to test CI/CD locally, always follow `.github/workflows/TESTING-LOCALLY.md`. The canonical command for the CI workflow is:
   ```bash
@@ -382,6 +382,7 @@ function getTotal(items) {
 - Use `any` — use `unknown` and narrow.
 - Run `git add`, `git commit`, or `git push` — never stage, commit, or push changes.
 - Do not run npm installation commands locally. Use `pnpm install --frozen-lockfile` from the repository root when dependencies need repair.
+- Do not start a local server, development server, watcher, or another server port. If the pre-existing server is unavailable, report the blocker and ask the user to start or restore it.
 
 ---
 

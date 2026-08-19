@@ -1,4 +1,10 @@
-import { useContext, useEffect, useMemo, useSyncExternalStore } from 'react';
+import {
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import type { FieldComponentProps } from '@esheet/core';
 import { FormStoreContext } from '@esheet/fields';
 import {
@@ -11,6 +17,11 @@ import {
   getDocumentListRuntimeState,
   type DocumentListRuntimeState,
 } from './document-list-runtime.js';
+import {
+  DocumentListComposeModal,
+  DocumentListDetailRow,
+  DocumentListUploadModal,
+} from './DocumentListWorkflows.js';
 import type { DocumentListDefinition, DocumentListDocument } from './types.js';
 
 const subscribeToNothing = (): (() => void) => () => {};
@@ -31,6 +42,7 @@ function runtimeRows(
 
 export function DocumentListField({
   field,
+  form,
   response,
 }: FieldComponentProps): React.JSX.Element {
   const definition = field.definition as DocumentListDefinition;
@@ -56,6 +68,9 @@ export function DocumentListField({
     () => runtimeRows(runtimeState) ?? initialRows,
     [initialRows, runtimeState]
   );
+  const [composeOpen, setComposeOpen] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [detailRowsExpanded, setDetailRowsExpanded] = useState(false);
 
   useEffect(() => {
     if (!formStore) return;
@@ -73,28 +88,68 @@ export function DocumentListField({
     typeof definition.question === 'string' && definition.question.trim()
       ? definition.question
       : 'Documents';
+  const formInstanceId = form?.getState().instanceId ?? 'document-list-form';
+  const inputPrefix = `${formInstanceId}-${field.definition.id}`;
+  const gridDetailRowsExpanded = host?.detailRowsExpanded ?? detailRowsExpanded;
+  const handleToggleDetails =
+    host?.onToggleDetails ??
+    (runtimeState
+      ? () => setDetailRowsExpanded((expanded) => !expanded)
+      : undefined);
+  const handleCompose = runtimeState
+    ? host?.onCompose
+      ? () => void host.onCompose?.(runtimeState)
+      : () => setComposeOpen(true)
+    : undefined;
+  const handleUpload = runtimeState
+    ? host?.onUpload
+      ? () => void host.onUpload?.(runtimeState)
+      : () => setUploadOpen(true)
+    : undefined;
+  const detailRenderer = host?.renderDetailRow
+    ? host.renderDetailRow
+    : runtimeState
+    ? (row: DocumentListDocument) => (
+        <DocumentListDetailRow document={row} runtime={runtimeState} />
+      )
+    : undefined;
 
   return (
     <section className="document-list-field" aria-label={title}>
       <DocumentListGrid
         rows={rows}
         title={title}
-        {...(host ?? {})}
-        onCompose={
-          host?.onCompose && runtimeState
-            ? () => void host.onCompose?.(runtimeState)
-            : undefined
-        }
-        onUpload={
-          host?.onUpload && runtimeState
-            ? () => void host.onUpload?.(runtimeState)
-            : undefined
-        }
+        titleActions={host?.titleActions}
+        renderActions={host?.renderActions}
+        getRowCapabilities={host?.getRowCapabilities}
+        onRowClick={host?.onRowClick}
+        onRowDoubleClick={host?.onRowDoubleClick}
+        renderDetailRow={detailRenderer}
+        detailRowsExpanded={gridDetailRowsExpanded}
+        onToggleDetails={handleToggleDetails}
+        onCompose={handleCompose}
+        onUpload={handleUpload}
         loading={
           host?.loading === true || runtimeState?.syncStatus === 'loading'
         }
         error={runtimeState?.error ?? host?.error}
       />
+      {runtimeState && !host?.onCompose && (
+        <DocumentListComposeModal
+          open={composeOpen}
+          onOpenChange={setComposeOpen}
+          runtime={runtimeState}
+          inputPrefix={inputPrefix}
+        />
+      )}
+      {runtimeState && !host?.onUpload && (
+        <DocumentListUploadModal
+          open={uploadOpen}
+          onOpenChange={setUploadOpen}
+          runtime={runtimeState}
+          inputPrefix={inputPrefix}
+        />
+      )}
     </section>
   );
 }

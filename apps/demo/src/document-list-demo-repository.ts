@@ -1,4 +1,6 @@
 import type {
+  DocumentListContent,
+  DocumentListContentInput,
   DocumentListDocument,
   DocumentListRepository,
   DocumentListRepositoryContext,
@@ -7,53 +9,10 @@ import type {
 
 interface DemoDocumentBucket {
   readonly documents: Map<string, DocumentListDocument>;
+  readonly contents: Map<string, DocumentListContentInput>;
   readonly listeners: Set<(snapshot: DocumentListSnapshot) => void>;
   revision: number;
   seeded: boolean;
-}
-
-export interface DemoDocumentListRepository extends DocumentListRepository {
-  readonly setFile: (documentId: string, file: File) => void;
-}
-
-let nextDemoDocumentId = 1;
-
-function createDemoDocumentId(): string {
-  const id = `demo-created-${nextDemoDocumentId}`;
-  nextDemoDocumentId += 1;
-  return id;
-}
-
-function today(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-export function documentFromUploadedFile(file: File): DocumentListDocument {
-  const id = createDemoDocumentId();
-  return {
-    id,
-    date: today(),
-    title: file.name,
-    subject: 'Uploaded in the eSheet demo',
-    docType: file.type || 'Uploaded document',
-    docId: id,
-    source: 'Demo upload',
-    file: file.name,
-  };
-}
-
-export function createComposedDemoDocument(): DocumentListDocument {
-  const id = createDemoDocumentId();
-  return {
-    id,
-    date: today(),
-    title: 'Composed demo document',
-    subject: 'Created in the eSheet demo',
-    docType: 'Demo document',
-    docId: id,
-    source: 'Demo compose',
-    file: `${id}.txt`,
-  };
 }
 
 function bucketKey(context: DocumentListRepositoryContext): string {
@@ -63,6 +22,7 @@ function bucketKey(context: DocumentListRepositoryContext): string {
 function createBucket(): DemoDocumentBucket {
   return {
     documents: new Map(),
+    contents: new Map(),
     listeners: new Set(),
     revision: 0,
     seeded: false,
@@ -80,9 +40,8 @@ function assertNotAborted(signal: AbortSignal): void {
   if (signal.aborted) throw new DOMException('Operation aborted', 'AbortError');
 }
 
-export function createDemoDocumentListRepository(): DemoDocumentListRepository {
+export function createDemoDocumentListRepository(): DocumentListRepository {
   const buckets = new Map<string, DemoDocumentBucket>();
-  const files = new Map<string, File>();
 
   const getBucket = (
     context: DocumentListRepositoryContext
@@ -114,10 +73,11 @@ export function createDemoDocumentListRepository(): DemoDocumentListRepository {
       return snapshot(getBucket(context));
     },
 
-    save: async (context, document, signal) => {
+    save: async (context, document, signal, content) => {
       assertNotAborted(signal);
       const bucket = getBucket(context);
       bucket.documents.set(document.id, document);
+      if (content) bucket.contents.set(document.id, content);
       bucket.revision += 1;
       notify(bucket);
       return document;
@@ -127,21 +87,49 @@ export function createDemoDocumentListRepository(): DemoDocumentListRepository {
       assertNotAborted(signal);
       const bucket = getBucket(context);
       bucket.documents.delete(documentId);
-      files.delete(documentId);
+      bucket.contents.delete(documentId);
       bucket.revision += 1;
       notify(bucket);
     },
 
-    loadContent: async (context, document, signal) => {
+    loadContent: async (
+      context,
+      document,
+      signal
+    ): Promise<DocumentListContent> => {
       assertNotAborted(signal);
-      const file = files.get(document.id);
-      if (!file) {
+      const savedContent = getBucket(context).contents.get(document.id);
+      if (!savedContent) {
         return { reference: document.file };
       }
+      const contentType =
+        savedContent.contentType ||
+        (typeof savedContent.content === 'string'
+          ? 'text/plain'
+          : savedContent.content.type || 'application/octet-stream');
+      const size =
+        savedContent.size ??
+        (typeof savedContent.content === 'string'
+          ? new Blob([savedContent.content]).size
+          : savedContent.content.size);
+      if (typeof savedContent.content === 'string') {
+        return { text: savedContent.content, contentType, size };
+      }
+      if (contentType.startsWith('text/')) {
+        return {
+          text: await savedContent.content.text(),
+          contentType,
+          size,
+        };
+      }
+      if (contentType.startsWith('image/')) {
+        const reference = URL.createObjectURL(savedContent.content);
+        return { reference, contentType, size };
+      }
       return {
-        reference: file.name,
-        contentType: file.type || 'application/octet-stream',
-        size: file.size,
+        reference: document.file,
+        contentType,
+        size,
       };
     },
 
@@ -149,10 +137,6 @@ export function createDemoDocumentListRepository(): DemoDocumentListRepository {
       const bucket = getBucket(context);
       bucket.listeners.add(onSnapshot);
       return () => bucket.listeners.delete(onSnapshot);
-    },
-
-    setFile: (documentId, file) => {
-      files.set(documentId, file);
     },
   };
 }

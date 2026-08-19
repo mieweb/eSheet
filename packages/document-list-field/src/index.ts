@@ -21,6 +21,11 @@ export function registerDocumentListFieldType(): void {
 
 export { DocumentListField } from './DocumentListField.js';
 export {
+  DocumentListComposeModal,
+  DocumentListDetailRow,
+  DocumentListUploadModal,
+} from './DocumentListWorkflows.js';
+export {
   DocumentListFieldProvider,
   DocumentListGrid,
   createDocumentListFieldProvider,
@@ -63,6 +68,7 @@ export type {
 export type {
   CreateDocumentListRuntimeExtensionOptions,
   DocumentListContent,
+  DocumentListContentInput,
   DocumentListContentState,
   DocumentListContentStatus,
   DocumentListPendingOperation,

@@ -166,6 +166,39 @@ describe('document list runtime store', () => {
     expect(store.getState().documentIds).toEqual(['doc-1', 'doc-2']);
   });
 
+  it('preserves the metadata-only repository save call shape', async () => {
+    const repository = createRepository();
+    const store = createRuntime({ repository });
+
+    await store.getState().saveDocument(documentOne);
+
+    expect(repository.save).toHaveBeenCalledWith(
+      context,
+      documentOne,
+      expect.any(AbortSignal)
+    );
+    expect(repository.save).toHaveBeenCalledTimes(1);
+  });
+
+  it('forwards transient content to the repository save operation', async () => {
+    const repository = createRepository();
+    const store = createRuntime({ repository });
+    const content = {
+      content: 'A composed note',
+      contentType: 'text/plain',
+      size: 15,
+    };
+
+    await store.getState().saveDocument(documentOne, content);
+
+    expect(repository.save).toHaveBeenCalledWith(
+      context,
+      documentOne,
+      expect.any(AbortSignal),
+      content
+    );
+  });
+
   it('rolls back an optimistic delete when the repository fails', async () => {
     const repository = createRepository({
       remove: vi.fn(async () => {
