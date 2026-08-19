@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { load } from 'js-yaml';
 import {
   EsheetRenderer,
@@ -6,7 +6,10 @@ import {
   useRendererMcpToolHandler,
   type ResponseFormat,
 } from '@esheet/renderer';
-import { createDocumentListFieldProvider } from '@esheet/document-list-field';
+import {
+  createDocumentListFieldProvider,
+  type DocumentListRuntimeState,
+} from '@esheet/document-list-field';
 import { Navbar } from '../components/Navbar';
 import {
   Alert,
@@ -35,6 +38,11 @@ import {
 } from '@mieweb/ui';
 import { ClipboardList, SlidersHorizontal, Smartphone } from 'lucide-react';
 import { updateOzwellTools, FLOWIE_KEY } from '../ozwell-setup.js';
+import {
+  createComposedDemoDocument,
+  createDemoDocumentListRepository,
+  documentFromUploadedFile,
+} from '../document-list-demo-repository.js';
 
 interface SubmitResult {
   readonly kind: 'success' | 'error';
@@ -114,6 +122,11 @@ export function RendererView() {
   const [pasteError, setPasteError] = useState<string | null>(null);
   const [detailRowsExpanded, setDetailRowsExpanded] = useState(false);
   const uploadInputRef = useRef<HTMLInputElement>(null);
+  const activeRuntimeRef = useRef<DocumentListRuntimeState | null>(null);
+  const documentRepository = useMemo(
+    () => createDemoDocumentListRepository(),
+    []
+  );
   const { info } = useToast();
 
   const resetFormKey = useCallback(() => {
@@ -213,47 +226,68 @@ export function RendererView() {
   };
 
   const hasForm = rawInput != null;
-  const handleUpload = () => {
+  const handleUpload = (runtime: DocumentListRuntimeState) => {
+    activeRuntimeRef.current = runtime;
     info('Choose a document to upload.', { title: 'Upload button clicked' });
     uploadInputRef.current?.click();
   };
   const handleUploadChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) info(`${file.name} would be uploaded.`, { title: 'Upload' });
+    const runtime = activeRuntimeRef.current;
+    if (file && runtime) {
+      const document = documentFromUploadedFile(file);
+      documentRepository.setFile(document.id, file);
+      void runtime
+        .saveDocument(document)
+        .then(() => info(`${file.name} uploaded.`, { title: 'Upload' }))
+        .catch(() =>
+          info(`Could not upload ${file.name}.`, { title: 'Upload' })
+        );
+    }
+    activeRuntimeRef.current = null;
     event.target.value = '';
   };
-  const documentListProvider = createDocumentListFieldProvider({
-    detailRowsExpanded,
-    onToggleDetails: () => setDetailRowsExpanded((expanded) => !expanded),
-    onCompose: () =>
-      info('Your functionality goes here. Compose button clicked.', {
-        title: 'Compose',
-      }),
-    onUpload: handleUpload,
-    renderDetailRow: (row) => (
-      <div className="document-list-demo__detail px-4 py-3">
-        <strong className="block text-sm">{row.title}</strong>
-        <dl className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-sm text-muted-foreground">
-          <div>
-            <dt className="font-medium">Date</dt>
-            <dd>{row.date}</dd>
-          </div>
-          <div>
-            <dt className="font-medium">Subject</dt>
-            <dd>{row.subject}</dd>
-          </div>
-          <div>
-            <dt className="font-medium">Document type</dt>
-            <dd>{row.docType}</dd>
-          </div>
-          <div>
-            <dt className="font-medium">Source</dt>
-            <dd>{row.source}</dd>
-          </div>
-        </dl>
-      </div>
-    ),
-  });
+  const handleCompose = (runtime: DocumentListRuntimeState) => {
+    const document = createComposedDemoDocument();
+    void runtime
+      .saveDocument(document)
+      .then(() => info('Composed demo document added.', { title: 'Compose' }))
+      .catch(() =>
+        info('Could not compose the document.', { title: 'Compose' })
+      );
+  };
+  const documentListProvider = createDocumentListFieldProvider(
+    {
+      detailRowsExpanded,
+      onToggleDetails: () => setDetailRowsExpanded((expanded) => !expanded),
+      onCompose: handleCompose,
+      onUpload: handleUpload,
+      renderDetailRow: (row) => (
+        <div className="document-list-demo__detail px-4 py-3">
+          <strong className="block text-sm">{row.title}</strong>
+          <dl className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-sm text-muted-foreground">
+            <div>
+              <dt className="font-medium">Date</dt>
+              <dd>{row.date}</dd>
+            </div>
+            <div>
+              <dt className="font-medium">Subject</dt>
+              <dd>{row.subject}</dd>
+            </div>
+            <div>
+              <dt className="font-medium">Document type</dt>
+              <dd>{row.docType}</dd>
+            </div>
+            <div>
+              <dt className="font-medium">Source</dt>
+              <dd>{row.source}</dd>
+            </div>
+          </dl>
+        </div>
+      ),
+    },
+    { repository: documentRepository }
+  );
 
   return (
     <>

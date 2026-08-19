@@ -33,3 +33,11 @@ pages:
             docId: '1821'
             source: Internal
             file: browser
+  - id: empty-documents-page
+    title: Empty Documents
+    fields:
+      - id: empty-documents
+        fieldType: documentList
+        question: No documents yet
+        width: full
+        documents: []

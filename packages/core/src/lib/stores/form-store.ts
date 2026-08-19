@@ -62,6 +62,16 @@ export interface AddFieldOptions {
   patch?: Record<string, unknown>;
 }
 
+/** Lifecycle options for a core-managed custom-field extension. */
+export interface FormExtensionOptions {
+  readonly onDispose?: () => void;
+}
+
+/** Namespaced custom-field runtime state owned by the form store. */
+export type FormExtensionState = Readonly<
+  Record<string, Readonly<Record<string, unknown>>>
+>;
+
 /** The full form state — data + actions + selectors. */
 export interface FormState {
   // --- Data ---
@@ -83,6 +93,10 @@ export interface FormState {
   readonly responses: FieldResponseMap;
   /** Field IDs that have been explicitly edited by the user (not auto-calculated). */
   readonly userEditedFields: ReadonlySet<string>;
+  /** Core-managed custom-field runtime state; excluded from response export. */
+  readonly extensions: FormExtensionState;
+  /** True after `dispose()` has been called. */
+  readonly disposed: boolean;
 
   // --- Lifecycle Actions ---
   /** Load a form definition (tree), normalizing it into the flat index. */
@@ -101,6 +115,33 @@ export interface FormState {
   clearResponse: (fieldId: string) => void;
   /** Clear all responses. */
   resetResponses: () => void;
+  /** Register extension state for a namespace and field ID. */
+  registerExtension: <T>(
+    namespace: string,
+    fieldId: string,
+    initialState: T,
+    options?: FormExtensionOptions
+  ) => boolean;
+  /** Read extension state with a caller-provided type. */
+  getExtension: <T>(namespace: string, fieldId: string) => T | undefined;
+  /** Replace extension state. Creates the entry when it does not exist. */
+  setExtension: <T>(namespace: string, fieldId: string, state: T) => void;
+  /** Update extension state immutably. */
+  updateExtension: <T>(
+    namespace: string,
+    fieldId: string,
+    updater: (state: T | undefined) => T
+  ) => void;
+  /** Clear one extension and invoke its disposer. */
+  clearExtension: (namespace: string, fieldId: string) => void;
+  /** Clear extensions belonging to the supplied field IDs. */
+  clearExtensionsForFields: (fieldIds: readonly string[]) => void;
+  /** Clear every extension registered under a namespace. */
+  clearExtensionsForNamespace: (namespace: string) => void;
+  /** Clear every extension in the form store. */
+  clearExtensions: () => void;
+  /** Dispose all extension state and prevent future extension registration. */
+  dispose: () => void;
 
   // --- Builder Actions ---
   /** Add a new field. Returns the generated field ID, or `null` if the type is unknown. */
@@ -420,6 +461,53 @@ function createTemporaryFormId(): string {
   return id;
 }
 
+function extensionKey(namespace: string, fieldId: string): string {
+  return `${namespace}\u0000${fieldId}`;
+}
+
+function hasExtension(
+  extensions: FormExtensionState,
+  namespace: string,
+  fieldId: string
+): boolean {
+  return Object.prototype.hasOwnProperty.call(
+    extensions[namespace] ?? {},
+    fieldId
+  );
+}
+
+function withoutExtensionFields(
+  extensions: FormExtensionState,
+  fieldIds: ReadonlySet<string>
+): FormExtensionState {
+  const next: Record<string, Record<string, unknown>> = {};
+  for (const [namespace, entries] of Object.entries(extensions)) {
+    const remaining = Object.fromEntries(
+      Object.entries(entries).filter(([fieldId]) => !fieldIds.has(fieldId))
+    );
+    if (Object.keys(remaining).length > 0) next[namespace] = remaining;
+  }
+  return next;
+}
+
+function withoutExtension(
+  extensions: FormExtensionState,
+  namespace: string,
+  fieldId: string
+): FormExtensionState {
+  const entries = extensions[namespace];
+  if (!entries || !hasExtension(extensions, namespace, fieldId))
+    return extensions;
+  const remaining = { ...entries };
+  delete remaining[fieldId];
+  if (Object.keys(remaining).length === 0) {
+    const next = { ...extensions };
+    delete next[namespace];
+    return next;
+  }
+  return { ...extensions, [namespace]: remaining };
+}
+
 export function createFormStore(
   initial?: FormDefinition,
   hostAllowsJS = false
@@ -427,6 +515,19 @@ export function createFormStore(
   const initialFormId = initial?.id?.trim() || createTemporaryFormId();
   // Sealed at creation time — cannot be overridden by store mutations.
   const _hostAllowsJS = hostAllowsJS;
+  const extensionDisposers = new Map<string, () => void>();
+
+  const disposeExtension = (namespace: string, fieldId: string): void => {
+    const key = extensionKey(namespace, fieldId);
+    const disposer = extensionDisposers.get(key);
+    extensionDisposers.delete(key);
+    disposer?.();
+  };
+
+  const disposeAllExtensions = (): void => {
+    for (const disposer of extensionDisposers.values()) disposer();
+    extensionDisposers.clear();
+  };
 
   const store = createStore<FormState>()((set, get) => ({
     // --- Data ---
@@ -439,20 +540,26 @@ export function createFormStore(
     normalized: initial ? normalizeDefinition(initial.pages) : EMPTY_NORMALIZED,
     responses: {},
     userEditedFields: new Set<string>(),
+    extensions: {},
+    disposed: false,
 
     // --- Actions ---
     loadDefinition: (definition) =>
-      set({
-        formId: definition.id,
-        formTitle: definition.title,
-        formDescription: definition.description,
-        formSourceData: definition._sourceData,
-        dangerouslyAllowJS:
-          (definition.dangerouslyAllowJS ?? false) && _hostAllowsJS,
-        normalized: normalizeDefinition(definition.pages),
-        responses: {},
-        userEditedFields: new Set<string>(),
-      }),
+      (() => {
+        disposeAllExtensions();
+        set({
+          formId: definition.id,
+          formTitle: definition.title,
+          formDescription: definition.description,
+          formSourceData: definition._sourceData,
+          dangerouslyAllowJS:
+            (definition.dangerouslyAllowJS ?? false) && _hostAllowsJS,
+          normalized: normalizeDefinition(definition.pages),
+          responses: {},
+          userEditedFields: new Set<string>(),
+          extensions: {},
+        });
+      })(),
 
     setFormId: (id) => {
       const nextId = id.trim();
@@ -505,6 +612,99 @@ export function createFormStore(
 
     resetResponses: () =>
       set({ responses: {}, userEditedFields: new Set<string>() }),
+
+    registerExtension: (namespace, fieldId, initialState, options) => {
+      if (get().disposed) return false;
+      if (hasExtension(get().extensions, namespace, fieldId)) return false;
+      if (options?.onDispose) {
+        extensionDisposers.set(
+          extensionKey(namespace, fieldId),
+          options.onDispose
+        );
+      }
+      set((state) => ({
+        extensions: {
+          ...state.extensions,
+          [namespace]: {
+            ...(state.extensions[namespace] ?? {}),
+            [fieldId]: initialState,
+          },
+        },
+      }));
+      return true;
+    },
+
+    getExtension: <T>(namespace: string, fieldId: string): T | undefined =>
+      get().extensions[namespace]?.[fieldId] as T | undefined,
+
+    setExtension: (namespace, fieldId, state) => {
+      if (get().disposed) return;
+      set((current) => ({
+        extensions: {
+          ...current.extensions,
+          [namespace]: {
+            ...(current.extensions[namespace] ?? {}),
+            [fieldId]: state,
+          },
+        },
+      }));
+    },
+
+    updateExtension: <T>(
+      namespace: string,
+      fieldId: string,
+      updater: (state: T | undefined) => T
+    ) => {
+      if (get().disposed) return;
+      const current = get().extensions[namespace]?.[fieldId] as T | undefined;
+      set((state) => ({
+        extensions: {
+          ...state.extensions,
+          [namespace]: {
+            ...(state.extensions[namespace] ?? {}),
+            [fieldId]: updater(current),
+          },
+        },
+      }));
+    },
+
+    clearExtension: (namespace, fieldId) => {
+      disposeExtension(namespace, fieldId);
+      set((state) => ({
+        extensions: withoutExtension(state.extensions, namespace, fieldId),
+      }));
+    },
+
+    clearExtensionsForFields: (fieldIds) => {
+      const ids = new Set(fieldIds);
+      for (const namespace of Object.keys(get().extensions)) {
+        for (const fieldId of ids) disposeExtension(namespace, fieldId);
+      }
+      set((state) => ({
+        extensions: withoutExtensionFields(state.extensions, ids),
+      }));
+    },
+
+    clearExtensionsForNamespace: (namespace) => {
+      for (const fieldId of Object.keys(get().extensions[namespace] ?? {}))
+        disposeExtension(namespace, fieldId);
+      set((state) => {
+        if (!state.extensions[namespace]) return state;
+        const extensions = { ...state.extensions };
+        delete extensions[namespace];
+        return { extensions };
+      });
+    },
+
+    clearExtensions: () => {
+      disposeAllExtensions();
+      set({ extensions: {} });
+    },
+
+    dispose: () => {
+      disposeAllExtensions();
+      set({ extensions: {}, disposed: true });
+    },
 
     // --- Builder Actions ---
     addField: (fieldType, options) => {
@@ -625,6 +825,10 @@ export function createFormStore(
 
       const newId = patch['id'] as string | undefined;
       const isRename = newId !== undefined && newId !== fieldId;
+      const nextFieldType = patch['fieldType'] as FieldType | undefined;
+      const isTypeChange =
+        nextFieldType !== undefined &&
+        nextFieldType !== node.definition.fieldType;
 
       if (isRename) {
         if (normalized.byId[newId!]) return false;
@@ -672,6 +876,7 @@ export function createFormStore(
           }
         }
 
+        get().clearExtensionsForFields([fieldId]);
         set({ normalized: { byId, pages } });
         return true;
       }
@@ -687,6 +892,7 @@ export function createFormStore(
           } as FieldDefinition)
       );
       if (!result) return false;
+      if (isTypeChange) get().clearExtensionsForFields([fieldId]);
       set({ normalized: result });
       return true;
     },
@@ -723,6 +929,7 @@ export function createFormStore(
         });
       }
 
+      get().clearExtensionsForFields([...toRemove]);
       set({ normalized: { byId, pages } });
       return true;
     },
@@ -767,6 +974,7 @@ export function createFormStore(
         if (!toRemove.has(id)) byId[id] = n;
       }
       const pages = normalized.pages.filter((p) => p.id !== pageId);
+      get().clearExtensionsForFields([...toRemove]);
       set({ normalized: { byId, pages } });
       return true;
     },

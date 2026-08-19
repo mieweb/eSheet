@@ -25,7 +25,13 @@ export {
   DocumentListGrid,
   createDocumentListFieldProvider,
   useDocumentListFieldHost,
+  useDocumentListFieldRuntime,
 } from './DocumentListGrid.js';
+export {
+  createDocumentListRuntimeExtension,
+  getDocumentListRuntimeState,
+  DOCUMENT_LIST_EXTENSION_NAMESPACE,
+} from './document-list-runtime.js';
 export {
   createLocalSourcePayload,
   documentListValueFromRows,
@@ -39,7 +45,10 @@ export {
 export type {
   DocumentListActionsRenderer,
   DocumentListColumn,
+  DocumentListFieldAction,
   DocumentListFieldHost,
+  DocumentListFieldProviderProps,
+  DocumentListFieldRuntimeOptions,
   DocumentListGridProps,
   DocumentListRowCapabilities,
   DocumentListToolbarProps,
@@ -51,4 +60,16 @@ export type {
   DocumentListInput,
   DocumentListValue,
 } from './types.js';
+export type {
+  CreateDocumentListRuntimeExtensionOptions,
+  DocumentListContent,
+  DocumentListContentState,
+  DocumentListContentStatus,
+  DocumentListPendingOperation,
+  DocumentListRepository,
+  DocumentListRepositoryContext,
+  DocumentListSnapshot,
+  DocumentListRuntimeState,
+  DocumentListSyncStatus,
+} from './document-list-runtime.js';
 export { DOCUMENT_LIST_ACTIONS } from './types.js';

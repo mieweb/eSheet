@@ -2,6 +2,7 @@ import {
   createContext,
   useEffect,
   useContext,
+  useMemo,
   useRef,
   useState,
   type ComponentProps,
@@ -21,6 +22,12 @@ import {
   normalizeDocumentRow,
 } from './data.js';
 import type { FieldProvider } from '@esheet/fields';
+import { FormStoreContext } from '@esheet/fields';
+import {
+  createDocumentListRuntimeExtension,
+  type DocumentListRepository,
+  type DocumentListRuntimeState,
+} from './document-list-runtime.js';
 import type { DocumentListDocument } from './types.js';
 
 type DataVisGridProps = Partial<ComponentProps<typeof DataVisNitroGrid>>;
@@ -45,6 +52,20 @@ export type DocumentListActionsRenderer = (
   row: DocumentListDocument,
   capabilities: DocumentListRowCapabilities
 ) => ReactNode;
+
+export type DocumentListFieldAction = (
+  runtime: DocumentListRuntimeState
+) => void | Promise<void>;
+
+export interface DocumentListFieldRuntimeOptions {
+  readonly formInstanceId?: string;
+  readonly repository?: DocumentListRepository;
+}
+
+interface DocumentListRuntimeContextValue {
+  readonly options: DocumentListFieldRuntimeOptions;
+  readonly registerField: (fieldId: string) => void;
+}
 
 export interface DocumentListToolbarProps {
   detailRowsExpanded?: boolean;
@@ -81,34 +102,64 @@ export type DocumentListFieldHost = Pick<
   | 'renderDetailRow'
   | 'detailRowsExpanded'
   | 'onToggleDetails'
-  | 'onCompose'
-  | 'onUpload'
   | 'loading'
   | 'error'
->;
+> & {
+  readonly onCompose?: DocumentListFieldAction;
+  readonly onUpload?: DocumentListFieldAction;
+};
 
 const DocumentListFieldHostContext =
   createContext<DocumentListFieldHost | null>(null);
 
+const DocumentListRuntimeContext =
+  createContext<DocumentListRuntimeContextValue | null>(null);
+
+export interface DocumentListFieldProviderProps {
+  readonly host: DocumentListFieldHost;
+  readonly runtime?: DocumentListFieldRuntimeOptions;
+  readonly children: ReactNode;
+}
+
 export function DocumentListFieldProvider({
   host,
   children,
-}: {
-  host: DocumentListFieldHost;
-  children: ReactNode;
-}): React.JSX.Element {
+  runtime,
+}: DocumentListFieldProviderProps): React.JSX.Element {
+  const formStore = useContext(FormStoreContext);
+  const fieldIdsRef = useRef(new Set<string>());
+  const runtimeContext = useMemo<DocumentListRuntimeContextValue>(
+    () => ({
+      options: runtime ?? {},
+      registerField: (fieldId) => fieldIdsRef.current.add(fieldId),
+    }),
+    [runtime]
+  );
+
+  useEffect(
+    () => () => {
+      if (!formStore) return;
+      formStore.getState().clearExtensionsForFields([...fieldIdsRef.current]);
+      fieldIdsRef.current.clear();
+    },
+    [formStore]
+  );
+
   return (
     <DocumentListFieldHostContext.Provider value={host}>
-      {children}
+      <DocumentListRuntimeContext.Provider value={runtimeContext}>
+        {children}
+      </DocumentListRuntimeContext.Provider>
     </DocumentListFieldHostContext.Provider>
   );
 }
 
 export function createDocumentListFieldProvider(
-  host: DocumentListFieldHost
+  host: DocumentListFieldHost,
+  runtime?: DocumentListFieldRuntimeOptions
 ): FieldProvider {
   return (children) => (
-    <DocumentListFieldProvider host={host}>
+    <DocumentListFieldProvider host={host} runtime={runtime}>
       {children}
     </DocumentListFieldProvider>
   );
@@ -116,6 +167,30 @@ export function createDocumentListFieldProvider(
 
 export function useDocumentListFieldHost(): DocumentListFieldHost | null {
   return useContext(DocumentListFieldHostContext);
+}
+
+export function useDocumentListFieldRuntime(
+  fieldId: string,
+  initialDocuments?: readonly DocumentListDocument[]
+): DocumentListRuntimeState | null {
+  const formStore = useContext(FormStoreContext);
+  const runtime = useContext(DocumentListRuntimeContext);
+  runtime?.registerField(fieldId);
+  return useMemo(() => {
+    if (!formStore) return null;
+    const formInstanceId =
+      formStore.getState().instanceId ??
+      runtime?.options.formInstanceId ??
+      'document-list-provider';
+    return (
+      createDocumentListRuntimeExtension({
+        formStore,
+        context: { formInstanceId, fieldId },
+        repository: runtime?.options.repository,
+        initialDocuments,
+      }) ?? null
+    );
+  }, [fieldId, formStore, initialDocuments, runtime]);
 }
 
 const DEFAULT_ROW_CAPABILITIES: DocumentListRowCapabilities = {

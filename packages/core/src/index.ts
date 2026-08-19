@@ -145,6 +145,8 @@ export {
   type FormState,
   type FormStore,
   type AddFieldOptions,
+  type FormExtensionOptions,
+  type FormExtensionState,
 } from './lib/stores/form-store.js';
 
 export {

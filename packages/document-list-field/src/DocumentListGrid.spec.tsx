@@ -1,11 +1,14 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
+import type { FieldComponentProps } from '@esheet/core';
+import { DocumentListField } from './DocumentListField.js';
 import { DocumentListGrid } from './DocumentListGrid.js';
 import type { DocumentListDocument } from './types.js';
 
 const captured = {
   props: null as Record<string, unknown> | null,
 };
+const sourceKeys: string[] = [];
 
 vi.mock('@mieweb/ui/datavis', () => ({
   DataVisNitroContext: {
@@ -21,7 +24,10 @@ vi.mock('datavis-ace', () => {
   class Source {
     cache: Record<string, unknown> = {};
 
-    constructor(public readonly options: unknown) {}
+    constructor(public readonly options: unknown) {
+      const varName = (options as { varName?: unknown }).varName;
+      if (typeof varName === 'string') sourceKeys.push(varName);
+    }
   }
 
   class ComputedView {
@@ -54,6 +60,7 @@ const tableData: Record<string, unknown> = { ...row };
 describe('DocumentListGrid host integration', () => {
   beforeEach(() => {
     captured.props = null;
+    sourceKeys.length = 0;
   });
 
   it('adds the Actions column and renders host actions for a stable row', async () => {
@@ -179,5 +186,70 @@ describe('DocumentListGrid host integration', () => {
           .getAttribute('aria-pressed')
       ).toBe('true')
     );
+  });
+
+  it('publishes an empty source for malformed field responses', async () => {
+    const field = {
+      definition: {
+        question: 'Documents',
+        documents: [row],
+      },
+    } as unknown as FieldComponentProps['field'];
+    const props = {
+      field,
+      response: { answer: '{invalid' },
+    } as unknown as FieldComponentProps;
+
+    render(<DocumentListField {...props} />);
+
+    await waitFor(() => expect(sourceKeys).toHaveLength(1));
+    const sourceKey = sourceKeys[0];
+    expect(
+      (window as unknown as Record<string, { data: unknown[] }>)[sourceKey].data
+    ).toEqual([]);
+  });
+
+  it('replaces published rows when the response becomes empty', async () => {
+    const { rerender, unmount } = render(<DocumentListGrid rows={[row]} />);
+
+    await waitFor(() => expect(sourceKeys).toHaveLength(1));
+    const sourceKey = sourceKeys[0];
+    const sources = window as unknown as Record<
+      string,
+      { data: DocumentListDocument[] }
+    >;
+
+    expect(sources[sourceKey].data).toEqual([row]);
+
+    rerender(<DocumentListGrid rows={[]} />);
+
+    await waitFor(() => expect(sources[sourceKey].data).toEqual([]));
+    unmount();
+    expect(sources[sourceKey]).toBeUndefined();
+  });
+
+  it('uses independent source keys for multiple field instances', async () => {
+    const secondRow = { ...row, id: 'doc-2', title: 'Second letter' };
+
+    const { unmount } = render(
+      <>
+        <DocumentListGrid rows={[row]} />
+        <DocumentListGrid rows={[secondRow]} />
+      </>
+    );
+
+    await waitFor(() => expect(sourceKeys).toHaveLength(2));
+    expect(new Set(sourceKeys).size).toBe(2);
+
+    const sources = window as unknown as Record<
+      string,
+      { data: DocumentListDocument[] }
+    >;
+    expect(sources[sourceKeys[0]].data).toEqual([row]);
+    expect(sources[sourceKeys[1]].data).toEqual([secondRow]);
+
+    unmount();
+    expect(sources[sourceKeys[0]]).toBeUndefined();
+    expect(sources[sourceKeys[1]]).toBeUndefined();
   });
 });

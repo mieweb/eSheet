@@ -20,6 +20,17 @@ Only use grep/text search first when:
 
 Before making code edits, inspect the relevant graph context first, then make the smallest safe change.
 
+## Workspace Documentation Routing
+
+Before repository exploration or implementation, check `.github/workspace-doc/` for task-specific context. Choose the narrowest relevant subfolder based on the request:
+
+- `tracker/` for implementation status, parity checklists, and verification evidence.
+- `todo/` for follow-up work and lightweight task notes.
+- `tickets/` for planned features, technical debt, and scoped implementation proposals.
+- `docs/` for architecture, workflows, domain behavior, and reference material.
+
+Read the relevant documents before relying on code inspection, and cross-reference the user's prompt against them. When a task spans concerns, consult each applicable subfolder. Update the relevant tracker, ticket, or todo in the same change when the implementation changes its status or verification evidence.
+
 ## Project Context
 
 This is a **pnpm workspace** for the **vNext** rewrite of the Questionnaire Builder packages, written in **TypeScript**.
