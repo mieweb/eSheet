@@ -4,23 +4,107 @@ import { CoreEditor } from '@kerebron/editor';
 import { AdvancedEditorKit } from '@kerebron/editor-kits/AdvancedEditorKit';
 import { getAssetLoad } from './asset-load.js';
 // Core editor styles (--kb-* variables + base/ProseMirror styles).
-// index-light.css pins the light theme so the editor matches the host app
-// regardless of OS dark-mode preference.
-import '@kerebron/editor/assets/index-light.css';
+import '@kerebron/editor/assets/index.css';
 import '@kerebron/editor-kits/assets/AdvancedEditorKit.css';
 
 // Base content styles for the ProseMirror editable area (headings, lists, etc.)
 const CONTENT_STYLES = `
+  [data-theme='light'],
+  [data-theme='light'] .kb-component {
+    --kb-color-primary: var(--mieweb-primary-500, #27aae1);
+    --kb-color-text: var(--mieweb-foreground, #1f2937);
+    --kb-color-text-muted: var(--mieweb-muted-foreground, #6b7280);
+    --kb-color-icon: var(--mieweb-muted-foreground, #5f6368);
+    --kb-color-surface: var(--mieweb-background, #ffffff);
+    --kb-color-surface-elevated: var(--mieweb-muted, #f9fafb);
+    --kb-color-surface-hover: rgba(60, 64, 67, 0.08);
+    --kb-color-border: var(--mieweb-border, #e5e7eb);
+    --kb-color-border-strong: var(--mieweb-border, #d1d5db);
+    --kb-color-hover: rgba(60, 64, 67, 0.08);
+    --kb-color-active: rgba(60, 64, 67, 0.1);
+    --kb-menu-dropdown-bg: var(--mieweb-card, #ffffff);
+    --kb-menu-dropdown-border: var(--mieweb-border, #dadce0);
+    --kb-menu-dropdown-text: var(--mieweb-card-foreground, #3c4043);
+    --kb-menu-dropdown-hover: rgba(60, 64, 67, 0.08);
+  }
+
+  [data-theme='dark'],
+  [data-theme='dark'] .kb-component,
+  .dark,
+  .dark .kb-component {
+    --kb-color-primary: var(--mieweb-primary-500, #27aae1);
+    --kb-color-text: var(--mieweb-foreground, #fafafa);
+    --kb-color-text-muted: var(--mieweb-muted-foreground, #a1a1aa);
+    --kb-color-icon: var(--mieweb-muted-foreground, #a1a1aa);
+    --kb-color-surface: var(--mieweb-background, #171717);
+    --kb-color-surface-elevated: var(--mieweb-muted, #404040);
+    --kb-color-surface-hover: color-mix(in srgb, var(--mieweb-foreground, #fafafa) 8%, transparent);
+    --kb-color-border: var(--mieweb-border, #404040);
+    --kb-color-border-strong: var(--mieweb-border, #404040);
+    --kb-color-hover: color-mix(in srgb, var(--mieweb-foreground, #fafafa) 8%, transparent);
+    --kb-color-active: color-mix(in srgb, var(--mieweb-foreground, #fafafa) 14%, transparent);
+    --kb-menu-dropdown-bg: var(--mieweb-card, #262626);
+    --kb-menu-dropdown-border: var(--mieweb-border, #404040);
+    --kb-menu-dropdown-text: var(--mieweb-card-foreground, #fafafa);
+    --kb-menu-dropdown-hover: color-mix(in srgb, var(--mieweb-foreground, #fafafa) 8%, transparent);
+  }
+
+  [data-theme='light'] .kb-custom-menu,
+  [data-theme='dark'] .kb-custom-menu,
+  .dark .kb-custom-menu {
+    background: var(--kb-color-surface-elevated);
+    border-bottom-color: var(--kb-color-border-strong);
+    color: var(--kb-color-text);
+  }
+
+  [data-theme='light'] .kb-custom-menu .kb-menu__button,
+  [data-theme='light'] .kb-custom-menu .kb-dropdown__label,
+  [data-theme='dark'] .kb-custom-menu .kb-menu__button,
+  [data-theme='dark'] .kb-custom-menu .kb-dropdown__label,
+  .dark .kb-custom-menu .kb-menu__button,
+  .dark .kb-custom-menu .kb-dropdown__label {
+    color: var(--kb-color-icon);
+  }
+
+  [data-theme='light'] .kb-dropdown__menu,
+  [data-theme='light'] .kb-submenu__content,
+  [data-theme='light'] .kb-custom-menu__overflow-menu,
+  [data-theme='dark'] .kb-dropdown__menu,
+  [data-theme='dark'] .kb-submenu__content,
+  [data-theme='dark'] .kb-custom-menu__overflow-menu,
+  .dark .kb-dropdown__menu,
+  .dark .kb-submenu__content,
+  .dark .kb-custom-menu__overflow-menu {
+    background: var(--kb-menu-dropdown-bg) !important;
+    border-color: var(--kb-menu-dropdown-border) !important;
+    color: var(--kb-menu-dropdown-text) !important;
+  }
+
+  [data-theme='light'] .kb-custom-menu .kb-dropdown__item .kb-menu__button:hover,
+  [data-theme='light'] .kb-custom-menu .kb-submenu__label:hover,
+  [data-theme='light'] .kb-custom-menu__overflow-item:hover,
+  [data-theme='dark'] .kb-custom-menu .kb-dropdown__item .kb-menu__button:hover,
+  [data-theme='dark'] .kb-custom-menu .kb-submenu__label:hover,
+  [data-theme='dark'] .kb-custom-menu__overflow-item:hover,
+  .dark .kb-custom-menu .kb-dropdown__item .kb-menu__button:hover,
+  .dark .kb-custom-menu .kb-submenu__label:hover,
+  .dark .kb-custom-menu__overflow-item:hover {
+    background: var(--kb-menu-dropdown-hover) !important;
+    color: var(--kb-menu-dropdown-text) !important;
+  }
+
   .richtext-field .ProseMirror { outline: none; min-height: 80px; padding: 8px 12px; }
+  .richtext-field .kb-editor,
+  .richtext-field .ProseMirror { color: var(--kb-color-text); }
   .richtext-field .ProseMirror h1 { font-size: 2em; font-weight: bold; margin: 0.67em 0; }
   .richtext-field .ProseMirror h2 { font-size: 1.5em; font-weight: bold; margin: 0.75em 0; }
   .richtext-field .ProseMirror h3 { font-size: 1.17em; font-weight: bold; margin: 0.83em 0; }
   .richtext-field .ProseMirror ul { list-style: disc; padding-left: 1.5em; }
   .richtext-field .ProseMirror ol { list-style: decimal; padding-left: 1.5em; }
-  .richtext-field .ProseMirror blockquote { border-left: 3px solid #ccc; margin-left: 0; padding-left: 1em; color: #666; }
+  .richtext-field .ProseMirror blockquote { border-left: 3px solid var(--kb-color-border); margin-left: 0; padding-left: 1em; color: var(--kb-color-text-muted); }
   .richtext-field .ProseMirror strong { font-weight: bold; }
   .richtext-field .ProseMirror em { font-style: italic; }
-  .richtext-field .ProseMirror code { font-family: monospace; background: #f4f4f4; padding: 0.1em 0.3em; border-radius: 3px; }
+  .richtext-field .ProseMirror code { font-family: monospace; background: var(--kb-color-surface-elevated); padding: 0.1em 0.3em; border-radius: 3px; }
 
   /* Upstream fix: base .kb-icon keeps 48px touch-target min sizing, which
      overflows the 32px overflow-menu buttons and misaligns icons from their

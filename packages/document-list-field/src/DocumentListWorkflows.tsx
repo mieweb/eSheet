@@ -67,10 +67,99 @@ export function configureDocumentListComposeEditor(options: {
 }
 
 const COMPOSE_EDITOR_STYLES = `
+  [data-theme='light'],
+  [data-theme='light'] .kb-component {
+    --kb-color-primary: var(--mieweb-primary-500, #27aae1);
+    --kb-color-text: var(--mieweb-foreground, #1f2937);
+    --kb-color-text-muted: var(--mieweb-muted-foreground, #6b7280);
+    --kb-color-icon: var(--mieweb-muted-foreground, #5f6368);
+    --kb-color-surface: var(--mieweb-background, #ffffff);
+    --kb-color-surface-elevated: var(--mieweb-muted, #f9fafb);
+    --kb-color-surface-hover: rgba(60, 64, 67, 0.08);
+    --kb-color-border: var(--mieweb-border, #e5e7eb);
+    --kb-color-border-strong: var(--mieweb-border, #d1d5db);
+    --kb-color-hover: rgba(60, 64, 67, 0.08);
+    --kb-color-active: rgba(60, 64, 67, 0.1);
+    --kb-menu-dropdown-bg: var(--mieweb-card, #ffffff);
+    --kb-menu-dropdown-border: var(--mieweb-border, #dadce0);
+    --kb-menu-dropdown-text: var(--mieweb-card-foreground, #3c4043);
+    --kb-menu-dropdown-hover: rgba(60, 64, 67, 0.08);
+  }
+
+  [data-theme='dark'],
+  [data-theme='dark'] .kb-component,
+  .dark,
+  .dark .kb-component {
+    --kb-color-primary: var(--mieweb-primary-500, #27aae1);
+    --kb-color-text: var(--mieweb-foreground, #fafafa);
+    --kb-color-text-muted: var(--mieweb-muted-foreground, #a1a1aa);
+    --kb-color-icon: var(--mieweb-muted-foreground, #a1a1aa);
+    --kb-color-surface: var(--mieweb-background, #171717);
+    --kb-color-surface-elevated: var(--mieweb-muted, #404040);
+    --kb-color-surface-hover: color-mix(in srgb, var(--mieweb-foreground, #fafafa) 8%, transparent);
+    --kb-color-border: var(--mieweb-border, #404040);
+    --kb-color-border-strong: var(--mieweb-border, #404040);
+    --kb-color-hover: color-mix(in srgb, var(--mieweb-foreground, #fafafa) 8%, transparent);
+    --kb-color-active: color-mix(in srgb, var(--mieweb-foreground, #fafafa) 14%, transparent);
+    --kb-menu-dropdown-bg: var(--mieweb-card, #262626);
+    --kb-menu-dropdown-border: var(--mieweb-border, #404040);
+    --kb-menu-dropdown-text: var(--mieweb-card-foreground, #fafafa);
+    --kb-menu-dropdown-hover: color-mix(in srgb, var(--mieweb-foreground, #fafafa) 8%, transparent);
+  }
+
+  [data-theme='light'] .kb-custom-menu,
+  [data-theme='dark'] .kb-custom-menu,
+  .dark .kb-custom-menu {
+    background: var(--kb-color-surface-elevated);
+    border-bottom-color: var(--kb-color-border-strong);
+    color: var(--kb-color-text);
+  }
+
+  [data-theme='light'] .kb-custom-menu .kb-menu__button,
+  [data-theme='light'] .kb-custom-menu .kb-dropdown__label,
+  [data-theme='dark'] .kb-custom-menu .kb-menu__button,
+  [data-theme='dark'] .kb-custom-menu .kb-dropdown__label,
+  .dark .kb-custom-menu .kb-menu__button,
+  .dark .kb-custom-menu .kb-dropdown__label {
+    color: var(--kb-color-icon);
+  }
+
+  [data-theme='light'] .kb-dropdown__menu,
+  [data-theme='light'] .kb-submenu__content,
+  [data-theme='light'] .kb-custom-menu__overflow-menu,
+  [data-theme='dark'] .kb-dropdown__menu,
+  [data-theme='dark'] .kb-submenu__content,
+  [data-theme='dark'] .kb-custom-menu__overflow-menu,
+  .dark .kb-dropdown__menu,
+  .dark .kb-submenu__content,
+  .dark .kb-custom-menu__overflow-menu {
+    background: var(--kb-menu-dropdown-bg) !important;
+    border-color: var(--kb-menu-dropdown-border) !important;
+    color: var(--kb-menu-dropdown-text) !important;
+  }
+
+  [data-theme='light'] .kb-custom-menu .kb-dropdown__item .kb-menu__button:hover,
+  [data-theme='light'] .kb-custom-menu .kb-submenu__label:hover,
+  [data-theme='light'] .kb-custom-menu__overflow-item:hover,
+  [data-theme='dark'] .kb-custom-menu .kb-dropdown__item .kb-menu__button:hover,
+  [data-theme='dark'] .kb-custom-menu .kb-submenu__label:hover,
+  [data-theme='dark'] .kb-custom-menu__overflow-item:hover,
+  .dark .kb-custom-menu .kb-dropdown__item .kb-menu__button:hover,
+  .dark .kb-custom-menu .kb-submenu__label:hover,
+  .dark .kb-custom-menu__overflow-item:hover {
+    background: var(--kb-menu-dropdown-hover) !important;
+    color: var(--kb-menu-dropdown-text) !important;
+  }
+
   .document-list-compose-editor .ProseMirror {
     min-height: 160px;
     outline: none;
     padding: 8px 12px;
+  }
+
+  .document-list-compose-editor .kb-editor,
+  .document-list-compose-editor .ProseMirror {
+    color: var(--kb-color-text);
   }
 
   .document-list-compose-editor .ProseMirror h1 {
@@ -102,30 +191,20 @@ const COMPOSE_EDITOR_STYLES = `
   }
 
   .document-list-compose-editor .ProseMirror blockquote {
-    border-left: 3px solid #ccc;
+    border-left: 3px solid var(--kb-color-border);
     color: var(--kb-color-text-muted);
     margin-left: 0;
     padding-left: 1em;
   }
 
-  .document-list-compose-editor.kb-component--dark {
-    --kb-bg: var(--kb-color-surface-elevated, #374151);
-    --kb-fg: var(--kb-color-text, #f9fafb);
-    --kb-subtle: var(--kb-color-text-muted, #9ca3af);
-    --kb-border: var(--kb-color-border, #374151);
-    --kb-hover: var(--kb-color-surface-hover, rgba(232, 234, 237, 0.08));
-    --kb-active: rgba(59, 130, 246, 0.2);
-    --kb-focus: #93c5fd;
-    --kb-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.3);
-  }
-
-  .document-list-compose-editor.kb-component--dark .ProseMirror {
-    color: var(--kb-color-text);
-    background: var(--kb-color-surface);
-  }
-
-  .document-list-compose-editor.kb-component--dark .ProseMirror blockquote {
-    border-left-color: var(--kb-color-border);
+  /* Keep overflow-menu icons inside their compact button hit areas. */
+  .document-list-compose-editor .kb-custom-menu__overflow-menu .kb-icon {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    line-height: 1;
   }
 
   .document-list-compose-editor .kb-custom-menu__editor {

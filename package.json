@@ -95,6 +95,9 @@
       "@swc/core",
       "core-js",
       "protobufjs"
-    ]
+    ],
+    "patchedDependencies": {
+      "@kerebron/extension-menu@0.8.10": "patches/@kerebron__extension-menu@0.8.10.patch"
+    }
   }
 }

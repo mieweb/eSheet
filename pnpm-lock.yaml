@@ -18,6 +18,11 @@ overrides:
   dompurify@<=3.4.12: '>=3.4.13'
   prosemirror-model: 1.25.9
 
+patchedDependencies:
+  '@kerebron/extension-menu@0.8.10':
+    hash: 4bfcffd5f324775f98e04cec05c3fde04584c4a91dbfe7a7de65bc78baa37967
+    path: patches/@kerebron__extension-menu@0.8.10.patch
+
 importers:
 
   .:
@@ -177,6 +182,9 @@ importers:
       '@esheet/renderer':
         specifier: workspace:*
         version: link:../../packages/renderer
+      '@kerebron/wasm':
+        specifier: ^0.8.10
+        version: 0.8.10
       '@mieweb/ui':
         specifier: 0.7.1
         version: 0.7.1(@kerebron/editor-kits@0.8.10(svelte@5.56.8(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.10)(@kerebron/wasm@0.8.10)(@mieweb/datavis@1.6.0(@kerebron/editor-kits@0.8.10(svelte@5.56.8(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.10)(@kerebron/wasm@0.8.10)(@types/react@19.2.18)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(redux@5.0.1)(remark-gfm@4.0.1)(typescript@6.0.3))(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(remark-gfm@4.0.1)
@@ -12098,7 +12106,7 @@ snapshots:
       '@kerebron/extension-codecrock': 0.8.10
       '@kerebron/extension-dev-toolkit': 0.8.10(svelte@5.56.8(@typescript-eslint/types@8.67.0))
       '@kerebron/extension-markdown': 0.8.10
-      '@kerebron/extension-menu': 0.8.10
+      '@kerebron/extension-menu': 0.8.10(patch_hash=4bfcffd5f324775f98e04cec05c3fde04584c4a91dbfe7a7de65bc78baa37967)
       '@kerebron/extension-menu-legacy': 0.8.10
       '@kerebron/extension-odt': 0.8.10
       '@kerebron/extension-tables': 0.8.10
@@ -12165,7 +12173,7 @@ snapshots:
       prosemirror-state: 1.4.3
       prosemirror-view: 1.40.0
 
-  '@kerebron/extension-menu@0.8.10':
+  '@kerebron/extension-menu@0.8.10(patch_hash=4bfcffd5f324775f98e04cec05c3fde04584c4a91dbfe7a7de65bc78baa37967)':
     dependencies:
       '@kerebron/editor': 0.8.10
       prosemirror-model: 1.25.9
