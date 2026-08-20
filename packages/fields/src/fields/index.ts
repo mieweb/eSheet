@@ -9,7 +9,12 @@ export {
   BooleanField,
   DropdownField,
   MultiSelectDropdownField,
+  AutocompleteField,
+  registerAutocompleteFieldType,
+  parseAutocompleteItems,
+  WIKIPEDIA_OPENSEARCH_URL,
 } from './selection/index.js';
+export type { AutocompleteFieldDefinition } from './selection/index.js';
 
 // Rating & Ranking
 export { RatingField, RankingField, SliderField } from './rating/index.js';
