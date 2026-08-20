@@ -7,6 +7,13 @@ export interface DocumentListDocument {
   readonly docId: string;
   readonly source: string;
   readonly file: string;
+  /**
+   * Content hash and byte length, when the host's repository records them.
+   * eSheet never computes these — it carries them so a host that stores the
+   * bytes elsewhere can address them from the row alone.
+   */
+  readonly sha256?: string;
+  readonly size?: number;
 }
 
 export interface DocumentListValue {
@@ -35,6 +42,8 @@ export interface DocumentListInput {
   readonly from?: unknown;
   readonly author?: unknown;
   readonly file?: unknown;
+  readonly sha256?: unknown;
+  readonly size?: unknown;
 }
 
 export interface DocumentListDefinition {

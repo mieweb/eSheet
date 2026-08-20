@@ -114,6 +114,13 @@ export function normalizeDocumentRow(
     docId: displayValue(input.docId),
     source: displayValue(input.source ?? input.from ?? input.author),
     file: fileValue(input.file),
+    // Host bookkeeping: carried through untouched, absent when not recorded.
+    ...(typeof input.sha256 === 'string' && input.sha256
+      ? { sha256: input.sha256 }
+      : {}),
+    ...(typeof input.size === 'number' && Number.isFinite(input.size)
+      ? { size: input.size }
+      : {}),
   };
 }
 
