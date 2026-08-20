@@ -10,6 +10,41 @@ import {
   DocumentListUploadModal,
 } from './DocumentListWorkflows.js';
 
+vi.mock('@kerebron/editor', () => ({
+  CoreEditor: {
+    create: ({ element }: { element: HTMLElement }) => {
+      const eventTarget = new EventTarget();
+      const editor = {
+        addEventListener: eventTarget.addEventListener.bind(eventTarget),
+        removeEventListener: eventTarget.removeEventListener.bind(eventTarget),
+        view: { setProps: vi.fn() },
+        loadDocument: vi.fn(async (_mediaType: string, content: Uint8Array) => {
+          const nextValue = new TextDecoder().decode(content);
+          editorValue = nextValue;
+          editorInput.value = nextValue;
+        }),
+        saveDocument: vi.fn(async () => new TextEncoder().encode(editorValue)),
+        destroy: vi.fn(),
+      };
+      let editorValue = '';
+      const editorInput = globalThis.document.createElement('textarea');
+      editorInput.setAttribute('aria-label', 'Note');
+      const updateValue = (): void => {
+        editorValue = editorInput.value;
+        eventTarget.dispatchEvent(new Event('changed'));
+      };
+      editorInput.addEventListener('input', updateValue);
+      editorInput.addEventListener('change', updateValue);
+      element.appendChild(editorInput);
+      return editor;
+    },
+  },
+}));
+
+vi.mock('@kerebron/editor-kits/AdvancedEditorKit', () => ({
+  AdvancedEditorKit: class AdvancedEditorKit {},
+}));
+
 vi.mock('@mieweb/ui', () => {
   const Button = ({
     children,
@@ -96,11 +131,11 @@ function createRuntime(
 }
 
 describe('document list workflow modals', () => {
-  it('submits editable compose metadata and transient text content', async () => {
+  it('submits editable compose metadata and markdown content', async () => {
     const runtime = createRuntime();
     const onOpenChange = vi.fn();
 
-    render(
+    const documentView = render(
       <DocumentListComposeModal
         open
         onOpenChange={onOpenChange}
@@ -118,7 +153,11 @@ describe('document list workflow modals', () => {
     fireEvent.change(screen.getByLabelText('Document type'), {
       target: { value: 'Clinical note' },
     });
-    fireEvent.change(screen.getByLabelText('Note'), {
+    const noteEditor = documentView.container.querySelector(
+      '.document-list-compose-editor textarea'
+    );
+    expect(noteEditor).toBeTruthy();
+    fireEvent.change(noteEditor as HTMLTextAreaElement, {
       target: { value: 'Follow-up completed.' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Save document' }));
@@ -134,13 +173,13 @@ describe('document list workflow modals', () => {
         subject: 'Follow-up visit',
         docType: 'Clinical note',
         docId: savedDocument.id,
-        file: `${savedDocument.id}.txt`,
+        file: `${savedDocument.id}.md`,
       })
     );
     expect(content).toEqual(
       expect.objectContaining({
         content: 'Follow-up completed.',
-        contentType: 'text/plain',
+        contentType: 'text/x-markdown',
       })
     );
     expect(onOpenChange).toHaveBeenCalledWith(false);

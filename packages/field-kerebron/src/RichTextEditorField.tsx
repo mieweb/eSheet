@@ -2,7 +2,6 @@ import React from 'react';
 import type { FieldComponentProps } from '@esheet/core';
 import { CoreEditor } from '@kerebron/editor';
 import { AdvancedEditorKit } from '@kerebron/editor-kits/AdvancedEditorKit';
-import { ExtensionHistory } from '@kerebron/extension-basic-editor/ExtensionHistory';
 import { getAssetLoad } from './asset-load.js';
 // Core editor styles (--kb-* variables + base/ProseMirror styles).
 // index-light.css pins the light theme so the editor matches the host app
@@ -114,10 +113,7 @@ export function RichTextEditorField({
       element: mount,
       uri: 'file:///untitled.md',
       assetLoad: getAssetLoad(),
-      editorKits: [
-        new AdvancedEditorKit(),
-        { getExtensions: () => [new ExtensionHistory()] },
-      ],
+      editorKits: [new AdvancedEditorKit()],
     });
     editorRef.current = editor;
 

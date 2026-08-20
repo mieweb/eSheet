@@ -343,6 +343,52 @@ export function DocumentListGrid({
           return document ? renderDetailRow(document) : null;
         }
       : undefined;
+  const gridTitleActions =
+    titleActions || onToggleDetails || onCompose || onUpload ? (
+      <div className="document-list-grid__title-actions">
+        {onToggleDetails && (
+          <Button
+            type="button"
+            variant={detailRowsExpanded ? 'primary' : 'ghost'}
+            size="sm"
+            onClick={onToggleDetails}
+            aria-label="Toggle all document details"
+            aria-pressed={detailRowsExpanded ?? false}
+            title="Detail"
+            leftIcon={<LayoutList size={16} aria-hidden="true" />}
+          >
+            <span className="document-list-grid__action-label">Detail</span>
+          </Button>
+        )}
+        {onCompose && (
+          <Button
+            type="button"
+            variant="link"
+            size="sm"
+            onClick={onCompose}
+            aria-label="Compose document"
+            title="Compose"
+            leftIcon={<SquarePen size={16} aria-hidden="true" />}
+          >
+            <span className="document-list-grid__action-label">Compose</span>
+          </Button>
+        )}
+        {onUpload && (
+          <Button
+            type="button"
+            variant="link"
+            size="sm"
+            onClick={onUpload}
+            aria-label="Upload document"
+            title="Upload"
+            leftIcon={<Upload size={16} aria-hidden="true" />}
+          >
+            <span className="document-list-grid__action-label">Upload</span>
+          </Button>
+        )}
+        {titleActions}
+      </div>
+    ) : undefined;
 
   if (!view) {
     return (
@@ -368,50 +414,9 @@ export function DocumentListGrid({
             {error}
           </div>
         )}
-        {(titleActions || onToggleDetails || onCompose || onUpload) && (
-          <div className="document-list-grid__title-actions">
-            {onToggleDetails && (
-              <Button
-                type="button"
-                variant={detailRowsExpanded ? 'primary' : 'ghost'}
-                size="sm"
-                onClick={onToggleDetails}
-                aria-label="Toggle all document details"
-                aria-pressed={detailRowsExpanded ?? false}
-                leftIcon={<LayoutList size={16} aria-hidden="true" />}
-              >
-                Detail
-              </Button>
-            )}
-            {onCompose && (
-              <Button
-                type="button"
-                variant="link"
-                size="sm"
-                onClick={onCompose}
-                aria-label="Compose document"
-                leftIcon={<SquarePen size={16} aria-hidden="true" />}
-              >
-                Compose
-              </Button>
-            )}
-            {onUpload && (
-              <Button
-                type="button"
-                variant="link"
-                size="sm"
-                onClick={onUpload}
-                aria-label="Upload document"
-                leftIcon={<Upload size={16} aria-hidden="true" />}
-              >
-                Upload
-              </Button>
-            )}
-            {titleActions}
-          </div>
-        )}
         <OptionalDataVisNitroGrid
           title={title}
+          titleActions={gridTitleActions}
           columns={gridColumns as DataVisGridProps['columns']}
           formatCell={gridFormatCell}
           onRowClick={gridOnRowClick}

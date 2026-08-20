@@ -18,66 +18,6 @@ const prosemirrorModelPath = require.resolve('prosemirror-model', {
   ],
 });
 
-/**
- * Serves Kerebron WASM directly from its npm package during development and
- * emits the assets into production builds without creating a local copy.
- */
-function kerebronWasmPlugin(command: 'build' | 'serve'): Plugin {
-  const assetsDir = resolve(
-    import.meta.dirname,
-    'node_modules/@kerebron/wasm/assets'
-  );
-
-  function visitWasm(
-    dir: string,
-    relativePath: string,
-    visit: (path: string, relativePath: string) => void
-  ) {
-    for (const entry of readdirSync(dir, { withFileTypes: true })) {
-      const path = join(dir, entry.name);
-      const nextRelativePath = relativePath
-        ? `${relativePath}/${entry.name}`
-        : entry.name;
-      if (entry.isDirectory()) {
-        visitWasm(path, nextRelativePath, visit);
-      } else if (entry.name.endsWith('.wasm')) {
-        visit(path, nextRelativePath);
-      }
-    }
-  }
-
-  return {
-    name: 'kerebron-wasm',
-    configureServer(server) {
-      server.middlewares.use('/kerebron-wasm', (request, response, next) => {
-        const relativePath = decodeURIComponent(
-          request.url?.split('?')[0] ?? ''
-        ).replace(/^\/+/, '');
-        const assetPath = resolve(assetsDir, relativePath);
-        if (relativePath.includes('..') || !existsSync(assetPath)) {
-          next();
-          return;
-        }
-        response.setHeader('Content-Type', 'application/wasm');
-        response.end(readFileSync(assetPath));
-      });
-    },
-    ...(command === 'build'
-      ? {
-          buildStart() {
-            visitWasm(assetsDir, '', (path, relativePath) => {
-              this.emitFile({
-                type: 'asset',
-                fileName: `kerebron-wasm/${relativePath}`,
-                source: readFileSync(path),
-              });
-            });
-          },
-        }
-      : {}),
-  };
-}
-
 function codifyAssetsPlugin(
   assetsDir: string | undefined,
   command: 'build' | 'serve'
@@ -230,7 +170,6 @@ export default defineConfig(({ command, mode }) => {
     plugins: [
       react(),
       tailwindcss(),
-      kerebronWasmPlugin(command),
       codifyAssetsPlugin(
         process.env.CODIFY_ASSETS_DIR ?? env.CODIFY_ASSETS_DIR,
         command
