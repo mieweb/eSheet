@@ -21,6 +21,7 @@ export function registerDocumentListFieldType(): void {
 
 export { DocumentListField } from './DocumentListField.js';
 export {
+  configureDocumentListComposeEditor,
   DocumentListComposeModal,
   DocumentListDetailRow,
   DocumentListUploadModal,
