@@ -12,6 +12,11 @@ import {
   fileMatchesAccept,
   readFileAsAttachment,
 } from '../../lib/file-utils.js';
+import {
+  removeUnreferenced,
+  storeAttachments,
+  useAttachmentManager,
+} from '../../lib/AttachmentManagerProvider.js';
 import { NoteCardList, type NoteCardItem } from './NoteCardList.js';
 import { getNotesComposer } from '../../lib/notes-composer.js';
 
@@ -289,6 +294,7 @@ export const NotesField = React.memo(function NotesField({
   const readOnly = !(isPreview && isEnabled) || isReadOnly;
   // Renderer identity (when the host provides one) stamps `author`.
   const identity = form.getState().identity;
+  const attachmentManager = useAttachmentManager();
 
   const [composer, setComposer] = React.useState<ComposerState>({
     mode: 'closed',
@@ -320,43 +326,68 @@ export const NotesField = React.memo(function NotesField({
     [onResponse, response]
   );
 
+  // Storage happens on save, not on attach: a cancelled composer must not
+  // leave bytes behind. With no manager the commit stays synchronous.
   const saveNote = React.useCallback(
-    (markdown: string, attachments: AttachmentAnswer[]) => {
-      const now = new Date().toISOString();
-      if (composer.mode === 'edit') {
-        commitNotes(
-          notes.map((note) =>
-            note.id === composer.noteId
-              ? {
-                  ...note,
-                  markdown,
-                  updatedAt: now,
-                  attachments: attachments.length ? attachments : undefined,
-                }
-              : note
-          )
-        );
+    (markdown: string, composed: AttachmentAnswer[]) => {
+      const commit = (attachments: AttachmentAnswer[]) => {
+        const now = new Date().toISOString();
+        if (composer.mode === 'edit') {
+          const edited = notes.find((note) => note.id === composer.noteId);
+          removeUnreferenced(
+            attachmentManager,
+            edited?.attachments ?? [],
+            attachments
+          );
+          commitNotes(
+            notes.map((note) =>
+              note.id === composer.noteId
+                ? {
+                    ...note,
+                    markdown,
+                    updatedAt: now,
+                    attachments: attachments.length ? attachments : undefined,
+                  }
+                : note
+            )
+          );
+        } else {
+          const entry: NoteEntry = {
+            id: crypto.randomUUID(),
+            createdAt: now,
+            markdown,
+            ...(identity?.name ? { author: identity.name } : {}),
+            ...(attachments.length ? { attachments } : {}),
+          };
+          commitNotes([...notes, entry]);
+        }
+      };
+
+      if (attachmentManager) {
+        void storeAttachments(attachmentManager, composed).then(commit);
       } else {
-        const entry: NoteEntry = {
-          id: crypto.randomUUID(),
-          createdAt: now,
-          markdown,
-          ...(identity?.name ? { author: identity.name } : {}),
-          ...(attachments.length ? { attachments } : {}),
-        };
-        commitNotes([...notes, entry]);
+        commit(composed);
       }
       closeComposer();
     },
-    [composer, notes, identity?.name, commitNotes, closeComposer]
+    [
+      composer,
+      notes,
+      identity?.name,
+      commitNotes,
+      closeComposer,
+      attachmentManager,
+    ]
   );
 
   const deleteNote = React.useCallback(
     (noteId: string) => {
+      const removed = notes.find((note) => note.id === noteId);
+      removeUnreferenced(attachmentManager, removed?.attachments ?? [], []);
       commitNotes(notes.filter((note) => note.id !== noteId));
       setConfirmingDeleteId(null);
     },
-    [notes, commitNotes]
+    [notes, commitNotes, attachmentManager]
   );
 
   const canModify = def.canModify ?? (() => true);
@@ -374,9 +405,7 @@ export const NotesField = React.memo(function NotesField({
       title: note.author,
       timestamp:
         formatTimestamp(note.createdAt) +
-        (note.updatedAt
-          ? ` (edited ${formatTimestamp(note.updatedAt)})`
-          : ''),
+        (note.updatedAt ? ` (edited ${formatTimestamp(note.updatedAt)})` : ''),
       body: renderMarkdownContent(note.markdown),
       footer: note.attachments?.length ? (
         <AttachmentChips attachments={note.attachments} />

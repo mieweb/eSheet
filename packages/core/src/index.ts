@@ -129,6 +129,8 @@ export {
   mapAttachments,
 } from './lib/functions/notes.js';
 
+export type { AttachmentManager } from './lib/attachment-manager.js';
+
 export {
   ACTIVITY_RESPONSE_KEY,
   ACTIVITY_DEBOUNCE_MS,

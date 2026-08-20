@@ -1,11 +1,16 @@
 import React, { useCallback, useState } from 'react';
-import type {
-  FieldComponentProps,
-  AttachmentAnswer,
-  FileFieldDefinition,
-} from '@esheet/core';
+import type { FieldComponentProps, FileFieldDefinition } from '@esheet/core';
 import { TrashIcon, UploadIcon } from '../../icons.js';
-import { formatFileSize, fileMatchesAccept } from '../../lib/file-utils.js';
+import {
+  formatFileSize,
+  fileMatchesAccept,
+  readFileAsAttachment,
+} from '../../lib/file-utils.js';
+import {
+  removeUnreferenced,
+  storeAttachments,
+  useAttachmentManager,
+} from '../../lib/AttachmentManagerProvider.js';
 
 const PREDEFINED_FILE_TYPES = [
   { label: 'JPEG', value: 'image/jpeg', accept: '.jpg,.jpeg' },
@@ -90,6 +95,7 @@ export const FileField = React.memo(function FileField({
   const def = field.definition as FileFieldDefinition & { question?: string };
   const instanceId = form.getState().instanceId;
   const maxFiles = def.maxFiles ?? 1;
+  const attachmentManager = useAttachmentManager();
   const [isDragActive, setIsDragActive] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [sizeUnit, setSizeUnit] = useState<SizeUnit>(
@@ -148,36 +154,29 @@ export const FileField = React.memo(function FileField({
         if (validFiles.length === 0) return;
       }
 
-      let processed = 0;
-      const newFiles: AttachmentAnswer[] = [];
-
-      validFiles.forEach((file) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const result = reader.result as string;
-          const ans: AttachmentAnswer = {
-            contentType: file.type || 'application/octet-stream',
-            dataUrl: result,
-            title: file.name,
-            size: file.size,
-          };
-          newFiles.push(ans);
-          processed++;
-
-          if (processed === validFiles.length) {
-            const updated = [...fileDataArr, ...newFiles];
-            onResponse({ fileData: maxFiles === 1 ? updated[0] : updated });
-          }
-        };
-        reader.readAsDataURL(file);
-      });
+      void (async () => {
+        const read = await Promise.all(validFiles.map(readFileAsAttachment));
+        // The host's manager takes the bytes and hands back a reference; with
+        // no manager the data URL stays on the response, as it always has.
+        const stored = await storeAttachments(attachmentManager, read);
+        const updated = [...fileDataArr, ...stored];
+        onResponse({ fileData: maxFiles === 1 ? updated[0] : updated });
+      })();
     },
-    [fileDataArr, maxFiles, def.maxFileSize, def.accept, onResponse]
+    [
+      fileDataArr,
+      maxFiles,
+      def.maxFileSize,
+      def.accept,
+      onResponse,
+      attachmentManager,
+    ]
   );
 
   const handleRemoveFile = useCallback(
     (index: number) => {
       const updated = fileDataArr.filter((_, i) => i !== index);
+      removeUnreferenced(attachmentManager, fileDataArr, updated);
       onResponse({
         fileData:
           updated.length === 0
@@ -187,7 +186,7 @@ export const FileField = React.memo(function FileField({
             : updated,
       });
     },
-    [fileDataArr, maxFiles, onResponse]
+    [fileDataArr, maxFiles, onResponse, attachmentManager]
   );
 
   const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {

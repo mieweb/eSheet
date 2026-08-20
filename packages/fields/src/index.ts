@@ -111,11 +111,18 @@ export {
   type FieldProviderStackProps,
 } from './lib/FieldProviders.js';
 
-// Shared markdown-lite rendering
+// Optional host-supplied attachment byte storage
 export {
-  renderMarkdownContent,
-  renderMarkdownInline,
-} from './lib/markdown.js';
+  AttachmentManagerProvider,
+  createAttachmentManagerProvider,
+  useAttachmentManager,
+  storeAttachments,
+  removeUnreferenced,
+  type AttachmentManagerProviderProps,
+} from './lib/AttachmentManagerProvider.js';
+
+// Shared markdown-lite rendering
+export { renderMarkdownContent, renderMarkdownInline } from './lib/markdown.js';
 
 // Shared file/attachment helpers
 export {
