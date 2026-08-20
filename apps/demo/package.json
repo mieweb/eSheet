@@ -19,6 +19,7 @@
     "@esheet/field-kerebron": "workspace:*",
     "@esheet/fields": "workspace:*",
     "@esheet/renderer": "workspace:*",
+    "@kerebron/wasm": "^0.8.10",
     "@mieweb/ui": "0.7.1",
     "js-yaml": "^5.2.3",
     "lucide-react": "^1.31.0",
