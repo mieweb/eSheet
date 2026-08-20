@@ -97,8 +97,12 @@ export function hydrateResponse(
           (definition as { title?: string }).title ??
           '',
       };
-      if (!isEmptyAnswer(answer))
+      if (!isEmptyAnswer(answer)) {
         item.answer = answer as ResponseItem['answer'];
+        const attributes = responses[id]?.attributes;
+        if (attributes && Object.keys(attributes).length > 0)
+          item.attributes = attributes;
+      }
       items.push(item);
     }
   }

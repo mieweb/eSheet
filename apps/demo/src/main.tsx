@@ -1,6 +1,9 @@
 import './styles.css';
 import './ozwell-setup.js';
-import { registerFieldComponents } from '@esheet/fields';
+import {
+  registerFieldComponents,
+  registerAutocompleteFieldType,
+} from '@esheet/fields';
 import {
   RichTextEditorField,
   configureRichTextField,
@@ -19,6 +22,7 @@ import { BrandInitializer } from './components/BrandInitializer';
 
 // Register plugin fields (imports also self-register metadata + Zod schema)
 registerFieldComponents({ richtext: RichTextEditorField });
+registerAutocompleteFieldType();
 registerHealthFieldTypes({
   indexUrl: `${import.meta.env.BASE_URL}codify`.replace(/\/$/, ''),
 });

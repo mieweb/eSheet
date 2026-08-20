@@ -1,0 +1,39 @@
+id: wiki-lookup
+title: Autocomplete Field Demo — Live Wikipedia
+description: Demonstrates the `autocomplete` custom field type searching a real remote API (Wikipedia) as you type, including enveloped responses and attribute capture.
+pages:
+  - id: page-1
+    fields:
+      - id: wiki-intro
+        fieldType: html
+        htmlContent: <h2 style='margin:0 0 8px'>Live remote autocomplete</h2><p>The fields below search <strong>Wikipedia</strong> as you type — debounced, with stale responses discarded. The data source URL is configurable per field in the builder.</p>
+        iframeHeight: 90
+      - id: section-wiki
+        fieldType: section
+        title: Reference Lookups
+        fields:
+          - id: favorite-topic
+            fieldType: autocomplete
+            question: Find a Wikipedia article about your condition
+            required: true
+            width: half
+            dataSourceUrl: https://en.wikipedia.org/w/api.php?action=opensearch&search={query}&limit=8&format=json&origin=*
+            answerPlaceholder: Start typing, e.g. "hypertension"…
+          - id: hometown
+            fieldType: autocomplete
+            question: What city are you from?
+            width: half
+            dataSourceUrl: https://en.wikipedia.org/w/api.php?action=opensearch&search={query}&limit=8&format=json&origin=*
+            answerPlaceholder: Start typing a city name…
+          - id: reference-article
+            fieldType: autocomplete
+            question: Reference article (enveloped response + captured attributes)
+            width: full
+            dataSourceUrl: https://en.wikipedia.org/w/rest.php/v1/search/title?q={query}&limit=8
+            resultsPath: pages
+            labelKey: title
+            valueKey: key
+            captureKeys:
+              - id
+              - description
+            answerPlaceholder: Start typing an article title…
