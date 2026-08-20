@@ -146,8 +146,9 @@
     line-height: 1.4 !important;
   }
 
-  /* Note: buttons are NOT touched in builder to avoid affecting UI buttons */
-  .esheet-renderer-root:not(.touch-mode-disabled) button {
+  /* Note: buttons are NOT touched in builder to avoid affecting UI buttons.
+     [data-slot] buttons come from @mieweb/ui and size themselves. */
+  .esheet-renderer-root:not(.touch-mode-disabled) button:not([data-slot]) {
     min-height: 44px !important;
     font-size: 1rem !important;
   }
@@ -258,8 +259,9 @@
   line-height: 1.4 !important;
 }
 
-/* Note: buttons are NOT touched in builder to avoid affecting UI buttons */
-.esheet-renderer-root.esheet-touch-active button {
+/* Note: buttons are NOT touched in builder to avoid affecting UI buttons.
+   [data-slot] buttons come from @mieweb/ui and size themselves. */
+.esheet-renderer-root.esheet-touch-active button:not([data-slot]) {
   min-height: 44px !important;
   font-size: 1rem !important;
 }

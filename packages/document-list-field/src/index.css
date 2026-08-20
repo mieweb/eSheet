@@ -19,6 +19,17 @@
   gap: 0.25rem;
 }
 
+/* The cluster overlays the DataVis title bar rather than sitting inside it, so
+   @mieweb/ui's `body.condensed` density never reaches it. */
+.document-list-grid__title-actions button {
+  font-size: 0.6875rem;
+}
+
+.document-list-grid__title-actions button svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
 .document-list-grid__status,
 .document-list-grid__error {
   margin-bottom: 0.5rem;
