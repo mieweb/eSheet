@@ -19,7 +19,7 @@ import {
   ModalHeader,
   ModalTitle,
 } from '@mieweb/ui';
-import '@kerebron/editor/assets/index-light.css';
+import '@kerebron/editor/assets/index.css';
 import '@kerebron/editor-kits/assets/AdvancedEditorKit.css';
 import type {
   DocumentListContent,
@@ -29,6 +29,34 @@ import type {
 import type { DocumentListDocument } from './types.js';
 
 const COMPOSE_CONTENT_TYPE = 'text/x-markdown';
+
+function useIsDark(): boolean {
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof document === 'undefined') return false;
+    return (
+      document.documentElement.classList.contains('dark') ||
+      document.documentElement.dataset.theme === 'dark'
+    );
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const updateTheme = (): void => {
+      setIsDark(
+        root.classList.contains('dark') || root.dataset.theme === 'dark'
+      );
+    };
+    const observer = new MutationObserver(updateTheme);
+    observer.observe(root, {
+      attributes: true,
+      attributeFilter: ['class', 'data-theme'],
+    });
+    updateTheme();
+    return () => observer.disconnect();
+  }, []);
+
+  return isDark;
+}
 
 let composeAssetLoad: AssetLoad | undefined;
 
@@ -75,9 +103,29 @@ const COMPOSE_EDITOR_STYLES = `
 
   .document-list-compose-editor .ProseMirror blockquote {
     border-left: 3px solid #ccc;
-    color: #666;
+    color: var(--kb-color-text-muted);
     margin-left: 0;
     padding-left: 1em;
+  }
+
+  .document-list-compose-editor.kb-component--dark {
+    --kb-bg: var(--kb-color-surface-elevated, #374151);
+    --kb-fg: var(--kb-color-text, #f9fafb);
+    --kb-subtle: var(--kb-color-text-muted, #9ca3af);
+    --kb-border: var(--kb-color-border, #374151);
+    --kb-hover: var(--kb-color-surface-hover, rgba(232, 234, 237, 0.08));
+    --kb-active: rgba(59, 130, 246, 0.2);
+    --kb-focus: #93c5fd;
+    --kb-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .document-list-compose-editor.kb-component--dark .ProseMirror {
+    color: var(--kb-color-text);
+    background: var(--kb-color-surface);
+  }
+
+  .document-list-compose-editor.kb-component--dark .ProseMirror blockquote {
+    border-left-color: var(--kb-color-border);
   }
 
   .document-list-compose-editor .kb-custom-menu__editor {
@@ -151,6 +199,7 @@ const DocumentListComposeEditor = forwardRef<
   { ariaLabel, disabled, id, labelledBy, onChange, value },
   ref
 ): React.JSX.Element {
+  const isDark = useIsDark();
   const hostRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<CoreEditor | null>(null);
   const onChangeRef = useRef(onChange);
@@ -272,7 +321,9 @@ const DocumentListComposeEditor = forwardRef<
     <div
       ref={hostRef}
       id={id}
-      className="kb-component document-list-compose-editor"
+      className={`kb-component document-list-compose-editor${
+        isDark ? ' kb-component--dark' : ''
+      }`}
       aria-labelledby={labelledBy}
       aria-label="Document note editor"
       aria-disabled={disabled || undefined}

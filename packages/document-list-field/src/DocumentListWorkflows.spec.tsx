@@ -185,6 +185,55 @@ describe('document list workflow modals', () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
+  it('follows Mieweb UI dark mode changes without remounting', async () => {
+    const root = globalThis.document.documentElement;
+    const initialClassName = root.className;
+    const initialTheme = root.getAttribute('data-theme');
+    root.classList.remove('dark');
+    root.removeAttribute('data-theme');
+
+    try {
+      const documentView = render(
+        <DocumentListComposeModal
+          open
+          onOpenChange={vi.fn()}
+          runtime={createRuntime()}
+          inputPrefix="form-1-documents"
+        />
+      );
+      const editor = documentView.container.querySelector(
+        '.document-list-compose-editor'
+      );
+
+      expect(editor).toBeTruthy();
+      expect(editor?.classList.contains('kb-component--dark')).toBe(false);
+
+      root.classList.add('dark');
+      await waitFor(() =>
+        expect(editor?.classList.contains('kb-component--dark')).toBe(true)
+      );
+
+      root.classList.remove('dark');
+      root.dataset.theme = 'dark';
+      await waitFor(() =>
+        expect(editor?.classList.contains('kb-component--dark')).toBe(true)
+      );
+
+      root.removeAttribute('data-theme');
+      await waitFor(() =>
+        expect(editor?.classList.contains('kb-component--dark')).toBe(false)
+      );
+      documentView.unmount();
+    } finally {
+      root.className = initialClassName;
+      if (initialTheme === null) {
+        root.removeAttribute('data-theme');
+      } else {
+        root.setAttribute('data-theme', initialTheme);
+      }
+    }
+  });
+
   it('validates compose fields and keeps storage errors in the modal', async () => {
     const runtime = createRuntime();
     const saveError = new Error('storage unavailable');
