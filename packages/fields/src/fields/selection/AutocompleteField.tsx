@@ -10,6 +10,8 @@ import { registerCustomFieldTypes } from '../../lib/component-registry.js';
  * chosen item as `{ selected: { id, value } }`, like a dropdown.
  */
 export interface AutocompleteFieldDefinition {
+  /** Field id, assigned by the builder like every field definition. */
+  id: string;
   question?: string;
   /**
    * Remote endpoint template. `{query}` is replaced with the URL-encoded
@@ -138,9 +140,7 @@ export const AutocompleteField = React.memo(function AutocompleteField({
   onUpdate,
   onResponse,
 }: FieldComponentProps) {
-  const def = field.definition as unknown as AutocompleteFieldDefinition & {
-    id: string;
-  };
+  const def = field.definition as unknown as AutocompleteFieldDefinition;
   const instanceId = form.getState().instanceId;
   const selected = response?.selected as SelectedOption | undefined;
 
@@ -172,7 +172,13 @@ export const AutocompleteField = React.memo(function AutocompleteField({
       if (selected) onResponse({ selected: undefined });
       return;
     }
-    if (!def.dataSourceUrl || q.length < minQueryLength) return;
+    if (!def.dataSourceUrl || q.length < minQueryLength) {
+      // Reset any earlier "Searching…" state so loading doesn't stick when
+      // the query shrinks below the minimum (the request above was aborted).
+      setItems([]);
+      setLoading(false);
+      return;
+    }
     const url = def.dataSourceUrl.replace('{query}', encodeURIComponent(q));
     setLoading(true);
     debounceTimer.current = setTimeout(async () => {
