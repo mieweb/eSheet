@@ -20,7 +20,7 @@ vi.mock('@mieweb/ui/datavis', () => ({
   },
   DataVisNitroGrid: (props: Record<string, unknown>) => {
     captured.props = props;
-    return null;
+    return (props.titleActions as ReactNode) ?? null;
   },
 }));
 
@@ -152,6 +152,9 @@ describe('DocumentListGrid host integration', () => {
         screen.getByRole('button', { name: 'Toggle all document details' })
       ).toBeTruthy()
     );
+    expect(
+      (captured.props as { titleActions: ReactNode }).titleActions
+    ).toBeTruthy();
 
     const detailButton = screen.getByRole('button', {
       name: 'Toggle all document details',

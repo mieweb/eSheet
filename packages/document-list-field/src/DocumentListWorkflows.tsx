@@ -1,4 +1,14 @@
-import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from 'react';
+import { CoreEditor, type AssetLoad } from '@kerebron/editor';
+import { AdvancedEditorKit } from '@kerebron/editor-kits/AdvancedEditorKit';
 import {
   Button,
   Input,
@@ -8,14 +18,131 @@ import {
   ModalFooter,
   ModalHeader,
   ModalTitle,
-  Textarea,
 } from '@mieweb/ui';
+import '@kerebron/editor/assets/index.css';
+import '@kerebron/editor-kits/assets/AdvancedEditorKit.css';
 import type {
   DocumentListContent,
   DocumentListContentInput,
   DocumentListRuntimeState,
 } from './document-list-runtime.js';
 import type { DocumentListDocument } from './types.js';
+
+const COMPOSE_CONTENT_TYPE = 'text/x-markdown';
+
+function useIsDark(): boolean {
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof document === 'undefined') return false;
+    return (
+      document.documentElement.classList.contains('dark') ||
+      document.documentElement.dataset.theme === 'dark'
+    );
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const updateTheme = (): void => {
+      setIsDark(
+        root.classList.contains('dark') || root.dataset.theme === 'dark'
+      );
+    };
+    const observer = new MutationObserver(updateTheme);
+    observer.observe(root, {
+      attributes: true,
+      attributeFilter: ['class', 'data-theme'],
+    });
+    updateTheme();
+    return () => observer.disconnect();
+  }, []);
+
+  return isDark;
+}
+
+let composeAssetLoad: AssetLoad | undefined;
+
+export function configureDocumentListComposeEditor(options: {
+  assetLoad: AssetLoad;
+}): void {
+  composeAssetLoad = options.assetLoad;
+}
+
+const COMPOSE_EDITOR_STYLES = `
+  .document-list-compose-editor .ProseMirror {
+    min-height: 160px;
+    outline: none;
+    padding: 8px 12px;
+  }
+
+  .document-list-compose-editor .ProseMirror h1 {
+    font-size: 2em;
+    font-weight: bold;
+    margin: 0.67em 0;
+  }
+
+  .document-list-compose-editor .ProseMirror h2 {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin: 0.75em 0;
+  }
+
+  .document-list-compose-editor .ProseMirror h3 {
+    font-size: 1.17em;
+    font-weight: bold;
+    margin: 0.83em 0;
+  }
+
+  .document-list-compose-editor .ProseMirror ul {
+    list-style: disc;
+    padding-left: 1.5em;
+  }
+
+  .document-list-compose-editor .ProseMirror ol {
+    list-style: decimal;
+    padding-left: 1.5em;
+  }
+
+  .document-list-compose-editor .ProseMirror blockquote {
+    border-left: 3px solid #ccc;
+    color: var(--kb-color-text-muted);
+    margin-left: 0;
+    padding-left: 1em;
+  }
+
+  .document-list-compose-editor.kb-component--dark {
+    --kb-bg: var(--kb-color-surface-elevated, #374151);
+    --kb-fg: var(--kb-color-text, #f9fafb);
+    --kb-subtle: var(--kb-color-text-muted, #9ca3af);
+    --kb-border: var(--kb-color-border, #374151);
+    --kb-hover: var(--kb-color-surface-hover, rgba(232, 234, 237, 0.08));
+    --kb-active: rgba(59, 130, 246, 0.2);
+    --kb-focus: #93c5fd;
+    --kb-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .document-list-compose-editor.kb-component--dark .ProseMirror {
+    color: var(--kb-color-text);
+    background: var(--kb-color-surface);
+  }
+
+  .document-list-compose-editor.kb-component--dark .ProseMirror blockquote {
+    border-left-color: var(--kb-color-border);
+  }
+
+  .document-list-compose-editor .kb-custom-menu__editor {
+    max-height: 300px;
+    overflow-y: auto;
+  }
+`;
+
+if (
+  typeof document !== 'undefined' &&
+  !document.getElementById('document-list-compose-editor-styles')
+) {
+  const style = document.createElement('style');
+  style.id = 'document-list-compose-editor-styles';
+  style.textContent = COMPOSE_EDITOR_STYLES;
+  document.head.appendChild(style);
+}
 
 export interface DocumentListWorkflowModalProps {
   readonly open: boolean;
@@ -52,6 +179,163 @@ function resetFormState(
   setSaving(false);
 }
 
+interface DocumentListComposeEditorProps {
+  readonly ariaLabel: string;
+  readonly disabled: boolean;
+  readonly id: string;
+  readonly labelledBy: string;
+  readonly onChange: (value: string) => void;
+  readonly value: string;
+}
+
+interface DocumentListComposeEditorHandle {
+  readonly getContent: () => Promise<string>;
+}
+
+const DocumentListComposeEditor = forwardRef<
+  DocumentListComposeEditorHandle,
+  DocumentListComposeEditorProps
+>(function DocumentListComposeEditor(
+  { ariaLabel, disabled, id, labelledBy, onChange, value },
+  ref
+): React.JSX.Element {
+  const isDark = useIsDark();
+  const hostRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<CoreEditor | null>(null);
+  const onChangeRef = useRef(onChange);
+  const valueRef = useRef(value);
+  const readyPromiseRef = useRef<Promise<void> | null>(null);
+  const isLoadingRef = useRef(false);
+  const disabledRef = useRef(disabled);
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (value === valueRef.current) return;
+    valueRef.current = value;
+    if (!editor) return;
+
+    isLoadingRef.current = true;
+    void editor
+      .loadDocument(COMPOSE_CONTENT_TYPE, new TextEncoder().encode(value))
+      .catch(() => undefined)
+      .finally(() => {
+        if (editorRef.current === editor) isLoadingRef.current = false;
+      });
+  }, [value]);
+
+  useEffect(() => {
+    disabledRef.current = disabled;
+    editorRef.current?.view.setProps({
+      editable: () => !disabledRef.current,
+    });
+  }, [disabled]);
+
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+
+    const mount = document.createElement('div');
+    host.appendChild(mount);
+    const editor = CoreEditor.create({
+      element: mount,
+      uri: 'file:///document.md',
+      assetLoad: composeAssetLoad,
+      editorKits: [new AdvancedEditorKit()],
+      readOnly: disabledRef.current,
+    });
+    editorRef.current = editor;
+    editor.view.setProps({
+      editable: () => !disabledRef.current,
+      attributes: { 'aria-label': ariaLabel },
+    });
+
+    let destroyed = false;
+    let listening = false;
+    const handleChanged = (): void => {
+      if (isLoadingRef.current) return;
+      void editor
+        .saveDocument(COMPOSE_CONTENT_TYPE)
+        .then((content) => {
+          if (destroyed) return;
+          const nextValue = new TextDecoder().decode(content);
+          valueRef.current = nextValue;
+          onChangeRef.current(nextValue);
+        })
+        .catch(() => undefined);
+    };
+
+    const loadInitialContent = async (): Promise<void> => {
+      if (valueRef.current) {
+        isLoadingRef.current = true;
+        try {
+          await editor.loadDocument(
+            COMPOSE_CONTENT_TYPE,
+            new TextEncoder().encode(valueRef.current)
+          );
+        } catch {
+          // Keep the empty editor available when initial content cannot load.
+        } finally {
+          isLoadingRef.current = false;
+        }
+      }
+      if (destroyed) return;
+      editor.addEventListener('changed', handleChanged);
+      listening = true;
+    };
+
+    readyPromiseRef.current = loadInitialContent();
+
+    return () => {
+      destroyed = true;
+      if (listening) editor.removeEventListener('changed', handleChanged);
+      editor.destroy();
+      editorRef.current = null;
+      readyPromiseRef.current = null;
+      host.replaceChildren();
+    };
+    // The editor is intentionally created once for the modal instance.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      getContent: async (): Promise<string> => {
+        await readyPromiseRef.current;
+        const editor = editorRef.current;
+        if (!editor) return valueRef.current;
+        const content = await editor.saveDocument(COMPOSE_CONTENT_TYPE);
+        const nextValue = new TextDecoder().decode(content);
+        valueRef.current = nextValue;
+        return nextValue;
+      },
+    }),
+    []
+  );
+
+  return (
+    <div
+      ref={hostRef}
+      id={id}
+      className={`kb-component document-list-compose-editor${
+        isDark ? ' kb-component--dark' : ''
+      }`}
+      aria-labelledby={labelledBy}
+      aria-label="Document note editor"
+      aria-disabled={disabled || undefined}
+      style={{
+        isolation: 'isolate',
+        opacity: disabled ? 0.65 : undefined,
+        pointerEvents: disabled ? 'none' : undefined,
+      }}
+    />
+  );
+});
+
 export function DocumentListComposeModal({
   open,
   onOpenChange,
@@ -64,6 +348,7 @@ export function DocumentListComposeModal({
   const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const editorRef = useRef<DocumentListComposeEditorHandle>(null);
 
   const reset = (): void => {
     setTitle('');
@@ -88,26 +373,28 @@ export function DocumentListComposeModal({
       return;
     }
 
-    const id = createDocumentId();
-    const content: DocumentListContentInput = {
-      content: note,
-      contentType: 'text/plain',
-      size: contentSize(note),
-    };
-    const document: DocumentListDocument = {
-      id,
-      date: today(),
-      title: trimmedTitle,
-      subject: trimmedSubject,
-      docType: trimmedDocType,
-      docId: id,
-      source: 'Compose',
-      file: `${id}.txt`,
-    };
-
     setSaving(true);
     setError(null);
     try {
+      const composedNote = editorRef.current
+        ? await editorRef.current.getContent()
+        : note;
+      const id = createDocumentId();
+      const content: DocumentListContentInput = {
+        content: composedNote,
+        contentType: COMPOSE_CONTENT_TYPE,
+        size: contentSize(composedNote),
+      };
+      const document: DocumentListDocument = {
+        id,
+        date: today(),
+        title: trimmedTitle,
+        subject: trimmedSubject,
+        docType: trimmedDocType,
+        docId: id,
+        source: 'Compose',
+        file: `${id}.md`,
+      };
       await runtime.saveDocument(document, content);
       reset();
       onOpenChange(false);
@@ -155,14 +442,23 @@ export function DocumentListComposeModal({
             disabled={saving}
             required
           />
-          <Textarea
-            id={inputId(inputPrefix, 'compose-note')}
-            label="Note"
-            value={note}
-            onChange={(event) => setNote(event.target.value)}
-            disabled={saving}
-            rows={7}
-          />
+          <div className="document-list-workflow__field">
+            <label
+              id={inputId(inputPrefix, 'compose-note-label')}
+              htmlFor={inputId(inputPrefix, 'compose-note')}
+            >
+              Note
+            </label>
+            <DocumentListComposeEditor
+              ref={editorRef}
+              id={inputId(inputPrefix, 'compose-note')}
+              ariaLabel="Note"
+              labelledBy={inputId(inputPrefix, 'compose-note-label')}
+              value={note}
+              onChange={setNote}
+              disabled={saving}
+            />
+          </div>
           {error && (
             <p className="document-list-workflow__error" role="alert">
               {error}

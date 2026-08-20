@@ -1,13 +1,9 @@
 import './styles.css';
 import './ozwell-setup.js';
 import { registerFieldComponents } from '@esheet/fields';
-import {
-  RichTextEditorField,
-  configureRichTextField,
-} from '@esheet/field-kerebron';
+import { RichTextEditorField } from '@esheet/field-kerebron';
 import { registerHealthFieldTypes } from '@esheet/field-health';
 import { registerDocumentListFieldType } from '@esheet/document-list-field';
-import { createAssetLoad } from '@kerebron/wasm/web';
 import { StrictMode } from 'react';
 import * as ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
@@ -25,13 +21,6 @@ registerHealthFieldTypes({
   indexUrl: `${import.meta.env.BASE_URL}codify`.replace(/\/$/, ''),
 });
 registerDocumentListFieldType();
-
-// The Vite plugin serves and emits these assets from the installed package.
-configureRichTextField({
-  assetLoad: createAssetLoad(
-    `${import.meta.env.BASE_URL}kerebron-wasm`.replace(/\/\//g, '/')
-  ),
-});
 
 function App() {
   return (

@@ -33,8 +33,8 @@
   "dependencies": {
     "@esheet/core": "workspace:*",
     "@esheet/fields": "workspace:*",
-    "@kerebron/editor": "^0.8.9",
-    "@kerebron/editor-kits": "^0.8.9",
+    "@kerebron/editor": "^0.8.10",
+    "@kerebron/editor-kits": "^0.8.10",
     "@kerebron/editor-react": "^0.8.9",
     "@kerebron/extension-basic-editor": "^0.8.9",
     "@kerebron/extension-menu": "^0.8.9",

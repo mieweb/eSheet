@@ -6,17 +6,40 @@
 .document-list-grid {
   position: relative;
   width: 100%;
+  min-width: 0;
 }
 
 .document-list-grid__title-actions {
-  position: absolute;
-  top: 0;
-  right: 2rem;
-  z-index: 5;
   display: flex;
-  height: 1.8rem;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.25rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.document-list-grid .wcdv-title {
+  min-width: 0;
+}
+
+.document-list-grid .wcdv-title-actions {
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+}
+
+.document-list-grid__action-label {
+  display: inline;
+}
+
+@media (max-width: 40rem) {
+  .document-list-grid__title-actions {
+    gap: 0;
+  }
+
+  .document-list-grid__action-label {
+    display: none;
+  }
 }
 
 /* The cluster overlays the DataVis title bar rather than sitting inside it, so
