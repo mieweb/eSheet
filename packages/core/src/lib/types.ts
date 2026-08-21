@@ -1346,6 +1346,12 @@ export interface FieldResponse {
   notes?: NoteEntry[];
   /** Append-only response change log (reserved `_activity` key; activity field). */
   activity?: ActivityEntry[];
+  /**
+   * Extra attributes captured from the selected item (autocomplete field).
+   * Keyed by the source object's property name, e.g. an address pick may
+   * capture `{ city, state, zip }` alongside `selected`.
+   */
+  attributes?: Record<string, string>;
   /** Set to true when the response was filled programmatically by an AI agent. */
   _ai?: boolean;
 }
@@ -1607,6 +1613,8 @@ export interface ResponseItem {
   id: string;
   text?: string;
   answer?: AnswerValue;
+  /** Extra attributes captured from the selected item (see FieldResponse.attributes). */
+  attributes?: Record<string, string>;
 }
 
 export const RESPONSE_STATUSES = [

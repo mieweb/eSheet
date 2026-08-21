@@ -30,6 +30,10 @@ export {
   BooleanField,
   DropdownField,
   MultiSelectDropdownField,
+  AutocompleteField,
+  registerAutocompleteFieldType,
+  parseAutocompleteItems,
+  WIKIPEDIA_OPENSEARCH_URL,
   RatingField,
   RankingField,
   SliderField,
@@ -49,6 +53,7 @@ export {
   NoteCardList,
 } from './fields/index.js';
 export type {
+  AutocompleteFieldDefinition,
   DrawingData,
   DrawingPadConfig,
   DrawingPadPayload,
