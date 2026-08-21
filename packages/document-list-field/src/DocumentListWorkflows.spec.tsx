@@ -12,8 +12,56 @@ import {
 
 vi.mock('@kerebron/editor', () => ({
   CoreEditor: {
-    create: ({ element }: { element: HTMLElement }) => {
+    create: ({
+      element,
+      readOnly = false,
+    }: {
+      element: HTMLElement;
+      readOnly?: boolean;
+    }) => {
       const eventTarget = new EventTarget();
+      let editorValue = '';
+      const editorInput = readOnly
+        ? null
+        : globalThis.document.createElement('textarea');
+      if (editorInput) {
+        editorInput.setAttribute('aria-label', 'Note');
+      }
+      const renderMarkdown = (markdown: string): void => {
+        const proseMirror = globalThis.document.createElement('div');
+        proseMirror.className = 'kb-editor ProseMirror';
+        let list: HTMLUListElement | null = null;
+
+        for (const line of markdown.split(/\r?\n/)) {
+          const heading = /^(#{1,6})\s+(.+)$/.exec(line);
+          const listItem = /^\s*[-*]\s+(.+)$/.exec(line);
+          if (heading) {
+            list = null;
+            const headingElement = globalThis.document.createElement(
+              `h${heading[1].length}`
+            );
+            headingElement.textContent = heading[2];
+            proseMirror.appendChild(headingElement);
+          } else if (listItem) {
+            if (!list) {
+              list = globalThis.document.createElement('ul');
+              proseMirror.appendChild(list);
+            }
+            const listElement = globalThis.document.createElement('li');
+            listElement.textContent = listItem[1];
+            list.appendChild(listElement);
+          } else if (line.trim()) {
+            list = null;
+            const paragraph = globalThis.document.createElement('p');
+            paragraph.textContent = line;
+            proseMirror.appendChild(paragraph);
+          } else {
+            list = null;
+          }
+        }
+
+        element.replaceChildren(proseMirror);
+      };
       const editor = {
         addEventListener: eventTarget.addEventListener.bind(eventTarget),
         removeEventListener: eventTarget.removeEventListener.bind(eventTarget),
@@ -21,21 +69,25 @@ vi.mock('@kerebron/editor', () => ({
         loadDocument: vi.fn(async (_mediaType: string, content: Uint8Array) => {
           const nextValue = new TextDecoder().decode(content);
           editorValue = nextValue;
-          editorInput.value = nextValue;
+          if (editorInput) {
+            editorInput.value = nextValue;
+          } else {
+            renderMarkdown(nextValue);
+          }
         }),
         saveDocument: vi.fn(async () => new TextEncoder().encode(editorValue)),
         destroy: vi.fn(),
       };
-      let editorValue = '';
-      const editorInput = globalThis.document.createElement('textarea');
-      editorInput.setAttribute('aria-label', 'Note');
       const updateValue = (): void => {
+        if (!editorInput) return;
         editorValue = editorInput.value;
         eventTarget.dispatchEvent(new Event('changed'));
       };
-      editorInput.addEventListener('input', updateValue);
-      editorInput.addEventListener('change', updateValue);
-      element.appendChild(editorInput);
+      if (editorInput) {
+        editorInput.addEventListener('input', updateValue);
+        editorInput.addEventListener('change', updateValue);
+        element.appendChild(editorInput);
+      }
       return editor;
     },
   },
@@ -317,6 +369,33 @@ describe('document list detail row', () => {
 
     expect(await screen.findByText('Loaded note')).toBeTruthy();
     expect(screen.queryByRole('status')).toBeNull();
+  });
+
+  it('renders markdown content with Kerebron formatting', async () => {
+    const content: DocumentListContent = {
+      text: '# Visit note\n\n- First item\n- Second item',
+      contentType: 'text/x-markdown',
+      size: 42,
+    };
+    const runtime = createRuntime(async () => content);
+
+    const detailView = render(
+      <DocumentListDetailRow document={document} runtime={runtime} />
+    );
+
+    expect(
+      await screen.findByRole('heading', { name: 'Visit note' })
+    ).toBeTruthy();
+    expect(detailView.container.querySelector('ul')).toBeTruthy();
+    expect(detailView.container.querySelector('li')?.textContent).toBe(
+      'First item'
+    );
+    const preview = detailView.container.querySelector(
+      '.document-list-detail__preview'
+    );
+    expect(preview).toBeTruthy();
+    expect(preview?.textContent).not.toContain('# Visit note');
+    expect(preview?.textContent).not.toContain('- First item');
   });
 
   it('renders image references and metadata fallback content', async () => {

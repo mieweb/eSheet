@@ -701,6 +701,46 @@ function ContentMetadata({
   );
 }
 
+function DocumentListMarkdownPreview({
+  content,
+}: {
+  readonly content: string;
+}): React.JSX.Element {
+  const hostRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+
+    const mount = document.createElement('div');
+    host.appendChild(mount);
+    const editor = CoreEditor.create({
+      element: mount,
+      uri: 'file:///document-list-detail.md',
+      assetLoad: composeAssetLoad,
+      editorKits: [new AdvancedEditorKit()],
+      readOnly: true,
+    });
+
+    void editor
+      .loadDocument(COMPOSE_CONTENT_TYPE, new TextEncoder().encode(content))
+      .catch(() => undefined);
+
+    return () => {
+      editor.destroy();
+      host.replaceChildren();
+    };
+  }, [content]);
+
+  return (
+    <div
+      ref={hostRef}
+      className="kb-component document-list-detail__preview"
+      aria-label="Document content"
+    />
+  );
+}
+
 export function DocumentListDetailRow({
   document,
   runtime,
@@ -737,6 +777,8 @@ export function DocumentListDetailRow({
     content?.reference &&
       content.contentType?.toLowerCase().startsWith('image/')
   );
+  const isMarkdown =
+    content?.contentType === COMPOSE_CONTENT_TYPE && content.text != null;
 
   return (
     <div className="document-list-detail">
@@ -765,9 +807,13 @@ export function DocumentListDetailRow({
           Could not load document content: {error}
         </p>
       )}
-      {!loading && content?.text != null && (
-        <div className="document-list-detail__text">{content.text}</div>
-      )}
+      {!loading &&
+        content?.text != null &&
+        (isMarkdown ? (
+          <DocumentListMarkdownPreview content={content.text} />
+        ) : (
+          <div className="document-list-detail__text">{content.text}</div>
+        ))}
       {!loading && isImage && (
         <img
           className="document-list-detail__image"
