@@ -4,6 +4,12 @@ import type {
   DocumentListValue,
 } from './types.js';
 
+/** Content type of composed and inline markdown documents. */
+export const DOCUMENT_LIST_MARKDOWN_TYPE = 'text/x-markdown';
+
+/** What one row is called when a field names nothing else. */
+export const DOCUMENT_LIST_DEFAULT_NOUN = 'document';
+
 export const DOCUMENT_LIST_COLUMNS = [
   {
     field: 'date',
@@ -121,6 +127,7 @@ export function normalizeDocumentRow(
     ...(typeof input.size === 'number' && Number.isFinite(input.size)
       ? { size: input.size }
       : {}),
+    ...(typeof input.body === 'string' ? { body: input.body } : {}),
   };
 }
 

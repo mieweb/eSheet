@@ -5,10 +5,11 @@ import type {
   DocumentListRuntimeState,
 } from './document-list-runtime.js';
 import {
-  DocumentListComposeModal,
+  DocumentListComposePanel,
   DocumentListDetailRow,
-  DocumentListUploadModal,
+  DocumentListUploadPanel,
 } from './DocumentListWorkflows.js';
+import type { DocumentListDocument } from './types.js';
 
 vi.mock('@kerebron/editor', () => ({
   CoreEditor: {
@@ -185,13 +186,13 @@ function createRuntime(
   } as unknown as DocumentListRuntimeState;
 }
 
-describe('document list workflow modals', () => {
+describe('document list workflow panels', () => {
   it('submits editable compose metadata and markdown content', async () => {
     const runtime = createRuntime();
     const onOpenChange = vi.fn();
 
     const documentView = render(
-      <DocumentListComposeModal
+      <DocumentListComposePanel
         open
         onOpenChange={onOpenChange}
         runtime={runtime}
@@ -240,8 +241,71 @@ describe('document list workflow modals', () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
-  it('follows Mieweb UI dark mode changes without remounting', async () => {
-    const root = globalThis.document.documentElement;
+  it('keeps an inline document type on the row instead of storing content', async () => {
+    const runtime = createRuntime();
+
+    const documentView = render(
+      <DocumentListComposePanel
+        open
+        onOpenChange={vi.fn()}
+        runtime={runtime}
+        inputPrefix="form-1-notes"
+        docTypes={[
+          { id: 'progress-note', label: 'Progress note', inline: true },
+          { id: 'referral' },
+        ]}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText('Title'), {
+      target: { value: 'Called employer' },
+    });
+    fireEvent.change(screen.getByLabelText('Subject'), {
+      target: { value: 'Lisa Ryan' },
+    });
+    const noteEditor = documentView.container.querySelector(
+      '.document-list-compose-editor textarea'
+    );
+    fireEvent.change(noteEditor as HTMLTextAreaElement, {
+      target: { value: 'Employer confirmed return date.' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save document' }));
+
+    await waitFor(() => expect(runtime.saveDocument).toHaveBeenCalledOnce());
+    const [savedDocument, content] = (
+      runtime.saveDocument as ReturnType<typeof vi.fn>
+    ).mock.calls[0] as [DocumentListDocument, DocumentListContentInput?];
+
+    expect(savedDocument.docType).toBe('progress-note');
+    expect(savedDocument.body).toBe('Employer confirmed return date.');
+    expect(content).toBeUndefined();
+  });
+
+  it('asks only for the columns the list shows', async () => {
+    const runtime = createRuntime();
+
+    render(
+      <DocumentListComposePanel
+        open
+        onOpenChange={vi.fn()}
+        runtime={runtime}
+        inputPrefix="form-1-notes"
+        fields={['date', 'title', 'source']}
+      />
+    );
+
+    expect(screen.queryByLabelText('Subject')).toBeNull();
+    expect(screen.queryByLabelText('Document type')).toBeNull();
+
+    fireEvent.change(screen.getByLabelText('Title'), {
+      target: { value: 'Called employer' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save document' }));
+
+    await waitFor(() => expect(runtime.saveDocument).toHaveBeenCalledOnce());
+  });
+
+  it('follows Mieweb UI dark mode changes without remounting', async () => {    const root = globalThis.document.documentElement;
     const initialClassName = root.className;
     const initialTheme = root.getAttribute('data-theme');
     root.classList.remove('dark');
@@ -249,7 +313,7 @@ describe('document list workflow modals', () => {
 
     try {
       const documentView = render(
-        <DocumentListComposeModal
+        <DocumentListComposePanel
           open
           onOpenChange={vi.fn()}
           runtime={createRuntime()}
@@ -289,7 +353,7 @@ describe('document list workflow modals', () => {
     }
   });
 
-  it('validates compose fields and keeps storage errors in the modal', async () => {
+  it('validates compose fields and keeps storage errors in the panel', async () => {
     const runtime = createRuntime();
     const saveError = new Error('storage unavailable');
     runtime.saveDocument = vi.fn(async () => {
@@ -297,7 +361,7 @@ describe('document list workflow modals', () => {
     });
 
     render(
-      <DocumentListComposeModal
+      <DocumentListComposePanel
         open
         onOpenChange={vi.fn()}
         runtime={runtime}
@@ -307,7 +371,7 @@ describe('document list workflow modals', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Save document' }));
     expect(screen.getByRole('alert').textContent).toContain(
-      'Title, subject, and document type are required.'
+      'Title, Subject and Document type are required.'
     );
     expect(runtime.saveDocument).not.toHaveBeenCalled();
 
@@ -333,7 +397,7 @@ describe('document list workflow modals', () => {
     });
 
     render(
-      <DocumentListUploadModal
+      <DocumentListUploadPanel
         open
         onOpenChange={onOpenChange}
         runtime={runtime}
@@ -375,7 +439,7 @@ describe('document list workflow modals', () => {
     const runtime = createRuntime();
     const onOpenChange = vi.fn();
     const { rerender } = render(
-      <DocumentListUploadModal
+      <DocumentListUploadPanel
         open
         onOpenChange={onOpenChange}
         runtime={runtime}
@@ -395,7 +459,7 @@ describe('document list workflow modals', () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
 
     rerender(
-      <DocumentListUploadModal
+      <DocumentListUploadPanel
         open
         onOpenChange={onOpenChange}
         runtime={runtime}

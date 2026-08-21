@@ -63,6 +63,7 @@ function createRuntime(
     context?: DocumentListRepositoryContext;
     repository?: DocumentListRepository;
     initialDocuments?: readonly DocumentListDocument[];
+    onDocumentsChange?: (documents: readonly DocumentListDocument[]) => void;
   } = {}
 ): {
   formStore: FormStore;
@@ -75,6 +76,7 @@ function createRuntime(
     context: runtimeContext,
     repository: options.repository,
     initialDocuments: options.initialDocuments,
+    onDocumentsChange: options.onDocumentsChange,
   });
   return {
     formStore,
@@ -166,18 +168,27 @@ describe('document list runtime store', () => {
     expect(store.getState().documentIds).toEqual(['doc-1', 'doc-2']);
   });
 
-  it('preserves the metadata-only repository save call shape', async () => {
+  it('keeps a row with no content away from the repository', async () => {
     const repository = createRepository();
-    const store = createRuntime({ repository });
+    const onDocumentsChange = vi.fn();
+    const store = createRuntime({ repository, onDocumentsChange });
 
     await store.getState().saveDocument(documentOne);
 
-    expect(repository.save).toHaveBeenCalledWith(
-      context,
-      documentOne,
-      expect.any(AbortSignal)
-    );
-    expect(repository.save).toHaveBeenCalledTimes(1);
+    expect(repository.save).not.toHaveBeenCalled();
+    expect(onDocumentsChange).toHaveBeenCalledWith([documentOne]);
+  });
+
+  it('publishes the row list when a document is removed', async () => {
+    const onDocumentsChange = vi.fn();
+    const store = createRuntime({
+      initialDocuments: [documentOne, documentTwo],
+      onDocumentsChange,
+    });
+
+    await store.getState().removeDocument('doc-1');
+
+    expect(onDocumentsChange).toHaveBeenCalledWith([documentTwo]);
   });
 
   it('forwards transient content to the repository save operation', async () => {

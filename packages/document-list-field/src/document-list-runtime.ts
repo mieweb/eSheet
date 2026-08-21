@@ -1,4 +1,5 @@
 import type { FormStore } from '@esheet/core';
+import { DOCUMENT_LIST_MARKDOWN_TYPE } from './data.js';
 import type { DocumentListDocument } from './types.js';
 
 export const DOCUMENT_LIST_EXTENSION_NAMESPACE = '@esheet/document-list-field';
@@ -44,7 +45,7 @@ export interface DocumentListRepository {
   ) => Promise<DocumentListDocument>;
   remove: (
     context: DocumentListRepositoryContext,
-    documentId: string,
+    document: DocumentListDocument,
     signal: AbortSignal
   ) => Promise<void>;
   loadContent: (
@@ -110,6 +111,13 @@ export interface CreateDocumentListRuntimeExtensionOptions {
   readonly context: DocumentListRepositoryContext;
   readonly repository?: DocumentListRepository;
   readonly initialDocuments?: readonly DocumentListDocument[];
+  /**
+   * Called whenever the row list changes, so the field can publish it as its
+   * answer. Rows are the field's to own; the repository only ever sees bytes.
+   */
+  readonly onDocumentsChange?: (
+    documents: readonly DocumentListDocument[]
+  ) => void;
 }
 
 interface ContentRequest {
@@ -152,6 +160,15 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+/** The content of a row that carries its own body, with no repository call. */
+function inlineContent(body: string): DocumentListContent {
+  return {
+    text: body,
+    contentType: DOCUMENT_LIST_MARKDOWN_TYPE,
+    size: body.length,
+  };
+}
+
 export function getDocumentListRuntimeState(
   formStore: FormStore,
   fieldId: string
@@ -167,7 +184,7 @@ export function getDocumentListRuntimeState(
 export function createDocumentListRuntimeExtension(
   options: CreateDocumentListRuntimeExtensionOptions
 ): DocumentListRuntimeState | undefined {
-  const { formStore, context, repository } = options;
+  const { formStore, context, repository, onDocumentsChange } = options;
   const existing = getDocumentListRuntimeState(formStore, context.fieldId);
   if (existing) return existing;
 
@@ -197,6 +214,19 @@ export function createDocumentListRuntimeExtension(
         context.fieldId,
         (state) => (state ? updater(state) : current)
       );
+  };
+
+  /** Publishes the row list to the field. Never called for inbound snapshots. */
+  const notifyDocuments = (): void => {
+    if (!onDocumentsChange) return;
+    const current = getState();
+    if (!current) return;
+    onDocumentsChange(
+      current.documentIds.flatMap((documentId) => {
+        const document = current.documents[documentId];
+        return document ? [document] : [];
+      })
+    );
   };
 
   const setSnapshot = (snapshot: DocumentListSnapshot): void => {
@@ -258,13 +288,15 @@ export function createDocumentListRuntimeExtension(
           : [...current.documentIds, document.id],
         error: undefined,
       }));
+      notifyDocuments();
     },
 
     saveDocument: async (document, content) => {
       const current = getState();
       if (!current || current.disposed) return document;
       current.upsertDocument(document);
-      if (!repository) return document;
+      // No bytes, no host: an inline row's content is already in the answer.
+      if (!repository || !content) return document;
 
       const operationKey = `save:${document.id}`;
       operationControllers.get(operationKey)?.abort();
@@ -343,7 +375,9 @@ export function createDocumentListRuntimeExtension(
           error: undefined,
         };
       });
-      if (!repository) return;
+      notifyDocuments();
+      // An inline row left nothing behind for the repository to delete.
+      if (!repository || previousDocument.body != null) return;
 
       const operationKey = `delete:${documentId}`;
       operationControllers.get(operationKey)?.abort();
@@ -362,7 +396,7 @@ export function createDocumentListRuntimeExtension(
       }));
 
       try {
-        await repository.remove(context, documentId, controller.signal);
+        await repository.remove(context, previousDocument, controller.signal);
         if (!getState() || operationRequestIds.get(operationKey) !== requestId)
           return;
         updateState((next) => {
@@ -397,6 +431,7 @@ export function createDocumentListRuntimeExtension(
               error: errorMessage(error),
             };
           });
+          notifyDocuments();
         }
         throw error;
       } finally {
@@ -415,6 +450,9 @@ export function createDocumentListRuntimeExtension(
       const cached = current.contents[documentId];
       if (cached?.status === 'loaded' && cached.content)
         return Promise.resolve(cached.content);
+      // An inline row carries its own content; the repository never saw it.
+      const inline = current.documents[documentId]?.body;
+      if (inline != null) return Promise.resolve(inlineContent(inline));
       if (current.disposed || !repository) return Promise.resolve(undefined);
       const document = current.documents[documentId];
       if (!document) return Promise.resolve(undefined);

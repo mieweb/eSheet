@@ -19,6 +19,7 @@ import {
   createLocalSourcePayload,
   DOCUMENT_LIST_ACTIONS_COLUMN,
   DOCUMENT_LIST_COLUMNS,
+  DOCUMENT_LIST_DEFAULT_NOUN,
   normalizeDocumentRow,
 } from './data.js';
 import type { FieldProvider } from '@esheet/fields';
@@ -77,6 +78,8 @@ export interface DocumentListToolbarProps {
 export interface DocumentListGridProps extends DocumentListToolbarProps {
   rows: readonly DocumentListDocument[];
   title?: string;
+  /** What one row is called, lowercase; defaults to `document`. */
+  noun?: string;
   columns?: readonly DocumentListColumn[];
   titleActions?: ReactNode;
   renderActions?: DocumentListActionsRenderer;
@@ -171,10 +174,13 @@ export function useDocumentListFieldHost(): DocumentListFieldHost | null {
 
 export function useDocumentListFieldRuntime(
   fieldId: string,
-  initialDocuments?: readonly DocumentListDocument[]
+  initialDocuments?: readonly DocumentListDocument[],
+  onDocumentsChange?: (documents: readonly DocumentListDocument[]) => void
 ): DocumentListRuntimeState | null {
   const formStore = useContext(FormStoreContext);
   const runtime = useContext(DocumentListRuntimeContext);
+  const onDocumentsChangeRef = useRef(onDocumentsChange);
+  onDocumentsChangeRef.current = onDocumentsChange;
   runtime?.registerField(fieldId);
   return useMemo(() => {
     if (!formStore) return null;
@@ -188,6 +194,10 @@ export function useDocumentListFieldRuntime(
         context: { formInstanceId, fieldId },
         repository: runtime?.options.repository,
         initialDocuments,
+        // The extension outlives any one render, so the callback stays behind
+        // a ref rather than being captured at creation.
+        onDocumentsChange: (documents) =>
+          onDocumentsChangeRef.current?.(documents),
       }) ?? null
     );
   }, [fieldId, formStore, initialDocuments, runtime]);
@@ -282,6 +292,7 @@ function useDocumentListView(rows: readonly DocumentListDocument[]): {
 export function DocumentListGrid({
   rows,
   title = 'Documents',
+  noun = DOCUMENT_LIST_DEFAULT_NOUN,
   columns = DOCUMENT_LIST_COLUMNS,
   titleActions,
   renderActions,
@@ -366,7 +377,7 @@ export function DocumentListGrid({
             variant="link"
             size="sm"
             onClick={onCompose}
-            aria-label="Compose document"
+            aria-label={`Compose ${noun}`}
             title="Compose"
             leftIcon={<SquarePen size={16} aria-hidden="true" />}
           >
@@ -379,7 +390,7 @@ export function DocumentListGrid({
             variant="link"
             size="sm"
             onClick={onUpload}
-            aria-label="Upload document"
+            aria-label={`Upload ${noun}`}
             title="Upload"
             leftIcon={<Upload size={16} aria-hidden="true" />}
           >

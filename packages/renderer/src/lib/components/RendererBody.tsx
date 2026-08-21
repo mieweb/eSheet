@@ -14,6 +14,8 @@ export interface RendererBodyProps {
   bottomNavigation?: boolean;
   /** Block forward navigation when required fields on the current page are unanswered. */
   validateNavigation?: boolean;
+  /** Hands the host a way to jump to a page by id; `false` when there is no such page. */
+  registerGoToPage?: (goToPage: (pageId: string) => boolean) => void;
 }
 
 /**
@@ -29,6 +31,7 @@ export function RendererBody({
   topNavigation = false,
   bottomNavigation = true,
   validateNavigation = true,
+  registerGoToPage,
 }: RendererBodyProps) {
   const normalized = React.useSyncExternalStore(
     (cb) => form.subscribe(cb),
@@ -50,6 +53,15 @@ export function RendererBody({
       setCurrentPagesIdx(pages.length - 1);
     }
   }, [pages.length, currentPagesIdx]);
+
+  React.useEffect(() => {
+    registerGoToPage?.((pageId) => {
+      const index = pages.findIndex((page) => page.id === pageId);
+      if (index < 0) return false;
+      setCurrentPagesIdx(index);
+      return true;
+    });
+  }, [pages, registerGoToPage]);
 
   const isMultiPage = pages.length > 1;
   const hasPageNavigation = topNavigation || bottomNavigation;

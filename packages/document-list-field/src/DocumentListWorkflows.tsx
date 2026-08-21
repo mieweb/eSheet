@@ -6,20 +6,12 @@ import {
   useState,
   type ChangeEvent,
   type FormEvent,
+  type ReactNode,
 } from 'react';
 import { CoreEditor, type AssetLoad } from '@kerebron/editor';
 import { AdvancedEditorKit } from '@kerebron/editor-kits/AdvancedEditorKit';
-import {
-  Button,
-  Input,
-  MarkdownRenderer,
-  Modal,
-  ModalBody,
-  ModalClose,
-  ModalFooter,
-  ModalHeader,
-  ModalTitle,
-} from '@mieweb/ui';
+import { Button, Input, MarkdownRenderer } from '@mieweb/ui';
+import { X } from 'lucide-react';
 import '@kerebron/editor/assets/index.css';
 import '@kerebron/editor-kits/assets/AdvancedEditorKit.css';
 import '@mieweb/ui/markdown.css';
@@ -28,9 +20,13 @@ import type {
   DocumentListContentInput,
   DocumentListRuntimeState,
 } from './document-list-runtime.js';
-import type { DocumentListDocument } from './types.js';
+import { DOCUMENT_LIST_DEFAULT_NOUN, DOCUMENT_LIST_MARKDOWN_TYPE } from './data.js';
+import type {
+  DocumentListDocTypeOption,
+  DocumentListDocument,
+} from './types.js';
 
-const COMPOSE_CONTENT_TYPE = 'text/x-markdown';
+const COMPOSE_CONTENT_TYPE = DOCUMENT_LIST_MARKDOWN_TYPE;
 
 function useIsDark(): boolean {
   const [isDark, setIsDark] = useState(() => {
@@ -225,11 +221,35 @@ if (
   document.head.appendChild(style);
 }
 
-export interface DocumentListWorkflowModalProps {
+export interface DocumentListWorkflowPanelProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
   readonly runtime: DocumentListRuntimeState;
   readonly inputPrefix: string;
+  /** What one row is called, lowercase; defaults to `document`. */
+  readonly noun?: string;
+  /** Column field names the list shows; the compose form asks for those. */
+  readonly fields?: readonly string[];
+  /** Types the field offers; the compose form falls back to free text. */
+  readonly docTypes?: readonly DocumentListDocTypeOption[];
+  /** Compose inline unless the chosen `docType` says otherwise. */
+  readonly defaultInline?: boolean;
+  /** `accept` for the upload file input. */
+  readonly accept?: string;
+  /** Largest upload accepted, in bytes. */
+  readonly maxFileSize?: number;
+}
+
+/** Compose asks for the columns the list shows, and always for the title. */
+function asks(fields: readonly string[] | undefined, name: string): boolean {
+  return !fields || name === 'title' || fields.includes(name);
+}
+
+function requiredMessage(labels: readonly string[]): string {
+  if (labels.length === 1) return `${labels[0]} is required.`;
+  return `${labels.slice(0, -1).join(', ')} and ${
+    labels[labels.length - 1]
+  } are required.`;
 }
 
 function today(): string {
@@ -417,24 +437,90 @@ const DocumentListComposeEditor = forwardRef<
   );
 });
 
-export function DocumentListComposeModal({
+/**
+ * The workflow forms float over the list they belong to rather than dimming the
+ * page, so the row being added stays in its own context.
+ */
+function DocumentListWorkflowPanel({
+  onClose,
+  title,
+  children,
+}: {
+  readonly onClose: () => void;
+  readonly title: string;
+  readonly children: ReactNode;
+}): React.JSX.Element {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') onCloseRef.current();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    panelRef.current
+      ?.querySelector<HTMLElement>('input, select, textarea')
+      ?.focus();
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  return (
+    <div
+      ref={panelRef}
+      className="document-list-workflow-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+    >
+      <div className="document-list-workflow-panel__header">
+        <h3 className="document-list-workflow-panel__title">{title}</h3>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={onClose}
+          aria-label="Close"
+          title="Close"
+        >
+          <X size={16} aria-hidden="true" />
+        </Button>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+export function DocumentListComposePanel({
   open,
   onOpenChange,
   runtime,
   inputPrefix,
-}: DocumentListWorkflowModalProps): React.JSX.Element {
+  noun = DOCUMENT_LIST_DEFAULT_NOUN,
+  fields,
+  docTypes,
+  defaultInline,
+}: DocumentListWorkflowPanelProps): React.JSX.Element | null {
+  const defaultDocType = docTypes?.[0]?.id ?? 'Note';
   const [title, setTitle] = useState('');
   const [subject, setSubject] = useState('');
-  const [docType, setDocType] = useState('Note');
+  const [docType, setDocType] = useState(defaultDocType);
   const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const editorRef = useRef<DocumentListComposeEditorHandle>(null);
+  const asksSubject = asks(fields, 'subject');
+  const asksDocType = asks(fields, 'docType');
+  const requiredLabels = [
+    'Title',
+    ...(asksSubject ? ['Subject'] : []),
+    ...(asksDocType ? ['Document type'] : []),
+  ];
 
   const reset = (): void => {
     setTitle('');
     setSubject('');
-    setDocType('Note');
+    setDocType(defaultDocType);
     setNote('');
     resetFormState(setError, setSaving);
   };
@@ -449,8 +535,12 @@ export function DocumentListComposeModal({
     const trimmedTitle = title.trim();
     const trimmedSubject = subject.trim();
     const trimmedDocType = docType.trim();
-    if (!trimmedTitle || !trimmedSubject || !trimmedDocType) {
-      setError('Title, subject, and document type are required.');
+    if (
+      !trimmedTitle ||
+      (asksSubject && !trimmedSubject) ||
+      (asksDocType && !trimmedDocType)
+    ) {
+      setError(requiredMessage(requiredLabels));
       return;
     }
 
@@ -461,11 +551,10 @@ export function DocumentListComposeModal({
         ? await editorRef.current.getContent()
         : note;
       const id = createDocumentId();
-      const content: DocumentListContentInput = {
-        content: composedNote,
-        contentType: COMPOSE_CONTENT_TYPE,
-        size: contentSize(composedNote),
-      };
+      const inline =
+        docTypes?.find((option) => option.id === trimmedDocType)?.inline ??
+        defaultInline ??
+        false;
       const document: DocumentListDocument = {
         id,
         date: today(),
@@ -475,8 +564,20 @@ export function DocumentListComposeModal({
         docId: id,
         source: 'Compose',
         file: `${id}.md`,
+        ...(inline ? { body: composedNote } : {}),
       };
-      await runtime.saveDocument(document, content);
+      // An inline type keeps its prose on the row, so there is nothing for
+      // the repository to store.
+      await runtime.saveDocument(
+        document,
+        inline
+          ? undefined
+          : {
+              content: composedNote,
+              contentType: COMPOSE_CONTENT_TYPE,
+              size: contentSize(composedNote),
+            }
+      );
       reset();
       onOpenChange(false);
     } catch (saveError) {
@@ -487,18 +588,19 @@ export function DocumentListComposeModal({
     }
   };
 
+  if (!open) return null;
+
   return (
-    <Modal
-      open={open}
-      onOpenChange={handleOpenChange}
-      aria-label="Compose document"
+    <DocumentListWorkflowPanel
+      title={`Compose ${noun}`}
+      onClose={() => handleOpenChange(false)}
     >
-      <ModalHeader>
-        <ModalTitle>Compose document</ModalTitle>
-        <ModalClose />
-      </ModalHeader>
-      <form onSubmit={handleSubmit} noValidate>
-        <ModalBody className="document-list-workflow__body">
+      <form
+        className="document-list-workflow-panel__form"
+        onSubmit={handleSubmit}
+        noValidate
+      >
+        <div className="document-list-workflow-panel__body">
           <Input
             id={inputId(inputPrefix, 'compose-title')}
             label="Title"
@@ -507,23 +609,48 @@ export function DocumentListComposeModal({
             disabled={saving}
             required
           />
-          <Input
-            id={inputId(inputPrefix, 'compose-subject')}
-            label="Subject"
-            value={subject}
-            onChange={(event) => setSubject(event.target.value)}
-            disabled={saving}
-            required
-          />
-          <Input
-            id={inputId(inputPrefix, 'compose-type')}
-            label="Document type"
-            value={docType}
-            onChange={(event) => setDocType(event.target.value)}
-            disabled={saving}
-            required
-          />
-          <div className="document-list-workflow__field">
+          {asksSubject && (
+            <Input
+              id={inputId(inputPrefix, 'compose-subject')}
+              label="Subject"
+              value={subject}
+              onChange={(event) => setSubject(event.target.value)}
+              disabled={saving}
+              required
+            />
+          )}
+          {asksDocType &&
+            (docTypes?.length ? (
+              <div className="document-list-workflow__field">
+                <label htmlFor={inputId(inputPrefix, 'compose-type')}>
+                  Document type
+                </label>
+                <select
+                  id={inputId(inputPrefix, 'compose-type')}
+                  className="document-list-workflow__select"
+                  value={docType}
+                  onChange={(event) => setDocType(event.target.value)}
+                  disabled={saving}
+                  required
+                >
+                  {docTypes.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.label ?? option.id}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <Input
+                id={inputId(inputPrefix, 'compose-type')}
+                label="Document type"
+                value={docType}
+                onChange={(event) => setDocType(event.target.value)}
+                disabled={saving}
+                required
+              />
+            ))}
+          <div className="document-list-workflow__field document-list-workflow__field--grow">
             <label
               id={inputId(inputPrefix, 'compose-note-label')}
               htmlFor={inputId(inputPrefix, 'compose-note')}
@@ -545,8 +672,8 @@ export function DocumentListComposeModal({
               {error}
             </p>
           )}
-        </ModalBody>
-        <ModalFooter>
+        </div>
+        <div className="document-list-workflow-panel__footer">
           <Button
             type="button"
             variant="outline"
@@ -557,20 +684,23 @@ export function DocumentListComposeModal({
             Cancel
           </Button>
           <Button type="submit" variant="primary" size="sm" disabled={saving}>
-            {saving ? 'Saving…' : 'Save document'}
+            {saving ? 'Saving…' : `Save ${noun}`}
           </Button>
-        </ModalFooter>
+        </div>
       </form>
-    </Modal>
+    </DocumentListWorkflowPanel>
   );
 }
 
-export function DocumentListUploadModal({
+export function DocumentListUploadPanel({
   open,
   onOpenChange,
   runtime,
   inputPrefix,
-}: DocumentListWorkflowModalProps): React.JSX.Element {
+  noun = DOCUMENT_LIST_DEFAULT_NOUN,
+  accept,
+  maxFileSize,
+}: DocumentListWorkflowPanelProps): React.JSX.Element | null {
   const [file, setFile] = useState<File | null>(null);
   const [storedName, setStoredName] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -599,6 +729,10 @@ export function DocumentListUploadModal({
     const trimmedStoredName = storedName.trim();
     if (!file || !trimmedStoredName) {
       setError('Choose a file and enter a stored filename.');
+      return;
+    }
+    if (maxFileSize != null && file.size > maxFileSize) {
+      setError(`File is larger than the ${maxFileSize} byte limit.`);
       return;
     }
 
@@ -634,22 +768,24 @@ export function DocumentListUploadModal({
     }
   };
 
+  if (!open) return null;
+
   return (
-    <Modal
-      open={open}
-      onOpenChange={handleOpenChange}
-      aria-label="Upload document"
+    <DocumentListWorkflowPanel
+      title={`Upload ${noun}`}
+      onClose={() => handleOpenChange(false)}
     >
-      <ModalHeader>
-        <ModalTitle>Upload document</ModalTitle>
-        <ModalClose />
-      </ModalHeader>
-      <form onSubmit={handleSubmit} noValidate>
-        <ModalBody className="document-list-workflow__body">
+      <form
+        className="document-list-workflow-panel__form"
+        onSubmit={handleSubmit}
+        noValidate
+      >
+        <div className="document-list-workflow-panel__body">
           <Input
             id={inputId(inputPrefix, 'upload-file')}
             label="Choose a file"
             type="file"
+            accept={accept}
             onChange={handleFileChange}
             disabled={saving}
           />
@@ -672,8 +808,8 @@ export function DocumentListUploadModal({
               {error}
             </p>
           )}
-        </ModalBody>
-        <ModalFooter>
+        </div>
+        <div className="document-list-workflow-panel__footer">
           <Button
             type="button"
             variant="outline"
@@ -684,11 +820,11 @@ export function DocumentListUploadModal({
             Cancel
           </Button>
           <Button type="submit" variant="primary" size="sm" disabled={saving}>
-            {saving ? 'Saving…' : 'Save document'}
+            {saving ? 'Saving…' : `Save ${noun}`}
           </Button>
-        </ModalFooter>
+        </div>
       </form>
-    </Modal>
+    </DocumentListWorkflowPanel>
   );
 }
 

@@ -169,6 +169,8 @@ export interface EsheetRendererHandle {
   setTouchMode: (enabled: boolean) => void;
   /** Reset to auto-detection mode (clears manual override). Only works when touchMode='auto'. */
   resetTouchMode: () => void;
+  /** Show the page with this id. Returns `false` when the form has no such page. */
+  goToPage: (pageId: string) => boolean;
 }
 
 /**
@@ -307,6 +309,14 @@ const EsheetRendererInner = React.forwardRef<
   );
 
   // Expose ref API
+  const goToPageRef = React.useRef<((pageId: string) => boolean) | null>(null);
+  const registerGoToPage = React.useCallback(
+    (goToPage: (pageId: string) => boolean) => {
+      goToPageRef.current = goToPage;
+    },
+    []
+  );
+
   React.useImperativeHandle(
     ref,
     () => ({
@@ -366,6 +376,7 @@ const EsheetRendererInner = React.forwardRef<
       isTouchModeEnabled: () => isTouchEnabled,
       setTouchMode: setTouchModeInternal,
       resetTouchMode: resetTouchModeInternal,
+      goToPage: (pageId: string) => goToPageRef.current?.(pageId) ?? false,
     }),
     [
       formStore,
@@ -407,6 +418,7 @@ const EsheetRendererInner = React.forwardRef<
         topNavigation={topNavigation}
         bottomNavigation={bottomNavigation}
         validateNavigation={validateNavigation}
+        registerGoToPage={registerGoToPage}
       />
       {onSubmit && (
         <div className="renderer-submit ms:mt-6 ms:flex ms:justify-end">

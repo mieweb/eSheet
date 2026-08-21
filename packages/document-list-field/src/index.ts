@@ -22,9 +22,9 @@ export function registerDocumentListFieldType(): void {
 export { DocumentListField } from './DocumentListField.js';
 export {
   configureDocumentListComposeEditor,
-  DocumentListComposeModal,
+  DocumentListComposePanel,
   DocumentListDetailRow,
-  DocumentListUploadModal,
+  DocumentListUploadPanel,
 } from './DocumentListWorkflows.js';
 export {
   DocumentListFieldProvider,
@@ -43,6 +43,8 @@ export {
   documentListValueFromRows,
   DOCUMENT_LIST_ACTIONS_COLUMN,
   DOCUMENT_LIST_COLUMNS,
+  DOCUMENT_LIST_DEFAULT_NOUN,
+  DOCUMENT_LIST_MARKDOWN_TYPE,
   DOCUMENT_LIST_TYPE_INFO,
   normalizeDocumentRow,
   normalizeDocumentRows,
@@ -62,9 +64,11 @@ export type {
 export type {
   DocumentListAction,
   DocumentListDefinition,
+  DocumentListDocTypeOption,
   DocumentListDocument,
   DocumentListInput,
   DocumentListValue,
+  DocumentListWorkflow,
 } from './types.js';
 export type {
   CreateDocumentListRuntimeExtensionOptions,
