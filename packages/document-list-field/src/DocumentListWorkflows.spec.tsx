@@ -97,7 +97,8 @@ vi.mock('@kerebron/editor-kits/AdvancedEditorKit', () => ({
   AdvancedEditorKit: class AdvancedEditorKit {},
 }));
 
-vi.mock('@mieweb/ui', () => {
+vi.mock('@mieweb/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@mieweb/ui')>();
   const Button = ({
     children,
     ...props
@@ -150,6 +151,8 @@ vi.mock('@mieweb/ui', () => {
     <footer>{children}</footer>
   );
   return {
+    // The detail preview renders markdown with the real MarkdownRenderer.
+    MarkdownRenderer: actual.MarkdownRenderer,
     Button,
     Input,
     Modal,
@@ -420,7 +423,7 @@ describe('document list detail row', () => {
     expect(screen.queryByRole('status')).toBeNull();
   });
 
-  it('renders markdown content with Kerebron formatting', async () => {
+  it('renders markdown content as formatted preview', async () => {
     const content: DocumentListContent = {
       text: '# Visit note\n\n- First item\n- Second item',
       contentType: 'text/x-markdown',

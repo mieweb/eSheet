@@ -128,57 +128,40 @@
 
 .document-list-detail__preview {
   min-width: 0;
-  color: var(--kb-color-text, var(--mieweb-foreground, #1f2937));
+  color: var(--mieweb-foreground, #1f2937);
 }
 
-.document-list-detail__preview .kb-custom-menu,
-.document-list-detail__preview .kb-custom-menu__overflow-menu {
-  display: none !important;
-}
-
-.document-list-detail__preview .kb-custom-menu__editor {
-  display: block;
-  max-height: none;
-  overflow: visible;
-}
-
-.document-list-detail__preview .ProseMirror {
-  min-height: 0;
-  outline: none;
-  padding: 0 0 0 0.75rem;
-}
-
-.document-list-detail__preview .ProseMirror h1 {
+.document-list-detail__preview h1 {
   font-size: 2em;
   font-weight: bold;
   margin: 0.67em 0;
 }
 
-.document-list-detail__preview .ProseMirror h2 {
+.document-list-detail__preview h2 {
   font-size: 1.5em;
   font-weight: bold;
   margin: 0.75em 0;
 }
 
-.document-list-detail__preview .ProseMirror h3 {
+.document-list-detail__preview h3 {
   font-size: 1.17em;
   font-weight: bold;
   margin: 0.83em 0;
 }
 
-.document-list-detail__preview .ProseMirror ul {
+.document-list-detail__preview ul {
   list-style: disc;
   padding-left: 1.5em;
 }
 
-.document-list-detail__preview .ProseMirror ol {
+.document-list-detail__preview ol {
   list-style: decimal;
   padding-left: 1.5em;
 }
 
-.document-list-detail__preview .ProseMirror blockquote {
-  border-left: 3px solid var(--kb-color-border);
-  color: var(--kb-color-text-muted);
+.document-list-detail__preview blockquote {
+  border-left: 3px solid var(--mieweb-border, #e5e7eb);
+  color: var(--mieweb-muted-foreground, #64748b);
   margin-left: 0;
   padding-left: 1em;
 }

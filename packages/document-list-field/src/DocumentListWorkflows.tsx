@@ -12,6 +12,7 @@ import { AdvancedEditorKit } from '@kerebron/editor-kits/AdvancedEditorKit';
 import {
   Button,
   Input,
+  MarkdownRenderer,
   Modal,
   ModalBody,
   ModalClose,
@@ -21,6 +22,7 @@ import {
 } from '@mieweb/ui';
 import '@kerebron/editor/assets/index.css';
 import '@kerebron/editor-kits/assets/AdvancedEditorKit.css';
+import '@mieweb/ui/markdown.css';
 import type {
   DocumentListContent,
   DocumentListContentInput,
@@ -737,38 +739,10 @@ function DocumentListMarkdownPreview({
 }: {
   readonly content: string;
 }): React.JSX.Element {
-  const hostRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const host = hostRef.current;
-    if (!host) return;
-
-    const mount = document.createElement('div');
-    host.appendChild(mount);
-    const editor = CoreEditor.create({
-      element: mount,
-      uri: 'file:///document-list-detail.md',
-      assetLoad: composeAssetLoad,
-      editorKits: [new AdvancedEditorKit()],
-      readOnly: true,
-    });
-
-    void editor
-      .loadDocument(COMPOSE_CONTENT_TYPE, new TextEncoder().encode(content))
-      .catch(() => undefined);
-
-    return () => {
-      editor.destroy();
-      host.replaceChildren();
-    };
-  }, [content]);
-
   return (
-    <div
-      ref={hostRef}
-      className="kb-component document-list-detail__preview"
-      aria-label="Document content"
-    />
+    <div className="document-list-detail__preview" aria-label="Document content">
+      <MarkdownRenderer text={content} />
+    </div>
   );
 }
 
