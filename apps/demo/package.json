@@ -8,7 +8,8 @@
     "dev": "pnpm build:css && vite",
     "lint": "eslint .",
     "preview": "vite preview",
-    "typecheck": "tsc --build --emitDeclarationOnly --force"
+    "typecheck": "tsc --build --emitDeclarationOnly --force",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@esheet/adapters": "workspace:*",
@@ -27,6 +28,7 @@
     "react-router-dom": "^7.18.2"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@types/js-yaml": "^4.0.9"
   }
 }

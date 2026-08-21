@@ -18,11 +18,26 @@ const isDev = import.meta.env.DEV;
 const landingUrl = isDev ? 'http://localhost:3000/' : '/';
 const docsUrl = isDev ? 'http://localhost:3000/docs/intro' : '/docs/intro';
 const demoUrl = isDev ? 'http://localhost:3001/' : '/demo/';
+const LOCO_MODE_KEY = 'esheet-loco-mode';
+const LOCO_LANGUAGE_KEY = 'loco-lang';
+const LOCO_API_URL = 'https://loco.os.mieweb.org';
+const LOCO_API_KEY = '202337e52dff4fb69e97857d';
 
 export function Navbar() {
   const { theme, setTheme } = useTheme();
   const { brand, setBrand, brands } = useBrand();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [language, setLanguage] = useState(
+    () => localStorage.getItem(LOCO_LANGUAGE_KEY) ?? ''
+  );
+  const [locoMode, setLocoMode] = useState<'offline' | 'online'>(() => {
+    return localStorage.getItem(LOCO_MODE_KEY) === 'online'
+      ? 'online'
+      : 'offline';
+  });
+  const [languages, setLanguages] = useState<
+    Array<{ code: string; name: string }>
+  >([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
 
@@ -50,6 +65,35 @@ export function Navbar() {
   useEffect(() => {
     if (theme === 'system') setTheme('light');
   }, [theme, setTheme]);
+
+  useEffect(() => {
+    if (!settingsOpen || !window.Loco || languages.length > 0) return;
+
+    let active = true;
+    window.Loco.languages().then((availableLanguages) => {
+      if (active) setLanguages(availableLanguages);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [languages.length, settingsOpen]);
+
+  const handleLanguageChange = (value: string) => {
+    setLanguage(value);
+    if (value) {
+      void window.Loco?.apply(value);
+    } else {
+      window.Loco?.restore();
+    }
+  };
+
+  const handleLocoModeChange = (value: string) => {
+    const nextMode = value === 'online' ? 'online' : 'offline';
+    localStorage.setItem(LOCO_MODE_KEY, nextMode);
+    setLocoMode(nextMode);
+    window.location.reload();
+  };
 
   const logoLink = (
     <a
@@ -199,6 +243,33 @@ export function Navbar() {
             onValueChange={(val) => setBrand(val as typeof brand)}
             options={brands.map((b) => ({ value: b.value, label: b.label }))}
           />
+          <Select
+            label="Language"
+            value={language}
+            onValueChange={handleLanguageChange}
+            options={[
+              { value: '', label: 'Original' },
+              ...languages.map((item) => ({
+                value: item.code,
+                label: item.name,
+              })),
+            ]}
+          />
+          <Select
+            label="Translation mode"
+            value={locoMode}
+            onValueChange={handleLocoModeChange}
+            options={[
+              { value: 'offline', label: 'Offline (local approved translations)' },
+              { value: 'online', label: 'Online (Loco API)' },
+            ]}
+          />
+          {locoMode === 'online' && (
+            <div className="rounded-md border border-border bg-muted p-3 text-xs text-muted-foreground">
+              <div>API URL: {LOCO_API_URL}</div>
+              <div>API key: {LOCO_API_KEY}</div>
+            </div>
+          )}
         </ModalBody>
         <ModalFooter>
           <Button
