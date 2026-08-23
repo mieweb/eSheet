@@ -3,9 +3,11 @@ import { useState } from 'react';
 import type { FormDefinition } from '@esheet/core';
 import { DocumentListComposePanel } from './DocumentListWorkflows.js';
 import { parseMdy } from './mdy.js';
-import type { DocumentListRuntimeState } from './document-list-runtime.js';
 import type {
   DocumentListContentInput,
+  DocumentListRuntimeState,
+} from './document-list-runtime.js';
+import type {
   DocumentListDocument,
   DocumentListWorkflowMode,
 } from './types.js';

@@ -758,43 +758,6 @@ export interface DocumentListDetailRowProps {
   readonly runtime: DocumentListRuntimeState;
 }
 
-function formatSize(size: number | undefined): string {
-  return size == null ? 'Unknown' : `${size} bytes`;
-}
-
-function ContentMetadata({
-  document,
-  content,
-}: {
-  readonly document: DocumentListDocument;
-  readonly content?: DocumentListContent;
-}): React.JSX.Element {
-  return (
-    <dl className="document-list-detail__content-meta">
-      <div>
-        <dt>Content</dt>
-        <dd>
-          {content?.text != null
-            ? 'Text content'
-            : 'Unavailable or unsupported'}
-        </dd>
-      </div>
-      <div>
-        <dt>Reference</dt>
-        <dd>{content?.reference ?? document.file}</dd>
-      </div>
-      <div>
-        <dt>Type</dt>
-        <dd>{content?.contentType ?? document.docType}</dd>
-      </div>
-      <div>
-        <dt>Size</dt>
-        <dd>{formatSize(content?.size)}</dd>
-      </div>
-    </dl>
-  );
-}
-
 function DocumentListMarkdownPreview({
   content,
 }: {
@@ -848,26 +811,9 @@ export function DocumentListDetailRow({
     content?.contentType === COMPOSE_CONTENT_TYPE && content.text != null;
 
   return (
+    // The row is the document. Date, title, type and source are already
+    // columns in the grid above, so repeating them here says nothing.
     <div className="document-list-detail">
-      <strong className="document-list-detail__title">{document.title}</strong>
-      <dl className="document-list-detail__metadata">
-        <div>
-          <dt>Date</dt>
-          <dd>{document.date}</dd>
-        </div>
-        <div>
-          <dt>Subject</dt>
-          <dd>{document.subject}</dd>
-        </div>
-        <div>
-          <dt>Document type</dt>
-          <dd>{document.docType}</dd>
-        </div>
-        <div>
-          <dt>Source</dt>
-          <dd>{document.source}</dd>
-        </div>
-      </dl>
       {loading && <p role="status">Loading document content…</p>}
       {error && (
         <p className="document-list-workflow__error" role="alert">
@@ -888,8 +834,10 @@ export function DocumentListDetailRow({
           alt={document.title}
         />
       )}
-      {!loading && content?.text == null && !isImage && (
-        <ContentMetadata document={document} content={content} />
+      {!loading && !error && content?.text == null && !isImage && (
+        <p className="document-list-detail__empty">
+          No preview for this document.
+        </p>
       )}
     </div>
   );

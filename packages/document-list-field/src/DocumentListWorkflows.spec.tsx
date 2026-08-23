@@ -558,7 +558,7 @@ describe('document list detail row', () => {
     expect(preview?.textContent).not.toContain('- First item');
   });
 
-  it('renders image references and metadata fallback content', async () => {
+  it('renders image references and says so when there is nothing to preview', async () => {
     const imageRuntime = createRuntime(async () => ({
       reference: 'https://example.test/document.png',
       contentType: 'image/png',
@@ -584,12 +584,13 @@ describe('document list detail row', () => {
       <DocumentListDetailRow document={document} runtime={fallbackRuntime} />
     );
 
-    expect(await screen.findByText('document.pdf')).toBeTruthy();
-    expect(screen.getByText('application/pdf')).toBeTruthy();
-    expect(screen.getByText('2048 bytes')).toBeTruthy();
+    expect(await screen.findByText('No preview for this document.')).toBeTruthy();
+    // The grid already carries the row's date, title, type and source.
+    expect(screen.queryByText(document.docType)).toBeNull();
+    expect(screen.queryByText(document.source)).toBeNull();
   });
 
-  it('falls back to metadata when content loading fails', async () => {
+  it('reports a content loading failure', async () => {
     const runtime = createRuntime(async () => {
       throw new Error('content unavailable');
     });
@@ -601,6 +602,6 @@ describe('document list detail row', () => {
         'Could not load document content: content unavailable'
       )
     ).toBeTruthy();
-    expect(screen.getByText(document.file)).toBeTruthy();
+    expect(screen.queryByText('No preview for this document.')).toBeNull();
   });
 });

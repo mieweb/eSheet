@@ -228,29 +228,9 @@
   padding: 0.75rem 1rem;
 }
 
-.document-list-detail__title {
-  font-size: 0.875rem;
-}
-
-.document-list-detail__metadata,
-.document-list-detail__content-meta {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-  gap: 0.5rem 1.5rem;
-  margin: 0;
-  font-size: 0.875rem;
-}
-
-.document-list-detail__metadata dt,
-.document-list-detail__content-meta dt {
+.document-list-detail__empty {
   color: var(--mieweb-muted-foreground, #64748b);
-  font-weight: 600;
-}
-
-.document-list-detail__metadata dd,
-.document-list-detail__content-meta dd {
-  margin: 0;
-  overflow-wrap: anywhere;
+  font-size: 0.875rem;
 }
 
 .document-list-detail__text {
