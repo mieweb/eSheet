@@ -14,6 +14,7 @@ import {
   isComposeDraftDirty,
 } from './DocumentListWorkflows.js';
 import type { DocumentListRuntimeState } from './document-list-runtime.js';
+import type { DocumentDraft } from './draftChannel.js';
 import type {
   DocumentListAuthor,
   DocumentListComposeDraft,
@@ -43,6 +44,10 @@ export interface ComposerSession {
   readonly runtime: DocumentListRuntimeState;
   readonly config: ComposerSessionConfig;
   readonly draft: DocumentListComposeDraft;
+  /** The shared draft this session edits (ED.36/37); absent when composing new. */
+  readonly documentDraft?: DocumentDraft;
+  /** The row the shared draft revises. */
+  readonly documentId?: string;
 }
 
 export interface ComposerSessionValue {
@@ -52,6 +57,10 @@ export interface ComposerSessionValue {
     fieldId: string;
     runtime: DocumentListRuntimeState;
     config: ComposerSessionConfig;
+    documentDraft?: DocumentDraft;
+    documentId?: string;
+    /** Prefill for the compose draft (e.g. the head revision, ED.40). */
+    draft?: DocumentListComposeDraft;
   }) => void;
   readonly setMode: (mode: DocumentListWorkflowMode) => void;
   readonly setDraft: (draft: DocumentListComposeDraft) => void;
@@ -79,7 +88,7 @@ export function useComposerSessionValue(): ComposerSessionValue {
   return useMemo<ComposerSessionValue>(
     () => ({
       session,
-      open: ({ kind, fieldId, runtime, config }) =>
+      open: ({ kind, fieldId, runtime, config, documentDraft, documentId, draft }) =>
         setSession((current) => {
           // A dirty draft is never replaced: composing again restores it.
           if (current && sessionIsDirty(current)) {
@@ -87,6 +96,7 @@ export function useComposerSessionValue(): ComposerSessionValue {
               ? current
               : { ...current, mode: 'full' };
           }
+          current?.documentDraft?.close();
           nextIdRef.current += 1;
           return {
             id: `composer-${nextIdRef.current}`,
@@ -95,7 +105,10 @@ export function useComposerSessionValue(): ComposerSessionValue {
             fieldId,
             runtime,
             config,
-            draft: emptyComposeDraft(composeDefaultDocType(config.docTypes)),
+            documentDraft,
+            documentId,
+            draft:
+              draft ?? emptyComposeDraft(composeDefaultDocType(config.docTypes)),
           };
         }),
       setMode: (mode) =>
@@ -143,6 +156,7 @@ export function ComposerSessionOverlay({
         docTypes={config.docTypes}
         defaultInline={config.defaultInline}
         author={config.author}
+        documentDraft={session.documentDraft}
         mode={session.mode}
         onModeChange={setMode}
         draft={session.draft}

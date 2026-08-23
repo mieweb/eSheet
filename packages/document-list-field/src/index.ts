@@ -118,6 +118,7 @@ export type {
   DraftMeta,
   DraftPresence,
 } from './draftChannel.js';
+export { bindDraftAnswers } from './draftBinding.js';
 export type {
   CreateDocumentListRuntimeExtensionOptions,
   DocumentListContent,

@@ -8,6 +8,8 @@ import type {
   ValidationError,
 } from '@esheet/core';
 import type { MdyFrontMatter } from './mdy.js';
+import type { DocumentDraft } from './draftChannel.js';
+import { bindDraftAnswers } from './draftBinding.js';
 
 /**
  * The field type `@esheet/field-kerebron` registers for prose. A document type
@@ -42,6 +44,8 @@ export interface DocumentListDefinitionFormProps {
   readonly definitionVersion?: string;
   /** Fires whenever the form goes from empty to answered, or back. */
   readonly onDirtyChange?: (dirty: boolean) => void;
+  /** Binds every answer to the shared draft (ED.37); local-only when absent. */
+  readonly draft?: DocumentDraft;
 }
 
 /** Ordered field ids: pages, then each page's fields and their children. */
@@ -103,11 +107,12 @@ export const DocumentListDefinitionForm = forwardRef<
   DocumentListDefinitionFormHandle,
   DocumentListDefinitionFormProps
 >(function DocumentListDefinitionForm(
-  { definition, docType, definitionVersion, onDirtyChange },
+  { definition, docType, definitionVersion, onDirtyChange, draft },
   handle
 ): React.JSX.Element {
   const renderer = useRef<EsheetRendererHandle>(null);
   const unsubscribe = useRef<(() => void) | null>(null);
+  const unbindDraft = useRef<(() => void) | null>(null);
 
   useImperativeHandle(handle, () => ({
     collect: () => {
@@ -141,15 +146,25 @@ export const DocumentListDefinitionForm = forwardRef<
     },
   }));
 
-  // Nothing else owns the subscription, so it has to end with the panel.
-  useEffect(() => () => unsubscribe.current?.(), []);
+  // Nothing else owns the subscriptions, so they have to end with the panel.
+  useEffect(
+    () => () => {
+      unsubscribe.current?.();
+      unbindDraft.current?.();
+    },
+    []
+  );
 
   // The renderer has no onChange, so the dock's unsaved dot watches the store.
   // `onReady` fires after loadDefinition, which resets responses.
   const handleReady = (): void => {
     unsubscribe.current?.();
+    unbindDraft.current?.();
     const store = renderer.current?.getFormStore();
     if (!store) return;
+    // Bind first: a shared draft's answers must win over the fresh form
+    // before the dirty watcher starts reporting.
+    if (draft) unbindDraft.current = bindDraftAnswers(store, draft);
     let dirty = false;
     unsubscribe.current = store.subscribe((state, previous) => {
       if (state.responses === previous.responses) return;

@@ -24,6 +24,7 @@ import {
   type DocumentListDefinitionFormHandle,
 } from './DocumentListDefinitionForm.js';
 import { createMdy, mdyBody } from './mdy.js';
+import type { DocumentDraft, DraftBodyRoom } from './draftChannel.js';
 import type {
   DocumentListAuthor,
   DocumentListComposeDraft,
@@ -128,6 +129,12 @@ export interface DocumentListWorkflowPanelProps {
   readonly maxFileSize?: number;
   /** Stamped as `author` onto rows this panel saves; absent = unattributed. */
   readonly author?: DocumentListAuthor;
+  /**
+   * The shared draft this panel edits (ED.37). The body binds to its room,
+   * note-tier meta and definition answers bind to its answers map, and
+   * closing the panel leaves the draft intact for whoever else is in it.
+   */
+  readonly documentDraft?: DocumentDraft;
   /** Full-screen unless the owner has collapsed the panel to the dock. */
   readonly mode?: DocumentListWorkflowMode;
   /** Supplying this makes the panel dockable; omitting it keeps it modal. */
@@ -144,6 +151,9 @@ export interface DocumentListWorkflowPanelProps {
 function asks(fields: readonly string[] | undefined, name: string): boolean {
   return !fields || name === 'title' || fields.includes(name);
 }
+
+/** Note-tier meta shared through the draft's answers map, as `meta:<key>`. */
+const META_KEYS = ['title', 'subject', 'docType'] as const;
 
 function requiredMessage(labels: readonly string[]): string {
   if (labels.length === 1) return `${labels[0]} is required.`;
@@ -215,6 +225,8 @@ interface DocumentListComposeEditorProps {
   readonly labelledBy: string;
   readonly onChange: (value: string) => void;
   readonly value: string;
+  /** Joins the draft's shared body; the CRDT owns the content when set. */
+  readonly collab?: DraftBodyRoom;
 }
 
 type DocumentListComposeEditorHandle = RichEditorHandle;
@@ -224,7 +236,7 @@ const DocumentListComposeEditor = forwardRef<
   DocumentListComposeEditorHandle,
   DocumentListComposeEditorProps
 >(function DocumentListComposeEditor(
-  { ariaLabel, disabled, id, labelledBy, onChange, value },
+  { ariaLabel, disabled, id, labelledBy, onChange, value, collab },
   ref
 ): React.JSX.Element {
   return (
@@ -238,6 +250,11 @@ const DocumentListComposeEditor = forwardRef<
       aria-label={ariaLabel}
       aria-labelledby={labelledBy}
       assetLoad={composeAssetLoad}
+      collab={
+        collab
+          ? { room: collab.room, wsUrl: collab.wsUrl, params: { ...collab.params } }
+          : undefined
+      }
     />
   );
 });
@@ -295,6 +312,7 @@ export function DocumentListComposePanel({
   docTypes,
   defaultInline,
   author,
+  documentDraft,
   mode = 'full',
   onModeChange,
   draft,
@@ -329,20 +347,60 @@ export function DocumentListComposePanel({
     ...(asksDocType ? ['Document type'] : []),
   ];
 
-  const updateDraft = (patch: Partial<DocumentListComposeDraft>): void => {
-    const next = { ...activeDraft, ...patch };
+  const activeDraftRef = useRef(activeDraft);
+  activeDraftRef.current = activeDraft;
+
+  const updateDraft = (
+    patch: Partial<DocumentListComposeDraft>,
+    options?: { share?: boolean }
+  ): void => {
+    const next = { ...activeDraftRef.current, ...patch };
     setLocalDraft(next);
     onDraftChange?.(next);
+    // Note-tier meta is shared state too; the body syncs through its room.
+    if (documentDraft && options?.share !== false) {
+      for (const key of META_KEYS) {
+        if (key in patch) documentDraft.setAnswer(`meta:${key}`, next[key]);
+      }
+    }
   };
 
+  // Remote meta edits land in the local draft state; identical values are
+  // dropped so our own setAnswer echoes (the channel notifies local writes
+  // too) cannot ping-pong.
+  useEffect(() => {
+    if (!documentDraft) return;
+    const apply = (answers: Readonly<Record<string, unknown>>): void => {
+      const patch: Partial<DocumentListComposeDraft> = {};
+      for (const key of META_KEYS) {
+        const value = answers[`meta:${key}`];
+        if (typeof value === 'string' && value !== activeDraftRef.current[key]) {
+          patch[key] = value;
+        }
+      }
+      if (Object.keys(patch).length === 0) return;
+      const next = { ...activeDraftRef.current, ...patch };
+      setLocalDraft(next);
+      onDraftChange?.(next);
+    };
+    apply(documentDraft.getAnswers());
+    return documentDraft.onAnswers(apply);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [documentDraft]);
+
   const reset = (): void => {
-    updateDraft(emptyComposeDraft(defaultDocType));
+    // Local only: resetting the panel must never blank the shared draft.
+    updateDraft(emptyComposeDraft(defaultDocType), { share: false });
     setDefinitionDirty(false);
     resetFormState(setError, setSaving);
   };
 
   const handleOpenChange = (nextOpen: boolean): void => {
-    if (!nextOpen && !saving) reset();
+    if (!nextOpen && !saving) {
+      // Leaving is not discarding: the draft stays for whoever else is in it.
+      documentDraft?.close();
+      reset();
+    }
     onOpenChange(nextOpen);
   };
 
@@ -576,6 +634,7 @@ export function DocumentListComposePanel({
                 docType={activeDraft.docType}
                 definitionVersion={selectedType?.definitionVersion}
                 onDirtyChange={setDefinitionDirty}
+                draft={documentDraft}
               />
             ) : (
               <>
@@ -590,9 +649,14 @@ export function DocumentListComposePanel({
                   id={inputId(inputPrefix, 'compose-note')}
                   ariaLabel="Note"
                   labelledBy={inputId(inputPrefix, 'compose-note-label')}
-                  value={activeDraft.note}
+                  // Joiners must not seed the shared body: only the opener's
+                  // prefill loads; after that the CRDT owns the content.
+                  value={
+                    documentDraft && !documentDraft.isNew ? '' : activeDraft.note
+                  }
                   onChange={(note) => updateDraft({ note })}
                   disabled={saving}
+                  collab={documentDraft?.body}
                 />
               </>
             )}

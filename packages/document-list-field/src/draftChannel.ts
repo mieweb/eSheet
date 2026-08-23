@@ -43,11 +43,14 @@ export interface DraftPresence {
 
 /** One open draft, as the field sees it. */
 export interface DocumentDraft {
+  /** True when this open *created* the draft — the opener seeds prefills. */
+  readonly isNew: boolean;
   /** The body room the compose editor binds to via its `collab` prop. */
   readonly body: DraftBodyRoom;
   readonly meta: DraftMeta;
   /** Definition-tier answers proposed by the draft (ED.37 binds them). */
   getAnswers(): Readonly<Record<string, unknown>>;
+  /** `undefined` deletes the key — a cleared field is a proposal too. */
   setAnswer(fieldId: string, value: unknown): void;
   /** Fires on any remote answers change; returns the unsubscriber. */
   onAnswers(listener: (answers: Readonly<Record<string, unknown>>) => void): () => void;
