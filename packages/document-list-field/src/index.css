@@ -298,13 +298,14 @@
   max-height: none;
 }
 
-/* Long letters stay readable on wide monitors; the toolbar keeps full bleed. */
+/* Long letters keep a readable measure, but start at the panel's left margin —
+   centring reads as an accidental indent against the full-bleed toolbar. */
 .document-list-workflow__field--grow .document-list-compose-editor .kb-editor,
 .document-list-workflow__field--grow
   .document-list-compose-editor
   .ProseMirror {
   max-width: 60rem;
-  margin-inline: auto;
+  margin-inline: 0;
   width: 100%;
 }
 
