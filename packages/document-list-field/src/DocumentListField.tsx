@@ -32,9 +32,14 @@ import {
 } from './document-list-runtime.js';
 import { DocumentListDetailRow } from './DocumentListWorkflows.js';
 import type {
+  DocumentListCapabilities,
   DocumentListDefinition,
   DocumentListDocument,
   DocumentListWorkflow,
+} from './types.js';
+import {
+  permissiveDocumentListCapabilities,
+  readOnlyDocumentListCapabilities,
 } from './types.js';
 
 const subscribeToNothing = (): (() => void) => () => {};
@@ -74,6 +79,18 @@ function runtimeRows(
   });
 }
 
+/** May this user author any of the types the compose picker would offer? */
+function canCreateAny(
+  capabilities: DocumentListCapabilities,
+  definition: DocumentListDefinition
+): boolean {
+  if (!definition.docTypes || definition.docTypes.length === 0) {
+    // Free-text type: the host answers for the field's default ('').
+    return capabilities.create('');
+  }
+  return definition.docTypes.some((docType) => capabilities.create(docType.id));
+}
+
 export function DocumentListField({
   field,
   form,
@@ -82,6 +99,11 @@ export function DocumentListField({
 }: FieldComponentProps): React.JSX.Element {
   const definition = field.definition as DocumentListDefinition;
   const host = useDocumentListFieldHost();
+  // A bare field with no provider is a local preview with nothing to protect;
+  // a host that says nothing gets read-only — absence must never widen access.
+  const capabilities = host
+    ? host.capabilities ?? readOnlyDocumentListCapabilities
+    : permissiveDocumentListCapabilities;
   const formStore = useContext(FormStoreContext);
   const initialRows = useMemo(
     () =>
@@ -108,10 +130,10 @@ export function DocumentListField({
         : null,
     getEmptyRuntimeState
   );
-  const rows = useMemo(
-    () => runtimeRows(runtimeState) ?? initialRows,
-    [initialRows, runtimeState]
-  );
+  const rows = useMemo(() => {
+    const all = runtimeRows(runtimeState) ?? initialRows;
+    return all.filter((row) => capabilities.view(row));
+  }, [capabilities, initialRows, runtimeState]);
   const [detailRowsExpanded, setDetailRowsExpanded] = useState(false);
   const sharedSession = useComposerSession();
   // Standalone fields (no provider) keep a session of their own, so the panel
@@ -144,7 +166,10 @@ export function DocumentListField({
     inputPrefix,
     noun,
     fields: columnFields,
-    docTypes: definition.docTypes,
+    // The picker offers only what this user may author.
+    docTypes: definition.docTypes?.filter((docType) =>
+      capabilities.create(docType.id)
+    ),
     defaultInline: definition.inline,
     accept: definition.accept,
     maxFileSize: definition.maxFileSize,
@@ -163,14 +188,15 @@ export function DocumentListField({
         runtime,
         config: composerConfig,
       });
+  const mayCreate = canCreateAny(capabilities, definition);
   const handleCompose =
-    runtimeState && offers(definition, 'compose')
+    runtimeState && offers(definition, 'compose') && mayCreate
       ? host?.onCompose
         ? () => void host.onCompose?.(runtimeState)
         : openSession('compose', runtimeState)
       : undefined;
   const handleUpload =
-    runtimeState && offers(definition, 'upload')
+    runtimeState && offers(definition, 'upload') && mayCreate
       ? host?.onUpload
         ? () => void host.onUpload?.(runtimeState)
         : openSession('upload', runtimeState)

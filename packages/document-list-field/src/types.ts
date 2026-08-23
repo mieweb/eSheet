@@ -78,6 +78,27 @@ export interface DocumentListCapabilities {
   remove(document: DocumentListDocument): boolean;
 }
 
+/**
+ * Everything allowed — for previews, demos and tests, where there is nobody
+ * to protect anything from. A real host resolves its own object instead.
+ */
+export const permissiveDocumentListCapabilities: DocumentListCapabilities = {
+  view: () => true,
+  create: () => true,
+  edit: () => true,
+  append: () => true,
+  remove: () => true,
+};
+
+/** Look, but touch nothing — what a host gets by saying nothing. */
+export const readOnlyDocumentListCapabilities: DocumentListCapabilities = {
+  view: () => true,
+  create: () => false,
+  edit: () => false,
+  append: () => false,
+  remove: () => false,
+};
+
 
 export interface DocumentListInput {
   readonly id?: unknown;

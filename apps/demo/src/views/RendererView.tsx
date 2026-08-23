@@ -7,6 +7,7 @@ import {
   type ResponseFormat,
 } from '@esheet/renderer';
 import { createDocumentListFieldProvider } from '@esheet/document-list-field';
+import { permissiveDocumentListCapabilities } from '@esheet/document-list-field';
 import { Navbar } from '../components/Navbar';
 import {
   Alert,
@@ -215,7 +216,8 @@ export function RendererView() {
 
   const hasForm = rawInput != null;
   const documentListProvider = createDocumentListFieldProvider(
-    {},
+    // A demo protects nothing; a real host resolves its own capabilities.
+    { capabilities: permissiveDocumentListCapabilities },
     { repository: documentRepository }
   );
 

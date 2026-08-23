@@ -9,6 +9,7 @@ import {
   useDocumentListFieldRuntime,
 } from './DocumentListGrid.js';
 import type { DocumentListDocument } from './types.js';
+import { permissiveDocumentListCapabilities } from './types.js';
 
 vi.mock('@mieweb/ui/datavis', () => ({
   DataVisNitroContext: {
@@ -150,8 +151,7 @@ describe('DocumentListFieldProvider', () => {
 
   // The reason the composer session is hoisted at all: eSheet's pages
   // navigator unmounts the page the draft was started from.
-  it('keeps a docked draft when the field that opened it unmounts', async () => {
-    const formStore = createFormStore();
+  it('keeps a docked draft when the field that opened it unmounts', async () => {    const formStore = createFormStore();
     const field = {
       definition: { id: 'documents', question: 'Documents' },
     } as unknown as FieldComponentProps['field'];
@@ -162,7 +162,9 @@ describe('DocumentListFieldProvider', () => {
     } as unknown as FieldComponentProps;
     const tree = (visible: boolean): React.JSX.Element => (
       <FormStoreContext.Provider value={formStore}>
-        <DocumentListFieldProvider host={{}}>
+        <DocumentListFieldProvider
+          host={{ capabilities: permissiveDocumentListCapabilities }}
+        >
           {visible ? <DocumentListField {...fieldProps} /> : null}
         </DocumentListFieldProvider>
       </FormStoreContext.Provider>
@@ -195,5 +197,70 @@ describe('DocumentListFieldProvider', () => {
     expect((screen.getByLabelText(/^Title/) as HTMLInputElement).value).toBe(
       'Visit note'
     );
+  });
+});
+
+describe('capabilities (the host says who may do what)', () => {
+  const mountField = (
+    host: Parameters<typeof DocumentListFieldProvider>[0]['host'],
+    definition: Record<string, unknown> = { id: 'documents', question: 'Documents' }
+  ): void => {
+    const formStore = createFormStore();
+    const fieldProps = {
+      field: { definition },
+      form: formStore,
+      response: undefined,
+    } as unknown as FieldComponentProps;
+    render(
+      <FormStoreContext.Provider value={formStore}>
+        <DocumentListFieldProvider host={host}>
+          <DocumentListField {...fieldProps} />
+        </DocumentListFieldProvider>
+      </FormStoreContext.Provider>
+    );
+  };
+
+  it('a host that says nothing is read-only: no compose, no upload', async () => {
+    mountField({});
+    expect(await screen.findByLabelText('Documents')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Compose/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Upload/ })).toBeNull();
+  });
+
+  it('compose appears only when some offered type is creatable', async () => {
+    mountField(
+      {
+        capabilities: {
+          ...permissiveDocumentListCapabilities,
+          create: (docType: string) => docType === 'phone-call',
+        },
+      },
+      {
+        id: 'documents',
+        question: 'Documents',
+        docTypes: [{ id: 'progress-note' }, { id: 'phone-call' }],
+      }
+    );
+    expect(
+      await screen.findByRole('button', { name: 'Compose document' })
+    ).toBeTruthy();
+  });
+
+  it('compose disappears when no offered type is creatable', async () => {
+    mountField(
+      {
+        capabilities: {
+          ...permissiveDocumentListCapabilities,
+          create: () => false,
+        },
+      },
+      {
+        id: 'documents',
+        question: 'Documents',
+        docTypes: [{ id: 'progress-note' }],
+      }
+    );
+    expect(await screen.findByLabelText('Documents')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Compose/ })).toBeNull();
   });
 });

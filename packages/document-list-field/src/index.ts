@@ -121,4 +121,9 @@ export type {
   DocumentListRuntimeState,
   DocumentListSyncStatus,
 } from './document-list-runtime.js';
-export { DOCUMENT_LIST_ACTIONS, DOCUMENT_REVISION_ACTIONS } from './types.js';
+export {
+  DOCUMENT_LIST_ACTIONS,
+  DOCUMENT_REVISION_ACTIONS,
+  permissiveDocumentListCapabilities,
+  readOnlyDocumentListCapabilities,
+} from './types.js';

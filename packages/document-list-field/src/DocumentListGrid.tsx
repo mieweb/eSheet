@@ -30,7 +30,7 @@ import {
   type DocumentListRepository,
   type DocumentListRuntimeState,
 } from './document-list-runtime.js';
-import type { DocumentListDocument } from './types.js';
+import type { DocumentListCapabilities, DocumentListDocument } from './types.js';
 
 type DataVisGridProps = Partial<ComponentProps<typeof DataVisNitroGrid>>;
 type DataVisView = ContextType<typeof DataVisNitroContext>;
@@ -111,6 +111,15 @@ export type DocumentListFieldHost = Pick<
 > & {
   readonly onCompose?: DocumentListFieldAction;
   readonly onUpload?: DocumentListFieldAction;
+  /**
+   * Who may do what, resolved by the host — the field never sees roles,
+   * levels or a grant table. Rows the object cannot `view` are hidden and
+   * compose/upload appear only for types it can `create`. **Absent means
+   * read-only** (the migration default: saying nothing must never widen
+   * access); a demo with nobody to protect passes
+   * `permissiveDocumentListCapabilities` explicitly.
+   */
+  readonly capabilities?: DocumentListCapabilities;
 };
 
 const DocumentListFieldHostContext =

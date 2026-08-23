@@ -8,6 +8,7 @@ import {
   DocumentListGrid,
 } from './DocumentListGrid.js';
 import type { DocumentListDocument } from './types.js';
+import { permissiveDocumentListCapabilities } from './types.js';
 
 const captured = {
   props: null as Record<string, unknown> | null,
@@ -218,7 +219,10 @@ describe('DocumentListGrid host integration', () => {
     render(
       <FormStoreContext.Provider value={formStore}>
         <DocumentListFieldProvider
-          host={{ renderDetailRow: customDetail }}
+          host={{
+            renderDetailRow: customDetail,
+            capabilities: permissiveDocumentListCapabilities,
+          }}
           runtime={{ repository }}
         >
           <DocumentListField {...fieldProps} />

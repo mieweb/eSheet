@@ -5,6 +5,7 @@ import {
   type FormDefinition,
 } from '@esheet/builder';
 import { createDocumentListFieldProvider } from '@esheet/document-list-field';
+import { permissiveDocumentListCapabilities } from '@esheet/document-list-field';
 import { Navbar } from '../components/Navbar.js';
 import { updateOzwellTools, FORMIE_KEY } from '../ozwell-setup.js';
 import { createDemoDocumentListRepository } from '../document-list-demo-repository.js';
@@ -89,7 +90,8 @@ export function BuilderView() {
   });
 
   const documentListProvider = createDocumentListFieldProvider(
-    {},
+    // A demo protects nothing; a real host resolves its own capabilities.
+    { capabilities: permissiveDocumentListCapabilities },
     { repository: documentRepository }
   );
 
