@@ -97,6 +97,7 @@ export type {
 } from './DocumentListGrid.js';
 export type {
   DocumentListAction,
+  DocumentListCapabilities,
   DocumentListComposeDraft,
   DocumentListDefinition,
   DocumentListDocTypeOption,
@@ -105,6 +106,7 @@ export type {
   DocumentListValue,
   DocumentListWorkflow,
   DocumentListWorkflowMode,
+  DocumentRevisionAction,
 } from './types.js';
 export type {
   CreateDocumentListRuntimeExtensionOptions,
@@ -119,4 +121,4 @@ export type {
   DocumentListRuntimeState,
   DocumentListSyncStatus,
 } from './document-list-runtime.js';
-export { DOCUMENT_LIST_ACTIONS } from './types.js';
+export { DOCUMENT_LIST_ACTIONS, DOCUMENT_REVISION_ACTIONS } from './types.js';

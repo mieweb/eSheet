@@ -38,6 +38,47 @@ export const DOCUMENT_LIST_ACTIONS = [
 
 export type DocumentListAction = (typeof DOCUMENT_LIST_ACTIONS)[number];
 
+/**
+ * What one revision *was*: every entry in a document's history is a save of
+ * one of these kinds. Drafts have no action — a draft is a proposed change,
+ * not a version, and it reaches history only by being saved. `blank` is
+ * delete-by-edit (a revision whose content is empty); `remove`/`restore`
+ * tombstone and un-tombstone the row without touching content.
+ */
+export const DOCUMENT_REVISION_ACTIONS = [
+  'create',
+  'edit',
+  'blank',
+  'append',
+  'remove',
+  'restore',
+] as const;
+
+export type DocumentRevisionAction = (typeof DOCUMENT_REVISION_ACTIONS)[number];
+
+/**
+ * The verbs a host resolves per user, handed to the field as one object. The
+ * field never sees roles, levels or a grant table — the host's own/others,
+ * level-ladder and legal-hold reasoning all collapse into these five
+ * predicates. No capabilities object means read-only.
+ */
+export interface DocumentListCapabilities {
+  /** May read documents of this row's type at all (false hides the row). */
+  view(document: DocumentListDocument): boolean;
+  /** May author a new document of this type. */
+  create(docType: string): boolean;
+  /**
+   * May revise this document — which also gates opening a draft on it,
+   * joining one somebody else opened, and saving it. One question, asked once.
+   */
+  edit(document: DocumentListDocument): boolean;
+  /** May append to this document (text-backed documents only). */
+  append(document: DocumentListDocument): boolean;
+  /** May tombstone this document with a reason — and restore it: same grant. */
+  remove(document: DocumentListDocument): boolean;
+}
+
+
 export interface DocumentListInput {
   readonly id?: unknown;
   readonly date?: unknown;
