@@ -335,6 +335,41 @@ describe('document list workflow panels', () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
+  it('stamps the host-supplied author onto the saved row', async () => {
+    const runtime = createRuntime();
+
+    render(
+      <DocumentListComposePanel
+        open
+        onOpenChange={vi.fn()}
+        runtime={runtime}
+        inputPrefix="form-1-documents"
+        author={{ id: 'u-casey', name: 'Casey Manager' }}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText('Title'), {
+      target: { value: 'Visit note' },
+    });
+    fireEvent.change(screen.getByLabelText('Subject'), {
+      target: { value: 'Follow-up visit' },
+    });
+    fireEvent.change(screen.getByLabelText('Document type'), {
+      target: { value: 'Clinical note' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save document' }));
+
+    await waitFor(() => expect(runtime.saveDocument).toHaveBeenCalledOnce());
+    const [savedDocument] = (
+      runtime.saveDocument as ReturnType<typeof vi.fn>
+    ).mock.calls[0] as [typeof document];
+    expect(savedDocument).toEqual(
+      expect.objectContaining({
+        author: { id: 'u-casey', name: 'Casey Manager' },
+      })
+    );
+  });
+
   it('keeps an inline document type on the row instead of storing content', async () => {
     const runtime = createRuntime();
 

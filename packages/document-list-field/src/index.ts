@@ -97,6 +97,7 @@ export type {
 } from './DocumentListGrid.js';
 export type {
   DocumentListAction,
+  DocumentListAuthor,
   DocumentListCapabilities,
   DocumentListComposeDraft,
   DocumentListDefinition,

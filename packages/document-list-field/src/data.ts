@@ -1,4 +1,5 @@
 import type {
+  DocumentListAuthor,
   DocumentListDocument,
   DocumentListInput,
   DocumentListValue,
@@ -104,6 +105,14 @@ function asInput(value: unknown): DocumentListInput | null {
   return value as DocumentListInput;
 }
 
+/** A structured `{ id, name }` author; legacy string authors fold into `source`. */
+function authorValue(value: unknown): DocumentListAuthor | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const { id, name } = value as { id?: unknown; name?: unknown };
+  if (typeof id !== 'string' || !id || typeof name !== 'string' || !name) return null;
+  return { id, name };
+}
+
 export function normalizeDocumentRow(
   value: unknown
 ): DocumentListDocument | null {
@@ -111,6 +120,7 @@ export function normalizeDocumentRow(
   const id = input ? stringId(input.id) : null;
   if (!input || !id) return null;
 
+  const author = authorValue(input.author);
   return {
     id,
     date: displayValue(input.date),
@@ -118,8 +128,11 @@ export function normalizeDocumentRow(
     subject: displayValue(input.subject),
     docType: displayValue(input.docType),
     docId: displayValue(input.docId),
-    source: displayValue(input.source ?? input.from ?? input.author),
+    source: displayValue(
+      input.source ?? input.from ?? (author ? undefined : input.author)
+    ),
     file: fileValue(input.file),
+    ...(author ? { author } : {}),
     // Host bookkeeping: carried through untouched, absent when not recorded.
     ...(typeof input.sha256 === 'string' && input.sha256
       ? { sha256: input.sha256 }

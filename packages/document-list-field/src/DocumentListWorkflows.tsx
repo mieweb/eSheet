@@ -25,6 +25,7 @@ import {
 } from './DocumentListDefinitionForm.js';
 import { createMdy, mdyBody } from './mdy.js';
 import type {
+  DocumentListAuthor,
   DocumentListComposeDraft,
   DocumentListDocTypeOption,
   DocumentListDocument,
@@ -125,6 +126,8 @@ export interface DocumentListWorkflowPanelProps {
   readonly accept?: string;
   /** Largest upload accepted, in bytes. */
   readonly maxFileSize?: number;
+  /** Stamped as `author` onto rows this panel saves; absent = unattributed. */
+  readonly author?: DocumentListAuthor;
   /** Full-screen unless the owner has collapsed the panel to the dock. */
   readonly mode?: DocumentListWorkflowMode;
   /** Supplying this makes the panel dockable; omitting it keeps it modal. */
@@ -291,6 +294,7 @@ export function DocumentListComposePanel({
   fields,
   docTypes,
   defaultInline,
+  author,
   mode = 'full',
   onModeChange,
   draft,
@@ -364,6 +368,7 @@ export function DocumentListComposePanel({
       docId: id,
       source: 'Compose',
       file: `${id}.md`,
+      ...(author ? { author } : {}),
       ...(inline ? { body: content } : {}),
     };
     // An inline type keeps its prose on the row, so there is nothing for
@@ -625,6 +630,7 @@ export function DocumentListUploadPanel({
   noun = DOCUMENT_LIST_DEFAULT_NOUN,
   accept,
   maxFileSize,
+  author,
 }: DocumentListWorkflowPanelProps): React.JSX.Element | null {
   const [file, setFile] = useState<File | null>(null);
   const [storedName, setStoredName] = useState('');
@@ -677,6 +683,7 @@ export function DocumentListUploadPanel({
       docId: id,
       source: 'Upload',
       file: trimmedStoredName,
+      ...(author ? { author } : {}),
     };
 
     setSaving(true);

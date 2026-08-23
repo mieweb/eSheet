@@ -1,3 +1,9 @@
+/** Who authored a row — identity id plus display name at authoring time. */
+export interface DocumentListAuthor {
+  readonly id: string;
+  readonly name: string;
+}
+
 export interface DocumentListDocument {
   readonly id: string;
   readonly date: string;
@@ -7,6 +13,13 @@ export interface DocumentListDocument {
   readonly docId: string;
   readonly source: string;
   readonly file: string;
+  /**
+   * Who authored this row, stamped by the host at save. "Own" means author,
+   * not source — `source` says which system, this says which person. Absent
+   * on rows saved before stamping existed: such a row is treated as somebody
+   * else's, never as yours.
+   */
+  readonly author?: DocumentListAuthor;
   /**
    * Content hash and byte length, when the host's repository records them.
    * eSheet never computes these — it carries them so a host that stores the

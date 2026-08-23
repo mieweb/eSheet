@@ -30,7 +30,11 @@ import {
   type DocumentListRepository,
   type DocumentListRuntimeState,
 } from './document-list-runtime.js';
-import type { DocumentListCapabilities, DocumentListDocument } from './types.js';
+import type {
+  DocumentListAuthor,
+  DocumentListCapabilities,
+  DocumentListDocument,
+} from './types.js';
 
 type DataVisGridProps = Partial<ComponentProps<typeof DataVisNitroGrid>>;
 type DataVisView = ContextType<typeof DataVisNitroContext>;
@@ -120,6 +124,12 @@ export type DocumentListFieldHost = Pick<
    * `permissiveDocumentListCapabilities` explicitly.
    */
   readonly capabilities?: DocumentListCapabilities;
+  /**
+   * Who this window is, stamped as `author` onto rows the composer and
+   * uploader save. Absent means rows are saved unattributed — and an
+   * unattributed row is nobody's own.
+   */
+  readonly author?: DocumentListAuthor;
 };
 
 const DocumentListFieldHostContext =

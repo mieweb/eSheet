@@ -58,6 +58,26 @@ describe('document list data', () => {
     expect(parseDocumentListAnswer('{invalid')).toEqual([]);
   });
 
+  it('round-trips a structured author and folds a legacy string one into source', () => {
+    const [structured] = normalizeDocumentRows([
+      { id: 'doc-1', title: 'Note', author: { id: 'u-1', name: 'Casey' } },
+    ]);
+    expect(structured.author).toEqual({ id: 'u-1', name: 'Casey' });
+    expect(structured.source).toBe('—');
+
+    const [legacy] = normalizeDocumentRows([
+      { id: 'doc-2', title: 'Note', author: 'Casey Manager' },
+    ]);
+    expect(legacy.author).toBeUndefined();
+    expect(legacy.source).toBe('Casey Manager');
+
+    // Half-formed authors are dropped, never invented.
+    const [broken] = normalizeDocumentRows([
+      { id: 'doc-3', title: 'Note', author: { id: 'u-1' } },
+    ]);
+    expect(broken.author).toBeUndefined();
+  });
+
   it('publishes a fresh DataVis payload without mutating rows', () => {
     const rows = normalizeDocumentRows([{ id: 'doc-1', title: 'Letter' }]);
     const payload = createLocalSourcePayload(rows);

@@ -173,6 +173,7 @@ export function DocumentListField({
     defaultInline: definition.inline,
     accept: definition.accept,
     maxFileSize: definition.maxFileSize,
+    author: host?.author,
   };
   const gridDetailRowsExpanded = host?.detailRowsExpanded ?? detailRowsExpanded;
   const handleToggleDetails =

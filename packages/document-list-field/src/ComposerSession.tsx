@@ -15,6 +15,7 @@ import {
 } from './DocumentListWorkflows.js';
 import type { DocumentListRuntimeState } from './document-list-runtime.js';
 import type {
+  DocumentListAuthor,
   DocumentListComposeDraft,
   DocumentListDocTypeOption,
   DocumentListWorkflow,
@@ -30,6 +31,8 @@ export interface ComposerSessionConfig {
   readonly defaultInline?: boolean;
   readonly accept?: string;
   readonly maxFileSize?: number;
+  /** Stamped as `author` onto rows this session saves. */
+  readonly author?: DocumentListAuthor;
 }
 
 export interface ComposerSession {
@@ -139,6 +142,7 @@ export function ComposerSessionOverlay({
         fields={config.fields}
         docTypes={config.docTypes}
         defaultInline={config.defaultInline}
+        author={config.author}
         mode={session.mode}
         onModeChange={setMode}
         draft={session.draft}
@@ -156,6 +160,7 @@ export function ComposerSessionOverlay({
       noun={config.noun}
       accept={config.accept}
       maxFileSize={config.maxFileSize}
+      author={config.author}
     />
   );
 }
