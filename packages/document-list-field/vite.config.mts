@@ -80,6 +80,9 @@ export default defineConfig(() => ({
         'ag-grid-community',
         'ag-grid-react',
         'datavis-ace',
+        // The host already bundles js-yaml for @esheet/renderer; leaving it
+        // external keeps one copy instead of two.
+        'js-yaml',
         'react',
         'react-dom',
         'react/jsx-runtime',

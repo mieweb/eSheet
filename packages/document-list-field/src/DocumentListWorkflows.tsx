@@ -18,6 +18,7 @@ import type {
   DocumentListRuntimeState,
 } from './document-list-runtime.js';
 import { DOCUMENT_LIST_DEFAULT_NOUN, DOCUMENT_LIST_MARKDOWN_TYPE } from './data.js';
+import { mdyBody } from './mdy.js';
 import type {
   DocumentListComposeDraft,
   DocumentListDocTypeOption,
@@ -723,7 +724,8 @@ function DocumentListMarkdownPreview({
 }): React.JSX.Element {
   return (
     <div className="document-list-detail__preview" aria-label="Document content">
-      <MarkdownRenderer text={content} />
+      {/* Front matter is data, not prose: the reader sees the body only. */}
+      <MarkdownRenderer text={mdyBody(content)} />
     </div>
   );
 }
