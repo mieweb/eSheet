@@ -78,6 +78,46 @@ describe('document list data', () => {
     expect(broken.author).toBeUndefined();
   });
 
+  it('round-trips rev, removed and history; malformed provenance drops silently', () => {
+    const casey = { id: 'u-1', name: 'Casey' };
+    const [row] = normalizeDocumentRows([
+      {
+        id: 'doc-1',
+        title: 'Note',
+        rev: 2,
+        removed: { author: casey, at: '2026-08-23T12:00:00Z', reason: 'wrong patient' },
+        history: [
+          { rev: 0, action: 'create', author: casey, at: '2026-08-01', body: 'v0' },
+          { rev: 1, action: 'edit', contributors: [casey], size: 12 },
+          { rev: 9, action: 'invent' }, // unknown action — dropped
+          { action: 'edit' }, // no rev — dropped
+        ],
+      },
+    ]);
+    expect(row.rev).toBe(2);
+    expect(row.removed).toEqual({
+      author: casey,
+      at: '2026-08-23T12:00:00Z',
+      reason: 'wrong patient',
+    });
+    expect(row.history).toEqual([
+      { rev: 0, action: 'create', author: casey, at: '2026-08-01', body: 'v0' },
+      { rev: 1, action: 'edit', contributors: [casey], size: 12 },
+    ]);
+
+    // A rev may be 0 (the first save); anything else non-integer means absent.
+    const [first] = normalizeDocumentRows([{ id: 'doc-2', title: 'Note', rev: 0 }]);
+    expect(first.rev).toBe(0);
+    const [none] = normalizeDocumentRows([{ id: 'doc-3', title: 'Note', rev: -1 }]);
+    expect(none.rev).toBeUndefined();
+
+    // A tombstone without a reason is not a tombstone.
+    const [alive] = normalizeDocumentRows([
+      { id: 'doc-4', title: 'Note', removed: { author: casey } },
+    ]);
+    expect(alive.removed).toBeUndefined();
+  });
+
   it('publishes a fresh DataVis payload without mutating rows', () => {
     const rows = normalizeDocumentRows([{ id: 'doc-1', title: 'Letter' }]);
     const payload = createLocalSourcePayload(rows);

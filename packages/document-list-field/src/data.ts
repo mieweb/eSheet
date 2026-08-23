@@ -2,8 +2,12 @@ import type {
   DocumentListAuthor,
   DocumentListDocument,
   DocumentListInput,
+  DocumentListRemoval,
   DocumentListValue,
+  DocumentRevision,
+  DocumentRevisionAction,
 } from './types.js';
+import { DOCUMENT_REVISION_ACTIONS } from './types.js';
 
 /** Content type of composed and inline markdown documents. */
 export const DOCUMENT_LIST_MARKDOWN_TYPE = 'text/x-markdown';
@@ -113,6 +117,66 @@ function authorValue(value: unknown): DocumentListAuthor | null {
   return { id, name };
 }
 
+/** A head revision number: a non-negative integer, or nothing (meaning 0). */
+function revValue(value: unknown): number | null {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0
+    ? value
+    : null;
+}
+
+/** A tombstone — only the reason is load-bearing; provenance is optional. */
+function removedValue(value: unknown): DocumentListRemoval | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const { author, at, reason } = value as {
+    author?: unknown;
+    at?: unknown;
+    reason?: unknown;
+  };
+  if (typeof reason !== 'string' || !reason.trim()) return null;
+  const parsedAuthor = authorValue(author);
+  return {
+    reason,
+    ...(parsedAuthor ? { author: parsedAuthor } : {}),
+    ...(typeof at === 'string' && at ? { at } : {}),
+  };
+}
+
+function isRevisionAction(value: unknown): value is DocumentRevisionAction {
+  return (DOCUMENT_REVISION_ACTIONS as readonly unknown[]).includes(value);
+}
+
+function revisionValue(value: unknown): DocumentRevision | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const raw = value as Record<string, unknown>;
+  const rev = revValue(raw.rev);
+  if (rev === null || !isRevisionAction(raw.action)) return null;
+  const author = authorValue(raw.author);
+  const contributors = Array.isArray(raw.contributors)
+    ? raw.contributors.flatMap((entry) => authorValue(entry) ?? [])
+    : null;
+  return {
+    rev,
+    action: raw.action,
+    ...(author ? { author } : {}),
+    ...(contributors && contributors.length > 0 ? { contributors } : {}),
+    ...(typeof raw.at === 'string' && raw.at ? { at: raw.at } : {}),
+    ...(typeof raw.contentType === 'string' && raw.contentType
+      ? { contentType: raw.contentType }
+      : {}),
+    ...(typeof raw.size === 'number' && Number.isFinite(raw.size)
+      ? { size: raw.size }
+      : {}),
+    ...(typeof raw.body === 'string' ? { body: raw.body } : {}),
+  };
+}
+
+/** Prior revisions of an inline row; malformed entries are dropped, not fatal. */
+function historyValue(value: unknown): DocumentRevision[] | null {
+  if (!Array.isArray(value)) return null;
+  const revisions = value.flatMap((entry) => revisionValue(entry) ?? []);
+  return revisions.length > 0 ? revisions : null;
+}
+
 export function normalizeDocumentRow(
   value: unknown
 ): DocumentListDocument | null {
@@ -121,6 +185,9 @@ export function normalizeDocumentRow(
   if (!input || !id) return null;
 
   const author = authorValue(input.author);
+  const rev = revValue(input.rev);
+  const removed = removedValue(input.removed);
+  const history = historyValue(input.history);
   return {
     id,
     date: displayValue(input.date),
@@ -133,6 +200,9 @@ export function normalizeDocumentRow(
     ),
     file: fileValue(input.file),
     ...(author ? { author } : {}),
+    ...(rev !== null ? { rev } : {}),
+    ...(removed ? { removed } : {}),
+    ...(history ? { history } : {}),
     // Host bookkeeping: carried through untouched, absent when not recorded.
     ...(typeof input.sha256 === 'string' && input.sha256
       ? { sha256: input.sha256 }

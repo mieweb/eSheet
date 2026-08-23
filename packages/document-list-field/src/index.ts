@@ -104,9 +104,11 @@ export type {
   DocumentListDocTypeOption,
   DocumentListDocument,
   DocumentListInput,
+  DocumentListRemoval,
   DocumentListValue,
   DocumentListWorkflow,
   DocumentListWorkflowMode,
+  DocumentRevision,
   DocumentRevisionAction,
 } from './types.js';
 export type {

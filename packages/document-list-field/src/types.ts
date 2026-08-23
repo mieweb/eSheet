@@ -21,6 +21,23 @@ export interface DocumentListDocument {
    */
   readonly author?: DocumentListAuthor;
   /**
+   * The head revision number, counting saves from **0** (WebChart's
+   * `revision_number`). Absent means 0: a row saved before revisions existed
+   * has been saved once.
+   */
+  readonly rev?: number;
+  /**
+   * Present when the row is tombstoned: hidden from the grid, kept in the
+   * answer, its removal reasoned and attributed. Restore deletes the marker.
+   */
+  readonly removed?: DocumentListRemoval;
+  /**
+   * Prior revisions of an **inline** row, prose included — the case document
+   * is the store for these. File-backed rows keep history in their backend;
+   * read it through the port, never from here.
+   */
+  readonly history?: readonly DocumentRevision[];
+  /**
    * Content hash and byte length, when the host's repository records them.
    * eSheet never computes these — it carries them so a host that stores the
    * bytes elsewhere can address them from the row alone.
@@ -68,6 +85,40 @@ export const DOCUMENT_REVISION_ACTIONS = [
 ] as const;
 
 export type DocumentRevisionAction = (typeof DOCUMENT_REVISION_ACTIONS)[number];
+
+/**
+ * One saved revision of a document — who, when, what kind of save. Nothing
+ * in here records a keystroke: drafts create no revisions. Where the list
+ * lives is the backend's business (inline rows keep it on the row, a blob
+ * store keeps prior SHAs, WebChart keeps an archive table), so history is
+ * always read through `listRevisions(id)` on the storage port — never by
+ * reaching into the row.
+ */
+export interface DocumentRevision {
+  /** Counts saves from 0, matching WebChart's `revision_number`. */
+  readonly rev: number;
+  readonly action: DocumentRevisionAction;
+  /** The saver — whoever pressed Save owns the revision. */
+  readonly author?: DocumentListAuthor;
+  /** Everyone whose awareness appeared in the draft since the last save. */
+  readonly contributors?: readonly DocumentListAuthor[];
+  /** When it was saved, ISO 8601. */
+  readonly at?: string;
+  readonly contentType?: string;
+  readonly size?: number;
+  /**
+   * The superseded prose, kept in full on inline rows — the case doc is the
+   * store, so history travels with it. File-backed rows never carry this.
+   */
+  readonly body?: string;
+}
+
+/** The tombstone a removed row carries — always visible, always reasoned. */
+export interface DocumentListRemoval {
+  readonly author?: DocumentListAuthor;
+  readonly at?: string;
+  readonly reason: string;
+}
 
 /**
  * The verbs a host resolves per user, handed to the field as one object. The
@@ -123,6 +174,9 @@ export interface DocumentListInput {
   readonly source?: unknown;
   readonly from?: unknown;
   readonly author?: unknown;
+  readonly rev?: unknown;
+  readonly removed?: unknown;
+  readonly history?: unknown;
   readonly file?: unknown;
   readonly sha256?: unknown;
   readonly size?: unknown;
