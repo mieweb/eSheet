@@ -131,4 +131,77 @@ describe('compose panel in draft mode (ED.37)', () => {
     // Left, not discarded: the shared state survives the panel.
     expect(draft.answers.get('meta:title')).toBe('Half-written');
   });
+
+  // ED.39 — a save is a revision: same row, rev + 1, prior prose kept, draft
+  // cleared for everyone.
+  it('saving a draft projects the next head revision and discards the draft', async () => {
+    const prior = {
+      id: 'doc-1',
+      date: '2026-08-14',
+      title: 'Original note',
+      subject: 'Original subject',
+      docType: 'progress-note',
+      docId: 'doc-1',
+      source: 'Compose',
+      file: 'doc-1.md',
+      author: { id: 'u-riley', name: 'Riley Reviewer' },
+      rev: 0,
+      body: 'original prose',
+    };
+    const saveDocument = vi.fn(async (document: unknown) => document);
+    const revisingRuntime = {
+      documents: { 'doc-1': prior },
+      saveDocument,
+    } as unknown as DocumentListRuntimeState;
+    const draft = fakeDraft({ isNew: false });
+    const discard = vi.spyOn(draft, 'discard');
+    const onOpenChange = vi.fn();
+
+    render(
+      <DocumentListComposePanel
+        open
+        onOpenChange={onOpenChange}
+        runtime={revisingRuntime}
+        inputPrefix="form-1-documents"
+        author={{ id: 'u-casey', name: 'Casey Manager' }}
+        documentDraft={draft}
+        documentId="doc-1"
+      />
+    );
+
+    fireEvent.change(await screen.findByLabelText(/^Title/), {
+      target: { value: 'Revised note' },
+    });
+    fireEvent.change(screen.getByLabelText(/^Subject/), {
+      target: { value: 'Revised subject' },
+    });
+    fireEvent.change(screen.getByLabelText(/^Document type/), {
+      target: { value: 'progress-note' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /^Save/ }));
+
+    await waitFor(() => expect(saveDocument).toHaveBeenCalledOnce());
+    const [saved, content] = saveDocument.mock.calls[0] as [
+      Record<string, unknown>,
+      unknown,
+    ];
+    expect(saved).toMatchObject({
+      id: 'doc-1', // the row, not a new one
+      title: 'Revised note',
+      rev: 1,
+      author: { id: 'u-casey', name: 'Casey Manager' }, // the saver owns it
+      history: [
+        {
+          rev: 0,
+          action: 'create',
+          author: { id: 'u-riley', name: 'Riley Reviewer' },
+          body: 'original prose',
+        },
+      ],
+    });
+    // Inline tier: the prose stays on the row, nothing goes to a repository.
+    expect(content).toBeUndefined();
+    expect(discard).toHaveBeenCalledOnce();
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
 });

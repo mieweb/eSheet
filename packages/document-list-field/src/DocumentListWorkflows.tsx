@@ -135,6 +135,8 @@ export interface DocumentListWorkflowPanelProps {
    * closing the panel leaves the draft intact for whoever else is in it.
    */
   readonly documentDraft?: DocumentDraft;
+  /** The row `documentDraft` revises; a draft without one composes new. */
+  readonly documentId?: string;
   /** Full-screen unless the owner has collapsed the panel to the dock. */
   readonly mode?: DocumentListWorkflowMode;
   /** Supplying this makes the panel dockable; omitting it keeps it modal. */
@@ -318,6 +320,7 @@ export function DocumentListComposePanel({
   defaultInline,
   author,
   documentDraft,
+  documentId,
   mode = 'full',
   onModeChange,
   draft,
@@ -417,23 +420,58 @@ export function DocumentListComposePanel({
     }
   };
 
-  /** One save path for both tiers — only the row and the file differ. */
+  /**
+   * One save path for both tiers and both kinds of session — a save is a
+   * revision (ED.39): composing new writes rev 0; saving a draft on an
+   * existing row projects it into the next head revision (an empty body is a
+   * `blank` revision, never a lost row) and then clears the draft for
+   * everyone. Only the place the bytes land differs by tier.
+   */
   const save = async (
     row: { title: string; subject: string; docType: string },
     content: string
   ): Promise<void> => {
-    const id = createDocumentId();
-    const inline = selectedType?.inline ?? defaultInline ?? false;
-    const document: DocumentListDocument = {
-      id,
-      date: today(),
-      ...row,
-      docId: id,
-      source: 'Compose',
-      file: `${id}.md`,
-      ...(author ? { author } : {}),
-      ...(inline ? { body: content } : {}),
-    };
+    const prior = documentId ? runtime.documents[documentId] : undefined;
+    const inline = prior
+      ? prior.body != null // a revision never changes the row's tier
+      : selectedType?.inline ?? defaultInline ?? false;
+    const id = prior?.id ?? createDocumentId();
+    const document: DocumentListDocument = prior
+      ? {
+          ...prior,
+          ...row,
+          date: today(),
+          // Whoever saves owns the revision.
+          ...(author ? { author } : {}),
+          rev: (prior.rev ?? 0) + 1,
+          ...(inline
+            ? {
+                body: content,
+                // The superseded prose rides along in full — the case doc is
+                // the inline tier's store (ED.47 formalizes this in the port).
+                history: [
+                  ...(prior.history ?? []),
+                  {
+                    rev: prior.rev ?? 0,
+                    action: (prior.rev ?? 0) === 0 ? ('create' as const) : ('edit' as const),
+                    ...(prior.author ? { author: prior.author } : {}),
+                    at: prior.date,
+                    ...(prior.body != null ? { body: prior.body } : {}),
+                  },
+                ],
+              }
+            : {}),
+        }
+      : {
+          id,
+          date: today(),
+          ...row,
+          docId: id,
+          source: 'Compose',
+          file: `${id}.md`,
+          ...(author ? { author } : {}),
+          ...(inline ? { body: content } : {}),
+        };
     // An inline type keeps its prose on the row, so there is nothing for
     // the repository to store.
     await runtime.saveDocument(
@@ -446,6 +484,8 @@ export function DocumentListComposePanel({
             size: contentSize(content),
           }
     );
+    // The proposal became a revision; drop it for everyone in it.
+    await documentDraft?.discard();
     reset();
     onOpenChange(false);
   };

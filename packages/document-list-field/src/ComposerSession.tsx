@@ -157,6 +157,7 @@ export function ComposerSessionOverlay({
         defaultInline={config.defaultInline}
         author={config.author}
         documentDraft={session.documentDraft}
+        documentId={session.documentId}
         mode={session.mode}
         onModeChange={setMode}
         draft={session.draft}
