@@ -79,123 +79,8 @@
   min-width: 0;
 }
 
-/* Below @mieweb/ui's overlay layers (dropzone 50, chat 60, tooltip 9999) and
-   above its sidebar (40), so system chrome and menus stay reachable. */
-.document-list-workflow-scrim,
-.document-list-workflow-dock {
-  --document-list-workflow-z-index: 45;
-  /* The editor keeps this width in both modes: the dock clips, never resizes,
-     so Kerebron's toolbar ResizeObserver never rebuilds mid-draft. */
-  --document-list-workflow-width: min(90rem, 100vw - 3rem);
-  position: fixed;
-  z-index: var(--document-list-workflow-z-index);
-}
-
-.document-list-workflow-scrim {
-  inset: 0;
-  z-index: calc(var(--document-list-workflow-z-index) - 1);
-  background: rgb(15 23 42 / 45%);
-}
-
-.document-list-workflow-dock--full {
-  inset: 1.5rem;
-  display: flex;
-  justify-content: center;
-}
-
-.document-list-workflow-dock--docked {
-  inset: auto 1.5rem 0 auto;
-  width: 26rem;
-  max-width: calc(100vw - 3rem);
-  overflow: hidden;
-}
-
-.document-list-workflow-panel {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  border: 1px solid var(--mieweb-border, #e5e7eb);
-  border-radius: 0.5rem;
-  background: var(--mieweb-card, #ffffff);
-  color: var(--mieweb-card-foreground, #1f2937);
-  box-shadow: 0 1.25rem 2.5rem rgb(15 23 42 / 22%);
-}
-
-.document-list-workflow-panel--full {
-  width: 100%;
-  max-width: 90rem;
-  height: 100%;
-}
-
-.document-list-workflow-panel--docked {
-  width: 100%;
-  border-bottom: 0;
-  border-radius: 0.5rem 0.5rem 0 0;
-}
-
-/* Docked keeps the form laid out at its full-screen width and clips it away,
-   rather than hiding or shrinking it. */
-.document-list-workflow-panel--docked .document-list-workflow-panel__content {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  width: var(--document-list-workflow-width);
-  height: calc(100vh - 4rem);
-}
-
-@media (max-width: 40rem) {
-  .document-list-workflow-scrim,
-  .document-list-workflow-dock {
-    --document-list-workflow-width: 100vw;
-  }
-
-  .document-list-workflow-dock--full {
-    inset: 0;
-  }
-
-  .document-list-workflow-dock--docked {
-    inset: auto 0 0 0;
-    width: 100%;
-  }
-}
-
-.document-list-workflow-panel__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.625rem 0.75rem;
-  border-bottom: 1px solid var(--mieweb-border, #e5e7eb);
-}
-
-.document-list-workflow-panel__header-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.document-list-workflow-panel__title {
-  margin: 0;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  text-transform: capitalize;
-}
-
-.document-list-workflow-panel__content {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-height: 0;
-}
-
-.document-list-workflow-dock__summary {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 0;
-  font-size: 0.875rem;
-}
+/* The panel shell — scrim, dock, header, focus trap — is @mieweb/ui's
+   `DockablePanel`. What follows styles only what this field puts inside it. */
 
 .document-list-workflow-dock__title {
   overflow: hidden;
@@ -215,17 +100,6 @@
   flex: none;
   border-radius: 9999px;
   background: var(--mieweb-primary-500, #27aae1);
-}
-
-.document-list-workflow__announcer {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
 }
 
 .document-list-workflow-panel__form {

@@ -6,7 +6,6 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { createPortal } from 'react-dom';
 import {
   composeDefaultDocType,
   DocumentListComposePanel,
@@ -120,13 +119,14 @@ export function ComposerSessionOverlay({
   readonly value: ComposerSessionValue;
 }): React.JSX.Element | null {
   const { session, setMode, setDraft, close } = value;
-  if (!session || typeof document === 'undefined' || !document.body) {
+  if (!session) {
     return null;
   }
 
   const { config } = session;
-  const panel =
-    session.kind === 'compose' ? (
+  // The panels portal themselves (via @mieweb/ui's DockablePanel), so this
+  // renders them in place and lets the shell decide where they land.
+  return session.kind === 'compose' ? (
       <DocumentListComposePanel
         key={session.id}
         open
@@ -144,22 +144,20 @@ export function ComposerSessionOverlay({
         draft={session.draft}
         onDraftChange={setDraft}
       />
-    ) : (
-      <DocumentListUploadPanel
-        key={session.id}
-        open
-        onOpenChange={(open) => {
-          if (!open) close();
-        }}
-        runtime={session.runtime}
-        inputPrefix={config.inputPrefix}
-        noun={config.noun}
-        accept={config.accept}
-        maxFileSize={config.maxFileSize}
-      />
-    );
-
-  return createPortal(panel, document.body);
+  ) : (
+    <DocumentListUploadPanel
+      key={session.id}
+      open
+      onOpenChange={(open) => {
+        if (!open) close();
+      }}
+      runtime={session.runtime}
+      inputPrefix={config.inputPrefix}
+      noun={config.noun}
+      accept={config.accept}
+      maxFileSize={config.maxFileSize}
+    />
+  );
 }
 
 export function ComposerSessionProvider({

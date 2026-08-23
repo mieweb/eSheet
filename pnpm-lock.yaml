@@ -410,18 +410,9 @@ importers:
       '@kerebron/editor':
         specifier: ^0.8.10
         version: 0.8.10
-      '@kerebron/editor-kits':
-        specifier: ^0.8.10
-        version: 0.8.10(svelte@5.56.8(@typescript-eslint/types@8.67.0))
-      '@kerebron/editor-react':
-        specifier: ^0.8.9
-        version: 0.8.10
-      '@kerebron/extension-basic-editor':
-        specifier: ^0.8.9
-        version: 0.8.10
-      '@kerebron/extension-menu':
-        specifier: ^0.8.9
-        version: 0.8.10(patch_hash=4bfcffd5f324775f98e04cec05c3fde04584c4a91dbfe7a7de65bc78baa37967)
+      '@mieweb/ui':
+        specifier: link:../../../ui
+        version: link:../../../ui
       react:
         specifier: ^19.2.4
         version: 19.2.8
@@ -2041,9 +2032,6 @@ packages:
 
   '@kerebron/editor-kits@0.8.10':
     resolution: {integrity: sha512-PqiATAYwvOcN9EW72T/tqDcmDU2O+K+W93aJvi43kHUVhNpUwAQydrpS4iQlaJcuhZLSxBLH6Xq6qy/EXu4W6w==}
-
-  '@kerebron/editor-react@0.8.10':
-    resolution: {integrity: sha512-ie2Hedz7MKxLDqQpOPnv7jDUXgxudqMFuCrEZRdgxQy5O5Q+89GStK+dfLnn5wdn+KKiDaE86/m8tm4RO2Xdag==}
 
   '@kerebron/editor@0.8.10':
     resolution: {integrity: sha512-bppbQgj4U/2/chWWtEIYdnA4Gsx6KpIUaPbQKsInm4tRF5TZMH/+A88kaD9iIjkJP6Rm+g01AmqLE/Cyd9e/Bg==}
@@ -11904,11 +11892,6 @@ snapshots:
       '@kerebron/extension-ui': 0.8.10
     transitivePeerDependencies:
       - svelte
-
-  '@kerebron/editor-react@0.8.10':
-    dependencies:
-      '@kerebron/editor': 0.8.10
-      react: 19.2.8
 
   '@kerebron/editor@0.8.10':
     dependencies:

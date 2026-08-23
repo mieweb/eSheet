@@ -179,8 +179,9 @@ describe('DocumentListFieldProvider', () => {
     });
     // Portaled out of the renderer, so page scroll and stacking cannot clip it.
     expect(
-      screen.getByRole('dialog').closest('.document-list-workflow-dock')
-        ?.parentElement
+      screen
+        .getByRole('dialog')
+        .closest('[data-slot="dockable-panel-dock"]')?.parentElement
     ).toBe(globalThis.document.body);
     fireEvent.click(screen.getByRole('button', { name: 'Collapse to dock' }));
 

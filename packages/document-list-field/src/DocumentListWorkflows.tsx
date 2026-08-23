@@ -1,20 +1,16 @@
 import {
   forwardRef,
   useEffect,
-  useImperativeHandle,
   useRef,
   useState,
   type ChangeEvent,
   type FormEvent,
-  type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
 } from 'react';
-import { CoreEditor, type AssetLoad } from '@kerebron/editor';
-import { AdvancedEditorKit } from '@kerebron/editor-kits/AdvancedEditorKit';
-import { Button, Input, MarkdownRenderer } from '@mieweb/ui';
-import { Maximize2, Minimize2, X } from 'lucide-react';
-import '@kerebron/editor/assets/index.css';
-import '@kerebron/editor-kits/assets/AdvancedEditorKit.css';
+import type { AssetLoad } from '@kerebron/editor';
+import { Button, DockablePanel, Input, MarkdownRenderer } from '@mieweb/ui';
+import { RichEditor, type RichEditorHandle } from '@mieweb/ui/kerebron';
+import '@mieweb/ui/kerebron.css';
 import '@mieweb/ui/markdown.css';
 import type {
   DocumentListContent,
@@ -31,34 +27,6 @@ import type {
 
 const COMPOSE_CONTENT_TYPE = DOCUMENT_LIST_MARKDOWN_TYPE;
 
-function useIsDark(): boolean {
-  const [isDark, setIsDark] = useState(() => {
-    if (typeof document === 'undefined') return false;
-    return (
-      document.documentElement.classList.contains('dark') ||
-      document.documentElement.dataset.theme === 'dark'
-    );
-  });
-
-  useEffect(() => {
-    const root = document.documentElement;
-    const updateTheme = (): void => {
-      setIsDark(
-        root.classList.contains('dark') || root.dataset.theme === 'dark'
-      );
-    };
-    const observer = new MutationObserver(updateTheme);
-    observer.observe(root, {
-      attributes: true,
-      attributeFilter: ['class', 'data-theme'],
-    });
-    updateTheme();
-    return () => observer.disconnect();
-  }, []);
-
-  return isDark;
-}
-
 let composeAssetLoad: AssetLoad | undefined;
 
 export function configureDocumentListComposeEditor(options: {
@@ -67,91 +35,11 @@ export function configureDocumentListComposeEditor(options: {
   composeAssetLoad = options.assetLoad;
 }
 
+/**
+ * Only what is specific to this composer — the kerebron/mieweb theme bridge
+ * lives in `@mieweb/ui/kerebron.css`, imported above.
+ */
 const COMPOSE_EDITOR_STYLES = `
-  [data-theme='light'],
-  [data-theme='light'] .kb-component {
-    --kb-color-primary: var(--mieweb-primary-500, #27aae1);
-    --kb-color-text: var(--mieweb-foreground, #1f2937);
-    --kb-color-text-muted: var(--mieweb-muted-foreground, #6b7280);
-    --kb-color-icon: var(--mieweb-muted-foreground, #5f6368);
-    --kb-color-surface: var(--mieweb-background, #ffffff);
-    --kb-color-surface-elevated: var(--mieweb-muted, #f9fafb);
-    --kb-color-surface-hover: rgba(60, 64, 67, 0.08);
-    --kb-color-border: var(--mieweb-border, #e5e7eb);
-    --kb-color-border-strong: var(--mieweb-border, #d1d5db);
-    --kb-color-hover: rgba(60, 64, 67, 0.08);
-    --kb-color-active: rgba(60, 64, 67, 0.1);
-    --kb-menu-dropdown-bg: var(--mieweb-card, #ffffff);
-    --kb-menu-dropdown-border: var(--mieweb-border, #dadce0);
-    --kb-menu-dropdown-text: var(--mieweb-card-foreground, #3c4043);
-    --kb-menu-dropdown-hover: rgba(60, 64, 67, 0.08);
-  }
-
-  [data-theme='dark'],
-  [data-theme='dark'] .kb-component,
-  .dark,
-  .dark .kb-component {
-    --kb-color-primary: var(--mieweb-primary-500, #27aae1);
-    --kb-color-text: var(--mieweb-foreground, #fafafa);
-    --kb-color-text-muted: var(--mieweb-muted-foreground, #a1a1aa);
-    --kb-color-icon: var(--mieweb-muted-foreground, #a1a1aa);
-    --kb-color-surface: var(--mieweb-background, #171717);
-    --kb-color-surface-elevated: var(--mieweb-muted, #404040);
-    --kb-color-surface-hover: color-mix(in srgb, var(--mieweb-foreground, #fafafa) 8%, transparent);
-    --kb-color-border: var(--mieweb-border, #404040);
-    --kb-color-border-strong: var(--mieweb-border, #404040);
-    --kb-color-hover: color-mix(in srgb, var(--mieweb-foreground, #fafafa) 8%, transparent);
-    --kb-color-active: color-mix(in srgb, var(--mieweb-foreground, #fafafa) 14%, transparent);
-    --kb-menu-dropdown-bg: var(--mieweb-card, #262626);
-    --kb-menu-dropdown-border: var(--mieweb-border, #404040);
-    --kb-menu-dropdown-text: var(--mieweb-card-foreground, #fafafa);
-    --kb-menu-dropdown-hover: color-mix(in srgb, var(--mieweb-foreground, #fafafa) 8%, transparent);
-  }
-
-  [data-theme='light'] .kb-custom-menu,
-  [data-theme='dark'] .kb-custom-menu,
-  .dark .kb-custom-menu {
-    background: var(--kb-color-surface-elevated);
-    border-bottom-color: var(--kb-color-border-strong);
-    color: var(--kb-color-text);
-  }
-
-  [data-theme='light'] .kb-custom-menu .kb-menu__button,
-  [data-theme='light'] .kb-custom-menu .kb-dropdown__label,
-  [data-theme='dark'] .kb-custom-menu .kb-menu__button,
-  [data-theme='dark'] .kb-custom-menu .kb-dropdown__label,
-  .dark .kb-custom-menu .kb-menu__button,
-  .dark .kb-custom-menu .kb-dropdown__label {
-    color: var(--kb-color-icon);
-  }
-
-  [data-theme='light'] .kb-dropdown__menu,
-  [data-theme='light'] .kb-submenu__content,
-  [data-theme='light'] .kb-custom-menu__overflow-menu,
-  [data-theme='dark'] .kb-dropdown__menu,
-  [data-theme='dark'] .kb-submenu__content,
-  [data-theme='dark'] .kb-custom-menu__overflow-menu,
-  .dark .kb-dropdown__menu,
-  .dark .kb-submenu__content,
-  .dark .kb-custom-menu__overflow-menu {
-    background: var(--kb-menu-dropdown-bg) !important;
-    border-color: var(--kb-menu-dropdown-border) !important;
-    color: var(--kb-menu-dropdown-text) !important;
-  }
-
-  [data-theme='light'] .kb-custom-menu .kb-dropdown__item .kb-menu__button:hover,
-  [data-theme='light'] .kb-custom-menu .kb-submenu__label:hover,
-  [data-theme='light'] .kb-custom-menu__overflow-item:hover,
-  [data-theme='dark'] .kb-custom-menu .kb-dropdown__item .kb-menu__button:hover,
-  [data-theme='dark'] .kb-custom-menu .kb-submenu__label:hover,
-  [data-theme='dark'] .kb-custom-menu__overflow-item:hover,
-  .dark .kb-custom-menu .kb-dropdown__item .kb-menu__button:hover,
-  .dark .kb-custom-menu .kb-submenu__label:hover,
-  .dark .kb-custom-menu__overflow-item:hover {
-    background: var(--kb-menu-dropdown-hover) !important;
-    color: var(--kb-menu-dropdown-text) !important;
-  }
-
   .document-list-compose-editor .ProseMirror {
     min-height: 160px;
     outline: none;
@@ -196,16 +84,6 @@ const COMPOSE_EDITOR_STYLES = `
     color: var(--kb-color-text-muted);
     margin-left: 0;
     padding-left: 1em;
-  }
-
-  /* Keep overflow-menu icons inside their compact button hit areas. */
-  .document-list-compose-editor .kb-custom-menu__overflow-menu .kb-icon {
-    display: inline-flex !important;
-    align-items: center;
-    justify-content: center;
-    min-width: 0 !important;
-    min-height: 0 !important;
-    line-height: 1;
   }
 
   .document-list-compose-editor .kb-custom-menu__editor {
@@ -330,12 +208,9 @@ interface DocumentListComposeEditorProps {
   readonly value: string;
 }
 
-interface DocumentListComposeEditorHandle {
-  readonly getContent: () => Promise<string>;
-  /** Restores the caret where the writer left it — the editor never unmounts. */
-  readonly focus: () => void;
-}
+type DocumentListComposeEditorHandle = RichEditorHandle;
 
+/** Thin adapter: the editor itself is `@mieweb/ui`'s `RichEditor`. */
 const DocumentListComposeEditor = forwardRef<
   DocumentListComposeEditorHandle,
   DocumentListComposeEditorProps
@@ -343,164 +218,20 @@ const DocumentListComposeEditor = forwardRef<
   { ariaLabel, disabled, id, labelledBy, onChange, value },
   ref
 ): React.JSX.Element {
-  const isDark = useIsDark();
-  const hostRef = useRef<HTMLDivElement>(null);
-  const editorRef = useRef<CoreEditor | null>(null);
-  const onChangeRef = useRef(onChange);
-  const valueRef = useRef(value);
-  const readyPromiseRef = useRef<Promise<void> | null>(null);
-  const isLoadingRef = useRef(false);
-  const disabledRef = useRef(disabled);
-
-  useEffect(() => {
-    onChangeRef.current = onChange;
-  }, [onChange]);
-
-  useEffect(() => {
-    const editor = editorRef.current;
-    if (value === valueRef.current) return;
-    valueRef.current = value;
-    if (!editor) return;
-
-    isLoadingRef.current = true;
-    void editor
-      .loadDocument(COMPOSE_CONTENT_TYPE, new TextEncoder().encode(value))
-      .catch(() => undefined)
-      .finally(() => {
-        if (editorRef.current === editor) isLoadingRef.current = false;
-      });
-  }, [value]);
-
-  useEffect(() => {
-    disabledRef.current = disabled;
-    editorRef.current?.view.setProps({
-      editable: () => !disabledRef.current,
-    });
-  }, [disabled]);
-
-  useEffect(() => {
-    const host = hostRef.current;
-    if (!host) return;
-
-    const mount = document.createElement('div');
-    host.appendChild(mount);
-    const editor = CoreEditor.create({
-      element: mount,
-      uri: 'file:///document.md',
-      assetLoad: composeAssetLoad,
-      editorKits: [new AdvancedEditorKit()],
-      readOnly: disabledRef.current,
-    });
-    editorRef.current = editor;
-    editor.view.setProps({
-      editable: () => !disabledRef.current,
-      attributes: { 'aria-label': ariaLabel },
-    });
-
-    let destroyed = false;
-    let listening = false;
-    const handleChanged = (): void => {
-      if (isLoadingRef.current) return;
-      void editor
-        .saveDocument(COMPOSE_CONTENT_TYPE)
-        .then((content) => {
-          if (destroyed) return;
-          const nextValue = new TextDecoder().decode(content);
-          valueRef.current = nextValue;
-          onChangeRef.current(nextValue);
-        })
-        .catch(() => undefined);
-    };
-
-    const loadInitialContent = async (): Promise<void> => {
-      if (valueRef.current) {
-        isLoadingRef.current = true;
-        try {
-          await editor.loadDocument(
-            COMPOSE_CONTENT_TYPE,
-            new TextEncoder().encode(valueRef.current)
-          );
-        } catch {
-          // Keep the empty editor available when initial content cannot load.
-        } finally {
-          isLoadingRef.current = false;
-        }
-      }
-      if (destroyed) return;
-      editor.addEventListener('changed', handleChanged);
-      listening = true;
-    };
-
-    readyPromiseRef.current = loadInitialContent();
-
-    return () => {
-      destroyed = true;
-      if (listening) editor.removeEventListener('changed', handleChanged);
-      editor.destroy();
-      editorRef.current = null;
-      readyPromiseRef.current = null;
-      host.replaceChildren();
-    };
-    // The editor is intentionally created once for the modal instance.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useImperativeHandle(
-    ref,
-    () => ({
-      getContent: async (): Promise<string> => {
-        await readyPromiseRef.current;
-        const editor = editorRef.current;
-        if (!editor) return valueRef.current;
-        const content = await editor.saveDocument(COMPOSE_CONTENT_TYPE);
-        const nextValue = new TextDecoder().decode(content);
-        valueRef.current = nextValue;
-        return nextValue;
-      },
-      focus: (): void => {
-        const view = editorRef.current?.view as
-          | { focus?: () => void }
-          | undefined;
-        if (view?.focus) {
-          view.focus();
-          return;
-        }
-        hostRef.current
-          ?.querySelector<HTMLElement>('[contenteditable="true"], textarea')
-          ?.focus();
-      },
-    }),
-    []
-  );
-
   return (
-    <div
-      ref={hostRef}
+    <RichEditor
+      ref={ref}
       id={id}
-      className={`kb-component document-list-compose-editor${
-        isDark ? ' kb-component--dark' : ''
-      }`}
+      className="document-list-compose-editor"
+      value={value}
+      onChange={onChange}
+      disabled={disabled}
+      aria-label={ariaLabel}
       aria-labelledby={labelledBy}
-      aria-label="Document note editor"
-      aria-disabled={disabled || undefined}
-      style={{
-        isolation: 'isolate',
-        opacity: disabled ? 0.65 : undefined,
-        pointerEvents: disabled ? 'none' : undefined,
-      }}
+      assetLoad={composeAssetLoad}
     />
   );
 });
-
-const FOCUSABLE_SELECTOR = [
-  'a[href]',
-  'button:not([disabled])',
-  'input:not([disabled])',
-  'select:not([disabled])',
-  'textarea:not([disabled])',
-  '[contenteditable="true"]',
-  '[tabindex]:not([tabindex="-1"])',
-].join(', ');
 
 export interface DocumentListWorkflowShellProps {
   readonly onClose: () => void;
@@ -516,9 +247,9 @@ export interface DocumentListWorkflowShellProps {
 }
 
 /**
- * The workflow forms own the viewport while `full`, and collapse to a dock
- * strip that keeps the draft — and the editor — alive while `docked`. The
- * panel is never unmounted or resized between the two: `docked` clips it.
+ * Thin adapter: the shell is `@mieweb/ui`'s `DockablePanel`. The workflow
+ * forms own the viewport while `full` and collapse to a dock strip that keeps
+ * the draft — and the editor — alive while `docked`.
  */
 export function DocumentListWorkflowPanel({
   onClose,
@@ -529,163 +260,19 @@ export function DocumentListWorkflowPanel({
   dirty = false,
   dockSummary,
 }: DocumentListWorkflowShellProps): React.JSX.Element {
-  const panelRef = useRef<HTMLDivElement>(null);
-  const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
-  const onModeChangeRef = useRef(onModeChange);
-  onModeChangeRef.current = onModeChange;
-  const dirtyRef = useRef(dirty);
-  dirtyRef.current = dirty;
-  const modeRef = useRef(mode);
-  modeRef.current = mode;
-  const dockable = Boolean(onModeChange);
-  const docked = dockable && mode === 'docked';
-
-  const requestClose = (): void => {
-    const view = panelRef.current?.ownerDocument.defaultView;
-    // Discarding work is always deliberate; Escape and collapse never destroy.
-    if (dirty && view?.confirm && !view.confirm(`Discard this ${title}?`)) {
-      return;
-    }
-    onClose();
-  };
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent): void => {
-      if (event.key !== 'Escape') return;
-      if (dockable && dirtyRef.current && modeRef.current === 'full') {
-        onModeChangeRef.current?.('docked');
-        return;
-      }
-      onCloseRef.current();
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    panelRef.current
-      ?.querySelector<HTMLElement>('input, select, textarea')
-      ?.focus();
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [dockable]);
-
-  // A dirty draft lives in memory only, so leaving the page has to be a choice.
-  useEffect(() => {
-    if (!dirty || typeof window === 'undefined') return;
-    const handleBeforeUnload = (event: BeforeUnloadEvent): void => {
-      event.preventDefault();
-      event.returnValue = '';
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [dirty]);
-
-  // Modality is a function of mode: a docked panel must leave the app usable.
-  useEffect(() => {
-    const panel = panelRef.current;
-    if (!panel || mode !== 'full') return;
-    const root = panel.closest('.document-list-workflow-dock') ?? panel;
-    const inerted = Array.from(panel.ownerDocument.body.children).filter(
-      (child) =>
-        child !== root && !child.contains(root) && !child.hasAttribute('inert')
-    );
-    for (const element of inerted) element.setAttribute('inert', '');
-    return () => {
-      for (const element of inerted) element.removeAttribute('inert');
-    };
-  }, [mode]);
-
-  useEffect(() => {
-    if (!docked) return;
-    panelRef.current
-      ?.querySelector<HTMLElement>('[aria-label="Restore"]')
-      ?.focus();
-  }, [docked]);
-
-  const handleTabTrap = (event: ReactKeyboardEvent<HTMLDivElement>): void => {
-    if (event.key !== 'Tab' || mode !== 'full') return;
-    const panel = panelRef.current;
-    if (!panel) return;
-    const focusable = Array.from(
-      panel.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
-    ).filter((element) => element.offsetParent !== null || element === panel);
-    if (focusable.length === 0) return;
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    const active = panel.ownerDocument.activeElement;
-    if (event.shiftKey && (active === first || !panel.contains(active))) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && active === last) {
-      event.preventDefault();
-      first.focus();
-    }
-  };
-
   return (
-    <>
-      {mode === 'full' && (
-        <div className="document-list-workflow-scrim" aria-hidden="true" />
-      )}
-      <div
-        className={`document-list-workflow-dock document-list-workflow-dock--${
-          docked ? 'docked' : 'full'
-        }`}
-      >
-        <div
-          ref={panelRef}
-          className={`document-list-workflow-panel document-list-workflow-panel--${
-            docked ? 'docked' : 'full'
-          }`}
-          role="dialog"
-          aria-modal={docked ? undefined : true}
-          aria-expanded={dockable ? !docked : undefined}
-          aria-label={title}
-          onKeyDown={handleTabTrap}
-        >
-          <div className="document-list-workflow-panel__header">
-            {docked ? (
-              <div className="document-list-workflow-dock__summary">
-                {dockSummary ?? title}
-              </div>
-            ) : (
-              <h3 className="document-list-workflow-panel__title">{title}</h3>
-            )}
-            <div className="document-list-workflow-panel__header-actions">
-              {dockable && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onModeChange?.(docked ? 'full' : 'docked')}
-                  aria-label={docked ? 'Restore' : 'Collapse to dock'}
-                  title={docked ? 'Restore' : 'Collapse to dock'}
-                >
-                  {docked ? (
-                    <Maximize2 size={16} aria-hidden="true" />
-                  ) : (
-                    <Minimize2 size={16} aria-hidden="true" />
-                  )}
-                </Button>
-              )}
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={requestClose}
-                aria-label={docked ? 'Discard' : 'Close'}
-                title={docked ? 'Discard' : 'Close'}
-              >
-                <X size={16} aria-hidden="true" />
-              </Button>
-            </div>
-          </div>
-          <div className="document-list-workflow-panel__content">
-            {children}
-          </div>
-        </div>
-      </div>
-      <p className="document-list-workflow__announcer" aria-live="polite">
-        {docked ? `${title} collapsed to dock` : ''}
-      </p>
-    </>
+    <DockablePanel
+      title={title}
+      mode={mode}
+      onModeChange={onModeChange}
+      onClose={onClose}
+      dirty={dirty}
+      dockSummary={dockSummary}
+      discardMessage={`Discard this ${title}?`}
+      className="document-list-workflow-panel"
+    >
+      {children}
+    </DockablePanel>
   );
 }
 

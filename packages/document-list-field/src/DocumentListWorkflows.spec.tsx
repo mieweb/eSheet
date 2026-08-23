@@ -17,92 +17,56 @@ import type {
   DocumentListWorkflowMode,
 } from './types.js';
 
-vi.mock('@kerebron/editor', () => ({
-  CoreEditor: {
-    create: ({
-      element,
-      readOnly = false,
+/**
+ * The editor itself is @mieweb/ui's RichEditor, tested there. The composer
+ * only needs something that round-trips text through the same handle.
+ */
+vi.mock('@mieweb/ui/kerebron', async () => {
+  const { createElement, forwardRef, useImperativeHandle, useRef } =
+    await import('react');
+  const RichEditor = forwardRef(function RichEditor(
+    {
+      value = '',
+      onChange,
+      className,
+      disabled,
+      id,
+      'aria-label': ariaLabel,
+      'aria-labelledby': ariaLabelledBy,
     }: {
-      element: HTMLElement;
-      readOnly?: boolean;
-    }) => {
-      const eventTarget = new EventTarget();
-      let editorValue = '';
-      const editorInput = readOnly
-        ? null
-        : globalThis.document.createElement('textarea');
-      if (editorInput) {
-        editorInput.setAttribute('aria-label', 'Note');
-      }
-      const renderMarkdown = (markdown: string): void => {
-        const proseMirror = globalThis.document.createElement('div');
-        proseMirror.className = 'kb-editor ProseMirror';
-        let list: HTMLUListElement | null = null;
-
-        for (const line of markdown.split(/\r?\n/)) {
-          const heading = /^(#{1,6})\s+(.+)$/.exec(line);
-          const listItem = /^\s*[-*]\s+(.+)$/.exec(line);
-          if (heading) {
-            list = null;
-            const headingElement = globalThis.document.createElement(
-              `h${heading[1].length}`
-            );
-            headingElement.textContent = heading[2];
-            proseMirror.appendChild(headingElement);
-          } else if (listItem) {
-            if (!list) {
-              list = globalThis.document.createElement('ul');
-              proseMirror.appendChild(list);
-            }
-            const listElement = globalThis.document.createElement('li');
-            listElement.textContent = listItem[1];
-            list.appendChild(listElement);
-          } else if (line.trim()) {
-            list = null;
-            const paragraph = globalThis.document.createElement('p');
-            paragraph.textContent = line;
-            proseMirror.appendChild(paragraph);
-          } else {
-            list = null;
-          }
-        }
-
-        element.replaceChildren(proseMirror);
-      };
-      const editor = {
-        addEventListener: eventTarget.addEventListener.bind(eventTarget),
-        removeEventListener: eventTarget.removeEventListener.bind(eventTarget),
-        view: { setProps: vi.fn() },
-        loadDocument: vi.fn(async (_mediaType: string, content: Uint8Array) => {
-          const nextValue = new TextDecoder().decode(content);
-          editorValue = nextValue;
-          if (editorInput) {
-            editorInput.value = nextValue;
-          } else {
-            renderMarkdown(nextValue);
-          }
-        }),
-        saveDocument: vi.fn(async () => new TextEncoder().encode(editorValue)),
-        destroy: vi.fn(),
-      };
-      const updateValue = (): void => {
-        if (!editorInput) return;
-        editorValue = editorInput.value;
-        eventTarget.dispatchEvent(new Event('changed'));
-      };
-      if (editorInput) {
-        editorInput.addEventListener('input', updateValue);
-        editorInput.addEventListener('change', updateValue);
-        element.appendChild(editorInput);
-      }
-      return editor;
+      value?: string;
+      onChange?: (next: string) => void;
+      className?: string;
+      disabled?: boolean;
+      id?: string;
+      'aria-label'?: string;
+      'aria-labelledby'?: string;
     },
-  },
-}));
-
-vi.mock('@kerebron/editor-kits/AdvancedEditorKit', () => ({
-  AdvancedEditorKit: class AdvancedEditorKit {},
-}));
+    ref
+  ) {
+    const inputRef = useRef<HTMLTextAreaElement>(null);
+    const valueRef = useRef(value);
+    valueRef.current = value;
+    useImperativeHandle(ref, () => ({
+      getContent: async () => valueRef.current,
+      focus: () => inputRef.current?.focus(),
+    }));
+    return createElement(
+      'div',
+      { id, className: ['kb-component', className].filter(Boolean).join(' ') },
+      createElement('textarea', {
+        ref: inputRef,
+        'aria-label': ariaLabel,
+        'aria-labelledby': ariaLabelledBy,
+        disabled,
+        value,
+        onChange: (event: { target: { value: string } }) =>
+          onChange?.(event.target.value),
+      })
+    );
+  });
+  return { RichEditor };
+});
 
 vi.mock('@mieweb/ui', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@mieweb/ui')>();
@@ -158,8 +122,10 @@ vi.mock('@mieweb/ui', async (importOriginal) => {
     <footer>{children}</footer>
   );
   return {
-    // The detail preview renders markdown with the real MarkdownRenderer.
+    // The detail preview renders markdown with the real MarkdownRenderer, and
+    // the workflow shell is the real DockablePanel it now adapts.
     MarkdownRenderer: actual.MarkdownRenderer,
+    DockablePanel: actual.DockablePanel,
     Button,
     Input,
     Modal,
@@ -218,31 +184,38 @@ function ComposeHarness({
   );
 }
 
-function typeDraft(container: HTMLElement, note: string): void {
+/** The panel portals to `document.body`, so the render container misses it. */
+function composeEditor(): HTMLElement | null {
+  return globalThis.document.querySelector('.document-list-compose-editor');
+}
+
+/** RichEditor assembles its kits asynchronously, so the mount is not instant. */
+async function composeEditorInput(): Promise<HTMLTextAreaElement> {
+  return await waitFor(() => {
+    const input = globalThis.document.querySelector(
+      '.document-list-compose-editor textarea'
+    );
+    if (!input) throw new Error('the compose editor has not mounted yet');
+    return input as HTMLTextAreaElement;
+  });
+}
+
+async function typeDraft(note: string): Promise<void> {
   fireEvent.change(screen.getByLabelText('Title'), {
     target: { value: 'Visit note' },
   });
   fireEvent.change(screen.getByLabelText('Subject'), {
     target: { value: 'Follow-up visit' },
   });
-  fireEvent.change(
-    container.querySelector(
-      '.document-list-compose-editor textarea'
-    ) as HTMLTextAreaElement,
-    { target: { value: note } }
-  );
+  fireEvent.change(await composeEditorInput(), { target: { value: note } });
 }
 
 describe('the docked composer', () => {
   it('keeps the draft and the editor alive across a collapse', async () => {
-    const composeView = render(
-      <ComposeHarness runtime={createRuntime()} onOpenChange={vi.fn()} />
-    );
+    render(<ComposeHarness runtime={createRuntime()} onOpenChange={vi.fn()} />);
 
-    typeDraft(composeView.container, 'Follow-up completed.');
-    const editor = composeView.container.querySelector(
-      '.document-list-compose-editor'
-    );
+    await typeDraft('Follow-up completed.');
+    const editor = composeEditor();
     fireEvent.click(
       screen.getByRole('button', { name: 'Collapse to dock' })
     );
@@ -250,35 +223,25 @@ describe('the docked composer', () => {
     // Collapsed is a class swap, not an unmount: the same editor node stays.
     expect(screen.getByText('Visit note')).toBeTruthy();
     expect(screen.getByLabelText('Unsaved changes')).toBeTruthy();
-    expect(screen.getByRole('dialog').getAttribute('aria-expanded')).toBe(
-      'false'
-    );
-    expect(screen.getByRole('dialog').getAttribute('aria-modal')).toBeNull();
     expect(
-      composeView.container.querySelector('.document-list-compose-editor')
-    ).toBe(editor);
+      screen.getByRole('button', { name: 'Restore' }).getAttribute('aria-expanded')
+    ).toBe('false');
+    expect(screen.getByRole('dialog').getAttribute('aria-modal')).toBeNull();
+    expect(composeEditor()).toBe(editor);
 
     fireEvent.click(screen.getByRole('button', { name: 'Restore' }));
 
     expect(
       (screen.getByLabelText('Title') as HTMLInputElement).value
     ).toBe('Visit note');
-    expect(
-      (
-        composeView.container.querySelector(
-          '.document-list-compose-editor textarea'
-        ) as HTMLTextAreaElement
-      ).value
-    ).toBe('Follow-up completed.');
+    expect((await composeEditorInput()).value).toBe('Follow-up completed.');
   });
 
   it('saves a restored draft with the content composed before docking', async () => {
     const runtime = createRuntime();
-    const composeView = render(
-      <ComposeHarness runtime={runtime} onOpenChange={vi.fn()} />
-    );
+    render(<ComposeHarness runtime={runtime} onOpenChange={vi.fn()} />);
 
-    typeDraft(composeView.container, 'Employer confirmed return date.');
+    await typeDraft('Employer confirmed return date.');
     fireEvent.click(screen.getByRole('button', { name: 'Collapse to dock' }));
     fireEvent.click(screen.getByRole('button', { name: 'Restore' }));
     fireEvent.change(screen.getByLabelText('Document type'), {
@@ -295,19 +258,19 @@ describe('the docked composer', () => {
     expect(content.content).toBe('Employer confirmed return date.');
   });
 
-  it('collapses on Escape while dirty and closes when empty', () => {
+  it('collapses on Escape while dirty and closes when empty', async () => {
     const onOpenChange = vi.fn();
     const composeView = render(
       <ComposeHarness runtime={createRuntime()} onOpenChange={onOpenChange} />
     );
 
-    typeDraft(composeView.container, 'Draft in progress.');
+    await typeDraft('Draft in progress.');
     fireEvent.keyDown(globalThis.document, { key: 'Escape' });
 
     expect(onOpenChange).not.toHaveBeenCalled();
-    expect(screen.getByRole('dialog').getAttribute('aria-expanded')).toBe(
-      'false'
-    );
+    expect(
+      screen.getByRole('button', { name: 'Restore' }).getAttribute('aria-expanded')
+    ).toBe('false');
 
     composeView.unmount();
     render(
@@ -324,7 +287,7 @@ describe('document list workflow panels', () => {
     const runtime = createRuntime();
     const onOpenChange = vi.fn();
 
-    const documentView = render(
+    render(
       <DocumentListComposePanel
         open
         onOpenChange={onOpenChange}
@@ -342,9 +305,7 @@ describe('document list workflow panels', () => {
     fireEvent.change(screen.getByLabelText('Document type'), {
       target: { value: 'Clinical note' },
     });
-    const noteEditor = documentView.container.querySelector(
-      '.document-list-compose-editor textarea'
-    );
+    const noteEditor = await composeEditorInput();
     expect(noteEditor).toBeTruthy();
     fireEvent.change(noteEditor as HTMLTextAreaElement, {
       target: { value: 'Follow-up completed.' },
@@ -377,7 +338,7 @@ describe('document list workflow panels', () => {
   it('keeps an inline document type on the row instead of storing content', async () => {
     const runtime = createRuntime();
 
-    const documentView = render(
+    render(
       <DocumentListComposePanel
         open
         onOpenChange={vi.fn()}
@@ -396,9 +357,7 @@ describe('document list workflow panels', () => {
     fireEvent.change(screen.getByLabelText('Subject'), {
       target: { value: 'Lisa Ryan' },
     });
-    const noteEditor = documentView.container.querySelector(
-      '.document-list-compose-editor textarea'
-    );
+    const noteEditor = await composeEditorInput();
     fireEvent.change(noteEditor as HTMLTextAreaElement, {
       target: { value: 'Employer confirmed return date.' },
     });
@@ -436,54 +395,6 @@ describe('document list workflow panels', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save document' }));
 
     await waitFor(() => expect(runtime.saveDocument).toHaveBeenCalledOnce());
-  });
-
-  it('follows Mieweb UI dark mode changes without remounting', async () => {    const root = globalThis.document.documentElement;
-    const initialClassName = root.className;
-    const initialTheme = root.getAttribute('data-theme');
-    root.classList.remove('dark');
-    root.removeAttribute('data-theme');
-
-    try {
-      const documentView = render(
-        <DocumentListComposePanel
-          open
-          onOpenChange={vi.fn()}
-          runtime={createRuntime()}
-          inputPrefix="form-1-documents"
-        />
-      );
-      const editor = documentView.container.querySelector(
-        '.document-list-compose-editor'
-      );
-
-      expect(editor).toBeTruthy();
-      expect(editor?.classList.contains('kb-component--dark')).toBe(false);
-
-      root.classList.add('dark');
-      await waitFor(() =>
-        expect(editor?.classList.contains('kb-component--dark')).toBe(true)
-      );
-
-      root.classList.remove('dark');
-      root.dataset.theme = 'dark';
-      await waitFor(() =>
-        expect(editor?.classList.contains('kb-component--dark')).toBe(true)
-      );
-
-      root.removeAttribute('data-theme');
-      await waitFor(() =>
-        expect(editor?.classList.contains('kb-component--dark')).toBe(false)
-      );
-      documentView.unmount();
-    } finally {
-      root.className = initialClassName;
-      if (initialTheme === null) {
-        root.removeAttribute('data-theme');
-      } else {
-        root.setAttribute('data-theme', initialTheme);
-      }
-    }
   });
 
   it('validates compose fields and keeps storage errors in the panel', async () => {

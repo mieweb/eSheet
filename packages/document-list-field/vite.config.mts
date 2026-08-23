@@ -76,6 +76,7 @@ export default defineConfig(() => ({
         '@mieweb/datavis',
         '@mieweb/ui',
         '@mieweb/ui/datavis',
+        '@mieweb/ui/kerebron',
         'ag-grid-community',
         'ag-grid-react',
         'datavis-ace',
