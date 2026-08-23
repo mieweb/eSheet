@@ -112,6 +112,13 @@ export type {
   DocumentRevisionAction,
 } from './types.js';
 export type {
+  DocumentDraft,
+  DocumentDraftChannel,
+  DraftBodyRoom,
+  DraftMeta,
+  DraftPresence,
+} from './draftChannel.js';
+export type {
   CreateDocumentListRuntimeExtensionOptions,
   DocumentListContent,
   DocumentListContentInput,

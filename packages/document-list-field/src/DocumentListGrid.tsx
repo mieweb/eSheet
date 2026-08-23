@@ -35,6 +35,7 @@ import type {
   DocumentListCapabilities,
   DocumentListDocument,
 } from './types.js';
+import type { DocumentDraftChannel } from './draftChannel.js';
 
 type DataVisGridProps = Partial<ComponentProps<typeof DataVisNitroGrid>>;
 type DataVisView = ContextType<typeof DataVisNitroContext>;
@@ -130,6 +131,12 @@ export type DocumentListFieldHost = Pick<
    * unattributed row is nobody's own.
    */
   readonly author?: DocumentListAuthor;
+  /**
+   * Where proposed changes live (ED.36). Host-supplied — this package never
+   * imports Yjs — and optional: without one, editing an existing document is
+   * not offered and compose stays the single-user flow it is today.
+   */
+  readonly draftChannel?: DocumentDraftChannel;
 };
 
 const DocumentListFieldHostContext =
