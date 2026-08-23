@@ -67,7 +67,7 @@ export interface EsheetRendererProps {
   /**
    * Enable touch-optimized mode with larger touch targets.
    * - `true`: Always enable touch mode
-   * - `false`: Never enable touch mode (CSS media query still applies)
+   * - `false`: Never enable touch mode (also disables the CSS media query)
    * - `'auto'`: Enable based on viewport width (<980px) via JavaScript
    * - `undefined`: Rely on CSS media query only (default)
    */
@@ -393,8 +393,10 @@ const EsheetRendererInner = React.forwardRef<
     touchMode === true ||
     ((touchMode === 'auto' || touchMode === undefined) && isTouchEnabled);
 
-  // Apply disabled class when user explicitly disabled touch mode (prevents CSS media query)
-  const applyDisabledClass = isManualOverride && !isTouchEnabled;
+  // Apply disabled class when touch mode is explicitly off — via prop or
+  // manual toggle — so touch-mode.css's own media query stands down too.
+  const applyDisabledClass =
+    touchMode === false || (isManualOverride && !isTouchEnabled);
 
   const rootClasses = [
     'esheet-renderer-root',

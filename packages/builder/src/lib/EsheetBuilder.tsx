@@ -235,8 +235,10 @@ export const EsheetBuilder = React.forwardRef<
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form]);
 
-  // Apply disabled class when user explicitly disabled touch mode (prevents CSS media query)
-  const applyTouchDisabledClass = isManualOverride && !isTouchEnabled;
+  // Apply disabled class when touch mode is explicitly off — via prop or
+  // manual toggle — so touch-mode.css's own media query stands down too.
+  const applyTouchDisabledClass =
+    touchModeProp === false || (isManualOverride && !isTouchEnabled);
 
   // Build root class string
   const rootClasses = [

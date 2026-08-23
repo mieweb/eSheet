@@ -58,6 +58,20 @@
     border-radius: 8px !important;
   }
 
+  /* Dropdown triggers are buttons, so the rule above misses them; line-height
+     1.5 matches the inputs' 16px/24px metrics. */
+  .esheet-renderer-root:not(.touch-mode-disabled) [data-slot='select-trigger'],
+  .ms-builder-root:not(.touch-mode-disabled)
+    .preview-layout
+    [data-slot='select-trigger'] {
+    font-size: 16px !important;
+    line-height: 1.5 !important;
+    min-height: 48px !important;
+    height: auto !important;
+    padding: 0.75rem !important;
+    border-radius: 8px !important;
+  }
+
   .esheet-renderer-root:not(.touch-mode-disabled) [data-slot='radio-indicator'],
   .ms-builder-root:not(.touch-mode-disabled)
     .preview-layout
@@ -176,6 +190,20 @@
 .ms-builder-root.esheet-touch-active .preview-layout input[type='tel'],
 .ms-builder-root.esheet-touch-active .preview-layout input:not([type]) {
   font-size: 16px !important;
+  min-height: 48px !important;
+  height: auto !important;
+  padding: 0.75rem !important;
+  border-radius: 8px !important;
+}
+
+/* Dropdown triggers are buttons, so the rule above misses them; line-height
+   1.5 matches the inputs' 16px/24px metrics. */
+.esheet-renderer-root.esheet-touch-active [data-slot='select-trigger'],
+.ms-builder-root.esheet-touch-active
+  .preview-layout
+  [data-slot='select-trigger'] {
+  font-size: 16px !important;
+  line-height: 1.5 !important;
   min-height: 48px !important;
   height: auto !important;
   padding: 0.75rem !important;
