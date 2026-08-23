@@ -866,13 +866,22 @@ export function DocumentListComposePanel({
             )}
             {asksDocType &&
               (docTypes?.length ? (
-                <div className="document-list-workflow__field">
-                  <label htmlFor={inputId(inputPrefix, 'compose-type')}>
+                // Native select, but wearing @mieweb/ui's Select slots so
+                // condensed/touch density reaches it like it does the Inputs.
+                <div
+                  className="document-list-workflow__field"
+                  data-slot="select-wrapper"
+                >
+                  <label
+                    htmlFor={inputId(inputPrefix, 'compose-type')}
+                    data-slot="select-label"
+                  >
                     Document type
                   </label>
                   <select
                     id={inputId(inputPrefix, 'compose-type')}
                     className="document-list-workflow__select"
+                    data-slot="select-trigger"
                     value={activeDraft.docType}
                     onChange={(event) =>
                       updateDraft({ docType: event.target.value })
