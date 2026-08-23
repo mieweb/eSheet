@@ -48,6 +48,14 @@ export interface ComposerSession {
   readonly documentDraft?: DocumentDraft;
   /** The row the shared draft revises. */
   readonly documentId?: string;
+  /** Definition-tier prefill from the last saved revision (ED.40). */
+  readonly definitionPrefill?: DefinitionPrefill;
+}
+
+/** The reverse of the ED.30 save: front-matter answers plus the body prose. */
+export interface DefinitionPrefill {
+  readonly responses: Readonly<Record<string, unknown>>;
+  readonly body: string;
 }
 
 export interface ComposerSessionValue {
@@ -59,6 +67,7 @@ export interface ComposerSessionValue {
     config: ComposerSessionConfig;
     documentDraft?: DocumentDraft;
     documentId?: string;
+    definitionPrefill?: DefinitionPrefill;
     /** Prefill for the compose draft (e.g. the head revision, ED.40). */
     draft?: DocumentListComposeDraft;
   }) => void;
@@ -88,7 +97,16 @@ export function useComposerSessionValue(): ComposerSessionValue {
   return useMemo<ComposerSessionValue>(
     () => ({
       session,
-      open: ({ kind, fieldId, runtime, config, documentDraft, documentId, draft }) =>
+      open: ({
+        kind,
+        fieldId,
+        runtime,
+        config,
+        documentDraft,
+        documentId,
+        definitionPrefill,
+        draft,
+      }) =>
         setSession((current) => {
           // A dirty draft is never replaced: composing again restores it.
           if (current && sessionIsDirty(current)) {
@@ -107,6 +125,7 @@ export function useComposerSessionValue(): ComposerSessionValue {
             config,
             documentDraft,
             documentId,
+            definitionPrefill,
             draft:
               draft ?? emptyComposeDraft(composeDefaultDocType(config.docTypes)),
           };
@@ -158,6 +177,7 @@ export function ComposerSessionOverlay({
         author={config.author}
         documentDraft={session.documentDraft}
         documentId={session.documentId}
+        definitionPrefill={session.definitionPrefill}
         mode={session.mode}
         onModeChange={setMode}
         draft={session.draft}

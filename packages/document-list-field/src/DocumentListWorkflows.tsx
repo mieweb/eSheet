@@ -25,6 +25,7 @@ import {
 } from './DocumentListDefinitionForm.js';
 import { createMdy, mdyBody } from './mdy.js';
 import type { DocumentDraft, DraftBodyRoom } from './draftChannel.js';
+import type { DefinitionPrefill } from './ComposerSession.js';
 import type {
   DocumentListAuthor,
   DocumentListComposeDraft,
@@ -137,6 +138,8 @@ export interface DocumentListWorkflowPanelProps {
   readonly documentDraft?: DocumentDraft;
   /** The row `documentDraft` revises; a draft without one composes new. */
   readonly documentId?: string;
+  /** Definition-tier prefill parsed from the last saved revision (ED.40). */
+  readonly definitionPrefill?: DefinitionPrefill;
   /** Full-screen unless the owner has collapsed the panel to the dock. */
   readonly mode?: DocumentListWorkflowMode;
   /** Supplying this makes the panel dockable; omitting it keeps it modal. */
@@ -321,6 +324,7 @@ export function DocumentListComposePanel({
   author,
   documentDraft,
   documentId,
+  definitionPrefill,
   mode = 'full',
   onModeChange,
   draft,
@@ -567,10 +571,15 @@ export function DocumentListComposePanel({
   const docTypeLabel =
     docTypes?.find((option) => option.id === activeDraft.docType)?.label ??
     activeDraft.docType;
+  // The title says which act this is: composing new, or revising rev N.
+  const revisingRow = documentId ? runtime.documents[documentId] : undefined;
+  const panelTitle = revisingRow
+    ? `Revise ${noun} (rev ${revisingRow.rev ?? 0})`
+    : `Compose ${noun}`;
 
   return (
     <DocumentListWorkflowPanel
-      title={`Compose ${noun}`}
+      title={panelTitle}
       onClose={() => handleOpenChange(false)}
       mode={mode}
       onModeChange={onModeChange ? handleModeChange : undefined}
@@ -680,6 +689,8 @@ export function DocumentListComposePanel({
                 definitionVersion={selectedType?.definitionVersion}
                 onDirtyChange={setDefinitionDirty}
                 draft={documentDraft}
+                initialResponses={definitionPrefill?.responses}
+                initialBody={definitionPrefill?.body}
               />
             ) : (
               <>

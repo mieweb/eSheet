@@ -1,5 +1,11 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import type { ReactNode } from 'react';
+import { createFormStore, type FieldComponentProps } from '@esheet/core';
+import { FormStoreContext } from '@esheet/fields';
 import { DocumentListComposePanel } from './DocumentListWorkflows.js';
+import { DocumentListField } from './DocumentListField.js';
+import { DocumentListFieldProvider } from './DocumentListGrid.js';
+import { permissiveDocumentListCapabilities } from './types.js';
 import type { DocumentDraft } from './draftChannel.js';
 import type { DocumentListRuntimeState } from './document-list-runtime.js';
 
@@ -13,6 +19,30 @@ vi.mock('@mieweb/ui/kerebron', () => ({
     return <textarea aria-label={String(props['aria-label'] ?? 'Note')} />;
   },
 }));
+
+const captured = { props: null as Record<string, unknown> | null };
+vi.mock('@mieweb/ui/datavis', () => ({
+  DataVisNitroContext: {
+    Provider: ({ children }: { children: ReactNode }) => children,
+  },
+  DataVisNitroGrid: (props: Record<string, unknown>) => {
+    captured.props = props;
+    return (props.titleActions as ReactNode) ?? null;
+  },
+}));
+
+vi.mock('datavis-ace', () => {
+  class Source {
+    cache: Record<string, unknown> = {};
+    constructor(public readonly options: unknown) {}
+  }
+  class ComputedView {
+    constructor(public readonly source: Source) {}
+    clearCache(): void {}
+    getData(): void {}
+  }
+  return { ComputedView, Source };
+});
 
 function fakeDraft(options?: { isNew?: boolean }): DocumentDraft & {
   answers: Map<string, unknown>;
@@ -203,5 +233,76 @@ describe('compose panel in draft mode (ED.37)', () => {
     expect(content).toBeUndefined();
     expect(discard).toHaveBeenCalledOnce();
     expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  // ED.40 — Edit on a row opens (or joins) its draft, prefilled from the last
+  // saved revision, and the panel says it is revising.
+  it('the Edit action opens the draft prefilled from the head revision', async () => {
+    const row = {
+      id: 'doc-1',
+      date: '2026-08-14',
+      title: 'Existing note',
+      subject: 'Original subject',
+      docType: 'progress-note',
+      docId: 'doc-1',
+      source: 'Compose',
+      file: 'doc-1.md',
+      rev: 0,
+      body: 'original prose',
+    };
+    const draft = fakeDraft({ isNew: true });
+    const open = vi.fn(async () => draft);
+    const draftChannel = { open, presenceOf: vi.fn(() => () => {}) };
+    const formStore = createFormStore();
+    const fieldProps = {
+      field: {
+        definition: { id: 'documents', question: 'Documents', documents: [row] },
+      },
+      form: formStore,
+      response: undefined,
+    } as unknown as FieldComponentProps;
+
+    render(
+      <FormStoreContext.Provider value={formStore}>
+        <DocumentListFieldProvider
+          host={{
+            capabilities: permissiveDocumentListCapabilities,
+            author: { id: 'u-casey', name: 'Casey Manager' },
+            draftChannel,
+          }}
+        >
+          <DocumentListField {...fieldProps} />
+        </DocumentListFieldProvider>
+      </FormStoreContext.Provider>
+    );
+
+    await waitFor(() => expect(captured.props).not.toBeNull());
+    const gridProps = captured.props as {
+      formatCell: (
+        value: unknown,
+        data: Record<string, unknown>,
+        column: { field: string }
+      ) => ReactNode;
+    };
+    const actions = render(
+      <>{gridProps.formatCell(undefined, { ...row }, { field: '_actions' })}</>
+    );
+    fireEvent.click(actions.getByRole('button', { name: 'Edit Existing note' }));
+
+    await waitFor(() =>
+      expect(open).toHaveBeenCalledWith('doc-1', {
+        openedBy: { id: 'u-casey', name: 'Casey Manager' },
+        baseRev: 0,
+      })
+    );
+    // The panel opened on the row's draft, saying which act this is.
+    expect(await screen.findByText('Revise document (rev 0)')).toBeTruthy();
+    // The opener seeds the prefill: the head revision's body.
+    await waitFor(() =>
+      expect(editorProps.at(-1)).toMatchObject({ value: 'original prose' })
+    );
+    expect(
+      (screen.getByLabelText(/^Title/) as HTMLInputElement).value
+    ).toBe('Existing note');
   });
 });

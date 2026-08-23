@@ -47,6 +47,10 @@ export interface DocumentListDefinitionFormProps {
   readonly onDirtyChange?: (dirty: boolean) => void;
   /** Binds every answer to the shared draft (ED.37); local-only when absent. */
   readonly draft?: DocumentDraft;
+  /** Answers from the last saved revision, applied on ready (ED.40). */
+  readonly initialResponses?: Readonly<Record<string, unknown>>;
+  /** The saved body, loaded into the definition's `richtext` field (ED.40). */
+  readonly initialBody?: string;
 }
 
 /** Ordered field ids: pages, then each page's fields and their children. */
@@ -108,7 +112,7 @@ export const DocumentListDefinitionForm = forwardRef<
   DocumentListDefinitionFormHandle,
   DocumentListDefinitionFormProps
 >(function DocumentListDefinitionForm(
-  { definition, docType, definitionVersion, onDirtyChange, draft },
+  { definition, docType, definitionVersion, onDirtyChange, draft, initialResponses, initialBody },
   handle
 ): React.JSX.Element {
   const renderer = useRef<EsheetRendererHandle>(null);
@@ -194,7 +198,19 @@ export const DocumentListDefinitionForm = forwardRef<
     unbindDraft.current?.();
     const store = renderer.current?.getFormStore();
     if (!store) return;
-    // Bind first: a shared draft's answers must win over the fresh form
+    // Prefill first (the reverse of the ED.30 save), so a brand-new draft is
+    // seeded from the last saved revision when the binding attaches.
+    if (initialResponses || initialBody != null) {
+      const { setResponse, normalized } = store.getState();
+      for (const [fieldId, response] of Object.entries(initialResponses ?? {})) {
+        setResponse(fieldId, response as FieldResponse);
+      }
+      const bodyId = bodyFieldId(normalized);
+      if (bodyId && initialBody != null) {
+        setResponse(bodyId, { answer: initialBody });
+      }
+    }
+    // Bind next: a shared draft's answers must win over the fresh form
     // before the dirty watcher starts reporting.
     if (draft) unbindDraft.current = bindDraftAnswers(store, draft);
     let dirty = false;

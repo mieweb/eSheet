@@ -8,12 +8,15 @@ import {
 } from 'react';
 import type { FieldComponentProps } from '@esheet/core';
 import { FormStoreContext } from '@esheet/fields';
+import { Button } from '@mieweb/ui';
 import type { DraftPresence } from './draftChannel.js';
+import { mdyBody, parseMdy } from './mdy.js';
 import {
   ComposerSessionOverlay,
   useComposerSession,
   useComposerSessionValue,
   type ComposerSessionConfig,
+  type DefinitionPrefill,
 } from './ComposerSession.js';
 import {
   DocumentListGrid,
@@ -233,6 +236,60 @@ export function DocumentListField({
     author: host?.author,
   };
   const gridDetailRowsExpanded = host?.detailRowsExpanded ?? detailRowsExpanded;
+
+  // ED.40 — Edit opens *or joins* the row's draft; a new draft is prefilled
+  // from the last saved revision (the reverse of the ED.30 save). Which tier
+  // decides the shape: a definition parses front matter back into answers, a
+  // note loads its body — and a parse failure is the note tier, never an
+  // error (ED.34's rule extended).
+  const openEdit = async (row: DocumentListDocument): Promise<void> => {
+    const openedBy = host?.author;
+    if (!draftChannel || !openedBy || !runtimeState) return;
+    const documentDraft = await draftChannel.open(row.id, {
+      openedBy,
+      baseRev: row.rev ?? 0,
+    });
+    const display = (value: string): string => (value === '—' ? '' : value);
+    const composeDraft = {
+      title: display(row.title),
+      subject: display(row.subject),
+      docType: display(row.docType),
+      note: '',
+    };
+    let definitionPrefill: DefinitionPrefill | undefined;
+    if (documentDraft.isNew) {
+      let text = row.body ?? '';
+      if (row.body == null) {
+        try {
+          text = (await runtimeState.loadContent(row.id))?.text ?? '';
+        } catch {
+          text = '';
+        }
+      }
+      const typed = definition.docTypes?.find(
+        (docType) => docType.id === row.docType
+      );
+      const mdy = parseMdy(text);
+      if (typed?.definition && mdy.frontMatter) {
+        definitionPrefill = {
+          responses: mdy.frontMatter.response ?? {},
+          body: mdy.body,
+        };
+      } else {
+        composeDraft.note = mdyBody(text);
+      }
+    }
+    session.open({
+      kind: 'compose',
+      fieldId: field.definition.id,
+      runtime: runtimeState,
+      config: composerConfig,
+      documentDraft,
+      documentId: row.id,
+      draft: composeDraft,
+      definitionPrefill,
+    });
+  };
   const handleToggleDetails =
     host?.onToggleDetails ??
     (runtimeState
@@ -267,6 +324,35 @@ export function DocumentListField({
       )
     : undefined;
 
+  // The capability object answers per-row questions unless the host renders
+  // its own actions; signature and PDF stay off until something backs them.
+  const getRowCapabilities =
+    host?.getRowCapabilities ??
+    ((row: DocumentListDocument) => ({
+      canView: capabilities.view(row),
+      canCompose: mayCreate,
+      canEdit: capabilities.edit(row),
+      canRequestSignature: false,
+      canDelete: capabilities.remove(row),
+      canDownloadPdf: false,
+    }));
+  const renderActions =
+    host?.renderActions ??
+    (draftChannel && host?.author
+      ? (row: DocumentListDocument, caps: { canEdit: boolean }) =>
+          caps.canEdit ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              aria-label={`Edit ${row.title}`}
+              onClick={() => void openEdit(row)}
+            >
+              Edit
+            </Button>
+          ) : null
+      : undefined);
+
   return (
     <section className="document-list-field" aria-label={title}>
       <DocumentListGrid
@@ -275,8 +361,8 @@ export function DocumentListField({
         noun={noun}
         columns={columns}
         titleActions={host?.titleActions}
-        renderActions={host?.renderActions}
-        getRowCapabilities={host?.getRowCapabilities}
+        renderActions={renderActions}
+        getRowCapabilities={getRowCapabilities}
         formatCell={presenceFormatCell}
         onRowClick={host?.onRowClick}
         onRowDoubleClick={host?.onRowDoubleClick}
