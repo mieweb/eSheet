@@ -41,6 +41,7 @@ function fakeDraft(options?: { isNew?: boolean }): DocumentDraft & {
       return () => listeners.delete(listener);
     },
     onPresence: () => () => {},
+    publishFocus: () => {},
     discard: async () => {},
     close: () => {
       closed += 1;

@@ -24,6 +24,8 @@ export interface DraftBodyRoom {
   readonly wsUrl?: string;
   /** Extra query params for the socket (auth token, role, …). */
   readonly params?: Readonly<Record<string, string>>;
+  /** Who this editor is — named, coloured cursors for everyone else. */
+  readonly user?: { readonly name: string; readonly color?: string };
 }
 
 /** What a draft says about itself — set at open, constant until discarded. */
@@ -39,6 +41,8 @@ export interface DraftMeta {
 export interface DraftPresence {
   readonly user: DocumentListAuthor;
   readonly color?: string;
+  /** The definition-tier field they are focused on, when they said. */
+  readonly fieldId?: string | null;
 }
 
 /** One open draft, as the field sees it. */
@@ -54,8 +58,10 @@ export interface DocumentDraft {
   setAnswer(fieldId: string, value: unknown): void;
   /** Fires on any remote answers change; returns the unsubscriber. */
   onAnswers(listener: (answers: Readonly<Record<string, unknown>>) => void): () => void;
-  /** Live presence in this draft; returns the unsubscriber. */
+  /** Live presence in this draft — everyone but me; returns the unsubscriber. */
   onPresence(listener: (present: readonly DraftPresence[]) => void): () => void;
+  /** Tells peers which definition-tier field I am in (`null` = none). */
+  publishFocus(fieldId: string | null): void;
   /**
    * Drops the proposal without a trace — there was never a version. The
    * channel tells everyone else in the draft; the host confirms first when

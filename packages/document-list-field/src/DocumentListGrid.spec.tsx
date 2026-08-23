@@ -197,8 +197,7 @@ describe('DocumentListGrid host integration', () => {
   });
 
   it('uses package workflow defaults with a repository-only runtime', async () => {
-    const formStore = createFormStore();
-    const customDetail = vi.fn(() => <div>Custom detail</div>);
+    const formStore = createFormStore();    const customDetail = vi.fn(() => <div>Custom detail</div>);
     const repository = {
       load: vi.fn(async () => ({ documents: [row] })),
       save: vi.fn(
@@ -313,5 +312,68 @@ describe('DocumentListGrid host integration', () => {
     unmount();
     expect(sources[sourceKeys[0]]).toBeUndefined();
     expect(sources[sourceKeys[1]]).toBeUndefined();
+  });
+
+  // ED.38 — the row says who is drafting it, without opening anything.
+  it('badges a row with draft presence from the host channel', async () => {
+    const formStore = createFormStore();
+    const field = {
+      definition: { id: 'documents', question: 'Documents', documents: [row] },
+    } as unknown as FieldComponentProps['field'];
+    const fieldProps = {
+      field,
+      form: formStore,
+      response: undefined,
+    } as unknown as FieldComponentProps;
+    const draftChannel = {
+      open: vi.fn(),
+      presenceOf: vi.fn(
+        (
+          documentId: string,
+          listener: (present: readonly unknown[]) => void
+        ) => {
+          if (documentId === 'doc-1') {
+            listener([
+              { user: { id: 'u-riley', name: 'Riley Reviewer' }, color: '#123456' },
+            ]);
+          }
+          return () => {};
+        }
+      ),
+    };
+
+    render(
+      <FormStoreContext.Provider value={formStore}>
+        <DocumentListFieldProvider
+          host={{
+            capabilities: permissiveDocumentListCapabilities,
+            draftChannel,
+          }}
+        >
+          <DocumentListField {...fieldProps} />
+        </DocumentListFieldProvider>
+      </FormStoreContext.Provider>
+    );
+
+    await waitFor(() => expect(draftChannel.presenceOf).toHaveBeenCalled());
+    const props = captured.props as {
+      formatCell: (
+        value: unknown,
+        data: Record<string, unknown>,
+        column: { field: string }
+      ) => ReactNode;
+    };
+    const { container } = render(
+      <>{props.formatCell('Letter', tableData, { field: 'title' })}</>
+    );
+    expect(
+      container.querySelector('[aria-label="Draft in progress — Riley Reviewer"]')
+    ).toBeTruthy();
+    expect(
+      (container.querySelector('.document-list-row-presence__dot') as HTMLElement)
+        ?.style.backgroundColor
+    ).toBeTruthy();
+    // Other columns stay on the default rendering.
+    expect(props.formatCell('42.pdf', tableData, { field: 'file' })).toBeUndefined();
   });
 });

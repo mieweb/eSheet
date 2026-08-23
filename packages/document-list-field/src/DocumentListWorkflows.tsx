@@ -252,7 +252,12 @@ const DocumentListComposeEditor = forwardRef<
       assetLoad={composeAssetLoad}
       collab={
         collab
-          ? { room: collab.room, wsUrl: collab.wsUrl, params: { ...collab.params } }
+          ? {
+              room: collab.room,
+              wsUrl: collab.wsUrl,
+              params: { ...collab.params },
+              user: collab.user ? { ...collab.user } : undefined,
+            }
           : undefined
       }
     />

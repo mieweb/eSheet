@@ -1,6 +1,7 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { EsheetRenderer, type EsheetRendererHandle } from '@esheet/renderer';
 import type {
+  FieldPresence,
   FieldResponse,
   FormResponse,
   FormStore,
@@ -113,6 +114,37 @@ export const DocumentListDefinitionForm = forwardRef<
   const renderer = useRef<EsheetRendererHandle>(null);
   const unsubscribe = useRef<(() => void) | null>(null);
   const unbindDraft = useRef<(() => void) | null>(null);
+  const [presenceByField, setPresenceByField] = useState<
+    Record<string, FieldPresence[]>
+  >({});
+
+  // ED.38 — peers' focused fields become the renderer's presence dots, and
+  // ours is published the same way; blur and unmount both say "nowhere".
+  useEffect(() => {
+    if (!draft) return;
+    const off = draft.onPresence((present) => {
+      const byField: Record<string, FieldPresence[]> = {};
+      for (const entry of present) {
+        if (!entry.fieldId) continue;
+        (byField[entry.fieldId] ??= []).push({
+          name: entry.user.name,
+          color: entry.color ?? '#888',
+        });
+      }
+      setPresenceByField(byField);
+    });
+    return () => {
+      off();
+      draft.publishFocus(null);
+    };
+  }, [draft]);
+
+  const publishFocus = (target: EventTarget | null): void => {
+    if (!draft || !(target instanceof Element)) return;
+    draft.publishFocus(
+      target.closest('[data-field-id]')?.getAttribute('data-field-id') ?? null
+    );
+  };
 
   useImperativeHandle(handle, () => ({
     collect: () => {
@@ -176,13 +208,18 @@ export const DocumentListDefinitionForm = forwardRef<
   };
 
   return (
-    <div className="document-list-workflow-panel__definition">
+    <div
+      className="document-list-workflow-panel__definition"
+      onFocusCapture={(event) => publishFocus(event.target)}
+      onBlurCapture={() => draft?.publishFocus(null)}
+    >
       <EsheetRenderer
         ref={renderer}
         formDataInput={definition}
         onReady={handleReady}
         topNavigation={false}
         bottomNavigation={false}
+        collab={draft ? { presenceByField } : undefined}
       />
     </div>
   );

@@ -284,3 +284,23 @@
   object-fit: contain;
   object-position: left top;
 }
+
+/* ED.38 — who is drafting a row, said on the row (names in the tooltip). */
+.document-list-row-presence {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.document-list-row-presence__badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+.document-list-row-presence__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid var(--mieweb-background, #fff);
+}

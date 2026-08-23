@@ -8,6 +8,7 @@ import {
 } from 'react';
 import type { FieldComponentProps } from '@esheet/core';
 import { FormStoreContext } from '@esheet/fields';
+import type { DraftPresence } from './draftChannel.js';
 import {
   ComposerSessionOverlay,
   useComposerSession,
@@ -135,6 +136,62 @@ export function DocumentListField({
     return all.filter((row) => capabilities.view(row));
   }, [capabilities, initialRows, runtimeState]);
   const [detailRowsExpanded, setDetailRowsExpanded] = useState(false);
+
+  // ED.38 — who is drafting each row, said on the row itself. One presence
+  // subscription per visible row; the channel keeps them body-free.
+  const draftChannel = host?.draftChannel;
+  const [presenceByRow, setPresenceByRow] = useState<
+    Record<string, readonly DraftPresence[]>
+  >({});
+  useEffect(() => {
+    if (!draftChannel) return;
+    const offs = rows.map((row) =>
+      draftChannel.presenceOf(row.id, (present) =>
+        setPresenceByRow((current) => {
+          if (present.length === 0 && !(row.id in current)) return current;
+          const next = { ...current };
+          if (present.length === 0) delete next[row.id];
+          else next[row.id] = present;
+          return next;
+        })
+      )
+    );
+    return () => {
+      for (const off of offs) off();
+    };
+  }, [draftChannel, rows]);
+
+  const presenceFormatCell = useMemo(() => {
+    if (!draftChannel) return undefined;
+    const format: NonNullable<
+      Parameters<typeof DocumentListGrid>[0]['formatCell']
+    > = (value, row, column) => {
+      if (column.field !== 'title') return undefined;
+      const present = presenceByRow[String(row.id ?? '')];
+      if (!present?.length) return undefined;
+      const names = present.map((entry) => entry.user.name).join(', ');
+      return (
+        <span className="document-list-row-presence">
+          {String(value ?? '')}
+          <span
+            className="document-list-row-presence__badges"
+            role="img"
+            aria-label={`Draft in progress — ${names}`}
+            title={`Draft in progress — ${names}`}
+          >
+            {present.map((entry) => (
+              <span
+                key={entry.user.id}
+                className="document-list-row-presence__dot"
+                style={{ backgroundColor: entry.color ?? '#888' }}
+              />
+            ))}
+          </span>
+        </span>
+      );
+    };
+    return format;
+  }, [draftChannel, presenceByRow]);
   const sharedSession = useComposerSession();
   // Standalone fields (no provider) keep a session of their own, so the panel
   // behaves the same either way — it just cannot outlive this field.
@@ -220,6 +277,7 @@ export function DocumentListField({
         titleActions={host?.titleActions}
         renderActions={host?.renderActions}
         getRowCapabilities={host?.getRowCapabilities}
+        formatCell={presenceFormatCell}
         onRowClick={host?.onRowClick}
         onRowDoubleClick={host?.onRowDoubleClick}
         renderDetailRow={detailRenderer}

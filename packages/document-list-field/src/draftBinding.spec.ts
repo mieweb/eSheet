@@ -30,6 +30,7 @@ function fakeDraft(options?: {
       return () => listeners.delete(listener);
     },
     onPresence: () => () => {},
+    publishFocus: () => {},
     discard: async () => {},
     close: () => {},
     emit,
