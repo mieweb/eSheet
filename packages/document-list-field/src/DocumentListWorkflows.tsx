@@ -6,12 +6,13 @@ import {
   useState,
   type ChangeEvent,
   type FormEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
 } from 'react';
 import { CoreEditor, type AssetLoad } from '@kerebron/editor';
 import { AdvancedEditorKit } from '@kerebron/editor-kits/AdvancedEditorKit';
 import { Button, Input, MarkdownRenderer } from '@mieweb/ui';
-import { X } from 'lucide-react';
+import { Maximize2, Minimize2, X } from 'lucide-react';
 import '@kerebron/editor/assets/index.css';
 import '@kerebron/editor-kits/assets/AdvancedEditorKit.css';
 import '@mieweb/ui/markdown.css';
@@ -22,8 +23,10 @@ import type {
 } from './document-list-runtime.js';
 import { DOCUMENT_LIST_DEFAULT_NOUN, DOCUMENT_LIST_MARKDOWN_TYPE } from './data.js';
 import type {
+  DocumentListComposeDraft,
   DocumentListDocTypeOption,
   DocumentListDocument,
+  DocumentListWorkflowMode,
 } from './types.js';
 
 const COMPOSE_CONTENT_TYPE = DOCUMENT_LIST_MARKDOWN_TYPE;
@@ -238,6 +241,16 @@ export interface DocumentListWorkflowPanelProps {
   readonly accept?: string;
   /** Largest upload accepted, in bytes. */
   readonly maxFileSize?: number;
+  /** Full-screen unless the owner has collapsed the panel to the dock. */
+  readonly mode?: DocumentListWorkflowMode;
+  /** Supplying this makes the panel dockable; omitting it keeps it modal. */
+  readonly onModeChange?: (mode: DocumentListWorkflowMode) => void;
+  /**
+   * The draft to edit. Uncontrolled when omitted, so a panel rendered without
+   * a composer session still works.
+   */
+  readonly draft?: DocumentListComposeDraft;
+  readonly onDraftChange?: (draft: DocumentListComposeDraft) => void;
 }
 
 /** Compose asks for the columns the list shows, and always for the title. */
@@ -280,6 +293,34 @@ function resetFormState(
   setSaving(false);
 }
 
+export function emptyComposeDraft(
+  defaultDocType: string
+): DocumentListComposeDraft {
+  return { title: '', subject: '', docType: defaultDocType, note: '' };
+}
+
+/**
+ * One definition of "dirty", shared by Escape handling, the unload guard, the
+ * dock's unsaved dot and the session's reopen guard.
+ */
+export function isComposeDraftDirty(
+  draft: DocumentListComposeDraft,
+  defaultDocType: string
+): boolean {
+  return Boolean(
+    draft.title.trim() ||
+      draft.subject.trim() ||
+      draft.note.trim() ||
+      draft.docType !== defaultDocType
+  );
+}
+
+export function composeDefaultDocType(
+  docTypes: readonly DocumentListDocTypeOption[] | undefined
+): string {
+  return docTypes?.[0]?.id ?? 'Note';
+}
+
 interface DocumentListComposeEditorProps {
   readonly ariaLabel: string;
   readonly disabled: boolean;
@@ -291,6 +332,8 @@ interface DocumentListComposeEditorProps {
 
 interface DocumentListComposeEditorHandle {
   readonly getContent: () => Promise<string>;
+  /** Restores the caret where the writer left it — the editor never unmounts. */
+  readonly focus: () => void;
 }
 
 const DocumentListComposeEditor = forwardRef<
@@ -414,6 +457,18 @@ const DocumentListComposeEditor = forwardRef<
         valueRef.current = nextValue;
         return nextValue;
       },
+      focus: (): void => {
+        const view = editorRef.current?.view as
+          | { focus?: () => void }
+          | undefined;
+        if (view?.focus) {
+          view.focus();
+          return;
+        }
+        hostRef.current
+          ?.querySelector<HTMLElement>('[contenteditable="true"], textarea')
+          ?.focus();
+      },
     }),
     []
   );
@@ -437,57 +492,200 @@ const DocumentListComposeEditor = forwardRef<
   );
 });
 
-/**
- * The workflow forms float over the list they belong to rather than dimming the
- * page, so the row being added stays in its own context.
- */
-function DocumentListWorkflowPanel({
-  onClose,
-  title,
-  children,
-}: {
+const FOCUSABLE_SELECTOR = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[contenteditable="true"]',
+  '[tabindex]:not([tabindex="-1"])',
+].join(', ');
+
+export interface DocumentListWorkflowShellProps {
   readonly onClose: () => void;
   readonly title: string;
   readonly children: ReactNode;
-}): React.JSX.Element {
+  readonly mode?: DocumentListWorkflowMode;
+  /** Supplying this makes the panel dockable; omitting it keeps it modal. */
+  readonly onModeChange?: (mode: DocumentListWorkflowMode) => void;
+  /** Whether the draft holds work the user would mind losing. */
+  readonly dirty?: boolean;
+  /** What the dock strip says about the draft while collapsed. */
+  readonly dockSummary?: ReactNode;
+}
+
+/**
+ * The workflow forms own the viewport while `full`, and collapse to a dock
+ * strip that keeps the draft — and the editor — alive while `docked`. The
+ * panel is never unmounted or resized between the two: `docked` clips it.
+ */
+export function DocumentListWorkflowPanel({
+  onClose,
+  title,
+  children,
+  mode = 'full',
+  onModeChange,
+  dirty = false,
+  dockSummary,
+}: DocumentListWorkflowShellProps): React.JSX.Element {
   const panelRef = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
+  const onModeChangeRef = useRef(onModeChange);
+  onModeChangeRef.current = onModeChange;
+  const dirtyRef = useRef(dirty);
+  dirtyRef.current = dirty;
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
+  const dockable = Boolean(onModeChange);
+  const docked = dockable && mode === 'docked';
+
+  const requestClose = (): void => {
+    const view = panelRef.current?.ownerDocument.defaultView;
+    // Discarding work is always deliberate; Escape and collapse never destroy.
+    if (dirty && view?.confirm && !view.confirm(`Discard this ${title}?`)) {
+      return;
+    }
+    onClose();
+  };
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') onCloseRef.current();
+      if (event.key !== 'Escape') return;
+      if (dockable && dirtyRef.current && modeRef.current === 'full') {
+        onModeChangeRef.current?.('docked');
+        return;
+      }
+      onCloseRef.current();
     };
     document.addEventListener('keydown', handleKeyDown);
     panelRef.current
       ?.querySelector<HTMLElement>('input, select, textarea')
       ?.focus();
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [dockable]);
+
+  // A dirty draft lives in memory only, so leaving the page has to be a choice.
+  useEffect(() => {
+    if (!dirty || typeof window === 'undefined') return;
+    const handleBeforeUnload = (event: BeforeUnloadEvent): void => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [dirty]);
+
+  // Modality is a function of mode: a docked panel must leave the app usable.
+  useEffect(() => {
+    const panel = panelRef.current;
+    if (!panel || mode !== 'full') return;
+    const root = panel.closest('.document-list-workflow-dock') ?? panel;
+    const inerted = Array.from(panel.ownerDocument.body.children).filter(
+      (child) =>
+        child !== root && !child.contains(root) && !child.hasAttribute('inert')
+    );
+    for (const element of inerted) element.setAttribute('inert', '');
+    return () => {
+      for (const element of inerted) element.removeAttribute('inert');
+    };
+  }, [mode]);
+
+  useEffect(() => {
+    if (!docked) return;
+    panelRef.current
+      ?.querySelector<HTMLElement>('[aria-label="Restore"]')
+      ?.focus();
+  }, [docked]);
+
+  const handleTabTrap = (event: ReactKeyboardEvent<HTMLDivElement>): void => {
+    if (event.key !== 'Tab' || mode !== 'full') return;
+    const panel = panelRef.current;
+    if (!panel) return;
+    const focusable = Array.from(
+      panel.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
+    ).filter((element) => element.offsetParent !== null || element === panel);
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = panel.ownerDocument.activeElement;
+    if (event.shiftKey && (active === first || !panel.contains(active))) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && active === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
 
   return (
-    <div
-      ref={panelRef}
-      className="document-list-workflow-panel"
-      role="dialog"
-      aria-modal="true"
-      aria-label={title}
-    >
-      <div className="document-list-workflow-panel__header">
-        <h3 className="document-list-workflow-panel__title">{title}</h3>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={onClose}
-          aria-label="Close"
-          title="Close"
+    <>
+      {mode === 'full' && (
+        <div className="document-list-workflow-scrim" aria-hidden="true" />
+      )}
+      <div
+        className={`document-list-workflow-dock document-list-workflow-dock--${
+          docked ? 'docked' : 'full'
+        }`}
+      >
+        <div
+          ref={panelRef}
+          className={`document-list-workflow-panel document-list-workflow-panel--${
+            docked ? 'docked' : 'full'
+          }`}
+          role="dialog"
+          aria-modal={docked ? undefined : true}
+          aria-expanded={dockable ? !docked : undefined}
+          aria-label={title}
+          onKeyDown={handleTabTrap}
         >
-          <X size={16} aria-hidden="true" />
-        </Button>
+          <div className="document-list-workflow-panel__header">
+            {docked ? (
+              <div className="document-list-workflow-dock__summary">
+                {dockSummary ?? title}
+              </div>
+            ) : (
+              <h3 className="document-list-workflow-panel__title">{title}</h3>
+            )}
+            <div className="document-list-workflow-panel__header-actions">
+              {dockable && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onModeChange?.(docked ? 'full' : 'docked')}
+                  aria-label={docked ? 'Restore' : 'Collapse to dock'}
+                  title={docked ? 'Restore' : 'Collapse to dock'}
+                >
+                  {docked ? (
+                    <Maximize2 size={16} aria-hidden="true" />
+                  ) : (
+                    <Minimize2 size={16} aria-hidden="true" />
+                  )}
+                </Button>
+              )}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={requestClose}
+                aria-label={docked ? 'Discard' : 'Close'}
+                title={docked ? 'Discard' : 'Close'}
+              >
+                <X size={16} aria-hidden="true" />
+              </Button>
+            </div>
+          </div>
+          <div className="document-list-workflow-panel__content">
+            {children}
+          </div>
+        </div>
       </div>
-      {children}
-    </div>
+      <p className="document-list-workflow__announcer" aria-live="polite">
+        {docked ? `${title} collapsed to dock` : ''}
+      </p>
+    </>
   );
 }
 
@@ -500,28 +698,38 @@ export function DocumentListComposePanel({
   fields,
   docTypes,
   defaultInline,
+  mode = 'full',
+  onModeChange,
+  draft,
+  onDraftChange,
 }: DocumentListWorkflowPanelProps): React.JSX.Element | null {
-  const defaultDocType = docTypes?.[0]?.id ?? 'Note';
-  const [title, setTitle] = useState('');
-  const [subject, setSubject] = useState('');
-  const [docType, setDocType] = useState(defaultDocType);
-  const [note, setNote] = useState('');
+  const defaultDocType = composeDefaultDocType(docTypes);
+  const [localDraft, setLocalDraft] = useState<DocumentListComposeDraft>(
+    () => draft ?? emptyComposeDraft(defaultDocType)
+  );
+  // `saving` and `error` stay local: the panel outlives navigation now, and
+  // neither survives a save attempt worth reporting to the dock.
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const editorRef = useRef<DocumentListComposeEditorHandle>(null);
+  const activeDraft = draft ?? localDraft;
   const asksSubject = asks(fields, 'subject');
   const asksDocType = asks(fields, 'docType');
+  const dirty = isComposeDraftDirty(activeDraft, defaultDocType);
   const requiredLabels = [
     'Title',
     ...(asksSubject ? ['Subject'] : []),
     ...(asksDocType ? ['Document type'] : []),
   ];
 
+  const updateDraft = (patch: Partial<DocumentListComposeDraft>): void => {
+    const next = { ...activeDraft, ...patch };
+    setLocalDraft(next);
+    onDraftChange?.(next);
+  };
+
   const reset = (): void => {
-    setTitle('');
-    setSubject('');
-    setDocType(defaultDocType);
-    setNote('');
+    updateDraft(emptyComposeDraft(defaultDocType));
     resetFormState(setError, setSaving);
   };
 
@@ -530,11 +738,19 @@ export function DocumentListComposePanel({
     onOpenChange(nextOpen);
   };
 
+  const handleModeChange = (nextMode: DocumentListWorkflowMode): void => {
+    onModeChange?.(nextMode);
+    // Restoring puts the writer back where they stopped typing.
+    if (nextMode === 'full') {
+      setTimeout(() => editorRef.current?.focus(), 0);
+    }
+  };
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const trimmedTitle = title.trim();
-    const trimmedSubject = subject.trim();
-    const trimmedDocType = docType.trim();
+    const trimmedTitle = activeDraft.title.trim();
+    const trimmedSubject = activeDraft.subject.trim();
+    const trimmedDocType = activeDraft.docType.trim();
     if (
       !trimmedTitle ||
       (asksSubject && !trimmedSubject) ||
@@ -549,7 +765,7 @@ export function DocumentListComposePanel({
     try {
       const composedNote = editorRef.current
         ? await editorRef.current.getContent()
-        : note;
+        : activeDraft.note;
       const id = createDocumentId();
       const inline =
         docTypes?.find((option) => option.id === trimmedDocType)?.inline ??
@@ -590,10 +806,36 @@ export function DocumentListComposePanel({
 
   if (!open) return null;
 
+  const docTypeLabel =
+    docTypes?.find((option) => option.id === activeDraft.docType)?.label ??
+    activeDraft.docType;
+
   return (
     <DocumentListWorkflowPanel
       title={`Compose ${noun}`}
       onClose={() => handleOpenChange(false)}
+      mode={mode}
+      onModeChange={onModeChange ? handleModeChange : undefined}
+      dirty={dirty}
+      dockSummary={
+        <>
+          <span className="document-list-workflow-dock__title">
+            {activeDraft.title.trim() || `Untitled ${noun}`}
+          </span>
+          {asksDocType && docTypeLabel && (
+            <span className="document-list-workflow-dock__type">
+              {docTypeLabel}
+            </span>
+          )}
+          {dirty && (
+            <span
+              className="document-list-workflow-dock__dot"
+              role="img"
+              aria-label="Unsaved changes"
+            />
+          )}
+        </>
+      }
     >
       <form
         className="document-list-workflow-panel__form"
@@ -601,55 +843,63 @@ export function DocumentListComposePanel({
         noValidate
       >
         <div className="document-list-workflow-panel__body">
-          <Input
-            id={inputId(inputPrefix, 'compose-title')}
-            label="Title"
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            disabled={saving}
-            required
-          />
-          {asksSubject && (
+          <div className="document-list-workflow-panel__meta">
             <Input
-              id={inputId(inputPrefix, 'compose-subject')}
-              label="Subject"
-              value={subject}
-              onChange={(event) => setSubject(event.target.value)}
+              id={inputId(inputPrefix, 'compose-title')}
+              label="Title"
+              value={activeDraft.title}
+              onChange={(event) => updateDraft({ title: event.target.value })}
               disabled={saving}
               required
             />
-          )}
-          {asksDocType &&
-            (docTypes?.length ? (
-              <div className="document-list-workflow__field">
-                <label htmlFor={inputId(inputPrefix, 'compose-type')}>
-                  Document type
-                </label>
-                <select
-                  id={inputId(inputPrefix, 'compose-type')}
-                  className="document-list-workflow__select"
-                  value={docType}
-                  onChange={(event) => setDocType(event.target.value)}
-                  disabled={saving}
-                  required
-                >
-                  {docTypes.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.label ?? option.id}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ) : (
+            {asksSubject && (
               <Input
-                id={inputId(inputPrefix, 'compose-type')}
-                label="Document type"
-                value={docType}
-                onChange={(event) => setDocType(event.target.value)}
+                id={inputId(inputPrefix, 'compose-subject')}
+                label="Subject"
+                value={activeDraft.subject}
+                onChange={(event) =>
+                  updateDraft({ subject: event.target.value })
+                }
                 disabled={saving}
                 required
               />
-            ))}
+            )}
+            {asksDocType &&
+              (docTypes?.length ? (
+                <div className="document-list-workflow__field">
+                  <label htmlFor={inputId(inputPrefix, 'compose-type')}>
+                    Document type
+                  </label>
+                  <select
+                    id={inputId(inputPrefix, 'compose-type')}
+                    className="document-list-workflow__select"
+                    value={activeDraft.docType}
+                    onChange={(event) =>
+                      updateDraft({ docType: event.target.value })
+                    }
+                    disabled={saving}
+                    required
+                  >
+                    {docTypes.map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.label ?? option.id}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <Input
+                  id={inputId(inputPrefix, 'compose-type')}
+                  label="Document type"
+                  value={activeDraft.docType}
+                  onChange={(event) =>
+                    updateDraft({ docType: event.target.value })
+                  }
+                  disabled={saving}
+                  required
+                />
+              ))}
+          </div>
           <div className="document-list-workflow__field document-list-workflow__field--grow">
             <label
               id={inputId(inputPrefix, 'compose-note-label')}
@@ -662,8 +912,8 @@ export function DocumentListComposePanel({
               id={inputId(inputPrefix, 'compose-note')}
               ariaLabel="Note"
               labelledBy={inputId(inputPrefix, 'compose-note-label')}
-              value={note}
-              onChange={setNote}
+              value={activeDraft.note}
+              onChange={(note) => updateDraft({ note })}
               disabled={saving}
             />
           </div>

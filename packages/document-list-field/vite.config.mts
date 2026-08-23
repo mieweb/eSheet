@@ -4,7 +4,17 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import dts from 'vite-plugin-dts';
 import * as path from 'path';
+import { createRequire } from 'node:module';
 import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
+
+// React is CJS, so vitest node-resolves it from each importer's own tree — a
+// linked @mieweb/ui checkout would load a second copy and every hook would
+// read a null dispatcher. Aliasing pins each entry to this workspace's copy.
+const require = createRequire(import.meta.url);
+const packageDir = (name: string): string =>
+  path.dirname(require.resolve(`${name}/package.json`));
+const reactDir = packageDir('react');
+const reactDomDir = packageDir('react-dom');
 
 function inlineCssDocumentListField(): import('vite').Plugin {
   return {
@@ -84,5 +94,11 @@ export default defineConfig(() => ({
     environment: 'jsdom',
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
+    alias: [
+      { find: /^react$/, replacement: reactDir },
+      { find: /^react\/(.*)$/, replacement: `${reactDir}/$1` },
+      { find: /^react-dom$/, replacement: reactDomDir },
+      { find: /^react-dom\/(.*)$/, replacement: `${reactDomDir}/$1` },
+    ],
   },
 }));

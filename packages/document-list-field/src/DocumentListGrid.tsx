@@ -15,6 +15,7 @@ import { Button } from '@mieweb/ui';
 import { DataVisNitroContext, DataVisNitroGrid } from '@mieweb/ui/datavis';
 import { ComputedView, Source } from 'datavis-ace';
 import { LayoutList, SquarePen, Upload } from 'lucide-react';
+import { ComposerSessionProvider } from './ComposerSession.js';
 import {
   createLocalSourcePayload,
   DOCUMENT_LIST_ACTIONS_COLUMN,
@@ -151,7 +152,7 @@ export function DocumentListFieldProvider({
   return (
     <DocumentListFieldHostContext.Provider value={host}>
       <DocumentListRuntimeContext.Provider value={runtimeContext}>
-        {children}
+        <ComposerSessionProvider>{children}</ComposerSessionProvider>
       </DocumentListRuntimeContext.Provider>
     </DocumentListFieldHostContext.Provider>
   );

@@ -1,12 +1,52 @@
-import { render, screen } from '@testing-library/react';
-import { createFormStore } from '@esheet/core';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import type { ReactNode } from 'react';
+import { createFormStore, type FieldComponentProps } from '@esheet/core';
 import { FormStoreContext } from '@esheet/fields';
+import { DocumentListField } from './DocumentListField.js';
 import {
   DocumentListFieldProvider,
   useDocumentListFieldHost,
   useDocumentListFieldRuntime,
 } from './DocumentListGrid.js';
 import type { DocumentListDocument } from './types.js';
+
+vi.mock('@mieweb/ui/datavis', () => ({
+  DataVisNitroContext: {
+    Provider: ({ children }: { children: ReactNode }) => children,
+  },
+  DataVisNitroGrid: (props: Record<string, unknown>) =>
+    (props.titleActions as ReactNode) ?? null,
+}));
+
+vi.mock('datavis-ace', () => {
+  class Source {
+    cache: Record<string, unknown> = {};
+    constructor(public readonly options: unknown) {}
+  }
+  class ComputedView {
+    constructor(public readonly source: Source) {}
+    clearCache(): void {}
+    getData(): void {}
+  }
+  return { ComputedView, Source };
+});
+
+vi.mock('@kerebron/editor', () => ({
+  CoreEditor: {
+    create: () => ({
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      view: { setProps: vi.fn() },
+      loadDocument: vi.fn(async () => undefined),
+      saveDocument: vi.fn(async () => new TextEncoder().encode('')),
+      destroy: vi.fn(),
+    }),
+  },
+}));
+
+vi.mock('@kerebron/editor-kits/AdvancedEditorKit', () => ({
+  AdvancedEditorKit: class AdvancedEditorKit {},
+}));
 
 function HostProbe(): React.JSX.Element {
   const host = useDocumentListFieldHost();
@@ -106,5 +146,53 @@ describe('DocumentListFieldProvider', () => {
         .getState()
         .getExtension('@esheet/document-list-field', 'documents')
     ).toBeTruthy();
+  });
+
+  // The reason the composer session is hoisted at all: eSheet's pages
+  // navigator unmounts the page the draft was started from.
+  it('keeps a docked draft when the field that opened it unmounts', async () => {
+    const formStore = createFormStore();
+    const field = {
+      definition: { id: 'documents', question: 'Documents' },
+    } as unknown as FieldComponentProps['field'];
+    const fieldProps = {
+      field,
+      form: formStore,
+      response: undefined,
+    } as unknown as FieldComponentProps;
+    const tree = (visible: boolean): React.JSX.Element => (
+      <FormStoreContext.Provider value={formStore}>
+        <DocumentListFieldProvider host={{}}>
+          {visible ? <DocumentListField {...fieldProps} /> : null}
+        </DocumentListFieldProvider>
+      </FormStoreContext.Provider>
+    );
+
+    const { rerender } = render(tree(true));
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Compose document' })
+    );
+    // The runtime marks the title required, so the label reads "Title *".
+    fireEvent.change(await screen.findByLabelText(/^Title/), {
+      target: { value: 'Visit note' },
+    });
+    // Portaled out of the renderer, so page scroll and stacking cannot clip it.
+    expect(
+      screen.getByRole('dialog').closest('.document-list-workflow-dock')
+        ?.parentElement
+    ).toBe(globalThis.document.body);
+    fireEvent.click(screen.getByRole('button', { name: 'Collapse to dock' }));
+
+    rerender(tree(false));
+
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Compose document' })).toBeNull()
+    );
+    expect(screen.getByRole('dialog')).toBeTruthy();
+    expect(screen.getByText('Visit note')).toBeTruthy();
+    expect((screen.getByLabelText(/^Title/) as HTMLInputElement).value).toBe(
+      'Visit note'
+    );
   });
 });

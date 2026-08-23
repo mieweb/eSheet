@@ -59,6 +59,20 @@ export const DOCUMENT_LIST_WORKFLOWS = ['compose', 'upload'] as const;
 
 export type DocumentListWorkflow = (typeof DOCUMENT_LIST_WORKFLOWS)[number];
 
+/**
+ * `full` owns the viewport and is modal; `docked` is a strip the user can read
+ * the rest of the form around. Collapsing never unmounts the panel.
+ */
+export type DocumentListWorkflowMode = 'full' | 'docked';
+
+/** What the user has typed so far — the part of a draft worth surviving. */
+export interface DocumentListComposeDraft {
+  readonly title: string;
+  readonly subject: string;
+  readonly docType: string;
+  readonly note: string;
+}
+
 /** A document type the compose form offers, instead of free text. */
 export interface DocumentListDocTypeOption {
   readonly id: string;

@@ -9,6 +9,12 @@ import {
 import type { FieldComponentProps } from '@esheet/core';
 import { FormStoreContext } from '@esheet/fields';
 import {
+  ComposerSessionOverlay,
+  useComposerSession,
+  useComposerSessionValue,
+  type ComposerSessionConfig,
+} from './ComposerSession.js';
+import {
   DocumentListGrid,
   useDocumentListFieldHost,
   useDocumentListFieldRuntime,
@@ -24,11 +30,7 @@ import {
   getDocumentListRuntimeState,
   type DocumentListRuntimeState,
 } from './document-list-runtime.js';
-import {
-  DocumentListComposePanel,
-  DocumentListDetailRow,
-  DocumentListUploadPanel,
-} from './DocumentListWorkflows.js';
+import { DocumentListDetailRow } from './DocumentListWorkflows.js';
 import type {
   DocumentListDefinition,
   DocumentListDocument,
@@ -110,9 +112,12 @@ export function DocumentListField({
     () => runtimeRows(runtimeState) ?? initialRows,
     [initialRows, runtimeState]
   );
-  const [composeOpen, setComposeOpen] = useState(false);
-  const [uploadOpen, setUploadOpen] = useState(false);
   const [detailRowsExpanded, setDetailRowsExpanded] = useState(false);
+  const sharedSession = useComposerSession();
+  // Standalone fields (no provider) keep a session of their own, so the panel
+  // behaves the same either way — it just cannot outlive this field.
+  const ownSession = useComposerSessionValue();
+  const session = sharedSession ?? ownSession;
 
   useEffect(() => {
     if (!formStore) return;
@@ -135,23 +140,40 @@ export function DocumentListField({
   const columnFields = columns?.map((column) => column.field);
   const formInstanceId = form?.getState().instanceId ?? 'document-list-form';
   const inputPrefix = `${formInstanceId}-${field.definition.id}`;
+  const composerConfig: ComposerSessionConfig = {
+    inputPrefix,
+    noun,
+    fields: columnFields,
+    docTypes: definition.docTypes,
+    defaultInline: definition.inline,
+    accept: definition.accept,
+    maxFileSize: definition.maxFileSize,
+  };
   const gridDetailRowsExpanded = host?.detailRowsExpanded ?? detailRowsExpanded;
   const handleToggleDetails =
     host?.onToggleDetails ??
     (runtimeState
       ? () => setDetailRowsExpanded((expanded) => !expanded)
       : undefined);
+  const openSession =
+    (kind: DocumentListWorkflow, runtime: DocumentListRuntimeState) => () =>
+      session.open({
+        kind,
+        fieldId: field.definition.id,
+        runtime,
+        config: composerConfig,
+      });
   const handleCompose =
     runtimeState && offers(definition, 'compose')
       ? host?.onCompose
         ? () => void host.onCompose?.(runtimeState)
-        : () => setComposeOpen(true)
+        : openSession('compose', runtimeState)
       : undefined;
   const handleUpload =
     runtimeState && offers(definition, 'upload')
       ? host?.onUpload
         ? () => void host.onUpload?.(runtimeState)
-        : () => setUploadOpen(true)
+        : openSession('upload', runtimeState)
       : undefined;
   const detailRenderer = host?.renderDetailRow
     ? host.renderDetailRow
@@ -162,12 +184,7 @@ export function DocumentListField({
     : undefined;
 
   return (
-    <section
-      className={`document-list-field${
-        composeOpen || uploadOpen ? ' document-list-field--workflow-open' : ''
-      }`}
-      aria-label={title}
-    >
+    <section className="document-list-field" aria-label={title}>
       <DocumentListGrid
         rows={rows}
         title={title}
@@ -188,29 +205,7 @@ export function DocumentListField({
         }
         error={runtimeState?.error ?? host?.error}
       />
-      {runtimeState && !host?.onCompose && composeOpen && (
-        <DocumentListComposePanel
-          open
-          onOpenChange={setComposeOpen}
-          runtime={runtimeState}
-          inputPrefix={inputPrefix}
-          noun={noun}
-          fields={columnFields}
-          docTypes={definition.docTypes}
-          defaultInline={definition.inline}
-        />
-      )}
-      {runtimeState && !host?.onUpload && uploadOpen && (
-        <DocumentListUploadPanel
-          open
-          onOpenChange={setUploadOpen}
-          runtime={runtimeState}
-          inputPrefix={inputPrefix}
-          noun={noun}
-          accept={definition.accept}
-          maxFileSize={definition.maxFileSize}
-        />
-      )}
+      {!sharedSession && <ComposerSessionOverlay value={ownSession} />}
     </section>
   );
 }

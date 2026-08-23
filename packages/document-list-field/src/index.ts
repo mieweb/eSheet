@@ -21,11 +21,27 @@ export function registerDocumentListFieldType(): void {
 
 export { DocumentListField } from './DocumentListField.js';
 export {
+  ComposerSessionOverlay,
+  ComposerSessionProvider,
+  useComposerSession,
+  useComposerSessionValue,
+} from './ComposerSession.js';
+export type {
+  ComposerSession,
+  ComposerSessionConfig,
+  ComposerSessionValue,
+} from './ComposerSession.js';
+export {
+  composeDefaultDocType,
   configureDocumentListComposeEditor,
   DocumentListComposePanel,
   DocumentListDetailRow,
   DocumentListUploadPanel,
+  DocumentListWorkflowPanel,
+  emptyComposeDraft,
+  isComposeDraftDirty,
 } from './DocumentListWorkflows.js';
+export type { DocumentListWorkflowShellProps } from './DocumentListWorkflows.js';
 export {
   DocumentListFieldProvider,
   DocumentListGrid,
@@ -63,12 +79,14 @@ export type {
 } from './DocumentListGrid.js';
 export type {
   DocumentListAction,
+  DocumentListComposeDraft,
   DocumentListDefinition,
   DocumentListDocTypeOption,
   DocumentListDocument,
   DocumentListInput,
   DocumentListValue,
   DocumentListWorkflow,
+  DocumentListWorkflowMode,
 } from './types.js';
 export type {
   CreateDocumentListRuntimeExtensionOptions,

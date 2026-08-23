@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { useState } from 'react';
 import type {
   DocumentListContent,
   DocumentListContentInput,
@@ -8,8 +9,13 @@ import {
   DocumentListComposePanel,
   DocumentListDetailRow,
   DocumentListUploadPanel,
+  emptyComposeDraft,
 } from './DocumentListWorkflows.js';
-import type { DocumentListDocument } from './types.js';
+import type {
+  DocumentListComposeDraft,
+  DocumentListDocument,
+  DocumentListWorkflowMode,
+} from './types.js';
 
 vi.mock('@kerebron/editor', () => ({
   CoreEditor: {
@@ -185,6 +191,133 @@ function createRuntime(
     loadContent,
   } as unknown as DocumentListRuntimeState;
 }
+
+/** Stands in for the composer session: owns the draft and the mode. */
+function ComposeHarness({
+  runtime,
+  onOpenChange,
+}: {
+  runtime: DocumentListRuntimeState;
+  onOpenChange: (open: boolean) => void;
+}): React.JSX.Element {
+  const [mode, setMode] = useState<DocumentListWorkflowMode>('full');
+  const [draft, setDraft] = useState<DocumentListComposeDraft>(() =>
+    emptyComposeDraft('Note')
+  );
+  return (
+    <DocumentListComposePanel
+      open
+      onOpenChange={onOpenChange}
+      runtime={runtime}
+      inputPrefix="form-1-documents"
+      mode={mode}
+      onModeChange={setMode}
+      draft={draft}
+      onDraftChange={setDraft}
+    />
+  );
+}
+
+function typeDraft(container: HTMLElement, note: string): void {
+  fireEvent.change(screen.getByLabelText('Title'), {
+    target: { value: 'Visit note' },
+  });
+  fireEvent.change(screen.getByLabelText('Subject'), {
+    target: { value: 'Follow-up visit' },
+  });
+  fireEvent.change(
+    container.querySelector(
+      '.document-list-compose-editor textarea'
+    ) as HTMLTextAreaElement,
+    { target: { value: note } }
+  );
+}
+
+describe('the docked composer', () => {
+  it('keeps the draft and the editor alive across a collapse', async () => {
+    const composeView = render(
+      <ComposeHarness runtime={createRuntime()} onOpenChange={vi.fn()} />
+    );
+
+    typeDraft(composeView.container, 'Follow-up completed.');
+    const editor = composeView.container.querySelector(
+      '.document-list-compose-editor'
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Collapse to dock' })
+    );
+
+    // Collapsed is a class swap, not an unmount: the same editor node stays.
+    expect(screen.getByText('Visit note')).toBeTruthy();
+    expect(screen.getByLabelText('Unsaved changes')).toBeTruthy();
+    expect(screen.getByRole('dialog').getAttribute('aria-expanded')).toBe(
+      'false'
+    );
+    expect(screen.getByRole('dialog').getAttribute('aria-modal')).toBeNull();
+    expect(
+      composeView.container.querySelector('.document-list-compose-editor')
+    ).toBe(editor);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Restore' }));
+
+    expect(
+      (screen.getByLabelText('Title') as HTMLInputElement).value
+    ).toBe('Visit note');
+    expect(
+      (
+        composeView.container.querySelector(
+          '.document-list-compose-editor textarea'
+        ) as HTMLTextAreaElement
+      ).value
+    ).toBe('Follow-up completed.');
+  });
+
+  it('saves a restored draft with the content composed before docking', async () => {
+    const runtime = createRuntime();
+    const composeView = render(
+      <ComposeHarness runtime={runtime} onOpenChange={vi.fn()} />
+    );
+
+    typeDraft(composeView.container, 'Employer confirmed return date.');
+    fireEvent.click(screen.getByRole('button', { name: 'Collapse to dock' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Restore' }));
+    fireEvent.change(screen.getByLabelText('Document type'), {
+      target: { value: 'Clinical note' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save document' }));
+
+    await waitFor(() => expect(runtime.saveDocument).toHaveBeenCalledOnce());
+    const [savedDocument, content] = (
+      runtime.saveDocument as ReturnType<typeof vi.fn>
+    ).mock.calls[0] as [DocumentListDocument, DocumentListContentInput];
+    expect(savedDocument.title).toBe('Visit note');
+    expect(savedDocument.docType).toBe('Clinical note');
+    expect(content.content).toBe('Employer confirmed return date.');
+  });
+
+  it('collapses on Escape while dirty and closes when empty', () => {
+    const onOpenChange = vi.fn();
+    const composeView = render(
+      <ComposeHarness runtime={createRuntime()} onOpenChange={onOpenChange} />
+    );
+
+    typeDraft(composeView.container, 'Draft in progress.');
+    fireEvent.keyDown(globalThis.document, { key: 'Escape' });
+
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(screen.getByRole('dialog').getAttribute('aria-expanded')).toBe(
+      'false'
+    );
+
+    composeView.unmount();
+    render(
+      <ComposeHarness runtime={createRuntime()} onOpenChange={onOpenChange} />
+    );
+    fireEvent.keyDown(globalThis.document, { key: 'Escape' });
+
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+});
 
 describe('document list workflow panels', () => {
   it('submits editable compose metadata and markdown content', async () => {
