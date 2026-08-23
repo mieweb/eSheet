@@ -27,6 +27,9 @@
     },
     {
       "path": "../core/tsconfig.lib.json"
+    },
+    {
+      "path": "../renderer/tsconfig.lib.json"
     }
   ]
 }

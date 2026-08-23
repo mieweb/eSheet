@@ -43,6 +43,15 @@ export {
 } from './DocumentListWorkflows.js';
 export type { DocumentListWorkflowShellProps } from './DocumentListWorkflows.js';
 export {
+  DocumentListDefinitionForm,
+  answerText,
+} from './DocumentListDefinitionForm.js';
+export type {
+  DocumentListDefinitionDraft,
+  DocumentListDefinitionFormHandle,
+  DocumentListDefinitionFormProps,
+} from './DocumentListDefinitionForm.js';
+export {
   DocumentListFieldProvider,
   DocumentListGrid,
   createDocumentListFieldProvider,
@@ -50,6 +59,7 @@ export {
   useDocumentListFieldRuntime,
 } from './DocumentListGrid.js';
 export {
+  createMdy,
   mdyBody,
   parseMdy,
   serializeMdy,

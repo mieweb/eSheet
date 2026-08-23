@@ -82,6 +82,16 @@ export interface DocumentListDocTypeOption {
    * Overrides the field's `inline`, so a mixed list can opt one type either way.
    */
   readonly inline?: boolean;
+  /**
+   * A FormDefinition source (object, or YAML/JSON string) describing this type.
+   * When present the compose panel fills that form instead of the bare
+   * title/subject inputs, and saves the answers as MDY front matter with the
+   * definition's `richtext` field as the markdown body. Without one the type
+   * stays on the note tier.
+   */
+  readonly definition?: unknown;
+  /** Recorded alongside `definition` so a document survives a later edit. */
+  readonly definitionVersion?: string;
 }
 
 export interface DocumentListDefinition {

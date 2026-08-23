@@ -37,6 +37,7 @@
   "dependencies": {
     "@esheet/core": "workspace:*",
     "@esheet/fields": "workspace:*",
+    "@esheet/renderer": "workspace:*",
     "@kerebron/editor": "^0.8.10",
     "@mieweb/datavis": "1.6.0",
     "@mieweb/ui": "0.7.1",

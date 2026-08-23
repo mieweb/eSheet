@@ -73,6 +73,7 @@ export default defineConfig(() => ({
       external: [
         '@esheet/core',
         '@esheet/fields',
+        '@esheet/renderer',
         '@mieweb/datavis',
         '@mieweb/ui',
         '@mieweb/ui/datavis',

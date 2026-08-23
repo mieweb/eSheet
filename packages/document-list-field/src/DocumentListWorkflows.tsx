@@ -18,7 +18,12 @@ import type {
   DocumentListRuntimeState,
 } from './document-list-runtime.js';
 import { DOCUMENT_LIST_DEFAULT_NOUN, DOCUMENT_LIST_MARKDOWN_TYPE } from './data.js';
-import { mdyBody } from './mdy.js';
+import {
+  DocumentListDefinitionForm,
+  answerText,
+  type DocumentListDefinitionFormHandle,
+} from './DocumentListDefinitionForm.js';
+import { createMdy, mdyBody } from './mdy.js';
 import type {
   DocumentListComposeDraft,
   DocumentListDocTypeOption,
@@ -300,10 +305,20 @@ export function DocumentListComposePanel({
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const editorRef = useRef<DocumentListComposeEditorHandle>(null);
+  const definitionRef = useRef<DocumentListDefinitionFormHandle>(null);
+  const [definitionDirty, setDefinitionDirty] = useState(false);
   const activeDraft = draft ?? localDraft;
+  const selectedType = docTypes?.find(
+    (option) => option.id === activeDraft.docType
+  );
+  // A type that carries a form owns the whole compose body; without one the
+  // panel stays on the note tier it has always been.
+  const definition = selectedType?.definition;
   const asksSubject = asks(fields, 'subject');
   const asksDocType = asks(fields, 'docType');
-  const dirty = isComposeDraftDirty(activeDraft, defaultDocType);
+  const dirty = definition
+    ? definitionDirty || activeDraft.docType !== defaultDocType
+    : isComposeDraftDirty(activeDraft, defaultDocType);
   const requiredLabels = [
     'Title',
     ...(asksSubject ? ['Subject'] : []),
@@ -318,6 +333,7 @@ export function DocumentListComposePanel({
 
   const reset = (): void => {
     updateDraft(emptyComposeDraft(defaultDocType));
+    setDefinitionDirty(false);
     resetFormState(setError, setSaving);
   };
 
@@ -334,8 +350,76 @@ export function DocumentListComposePanel({
     }
   };
 
+  /** One save path for both tiers — only the row and the file differ. */
+  const save = async (
+    row: { title: string; subject: string; docType: string },
+    content: string
+  ): Promise<void> => {
+    const id = createDocumentId();
+    const inline = selectedType?.inline ?? defaultInline ?? false;
+    const document: DocumentListDocument = {
+      id,
+      date: today(),
+      ...row,
+      docId: id,
+      source: 'Compose',
+      file: `${id}.md`,
+      ...(inline ? { body: content } : {}),
+    };
+    // An inline type keeps its prose on the row, so there is nothing for
+    // the repository to store.
+    await runtime.saveDocument(
+      document,
+      inline
+        ? undefined
+        : {
+            content,
+            contentType: COMPOSE_CONTENT_TYPE,
+            size: contentSize(content),
+          }
+    );
+    reset();
+    onOpenChange(false);
+  };
+
+  const submitDefinition = async (): Promise<void> => {
+    const { draft: collected, errors } = definitionRef.current?.collect() ?? {
+      draft: null,
+      errors: [],
+    };
+    if (!collected) {
+      setError(errors[0]?.message ?? 'This form is not ready to save yet.');
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    try {
+      await save(
+        {
+          title:
+            answerText(collected.responses.title).trim() ||
+            (selectedType?.label ?? activeDraft.docType),
+          subject: answerText(collected.responses.subject).trim(),
+          docType: activeDraft.docType,
+        },
+        createMdy(collected.frontMatter, collected.body)
+      );
+    } catch (saveError) {
+      setSaving(false);
+      setError(
+        saveError instanceof Error ? saveError.message : String(saveError)
+      );
+    }
+  };
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (definition) {
+      await submitDefinition();
+      return;
+    }
+
     const trimmedTitle = activeDraft.title.trim();
     const trimmedSubject = activeDraft.subject.trim();
     const trimmedDocType = activeDraft.docType.trim();
@@ -354,36 +438,14 @@ export function DocumentListComposePanel({
       const composedNote = editorRef.current
         ? await editorRef.current.getContent()
         : activeDraft.note;
-      const id = createDocumentId();
-      const inline =
-        docTypes?.find((option) => option.id === trimmedDocType)?.inline ??
-        defaultInline ??
-        false;
-      const document: DocumentListDocument = {
-        id,
-        date: today(),
-        title: trimmedTitle,
-        subject: trimmedSubject,
-        docType: trimmedDocType,
-        docId: id,
-        source: 'Compose',
-        file: `${id}.md`,
-        ...(inline ? { body: composedNote } : {}),
-      };
-      // An inline type keeps its prose on the row, so there is nothing for
-      // the repository to store.
-      await runtime.saveDocument(
-        document,
-        inline
-          ? undefined
-          : {
-              content: composedNote,
-              contentType: COMPOSE_CONTENT_TYPE,
-              size: contentSize(composedNote),
-            }
+      await save(
+        {
+          title: trimmedTitle,
+          subject: trimmedSubject,
+          docType: trimmedDocType,
+        },
+        composedNote
       );
-      reset();
-      onOpenChange(false);
     } catch (saveError) {
       setSaving(false);
       setError(
@@ -432,15 +494,17 @@ export function DocumentListComposePanel({
       >
         <div className="document-list-workflow-panel__body">
           <div className="document-list-workflow-panel__meta">
-            <Input
-              id={inputId(inputPrefix, 'compose-title')}
-              label="Title"
-              value={activeDraft.title}
-              onChange={(event) => updateDraft({ title: event.target.value })}
-              disabled={saving}
-              required
-            />
-            {asksSubject && (
+            {!definition && (
+              <Input
+                id={inputId(inputPrefix, 'compose-title')}
+                label="Title"
+                value={activeDraft.title}
+                onChange={(event) => updateDraft({ title: event.target.value })}
+                disabled={saving}
+                required
+              />
+            )}
+            {!definition && asksSubject && (
               <Input
                 id={inputId(inputPrefix, 'compose-subject')}
                 label="Subject"
@@ -498,21 +562,35 @@ export function DocumentListComposePanel({
               ))}
           </div>
           <div className="document-list-workflow__field document-list-workflow__field--grow">
-            <label
-              id={inputId(inputPrefix, 'compose-note-label')}
-              htmlFor={inputId(inputPrefix, 'compose-note')}
-            >
-              Note
-            </label>
-            <DocumentListComposeEditor
-              ref={editorRef}
-              id={inputId(inputPrefix, 'compose-note')}
-              ariaLabel="Note"
-              labelledBy={inputId(inputPrefix, 'compose-note-label')}
-              value={activeDraft.note}
-              onChange={(note) => updateDraft({ note })}
-              disabled={saving}
-            />
+            {definition ? (
+              <DocumentListDefinitionForm
+                // Switching type swaps the form, and with it the store.
+                key={activeDraft.docType}
+                ref={definitionRef}
+                definition={definition}
+                docType={activeDraft.docType}
+                definitionVersion={selectedType?.definitionVersion}
+                onDirtyChange={setDefinitionDirty}
+              />
+            ) : (
+              <>
+                <label
+                  id={inputId(inputPrefix, 'compose-note-label')}
+                  htmlFor={inputId(inputPrefix, 'compose-note')}
+                >
+                  Note
+                </label>
+                <DocumentListComposeEditor
+                  ref={editorRef}
+                  id={inputId(inputPrefix, 'compose-note')}
+                  ariaLabel="Note"
+                  labelledBy={inputId(inputPrefix, 'compose-note-label')}
+                  value={activeDraft.note}
+                  onChange={(note) => updateDraft({ note })}
+                  disabled={saving}
+                />
+              </>
+            )}
           </div>
           {error && (
             <p className="document-list-workflow__error" role="alert">

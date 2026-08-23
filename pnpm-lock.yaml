@@ -336,6 +336,9 @@ importers:
       '@esheet/fields':
         specifier: workspace:*
         version: link:../fields
+      '@esheet/renderer':
+        specifier: workspace:*
+        version: link:../renderer
       '@kerebron/editor':
         specifier: ^0.8.10
         version: 0.8.10

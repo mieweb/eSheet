@@ -132,3 +132,14 @@ export function withMdyFrontMatter(
     body: file.body,
   };
 }
+
+/**
+ * Build a document from its two layers. Composing goes through here rather
+ * than `parseMdy(body)` so a body that happens to open with `---` stays prose
+ * instead of being read back as front matter.
+ */
+export function createMdy(frontMatter: MdyFrontMatter | null, body: string): string {
+  return serializeMdy(
+    withMdyFrontMatter({ frontMatter: null, frontMatterSource: '', body }, frontMatter)
+  );
+}
