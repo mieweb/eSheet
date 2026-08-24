@@ -373,7 +373,8 @@ describe('DocumentListGrid host integration', () => {
       (container.querySelector('.document-list-row-presence__dot') as HTMLElement)
         ?.style.backgroundColor
     ).toBeTruthy();
-    // Other columns stay on the default rendering.
-    expect(props.formatCell('42.pdf', tableData, { field: 'file' })).toBeUndefined();
+    // Other columns render their own value — datavis has no undefined
+    // fallback, so the wrapper must supply the cell content itself.
+    expect(props.formatCell('42.pdf', tableData, { field: 'file' })).toBe('42.pdf');
   });
 });

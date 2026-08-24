@@ -369,7 +369,11 @@ export function DocumentListGrid({
               getRowCapabilities?.(document) ?? DEFAULT_ROW_CAPABILITIES
             );
           }
-          return formatCell?.(value, row, column);
+          const formatted = formatCell?.(value, row, column);
+          if (formatted !== undefined) return formatted;
+          // datavis renders exactly what formatCell returns — undefined is a
+          // blank cell, not a fallback — so plain cells return their value.
+          return value == null ? '' : String(value);
         }
       : undefined;
   const gridOnRowClick: DataVisGridProps['onRowClick'] = onRowClick
