@@ -123,6 +123,19 @@ export type {
   DraftPresence,
 } from './draftChannel.js';
 export { bindDraftAnswers } from './draftBinding.js';
+export {
+  createFileDocumentStore,
+  createInlineDocumentStore,
+} from './documentStore.js';
+export type {
+  DocumentRowRegistry,
+  DocumentSave,
+  DocumentStore,
+} from './documentStore.js';
+export {
+  runDocumentStoreConformance,
+} from './documentStoreConformance.js';
+export type { DocumentStorePolicies } from './documentStoreConformance.js';
 export type {
   CreateDocumentListRuntimeExtensionOptions,
   DocumentListContent,
