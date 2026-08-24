@@ -346,8 +346,12 @@ export function createDocumentListRuntimeExtension(
           const { [document.id]: _completed, ...pendingOperations } =
             next.pendingOperations;
           void _completed;
+          // The save made the cached content stale; the next read refetches.
+          const { [document.id]: _content, ...contents } = next.contents;
+          void _content;
           return {
             ...next,
+            contents,
             pendingOperations,
             syncStatus: syncStatusFor(pendingOperations),
           };
