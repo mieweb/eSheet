@@ -16,6 +16,23 @@ export interface RendererBodyProps {
   validateNavigation?: boolean;
   /** Hands the host a way to jump to a page by id; `false` when there is no such page. */
   registerGoToPage?: (goToPage: (pageId: string) => boolean) => void;
+  /** Page shown first, by id. Unknown or absent falls back to the first page. */
+  initialPageId?: string;
+  /**
+   * Fires when the user changes pages (tab click, prev/next) — never on the
+   * initial seed and never for programmatic `setCurrentPage`/`goToPage`.
+   */
+  onPageChange?: (pageId: string, pageIndex: number) => void;
+  /** Hands the host the current-page accessors backing the renderer handle. */
+  registerPageNavigation?: (api: RendererPageNavigation) => void;
+}
+
+/** What `EsheetRendererHandle` exposes for page routing (issue #147). */
+export interface RendererPageNavigation {
+  /** The active page's id, or `null` before any pages exist. */
+  getCurrentPageId: () => string | null;
+  /** Show a page by id or index. Unknown ids/indexes are a silent no-op. */
+  setCurrentPage: (pageIdOrIndex: string | number) => void;
 }
 
 /**
@@ -32,6 +49,9 @@ export function RendererBody({
   bottomNavigation = true,
   validateNavigation = true,
   registerGoToPage,
+  initialPageId,
+  onPageChange,
+  registerPageNavigation,
 }: RendererBodyProps) {
   const normalized = React.useSyncExternalStore(
     (cb) => form.subscribe(cb),
@@ -48,6 +68,25 @@ export function RendererBody({
 
   const pages = normalized.pages;
 
+  // Fresh references for the registered accessors, which outlive renders.
+  const pagesRef = React.useRef(pages);
+  pagesRef.current = pages;
+  const currentIdxRef = React.useRef(currentPagesIdx);
+  currentIdxRef.current = currentPagesIdx;
+  const onPageChangeRef = React.useRef(onPageChange);
+  onPageChangeRef.current = onPageChange;
+
+  // The definition loads after mount, so the seed waits for pages to exist —
+  // once. Unknown id stays on the first page; no onPageChange either way.
+  const seededRef = React.useRef(false);
+  React.useEffect(() => {
+    if (seededRef.current || pages.length === 0) return;
+    seededRef.current = true;
+    if (!initialPageId) return;
+    const index = pages.findIndex((page) => page.id === initialPageId);
+    if (index > 0) setCurrentPagesIdx(index);
+  }, [pages, initialPageId]);
+
   React.useEffect(() => {
     if (pages.length > 0 && currentPagesIdx >= pages.length) {
       setCurrentPagesIdx(pages.length - 1);
@@ -56,23 +95,52 @@ export function RendererBody({
 
   React.useEffect(() => {
     registerGoToPage?.((pageId) => {
-      const index = pages.findIndex((page) => page.id === pageId);
+      const index = pagesRef.current.findIndex((page) => page.id === pageId);
       if (index < 0) return false;
       setCurrentPagesIdx(index);
       return true;
     });
-  }, [pages, registerGoToPage]);
+  }, [registerGoToPage]);
+
+  React.useEffect(() => {
+    registerPageNavigation?.({
+      getCurrentPageId: () =>
+        pagesRef.current[currentIdxRef.current]?.id ?? null,
+      setCurrentPage: (pageIdOrIndex) => {
+        const index =
+          typeof pageIdOrIndex === 'number'
+            ? pageIdOrIndex
+            : pagesRef.current.findIndex((page) => page.id === pageIdOrIndex);
+        if (index < 0 || index >= pagesRef.current.length) return;
+        // Already current is a no-op by construction: programmatic moves
+        // never fire onPageChange, so there is no loop to guard beyond this.
+        setCurrentPagesIdx(index);
+      },
+    });
+  }, [registerPageNavigation]);
 
   const isMultiPage = pages.length > 1;
   const hasPageNavigation = topNavigation || bottomNavigation;
 
-  const handlePrev = React.useCallback(
-    () => setCurrentPagesIdx((p) => Math.max(p - 1, 0)),
+  // User navigation — and only user navigation — reports the change.
+  const navigateTo = React.useCallback(
+    (index: number) => {
+      const pageList = pagesRef.current;
+      const clamped = Math.min(Math.max(index, 0), pageList.length - 1);
+      if (clamped === currentIdxRef.current) return;
+      setCurrentPagesIdx(clamped);
+      const page = pageList[clamped];
+      if (page) onPageChangeRef.current?.(page.id, clamped);
+    },
     []
   );
+  const handlePrev = React.useCallback(
+    () => navigateTo(currentIdxRef.current - 1),
+    [navigateTo]
+  );
   const handleNext = React.useCallback(
-    () => setCurrentPagesIdx((p) => Math.min(p + 1, pages.length - 1)),
-    [pages.length]
+    () => navigateTo(currentIdxRef.current + 1),
+    [navigateTo]
   );
 
   const visibleFieldIds = React.useMemo(() => {
@@ -136,7 +204,7 @@ export function RendererBody({
       )}
       onPrev={handlePrev}
       onNext={handleNext}
-      onPageChange={setCurrentPagesIdx}
+      onPageChange={navigateTo}
       blockedCount={unfilledRequiredCount}
       topNavigation={topNavigation}
       bottomNavigation={bottomNavigation}

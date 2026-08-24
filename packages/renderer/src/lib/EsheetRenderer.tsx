@@ -29,7 +29,10 @@ import {
 } from '@esheet/fields';
 import { ensureDefaultFieldComponentsRegistered } from './register-defaults.js';
 import { useRendererInit } from './hooks/useRendererInit.js';
-import { RendererBody } from './components/RendererBody.js';
+import {
+  RendererBody,
+  type RendererPageNavigation,
+} from './components/RendererBody.js';
 
 export interface EsheetRendererProps {
   /** Form definition — accepts FormDefinition, SurveyJS schema, MCP elicitation envelope,
@@ -95,6 +98,14 @@ export interface EsheetRendererProps {
   bottomNavigation?: boolean;
   /** Block forward page navigation while required fields on the current page are unanswered. */
   validateNavigation?: boolean;
+  /** Page shown first, by id (issue #147). Unknown or absent → the first page. */
+  initialPageId?: string;
+  /**
+   * Fires when the user changes pages (tab click, prev/next) — never on the
+   * initial seed and never for programmatic `setCurrentPage`/`goToPage`, so a
+   * host syncing the URL cannot loop (issue #147).
+   */
+  onPageChange?: (pageId: string, pageIndex: number) => void;
   /** Optional wrappers supplied by field add-ons. */
   fieldProviders?: readonly FieldProvider[];
   /**
@@ -171,6 +182,13 @@ export interface EsheetRendererHandle {
   resetTouchMode: () => void;
   /** Show the page with this id. Returns `false` when the form has no such page. */
   goToPage: (pageId: string) => boolean;
+  /** The active page's id, or `null` before any pages exist (issue #147). */
+  getCurrentPageId: () => string | null;
+  /**
+   * Show a page by id or index. Unknown values are a silent no-op, and
+   * programmatic moves never fire `onPageChange` (issue #147).
+   */
+  setCurrentPage: (pageIdOrIndex: string | number) => void;
 }
 
 /**
@@ -256,6 +274,8 @@ const EsheetRendererInner = React.forwardRef<
     topNavigation = false,
     bottomNavigation = true,
     validateNavigation = true,
+    initialPageId,
+    onPageChange,
     identity,
   },
   ref
@@ -313,6 +333,13 @@ const EsheetRendererInner = React.forwardRef<
   const registerGoToPage = React.useCallback(
     (goToPage: (pageId: string) => boolean) => {
       goToPageRef.current = goToPage;
+    },
+    []
+  );
+  const pageNavigationRef = React.useRef<RendererPageNavigation | null>(null);
+  const registerPageNavigation = React.useCallback(
+    (api: RendererPageNavigation) => {
+      pageNavigationRef.current = api;
     },
     []
   );
@@ -377,6 +404,10 @@ const EsheetRendererInner = React.forwardRef<
       setTouchMode: setTouchModeInternal,
       resetTouchMode: resetTouchModeInternal,
       goToPage: (pageId: string) => goToPageRef.current?.(pageId) ?? false,
+      getCurrentPageId: () =>
+        pageNavigationRef.current?.getCurrentPageId() ?? null,
+      setCurrentPage: (pageIdOrIndex: string | number) =>
+        pageNavigationRef.current?.setCurrentPage(pageIdOrIndex),
     }),
     [
       formStore,
@@ -421,6 +452,9 @@ const EsheetRendererInner = React.forwardRef<
         bottomNavigation={bottomNavigation}
         validateNavigation={validateNavigation}
         registerGoToPage={registerGoToPage}
+        initialPageId={initialPageId}
+        onPageChange={onPageChange}
+        registerPageNavigation={registerPageNavigation}
       />
       {onSubmit && (
         <div className="renderer-submit ms:mt-6 ms:flex ms:justify-end">
