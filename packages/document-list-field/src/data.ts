@@ -2,6 +2,7 @@ import type {
   DocumentListAuthor,
   DocumentListDocument,
   DocumentListInput,
+  DocumentListLink,
   DocumentListRemoval,
   DocumentListValue,
   DocumentRevision,
@@ -145,6 +146,22 @@ function isRevisionAction(value: unknown): value is DocumentRevisionAction {
   return (DOCUMENT_REVISION_ACTIONS as readonly unknown[]).includes(value);
 }
 
+/** A row-to-row link; a link without a target is no link. */
+function linkValue(value: unknown): DocumentListLink | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const { id, linkType, comment } = value as {
+    id?: unknown;
+    linkType?: unknown;
+    comment?: unknown;
+  };
+  if (typeof id !== 'string' || !id) return null;
+  return {
+    id,
+    linkType: typeof linkType === 'string' && linkType ? linkType : 'addendum',
+    ...(typeof comment === 'string' && comment ? { comment } : {}),
+  };
+}
+
 function revisionValue(value: unknown): DocumentRevision | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   const raw = value as Record<string, unknown>;
@@ -186,6 +203,8 @@ export function normalizeDocumentRow(
 
   const author = authorValue(input.author);
   const rev = revValue(input.rev);
+  const action = isRevisionAction(input.action) ? input.action : null;
+  const linkedTo = linkValue(input.linkedTo);
   const removed = removedValue(input.removed);
   const history = historyValue(input.history);
   return {
@@ -201,6 +220,8 @@ export function normalizeDocumentRow(
     file: fileValue(input.file),
     ...(author ? { author } : {}),
     ...(rev !== null ? { rev } : {}),
+    ...(action ? { action } : {}),
+    ...(linkedTo ? { linkedTo } : {}),
     ...(removed ? { removed } : {}),
     ...(history ? { history } : {}),
     // Host bookkeeping: carried through untouched, absent when not recorded.

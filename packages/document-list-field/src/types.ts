@@ -27,6 +27,17 @@ export interface DocumentListDocument {
    */
   readonly rev?: number;
   /**
+   * What kind of save produced the head revision (`create` when absent).
+   * History entries copy it when the head is superseded, so a revision's
+   * nature is never guessed after the fact.
+   */
+  readonly action?: DocumentRevisionAction;
+  /**
+   * This row is an addendum to another document, which it links and leaves
+   * byte-identical — WebChart's `documents_link`, as a row-to-row reference.
+   */
+  readonly linkedTo?: DocumentListLink;
+  /**
    * Present when the row is tombstoned: hidden from the grid, kept in the
    * answer, its removal reasoned and attributed. Restore deletes the marker.
    */
@@ -120,6 +131,14 @@ export interface DocumentListRemoval {
   readonly reason: string;
 }
 
+/** A row-to-row reference (WebChart `documents_link`), carried by the addendum. */
+export interface DocumentListLink {
+  /** The document this row annotates. */
+  readonly id: string;
+  readonly linkType: string;
+  readonly comment?: string;
+}
+
 /**
  * The verbs a host resolves per user, handed to the field as one object. The
  * field never sees roles, levels or a grant table — the host's own/others,
@@ -175,6 +194,8 @@ export interface DocumentListInput {
   readonly from?: unknown;
   readonly author?: unknown;
   readonly rev?: unknown;
+  readonly action?: unknown;
+  readonly linkedTo?: unknown;
   readonly removed?: unknown;
   readonly history?: unknown;
   readonly file?: unknown;

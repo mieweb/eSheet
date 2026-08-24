@@ -138,6 +138,8 @@ export interface DocumentListWorkflowPanelProps {
   readonly documentDraft?: DocumentDraft;
   /** The row `documentDraft` revises; a draft without one composes new. */
   readonly documentId?: string;
+  /** This panel appends (ED.41): the author picks one of the two shapes. */
+  readonly appendMode?: boolean;
   /** Definition-tier prefill parsed from the last saved revision (ED.40). */
   readonly definitionPrefill?: DefinitionPrefill;
   /** Full-screen unless the owner has collapsed the panel to the dock. */
@@ -324,6 +326,7 @@ export function DocumentListComposePanel({
   author,
   documentDraft,
   documentId,
+  appendMode,
   definitionPrefill,
   mode = 'full',
   onModeChange,
@@ -338,6 +341,8 @@ export function DocumentListComposePanel({
   // neither survives a save attempt worth reporting to the dock.
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  // ED.41 — the author picks the addendum's shape; both are legitimate.
+  const [appendShape, setAppendShape] = useState<'revision' | 'linked'>('revision');
   const editorRef = useRef<DocumentListComposeEditorHandle>(null);
   const definitionRef = useRef<DocumentListDefinitionFormHandle>(null);
   const [definitionDirty, setDefinitionDirty] = useState(false);
@@ -436,46 +441,60 @@ export function DocumentListComposePanel({
     content: string
   ): Promise<void> => {
     const prior = documentId ? runtime.documents[documentId] : undefined;
-    const inline = prior
-      ? prior.body != null // a revision never changes the row's tier
-      : selectedType?.inline ?? defaultInline ?? false;
-    const id = prior?.id ?? createDocumentId();
-    const document: DocumentListDocument = prior
-      ? {
-          ...prior,
-          ...row,
-          date: today(),
-          // Whoever saves owns the revision.
-          ...(author ? { author } : {}),
-          rev: (prior.rev ?? 0) + 1,
-          ...(inline
-            ? {
-                body: content,
-                // The superseded prose rides along in full — the case doc is
-                // the inline tier's store (ED.47 formalizes this in the port).
-                history: [
-                  ...(prior.history ?? []),
-                  {
-                    rev: prior.rev ?? 0,
-                    action: (prior.rev ?? 0) === 0 ? ('create' as const) : ('edit' as const),
-                    ...(prior.author ? { author: prior.author } : {}),
-                    at: prior.date,
-                    ...(prior.body != null ? { body: prior.body } : {}),
-                  },
-                ],
-              }
-            : {}),
-        }
-      : {
-          id,
-          date: today(),
-          ...row,
-          docId: id,
-          source: 'Compose',
-          file: `${id}.md`,
-          ...(author ? { author } : {}),
-          ...(inline ? { body: content } : {}),
-        };
+    const asLinked = appendMode && appendShape === 'linked';
+    const inline =
+      prior && !asLinked
+        ? prior.body != null // a revision never changes the row's tier
+        : selectedType?.inline ?? defaultInline ?? false;
+    const id = prior && !asLinked ? prior.id : createDocumentId();
+    const document: DocumentListDocument =
+      prior && !asLinked
+        ? {
+            ...prior,
+            ...row,
+            date: today(),
+            // Whoever saves owns the revision.
+            ...(author ? { author } : {}),
+            rev: (prior.rev ?? 0) + 1,
+            action: appendMode ? 'append' : content.trim() ? 'edit' : 'blank',
+            ...(inline
+              ? {
+                  body: content,
+                  // The superseded prose rides along in full — the case doc is
+                  // the inline tier's store (ED.47 formalizes this in the port).
+                  history: [
+                    ...(prior.history ?? []),
+                    {
+                      rev: prior.rev ?? 0,
+                      action:
+                        prior.action ??
+                        ((prior.rev ?? 0) === 0
+                          ? ('create' as const)
+                          : ('edit' as const)),
+                      ...(prior.author ? { author: prior.author } : {}),
+                      at: prior.date,
+                      ...(prior.body != null ? { body: prior.body } : {}),
+                    },
+                  ],
+                }
+              : {}),
+          }
+        : {
+            id,
+            date: today(),
+            ...row,
+            docId: id,
+            source: 'Compose',
+            file: `${id}.md`,
+            ...(author ? { author } : {}),
+            action: 'create',
+            // A linked addendum leaves the original byte-identical and points
+            // back at it (WebChart's documents_link).
+            ...(asLinked && prior
+              ? { linkedTo: { id: prior.id, linkType: 'addendum' } }
+              : {}),
+            ...(inline ? { body: content } : {}),
+          };
     // An inline type keeps its prose on the row, so there is nothing for
     // the repository to store.
     await runtime.saveDocument(
@@ -571,10 +590,12 @@ export function DocumentListComposePanel({
   const docTypeLabel =
     docTypes?.find((option) => option.id === activeDraft.docType)?.label ??
     activeDraft.docType;
-  // The title says which act this is: composing new, or revising rev N.
+  // The title says which act this is: composing new, revising, or appending.
   const revisingRow = documentId ? runtime.documents[documentId] : undefined;
   const panelTitle = revisingRow
-    ? `Revise ${noun} (rev ${revisingRow.rev ?? 0})`
+    ? appendMode
+      ? `Append to ${noun} (rev ${revisingRow.rev ?? 0})`
+      : `Revise ${noun} (rev ${revisingRow.rev ?? 0})`
     : `Compose ${noun}`;
 
   return (
@@ -610,6 +631,32 @@ export function DocumentListComposePanel({
         noValidate
       >
         <div className="document-list-workflow-panel__body">
+          {appendMode && (
+            <fieldset className="document-list-workflow__append-shape">
+              <legend>Append as</legend>
+              <label>
+                <input
+                  type="radio"
+                  name={inputId(inputPrefix, 'append-shape')}
+                  checked={appendShape === 'revision'}
+                  onChange={() => setAppendShape('revision')}
+                  disabled={saving}
+                />
+                A new revision — this {noun} should now read differently
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name={inputId(inputPrefix, 'append-shape')}
+                  checked={appendShape === 'linked'}
+                  onChange={() => setAppendShape('linked')}
+                  disabled={saving}
+                />
+                A linked {noun} — further information; the original stays
+                untouched
+              </label>
+            </fieldset>
+          )}
           <div className="document-list-workflow-panel__meta">
             {!definition && (
               <Input
@@ -883,6 +930,8 @@ export function DocumentListUploadPanel({
 export interface DocumentListDetailRowProps {
   readonly document: DocumentListDocument;
   readonly runtime: DocumentListRuntimeState;
+  /** Rows linked to this one (addenda), rendered beneath the content. */
+  readonly related?: readonly DocumentListDocument[];
 }
 
 function DocumentListMarkdownPreview({
@@ -901,6 +950,7 @@ function DocumentListMarkdownPreview({
 export function DocumentListDetailRow({
   document,
   runtime,
+  related,
 }: DocumentListDetailRowProps): React.JSX.Element {
   const [content, setContent] = useState<DocumentListContent | undefined>();
   const [loading, setLoading] = useState(true);
@@ -965,6 +1015,16 @@ export function DocumentListDetailRow({
         <p className="document-list-detail__empty">
           No preview for this document.
         </p>
+      )}
+      {related && related.length > 0 && (
+        <ul className="document-list-detail__addenda" aria-label="Addenda">
+          {related.map((addendum) => (
+            <li key={addendum.id}>
+              Addendum — {addendum.title} ({addendum.date}
+              {addendum.author ? `, ${addendum.author.name}` : ''})
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );

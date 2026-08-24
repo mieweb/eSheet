@@ -242,7 +242,10 @@ export function DocumentListField({
   // decides the shape: a definition parses front matter back into answers, a
   // note loads its body — and a parse failure is the note tier, never an
   // error (ED.34's rule extended).
-  const openEdit = async (row: DocumentListDocument): Promise<void> => {
+  const openEdit = async (
+    row: DocumentListDocument,
+    options?: { append?: boolean }
+  ): Promise<void> => {
     const openedBy = host?.author;
     if (!draftChannel || !openedBy || !runtimeState) return;
     const documentDraft = await draftChannel.open(row.id, {
@@ -286,6 +289,7 @@ export function DocumentListField({
       config: composerConfig,
       documentDraft,
       documentId: row.id,
+      append: options?.append,
       draft: composeDraft,
       definitionPrefill,
     });
@@ -320,7 +324,14 @@ export function DocumentListField({
     ? host.renderDetailRow
     : runtimeState
     ? (row: DocumentListDocument) => (
-        <DocumentListDetailRow document={row} runtime={runtimeState} />
+        <DocumentListDetailRow
+          document={row}
+          runtime={runtimeState}
+          // ED.41 — the original renders its addenda beneath itself.
+          related={rows.filter(
+            (candidate) => candidate.linkedTo?.id === row.id
+          )}
+        />
       )
     : undefined;
 
@@ -332,6 +343,7 @@ export function DocumentListField({
       canView: capabilities.view(row),
       canCompose: mayCreate,
       canEdit: capabilities.edit(row),
+      canAppend: capabilities.append(row),
       canRequestSignature: false,
       canDelete: capabilities.remove(row),
       canDownloadPdf: false,
@@ -339,18 +351,35 @@ export function DocumentListField({
   const renderActions =
     host?.renderActions ??
     (draftChannel && host?.author
-      ? (row: DocumentListDocument, caps: { canEdit: boolean }) =>
-          caps.canEdit ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              aria-label={`Edit ${row.title}`}
-              onClick={() => void openEdit(row)}
-            >
-              Edit
-            </Button>
-          ) : null
+      ? (
+          row: DocumentListDocument,
+          caps: { canEdit: boolean; canAppend: boolean }
+        ) => (
+          <>
+            {caps.canEdit && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                aria-label={`Edit ${row.title}`}
+                onClick={() => void openEdit(row)}
+              >
+                Edit
+              </Button>
+            )}
+            {caps.canAppend && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                aria-label={`Append to ${row.title}`}
+                onClick={() => void openEdit(row, { append: true })}
+              >
+                Append
+              </Button>
+            )}
+          </>
+        )
       : undefined);
 
   return (

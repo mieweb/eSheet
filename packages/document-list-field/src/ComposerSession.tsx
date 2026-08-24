@@ -48,6 +48,8 @@ export interface ComposerSession {
   readonly documentDraft?: DocumentDraft;
   /** The row the shared draft revises. */
   readonly documentId?: string;
+  /** This session appends (ED.41): the panel offers the two shapes. */
+  readonly append?: boolean;
   /** Definition-tier prefill from the last saved revision (ED.40). */
   readonly definitionPrefill?: DefinitionPrefill;
 }
@@ -67,6 +69,7 @@ export interface ComposerSessionValue {
     config: ComposerSessionConfig;
     documentDraft?: DocumentDraft;
     documentId?: string;
+    append?: boolean;
     definitionPrefill?: DefinitionPrefill;
     /** Prefill for the compose draft (e.g. the head revision, ED.40). */
     draft?: DocumentListComposeDraft;
@@ -104,6 +107,7 @@ export function useComposerSessionValue(): ComposerSessionValue {
         config,
         documentDraft,
         documentId,
+        append,
         definitionPrefill,
         draft,
       }) =>
@@ -125,6 +129,7 @@ export function useComposerSessionValue(): ComposerSessionValue {
             config,
             documentDraft,
             documentId,
+            append,
             definitionPrefill,
             draft:
               draft ?? emptyComposeDraft(composeDefaultDocType(config.docTypes)),
@@ -177,6 +182,7 @@ export function ComposerSessionOverlay({
         author={config.author}
         documentDraft={session.documentDraft}
         documentId={session.documentId}
+        appendMode={session.append}
         definitionPrefill={session.definitionPrefill}
         mode={session.mode}
         onModeChange={setMode}

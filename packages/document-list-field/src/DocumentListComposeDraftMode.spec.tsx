@@ -305,4 +305,91 @@ describe('compose panel in draft mode (ED.37)', () => {
       (screen.getByLabelText(/^Title/) as HTMLInputElement).value
     ).toBe('Existing note');
   });
+
+  // ED.41 — one Append action, two shapes, the author picks.
+  describe('append', () => {
+    const prior = {
+      id: 'doc-1',
+      date: '2026-08-14',
+      title: 'Original note',
+      subject: 'Original subject',
+      docType: 'progress-note',
+      docId: 'doc-1',
+      source: 'Compose',
+      file: 'doc-1.md',
+      author: { id: 'u-riley', name: 'Riley Reviewer' },
+      rev: 1,
+      action: 'edit',
+      body: 'original prose',
+    };
+
+    async function submitAppend(shape: 'revision' | 'linked') {
+      const saveDocument = vi.fn(async (document: unknown) => document);
+      const appendRuntime = {
+        documents: { 'doc-1': prior },
+        saveDocument,
+      } as unknown as DocumentListRuntimeState;
+      const draft = fakeDraft({ isNew: false });
+
+      render(
+        <DocumentListComposePanel
+          open
+          onOpenChange={vi.fn()}
+          runtime={appendRuntime}
+          inputPrefix="form-1-documents"
+          author={{ id: 'u-casey', name: 'Casey Manager' }}
+          documentDraft={draft}
+          documentId="doc-1"
+          appendMode
+        />
+      );
+
+      expect(await screen.findByText('Append to document (rev 1)')).toBeTruthy();
+      if (shape === 'linked') {
+        fireEvent.click(
+          screen.getByRole('radio', { name: /A linked document/ })
+        );
+      }
+      fireEvent.change(screen.getByLabelText(/^Title/), {
+        target: { value: 'Addendum title' },
+      });
+      fireEvent.change(screen.getByLabelText(/^Subject/), {
+        target: { value: 'More information' },
+      });
+      fireEvent.change(screen.getByLabelText(/^Document type/), {
+        target: { value: 'progress-note' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: /^Save/ }));
+      await waitFor(() => expect(saveDocument).toHaveBeenCalledOnce());
+      return saveDocument.mock.calls[0][0] as Record<string, unknown>;
+    }
+
+    it('as a revision: the same document, rev + 1, action append', async () => {
+      const saved = await submitAppend('revision');
+      expect(saved).toMatchObject({
+        id: 'doc-1',
+        rev: 2,
+        action: 'append',
+        author: { id: 'u-casey', name: 'Casey Manager' },
+      });
+      // The superseded head keeps its own recorded action.
+      expect((saved.history as { action: string }[]).at(-1)).toMatchObject({
+        rev: 1,
+        action: 'edit',
+        body: 'original prose',
+      });
+    });
+
+    it('as a linked document: a new row pointing back, original untouched', async () => {
+      const saved = await submitAppend('linked');
+      expect(saved.id).not.toBe('doc-1');
+      expect(saved).toMatchObject({
+        action: 'create',
+        linkedTo: { id: 'doc-1', linkType: 'addendum' },
+        author: { id: 'u-casey', name: 'Casey Manager' },
+      });
+      expect(saved.rev).toBeUndefined();
+      expect(saved.history).toBeUndefined();
+    });
+  });
 });

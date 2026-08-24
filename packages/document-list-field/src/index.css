@@ -304,3 +304,31 @@
   border-radius: 9999px;
   border: 1px solid var(--mieweb-background, #fff);
 }
+
+/* ED.41 — the addendum's shape is the author's explicit choice. */
+.document-list-workflow__append-shape {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  border: 1px solid var(--mieweb-border, #e5e7eb);
+  border-radius: 0.375rem;
+  padding: 0.625rem 0.75rem;
+}
+
+.document-list-workflow__append-shape legend {
+  font-weight: 600;
+  padding: 0 0.25rem;
+}
+
+.document-list-workflow__append-shape label {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.document-list-detail__addenda {
+  margin-top: 0.75rem;
+  padding-left: 1.25rem;
+  list-style: disc;
+  color: var(--mieweb-muted-foreground, #64748b);
+}

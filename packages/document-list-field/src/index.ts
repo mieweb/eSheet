@@ -104,6 +104,7 @@ export type {
   DocumentListDocTypeOption,
   DocumentListDocument,
   DocumentListInput,
+  DocumentListLink,
   DocumentListRemoval,
   DocumentListValue,
   DocumentListWorkflow,

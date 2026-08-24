@@ -50,6 +50,7 @@ export interface DocumentListRowCapabilities {
   readonly canView: boolean;
   readonly canCompose: boolean;
   readonly canEdit: boolean;
+  readonly canAppend: boolean;
   readonly canRequestSignature: boolean;
   readonly canDelete: boolean;
   readonly canDownloadPdf: boolean;
@@ -234,6 +235,7 @@ const DEFAULT_ROW_CAPABILITIES: DocumentListRowCapabilities = {
   canView: true,
   canCompose: true,
   canEdit: true,
+  canAppend: true,
   canRequestSignature: true,
   canDelete: true,
   canDownloadPdf: false,
