@@ -25,7 +25,7 @@ export interface DraftBodyRoom {
   /** Extra query params for the socket (auth token, role, …). */
   readonly params?: Readonly<Record<string, string>>;
   /** Who this editor is — named, coloured cursors for everyone else. */
-  readonly user?: { readonly name: string; readonly color?: string };
+  readonly user?: { readonly id: string; readonly name: string; readonly color?: string };
 }
 
 /** What a draft says about itself — set at open, constant until discarded. */

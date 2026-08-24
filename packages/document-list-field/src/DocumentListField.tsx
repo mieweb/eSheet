@@ -153,20 +153,24 @@ export function DocumentListField({
   );
 
   // ED.38 — who is drafting each row, said on the row itself. One presence
-  // subscription per visible row; the channel keeps them body-free.
+  // subscription per visible row; the channel keeps them body-free. Keyed by
+  // the id list, not the array identity — every store update makes a fresh
+  // array and resubscribing per keystroke would churn sockets.
   const draftChannel = host?.draftChannel;
   const [presenceByRow, setPresenceByRow] = useState<
     Record<string, readonly DraftPresence[]>
   >({});
+  const rowIdKey = useMemo(() => rows.map((row) => row.id).join('\n'), [rows]);
   useEffect(() => {
     if (!draftChannel) return;
-    const offs = rows.map((row) =>
-      draftChannel.presenceOf(row.id, (present) =>
+    const ids = rowIdKey ? rowIdKey.split('\n') : [];
+    const offs = ids.map((id) =>
+      draftChannel.presenceOf(id, (present) =>
         setPresenceByRow((current) => {
-          if (present.length === 0 && !(row.id in current)) return current;
+          if (present.length === 0 && !(id in current)) return current;
           const next = { ...current };
-          if (present.length === 0) delete next[row.id];
-          else next[row.id] = present;
+          if (present.length === 0) delete next[id];
+          else next[id] = present;
           return next;
         })
       )
@@ -174,7 +178,7 @@ export function DocumentListField({
     return () => {
       for (const off of offs) off();
     };
-  }, [draftChannel, rows]);
+  }, [draftChannel, rowIdKey]);
 
   const presenceFormatCell = useMemo(() => {
     if (!draftChannel) return undefined;
