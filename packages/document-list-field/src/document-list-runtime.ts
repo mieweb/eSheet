@@ -1,6 +1,6 @@
 import type { FormStore } from '@esheet/core';
-import { DOCUMENT_LIST_MARKDOWN_TYPE } from './data.js';
-import type { DocumentListDocument } from './types.js';
+import { DOCUMENT_LIST_MARKDOWN_TYPE, priorRevisionOf } from './data.js';
+import type { DocumentListDocument, DocumentRevision } from './types.js';
 
 export const DOCUMENT_LIST_EXTENSION_NAMESPACE = '@esheet/document-list-field';
 
@@ -53,6 +53,15 @@ export interface DocumentListRepository {
     document: DocumentListDocument,
     signal: AbortSignal
   ) => Promise<DocumentListContent>;
+  /**
+   * Revisions of one document, oldest first, where the backend keeps them
+   * (prior SHAs, an archive table). Absent means the row is the only source.
+   */
+  listRevisions?: (
+    context: DocumentListRepositoryContext,
+    document: DocumentListDocument,
+    signal: AbortSignal
+  ) => Promise<readonly DocumentRevision[]>;
   subscribe?: (
     context: DocumentListRepositoryContext,
     onSnapshot: (snapshot: DocumentListSnapshot) => void
@@ -101,6 +110,8 @@ export interface DocumentListRuntimeState {
   ) => Promise<DocumentListDocument>;
   removeDocument: (documentId: string) => Promise<void>;
   loadContent: (documentId: string) => Promise<DocumentListContent | undefined>;
+  /** ED.43 — the document's history, newest first, head included. */
+  listRevisions: (documentId: string) => Promise<readonly DocumentRevision[]>;
   refresh: () => Promise<void>;
   start: () => void;
   dispose: () => void;
@@ -289,6 +300,16 @@ export function createDocumentListRuntimeExtension(
         error: undefined,
       }));
       notifyDocuments();
+    },
+
+    listRevisions: async (documentId) => {
+      const row = getState()?.documents[documentId];
+      if (!row) return [];
+      // The backend keeps priors when it can; the row keeps them inline.
+      const priors = repository?.listRevisions
+        ? await repository.listRevisions(context, row, new AbortController().signal)
+        : row.history ?? [];
+      return [...priors, priorRevisionOf(row)].reverse();
     },
 
     saveDocument: async (document, content) => {

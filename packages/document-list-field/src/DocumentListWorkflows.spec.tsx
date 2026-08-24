@@ -155,6 +155,7 @@ function createRuntime(
   return {
     saveDocument: vi.fn(async (savedDocument) => savedDocument),
     loadContent,
+    listRevisions: vi.fn(async () => []),
   } as unknown as DocumentListRuntimeState;
 }
 
@@ -638,5 +639,34 @@ describe('document list detail row', () => {
       )
     ).toBeTruthy();
     expect(screen.queryByText('No preview for this document.')).toBeNull();
+  });
+
+  // ED.43 — who, when, what kind of save; prior prose viewable, no diffing.
+  it('lists the revision history with prior revisions viewable', async () => {
+    const runtime = createRuntime(async () => ({ text: 'current prose' }));
+    (runtime.listRevisions as ReturnType<typeof vi.fn>).mockResolvedValue([
+      {
+        rev: 1,
+        action: 'edit',
+        author: { id: 'u-casey', name: 'Casey Manager' },
+        at: '2026-08-20',
+      },
+      {
+        rev: 0,
+        action: 'create',
+        author: { id: 'u-riley', name: 'Riley Reviewer' },
+        at: '2026-08-14',
+        body: 'the original prose',
+      },
+    ]);
+
+    render(<DocumentListDetailRow document={document} runtime={runtime} />);
+
+    const history = await screen.findByRole('region', { name: 'Revisions' });
+    expect(history.textContent).toContain('rev 1 — edit — Casey Manager');
+    expect(history.textContent).toContain('current');
+    expect(history.textContent).toContain('rev 0 — create — Riley Reviewer');
+    fireEvent.click(screen.getByText('View this revision'));
+    expect(await screen.findByText('the original prose')).toBeTruthy();
   });
 });

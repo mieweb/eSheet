@@ -333,6 +333,32 @@
   color: var(--mieweb-muted-foreground, #64748b);
 }
 
+/* ED.43 — the revision list: who, when, what kind of save. */
+.document-list-detail__history {
+  margin-top: 0.75rem;
+  border-top: 1px solid var(--mieweb-border, #e5e7eb);
+  padding-top: 0.5rem;
+}
+
+.document-list-detail__history h4 {
+  font-weight: 600;
+  margin: 0 0 0.25rem;
+}
+
+.document-list-detail__history ol {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-left: 1.25rem;
+  list-style: decimal;
+}
+
+.document-list-detail__history details {
+  margin-top: 0.25rem;
+  padding-left: 0.75rem;
+  border-left: 2px solid var(--mieweb-border, #e5e7eb);
+}
+
 /* ED.42 — removal always carries a reason. */
 .document-list-remove-dialog {
   position: fixed;
