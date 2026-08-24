@@ -342,6 +342,10 @@ export function DocumentListField({
         };
       } else {
         composeDraft.note = mdyBody(text);
+        // A head with no front matter revises as a note even when its type
+        // has a definition since (ED.40's parse-failure rule) — recorded on
+        // the draft so joiners land in the same tier as the opener.
+        if (typed?.definition) documentDraft.setAnswer('meta:tier', 'note');
       }
     }
     session.open({

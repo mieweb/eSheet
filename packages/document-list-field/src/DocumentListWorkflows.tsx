@@ -363,8 +363,13 @@ export function DocumentListComposePanel({
     (option) => option.id === activeDraft.docType
   );
   // A type that carries a form owns the whole compose body; without one the
-  // panel stays on the note tier it has always been.
-  const definition = selectedType?.definition;
+  // panel stays on the note tier it has always been. A draft opened from a
+  // head with no front matter says `meta:tier: note` (ED.40's parse-failure
+  // rule) — the legacy body revises as a note, for opener and joiners alike.
+  const definition =
+    documentDraft?.getAnswers()['meta:tier'] === 'note'
+      ? undefined
+      : selectedType?.definition;
   const asksSubject = asks(fields, 'subject');
   const asksDocType = asks(fields, 'docType');
   const dirty = definition
