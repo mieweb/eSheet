@@ -410,8 +410,15 @@ export function DocumentListComposePanel({
           updateDraft({ note: body });
         }
       })
-      .catch(() => {
-        if (active) setTemplateBody('');
+      .catch((renderError: unknown) => {
+        if (!active) return;
+        // The author still gets an editor — just not a prefilled one.
+        setTemplateBody('');
+        setError(
+          `The template could not be rendered: ${
+            renderError instanceof Error ? renderError.message : String(renderError)
+          }`
+        );
       });
     return () => {
       active = false;
