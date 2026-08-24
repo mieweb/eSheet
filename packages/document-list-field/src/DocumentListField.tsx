@@ -250,6 +250,7 @@ export function DocumentListField({
     accept: definition.accept,
     maxFileSize: definition.maxFileSize,
     author: host?.author,
+    renderTemplate: host?.renderTemplate,
   };
   const gridDetailRowsExpanded = host?.detailRowsExpanded ?? detailRowsExpanded;
 

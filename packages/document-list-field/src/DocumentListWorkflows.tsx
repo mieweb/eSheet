@@ -136,6 +136,11 @@ export interface DocumentListWorkflowPanelProps {
   readonly maxFileSize?: number;
   /** Stamped as `author` onto rows this panel saves; absent = unattributed. */
   readonly author?: DocumentListAuthor;
+  /** Renders a doc type's body template (ED.33); host-supplied and lazy. */
+  readonly renderTemplate?: (
+    template: string,
+    mergeContext: Readonly<Record<string, string>>
+  ) => Promise<string>;
   /**
    * The shared draft this panel edits (ED.37). The body binds to its room,
    * note-tier meta and definition answers bind to its answers map, and
@@ -330,6 +335,7 @@ export function DocumentListComposePanel({
   docTypes,
   defaultInline,
   author,
+  renderTemplate,
   documentDraft,
   documentId,
   appendMode,
@@ -386,6 +392,37 @@ export function DocumentListComposePanel({
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [documentDraft]);
+
+  // ED.33 — a type that names a template gets its body prefilled once, when
+  // composing new (revising starts from the saved revision instead). The
+  // template renders against only what its mergeContext declares.
+  const [templateBody, setTemplateBody] = useState<string | null>(null);
+  const templateFor = documentId ? undefined : selectedType?.template;
+  useEffect(() => {
+    setTemplateBody(null);
+    if (!open || !templateFor || !renderTemplate) return;
+    let active = true;
+    void renderTemplate(templateFor, selectedType?.mergeContext ?? {})
+      .then((body) => {
+        if (!active) return;
+        setTemplateBody(body);
+        if (!definition && !activeDraftRef.current.note.trim()) {
+          updateDraft({ note: body });
+        }
+      })
+      .catch(() => {
+        if (active) setTemplateBody('');
+      });
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, templateFor, activeDraft.docType]);
+  // The definition form applies its prefill on ready, so it must not mount
+  // until the rendered template is there to apply.
+  const awaitingTemplate = Boolean(
+    open && templateFor && renderTemplate && definition && templateBody === null
+  );
 
   const updateDraft = (
     patch: Partial<DocumentListComposeDraft>,
@@ -749,18 +786,22 @@ export function DocumentListComposePanel({
           </div>
           <div className="document-list-workflow__field document-list-workflow__field--grow">
             {definition ? (
-              <DocumentListDefinitionForm
-                // Switching type swaps the form, and with it the store.
-                key={activeDraft.docType}
-                ref={definitionRef}
-                definition={definition}
-                docType={activeDraft.docType}
-                definitionVersion={selectedType?.definitionVersion}
-                onDirtyChange={setDefinitionDirty}
-                draft={documentDraft}
-                initialResponses={definitionPrefill?.responses}
-                initialBody={definitionPrefill?.body}
-              />
+              awaitingTemplate ? (
+                <p role="status">Preparing the template…</p>
+              ) : (
+                <DocumentListDefinitionForm
+                  // Switching type swaps the form, and with it the store.
+                  key={activeDraft.docType}
+                  ref={definitionRef}
+                  definition={definition}
+                  docType={activeDraft.docType}
+                  definitionVersion={selectedType?.definitionVersion}
+                  onDirtyChange={setDefinitionDirty}
+                  draft={documentDraft}
+                  initialResponses={definitionPrefill?.responses}
+                  initialBody={definitionPrefill?.body ?? templateBody ?? undefined}
+                />
+              )
             ) : (
               <>
                 <label

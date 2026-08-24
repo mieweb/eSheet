@@ -138,6 +138,15 @@ export type DocumentListFieldHost = Pick<
    * not offered and compose stays the single-user flow it is today.
    */
   readonly draftChannel?: DocumentDraftChannel;
+  /**
+   * Renders a doc type's body template with the answers its mergeContext
+   * names (ED.33). Host-supplied — the field never depends on a template
+   * engine — and loaded lazily by the host, never in its entry chunk.
+   */
+  readonly renderTemplate?: (
+    template: string,
+    mergeContext: Readonly<Record<string, string>>
+  ) => Promise<string>;
 };
 
 const DocumentListFieldHostContext =

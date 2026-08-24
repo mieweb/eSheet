@@ -250,6 +250,18 @@ export interface DocumentListDocTypeOption {
    * map this to their own vocabulary (WebChart: `storage_type` 1 vs 36).
    */
   readonly serialization?: 'text' | 'mdy';
+  /**
+   * A `.mdyt` body template (source text; hosts resolve any file reference
+   * before it gets here). Compose renders it **once** to prefill the body —
+   * the engine is the template's own front-matter choice — and the user
+   * edits from there; a saved document never re-renders itself (ED.33).
+   */
+  readonly template?: string;
+  /**
+   * Which case answers the template may reference: template variable → host
+   * field id, explicit and declared — never free access to the whole case.
+   */
+  readonly mergeContext?: Readonly<Record<string, string>>;
 }
 
 export interface DocumentListDefinition {

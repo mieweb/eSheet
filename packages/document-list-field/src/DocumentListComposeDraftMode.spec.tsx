@@ -481,4 +481,38 @@ describe('compose panel in draft mode (ED.37)', () => {
     // The grid hides the row; the affordance reveals it with Restore.
     expect(screen.getByRole('button', { name: 'Show removed (1)' })).toBeTruthy();
   });
+
+  // ED.33 — a type that names a template gets its body prefilled once, from
+  // exactly the answers its mergeContext declares.
+  it('prefills a new compose from the doc type template', async () => {
+    const renderTemplate = vi.fn(async () => 'Dear Zoe,\n\nSincerely');
+    render(
+      <DocumentListComposePanel
+        open
+        onOpenChange={vi.fn()}
+        runtime={runtime}
+        inputPrefix="form-1-documents"
+        docTypes={[
+          {
+            id: 'acknowledgement',
+            label: 'Acknowledgement',
+            template: 'TEMPLATE SOURCE',
+            mergeContext: { employeeName: 'subjectName' },
+          },
+        ]}
+        renderTemplate={renderTemplate}
+      />
+    );
+
+    await waitFor(() =>
+      expect(renderTemplate).toHaveBeenCalledWith('TEMPLATE SOURCE', {
+        employeeName: 'subjectName',
+      })
+    );
+    // Note tier: the rendered body lands in the editor, once.
+    await waitFor(() =>
+      expect(editorProps.at(-1)).toMatchObject({ value: 'Dear Zoe,\n\nSincerely' })
+    );
+    expect(renderTemplate).toHaveBeenCalledOnce();
+  });
 });

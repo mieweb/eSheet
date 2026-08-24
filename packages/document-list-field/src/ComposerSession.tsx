@@ -34,6 +34,11 @@ export interface ComposerSessionConfig {
   readonly maxFileSize?: number;
   /** Stamped as `author` onto rows this session saves. */
   readonly author?: DocumentListAuthor;
+  /** Renders a doc type's body template (ED.33); host-supplied and lazy. */
+  readonly renderTemplate?: (
+    template: string,
+    mergeContext: Readonly<Record<string, string>>
+  ) => Promise<string>;
 }
 
 export interface ComposerSession {
@@ -180,6 +185,7 @@ export function ComposerSessionOverlay({
         docTypes={config.docTypes}
         defaultInline={config.defaultInline}
         author={config.author}
+        renderTemplate={config.renderTemplate}
         documentDraft={session.documentDraft}
         documentId={session.documentId}
         appendMode={session.append}
