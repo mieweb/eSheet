@@ -71,6 +71,7 @@ function fakeDraft(options?: { isNew?: boolean }): DocumentDraft & {
       return () => listeners.delete(listener);
     },
     onPresence: () => () => {},
+    onDiscarded: () => () => {},
     publishFocus: () => {},
     discard: async () => {},
     close: () => {
@@ -391,5 +392,93 @@ describe('compose panel in draft mode (ED.37)', () => {
       expect(saved.rev).toBeUndefined();
       expect(saved.history).toBeUndefined();
     });
+  });
+
+  // ED.42 — remove tombstones with a reason; restore is the same grant.
+  it('remove asks for a reason, tombstones the row, and discards its draft', async () => {
+    const row = {
+      id: 'doc-1',
+      date: '2026-08-14',
+      title: 'Existing note',
+      subject: '—',
+      docType: 'progress-note',
+      docId: 'doc-1',
+      source: 'Compose',
+      file: 'doc-1.md',
+      rev: 1,
+      action: 'edit',
+      body: 'prose',
+    };
+    const draft = fakeDraft();
+    const discard = vi.spyOn(draft, 'discard');
+    const draftChannel = {
+      open: vi.fn(async () => draft),
+      presenceOf: vi.fn(() => () => {}),
+    };
+    const formStore = createFormStore();
+    const fieldProps = {
+      field: {
+        definition: { id: 'documents', question: 'Documents', documents: [row] },
+      },
+      form: formStore,
+      response: undefined,
+    } as unknown as FieldComponentProps;
+
+    render(
+      <FormStoreContext.Provider value={formStore}>
+        <DocumentListFieldProvider
+          host={{
+            capabilities: permissiveDocumentListCapabilities,
+            author: { id: 'u-morgan', name: 'Morgan Records' },
+            draftChannel,
+          }}
+        >
+          <DocumentListField {...fieldProps} />
+        </DocumentListFieldProvider>
+      </FormStoreContext.Provider>
+    );
+
+    await waitFor(() => expect(captured.props).not.toBeNull());
+    const gridProps = captured.props as {
+      formatCell: (
+        value: unknown,
+        data: Record<string, unknown>,
+        column: { field: string }
+      ) => ReactNode;
+    };
+    const actions = render(
+      <>{gridProps.formatCell(undefined, { ...row }, { field: '_actions' })}</>
+    );
+    fireEvent.click(actions.getByRole('button', { name: 'Remove Existing note' }));
+
+    // The reason is required free text; the confirm stays disabled without it.
+    const dialog = await screen.findByRole('dialog', { name: /Remove/ });
+    expect(dialog).toBeTruthy();
+    const confirm = screen.getByRole('button', { name: 'Remove' });
+    expect(confirm).toHaveProperty('disabled', true);
+    fireEvent.change(screen.getByLabelText(/^Reason/), {
+      target: { value: 'wrong patient' },
+    });
+    fireEvent.click(confirm);
+
+    // The saved row is a tombstone: rev + 1, action remove, reasoned marker.
+    const runtimeState = formStore
+      .getState()
+      .getExtension('@esheet/document-list-field', 'documents') as {
+      documents: Record<string, Record<string, unknown>>;
+    };
+    await waitFor(() => {
+      const saved = runtimeState.documents['doc-1'];
+      expect(saved.removed).toMatchObject({
+        reason: 'wrong patient',
+        author: { id: 'u-morgan', name: 'Morgan Records' },
+      });
+      expect(saved).toMatchObject({ rev: 2, action: 'remove' });
+    });
+    // Removal is the stronger statement: the open draft was discarded.
+    await waitFor(() => expect(discard).toHaveBeenCalled());
+
+    // The grid hides the row; the affordance reveals it with Restore.
+    expect(screen.getByRole('button', { name: 'Show removed (1)' })).toBeTruthy();
   });
 });

@@ -268,6 +268,21 @@ export function documentListValueFromRows(
   return { documents: rows };
 }
 
+/**
+ * The head of a row as a history entry, for the moment it is superseded —
+ * the recorded action wins; only rows from before actions were recorded
+ * derive one. Inline rows keep their prose in full.
+ */
+export function priorRevisionOf(row: DocumentListDocument): DocumentRevision {
+  return {
+    rev: row.rev ?? 0,
+    action: row.action ?? ((row.rev ?? 0) === 0 ? 'create' : 'edit'),
+    ...(row.author ? { author: row.author } : {}),
+    at: row.date,
+    ...(row.body != null ? { body: row.body } : {}),
+  };
+}
+
 export function createLocalSourcePayload(
   rows: readonly DocumentListDocument[]
 ): {

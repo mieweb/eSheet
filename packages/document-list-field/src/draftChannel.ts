@@ -60,6 +60,12 @@ export interface DocumentDraft {
   onAnswers(listener: (answers: Readonly<Record<string, unknown>>) => void): () => void;
   /** Live presence in this draft — everyone but me; returns the unsubscriber. */
   onPresence(listener: (present: readonly DraftPresence[]) => void): () => void;
+  /**
+   * Fires when somebody else discards the draft — e.g. the document was
+   * removed while it was open (removal is the stronger statement). The panel
+   * tells the author and closes; nothing here saves anything.
+   */
+  onDiscarded(listener: () => void): () => void;
   /** Tells peers which definition-tier field I am in (`null` = none). */
   publishFocus(fieldId: string | null): void;
   /**

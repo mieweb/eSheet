@@ -8,9 +8,10 @@ import {
 } from 'react';
 import type { FieldComponentProps } from '@esheet/core';
 import { FormStoreContext } from '@esheet/fields';
-import { Button } from '@mieweb/ui';
+import { Button, Input } from '@mieweb/ui';
 import type { DraftPresence } from './draftChannel.js';
 import { mdyBody, parseMdy } from './mdy.js';
+import { priorRevisionOf } from './data.js';
 import {
   ComposerSessionOverlay,
   useComposerSession,
@@ -139,6 +140,17 @@ export function DocumentListField({
     return all.filter((row) => capabilities.view(row));
   }, [capabilities, initialRows, runtimeState]);
   const [detailRowsExpanded, setDetailRowsExpanded] = useState(false);
+  // ED.42 — tombstoned rows leave the grid but never the answer.
+  const [showRemoved, setShowRemoved] = useState(false);
+  const [removing, setRemoving] = useState<DocumentListDocument | null>(null);
+  const removedCount = useMemo(
+    () => rows.filter((row) => row.removed).length,
+    [rows]
+  );
+  const visibleRows = useMemo(
+    () => rows.filter((row) => showRemoved || !row.removed),
+    [rows, showRemoved]
+  );
 
   // ED.38 — who is drafting each row, said on the row itself. One presence
   // subscription per visible row; the channel keeps them body-free.
@@ -242,6 +254,51 @@ export function DocumentListField({
   // decides the shape: a definition parses front matter back into answers, a
   // note loads its body — and a parse failure is the note tier, never an
   // error (ED.34's rule extended).
+  // ED.42 — remove tombstones with a reason; restore is the same grant.
+  // Both are saves of their own kind: rev + 1, prior head kept in history.
+  const tombstone = async (
+    row: DocumentListDocument,
+    reason: string
+  ): Promise<void> => {
+    if (!runtimeState) return;
+    await runtimeState.saveDocument({
+      ...row,
+      rev: (row.rev ?? 0) + 1,
+      action: 'remove',
+      removed: {
+        ...(host?.author ? { author: host.author } : {}),
+        at: new Date().toISOString(),
+        reason,
+      },
+      ...(row.body != null
+        ? { history: [...(row.history ?? []), priorRevisionOf(row)] }
+        : {}),
+    });
+    // Removal is the stronger statement: any open draft is discarded, and
+    // the channel tells whoever is in it (onDiscarded).
+    if (draftChannel && host?.author) {
+      const draft = await draftChannel.open(row.id, {
+        openedBy: host.author,
+        baseRev: row.rev ?? 0,
+      });
+      await draft.discard();
+    }
+  };
+
+  const restore = async (row: DocumentListDocument): Promise<void> => {
+    if (!runtimeState) return;
+    const { removed: _removed, ...rest } = row;
+    void _removed;
+    await runtimeState.saveDocument({
+      ...rest,
+      rev: (row.rev ?? 0) + 1,
+      action: 'restore',
+      ...(row.body != null
+        ? { history: [...(row.history ?? []), priorRevisionOf(row)] }
+        : {}),
+    });
+  };
+
   const openEdit = async (
     row: DocumentListDocument,
     options?: { append?: boolean }
@@ -353,43 +410,84 @@ export function DocumentListField({
     (draftChannel && host?.author
       ? (
           row: DocumentListDocument,
-          caps: { canEdit: boolean; canAppend: boolean }
-        ) => (
-          <>
-            {caps.canEdit && (
+          caps: { canEdit: boolean; canAppend: boolean; canDelete: boolean }
+        ) =>
+          row.removed ? (
+            caps.canDelete ? (
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                aria-label={`Edit ${row.title}`}
-                onClick={() => void openEdit(row)}
+                aria-label={`Restore ${row.title}`}
+                onClick={() => void restore(row)}
               >
-                Edit
+                Restore
               </Button>
-            )}
-            {caps.canAppend && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                aria-label={`Append to ${row.title}`}
-                onClick={() => void openEdit(row, { append: true })}
-              >
-                Append
-              </Button>
-            )}
-          </>
-        )
+            ) : null
+          ) : (
+            <>
+              {caps.canEdit && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  aria-label={`Edit ${row.title}`}
+                  onClick={() => void openEdit(row)}
+                >
+                  Edit
+                </Button>
+              )}
+              {caps.canAppend && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  aria-label={`Append to ${row.title}`}
+                  onClick={() => void openEdit(row, { append: true })}
+                >
+                  Append
+                </Button>
+              )}
+              {caps.canDelete && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  aria-label={`Remove ${row.title}`}
+                  onClick={() => setRemoving(row)}
+                >
+                  Remove
+                </Button>
+              )}
+            </>
+          )
       : undefined);
+
+  const titleActions = (
+    <>
+      {host?.titleActions}
+      {removedCount > 0 && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          aria-pressed={showRemoved}
+          onClick={() => setShowRemoved((current) => !current)}
+        >
+          {showRemoved ? 'Hide removed' : `Show removed (${removedCount})`}
+        </Button>
+      )}
+    </>
+  );
 
   return (
     <section className="document-list-field" aria-label={title}>
       <DocumentListGrid
-        rows={rows}
+        rows={visibleRows}
         title={title}
         noun={noun}
         columns={columns}
-        titleActions={host?.titleActions}
+        titleActions={titleActions}
         renderActions={renderActions}
         getRowCapabilities={getRowCapabilities}
         formatCell={presenceFormatCell}
@@ -405,7 +503,66 @@ export function DocumentListField({
         }
         error={runtimeState?.error ?? host?.error}
       />
+      {removing && (
+        <RemoveDocumentDialog
+          document={removing}
+          noun={noun ?? 'document'}
+          onCancel={() => setRemoving(null)}
+          onRemove={async (reason) => {
+            setRemoving(null);
+            await tombstone(removing, reason);
+          }}
+        />
+      )}
       {!sharedSession && <ComposerSessionOverlay value={ownSession} />}
     </section>
+  );
+}
+
+/** ED.42 — removal always carries a reason; free text, required. */
+function RemoveDocumentDialog({
+  document,
+  noun,
+  onCancel,
+  onRemove,
+}: {
+  readonly document: DocumentListDocument;
+  readonly noun: string;
+  readonly onCancel: () => void;
+  readonly onRemove: (reason: string) => void | Promise<void>;
+}): React.JSX.Element {
+  const [reason, setReason] = useState('');
+  return (
+    <div className="document-list-remove-dialog" role="dialog" aria-modal="true"
+      aria-label={`Remove ${noun}`}>
+      <form
+        className="document-list-remove-dialog__panel"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (reason.trim()) void onRemove(reason.trim());
+        }}
+      >
+        <p>
+          Remove “{document.title}”? It leaves the list but stays in the
+          record, with your reason on the tombstone.
+        </p>
+        <Input
+          id={`remove-reason-${document.id}`}
+          label="Reason"
+          value={reason}
+          onChange={(event) => setReason(event.target.value)}
+          required
+          autoFocus
+        />
+        <div className="document-list-remove-dialog__actions">
+          <Button type="button" variant="outline" size="sm" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit" variant="primary" size="sm" disabled={!reason.trim()}>
+            Remove
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 }

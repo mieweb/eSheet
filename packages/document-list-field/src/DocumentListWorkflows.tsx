@@ -24,6 +24,7 @@ import {
   type DocumentListDefinitionFormHandle,
 } from './DocumentListDefinitionForm.js';
 import { createMdy, mdyBody } from './mdy.js';
+import { priorRevisionOf } from './data.js';
 import type { DocumentDraft, DraftBodyRoom } from './draftChannel.js';
 import type { DefinitionPrefill } from './ComposerSession.js';
 import type {
@@ -367,6 +368,20 @@ export function DocumentListComposePanel({
   const activeDraftRef = useRef(activeDraft);
   activeDraftRef.current = activeDraft;
 
+  // ED.42 — somebody removed the document (or dropped the proposal) while we
+  // were in it: say so and stop offering to save into a tombstone.
+  const [remoteDiscard, setRemoteDiscard] = useState(false);
+  useEffect(() => {
+    if (!documentDraft) return;
+    return documentDraft.onDiscarded(() => {
+      setRemoteDiscard(true);
+      setError(
+        'This draft was discarded — the document was removed or the proposal dropped.'
+      );
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [documentDraft]);
+
   const updateDraft = (
     patch: Partial<DocumentListComposeDraft>,
     options?: { share?: boolean }
@@ -462,20 +477,7 @@ export function DocumentListComposePanel({
                   body: content,
                   // The superseded prose rides along in full — the case doc is
                   // the inline tier's store (ED.47 formalizes this in the port).
-                  history: [
-                    ...(prior.history ?? []),
-                    {
-                      rev: prior.rev ?? 0,
-                      action:
-                        prior.action ??
-                        ((prior.rev ?? 0) === 0
-                          ? ('create' as const)
-                          : ('edit' as const)),
-                      ...(prior.author ? { author: prior.author } : {}),
-                      at: prior.date,
-                      ...(prior.body != null ? { body: prior.body } : {}),
-                    },
-                  ],
+                  history: [...(prior.history ?? []), priorRevisionOf(prior)],
                 }
               : {}),
           }
@@ -780,7 +782,12 @@ export function DocumentListComposePanel({
           >
             Cancel
           </Button>
-          <Button type="submit" variant="primary" size="sm" disabled={saving}>
+          <Button
+            type="submit"
+            variant="primary"
+            size="sm"
+            disabled={saving || remoteDiscard}
+          >
             {saving ? 'Saving…' : `Save ${noun}`}
           </Button>
         </div>
