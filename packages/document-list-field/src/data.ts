@@ -68,6 +68,14 @@ export const DOCUMENT_LIST_COLUMNS = [
     width: 90,
   },
   {
+    field: 'rev',
+    header: 'Rev',
+    sortable: true,
+    filterable: true,
+    resizable: true,
+    width: 56,
+  },
+  {
     field: 'source',
     header: 'Source',
     sortable: true,
@@ -303,7 +311,8 @@ export function createLocalSourcePayload(
   typeInfo: typeof DOCUMENT_LIST_TYPE_INFO;
 } {
   return {
-    data: rows.map((row) => ({ ...row })),
+    // `rev` displays as a column, so absent (a pre-revision row) reads as 0.
+    data: rows.map((row) => ({ ...row, rev: row.rev ?? 0 })),
     typeInfo: DOCUMENT_LIST_TYPE_INFO,
   };
 }

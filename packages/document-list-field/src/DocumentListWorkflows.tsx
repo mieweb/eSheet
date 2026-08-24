@@ -1012,6 +1012,8 @@ export interface DocumentListDetailRowProps {
   readonly runtime: DocumentListRuntimeState;
   /** Rows linked to this one (addenda), rendered beneath the content. */
   readonly related?: readonly DocumentListDocument[];
+  /** The host's full-page document view (revision history lives there). */
+  readonly historyHref?: string;
 }
 
 function DocumentListMarkdownPreview({
@@ -1031,26 +1033,11 @@ export function DocumentListDetailRow({
   document,
   runtime,
   related,
+  historyHref,
 }: DocumentListDetailRowProps): React.JSX.Element {
   const [content, setContent] = useState<DocumentListContent | undefined>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // ED.43 — who, when, what kind of save; read path only, no diffing.
-  const [revisions, setRevisions] = useState<readonly DocumentRevision[]>([]);
-
-  useEffect(() => {
-    let active = true;
-    setRevisions([]);
-    void runtime
-      .listRevisions(document.id)
-      .then((list) => {
-        if (active) setRevisions(list);
-      })
-      .catch(() => undefined);
-    return () => {
-      active = false;
-    };
-  }, [document, runtime]);
 
   useEffect(() => {
     let active = true;
@@ -1124,33 +1111,12 @@ export function DocumentListDetailRow({
           ))}
         </ul>
       )}
-      {revisions.length > 1 && (
-        <section className="document-list-detail__history" aria-label="Revisions">
-          <h4>History</h4>
-          <ol>
-            {revisions.map((revision, index) => (
-              <li key={revision.rev}>
-                <span>
-                  rev {revision.rev} — {revision.action}
-                  {revision.author ? ` — ${revision.author.name}` : ''}
-                  {revision.contributors?.length
-                    ? ` (with ${revision.contributors
-                        .map((contributor) => contributor.name)
-                        .join(', ')})`
-                    : ''}
-                  {revision.at ? ` — ${revision.at}` : ''}
-                  {index === 0 ? ' — current' : ''}
-                </span>
-                {index > 0 && revision.body != null && (
-                  <details>
-                    <summary>View this revision</summary>
-                    <MarkdownRenderer text={mdyBody(revision.body)} />
-                  </details>
-                )}
-              </li>
-            ))}
-          </ol>
-        </section>
+      {historyHref && (
+        <p className="document-list-detail__history-link">
+          <a href={historyHref}>
+            Revision history{document.rev ? ` (rev ${document.rev})` : ''}
+          </a>
+        </p>
       )}
     </div>
   );

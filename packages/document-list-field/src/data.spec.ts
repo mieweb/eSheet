@@ -122,8 +122,9 @@ describe('document list data', () => {
     const rows = normalizeDocumentRows([{ id: 'doc-1', title: 'Letter' }]);
     const payload = createLocalSourcePayload(rows);
 
-    expect(payload.data).toEqual(rows);
-    expect(payload.data).not.toBe(rows);
+    // The payload defaults `rev` for display; the rows stay untouched.
+    expect(payload.data).toEqual(rows.map((row) => ({ ...row, rev: 0 })));
+    expect(rows[0].rev).toBeUndefined();
     expect(
       payload.typeInfo.map((entry: { field: string }) => entry.field)
     ).toEqual([
@@ -132,6 +133,7 @@ describe('document list data', () => {
       'subject',
       'docType',
       'docId',
+      'rev',
       'source',
       'file',
     ]);

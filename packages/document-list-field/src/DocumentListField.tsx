@@ -393,6 +393,7 @@ export function DocumentListField({
         <DocumentListDetailRow
           document={row}
           runtime={runtimeState}
+          historyHref={host?.documentHref?.(row) ?? undefined}
           // ED.41 — the original renders its addenda beneath itself.
           related={rows.filter(
             (candidate) => candidate.linkedTo?.id === row.id

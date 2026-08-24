@@ -147,6 +147,14 @@ export type DocumentListFieldHost = Pick<
     template: string,
     mergeContext: Readonly<Record<string, string>>
   ) => Promise<string>;
+  /**
+   * A deep URL for one document — the host's full-page view with the
+   * revision history. The detail row links there instead of inlining the
+   * revisions; absent means no link.
+   */
+  readonly documentHref?: (
+    document: DocumentListDocument
+  ) => string | null | undefined;
 };
 
 const DocumentListFieldHostContext =

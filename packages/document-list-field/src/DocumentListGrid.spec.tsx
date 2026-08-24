@@ -59,6 +59,8 @@ const row: DocumentListDocument = {
   docId: '42',
   source: 'WebChart',
   file: '42.pdf',
+  // Published payloads default `rev` for the grid column.
+  rev: 0,
 };
 const tableData: Record<string, unknown> = { ...row };
 

@@ -641,32 +641,32 @@ describe('document list detail row', () => {
     expect(screen.queryByText('No preview for this document.')).toBeNull();
   });
 
-  // ED.43 — who, when, what kind of save; prior prose viewable, no diffing.
-  it('lists the revision history with prior revisions viewable', async () => {
+  // ED.43 revised: the detail row stays clean — the revisions live on the
+  // host's full-page view, reached through the history link.
+  it('links to the host document view instead of inlining the history', async () => {
     const runtime = createRuntime(async () => ({ text: 'current prose' }));
-    (runtime.listRevisions as ReturnType<typeof vi.fn>).mockResolvedValue([
-      {
-        rev: 1,
-        action: 'edit',
-        author: { id: 'u-casey', name: 'Casey Manager' },
-        at: '2026-08-20',
-      },
-      {
-        rev: 0,
-        action: 'create',
-        author: { id: 'u-riley', name: 'Riley Reviewer' },
-        at: '2026-08-14',
-        body: 'the original prose',
-      },
-    ]);
+
+    render(
+      <DocumentListDetailRow
+        document={{ ...document, rev: 2 }}
+        runtime={runtime}
+        historyHref="#/case/c-1/document/doc-1"
+      />
+    );
+
+    const link = await screen.findByRole('link', {
+      name: 'Revision history (rev 2)',
+    });
+    expect(link.getAttribute('href')).toBe('#/case/c-1/document/doc-1');
+    expect(screen.queryByRole('region', { name: 'Revisions' })).toBeNull();
+  });
+
+  it('shows no history link when the host offers no document view', async () => {
+    const runtime = createRuntime(async () => ({ text: 'current prose' }));
 
     render(<DocumentListDetailRow document={document} runtime={runtime} />);
 
-    const history = await screen.findByRole('region', { name: 'Revisions' });
-    expect(history.textContent).toContain('rev 1 — edit — Casey Manager');
-    expect(history.textContent).toContain('current');
-    expect(history.textContent).toContain('rev 0 — create — Riley Reviewer');
-    fireEvent.click(screen.getByText('View this revision'));
-    expect(await screen.findByText('the original prose')).toBeTruthy();
+    await screen.findByText('current prose');
+    expect(screen.queryByRole('link')).toBeNull();
   });
 });
