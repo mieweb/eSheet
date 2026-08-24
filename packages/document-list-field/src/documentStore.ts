@@ -66,6 +66,21 @@ export interface DocumentRowRegistry {
   write(rows: readonly DocumentListDocument[]): void;
 }
 
+/**
+ * ED.49 — the columns a backend can store are *its* choice, not the form's.
+ * Returns the declared column keys the store cannot carry, so a host can
+ * warn at config-check time instead of silently dropping data (everything
+ * else round-trips losslessly inside the document text).
+ */
+export function unsupportedColumns(
+  declared: readonly string[] | undefined,
+  store: Pick<DocumentStore, 'acceptedColumns'>
+): string[] {
+  return (declared ?? []).filter(
+    (column) => !store.acceptedColumns.includes(column)
+  );
+}
+
 const INLINE_COLUMNS = ['title', 'subject', 'docType', 'date'] as const;
 
 function createDocumentId(): string {

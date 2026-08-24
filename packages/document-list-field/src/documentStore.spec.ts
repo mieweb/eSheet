@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   createFileDocumentStore,
   createInlineDocumentStore,
+  unsupportedColumns,
   type DocumentRowRegistry,
 } from './documentStore.js';
 import { runDocumentStoreConformance } from './documentStoreConformance.js';
@@ -81,5 +82,18 @@ describe('DocumentStore conformance (ED.46/ED.47/ED.50)', () => {
     const row = registry.rows()[0];
     expect(row.history?.every((entry) => entry.body === undefined)).toBe(true);
     expect(row.history).toHaveLength(5);
+  });
+});
+
+describe('unsupportedColumns (ED.49)', () => {
+  it('names the declared columns a backend cannot carry', () => {
+    const webchartLike = { acceptedColumns: ['title', 'docType', 'date'] };
+    expect(unsupportedColumns(['date', 'title', 'subject', 'file'], webchartLike)).toEqual(
+      ['subject', 'file']
+    );
+    expect(unsupportedColumns(undefined, webchartLike)).toEqual([]);
+    expect(
+      unsupportedColumns(['title'], createInlineDocumentStore({ rows: () => [], write: () => {} }))
+    ).toEqual([]);
   });
 });

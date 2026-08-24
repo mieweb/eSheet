@@ -457,7 +457,7 @@ export function DocumentListComposePanel({
    * everyone. Only the place the bytes land differs by tier.
    */
   const save = async (
-    row: { title: string; subject: string; docType: string },
+    row: { title: string; subject: string; docType: string; date?: string },
     content: string
   ): Promise<void> => {
     const prior = documentId ? runtime.documents[documentId] : undefined;
@@ -472,7 +472,7 @@ export function DocumentListComposePanel({
         ? {
             ...prior,
             ...row,
-            date: today(),
+            date: row.date ?? today(),
             // Whoever saves owns the revision.
             ...(author ? { author } : {}),
             rev: (prior.rev ?? 0) + 1,
@@ -488,7 +488,7 @@ export function DocumentListComposePanel({
           }
         : {
             id,
-            date: today(),
+            date: row.date ?? today(),
             ...row,
             docId: id,
             source: 'Compose',
@@ -538,14 +538,21 @@ export function DocumentListComposePanel({
     setSaving(true);
     setError(null);
     try {
+      // ED.31/ED.49 — the declared columns are projected from the answers;
+      // everything else lives only inside the document.
+      const projected: { title: string; subject: string; docType: string } & {
+        date?: string;
+      } = {
+        title:
+          answerText(collected.responses.title).trim() ||
+          (selectedType?.label ?? activeDraft.docType),
+        subject: answerText(collected.responses.subject).trim(),
+        docType: activeDraft.docType,
+      };
+      const dateAnswer = answerText(collected.responses.date).trim();
+      if (fields?.includes('date') && dateAnswer) projected.date = dateAnswer;
       await save(
-        {
-          title:
-            answerText(collected.responses.title).trim() ||
-            (selectedType?.label ?? activeDraft.docType),
-          subject: answerText(collected.responses.subject).trim(),
-          docType: activeDraft.docType,
-        },
+        projected,
         // ED.45 — a type that opted out of front matter saves only the body.
         docTypeSerialization(selectedType) === 'mdy'
           ? createMdy(collected.frontMatter, collected.body)

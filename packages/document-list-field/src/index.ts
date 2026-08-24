@@ -126,6 +126,7 @@ export { bindDraftAnswers } from './draftBinding.js';
 export {
   createFileDocumentStore,
   createInlineDocumentStore,
+  unsupportedColumns,
 } from './documentStore.js';
 export type {
   DocumentRowRegistry,
