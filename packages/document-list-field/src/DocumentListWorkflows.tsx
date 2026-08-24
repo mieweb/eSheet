@@ -24,7 +24,11 @@ import {
   type DocumentListDefinitionFormHandle,
 } from './DocumentListDefinitionForm.js';
 import { createMdy, mdyBody } from './mdy.js';
-import { priorRevisionOf } from './data.js';
+import {
+  docTypeSerialization,
+  DOCUMENT_LIST_MDY_TYPE,
+  priorRevisionOf,
+} from './data.js';
 import type { DocumentDraft, DraftBodyRoom } from './draftChannel.js';
 import type { DefinitionPrefill } from './ComposerSession.js';
 import type {
@@ -506,7 +510,12 @@ export function DocumentListComposePanel({
         ? undefined
         : {
             content,
-            contentType: COMPOSE_CONTENT_TYPE,
+            // ED.45 — the doc type names the output; the backend maps it to
+            // its own vocabulary (WebChart: storage_type 1 vs 36).
+            contentType:
+              docTypeSerialization(selectedType) === 'mdy'
+                ? DOCUMENT_LIST_MDY_TYPE
+                : COMPOSE_CONTENT_TYPE,
             size: contentSize(content),
           }
     );
@@ -537,7 +546,10 @@ export function DocumentListComposePanel({
           subject: answerText(collected.responses.subject).trim(),
           docType: activeDraft.docType,
         },
-        createMdy(collected.frontMatter, collected.body)
+        // ED.45 — a type that opted out of front matter saves only the body.
+        docTypeSerialization(selectedType) === 'mdy'
+          ? createMdy(collected.frontMatter, collected.body)
+          : collected.body
       );
     } catch (saveError) {
       setSaving(false);
@@ -1009,7 +1021,9 @@ export function DocumentListDetailRow({
       content.contentType?.toLowerCase().startsWith('image/')
   );
   const isMarkdown =
-    content?.contentType === COMPOSE_CONTENT_TYPE && content.text != null;
+    (content?.contentType === COMPOSE_CONTENT_TYPE ||
+      content?.contentType === DOCUMENT_LIST_MDY_TYPE) &&
+    content.text != null;
 
   return (
     // The row is the document. Date, title, type and source are already

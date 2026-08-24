@@ -242,6 +242,14 @@ export interface DocumentListDocTypeOption {
   readonly definition?: unknown;
   /** Recorded alongside `definition` so a document survives a later edit. */
   readonly definitionVersion?: string;
+  /**
+   * What this type's saves are serialized as — `mdy` (front matter + body)
+   * or `text` (the body and nothing else, readable by every existing
+   * consumer). Defaults by what the type carries: a definition has answers
+   * to put in front matter, a plain type has nothing to put there. Backends
+   * map this to their own vocabulary (WebChart: `storage_type` 1 vs 36).
+   */
+  readonly serialization?: 'text' | 'mdy';
 }
 
 export interface DocumentListDefinition {

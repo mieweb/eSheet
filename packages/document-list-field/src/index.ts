@@ -74,11 +74,14 @@ export {
 } from './document-list-runtime.js';
 export {
   createLocalSourcePayload,
+  docTypeSerialization,
   documentListValueFromRows,
+  priorRevisionOf,
   DOCUMENT_LIST_ACTIONS_COLUMN,
   DOCUMENT_LIST_COLUMNS,
   DOCUMENT_LIST_DEFAULT_NOUN,
   DOCUMENT_LIST_MARKDOWN_TYPE,
+  DOCUMENT_LIST_MDY_TYPE,
   DOCUMENT_LIST_TYPE_INFO,
   normalizeDocumentRow,
   normalizeDocumentRows,

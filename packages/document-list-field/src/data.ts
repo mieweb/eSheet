@@ -13,6 +13,19 @@ import { DOCUMENT_REVISION_ACTIONS } from './types.js';
 /** Content type of composed and inline markdown documents. */
 export const DOCUMENT_LIST_MARKDOWN_TYPE = 'text/x-markdown';
 
+/** Content type of MDY documents — front matter + markdown body (ED.45). */
+export const DOCUMENT_LIST_MDY_TYPE = 'text/x-mdy';
+
+/**
+ * The serialization a doc type's saves use: its explicit choice, else what it
+ * carries — a definition has answers for front matter, a plain type does not.
+ */
+export function docTypeSerialization(
+  option: { readonly serialization?: 'text' | 'mdy'; readonly definition?: unknown } | undefined
+): 'text' | 'mdy' {
+  return option?.serialization ?? (option?.definition ? 'mdy' : 'text');
+}
+
 /** What one row is called when a field names nothing else. */
 export const DOCUMENT_LIST_DEFAULT_NOUN = 'document';
 
