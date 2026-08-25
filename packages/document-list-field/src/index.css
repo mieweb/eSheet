@@ -387,3 +387,9 @@
   justify-content: flex-end;
   gap: 0.5rem;
 }
+
+.document-list-field__row-actions {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}

@@ -98,7 +98,7 @@ export const DOCUMENT_LIST_ACTIONS_COLUMN = {
   sortable: false,
   filterable: false,
   resizable: false,
-  width: 48,
+  // No fixed width: the buttons render inline and size the cell.
 } as const;
 
 export const DOCUMENT_LIST_TYPE_INFO = DOCUMENT_LIST_COLUMNS.map((column) => ({

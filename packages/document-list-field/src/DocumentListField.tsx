@@ -139,7 +139,9 @@ export function DocumentListField({
     const all = runtimeRows(runtimeState) ?? initialRows;
     return all.filter((row) => capabilities.view(row));
   }, [capabilities, initialRows, runtimeState]);
-  const [detailRowsExpanded, setDetailRowsExpanded] = useState(false);
+  const [detailRowsExpanded, setDetailRowsExpanded] = useState(
+    definition.expandDetails ?? false
+  );
   // ED.42 — tombstoned rows leave the grid but never the answer.
   const [showRemoved, setShowRemoved] = useState(false);
   const [removing, setRemoving] = useState<DocumentListDocument | null>(null);
@@ -442,7 +444,7 @@ export function DocumentListField({
               </Button>
             ) : null
           ) : (
-            <>
+            <span className="document-list-field__row-actions">
               {caps.canEdit && (
                 <Button
                   type="button"
@@ -476,7 +478,7 @@ export function DocumentListField({
                   Remove
                 </Button>
               )}
-            </>
+            </span>
           )
       : undefined);
 

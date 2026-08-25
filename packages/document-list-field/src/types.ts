@@ -291,4 +291,6 @@ export interface DocumentListDefinition {
   readonly maxFileSize?: number;
   /** Which columns to show, in order, by field name; all when unset. */
   readonly columns?: readonly string[];
+  /** Start with every row's detail open — for lists read more than scanned. */
+  readonly expandDetails?: boolean;
 }
