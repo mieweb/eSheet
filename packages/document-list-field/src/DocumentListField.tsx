@@ -151,7 +151,16 @@ export function DocumentListField({
     [rows]
   );
   const visibleRows = useMemo(
-    () => rows.filter((row) => showRemoved || !row.removed),
+    () =>
+      rows
+        .filter((row) => showRemoved || !row.removed)
+        // Newest on top: date is the shared display column; undated rows
+        // sink, ties keep answer order (stable sort).
+        .sort((a, b) => {
+          const aDate = a.date === '—' ? '' : a.date;
+          const bDate = b.date === '—' ? '' : b.date;
+          return bDate.localeCompare(aDate);
+        }),
     [rows, showRemoved]
   );
 

@@ -389,6 +389,15 @@ export function DocumentListComposePanel({
   const activeDraftRef = useRef(activeDraft);
   activeDraftRef.current = activeDraft;
 
+  // Composing is writing: the note editor takes focus as the panel opens.
+  // The definition tier focuses its own first field; title-less notes have
+  // nothing else asking for the keyboard.
+  useEffect(() => {
+    if (!open || definition) return;
+    editorRef.current?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, definition]);
+
   // ED.42 — somebody removed the document (or dropped the proposal) while we
   // were in it: say so and stop offering to save into a tombstone.
   const [remoteDiscard, setRemoteDiscard] = useState(false);
