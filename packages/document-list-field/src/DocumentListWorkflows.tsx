@@ -134,6 +134,8 @@ export interface DocumentListWorkflowPanelProps {
   readonly accept?: string;
   /** Largest upload accepted, in bytes. */
   readonly maxFileSize?: number;
+  /** A file dropped on the list arrives pre-selected. */
+  readonly initialFile?: File;
   /** Stamped as `author` onto rows this panel saves; absent = unattributed. */
   readonly author?: DocumentListAuthor;
   /** Renders a doc type's body template (ED.33); host-supplied and lazy. */
@@ -894,11 +896,13 @@ export function DocumentListUploadPanel({
   accept,
   maxFileSize,
   author,
+  initialFile,
 }: DocumentListWorkflowPanelProps): React.JSX.Element | null {
-  const [file, setFile] = useState<File | null>(null);
-  const [storedName, setStoredName] = useState('');
+  const [file, setFile] = useState<File | null>(initialFile ?? null);
+  const [storedName, setStoredName] = useState(initialFile?.name ?? '');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
 
   const reset = (): void => {
     setFile(null);
@@ -915,6 +919,13 @@ export function DocumentListUploadPanel({
     const selectedFile = event.target.files?.[0] ?? null;
     setFile(selectedFile);
     setStoredName(selectedFile?.name ?? '');
+    setError(null);
+  };
+
+  const adoptFile = (dropped: File | undefined): void => {
+    if (!dropped) return;
+    setFile(dropped);
+    setStoredName(dropped.name);
     setError(null);
   };
 
@@ -976,14 +987,34 @@ export function DocumentListUploadPanel({
         noValidate
       >
         <div className="document-list-workflow-panel__body">
-          <Input
-            id={inputId(inputPrefix, 'upload-file')}
-            label="Choose a file"
-            type="file"
-            accept={accept}
-            onChange={handleFileChange}
-            disabled={saving}
-          />
+          <div
+            className={`document-list-upload__dropzone${
+              dragActive ? ' document-list-upload__dropzone--active' : ''
+            }`}
+            onDragOver={(event) => {
+              if (!event.dataTransfer.types.includes('Files')) return;
+              event.preventDefault();
+              setDragActive(true);
+            }}
+            onDragLeave={() => setDragActive(false)}
+            onDrop={(event) => {
+              event.preventDefault();
+              setDragActive(false);
+              if (!saving) adoptFile(event.dataTransfer.files?.[0]);
+            }}
+          >
+            <Input
+              id={inputId(inputPrefix, 'upload-file')}
+              label="Choose a file"
+              type="file"
+              accept={accept}
+              onChange={handleFileChange}
+              disabled={saving}
+            />
+            <p className="document-list-upload__dropzone-hint">
+              …or drag and drop a file here
+            </p>
+          </div>
           {file && (
             <p className="document-list-workflow__hint">
               Title: {file.name} · Type:{' '}

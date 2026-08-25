@@ -79,6 +79,37 @@
   min-width: 0;
 }
 
+.document-list-field--drop-active {
+  outline: 2px dashed var(--mieweb-primary-500, #3b82f6);
+  outline-offset: 2px;
+  border-radius: 0.5rem;
+}
+
+.document-list-upload__dropzone {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 2px dashed var(--mieweb-border, #e2e8f0);
+  border-radius: 0.5rem;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.document-list-upload__dropzone--active {
+  border-color: var(--mieweb-primary-500, #3b82f6);
+  background-color: color-mix(
+    in srgb,
+    var(--mieweb-primary-500, #3b82f6) 8%,
+    transparent
+  );
+}
+
+.document-list-upload__dropzone-hint {
+  font-size: 0.75rem;
+  color: var(--mieweb-muted-foreground, #64748b);
+  text-align: center;
+}
+
 /* The panel shell — scrim, dock, header, focus trap — is @mieweb/ui's
    `DockablePanel`. What follows styles only what this field puts inside it. */
 

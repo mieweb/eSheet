@@ -146,6 +146,7 @@ export function DocumentListField({
   // ED.42 — tombstoned rows leave the grid but never the answer.
   const [showRemoved, setShowRemoved] = useState(false);
   const [removing, setRemoving] = useState<DocumentListDocument | null>(null);
+  const [dropActive, setDropActive] = useState(false);
   const removedCount = useMemo(
     () => rows.filter((row) => row.removed).length,
     [rows]
@@ -405,6 +406,38 @@ export function DocumentListField({
         ? () => void host.onUpload?.(runtimeState)
         : openSession('upload', runtimeState)
       : undefined;
+  // The whole field is a drop target when the session-based uploader is on:
+  // a dropped file opens the upload panel with the file already selected.
+  const acceptsDrop =
+    runtimeState && offers(definition, 'upload') && mayCreate && !host?.onUpload
+      ? runtimeState
+      : undefined;
+  const dropHandlers = acceptsDrop
+    ? {
+        onDragOver: (event: React.DragEvent) => {
+          if (!event.dataTransfer.types.includes('Files')) return;
+          event.preventDefault();
+          setDropActive(true);
+        },
+        onDragLeave: (event: React.DragEvent) => {
+          if (event.currentTarget.contains(event.relatedTarget as Node)) return;
+          setDropActive(false);
+        },
+        onDrop: (event: React.DragEvent) => {
+          event.preventDefault();
+          setDropActive(false);
+          const dropped = event.dataTransfer.files?.[0];
+          if (!dropped) return;
+          session.open({
+            kind: 'upload',
+            fieldId: field.definition.id,
+            runtime: acceptsDrop,
+            config: composerConfig,
+            initialFile: dropped,
+          });
+        },
+      }
+    : undefined;
   const detailRenderer = host?.renderDetailRow
     ? host.renderDetailRow
     : runtimeState
@@ -514,7 +547,13 @@ export function DocumentListField({
   );
 
   return (
-    <section className="document-list-field" aria-label={title}>
+    <section
+      className={`document-list-field${
+        dropActive ? ' document-list-field--drop-active' : ''
+      }`}
+      aria-label={title}
+      {...dropHandlers}
+    >
       <DocumentListGrid
         rows={visibleRows}
         title={title}

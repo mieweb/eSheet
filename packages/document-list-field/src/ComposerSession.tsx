@@ -57,6 +57,8 @@ export interface ComposerSession {
   readonly append?: boolean;
   /** Definition-tier prefill from the last saved revision (ED.40). */
   readonly definitionPrefill?: DefinitionPrefill;
+  /** A file dropped on the list, handed to the upload panel pre-selected. */
+  readonly initialFile?: File;
 }
 
 /** The reverse of the ED.30 save: front-matter answers plus the body prose. */
@@ -76,6 +78,7 @@ export interface ComposerSessionValue {
     documentId?: string;
     append?: boolean;
     definitionPrefill?: DefinitionPrefill;
+    initialFile?: File;
     /** Prefill for the compose draft (e.g. the head revision, ED.40). */
     draft?: DocumentListComposeDraft;
   }) => void;
@@ -114,6 +117,7 @@ export function useComposerSessionValue(): ComposerSessionValue {
         documentId,
         append,
         definitionPrefill,
+        initialFile,
         draft,
       }) =>
         setSession((current) => {
@@ -136,6 +140,7 @@ export function useComposerSessionValue(): ComposerSessionValue {
             documentId,
             append,
             definitionPrefill,
+            initialFile,
             draft:
               draft ?? emptyComposeDraft(composeDefaultDocType(config.docTypes)),
           };
@@ -208,6 +213,7 @@ export function ComposerSessionOverlay({
       accept={config.accept}
       maxFileSize={config.maxFileSize}
       author={config.author}
+      initialFile={session.initialFile}
     />
   );
 }

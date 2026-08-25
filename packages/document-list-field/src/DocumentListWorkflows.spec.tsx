@@ -550,6 +550,49 @@ describe('document list workflow panels', () => {
       (screen.getByLabelText('Stored filename') as HTMLInputElement).value
     ).toBe('');
   });
+
+  it('adopts a file dropped on the drop zone', () => {
+    const runtime = createRuntime();
+    const file = new File(['dropped'], 'dropped.pdf', {
+      type: 'application/pdf',
+    });
+
+    render(
+      <DocumentListUploadPanel
+        open
+        onOpenChange={vi.fn()}
+        runtime={runtime}
+        inputPrefix="form-1-documents"
+      />
+    );
+
+    // The panel portals to document.body; `document` is shadowed in scope.
+    const dropzone = window.document.querySelector(
+      '.document-list-upload__dropzone'
+    ) as HTMLElement;
+    fireEvent.drop(dropzone, { dataTransfer: { files: [file], types: ['Files'] } });
+    expect(
+      (screen.getByLabelText('Stored filename') as HTMLInputElement).value
+    ).toBe('dropped.pdf');
+  });
+
+  it('arrives pre-selected when given an initial file', () => {
+    const runtime = createRuntime();
+    render(
+      <DocumentListUploadPanel
+        open
+        onOpenChange={vi.fn()}
+        runtime={runtime}
+        inputPrefix="form-1-documents"
+        initialFile={
+          new File(['prefilled'], 'prefilled.png', { type: 'image/png' })
+        }
+      />
+    );
+    expect(
+      (screen.getByLabelText('Stored filename') as HTMLInputElement).value
+    ).toBe('prefilled.png');
+  });
 });
 
 describe('document list detail row', () => {
