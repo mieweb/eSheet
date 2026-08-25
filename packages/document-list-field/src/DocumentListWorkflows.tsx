@@ -165,9 +165,10 @@ export interface DocumentListWorkflowPanelProps {
   readonly onDraftChange?: (draft: DocumentListComposeDraft) => void;
 }
 
-/** Compose asks for the columns the list shows, and always for the title. */
+/** Compose asks for the columns the list shows — title included, so a field
+ * whose columns drop it composes title-less (the save titles rows by type). */
 function asks(fields: readonly string[] | undefined, name: string): boolean {
-  return !fields || name === 'title' || fields.includes(name);
+  return !fields || fields.includes(name);
 }
 
 /** Note-tier meta shared through the draft's answers map, as `meta:<key>`. */
@@ -370,13 +371,17 @@ export function DocumentListComposePanel({
     documentDraft?.getAnswers()['meta:tier'] === 'note'
       ? undefined
       : selectedType?.definition;
+  // Title is asked like subject/docType: a field whose columns don't carry it
+  // (e.g. case notes — the note *is* the content) composes without one, and
+  // the save titles the row after its document type.
+  const asksTitle = asks(fields, 'title');
   const asksSubject = asks(fields, 'subject');
   const asksDocType = asks(fields, 'docType');
   const dirty = definition
     ? definitionDirty || activeDraft.docType !== defaultDocType
     : isComposeDraftDirty(activeDraft, defaultDocType);
   const requiredLabels = [
-    'Title',
+    ...(asksTitle ? ['Title'] : []),
     ...(asksSubject ? ['Subject'] : []),
     ...(asksDocType ? ['Document type'] : []),
   ];
@@ -626,7 +631,7 @@ export function DocumentListComposePanel({
     const trimmedSubject = activeDraft.subject.trim();
     const trimmedDocType = activeDraft.docType.trim();
     if (
-      !trimmedTitle ||
+      (asksTitle && !trimmedTitle) ||
       (asksSubject && !trimmedSubject) ||
       (asksDocType && !trimmedDocType)
     ) {
@@ -642,7 +647,9 @@ export function DocumentListComposePanel({
         : activeDraft.note;
       await save(
         {
-          title: trimmedTitle,
+          // Untitled rows read as their type — same rule as the definition tier.
+          title:
+            trimmedTitle || (selectedType?.label ?? trimmedDocType ?? noun),
           subject: trimmedSubject,
           docType: trimmedDocType,
         },
@@ -729,7 +736,7 @@ export function DocumentListComposePanel({
             </fieldset>
           )}
           <div className="document-list-workflow-panel__meta">
-            {!definition && (
+            {!definition && asksTitle && (
               <Input
                 id={inputId(inputPrefix, 'compose-title')}
                 label="Title"

@@ -182,10 +182,17 @@ export function DocumentListField({
 
   const presenceFormatCell = useMemo(() => {
     if (!draftChannel) return undefined;
+    // Badges ride the title cell; a field whose columns drop `title`
+    // (title-less notes) badges its first column instead.
+    const configured = definition.columns;
+    const presenceField =
+      !configured || configured.includes('title')
+        ? 'title'
+        : configured[0] ?? 'title';
     const format: NonNullable<
       Parameters<typeof DocumentListGrid>[0]['formatCell']
     > = (value, row, column) => {
-      if (column.field !== 'title') return undefined;
+      if (column.field !== presenceField) return undefined;
       const present = presenceByRow[String(row.id ?? '')];
       if (!present?.length) return undefined;
       const names = present.map((entry) => entry.user.name).join(', ');
@@ -210,7 +217,7 @@ export function DocumentListField({
       );
     };
     return format;
-  }, [draftChannel, presenceByRow]);
+  }, [draftChannel, definition.columns, presenceByRow]);
   const sharedSession = useComposerSession();
   // Standalone fields (no provider) keep a session of their own, so the panel
   // behaves the same either way — it just cannot outlive this field.
