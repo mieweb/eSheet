@@ -290,6 +290,12 @@
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
+  /* Its cell can be the date column (title-less lists) — dates never wrap. */
+  white-space: nowrap;
+}
+
+.document-list-grid__nowrap {
+  white-space: nowrap;
 }
 
 .document-list-row-presence__badges {
