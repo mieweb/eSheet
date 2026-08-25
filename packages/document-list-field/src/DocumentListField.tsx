@@ -59,6 +59,12 @@ function offers(
   return !definition.workflows || definition.workflows.includes(workflow);
 }
 
+/** Uploads carry their MIME type as `docType`; composed types never do.
+ * A file's bytes aren't editable prose — only its title is. */
+function isFileRow(row: DocumentListDocument): boolean {
+  return row.docType.includes('/');
+}
+
 /** The named columns in the order the definition gives them, or all of them. */
 function columnsOf(
   definition: DocumentListDefinition
@@ -146,6 +152,7 @@ export function DocumentListField({
   // ED.42 — tombstoned rows leave the grid but never the answer.
   const [showRemoved, setShowRemoved] = useState(false);
   const [removing, setRemoving] = useState<DocumentListDocument | null>(null);
+  const [renaming, setRenaming] = useState<DocumentListDocument | null>(null);
   const [dropActive, setDropActive] = useState(false);
   const removedCount = useMemo(
     () => rows.filter((row) => row.removed).length,
@@ -324,6 +331,23 @@ export function DocumentListField({
     });
   };
 
+  // A file row's only editable prose is its title — a metadata-only save.
+  const rename = async (
+    row: DocumentListDocument,
+    title: string
+  ): Promise<void> => {
+    if (!runtimeState) return;
+    await runtimeState.saveDocument({
+      ...row,
+      title,
+      rev: (row.rev ?? 0) + 1,
+      action: 'edit',
+      ...(row.body != null
+        ? { history: [...(row.history ?? []), priorRevisionOf(row)] }
+        : {}),
+    });
+  };
+
   const openEdit = async (
     row: DocumentListDocument,
     options?: { append?: boolean }
@@ -494,14 +518,20 @@ export function DocumentListField({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  aria-label={`Edit ${row.title}`}
-                  title="Edit"
-                  onClick={() => void openEdit(row)}
+                  aria-label={
+                    isFileRow(row)
+                      ? `Rename ${row.title}`
+                      : `Edit ${row.title}`
+                  }
+                  title={isFileRow(row) ? 'Rename' : 'Edit'}
+                  onClick={() =>
+                    isFileRow(row) ? setRenaming(row) : void openEdit(row)
+                  }
                 >
                   <SquarePen size={16} aria-hidden="true" />
                 </Button>
               )}
-              {caps.canAppend && (
+              {caps.canAppend && !isFileRow(row) && (
                 <Button
                   type="button"
                   variant="ghost"
@@ -586,6 +616,16 @@ export function DocumentListField({
           }}
         />
       )}
+      {renaming && (
+        <RenameDocumentDialog
+          document={renaming}
+          onCancel={() => setRenaming(null)}
+          onRename={async (title) => {
+            setRenaming(null);
+            await rename(renaming, title);
+          }}
+        />
+      )}
       {!sharedSession && <ComposerSessionOverlay value={ownSession} />}
     </section>
   );
@@ -632,6 +672,50 @@ function RemoveDocumentDialog({
           </Button>
           <Button type="submit" variant="primary" size="sm" disabled={!reason.trim()}>
             Remove
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+/** A file's bytes are immutable; renaming its title is the only edit. */
+function RenameDocumentDialog({
+  document,
+  onCancel,
+  onRename,
+}: {
+  readonly document: DocumentListDocument;
+  readonly onCancel: () => void;
+  readonly onRename: (title: string) => void | Promise<void>;
+}): React.JSX.Element {
+  const [title, setTitle] = useState(document.title);
+  const unchanged = title.trim() === document.title || !title.trim();
+  return (
+    <div className="document-list-remove-dialog" role="dialog" aria-modal="true"
+      aria-label={`Rename ${document.title}`}>
+      <form
+        className="document-list-remove-dialog__panel"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (!unchanged) void onRename(title.trim());
+        }}
+      >
+        <p>Rename “{document.title}”? The file itself is unchanged.</p>
+        <Input
+          id={`rename-title-${document.id}`}
+          label="Title"
+          value={title}
+          onChange={(event) => setTitle(event.target.value)}
+          required
+          autoFocus
+        />
+        <div className="document-list-remove-dialog__actions">
+          <Button type="button" variant="outline" size="sm" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit" variant="primary" size="sm" disabled={unchanged}>
+            Rename
           </Button>
         </div>
       </form>
