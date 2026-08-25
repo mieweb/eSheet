@@ -330,6 +330,12 @@
   max-height: 20rem;
   object-fit: contain;
   object-position: left top;
+  /* A framed mat keeps a screenshot from passing as live UI. */
+  border: 1px solid var(--mieweb-border, #e2e8f0);
+  border-radius: 0.375rem;
+  background: var(--mieweb-muted, #f1f5f9);
+  padding: 0.5rem;
+  box-sizing: border-box;
 }
 
 /* ED.38 — who is drafting a row, said on the row (names in the tooltip). */
