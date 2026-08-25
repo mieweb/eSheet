@@ -31,17 +31,47 @@ export function mergeActivity(
   return mergeById(a, b, (entry) => entry.at, (entry) => entry.at);
 }
 
+/** `N entry`/`N entries`, the log's display for any structured collection. */
+function countLabel(count: number): string {
+  return `${count} ${count === 1 ? 'entry' : 'entries'}`;
+}
+
+/**
+ * Custom fields round-trip whole JSON documents as one string answer; the
+ * log summarizes them instead of dumping the JSON. `undefined` when the
+ * string is not JSON-shaped.
+ */
+function summarizeJsonAnswer(answer: string): string | undefined {
+  const trimmed = answer.trim();
+  if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) return undefined;
+  try {
+    const parsed: unknown = JSON.parse(trimmed);
+    if (Array.isArray(parsed)) return countLabel(parsed.length);
+    if (parsed && typeof parsed === 'object') {
+      const list = Object.values(parsed).find(Array.isArray);
+      if (list) return countLabel(list.length);
+      return 'updated';
+    }
+  } catch {
+    // Not JSON after all — fall through to the raw string.
+  }
+  return undefined;
+}
+
 /** Display form of a response value for the activity log. */
 export function formatActivityValue(value: unknown): string | undefined {
   if (value === undefined || value === null) return undefined;
-  if (typeof value === 'string') return value === '' ? undefined : value;
+  if (typeof value === 'string') {
+    if (value === '') return undefined;
+    return summarizeJsonAnswer(value) ?? value;
+  }
   if (typeof value === 'number' || typeof value === 'boolean')
     return String(value);
   if (Array.isArray(value)) {
     if (value.length === 0) return undefined;
     if (value.every((v) => typeof v === 'object' && v !== null && 'value' in v))
       return (value as SelectedOption[]).map((v) => v.value).join(', ');
-    return `${value.length} ${value.length === 1 ? 'entry' : 'entries'}`;
+    return countLabel(value.length);
   }
   if (typeof value === 'object') {
     if ('value' in value) return String((value as SelectedOption).value);
@@ -80,11 +110,19 @@ export function recordActivity(
   );
   if (!hasActivityField) return next;
 
-  const from = formatActivityValue(
-    extractResponseValue(state.responses[fieldId])
-  );
-  const to = formatActivityValue(extractResponseValue(next[fieldId]));
-  if (from === to) return next;
+  // Change detection is on the raw values: two edits of a summarized JSON
+  // answer can share a display ("2 entries") yet still be a real change.
+  const rawFrom = extractResponseValue(state.responses[fieldId]);
+  const rawTo = extractResponseValue(next[fieldId]);
+  if (JSON.stringify(rawFrom ?? null) === JSON.stringify(rawTo ?? null))
+    return next;
+
+  const from = formatActivityValue(rawFrom);
+  let to = formatActivityValue(rawTo);
+  // An edit whose summary didn't move still deserves a line — but not
+  // "2 entries → 2 entries".
+  const sameDisplay = from !== undefined && from === to;
+  if (sameDisplay) to = `${to} (edited)`;
 
   const question = (
     state.normalized.byId[fieldId]?.definition as { question?: string }
@@ -107,7 +145,8 @@ export function recordActivity(
           ...(state.identity?.name ? { author: state.identity.name } : {}),
           fieldId,
           ...(question !== undefined ? { question } : {}),
-          ...(from !== undefined ? { from } : {}),
+          // A same-display edit reads as one statement, not "x → x".
+          ...(from !== undefined && !sameDisplay ? { from } : {}),
           ...(to !== undefined ? { to } : {}),
         },
       ];

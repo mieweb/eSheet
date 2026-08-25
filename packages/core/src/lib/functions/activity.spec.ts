@@ -109,6 +109,35 @@ describe('store activity logging', () => {
     store.getState().setResponse('name', { answer: 'Ada' });
     expect(getLog(store)).toEqual(before);
   });
+
+  // Custom fields round-trip whole JSON documents as one string answer; the
+  // log summarizes them and still records same-summary edits.
+  it('summarizes JSON answers instead of dumping them', () => {
+    const store = createFormStore();
+    store.getState().loadDefinition(activityForm);
+    store.getState().setResponse('name', {
+      answer: JSON.stringify({ todos: [{ id: 't-1' }, { id: 't-2' }] }),
+    });
+    const first = getLog(store).at(-1);
+    expect(first?.from).toBeUndefined();
+    expect(first?.to).toBe('2 entries');
+  });
+
+  it('records a same-summary JSON edit as one statement', () => {
+    const store = createFormStore();
+    store.getState().loadDefinition(activityForm);
+    store.getState().setResponse('name', {
+      answer: JSON.stringify({ todos: [{ id: 't-1', completed: false }] }),
+    });
+    store.getState().setResponse(
+      'name',
+      { answer: JSON.stringify({ todos: [{ id: 't-1', completed: true }] }) },
+      // Outside the debounce window, so it appends rather than collapsing.
+    );
+    const last = getLog(store).at(-1);
+    expect(last?.to).toMatch(/1 entry( \(edited\))?$/);
+    expect(last?.to?.includes('{')).toBe(false);
+  });
 });
 
 describe('mergeActivity', () => {

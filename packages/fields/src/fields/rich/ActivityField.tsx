@@ -42,10 +42,15 @@ export const ActivityField = React.memo(function ActivityField({
             {entry.question ?? entry.fieldId}
           </span>
           {': '}
-          <span className="activity-field-from ms:text-mstextmuted">
-            {entry.from ?? '—'}
-          </span>
-          {' → '}
+          {/* A first fill (or same-display edit) is one statement, no arrow. */}
+          {entry.from !== undefined && (
+            <>
+              <span className="activity-field-from ms:text-mstextmuted">
+                {entry.from}
+              </span>
+              {' → '}
+            </>
+          )}
           <span className="activity-field-to">{entry.to ?? '—'}</span>
         </span>
       ),
