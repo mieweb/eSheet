@@ -1,4 +1,10 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react';
 import { EsheetRenderer, type EsheetRendererHandle } from '@esheet/renderer';
 import type {
   FieldPresence,
@@ -58,9 +64,11 @@ function fieldIdsInOrder(normalized: NormalizedDefinition): string[] {
   const ordered: string[] = [];
   const visit = (fieldId: string): void => {
     ordered.push(fieldId);
-    for (const childId of normalized.byId[fieldId]?.childIds ?? []) visit(childId);
+    for (const childId of normalized.byId[fieldId]?.childIds ?? [])
+      visit(childId);
   };
-  for (const page of normalized.pages) for (const id of page.fieldIds) visit(id);
+  for (const page of normalized.pages)
+    for (const id of page.fieldIds) visit(id);
   return ordered;
 }
 
@@ -78,7 +86,8 @@ function bodyFieldId(normalized: NormalizedDefinition): string | null {
 
 function isAnswered(response: FieldResponse | undefined): boolean {
   if (!response) return false;
-  if (typeof response.answer === 'string' && response.answer.trim()) return true;
+  if (typeof response.answer === 'string' && response.answer.trim())
+    return true;
   return response.selected != null;
 }
 
@@ -96,7 +105,8 @@ export function answerText(response: FieldResponse | undefined): string {
   if (typeof response.answer === 'string') return response.answer;
   const { selected } = response;
   if (!selected) return '';
-  if (Array.isArray(selected)) return selected.map((one) => one.value).join(', ');
+  if (Array.isArray(selected))
+    return selected.map((one) => one.value).join(', ');
   if ('value' in selected && typeof selected.value === 'string') {
     return selected.value;
   }
@@ -112,7 +122,15 @@ export const DocumentListDefinitionForm = forwardRef<
   DocumentListDefinitionFormHandle,
   DocumentListDefinitionFormProps
 >(function DocumentListDefinitionForm(
-  { definition, docType, definitionVersion, onDirtyChange, draft, initialResponses, initialBody },
+  {
+    definition,
+    docType,
+    definitionVersion,
+    onDirtyChange,
+    draft,
+    initialResponses,
+    initialBody,
+  },
   handle
 ): React.JSX.Element {
   const renderer = useRef<EsheetRendererHandle>(null);
@@ -174,7 +192,7 @@ export const DocumentListDefinitionForm = forwardRef<
             ...(definitionVersion ? { definitionVersion } : {}),
             response: data,
           },
-          body: bodyId ? (responses[bodyId]?.answer ?? '') : '',
+          body: bodyId ? responses[bodyId]?.answer ?? '' : '',
           responses,
         },
         errors: [],
@@ -202,7 +220,9 @@ export const DocumentListDefinitionForm = forwardRef<
     // seeded from the last saved revision when the binding attaches.
     if (initialResponses || initialBody != null) {
       const { setResponse, normalized } = store.getState();
-      for (const [fieldId, response] of Object.entries(initialResponses ?? {})) {
+      for (const [fieldId, response] of Object.entries(
+        initialResponses ?? {}
+      )) {
         setResponse(fieldId, response as FieldResponse);
       }
       const bodyId = bodyFieldId(normalized);

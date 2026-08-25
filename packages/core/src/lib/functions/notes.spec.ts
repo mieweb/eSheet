@@ -3,11 +3,7 @@
 // ---------------------------------------------------------------------------
 
 import { mergeNotes, collectAttachments, mapAttachments } from './notes.js';
-import type {
-  AttachmentAnswer,
-  FieldResponse,
-  NoteEntry,
-} from '../types.js';
+import type { AttachmentAnswer, FieldResponse, NoteEntry } from '../types.js';
 
 const note = (
   id: string,

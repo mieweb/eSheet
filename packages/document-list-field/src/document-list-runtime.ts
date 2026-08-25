@@ -307,7 +307,11 @@ export function createDocumentListRuntimeExtension(
       if (!row) return [];
       // The backend keeps priors when it can; the row keeps them inline.
       const priors = repository?.listRevisions
-        ? await repository.listRevisions(context, row, new AbortController().signal)
+        ? await repository.listRevisions(
+            context,
+            row,
+            new AbortController().signal
+          )
         : row.history ?? [];
       return [...priors, priorRevisionOf(row)].reverse();
     },

@@ -40,7 +40,12 @@ from `@esheet/core` when both sides changed the field.
       "author": "Dr. Demo",
       "markdown": "Patient reports *improvement*.",
       "attachments": [
-        { "contentType": "application/pdf", "dataUrl": "data:...", "title": "report.pdf", "size": 2048 }
+        {
+          "contentType": "application/pdf",
+          "dataUrl": "data:...",
+          "title": "report.pdf",
+          "size": 2048
+        }
       ]
     }
   ]

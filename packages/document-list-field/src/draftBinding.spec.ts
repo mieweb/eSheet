@@ -18,7 +18,11 @@ function fakeDraft(options?: {
   return {
     isNew: options?.isNew ?? false,
     body: { room: 'draft/case-1:doc-1' },
-    meta: { openedBy: { id: 'u-1', name: 'One' }, openedAt: '2026-08-23', baseRev: 0 },
+    meta: {
+      openedBy: { id: 'u-1', name: 'One' },
+      openedAt: '2026-08-23',
+      baseRev: 0,
+    },
     getAnswers: snapshot,
     setAnswer: (fieldId, value) => {
       if (value === undefined) answers.delete(fieldId);
@@ -47,7 +51,9 @@ describe('bindDraftAnswers (ED.37)', () => {
     const draft = fakeDraft({ answers: { subject: response('shared truth') } });
 
     const unbind = bindDraftAnswers(store, draft);
-    expect(store.getState().responses.subject).toEqual(response('shared truth'));
+    expect(store.getState().responses.subject).toEqual(
+      response('shared truth')
+    );
     unbind();
   });
 

@@ -64,9 +64,10 @@ describe('notes field definition schema', () => {
   it('rejects unknown properties on a notes field', () => {
     const bad = structuredClone(notesForm) as Record<string, unknown>;
     (
-      (bad['pages'] as Record<string, unknown>[])[0][
-        'fields'
-      ] as Record<string, unknown>[]
+      (bad['pages'] as Record<string, unknown>[])[0]['fields'] as Record<
+        string,
+        unknown
+      >[]
     )[0]['bogus'] = true;
     expect(formDefinitionSchema.safeParse(bad).success).toBe(false);
   });
@@ -90,9 +91,10 @@ describe('notes field definition schema', () => {
     };
     const normalized = normalizeFormDefinition(raw);
     const field = (
-      (normalized['pages'] as Record<string, unknown>[])[0][
-        'fields'
-      ] as Record<string, unknown>[]
+      (normalized['pages'] as Record<string, unknown>[])[0]['fields'] as Record<
+        string,
+        unknown
+      >[]
     )[0];
     expect(field['entryLabel']).toBe('Comment');
     expect(field['options']).toBeUndefined();

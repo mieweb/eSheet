@@ -23,9 +23,7 @@ const activityForm: FormDefinition = {
   ],
 };
 
-const getLog = (
-  store: ReturnType<typeof createFormStore>
-): ActivityEntry[] =>
+const getLog = (store: ReturnType<typeof createFormStore>): ActivityEntry[] =>
   store.getState().responses[ACTIVITY_RESPONSE_KEY]?.activity ?? [];
 
 describe('store activity logging', () => {
@@ -131,7 +129,7 @@ describe('store activity logging', () => {
     });
     store.getState().setResponse(
       'name',
-      { answer: JSON.stringify({ todos: [{ id: 't-1', completed: true }] }) },
+      { answer: JSON.stringify({ todos: [{ id: 't-1', completed: true }] }) }
       // Outside the debounce window, so it appends rather than collapsing.
     );
     const last = getLog(store).at(-1);

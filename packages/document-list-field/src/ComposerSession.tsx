@@ -142,7 +142,8 @@ export function useComposerSessionValue(): ComposerSessionValue {
             definitionPrefill,
             initialFile,
             draft:
-              draft ?? emptyComposeDraft(composeDefaultDocType(config.docTypes)),
+              draft ??
+              emptyComposeDraft(composeDefaultDocType(config.docTypes)),
           };
         }),
       setMode: (mode) =>
@@ -177,29 +178,29 @@ export function ComposerSessionOverlay({
   // The panels portal themselves (via @mieweb/ui's DockablePanel), so this
   // renders them in place and lets the shell decide where they land.
   return session.kind === 'compose' ? (
-      <DocumentListComposePanel
-        key={session.id}
-        open
-        onOpenChange={(open) => {
-          if (!open) close();
-        }}
-        runtime={session.runtime}
-        inputPrefix={config.inputPrefix}
-        noun={config.noun}
-        fields={config.fields}
-        docTypes={config.docTypes}
-        defaultInline={config.defaultInline}
-        author={config.author}
-        renderTemplate={config.renderTemplate}
-        documentDraft={session.documentDraft}
-        documentId={session.documentId}
-        appendMode={session.append}
-        definitionPrefill={session.definitionPrefill}
-        mode={session.mode}
-        onModeChange={setMode}
-        draft={session.draft}
-        onDraftChange={setDraft}
-      />
+    <DocumentListComposePanel
+      key={session.id}
+      open
+      onOpenChange={(open) => {
+        if (!open) close();
+      }}
+      runtime={session.runtime}
+      inputPrefix={config.inputPrefix}
+      noun={config.noun}
+      fields={config.fields}
+      docTypes={config.docTypes}
+      defaultInline={config.defaultInline}
+      author={config.author}
+      renderTemplate={config.renderTemplate}
+      documentDraft={session.documentDraft}
+      documentId={session.documentId}
+      appendMode={session.append}
+      definitionPrefill={session.definitionPrefill}
+      mode={session.mode}
+      onModeChange={setMode}
+      draft={session.draft}
+      onDraftChange={setDraft}
+    />
   ) : (
     <DocumentListUploadPanel
       key={session.id}

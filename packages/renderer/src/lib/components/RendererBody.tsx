@@ -123,17 +123,14 @@ export function RendererBody({
   const hasPageNavigation = topNavigation || bottomNavigation;
 
   // User navigation — and only user navigation — reports the change.
-  const navigateTo = React.useCallback(
-    (index: number) => {
-      const pageList = pagesRef.current;
-      const clamped = Math.min(Math.max(index, 0), pageList.length - 1);
-      if (clamped === currentIdxRef.current) return;
-      setCurrentPagesIdx(clamped);
-      const page = pageList[clamped];
-      if (page) onPageChangeRef.current?.(page.id, clamped);
-    },
-    []
-  );
+  const navigateTo = React.useCallback((index: number) => {
+    const pageList = pagesRef.current;
+    const clamped = Math.min(Math.max(index, 0), pageList.length - 1);
+    if (clamped === currentIdxRef.current) return;
+    setCurrentPagesIdx(clamped);
+    const page = pageList[clamped];
+    if (page) onPageChangeRef.current?.(page.id, clamped);
+  }, []);
   const handlePrev = React.useCallback(
     () => navigateTo(currentIdxRef.current - 1),
     [navigateTo]

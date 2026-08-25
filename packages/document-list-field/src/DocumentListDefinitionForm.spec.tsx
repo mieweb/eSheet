@@ -19,12 +19,21 @@ import type {
  * without mounting every field component in jsdom.
  */
 vi.mock('@esheet/renderer', async () => {
-  const { createElement, forwardRef, useEffect, useImperativeHandle, useMemo, useReducer } =
-    await import('react');
+  const {
+    createElement,
+    forwardRef,
+    useEffect,
+    useImperativeHandle,
+    useMemo,
+    useReducer,
+  } = await import('react');
   const { createFormStore, validateForm } = await import('@esheet/core');
 
   const EsheetRenderer = forwardRef(function EsheetRenderer(
-    { formDataInput, onReady }: { formDataInput: unknown; onReady?: () => void },
+    {
+      formDataInput,
+      onReady,
+    }: { formDataInput: unknown; onReady?: () => void },
     ref
   ) {
     const store = useMemo(() => createFormStore(), []);
@@ -43,7 +52,10 @@ vi.mock('@esheet/renderer', async () => {
       getFormStore: () => store,
       getValidResponse: () => {
         const { normalized, responses } = store.getState();
-        return { response: responses, errors: validateForm(normalized, responses) };
+        return {
+          response: responses,
+          errors: validateForm(normalized, responses),
+        };
       },
     }));
 
@@ -132,7 +144,7 @@ function savedCall(
 ): [DocumentListDocument, DocumentListContentInput] {
   return (runtime.saveDocument as ReturnType<typeof vi.fn>).mock.calls[0] as [
     DocumentListDocument,
-    DocumentListContentInput,
+    DocumentListContentInput
   ];
 }
 
@@ -140,7 +152,9 @@ describe('a document type with a definition', () => {
   it('fills the type\u2019s form instead of the bare title and subject inputs', async () => {
     renderCompose(createRuntime());
 
-    await waitFor(() => expect(screen.getByLabelText('Recipient')).toBeTruthy());
+    await waitFor(() =>
+      expect(screen.getByLabelText('Recipient')).toBeTruthy()
+    );
     // The definition owns Title, so the panel drops its own copy.
     expect(screen.queryByLabelText('Subject')).toBeNull();
     expect(
@@ -188,7 +202,9 @@ describe('a document type with a definition', () => {
     const runtime = createRuntime();
     renderCompose(runtime);
 
-    await waitFor(() => expect(screen.getByLabelText('Recipient')).toBeTruthy());
+    await waitFor(() =>
+      expect(screen.getByLabelText('Recipient')).toBeTruthy()
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Save letter' }));
 
     await waitFor(() => expect(screen.getByRole('alert')).toBeTruthy());
@@ -198,7 +214,9 @@ describe('a document type with a definition', () => {
   it('marks the dock unsaved once the form has an answer', async () => {
     renderCompose(createRuntime());
 
-    await waitFor(() => expect(screen.getByLabelText('Recipient')).toBeTruthy());
+    await waitFor(() =>
+      expect(screen.getByLabelText('Recipient')).toBeTruthy()
+    );
     fireEvent.change(screen.getByLabelText('Recipient'), {
       target: { value: 'Lisa Ryan' },
     });
@@ -212,7 +230,9 @@ describe('a document type with a definition', () => {
   it('falls back to the note tier for a type without a definition', async () => {
     renderCompose(createRuntime());
 
-    await waitFor(() => expect(screen.getByLabelText('Recipient')).toBeTruthy());
+    await waitFor(() =>
+      expect(screen.getByLabelText('Recipient')).toBeTruthy()
+    );
     fireEvent.change(screen.getByLabelText('Document type'), {
       target: { value: 'note' },
     });

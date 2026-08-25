@@ -17,7 +17,10 @@ import type {
   DocumentListContentInput,
   DocumentListRuntimeState,
 } from './document-list-runtime.js';
-import { DOCUMENT_LIST_DEFAULT_NOUN, DOCUMENT_LIST_MARKDOWN_TYPE } from './data.js';
+import {
+  DOCUMENT_LIST_DEFAULT_NOUN,
+  DOCUMENT_LIST_MARKDOWN_TYPE,
+} from './data.js';
 import {
   DocumentListDefinitionForm,
   answerText,
@@ -357,7 +360,9 @@ export function DocumentListComposePanel({
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   // ED.41 — the author picks the addendum's shape; both are legitimate.
-  const [appendShape, setAppendShape] = useState<'revision' | 'linked'>('revision');
+  const [appendShape, setAppendShape] = useState<'revision' | 'linked'>(
+    'revision'
+  );
   const editorRef = useRef<DocumentListComposeEditorHandle>(null);
   const definitionRef = useRef<DocumentListDefinitionFormHandle>(null);
   const [definitionDirty, setDefinitionDirty] = useState(false);
@@ -437,7 +442,9 @@ export function DocumentListComposePanel({
         setTemplateBody('');
         setError(
           `The template could not be rendered: ${
-            renderError instanceof Error ? renderError.message : String(renderError)
+            renderError instanceof Error
+              ? renderError.message
+              : String(renderError)
           }`
         );
       });
@@ -476,7 +483,10 @@ export function DocumentListComposePanel({
       const patch: Partial<DocumentListComposeDraft> = {};
       for (const key of META_KEYS) {
         const value = answers[`meta:${key}`];
-        if (typeof value === 'string' && value !== activeDraftRef.current[key]) {
+        if (
+          typeof value === 'string' &&
+          value !== activeDraftRef.current[key]
+        ) {
           patch[key] = value;
         }
       }
@@ -829,7 +839,9 @@ export function DocumentListComposePanel({
                   onDirtyChange={setDefinitionDirty}
                   draft={documentDraft}
                   initialResponses={definitionPrefill?.responses}
-                  initialBody={definitionPrefill?.body ?? templateBody ?? undefined}
+                  initialBody={
+                    definitionPrefill?.body ?? templateBody ?? undefined
+                  }
                 />
               )
             ) : (
@@ -848,7 +860,9 @@ export function DocumentListComposePanel({
                   // Joiners must not seed the shared body: only the opener's
                   // prefill loads; after that the CRDT owns the content.
                   value={
-                    documentDraft && !documentDraft.isNew ? '' : activeDraft.note
+                    documentDraft && !documentDraft.isNew
+                      ? ''
+                      : activeDraft.note
                   }
                   onChange={(note) => updateDraft({ note })}
                   disabled={saving}
@@ -1069,7 +1083,10 @@ function DocumentListMarkdownPreview({
   readonly content: string;
 }): React.JSX.Element {
   return (
-    <div className="document-list-detail__preview" aria-label="Document content">
+    <div
+      className="document-list-detail__preview"
+      aria-label="Document content"
+    >
       {/* Front matter is data, not prose: the reader sees the body only. */}
       <MarkdownRenderer text={mdyBody(content)} />
     </div>

@@ -59,7 +59,11 @@ function fakeDraft(options?: { isNew?: boolean }): DocumentDraft & {
   return {
     isNew: options?.isNew ?? true,
     body: { room: 'draft/case-1:doc-1', wsUrl: 'ws://relay/yorm/ws' },
-    meta: { openedBy: { id: 'u-1', name: 'One' }, openedAt: '2026-08-23', baseRev: 0 },
+    meta: {
+      openedBy: { id: 'u-1', name: 'One' },
+      openedAt: '2026-08-23',
+      baseRev: 0,
+    },
     getAnswers: snapshot,
     setAnswer: (fieldId, value) => {
       if (value === undefined) answers.delete(fieldId);
@@ -83,7 +87,9 @@ function fakeDraft(options?: { isNew?: boolean }): DocumentDraft & {
   };
 }
 
-const runtime = { saveDocument: vi.fn() } as unknown as DocumentListRuntimeState;
+const runtime = {
+  saveDocument: vi.fn(),
+} as unknown as DocumentListRuntimeState;
 
 describe('compose panel in draft mode (ED.37)', () => {
   beforeEach(() => {
@@ -214,7 +220,7 @@ describe('compose panel in draft mode (ED.37)', () => {
     await waitFor(() => expect(saveDocument).toHaveBeenCalledOnce());
     const [saved, content] = saveDocument.mock.calls[0] as [
       Record<string, unknown>,
-      unknown,
+      unknown
     ];
     expect(saved).toMatchObject({
       id: 'doc-1', // the row, not a new one
@@ -257,7 +263,11 @@ describe('compose panel in draft mode (ED.37)', () => {
     const formStore = createFormStore();
     const fieldProps = {
       field: {
-        definition: { id: 'documents', question: 'Documents', documents: [row] },
+        definition: {
+          id: 'documents',
+          question: 'Documents',
+          documents: [row],
+        },
       },
       form: formStore,
       response: undefined,
@@ -288,7 +298,9 @@ describe('compose panel in draft mode (ED.37)', () => {
     const actions = render(
       <>{gridProps.formatCell(undefined, { ...row }, { field: '_actions' })}</>
     );
-    fireEvent.click(actions.getByRole('button', { name: 'Edit Existing note' }));
+    fireEvent.click(
+      actions.getByRole('button', { name: 'Edit Existing note' })
+    );
 
     await waitFor(() =>
       expect(open).toHaveBeenCalledWith('doc-1', {
@@ -302,9 +314,9 @@ describe('compose panel in draft mode (ED.37)', () => {
     await waitFor(() =>
       expect(editorProps.at(-1)).toMatchObject({ value: 'original prose' })
     );
-    expect(
-      (screen.getByLabelText(/^Title/) as HTMLInputElement).value
-    ).toBe('Existing note');
+    expect((screen.getByLabelText(/^Title/) as HTMLInputElement).value).toBe(
+      'Existing note'
+    );
   });
 
   // ED.41 — one Append action, two shapes, the author picks.
@@ -345,7 +357,9 @@ describe('compose panel in draft mode (ED.37)', () => {
         />
       );
 
-      expect(await screen.findByText('Append to document (rev 1)')).toBeTruthy();
+      expect(
+        await screen.findByText('Append to document (rev 1)')
+      ).toBeTruthy();
       if (shape === 'linked') {
         fireEvent.click(
           screen.getByRole('radio', { name: /A linked document/ })
@@ -418,7 +432,11 @@ describe('compose panel in draft mode (ED.37)', () => {
     const formStore = createFormStore();
     const fieldProps = {
       field: {
-        definition: { id: 'documents', question: 'Documents', documents: [row] },
+        definition: {
+          id: 'documents',
+          question: 'Documents',
+          documents: [row],
+        },
       },
       form: formStore,
       response: undefined,
@@ -449,7 +467,9 @@ describe('compose panel in draft mode (ED.37)', () => {
     const actions = render(
       <>{gridProps.formatCell(undefined, { ...row }, { field: '_actions' })}</>
     );
-    fireEvent.click(actions.getByRole('button', { name: 'Remove Existing note' }));
+    fireEvent.click(
+      actions.getByRole('button', { name: 'Remove Existing note' })
+    );
 
     // The reason is required free text; the confirm stays disabled without it.
     const dialog = await screen.findByRole('dialog', { name: /Remove/ });
@@ -479,7 +499,9 @@ describe('compose panel in draft mode (ED.37)', () => {
     await waitFor(() => expect(discard).toHaveBeenCalled());
 
     // The grid hides the row; the affordance reveals it with Restore.
-    expect(screen.getByRole('button', { name: 'Show removed (1)' })).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'Show removed (1)' })
+    ).toBeTruthy();
   });
 
   // ED.33 — a type that names a template gets its body prefilled once, from
@@ -511,7 +533,9 @@ describe('compose panel in draft mode (ED.37)', () => {
     );
     // Note tier: the rendered body lands in the editor, once.
     await waitFor(() =>
-      expect(editorProps.at(-1)).toMatchObject({ value: 'Dear Zoe,\n\nSincerely' })
+      expect(editorProps.at(-1)).toMatchObject({
+        value: 'Dear Zoe,\n\nSincerely',
+      })
     );
     expect(renderTemplate).toHaveBeenCalledOnce();
   });

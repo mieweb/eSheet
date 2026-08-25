@@ -104,9 +104,7 @@ describe('round-trip', () => {
     const file = parseMdy(LETTER);
     const edited = withMdyBody(file, `${file.body}\nCall us with questions.\n`);
 
-    expect(serializeMdy(edited)).toBe(
-      `${LETTER}\nCall us with questions.\n`
-    );
+    expect(serializeMdy(edited)).toBe(`${LETTER}\nCall us with questions.\n`);
     // The data layer is untouched, comments and flow style included.
     expect(serializeMdy(edited)).toContain(
       '  recipient: { answer: Jane Doe }   # kept as flow style on purpose'

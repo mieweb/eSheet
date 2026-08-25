@@ -15,7 +15,10 @@ import type { DocumentDraft } from './draftChannel.js';
 const same = (a: unknown, b: unknown): boolean =>
   JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 
-export function bindDraftAnswers(store: FormStore, draft: DocumentDraft): () => void {
+export function bindDraftAnswers(
+  store: FormStore,
+  draft: DocumentDraft
+): () => void {
   let applying = false;
 
   const applyToStore = (answers: Readonly<Record<string, unknown>>): void => {
@@ -45,7 +48,8 @@ export function bindDraftAnswers(store: FormStore, draft: DocumentDraft): () => 
     try {
       const answers = draft.getAnswers();
       for (const [fieldId, response] of Object.entries(state.responses)) {
-        if (!same(answers[fieldId], response)) draft.setAnswer(fieldId, response);
+        if (!same(answers[fieldId], response))
+          draft.setAnswer(fieldId, response);
       }
       for (const fieldId of Object.keys(answers)) {
         if (!(fieldId in state.responses)) draft.setAnswer(fieldId, undefined);
@@ -62,7 +66,9 @@ export function bindDraftAnswers(store: FormStore, draft: DocumentDraft): () => 
   if (draft.isNew && Object.keys(initial).length === 0) {
     applying = true;
     try {
-      for (const [fieldId, response] of Object.entries(store.getState().responses)) {
+      for (const [fieldId, response] of Object.entries(
+        store.getState().responses
+      )) {
         draft.setAnswer(fieldId, response);
       }
     } finally {

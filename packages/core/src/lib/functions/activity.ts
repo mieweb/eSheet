@@ -28,7 +28,12 @@ export function mergeActivity(
   a: ActivityEntry[] | undefined,
   b: ActivityEntry[] | undefined
 ): ActivityEntry[] {
-  return mergeById(a, b, (entry) => entry.at, (entry) => entry.at);
+  return mergeById(
+    a,
+    b,
+    (entry) => entry.at,
+    (entry) => entry.at
+  );
 }
 
 /** `N entry`/`N entries`, the log's display for any structured collection. */

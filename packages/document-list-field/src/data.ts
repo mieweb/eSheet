@@ -21,7 +21,9 @@ export const DOCUMENT_LIST_MDY_TYPE = 'text/x-mdy';
  * carries — a definition has answers for front matter, a plain type does not.
  */
 export function docTypeSerialization(
-  option: { readonly serialization?: 'text' | 'mdy'; readonly definition?: unknown } | undefined
+  option:
+    | { readonly serialization?: 'text' | 'mdy'; readonly definition?: unknown }
+    | undefined
 ): 'text' | 'mdy' {
   return option?.serialization ?? (option?.definition ? 'mdy' : 'text');
 }
@@ -135,7 +137,8 @@ function asInput(value: unknown): DocumentListInput | null {
 function authorValue(value: unknown): DocumentListAuthor | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   const { id, name } = value as { id?: unknown; name?: unknown };
-  if (typeof id !== 'string' || !id || typeof name !== 'string' || !name) return null;
+  if (typeof id !== 'string' || !id || typeof name !== 'string' || !name)
+    return null;
   return { id, name };
 }
 

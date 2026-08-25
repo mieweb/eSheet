@@ -18,7 +18,9 @@ function createProps(
   overrides: Partial<FieldComponentProps> = {}
 ): FieldComponentProps {
   return {
-    field: { definition: { fieldType: 'notes', id: 'case-notes', ...definition } },
+    field: {
+      definition: { fieldType: 'notes', id: 'case-notes', ...definition },
+    },
     form: {
       getState: () => ({
         instanceId: 'test',
@@ -131,7 +133,10 @@ describe('NotesField', () => {
       <NotesField
         {...createProps(
           {},
-          { onResponse, response: { notes: [note('n1', '2026-01-01T10:00:00Z')] } }
+          {
+            onResponse,
+            response: { notes: [note('n1', '2026-01-01T10:00:00Z')] },
+          }
         )}
       />
     );
@@ -188,14 +193,14 @@ describe('NotesField', () => {
         )}
       />
     );
-    expect(screen.getAllByRole('button', { name: 'Edit note' })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: 'Edit note' })).toHaveLength(
+      1
+    );
   });
 
   it('uses entryLabel for actions and empty state', () => {
     render(<NotesField {...createProps({ entryLabel: 'Letter' })} />);
-    expect(
-      screen.getByRole('button', { name: 'Add letter' })
-    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Add letter' })).toBeTruthy();
     expect(screen.getByText('No letters yet')).toBeTruthy();
   });
 
@@ -248,9 +253,7 @@ describe('NotesField', () => {
 
   it('builder mode edits definition properties', () => {
     const onUpdate = vi.fn();
-    render(
-      <NotesField {...createProps({}, { isPreview: false, onUpdate })} />
-    );
+    render(<NotesField {...createProps({}, { isPreview: false, onUpdate })} />);
     fireEvent.change(screen.getByLabelText('Entry label'), {
       target: { value: 'Comment' },
     });

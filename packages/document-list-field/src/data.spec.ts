@@ -85,9 +85,19 @@ describe('document list data', () => {
         id: 'doc-1',
         title: 'Note',
         rev: 2,
-        removed: { author: casey, at: '2026-08-23T12:00:00Z', reason: 'wrong patient' },
+        removed: {
+          author: casey,
+          at: '2026-08-23T12:00:00Z',
+          reason: 'wrong patient',
+        },
         history: [
-          { rev: 0, action: 'create', author: casey, at: '2026-08-01', body: 'v0' },
+          {
+            rev: 0,
+            action: 'create',
+            author: casey,
+            at: '2026-08-01',
+            body: 'v0',
+          },
           { rev: 1, action: 'edit', contributors: [casey], size: 12 },
           { rev: 9, action: 'invent' }, // unknown action — dropped
           { action: 'edit' }, // no rev — dropped
@@ -106,9 +116,13 @@ describe('document list data', () => {
     ]);
 
     // A rev may be 0 (the first save); anything else non-integer means absent.
-    const [first] = normalizeDocumentRows([{ id: 'doc-2', title: 'Note', rev: 0 }]);
+    const [first] = normalizeDocumentRows([
+      { id: 'doc-2', title: 'Note', rev: 0 },
+    ]);
     expect(first.rev).toBe(0);
-    const [none] = normalizeDocumentRows([{ id: 'doc-3', title: 'Note', rev: -1 }]);
+    const [none] = normalizeDocumentRows([
+      { id: 'doc-3', title: 'Note', rev: -1 },
+    ]);
     expect(none.rev).toBeUndefined();
 
     // A tombstone without a reason is not a tombstone.

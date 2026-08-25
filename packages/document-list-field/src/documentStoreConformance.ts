@@ -70,7 +70,11 @@ export async function runDocumentStoreConformance(
     author: riley,
   });
   equal(blanked.rev, 2, 'blank is a revision');
-  equal((await store.read(created.id)).text ?? '', '', 'blank content is empty');
+  equal(
+    (await store.read(created.id)).text ?? '',
+    '',
+    'blank content is empty'
+  );
 
   // append — the next revision of the same document
   const appended = await store.save(created.id, {
@@ -105,7 +109,11 @@ export async function runDocumentStoreConformance(
   equal(refusedEmptyReason, true, 'removal requires a reason');
   const removed = await store.remove(created.id, 'wrong patient', casey);
   equal(removed.rev, 4, 'remove is a revision');
-  equal(removed.removed?.reason, 'wrong patient', 'the tombstone carries the reason');
+  equal(
+    removed.removed?.reason,
+    'wrong patient',
+    'the tombstone carries the reason'
+  );
   if (policies.retainsContentAfterRemove) {
     equal(
       (await store.read(created.id)).text,

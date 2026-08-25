@@ -88,12 +88,15 @@ describe('DocumentStore conformance (ED.46/ED.47/ED.50)', () => {
 describe('unsupportedColumns (ED.49)', () => {
   it('names the declared columns a backend cannot carry', () => {
     const webchartLike = { acceptedColumns: ['title', 'docType', 'date'] };
-    expect(unsupportedColumns(['date', 'title', 'subject', 'file'], webchartLike)).toEqual(
-      ['subject', 'file']
-    );
+    expect(
+      unsupportedColumns(['date', 'title', 'subject', 'file'], webchartLike)
+    ).toEqual(['subject', 'file']);
     expect(unsupportedColumns(undefined, webchartLike)).toEqual([]);
     expect(
-      unsupportedColumns(['title'], createInlineDocumentStore({ rows: () => [], write: () => {} }))
+      unsupportedColumns(
+        ['title'],
+        createInlineDocumentStore({ rows: () => [], write: () => {} })
+      )
     ).toEqual([]);
   });
 });

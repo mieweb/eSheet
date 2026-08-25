@@ -519,9 +519,7 @@ export function DocumentListField({
                   variant="ghost"
                   size="icon"
                   aria-label={
-                    isFileRow(row)
-                      ? `Rename ${row.title}`
-                      : `Edit ${row.title}`
+                    isFileRow(row) ? `Rename ${row.title}` : `Edit ${row.title}`
                   }
                   title={isFileRow(row) ? 'Rename' : 'Edit'}
                   onClick={() =>
@@ -645,8 +643,12 @@ function RemoveDocumentDialog({
 }): React.JSX.Element {
   const [reason, setReason] = useState('');
   return (
-    <div className="document-list-remove-dialog" role="dialog" aria-modal="true"
-      aria-label={`Remove ${noun}`}>
+    <div
+      className="document-list-remove-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Remove ${noun}`}
+    >
       <form
         className="document-list-remove-dialog__panel"
         onSubmit={(event) => {
@@ -655,8 +657,8 @@ function RemoveDocumentDialog({
         }}
       >
         <p>
-          Remove “{document.title}”? It leaves the list but stays in the
-          record, with your reason on the tombstone.
+          Remove “{document.title}”? It leaves the list but stays in the record,
+          with your reason on the tombstone.
         </p>
         <Input
           id={`remove-reason-${document.id}`}
@@ -670,7 +672,12 @@ function RemoveDocumentDialog({
           <Button type="button" variant="outline" size="sm" onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="submit" variant="primary" size="sm" disabled={!reason.trim()}>
+          <Button
+            type="submit"
+            variant="primary"
+            size="sm"
+            disabled={!reason.trim()}
+          >
             Remove
           </Button>
         </div>
@@ -692,8 +699,12 @@ function RenameDocumentDialog({
   const [title, setTitle] = useState(document.title);
   const unchanged = title.trim() === document.title || !title.trim();
   return (
-    <div className="document-list-remove-dialog" role="dialog" aria-modal="true"
-      aria-label={`Rename ${document.title}`}>
+    <div
+      className="document-list-remove-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Rename ${document.title}`}
+    >
       <form
         className="document-list-remove-dialog__panel"
         onSubmit={(event) => {
@@ -714,7 +725,12 @@ function RenameDocumentDialog({
           <Button type="button" variant="outline" size="sm" onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="submit" variant="primary" size="sm" disabled={unchanged}>
+          <Button
+            type="submit"
+            variant="primary"
+            size="sm"
+            disabled={unchanged}
+          >
             Rename
           </Button>
         </div>

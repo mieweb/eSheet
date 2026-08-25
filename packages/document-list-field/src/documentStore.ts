@@ -48,10 +48,22 @@ export interface DocumentStore {
   save(id: string | null, save: DocumentSave): Promise<DocumentListDocument>;
   listRevisions(id: string): Promise<readonly DocumentRevision[]>;
   /** Row-to-row reference (linked addendum); the target stays byte-identical. */
-  link(id: string, toId: string, linkType: string, comment?: string): Promise<void>;
+  link(
+    id: string,
+    toId: string,
+    linkType: string,
+    comment?: string
+  ): Promise<void>;
   /** Tombstone with a required reason. Content retention is backend policy. */
-  remove(id: string, reason: string, author?: DocumentListAuthor): Promise<DocumentListDocument>;
-  restore(id: string, author?: DocumentListAuthor): Promise<DocumentListDocument>;
+  remove(
+    id: string,
+    reason: string,
+    author?: DocumentListAuthor
+  ): Promise<DocumentListDocument>;
+  restore(
+    id: string,
+    author?: DocumentListAuthor
+  ): Promise<DocumentListDocument>;
   /**
    * ED.49 — the projected column keys this backend can store; anything else
    * survives only inside the document text. Hosts warn at config-check time

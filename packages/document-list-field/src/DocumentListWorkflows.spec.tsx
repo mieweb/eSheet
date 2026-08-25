@@ -217,24 +217,24 @@ describe('the docked composer', () => {
 
     await typeDraft('Follow-up completed.');
     const editor = composeEditor();
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Collapse to dock' })
-    );
+    fireEvent.click(screen.getByRole('button', { name: 'Collapse to dock' }));
 
     // Collapsed is a class swap, not an unmount: the same editor node stays.
     expect(screen.getByText('Visit note')).toBeTruthy();
     expect(screen.getByLabelText('Unsaved changes')).toBeTruthy();
     expect(
-      screen.getByRole('button', { name: 'Restore' }).getAttribute('aria-expanded')
+      screen
+        .getByRole('button', { name: 'Restore' })
+        .getAttribute('aria-expanded')
     ).toBe('false');
     expect(screen.getByRole('dialog').getAttribute('aria-modal')).toBeNull();
     expect(composeEditor()).toBe(editor);
 
     fireEvent.click(screen.getByRole('button', { name: 'Restore' }));
 
-    expect(
-      (screen.getByLabelText('Title') as HTMLInputElement).value
-    ).toBe('Visit note');
+    expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe(
+      'Visit note'
+    );
     expect((await composeEditorInput()).value).toBe('Follow-up completed.');
   });
 
@@ -270,7 +270,9 @@ describe('the docked composer', () => {
 
     expect(onOpenChange).not.toHaveBeenCalled();
     expect(
-      screen.getByRole('button', { name: 'Restore' }).getAttribute('aria-expanded')
+      screen
+        .getByRole('button', { name: 'Restore' })
+        .getAttribute('aria-expanded')
     ).toBe('false');
 
     composeView.unmount();
@@ -361,9 +363,8 @@ describe('document list workflow panels', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save document' }));
 
     await waitFor(() => expect(runtime.saveDocument).toHaveBeenCalledOnce());
-    const [savedDocument] = (
-      runtime.saveDocument as ReturnType<typeof vi.fn>
-    ).mock.calls[0] as [typeof document];
+    const [savedDocument] = (runtime.saveDocument as ReturnType<typeof vi.fn>)
+      .mock.calls[0] as [typeof document];
     expect(savedDocument).toEqual(
       expect.objectContaining({
         author: { id: 'u-casey', name: 'Casey Manager' },
@@ -570,7 +571,9 @@ describe('document list workflow panels', () => {
     const dropzone = window.document.querySelector(
       '.document-list-upload__dropzone'
     ) as HTMLElement;
-    fireEvent.drop(dropzone, { dataTransfer: { files: [file], types: ['Files'] } });
+    fireEvent.drop(dropzone, {
+      dataTransfer: { files: [file], types: ['Files'] },
+    });
     expect(
       (screen.getByLabelText('Stored filename') as HTMLInputElement).value
     ).toBe('dropped.pdf');
@@ -663,7 +666,9 @@ describe('document list detail row', () => {
       <DocumentListDetailRow document={document} runtime={fallbackRuntime} />
     );
 
-    expect(await screen.findByText('No preview for this document.')).toBeTruthy();
+    expect(
+      await screen.findByText('No preview for this document.')
+    ).toBeTruthy();
     // The grid already carries the row's date, title, type and source.
     expect(screen.queryByText(document.docType)).toBeNull();
     expect(screen.queryByText(document.source)).toBeNull();

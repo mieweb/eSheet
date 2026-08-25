@@ -2,11 +2,7 @@
 // Notes helpers — GUID-keyed merge and attachment traversal
 // ---------------------------------------------------------------------------
 
-import type {
-  AttachmentAnswer,
-  FieldResponse,
-  NoteEntry,
-} from '../types.js';
+import type { AttachmentAnswer, FieldResponse, NoteEntry } from '../types.js';
 
 /** Timestamp used for conflict resolution: last edit wins, else creation. */
 function noteMergeStamp(note: NoteEntry): string {
@@ -35,8 +31,7 @@ export function mergeById<T extends { id: string }>(
     }
   }
   return [...byId.values()].sort(
-    (x, y) =>
-      sortKey(x).localeCompare(sortKey(y)) || x.id.localeCompare(y.id)
+    (x, y) => sortKey(x).localeCompare(sortKey(y)) || x.id.localeCompare(y.id)
   );
 }
 

@@ -25,7 +25,11 @@ export interface DraftBodyRoom {
   /** Extra query params for the socket (auth token, role, …). */
   readonly params?: Readonly<Record<string, string>>;
   /** Who this editor is — named, coloured cursors for everyone else. */
-  readonly user?: { readonly id: string; readonly name: string; readonly color?: string };
+  readonly user?: {
+    readonly id: string;
+    readonly name: string;
+    readonly color?: string;
+  };
 }
 
 /** What a draft says about itself — set at open, constant until discarded. */
@@ -57,7 +61,9 @@ export interface DocumentDraft {
   /** `undefined` deletes the key — a cleared field is a proposal too. */
   setAnswer(fieldId: string, value: unknown): void;
   /** Fires on any remote answers change; returns the unsubscriber. */
-  onAnswers(listener: (answers: Readonly<Record<string, unknown>>) => void): () => void;
+  onAnswers(
+    listener: (answers: Readonly<Record<string, unknown>>) => void
+  ): () => void;
   /** Live presence in this draft — everyone but me; returns the unsubscriber. */
   onPresence(listener: (present: readonly DraftPresence[]) => void): () => void;
   /**

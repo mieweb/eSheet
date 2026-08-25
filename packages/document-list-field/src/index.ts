@@ -133,9 +133,7 @@ export type {
   DocumentSave,
   DocumentStore,
 } from './documentStore.js';
-export {
-  runDocumentStoreConformance,
-} from './documentStoreConformance.js';
+export { runDocumentStoreConformance } from './documentStoreConformance.js';
 export type { DocumentStorePolicies } from './documentStoreConformance.js';
 export type {
   CreateDocumentListRuntimeExtensionOptions,

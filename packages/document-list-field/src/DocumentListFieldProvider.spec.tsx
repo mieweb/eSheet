@@ -151,7 +151,8 @@ describe('DocumentListFieldProvider', () => {
 
   // The reason the composer session is hoisted at all: eSheet's pages
   // navigator unmounts the page the draft was started from.
-  it('keeps a docked draft when the field that opened it unmounts', async () => {    const formStore = createFormStore();
+  it('keeps a docked draft when the field that opened it unmounts', async () => {
+    const formStore = createFormStore();
     const field = {
       definition: { id: 'documents', question: 'Documents' },
     } as unknown as FieldComponentProps['field'];
@@ -181,16 +182,17 @@ describe('DocumentListFieldProvider', () => {
     });
     // Portaled out of the renderer, so page scroll and stacking cannot clip it.
     expect(
-      screen
-        .getByRole('dialog')
-        .closest('[data-slot="dockable-panel-dock"]')?.parentElement
+      screen.getByRole('dialog').closest('[data-slot="dockable-panel-dock"]')
+        ?.parentElement
     ).toBe(globalThis.document.body);
     fireEvent.click(screen.getByRole('button', { name: 'Collapse to dock' }));
 
     rerender(tree(false));
 
     await waitFor(() =>
-      expect(screen.queryByRole('button', { name: 'Compose document' })).toBeNull()
+      expect(
+        screen.queryByRole('button', { name: 'Compose document' })
+      ).toBeNull()
     );
     expect(screen.getByRole('dialog')).toBeTruthy();
     expect(screen.getByText('Visit note')).toBeTruthy();
@@ -203,7 +205,10 @@ describe('DocumentListFieldProvider', () => {
 describe('capabilities (the host says who may do what)', () => {
   const mountField = (
     host: Parameters<typeof DocumentListFieldProvider>[0]['host'],
-    definition: Record<string, unknown> = { id: 'documents', question: 'Documents' }
+    definition: Record<string, unknown> = {
+      id: 'documents',
+      question: 'Documents',
+    }
   ): void => {
     const formStore = createFormStore();
     const fieldProps = {

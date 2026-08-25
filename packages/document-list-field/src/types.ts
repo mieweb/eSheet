@@ -182,7 +182,6 @@ export const readOnlyDocumentListCapabilities: DocumentListCapabilities = {
   remove: () => false,
 };
 
-
 export interface DocumentListInput {
   readonly id?: unknown;
   readonly date?: unknown;

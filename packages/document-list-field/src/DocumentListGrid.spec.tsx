@@ -199,7 +199,8 @@ describe('DocumentListGrid host integration', () => {
   });
 
   it('uses package workflow defaults with a repository-only runtime', async () => {
-    const formStore = createFormStore();    const customDetail = vi.fn(() => <div>Custom detail</div>);
+    const formStore = createFormStore();
+    const customDetail = vi.fn(() => <div>Custom detail</div>);
     const repository = {
       load: vi.fn(async () => ({ documents: [row] })),
       save: vi.fn(
@@ -336,7 +337,10 @@ describe('DocumentListGrid host integration', () => {
         ) => {
           if (documentId === 'doc-1') {
             listener([
-              { user: { id: 'u-riley', name: 'Riley Reviewer' }, color: '#123456' },
+              {
+                user: { id: 'u-riley', name: 'Riley Reviewer' },
+                color: '#123456',
+              },
             ]);
           }
           return () => {};
@@ -369,14 +373,21 @@ describe('DocumentListGrid host integration', () => {
       <>{props.formatCell('Letter', tableData, { field: 'title' })}</>
     );
     expect(
-      container.querySelector('[aria-label="Draft in progress — Riley Reviewer"]')
+      container.querySelector(
+        '[aria-label="Draft in progress — Riley Reviewer"]'
+      )
     ).toBeTruthy();
     expect(
-      (container.querySelector('.document-list-row-presence__dot') as HTMLElement)
-        ?.style.backgroundColor
+      (
+        container.querySelector(
+          '.document-list-row-presence__dot'
+        ) as HTMLElement
+      )?.style.backgroundColor
     ).toBeTruthy();
     // Other columns render their own value — datavis has no undefined
     // fallback, so the wrapper must supply the cell content itself.
-    expect(props.formatCell('42.pdf', tableData, { field: 'file' })).toBe('42.pdf');
+    expect(props.formatCell('42.pdf', tableData, { field: 'file' })).toBe(
+      '42.pdf'
+    );
   });
 });

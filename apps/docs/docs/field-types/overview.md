@@ -8,13 +8,13 @@ eSheet includes 19 built-in field types across six categories, plus **Pages** â€
 
 ## Categories
 
-| Category     | Field Types                                                    |
-| ------------ | -------------------------------------------------------------- |
-| Text         | `text`, `longtext`, `multitext`                                |
-| Selection    | `radio`, `check`, `boolean`, `dropdown`, `multiselectdropdown` |
-| Rating       | `rating`, `ranking`, `slider`                                  |
-| Matrix       | `singlematrix`, `multimatrix`                                  |
-| Organization | `section`, `pages` (form structure)                            |
+| Category     | Field Types                                                             |
+| ------------ | ----------------------------------------------------------------------- |
+| Text         | `text`, `longtext`, `multitext`                                         |
+| Selection    | `radio`, `check`, `boolean`, `dropdown`, `multiselectdropdown`          |
+| Rating       | `rating`, `ranking`, `slider`                                           |
+| Matrix       | `singlematrix`, `multimatrix`                                           |
+| Organization | `section`, `pages` (form structure)                                     |
 | Rich         | `display`, `html`, `image`, `signature`, `diagram`, `notes`, `activity` |
 
 ## Built-in Fields
