@@ -9,6 +9,7 @@ import {
 import type { FieldComponentProps } from '@esheet/core';
 import { FormStoreContext } from '@esheet/fields';
 import { Button, Input } from '@mieweb/ui';
+import { ArchiveRestore, ListPlus, SquarePen, Trash2 } from 'lucide-react';
 import type { DraftPresence } from './draftChannel.js';
 import { mdyBody, parseMdy } from './mdy.js';
 import { priorRevisionOf } from './data.js';
@@ -436,11 +437,12 @@ export function DocumentListField({
               <Button
                 type="button"
                 variant="ghost"
-                size="sm"
+                size="icon"
                 aria-label={`Restore ${row.title}`}
+                title="Restore"
                 onClick={() => void restore(row)}
               >
-                Restore
+                <ArchiveRestore size={16} aria-hidden="true" />
               </Button>
             ) : null
           ) : (
@@ -449,33 +451,36 @@ export function DocumentListField({
                 <Button
                   type="button"
                   variant="ghost"
-                  size="sm"
+                  size="icon"
                   aria-label={`Edit ${row.title}`}
+                  title="Edit"
                   onClick={() => void openEdit(row)}
                 >
-                  Edit
+                  <SquarePen size={16} aria-hidden="true" />
                 </Button>
               )}
               {caps.canAppend && (
                 <Button
                   type="button"
                   variant="ghost"
-                  size="sm"
+                  size="icon"
                   aria-label={`Append to ${row.title}`}
+                  title="Append"
                   onClick={() => void openEdit(row, { append: true })}
                 >
-                  Append
+                  <ListPlus size={16} aria-hidden="true" />
                 </Button>
               )}
               {caps.canDelete && (
                 <Button
                   type="button"
                   variant="ghost"
-                  size="sm"
+                  size="icon"
                   aria-label={`Remove ${row.title}`}
+                  title="Remove"
                   onClick={() => setRemoving(row)}
                 >
-                  Remove
+                  <Trash2 size={16} aria-hidden="true" />
                 </Button>
               )}
             </span>
