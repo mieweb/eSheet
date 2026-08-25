@@ -1,7 +1,6 @@
 import React from 'react';
 import type { NotesComposerProps } from '@esheet/fields';
 import { RichEditor } from '@mieweb/ui/kerebron';
-import { getAssetLoad } from './asset-load.js';
 import '@mieweb/ui/kerebron.css';
 
 // ---------------------------------------------------------------------------
@@ -72,7 +71,6 @@ export function KerebronNotesComposer({
         value={value}
         onChange={handleChange}
         aria-label={ariaLabel}
-        assetLoad={getAssetLoad()}
       />
     </div>
   );

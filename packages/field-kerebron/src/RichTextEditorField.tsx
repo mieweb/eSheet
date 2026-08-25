@@ -1,7 +1,6 @@
 import React from 'react';
 import type { FieldComponentProps } from '@esheet/core';
 import { RichEditor } from '@mieweb/ui/kerebron';
-import { getAssetLoad } from './asset-load.js';
 // Kerebron base styles plus the mieweb theme bridge.
 import '@mieweb/ui/kerebron.css';
 
@@ -143,7 +142,6 @@ export function RichTextEditorField({
       <RichEditor
         value={answer}
         onChange={handleChange}
-        assetLoad={getAssetLoad()}
         aria-label={def.question ? undefined : 'Rich text'}
         aria-labelledby={def.question ? questionId : undefined}
       />

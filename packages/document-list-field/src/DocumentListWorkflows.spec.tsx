@@ -122,10 +122,8 @@ vi.mock('@mieweb/ui', async (importOriginal) => {
     <footer>{children}</footer>
   );
   return {
-    // The detail preview renders markdown with the real MarkdownRenderer, and
-    // the workflow shell is the real DockablePanel it now adapts.
+    // The detail preview renders markdown with the real MarkdownRenderer.
     MarkdownRenderer: actual.MarkdownRenderer,
-    DockablePanel: actual.DockablePanel,
     Button,
     Input,
     Modal,

@@ -59,7 +59,7 @@
     "vitest": "4.1.10"
   },
   "dependencies": {
-    "@mieweb/ui": "0.7.1",
+    "@mieweb/ui": "0.7.3",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },
@@ -69,7 +69,6 @@
     "@parcel/watcher-linux-x64-glibc": "^2.5.6"
   },
   "overrides": {
-    "@mieweb/ui": "link:../ui",
     "axios": "1.13.6",
     "@xhmikosr/decompress": "11.1.4",
     "shell-quote": "1.10.0",
@@ -77,7 +76,6 @@
   },
   "pnpm": {
     "overrides": {
-      "@mieweb/ui": "link:../ui",
       "axios": "1.13.6",
       "@xhmikosr/decompress": "11.1.4",
       "shell-quote": "1.10.0",

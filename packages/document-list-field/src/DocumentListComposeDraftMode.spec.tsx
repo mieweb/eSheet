@@ -218,7 +218,7 @@ describe('compose panel in draft mode (ED.37)', () => {
     fireEvent.click(screen.getByRole('button', { name: /^Save/ }));
 
     await waitFor(() => expect(saveDocument).toHaveBeenCalledOnce());
-    const [saved, content] = saveDocument.mock.calls[0] as [
+    const [saved, content] = saveDocument.mock.calls[0] as unknown as [
       Record<string, unknown>,
       unknown
     ];

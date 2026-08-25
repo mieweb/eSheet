@@ -34,7 +34,9 @@
     "@esheet/core": "workspace:*",
     "@esheet/fields": "workspace:*",
     "@kerebron/editor": "^0.8.10",
-    "@mieweb/ui": "0.7.1",
+    "@kerebron/editor-kits": "^0.8.12",
+    "@kerebron/wasm": "^0.8.10",
+    "@mieweb/ui": "0.7.3",
     "react": "^19.2.4",
     "tslib": "^2.3.0"
   },

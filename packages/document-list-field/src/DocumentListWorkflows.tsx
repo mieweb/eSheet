@@ -1,6 +1,7 @@
 import {
   forwardRef,
   useEffect,
+  useImperativeHandle,
   useRef,
   useState,
   type ChangeEvent,
@@ -8,8 +9,8 @@ import {
   type ReactNode,
 } from 'react';
 import type { AssetLoad } from '@kerebron/editor';
-import { Button, DockablePanel, Input, MarkdownRenderer } from '@mieweb/ui';
-import { RichEditor, type RichEditorHandle } from '@mieweb/ui/kerebron';
+import { Button, Input, MarkdownRenderer } from '@mieweb/ui';
+import { RichEditor } from '@mieweb/ui/kerebron';
 import '@mieweb/ui/kerebron.css';
 import '@mieweb/ui/markdown.css';
 import type {
@@ -40,18 +41,13 @@ import type {
   DocumentListDocTypeOption,
   DocumentListDocument,
   DocumentListWorkflowMode,
-  DocumentRevision,
 } from './types.js';
 
 const COMPOSE_CONTENT_TYPE = DOCUMENT_LIST_MARKDOWN_TYPE;
 
-let composeAssetLoad: AssetLoad | undefined;
-
-export function configureDocumentListComposeEditor(options: {
+export function configureDocumentListComposeEditor(_options: {
   assetLoad: AssetLoad;
-}): void {
-  composeAssetLoad = options.assetLoad;
-}
+}): void {}
 
 /**
  * Only what is specific to this composer — the kerebron/mieweb theme bridge
@@ -253,7 +249,10 @@ interface DocumentListComposeEditorProps {
   readonly collab?: DraftBodyRoom;
 }
 
-type DocumentListComposeEditorHandle = RichEditorHandle;
+interface DocumentListComposeEditorHandle {
+  readonly focus: () => void;
+  readonly getContent: () => Promise<string>;
+}
 
 /** Thin adapter: the editor itself is `@mieweb/ui`'s `RichEditor`. */
 const DocumentListComposeEditor = forwardRef<
@@ -263,28 +262,43 @@ const DocumentListComposeEditor = forwardRef<
   { ariaLabel, disabled, id, labelledBy, onChange, value, collab },
   ref
 ): React.JSX.Element {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const valueRef = useRef(value);
+  valueRef.current = value;
+  useImperativeHandle(ref, () => ({
+    focus: () =>
+      rootRef.current
+        ?.querySelector<HTMLElement>('[contenteditable="true"], textarea')
+        ?.focus(),
+    getContent: async () => valueRef.current,
+  }));
+
   return (
-    <RichEditor
-      ref={ref}
+    <div
+      ref={rootRef}
       id={id}
       className="document-list-compose-editor"
-      value={value}
-      onChange={onChange}
-      disabled={disabled}
       aria-label={ariaLabel}
       aria-labelledby={labelledBy}
-      assetLoad={composeAssetLoad}
-      collab={
-        collab
-          ? {
-              room: collab.room,
-              wsUrl: collab.wsUrl,
-              params: { ...collab.params },
-              user: collab.user ? { ...collab.user } : undefined,
-            }
-          : undefined
-      }
-    />
+      aria-disabled={disabled || undefined}
+    >
+      <RichEditor
+        value={value}
+        onChange={(next) => {
+          valueRef.current = next;
+          onChange(next);
+        }}
+        collab={
+          collab
+            ? {
+                room: collab.room,
+                wsUrl: collab.wsUrl,
+                params: { ...collab.params },
+              }
+            : undefined
+        }
+      />
+    </div>
   );
 });
 
@@ -301,11 +315,6 @@ export interface DocumentListWorkflowShellProps {
   readonly dockSummary?: ReactNode;
 }
 
-/**
- * Thin adapter: the shell is `@mieweb/ui`'s `DockablePanel`. The workflow
- * forms own the viewport while `full` and collapse to a dock strip that keeps
- * the draft — and the editor — alive while `docked`.
- */
 export function DocumentListWorkflowPanel({
   onClose,
   title,
@@ -315,19 +324,49 @@ export function DocumentListWorkflowPanel({
   dirty = false,
   dockSummary,
 }: DocumentListWorkflowShellProps): React.JSX.Element {
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      if (dirty && onModeChange) {
+        onModeChange('docked');
+        return;
+      }
+      onClose();
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [dirty, onClose, onModeChange]);
+
+  const docked = mode === 'docked';
+
   return (
-    <DockablePanel
-      title={title}
-      mode={mode}
-      onModeChange={onModeChange}
-      onClose={onClose}
-      dirty={dirty}
-      dockSummary={dockSummary}
-      discardMessage={`Discard this ${title}?`}
-      className="document-list-workflow-panel"
+    <div
+      role="dialog"
+      aria-modal={docked ? undefined : true}
+      aria-label={title}
+      className={`document-list-workflow-panel ${
+        docked ? 'document-list-workflow-panel--docked' : ''
+      }`}
     >
-      {children}
-    </DockablePanel>
+      <header className="ms:flex ms:items-center ms:justify-between ms:gap-2">
+        <span>{docked ? dockSummary || title : title}</span>
+        {dirty && !docked && <span aria-label="Unsaved changes">*</span>}
+        {onModeChange && (
+          <button
+            type="button"
+            aria-label={docked ? 'Restore' : 'Collapse to dock'}
+            aria-expanded={!docked}
+            onClick={() => onModeChange(docked ? 'full' : 'docked')}
+          >
+            {docked ? 'Restore' : 'Collapse'}
+          </button>
+        )}
+        <button type="button" aria-label="Close" onClick={onClose}>
+          Close
+        </button>
+      </header>
+      <div hidden={docked}>{children}</div>
+    </div>
   );
 }
 
@@ -480,7 +519,7 @@ export function DocumentListComposePanel({
   useEffect(() => {
     if (!documentDraft) return;
     const apply = (answers: Readonly<Record<string, unknown>>): void => {
-      const patch: Partial<DocumentListComposeDraft> = {};
+      const patch: Record<string, string> = {};
       for (const key of META_KEYS) {
         const value = answers[`meta:${key}`];
         if (

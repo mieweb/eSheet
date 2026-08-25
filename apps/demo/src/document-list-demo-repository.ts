@@ -83,11 +83,11 @@ export function createDemoDocumentListRepository(): DocumentListRepository {
       return document;
     },
 
-    remove: async (context, documentId, signal) => {
+    remove: async (context, document, signal) => {
       assertNotAborted(signal);
       const bucket = getBucket(context);
-      bucket.documents.delete(documentId);
-      bucket.contents.delete(documentId);
+      bucket.documents.delete(document.id);
+      bucket.contents.delete(document.id);
       bucket.revision += 1;
       notify(bucket);
     },

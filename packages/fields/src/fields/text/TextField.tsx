@@ -165,7 +165,7 @@ export const TextField = React.memo(function TextField({
           disabled={!isEnabled}
           aria-required={isRequired || undefined}
           value={response?.answer || ''}
-          onChange={(e) => {
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             const val = isTel
               ? formatPhoneNumber(e.target.value)
               : e.target.value;

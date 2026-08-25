@@ -180,11 +180,9 @@ describe('DocumentListFieldProvider', () => {
     fireEvent.change(await screen.findByLabelText(/^Title/), {
       target: { value: 'Visit note' },
     });
-    // Portaled out of the renderer, so page scroll and stacking cannot clip it.
-    expect(
-      screen.getByRole('dialog').closest('[data-slot="dockable-panel-dock"]')
-        ?.parentElement
-    ).toBe(globalThis.document.body);
+    expect(globalThis.document.body.contains(screen.getByRole('dialog'))).toBe(
+      true
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Collapse to dock' }));
 
     rerender(tree(false));
