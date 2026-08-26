@@ -5,6 +5,7 @@ import {
   useState,
   type ChangeEvent,
   type FormEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
 } from 'react';
 import {
@@ -13,6 +14,7 @@ import {
   type KerebronMarkdownEditorHandle,
 } from '@esheet/field-kerebron';
 import { Button, Input, MarkdownRenderer } from '@mieweb/ui';
+import { Maximize2, Minimize2, X } from 'lucide-react';
 import '@mieweb/ui/markdown.css';
 import type {
   DocumentListContent,
@@ -187,6 +189,16 @@ interface DocumentListComposeEditorProps {
 
 type DocumentListComposeEditorHandle = KerebronMarkdownEditorHandle;
 
+const FOCUSABLE_SELECTOR = [
+  'button:not([disabled])',
+  'a[href]',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[contenteditable="true"]',
+  '[tabindex]:not([tabindex="-1"])',
+].join(', ');
+
 const DocumentListComposeEditor = forwardRef<
   DocumentListComposeEditorHandle,
   DocumentListComposeEditorProps
@@ -213,6 +225,7 @@ export interface DocumentListWorkflowShellProps {
   readonly onClose: () => void;
   readonly title: string;
   readonly children: ReactNode;
+  readonly size?: 'md' | 'xl';
   readonly mode?: DocumentListWorkflowMode;
   /** Supplying this makes the panel dockable; omitting it keeps it modal. */
   readonly onModeChange?: (mode: DocumentListWorkflowMode) => void;
@@ -226,56 +239,167 @@ export function DocumentListWorkflowPanel({
   onClose,
   title,
   children,
+  size = 'md',
   mode = 'full',
   onModeChange,
   dirty = false,
   dockSummary,
 }: DocumentListWorkflowShellProps): React.JSX.Element {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  const onModeChangeRef = useRef(onModeChange);
+  onModeChangeRef.current = onModeChange;
+  const dirtyRef = useRef(dirty);
+  dirtyRef.current = dirty;
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
+  const dockable = Boolean(onModeChange);
+  const docked = dockable && mode === 'docked';
+
+  const requestClose = (): void => {
+    const view = panelRef.current?.ownerDocument.defaultView;
+    if (dirty && view?.confirm && !view.confirm(`Discard this ${title}?`)) {
+      return;
+    }
+    onClose();
+  };
+
   useEffect(() => {
-    const handleEscape = (event: KeyboardEvent) => {
+    const handleEscape = (event: KeyboardEvent): void => {
       if (event.key !== 'Escape') return;
-      if (dirty && onModeChange) {
-        onModeChange('docked');
+      if (dockable && dirtyRef.current && modeRef.current === 'full') {
+        onModeChangeRef.current?.('docked');
         return;
       }
-      onClose();
+      onCloseRef.current();
     };
     document.addEventListener('keydown', handleEscape);
+    panelRef.current
+      ?.querySelector<HTMLElement>('input, select, textarea')
+      ?.focus();
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [dirty, onClose, onModeChange]);
+  }, [dockable]);
 
-  const docked = mode === 'docked';
+  useEffect(() => {
+    if (!dirty || typeof window === 'undefined') return;
+    const handleBeforeUnload = (event: BeforeUnloadEvent): void => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [dirty]);
+
+  useEffect(() => {
+    const panel = panelRef.current;
+    if (!panel || docked) return;
+    const root = panel.closest('.document-list-workflow-dock') ?? panel;
+    const inerted = Array.from(panel.ownerDocument.body.children).filter(
+      (child) =>
+        child !== root && !child.contains(root) && !child.hasAttribute('inert')
+    );
+    for (const element of inerted) element.setAttribute('inert', '');
+    return () => {
+      for (const element of inerted) element.removeAttribute('inert');
+    };
+  }, [docked]);
+
+  useEffect(() => {
+    if (!docked) return;
+    panelRef.current
+      ?.querySelector<HTMLElement>('[aria-label="Restore"]')
+      ?.focus();
+  }, [docked]);
+
+  const handleTabTrap = (event: ReactKeyboardEvent<HTMLDivElement>): void => {
+    if (event.key !== 'Tab' || docked) return;
+    const panel = panelRef.current;
+    if (!panel) return;
+    const focusable = Array.from(
+      panel.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
+    ).filter((element) => element.offsetParent !== null || element === panel);
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = panel.ownerDocument.activeElement;
+    if (event.shiftKey && (active === first || !panel.contains(active))) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && active === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
 
   return (
-    <div
-      role="dialog"
-      aria-modal={docked ? undefined : true}
-      aria-label={title}
-      className={`document-list-workflow-panel ${
-        docked ? 'document-list-workflow-panel--docked' : ''
-      }`}
-    >
-      <header className="ms:flex ms:items-center ms:justify-between ms:gap-2">
-        <span>{docked ? dockSummary || title : title}</span>
-        {dirty && !docked && <span aria-label="Unsaved changes">*</span>}
-        {onModeChange && (
-          <button
-            type="button"
-            aria-label={docked ? 'Restore' : 'Collapse to dock'}
-            aria-expanded={!docked}
-            onClick={() => onModeChange(docked ? 'full' : 'docked')}
-          >
-            {docked ? 'Restore' : 'Collapse'}
-          </button>
-        )}
-        <button type="button" aria-label="Close" onClick={onClose}>
-          Close
-        </button>
-      </header>
-      <div className="document-list-workflow-panel__content" hidden={docked}>
-        {children}
+    <>
+      {!docked && (
+        <div className="document-list-workflow-scrim" aria-hidden="true" />
+      )}
+      <div
+        className={`document-list-workflow-dock document-list-workflow-dock--${size} document-list-workflow-dock--${
+          docked ? 'docked' : 'full'
+        }`}
+      >
+        <div
+          ref={panelRef}
+          className={`document-list-workflow-panel document-list-workflow-panel--${
+            docked ? 'docked' : 'full'
+          }`}
+          role="dialog"
+          aria-modal={docked ? undefined : true}
+          aria-expanded={dockable ? !docked : undefined}
+          aria-label={title}
+          onKeyDown={handleTabTrap}
+        >
+          <div className="document-list-workflow-panel__header">
+            {docked ? (
+              <div className="document-list-workflow-dock__summary">
+                {dockSummary ?? title}
+              </div>
+            ) : (
+              <h3 className="document-list-workflow-panel__title">{title}</h3>
+            )}
+            <div className="document-list-workflow-panel__header-actions">
+              {dockable && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onModeChange?.(docked ? 'full' : 'docked')}
+                  aria-label={docked ? 'Restore' : 'Collapse to dock'}
+                  aria-expanded={!docked}
+                  title={docked ? 'Restore' : 'Collapse to dock'}
+                >
+                  {docked ? (
+                    <Maximize2 size={16} aria-hidden="true" />
+                  ) : (
+                    <Minimize2 size={16} aria-hidden="true" />
+                  )}
+                </Button>
+              )}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={requestClose}
+                aria-label={docked ? 'Discard' : 'Close'}
+                title={docked ? 'Discard' : 'Close'}
+              >
+                <X size={16} aria-hidden="true" />
+              </Button>
+            </div>
+          </div>
+          <div className="document-list-workflow-panel__content">
+            {children}
+          </div>
+        </div>
       </div>
-    </div>
+      <p className="document-list-workflow__announcer" aria-live="polite">
+        {docked ? `${title} collapsed to dock` : ''}
+      </p>
+    </>
   );
 }
 
@@ -649,6 +773,7 @@ export function DocumentListComposePanel({
     <DocumentListWorkflowPanel
       title={panelTitle}
       onClose={() => handleOpenChange(false)}
+      size="xl"
       mode={mode}
       onModeChange={onModeChange ? handleModeChange : undefined}
       dirty={dirty}

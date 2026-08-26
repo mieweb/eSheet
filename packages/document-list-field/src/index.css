@@ -110,11 +110,131 @@
   text-align: center;
 }
 
-/* The host positions the panel; this package owns its internal height chain. */
-.document-list-workflow-panel:not(.document-list-workflow-panel--docked) {
+/* Full workflows are centered modals; Compose may collapse without unmounting. */
+.document-list-workflow-scrim,
+.document-list-workflow-dock {
+  --document-list-workflow-z-index: 50;
+  position: fixed;
+  z-index: var(--document-list-workflow-z-index);
+}
+
+.document-list-workflow-dock--md {
+  --document-list-workflow-width: min(36rem, calc(100vw - 2rem));
+}
+
+.document-list-workflow-dock--xl {
+  --document-list-workflow-width: min(72rem, calc(100vw - 2rem));
+}
+
+.document-list-workflow-scrim {
+  inset: 0;
+  z-index: calc(var(--document-list-workflow-z-index) - 1);
+  background: rgb(15 23 42 / 45%);
+}
+
+.document-list-workflow-dock--full {
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  pointer-events: none;
+}
+
+.document-list-workflow-dock--docked {
+  inset: auto 1rem 0 auto;
+  width: 26rem;
+  max-width: calc(100vw - 2rem);
+  overflow: hidden;
+}
+
+.document-list-workflow-panel {
+  position: relative;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   min-height: 0;
+  border: 1px solid var(--mieweb-border, #e5e7eb);
+  border-radius: var(--mieweb-radius-lg, 0.5rem);
+  background: var(--mieweb-card, #ffffff);
+  color: var(--mieweb-card-foreground, #1f2937);
+  box-shadow: 0 1.25rem 2.5rem rgb(15 23 42 / 22%);
+  pointer-events: auto;
+}
+
+.document-list-workflow-panel--full {
+  width: var(--document-list-workflow-width);
+  height: min(48rem, calc(100vh - 2rem));
+}
+
+.document-list-workflow-dock--md .document-list-workflow-panel--full {
+  height: auto;
+  max-height: calc(100vh - 2rem);
+}
+
+.document-list-workflow-panel--docked {
+  width: 100%;
+  border-bottom: 0;
+  border-radius: var(--mieweb-radius-lg, 0.5rem) var(--mieweb-radius-lg, 0.5rem)
+    0 0;
+}
+
+.document-list-workflow-panel--docked .document-list-workflow-panel__content {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: var(--document-list-workflow-width);
+  height: min(48rem, calc(100vh - 2rem));
+}
+
+.document-list-workflow-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  border-bottom: 1px solid var(--mieweb-border, #e5e7eb);
+}
+
+.document-list-workflow-panel__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.document-list-workflow-panel__title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.document-list-workflow-dock__summary {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+@media (max-width: 40rem) {
+  .document-list-workflow-scrim,
+  .document-list-workflow-dock {
+    --document-list-workflow-width: 100vw;
+  }
+
+  .document-list-workflow-dock--full {
+    padding: 0;
+  }
+
+  .document-list-workflow-dock--docked {
+    inset: auto 0 0 0;
+    width: 100%;
+    max-width: none;
+  }
+
+  .document-list-workflow-panel--full {
+    height: 100vh;
+    max-height: none;
+    border-radius: 0;
+  }
 }
 
 .document-list-workflow-dock__title {

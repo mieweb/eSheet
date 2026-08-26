@@ -6,6 +6,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { createPortal } from 'react-dom';
 import {
   composeDefaultDocType,
   DocumentListComposePanel,
@@ -170,53 +171,54 @@ export function ComposerSessionOverlay({
   readonly value: ComposerSessionValue;
 }): React.JSX.Element | null {
   const { session, setMode, setDraft, close } = value;
-  if (!session) {
+  if (!session || typeof document === 'undefined' || !document.body) {
     return null;
   }
 
   const { config } = session;
-  // The panels portal themselves (via @mieweb/ui's DockablePanel), so this
-  // renders them in place and lets the shell decide where they land.
-  return session.kind === 'compose' ? (
-    <DocumentListComposePanel
-      key={session.id}
-      open
-      onOpenChange={(open) => {
-        if (!open) close();
-      }}
-      runtime={session.runtime}
-      inputPrefix={config.inputPrefix}
-      noun={config.noun}
-      fields={config.fields}
-      docTypes={config.docTypes}
-      defaultInline={config.defaultInline}
-      author={config.author}
-      renderTemplate={config.renderTemplate}
-      documentDraft={session.documentDraft}
-      documentId={session.documentId}
-      appendMode={session.append}
-      definitionPrefill={session.definitionPrefill}
-      mode={session.mode}
-      onModeChange={setMode}
-      draft={session.draft}
-      onDraftChange={setDraft}
-    />
-  ) : (
-    <DocumentListUploadPanel
-      key={session.id}
-      open
-      onOpenChange={(open) => {
-        if (!open) close();
-      }}
-      runtime={session.runtime}
-      inputPrefix={config.inputPrefix}
-      noun={config.noun}
-      accept={config.accept}
-      maxFileSize={config.maxFileSize}
-      author={config.author}
-      initialFile={session.initialFile}
-    />
-  );
+  const panel =
+    session.kind === 'compose' ? (
+      <DocumentListComposePanel
+        key={session.id}
+        open
+        onOpenChange={(open) => {
+          if (!open) close();
+        }}
+        runtime={session.runtime}
+        inputPrefix={config.inputPrefix}
+        noun={config.noun}
+        fields={config.fields}
+        docTypes={config.docTypes}
+        defaultInline={config.defaultInline}
+        author={config.author}
+        renderTemplate={config.renderTemplate}
+        documentDraft={session.documentDraft}
+        documentId={session.documentId}
+        appendMode={session.append}
+        definitionPrefill={session.definitionPrefill}
+        mode={session.mode}
+        onModeChange={setMode}
+        draft={session.draft}
+        onDraftChange={setDraft}
+      />
+    ) : (
+      <DocumentListUploadPanel
+        key={session.id}
+        open
+        onOpenChange={(open) => {
+          if (!open) close();
+        }}
+        runtime={session.runtime}
+        inputPrefix={config.inputPrefix}
+        noun={config.noun}
+        accept={config.accept}
+        maxFileSize={config.maxFileSize}
+        author={config.author}
+        initialFile={session.initialFile}
+      />
+    );
+
+  return createPortal(panel, document.body);
 }
 
 export function ComposerSessionProvider({
