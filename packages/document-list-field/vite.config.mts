@@ -72,12 +72,12 @@ export default defineConfig(() => ({
     rolldownOptions: {
       external: [
         '@esheet/core',
+        '@esheet/field-kerebron',
         '@esheet/fields',
         '@esheet/renderer',
         '@mieweb/datavis',
         '@mieweb/ui',
         '@mieweb/ui/datavis',
-        '@mieweb/ui/kerebron',
         'ag-grid-community',
         'ag-grid-react',
         'datavis-ace',
@@ -100,6 +100,13 @@ export default defineConfig(() => ({
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
     alias: [
+      {
+        find: /^@esheet\/field-kerebron$/,
+        replacement: path.resolve(
+          import.meta.dirname,
+          '../field-kerebron/src/index.ts'
+        ),
+      },
       { find: /^react$/, replacement: reactDir },
       { find: /^react\/(.*)$/, replacement: `${reactDir}/$1` },
       { find: /^react-dom$/, replacement: reactDomDir },

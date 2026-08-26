@@ -30,4 +30,11 @@ registerFieldType('richtext', {
 
 export { RichTextEditorField } from './RichTextEditorField.js';
 export type { RichTextFieldDefinition } from './RichTextEditorField.js';
-export { KerebronNotesComposer } from './KerebronNotesComposer.js';
+export {
+  KerebronMarkdownEditor,
+  KerebronNotesComposer,
+} from './KerebronNotesComposer.js';
+export type {
+  KerebronMarkdownEditorHandle,
+  KerebronMarkdownEditorProps,
+} from './KerebronNotesComposer.js';

@@ -1,11 +1,11 @@
 import React from 'react';
 import type { FieldComponentProps } from '@esheet/core';
-import { RichEditor } from '@mieweb/ui/kerebron';
-// Kerebron base styles plus the mieweb theme bridge.
-import '@mieweb/ui/kerebron.css';
+import { CoreEditor } from '@kerebron/editor';
+import { AdvancedEditorKit } from '@kerebron/editor-kits/AdvancedEditorKit';
+import { getAssetLoad } from './asset-load.js';
+import '@kerebron/editor/assets/index.css';
+import '@kerebron/editor-kits/assets/AdvancedEditorKit.css';
 
-// Typography for the editable area. The --kb-* palette is themed by
-// @mieweb/ui/kerebron.css, so only content styles live here.
 const CONTENT_STYLES = `
   .richtext-field .ProseMirror { outline: none; min-height: 80px; padding: 8px 12px; }
   .richtext-field .kb-editor,
@@ -20,8 +20,28 @@ const CONTENT_STYLES = `
   .richtext-field .ProseMirror em { font-style: italic; }
   .richtext-field .ProseMirror code { font-family: monospace; background: var(--kb-color-surface-elevated); padding: 0.1em 0.3em; border-radius: 3px; }
 
+  .richtext-field .kb-menu__button[aria-pressed='true'],
+  .richtext-field .kb-menu__button--active {
+    background: var(--kb-color-primary);
+    border-color: var(--kb-color-primary);
+    color: white;
+  }
+  .richtext-field .kb-custom-menu__overflow-menu .kb-icon {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    line-height: 1;
+  }
+  .richtext-field .kb-custom-menu__overflow-menu .kb-icon svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
   /* Cap the editor body height; toolbar stays put, body scrolls. */
   .richtext-field .kb-custom-menu__editor {
+    height: 300px;
     max-height: 300px;
     overflow-y: auto;
   }
@@ -50,10 +70,6 @@ export interface RichTextFieldDefinition {
 /**
  * RichTextEditorField — a Kerebron/ProseMirror-based rich text editor field.
  *
- * A thin adapter over @mieweb/ui's `RichEditor`: the answer is the editor's
- * markdown, so external changes (AI fill, clear) flow in through `value` and
- * edits flow out through `onChange`.
- *
  * Register in your app before use:
  * ```ts
  * import { registerFieldComponents } from '@esheet/fields';
@@ -72,16 +88,86 @@ export function RichTextEditorField({
   const def = field.definition as unknown as RichTextFieldDefinition;
   const instanceId = form.getState().instanceId;
 
+  const hostRef = React.useRef<HTMLDivElement>(null);
+  const editorRef = React.useRef<CoreEditor | null>(null);
   const onResponseRef = React.useRef(onResponse);
-  onResponseRef.current = onResponse;
+  React.useEffect(() => {
+    onResponseRef.current = onResponse;
+  }, [onResponse]);
 
-  // Response takes priority, then defaultContent (DrawingPad's pattern).
-  const answer =
+  const externalContent =
     (response?.answer as string | undefined) ?? def.defaultContent ?? '';
+  const isLoadingRef = React.useRef(false);
+  const pendingResponsesRef = React.useRef(new WeakSet<object>());
 
-  const handleChange = React.useCallback((markdown: string) => {
-    onResponseRef.current({ answer: markdown });
-  }, []);
+  React.useEffect(() => {
+    const host = hostRef.current;
+    if (!isPreview || !host) return;
+
+    const mount = document.createElement('div');
+    host.replaceChildren(mount);
+
+    const editor = CoreEditor.create({
+      element: mount,
+      uri: 'file:///untitled.md',
+      assetLoad: getAssetLoad(),
+      editorKits: [new AdvancedEditorKit()],
+    });
+    editorRef.current = editor;
+
+    const handleChanged = async () => {
+      if (isLoadingRef.current) return;
+      try {
+        const buffer = await editor.saveDocument('text/x-markdown');
+        const nextResponse = { answer: new TextDecoder().decode(buffer) };
+        pendingResponsesRef.current.add(nextResponse);
+        onResponseRef.current(nextResponse);
+      } catch {
+        // The editor may be destroyed while a save is pending.
+      }
+    };
+
+    let listening = false;
+    let destroyed = false;
+    const loadInitial = async () => {
+      isLoadingRef.current = true;
+      try {
+        await editor.loadDocumentText('text/x-markdown', externalContent);
+      } catch (error) {
+        console.error('[RichTextEditorField] loadDocument failed:', error);
+      } finally {
+        isLoadingRef.current = false;
+      }
+      if (destroyed) return;
+      editor.addEventListener('changed', handleChanged);
+      listening = true;
+    };
+    void loadInitial();
+
+    return () => {
+      destroyed = true;
+      if (listening) editor.removeEventListener('changed', handleChanged);
+      editor.destroy();
+      editorRef.current = null;
+      host.replaceChildren();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPreview]);
+
+  const skipFirstExternalRef = React.useRef(true);
+  React.useEffect(() => {
+    if (skipFirstExternalRef.current) {
+      skipFirstExternalRef.current = false;
+      return;
+    }
+    const editor = editorRef.current;
+    if (!editor) return;
+    if (response && pendingResponsesRef.current.delete(response)) return;
+    isLoadingRef.current = true;
+    editor.loadDocumentText('text/x-markdown', externalContent).finally(() => {
+      isLoadingRef.current = false;
+    });
+  }, [externalContent, response]);
 
   // Builder canvas: editable question input + static placeholder
   if (!isPreview) {
@@ -139,9 +225,9 @@ export function RichTextEditorField({
           {def.question}
         </div>
       )}
-      <RichEditor
-        value={answer}
-        onChange={handleChange}
+      <div
+        ref={hostRef}
+        className="kb-component"
         aria-label={def.question ? undefined : 'Rich text'}
         aria-labelledby={def.question ? questionId : undefined}
       />

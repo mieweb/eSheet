@@ -1,17 +1,18 @@
 import {
   forwardRef,
   useEffect,
-  useImperativeHandle,
   useRef,
   useState,
   type ChangeEvent,
   type FormEvent,
   type ReactNode,
 } from 'react';
-import type { AssetLoad } from '@kerebron/editor';
+import {
+  configureRichTextField,
+  KerebronMarkdownEditor,
+  type KerebronMarkdownEditorHandle,
+} from '@esheet/field-kerebron';
 import { Button, Input, MarkdownRenderer } from '@mieweb/ui';
-import { RichEditor } from '@mieweb/ui/kerebron';
-import '@mieweb/ui/kerebron.css';
 import '@mieweb/ui/markdown.css';
 import type {
   DocumentListContent,
@@ -45,75 +46,10 @@ import type {
 
 const COMPOSE_CONTENT_TYPE = DOCUMENT_LIST_MARKDOWN_TYPE;
 
-export function configureDocumentListComposeEditor(_options: {
-  assetLoad: AssetLoad;
-}): void {}
-
-/**
- * Only what is specific to this composer — the kerebron/mieweb theme bridge
- * lives in `@mieweb/ui/kerebron.css`, imported above.
- */
-const COMPOSE_EDITOR_STYLES = `
-  .document-list-compose-editor .ProseMirror {
-    min-height: 160px;
-    outline: none;
-    padding: 8px 12px;
-  }
-
-  .document-list-compose-editor .kb-editor,
-  .document-list-compose-editor .ProseMirror {
-    color: var(--kb-color-text);
-  }
-
-  .document-list-compose-editor .ProseMirror h1 {
-    font-size: 2em;
-    font-weight: bold;
-    margin: 0.67em 0;
-  }
-
-  .document-list-compose-editor .ProseMirror h2 {
-    font-size: 1.5em;
-    font-weight: bold;
-    margin: 0.75em 0;
-  }
-
-  .document-list-compose-editor .ProseMirror h3 {
-    font-size: 1.17em;
-    font-weight: bold;
-    margin: 0.83em 0;
-  }
-
-  .document-list-compose-editor .ProseMirror ul {
-    list-style: disc;
-    padding-left: 1.5em;
-  }
-
-  .document-list-compose-editor .ProseMirror ol {
-    list-style: decimal;
-    padding-left: 1.5em;
-  }
-
-  .document-list-compose-editor .ProseMirror blockquote {
-    border-left: 3px solid var(--kb-color-border);
-    color: var(--kb-color-text-muted);
-    margin-left: 0;
-    padding-left: 1em;
-  }
-
-  .document-list-compose-editor .kb-custom-menu__editor {
-    max-height: 300px;
-    overflow-y: auto;
-  }
-`;
-
-if (
-  typeof document !== 'undefined' &&
-  !document.getElementById('document-list-compose-editor-styles')
-) {
-  const style = document.createElement('style');
-  style.id = 'document-list-compose-editor-styles';
-  style.textContent = COMPOSE_EDITOR_STYLES;
-  document.head.appendChild(style);
+export function configureDocumentListComposeEditor(
+  options: Parameters<typeof configureRichTextField>[0]
+): void {
+  configureRichTextField(options);
 }
 
 export interface DocumentListWorkflowPanelProps {
@@ -249,56 +185,27 @@ interface DocumentListComposeEditorProps {
   readonly collab?: DraftBodyRoom;
 }
 
-interface DocumentListComposeEditorHandle {
-  readonly focus: () => void;
-  readonly getContent: () => Promise<string>;
-}
+type DocumentListComposeEditorHandle = KerebronMarkdownEditorHandle;
 
-/** Thin adapter: the editor itself is `@mieweb/ui`'s `RichEditor`. */
 const DocumentListComposeEditor = forwardRef<
   DocumentListComposeEditorHandle,
   DocumentListComposeEditorProps
 >(function DocumentListComposeEditor(
-  { ariaLabel, disabled, id, labelledBy, onChange, value, collab },
+  { ariaLabel, disabled, id, labelledBy, onChange, value },
   ref
 ): React.JSX.Element {
-  const rootRef = useRef<HTMLDivElement>(null);
-  const valueRef = useRef(value);
-  valueRef.current = value;
-  useImperativeHandle(ref, () => ({
-    focus: () =>
-      rootRef.current
-        ?.querySelector<HTMLElement>('[contenteditable="true"], textarea')
-        ?.focus(),
-    getContent: async () => valueRef.current,
-  }));
-
   return (
-    <div
-      ref={rootRef}
+    <KerebronMarkdownEditor
+      ref={ref}
       id={id}
       className="document-list-compose-editor"
-      aria-label={ariaLabel}
-      aria-labelledby={labelledBy}
-      aria-disabled={disabled || undefined}
-    >
-      <RichEditor
-        value={value}
-        onChange={(next) => {
-          valueRef.current = next;
-          onChange(next);
-        }}
-        collab={
-          collab
-            ? {
-                room: collab.room,
-                wsUrl: collab.wsUrl,
-                params: { ...collab.params },
-              }
-            : undefined
-        }
-      />
-    </div>
+      ariaLabel={ariaLabel}
+      labelledBy={labelledBy}
+      disabled={disabled}
+      minHeight={160}
+      value={value}
+      onChange={onChange}
+    />
   );
 });
 
@@ -365,7 +272,9 @@ export function DocumentListWorkflowPanel({
           Close
         </button>
       </header>
-      <div hidden={docked}>{children}</div>
+      <div className="document-list-workflow-panel__content" hidden={docked}>
+        {children}
+      </div>
     </div>
   );
 }
@@ -768,7 +677,7 @@ export function DocumentListComposePanel({
         onSubmit={handleSubmit}
         noValidate
       >
-        <div className="document-list-workflow-panel__body">
+        <div className="document-list-workflow-panel__body document-list-workflow-panel__body--compose">
           {appendMode && (
             <fieldset className="document-list-workflow__append-shape">
               <legend>Append as</legend>

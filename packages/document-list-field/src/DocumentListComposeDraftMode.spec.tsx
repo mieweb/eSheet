@@ -9,16 +9,41 @@ import { permissiveDocumentListCapabilities } from './types.js';
 import type { DocumentDraft } from './draftChannel.js';
 import type { DocumentListRuntimeState } from './document-list-runtime.js';
 
-// The real editor would lazy-load the Yjs collab kit (an optional peer this
-// workspace does not install); draft-mode wiring is what's under test, so the
-// editor is a stub that records the collab room it was asked to join.
 const editorProps: Record<string, unknown>[] = [];
-vi.mock('@mieweb/ui/kerebron', () => ({
-  RichEditor: (props: Record<string, unknown>) => {
-    editorProps.push(props);
-    return <textarea aria-label={String(props['aria-label'] ?? 'Note')} />;
-  },
-}));
+const editorValues: string[] = [];
+vi.mock('@esheet/field-kerebron', async () => {
+  const React = await import('react');
+  return {
+    configureRichTextField: vi.fn(),
+    KerebronMarkdownEditor: React.forwardRef(
+      (props: Record<string, unknown>, ref: React.ForwardedRef<unknown>) => {
+        const value = props.value as string;
+        const inputRef = React.useRef<HTMLTextAreaElement>(null);
+        editorProps.push(props);
+        editorValues.push(value);
+        React.useImperativeHandle(ref, () => ({
+          focus: () => inputRef.current?.focus(),
+          getContent: async () => value,
+        }));
+        return (
+          <div className={props.className as string}>
+            <textarea
+              ref={inputRef}
+              aria-label={props.ariaLabel as string}
+              disabled={props.disabled as boolean}
+              value={value}
+              onChange={(event) =>
+                (props.onChange as (nextValue: string) => void)(
+                  event.target.value
+                )
+              }
+            />
+          </div>
+        );
+      }
+    ),
+  };
+});
 
 const captured = { props: null as Record<string, unknown> | null };
 vi.mock('@mieweb/ui/datavis', () => ({
@@ -94,9 +119,10 @@ const runtime = {
 describe('compose panel in draft mode (ED.37)', () => {
   beforeEach(() => {
     editorProps.length = 0;
+    editorValues.length = 0;
   });
 
-  it('hands the editor the draft room instead of owning the content', async () => {
+  it('creates the direct editor without seeding a joiner draft', async () => {
     const draft = fakeDraft({ isNew: false });
     render(
       <DocumentListComposePanel
@@ -109,13 +135,8 @@ describe('compose panel in draft mode (ED.37)', () => {
     );
     await waitFor(() => expect(editorProps.length).toBeGreaterThan(0));
     const props = editorProps.at(-1)!;
-    expect(props.collab).toEqual({
-      room: 'draft/case-1:doc-1',
-      wsUrl: 'ws://relay/yorm/ws',
-      params: {},
-    });
-    // A joiner must not seed the shared body.
-    expect(props.value).toBe('');
+    expect(props.minHeight).toBe(160);
+    expect(props.disabled).toBe(false);
   });
 
   it('shares note-tier meta through the answers map, both directions', async () => {
@@ -311,9 +332,7 @@ describe('compose panel in draft mode (ED.37)', () => {
     // The panel opened on the row's draft, saying which act this is.
     expect(await screen.findByText('Revise document (rev 0)')).toBeTruthy();
     // The opener seeds the prefill: the head revision's body.
-    await waitFor(() =>
-      expect(editorProps.at(-1)).toMatchObject({ value: 'original prose' })
-    );
+    await waitFor(() => expect(editorValues).toContain('original prose'));
     expect((screen.getByLabelText(/^Title/) as HTMLInputElement).value).toBe(
       'Existing note'
     );
@@ -533,9 +552,7 @@ describe('compose panel in draft mode (ED.37)', () => {
     );
     // Note tier: the rendered body lands in the editor, once.
     await waitFor(() =>
-      expect(editorProps.at(-1)).toMatchObject({
-        value: 'Dear Zoe,\n\nSincerely',
-      })
+      expect(editorValues).toContain('Dear Zoe,\n\nSincerely')
     );
     expect(renderTemplate).toHaveBeenCalledOnce();
   });

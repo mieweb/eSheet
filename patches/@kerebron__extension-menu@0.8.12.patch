@@ -1,0 +1,82 @@
+diff --git a/esm/CustomMenuPlugin.js b/esm/CustomMenuPlugin.js
+--- a/esm/CustomMenuPlugin.js
++++ b/esm/CustomMenuPlugin.js
+@@ -622,7 +622,7 @@ export class CustomMenuView {
+                         const mousedownEvent = new MouseEvent('mousedown', {
+                             bubbles: true,
+                             cancelable: true,
+-                            view: dntShim.dntGlobalThis,
++                            view: this.editorView.dom.ownerDocument.defaultView,
+                         });
+                         dom.dispatchEvent(mousedownEvent);
+                     }
+@@ -759,7 +759,7 @@ export class CustomMenuView {
+                             const mousedownEvent = new MouseEvent('mousedown', {
+                                 bubbles: true,
+                                 cancelable: true,
+-                                view: dntShim.dntGlobalThis,
++                                view: this.editorView.dom.ownerDocument.defaultView,
+                             });
+                             dom.dispatchEvent(mousedownEvent);
+                         }
+@@ -771,7 +771,7 @@ export class CustomMenuView {
+                             const mousedownEvent = new MouseEvent('mousedown', {
+                                 bubbles: true,
+                                 cancelable: true,
+-                                view: dntShim.dntGlobalThis,
++                                view: this.editorView.dom.ownerDocument.defaultView,
+                             });
+                             dom.dispatchEvent(mousedownEvent);
+                         }
+@@ -905,15 +905,17 @@ export class CustomMenuView {
+             const isDropdown = tool.element.content !== undefined;
+             if (isDropdown) {
+-                const { dom } = tool.element.render(this.editorView);
++                const { dom, update } = tool.element.render(this.editorView);
+                 const dropdownMenu = dom.querySelector('.kb-dropdown__content');
+                 if (dropdownMenu) {
+                     dropdownMenu.style.display = 'none';
+                 }
+                 wrapper.appendChild(dom);
++                update(this.editorView.state);
+             }
+             else {
+-                const { dom } = tool.element.render(this.editorView);
++                const { dom, update } = tool.element.render(this.editorView);
+                 wrapper.appendChild(dom);
++                update(this.editorView.state);
+             }
+             // Temporarily add to toolbar to measure
+             this.toolbar.appendChild(wrapper);
+@@ -1513,11 +1515,7 @@ export class CustomMenuView {
+         }
+     }
+     update(view, prevState) {
+-        // Re-render tools to update their state (original approach)
+-        // Note: This is less efficient but more reliable than storing update functions
+-        this.tools.forEach((tool) => {
+-            tool.element.render(this.editorView);
+-        });
++        this.render();
+     }
+     destroy() {
+         // Clean up event listeners
+diff --git a/esm/buildMenu.js b/esm/buildMenu.js
+--- a/esm/buildMenu.js
++++ b/esm/buildMenu.js
+@@ -218,6 +218,7 @@ export function buildMenu(editor, schema) {
+             title: 'Toggle bold',
+             run: () => editor.chain().toggleStrong().run(),
+             enable: (state) => editor.can().toggleStrong().run(),
++            active: (state) => markActive(state, schema.marks.strong),
+             icon: icons.strong,
+         }));
+     }
+@@ -228,6 +229,7 @@ export function buildMenu(editor, schema) {
+             title: 'Toggle italic',
+             run: () => editor.chain().toggleItalic().run(),
+             enable: (state) => editor.can().toggleItalic().run(),
++            active: (state) => markActive(state, schema.marks.em),
+             icon: icons.em,
+         }));
+     }

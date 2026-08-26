@@ -17,55 +17,36 @@ import type {
   DocumentListWorkflowMode,
 } from './types.js';
 
-/**
- * The editor itself is @mieweb/ui's RichEditor, tested there. The composer
- * only needs something that round-trips text through the same handle.
- */
-vi.mock('@mieweb/ui/kerebron', async () => {
-  const { createElement, forwardRef, useImperativeHandle, useRef } =
-    await import('react');
-  const RichEditor = forwardRef(function RichEditor(
-    {
-      value = '',
-      onChange,
-      className,
-      disabled,
-      id,
-      'aria-label': ariaLabel,
-      'aria-labelledby': ariaLabelledBy,
-    }: {
-      value?: string;
-      onChange?: (next: string) => void;
-      className?: string;
-      disabled?: boolean;
-      id?: string;
-      'aria-label'?: string;
-      'aria-labelledby'?: string;
-    },
-    ref
-  ) {
-    const inputRef = useRef<HTMLTextAreaElement>(null);
-    const valueRef = useRef(value);
-    valueRef.current = value;
-    useImperativeHandle(ref, () => ({
-      getContent: async () => valueRef.current,
-      focus: () => inputRef.current?.focus(),
-    }));
-    return createElement(
-      'div',
-      { id, className: ['kb-component', className].filter(Boolean).join(' ') },
-      createElement('textarea', {
-        ref: inputRef,
-        'aria-label': ariaLabel,
-        'aria-labelledby': ariaLabelledBy,
-        disabled,
-        value,
-        onChange: (event: { target: { value: string } }) =>
-          onChange?.(event.target.value),
-      })
-    );
-  });
-  return { RichEditor };
+vi.mock('@esheet/field-kerebron', async () => {
+  const React = await import('react');
+  return {
+    configureRichTextField: vi.fn(),
+    KerebronMarkdownEditor: React.forwardRef(
+      (props: Record<string, unknown>, ref: React.ForwardedRef<unknown>) => {
+        const value = props.value as string;
+        const inputRef = React.useRef<HTMLTextAreaElement>(null);
+        React.useImperativeHandle(ref, () => ({
+          focus: () => inputRef.current?.focus(),
+          getContent: async () => value,
+        }));
+        return (
+          <div className={props.className as string}>
+            <textarea
+              ref={inputRef}
+              aria-label={props.ariaLabel as string}
+              disabled={props.disabled as boolean}
+              value={value}
+              onChange={(event) =>
+                (props.onChange as (nextValue: string) => void)(
+                  event.target.value
+                )
+              }
+            />
+          </div>
+        );
+      }
+    ),
+  };
 });
 
 vi.mock('@mieweb/ui', async (importOriginal) => {

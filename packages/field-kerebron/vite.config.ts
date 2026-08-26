@@ -61,10 +61,6 @@ export default defineConfig(() => ({
         // @esheet/fields — must stay external so host and field package share
         // one module instance.
         '@esheet/fields',
-        // The editor itself is @mieweb/ui's RichEditor; the host owns that
-        // module (and the Kerebron copy it bundles).
-        '@mieweb/ui',
-        '@mieweb/ui/kerebron',
         'tslib',
         // Kerebron packages are bundled in (they are the point of this package)
       ],

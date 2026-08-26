@@ -32,22 +32,35 @@ vi.mock('datavis-ace', () => {
   return { ComputedView, Source };
 });
 
-vi.mock('@kerebron/editor', () => ({
-  CoreEditor: {
-    create: () => ({
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      view: { setProps: vi.fn() },
-      loadDocument: vi.fn(async () => undefined),
-      saveDocument: vi.fn(async () => new TextEncoder().encode('')),
-      destroy: vi.fn(),
-    }),
-  },
-}));
-
-vi.mock('@kerebron/editor-kits/AdvancedEditorKit', () => ({
-  AdvancedEditorKit: class AdvancedEditorKit {},
-}));
+vi.mock('@esheet/field-kerebron', async () => {
+  const React = await import('react');
+  return {
+    configureRichTextField: vi.fn(),
+    KerebronMarkdownEditor: React.forwardRef(
+      (props: Record<string, unknown>, ref: React.ForwardedRef<unknown>) => {
+        const value = props.value as string;
+        React.useImperativeHandle(ref, () => ({
+          focus: vi.fn(),
+          getContent: async () => value,
+        }));
+        return (
+          <div className={props.className as string}>
+            <textarea
+              aria-label={props.ariaLabel as string}
+              disabled={props.disabled as boolean}
+              value={value}
+              onChange={(event) =>
+                (props.onChange as (nextValue: string) => void)(
+                  event.target.value
+                )
+              }
+            />
+          </div>
+        );
+      }
+    ),
+  };
+});
 
 function HostProbe(): React.JSX.Element {
   const host = useDocumentListFieldHost();

@@ -94,7 +94,11 @@
       "@parcel/watcher",
       "@swc/core",
       "core-js",
+      "es5-ext",
       "protobufjs"
-    ]
+    ],
+    "patchedDependencies": {
+      "@kerebron/extension-menu@0.8.12": "patches/@kerebron__extension-menu@0.8.12.patch"
+    }
   }
 }
