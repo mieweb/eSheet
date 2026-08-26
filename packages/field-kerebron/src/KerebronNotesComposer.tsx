@@ -21,6 +21,36 @@ import '@kerebron/editor-kits/assets/AdvancedEditorKit.css';
 // ---------------------------------------------------------------------------
 
 const COMPOSER_STYLES = `
+  .kerebron-markdown-editor {
+    --kb-font-family: var(--mieweb-font-sans, sans-serif);
+    --kb-color-primary: var(--mieweb-primary-500, #3b82f6);
+    --kb-color-primary-hover: var(--mieweb-primary-600, #2563eb);
+    --kb-color-primary-active: var(--mieweb-primary-700, #1d4ed8);
+    --kb-color-focus: color-mix(in srgb, var(--mieweb-ring, #3b82f6) 20%, transparent);
+    --kb-color-text: var(--mieweb-foreground, #1f2937);
+    --kb-color-text-muted: var(--mieweb-muted-foreground, #6b7280);
+    --kb-color-icon: var(--mieweb-muted-foreground, #5f6368);
+    --kb-color-surface: var(--mieweb-background, #ffffff);
+    --kb-color-surface-elevated: var(--mieweb-muted, #f9fafb);
+    --kb-color-surface-hover: var(--mieweb-muted, rgba(60, 64, 67, 0.08));
+    --kb-color-hover: var(--mieweb-muted, rgba(59, 130, 246, 0.05));
+    --kb-color-active: color-mix(in srgb, var(--mieweb-primary-500, #3b82f6) 10%, transparent);
+    --kb-color-border: var(--mieweb-border, #e5e7eb);
+    --kb-color-border-strong: var(--mieweb-input, #d1d5db);
+    --kb-menu-dropdown-bg: var(--mieweb-card, #ffffff);
+    --kb-menu-dropdown-border: var(--mieweb-border, #dadce0);
+    --kb-menu-dropdown-text: var(--mieweb-card-foreground, #3c4043);
+    --kb-menu-dropdown-hover: var(--mieweb-muted, rgba(60, 64, 67, 0.08));
+    --kb-menu-info-bg: var(--mieweb-muted, #e8f0fe);
+    --kb-menu-info-text: var(--mieweb-foreground, #1967d2);
+    --kb-radius-sm: var(--mieweb-radius-sm, 4px);
+    --kb-radius-md: var(--mieweb-radius-md, 6px);
+    --kb-radius-lg: var(--mieweb-radius-lg, 8px);
+  }
+  .kerebron-markdown-editor .kb-editor::selection,
+  .kerebron-markdown-editor .kb-editor::-moz-selection {
+    background: color-mix(in srgb, var(--mieweb-primary-500, #3b82f6) 30%, transparent);
+  }
   .kerebron-markdown-editor .ProseMirror { outline: none; min-height: var(--kerebron-editor-min-height, 96px); padding: 8px 12px; }
   .kerebron-markdown-editor .ProseMirror h1 { font-size: 2em; font-weight: bold; margin: 0.67em 0; }
   .kerebron-markdown-editor .ProseMirror h2 { font-size: 1.5em; font-weight: bold; margin: 0.75em 0; }

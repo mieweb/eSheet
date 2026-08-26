@@ -3,10 +3,40 @@ import type { FieldComponentProps } from '@esheet/core';
 import { CoreEditor } from '@kerebron/editor';
 import { AdvancedEditorKit } from '@kerebron/editor-kits/AdvancedEditorKit';
 import { getAssetLoad } from './asset-load.js';
-import '@kerebron/editor/assets/index.css';
+import '@kerebron/editor/assets/index-light.css';
 import '@kerebron/editor-kits/assets/AdvancedEditorKit.css';
 
 const CONTENT_STYLES = `
+  .richtext-field .kb-component {
+    --kb-font-family: var(--mieweb-font-sans, sans-serif);
+    --kb-color-primary: var(--mieweb-primary-500, #3b82f6);
+    --kb-color-primary-hover: var(--mieweb-primary-600, #2563eb);
+    --kb-color-primary-active: var(--mieweb-primary-700, #1d4ed8);
+    --kb-color-focus: color-mix(in srgb, var(--mieweb-ring, #3b82f6) 20%, transparent);
+    --kb-color-text: var(--mieweb-foreground, #1f2937);
+    --kb-color-text-muted: var(--mieweb-muted-foreground, #6b7280);
+    --kb-color-icon: var(--mieweb-muted-foreground, #5f6368);
+    --kb-color-surface: var(--mieweb-background, #ffffff);
+    --kb-color-surface-elevated: var(--mieweb-muted, #f9fafb);
+    --kb-color-surface-hover: var(--mieweb-muted, rgba(60, 64, 67, 0.08));
+    --kb-color-hover: var(--mieweb-muted, rgba(59, 130, 246, 0.05));
+    --kb-color-active: color-mix(in srgb, var(--mieweb-primary-500, #3b82f6) 10%, transparent);
+    --kb-color-border: var(--mieweb-border, #e5e7eb);
+    --kb-color-border-strong: var(--mieweb-input, #d1d5db);
+    --kb-menu-dropdown-bg: var(--mieweb-card, #ffffff);
+    --kb-menu-dropdown-border: var(--mieweb-border, #dadce0);
+    --kb-menu-dropdown-text: var(--mieweb-card-foreground, #3c4043);
+    --kb-menu-dropdown-hover: var(--mieweb-muted, rgba(60, 64, 67, 0.08));
+    --kb-menu-info-bg: var(--mieweb-muted, #e8f0fe);
+    --kb-menu-info-text: var(--mieweb-foreground, #1967d2);
+    --kb-radius-sm: var(--mieweb-radius-sm, 4px);
+    --kb-radius-md: var(--mieweb-radius-md, 6px);
+    --kb-radius-lg: var(--mieweb-radius-lg, 8px);
+  }
+  .richtext-field .kb-editor::selection,
+  .richtext-field .kb-editor::-moz-selection {
+    background: color-mix(in srgb, var(--mieweb-primary-500, #3b82f6) 30%, transparent);
+  }
   .richtext-field .ProseMirror { outline: none; min-height: 80px; padding: 8px 12px; }
   .richtext-field .kb-editor,
   .richtext-field .ProseMirror { color: var(--kb-color-text); }
