@@ -1,4 +1,5 @@
 diff --git a/esm/CustomMenuPlugin.js b/esm/CustomMenuPlugin.js
+index d630c6893dd77f148ca72cf2b137364bbce3830c..5b80fc9ed9dc64ce76b517f9fa6c02df44272f46 100644
 --- a/esm/CustomMenuPlugin.js
 +++ b/esm/CustomMenuPlugin.js
 @@ -622,7 +622,7 @@ export class CustomMenuView {
@@ -28,7 +29,8 @@ diff --git a/esm/CustomMenuPlugin.js b/esm/CustomMenuPlugin.js
                              });
                              dom.dispatchEvent(mousedownEvent);
                          }
-@@ -905,15 +905,17 @@ export class CustomMenuView {
+@@ -905,16 +905,18 @@ export class CustomMenuView {
+             wrapper.setAttribute('draggable', 'false');
              const isDropdown = tool.element.content !== undefined;
              if (isDropdown) {
 -                const { dom } = tool.element.render(this.editorView);
@@ -48,7 +50,7 @@ diff --git a/esm/CustomMenuPlugin.js b/esm/CustomMenuPlugin.js
              }
              // Temporarily add to toolbar to measure
              this.toolbar.appendChild(wrapper);
-@@ -1513,11 +1515,7 @@ export class CustomMenuView {
+@@ -1514,11 +1516,7 @@ export class CustomMenuView {
          }
      }
      update(view, prevState) {
@@ -62,9 +64,10 @@ diff --git a/esm/CustomMenuPlugin.js b/esm/CustomMenuPlugin.js
      destroy() {
          // Clean up event listeners
 diff --git a/esm/buildMenu.js b/esm/buildMenu.js
+index 85b1f4762033ee4dc68d1c9ceaa69dbd55f746de..9abcc3ba868130cd89c6653b942a6c5d4c699af9 100644
 --- a/esm/buildMenu.js
 +++ b/esm/buildMenu.js
-@@ -218,6 +218,7 @@ export function buildMenu(editor, schema) {
+@@ -220,6 +220,7 @@ export function buildMenu(editor, schema) {
              title: 'Toggle bold',
              run: () => editor.chain().toggleStrong().run(),
              enable: (state) => editor.can().toggleStrong().run(),
@@ -72,7 +75,7 @@ diff --git a/esm/buildMenu.js b/esm/buildMenu.js
              icon: icons.strong,
          }));
      }
-@@ -228,6 +229,7 @@ export function buildMenu(editor, schema) {
+@@ -229,6 +230,7 @@ export function buildMenu(editor, schema) {
              title: 'Toggle italic',
              run: () => editor.chain().toggleItalic().run(),
              enable: (state) => editor.can().toggleItalic().run(),
@@ -80,3 +83,44 @@ diff --git a/esm/buildMenu.js b/esm/buildMenu.js
              icon: icons.em,
          }));
      }
+@@ -252,6 +254,7 @@ export function buildMenu(editor, schema) {
+             title: 'Toggle underline',
+             run: () => editor.chain().toggleUnderline().run(),
+             enable: (state) => editor.can().toggleUnderline().run(),
++            active: (state) => markActive(state, schema.marks.underline),
+             icon: icons.underline,
+         }));
+     }
+@@ -331,24 +334,32 @@ export function buildMenu(editor, schema) {
+             icon: icons.alignLeft,
+             run: () => editor.chain().setTextAlignLeft().run(),
+             enable: () => editor.can().setTextAlignLeft().run(),
++            active: (state) =>
++                (state.selection.$from.parent.attrs.textAlign ?? 'left') === 'left',
+         }));
+         alignmentGroup.push(new MenuItem({
+             title: 'Align center',
+             icon: icons.alignCenter,
+             run: () => editor.chain().setTextAlignCenter().run(),
+             enable: () => editor.can().setTextAlignCenter().run(),
++            active: (state) =>
++                state.selection.$from.parent.attrs.textAlign === 'center',
+         }));
+         alignmentGroup.push(new MenuItem({
+             title: 'Align right',
+             icon: icons.alignRight,
+             run: () => editor.chain().setTextAlignRight().run(),
+             enable: () => editor.can().setTextAlignRight().run(),
++            active: (state) =>
++                state.selection.$from.parent.attrs.textAlign === 'right',
+         }));
+         alignmentGroup.push(new MenuItem({
+             title: 'Justify',
+             icon: icons.alignJustify,
+             run: () => editor.chain().setTextAlignJustify().run(),
+             enable: () => editor.can().setTextAlignJustify().run(),
++            active: (state) =>
++                state.selection.$from.parent.attrs.textAlign === 'justify',
+         }));
+     }
+     // Group 6: Insert tools (Image, Lists, HR, Table, Type)
