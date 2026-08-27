@@ -4,7 +4,7 @@ slug: /field-types
 
 # Overview
 
-eSheet includes 19 built-in field types across six categories, plus **Pages** — a first-class form structure for multi-page forms. Use this section as the index for built-in and custom field work.
+eSheet includes built-in field types across six categories, plus **Pages** — a first-class form structure for multi-page forms. Use this section as the index for built-in and custom field work.
 
 ## Categories
 
@@ -15,7 +15,7 @@ eSheet includes 19 built-in field types across six categories, plus **Pages** �
 | Rating       | `rating`, `ranking`, `slider`                                           |
 | Matrix       | `singlematrix`, `multimatrix`                                           |
 | Organization | `section`, `pages` (form structure)                                     |
-| Rich         | `display`, `html`, `image`, `signature`, `diagram`, `notes`, `activity` |
+| Rich         | `display`, `html`, `image`, `signature`, `diagram`, `activity`          |
 
 ## Built-in Fields
 
@@ -56,7 +56,6 @@ eSheet includes 19 built-in field types across six categories, plus **Pages** �
 - [image](/docs/field-types/image)
 - [signature](/docs/field-types/signature)
 - [diagram](/docs/field-types/diagram)
-- [notes](/docs/field-types/notes) — journal of markdown note entries
 - [activity](/docs/field-types/activity) — read-only response change log
 
 ## Custom

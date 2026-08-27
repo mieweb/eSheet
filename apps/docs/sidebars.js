@@ -81,7 +81,6 @@ const sidebars = {
             'field-types/rich/image',
             'field-types/rich/signature',
             'field-types/rich/diagram',
-            'field-types/rich/notes',
             'field-types/rich/activity',
           ],
         },

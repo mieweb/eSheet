@@ -109,9 +109,8 @@ export interface EsheetRendererProps {
   /** Optional wrappers supplied by field add-ons. */
   fieldProviders?: readonly FieldProvider[];
   /**
-   * Identity of the current user. When provided, fields that record
-   * authorship (e.g. `notes`) stamp new entries with `identity.name`.
-   * Absent → entries save unstamped.
+    * Identity of the current user. When provided, activity entries are stamped
+    * with `identity.name`. Absent → entries save unstamped.
    */
   identity?: { name: string };
 }
@@ -285,7 +284,7 @@ const EsheetRendererInner = React.forwardRef<
   const [pendingResponse, setPendingResponse] =
     React.useState<FormResponse | null>(null);
 
-  // Keep the host-supplied identity in the form store (stamps notes authorship).
+  // Keep the host-supplied identity in the form store for activity authorship.
   React.useEffect(() => {
     formStore.getState().setIdentity(identity);
   }, [formStore, identity]);

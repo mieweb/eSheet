@@ -285,15 +285,6 @@ const BUILT_IN_FIELD_TYPES: Record<FieldType, FieldTypeMeta> = {
     defaultProps: { width: 'full' },
     placeholder: { question: 'Upload a file' },
   },
-  notes: {
-    label: 'Notes',
-    category: 'rich',
-    answerType: 'notes',
-    hasOptions: false,
-    hasMatrix: false,
-    defaultProps: { entryLabel: 'Note', sortOrder: 'newest', width: 'full' },
-    placeholder: { question: 'Enter your question...' },
-  },
   activity: {
     label: 'Activity',
     category: 'rich',

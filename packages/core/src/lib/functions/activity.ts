@@ -9,7 +9,27 @@ import type {
 } from '../types.js';
 import type { NormalizedDefinition } from './normalize.js';
 import { extractResponseValue } from './normalize-responses.js';
-import { mergeById } from './notes.js';
+
+function mergeById<T extends { id: string }>(
+  a: T[] | undefined,
+  b: T[] | undefined,
+  stamp: (entry: T) => string,
+  sortKey: (entry: T) => string
+): T[] {
+  const byId = new Map<string, T>();
+  for (const entry of a ?? []) {
+    byId.set(entry.id, entry);
+  }
+  for (const entry of b ?? []) {
+    const existing = byId.get(entry.id);
+    if (!existing || stamp(entry) >= stamp(existing)) {
+      byId.set(entry.id, entry);
+    }
+  }
+  return [...byId.values()].sort(
+    (x, y) => sortKey(x).localeCompare(sortKey(y)) || x.id.localeCompare(y.id)
+  );
+}
 
 /** Reserved response key holding the activity log. */
 export const ACTIVITY_RESPONSE_KEY = '_activity';
@@ -21,8 +41,7 @@ export const ACTIVITY_RESPONSE_KEY = '_activity';
 export const ACTIVITY_DEBOUNCE_MS = 2000;
 
 /**
- * Merge two activity logs as a set keyed by entry GUID (same semantics as
- * `mergeNotes`); output sorted by `at`.
+ * Merge two activity logs as a set keyed by entry GUID; output sorted by `at`.
  */
 export function mergeActivity(
   a: ActivityEntry[] | undefined,

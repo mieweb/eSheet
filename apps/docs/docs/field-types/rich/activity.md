@@ -13,7 +13,7 @@ values.
 Entries are debounced per field — consecutive changes to the same field within
 a short window (keystrokes) collapse into one entry that keeps the original
 `from` and the latest `to`. Entries are GUID-keyed and live under the reserved
-`_activity` response key, so concurrent logs union-merge exactly like notes
+`_activity` response key, so concurrent logs union-merge by entry ID
 (`mergeActivity` from `@esheet/core`).
 
 The field renders the log newest first and offers no mutation affordances.

@@ -23,7 +23,6 @@ export {
   fieldDefinitionSchema,
   formDefinitionSchema,
   attachmentAnswerSchema,
-  noteEntrySchema,
   activityEntrySchema,
   getFormDefinitionJSONSchema,
 
@@ -68,7 +67,6 @@ export {
   type MultiMatrixFieldDefinition,
   type ImageFieldDefinition,
   type FileFieldDefinition,
-  type NotesFieldDefinition,
   type ActivityFieldDefinition,
   type HtmlFieldDefinition,
   type SignatureFieldDefinition,
@@ -83,7 +81,6 @@ export {
   type FieldTypeRegistry,
   type RankedAnswer,
   type AttachmentAnswer,
-  type NoteEntry,
   type ActivityEntry,
   type AnswerValue,
   type ResponseItem,
@@ -122,12 +119,6 @@ export {
   normalizeResponses,
   extractResponseValue,
 } from './lib/functions/normalize-responses.js';
-
-export {
-  mergeNotes,
-  collectAttachments,
-  mapAttachments,
-} from './lib/functions/notes.js';
 
 export type { AttachmentManager } from './lib/attachment-manager.js';
 

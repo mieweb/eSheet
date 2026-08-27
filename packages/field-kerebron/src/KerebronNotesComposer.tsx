@@ -1,5 +1,4 @@
 import React from 'react';
-import type { NotesComposerProps } from '@esheet/fields';
 import { CoreEditor } from '@kerebron/editor';
 import { AdvancedEditorKit } from '@kerebron/editor-kits/AdvancedEditorKit';
 import { ExtensionHistory } from '@kerebron/extension-basic-editor/ExtensionHistory';
@@ -8,16 +7,7 @@ import '@kerebron/editor/assets/index-light.css';
 import '@kerebron/editor-kits/assets/AdvancedEditorKit.css';
 
 // ---------------------------------------------------------------------------
-// KerebronNotesComposer — rich markdown composer for NotesField.
-//
-// Register once at app startup:
-// ```ts
-// import { registerNotesComposer } from '@esheet/fields';
-// import { KerebronNotesComposer } from '@esheet/field-kerebron';
-// registerNotesComposer(KerebronNotesComposer);
-// ```
-// Markdown stays the storage format: the editor loads/saves text/x-markdown,
-// so notes composed here render identically in the read-only card list.
+// KerebronMarkdownEditor — reusable controlled markdown editor.
 // ---------------------------------------------------------------------------
 
 const COMPOSER_STYLES = `
@@ -81,10 +71,10 @@ const COMPOSER_STYLES = `
 
 if (
   typeof document !== 'undefined' &&
-  !document.getElementById('notes-kerebron-composer-styles')
+  !document.getElementById('kerebron-markdown-editor-styles')
 ) {
   const style = document.createElement('style');
-  style.id = 'notes-kerebron-composer-styles';
+  style.id = 'kerebron-markdown-editor-styles';
   style.textContent = COMPOSER_STYLES;
   document.head.appendChild(style);
 }
@@ -264,7 +254,3 @@ export const KerebronMarkdownEditor = React.forwardRef<
     />
   );
 });
-
-export function KerebronNotesComposer(props: NotesComposerProps) {
-  return <KerebronMarkdownEditor {...props} />;
-}

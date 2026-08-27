@@ -57,10 +57,6 @@ export default defineConfig(() => ({
         'react',
         'react/jsx-runtime',
         '@esheet/core',
-        // Shared registries (field components, notes composer) live in
-        // @esheet/fields — must stay external so host and field package share
-        // one module instance.
-        '@esheet/fields',
         'tslib',
         // Kerebron packages are bundled in (they are the point of this package)
       ],

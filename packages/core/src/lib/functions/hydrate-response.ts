@@ -149,8 +149,6 @@ function extractAnswer(
       return response.selected;
     case 'multitext':
       return response.multitextAnswers;
-    case 'notes':
-      return response.notes;
     case 'media': {
       const dataUrl =
         response.signatureImage ??

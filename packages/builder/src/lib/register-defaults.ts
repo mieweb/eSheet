@@ -30,7 +30,6 @@ import {
   HtmlField,
   DisplayField,
   FileField,
-  NotesField,
   ActivityField,
 } from '@esheet/fields';
 
@@ -59,7 +58,6 @@ export function ensureDefaultFieldComponentsRegistered(): void {
     diagram: DiagramField,
     image: ImageField,
     file: FileField,
-    notes: NotesField,
     activity: ActivityField,
     html: HtmlField,
     display: DisplayField,

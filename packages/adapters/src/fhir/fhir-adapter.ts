@@ -889,35 +889,6 @@ function convertValueToAnswers(
       ];
     }
 
-    case 'notes': {
-      // Human-readable flattening: one valueString per entry — author and
-      // timestamp header, raw markdown body, attachment titles listed.
-      // Structured FHIR round-trip for notes is a deferred follow-up.
-      const notes = Array.isArray(value)
-        ? (value as {
-            author?: string;
-            createdAt?: string;
-            markdown?: string;
-            attachments?: { title?: string; contentType?: string }[];
-          }[])
-        : [];
-      return notes.map((note) => {
-        const header = [note.author, note.createdAt]
-          .filter(Boolean)
-          .join(' — ');
-        const attachments = note.attachments?.length
-          ? `\n[Attachments: ${note.attachments
-              .map((a) => a.title ?? a.contentType ?? 'attachment')
-              .join(', ')}]`
-          : '';
-        return {
-          valueString: `${header ? `${header}\n` : ''}${
-            note.markdown ?? ''
-          }${attachments}`,
-        };
-      });
-    }
-
     default:
       return [{ valueString: String(value) }];
   }

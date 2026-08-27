@@ -1,7 +1,7 @@
 import type { AttachmentAnswer } from '@esheet/core';
 
 // ---------------------------------------------------------------------------
-// Shared file/attachment helpers — used by FileField and NotesField.
+// Shared file/attachment helpers used by FileField.
 // ---------------------------------------------------------------------------
 
 /** Human-readable file size (e.g. `1.5 MB`). */

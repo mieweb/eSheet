@@ -31,7 +31,6 @@ export {
   DiagramField,
   DisplayField,
   FileField,
-  NotesField,
   ActivityField,
   NoteCardList,
   HtmlField,

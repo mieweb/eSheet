@@ -8,7 +8,6 @@ import { NoteCardList, type NoteCardItem } from './NoteCardList.js';
 
 // ---------------------------------------------------------------------------
 // ActivityField — read-only, append-only log of response changes over time.
-// Shares NoteCardList with NotesField; offers no mutation affordances.
 // ---------------------------------------------------------------------------
 
 const formatTimestamp = (iso: string): string => {

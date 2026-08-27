@@ -3,10 +3,10 @@ import React from 'react';
 // ---------------------------------------------------------------------------
 // Shared markdown-lite rendering pipeline.
 //
-// Used by DisplayField (after expression interpolation) and NotesField (raw
-// note bodies). Renders inline markdown with recursive nesting so formats can
-// combine. Syntax: *bold*, -italic-, _underline_, ~strike~, `#`..`######`
-// headings, bullets with `- ` at line start.
+// Used by DisplayField after expression interpolation. Renders inline markdown
+// with recursive nesting so formats can combine. Syntax: *bold*, -italic-,
+// _underline_, ~strike~, `#`..`######` headings, bullets with `- ` at line
+// start.
 // ---------------------------------------------------------------------------
 
 function renderInlineNode(text: string, key: string): React.ReactNode {

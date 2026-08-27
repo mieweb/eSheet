@@ -1,8 +1,8 @@
 import React from 'react';
 
 // ---------------------------------------------------------------------------
-// NoteCardList — shared presentational entry list used by NotesField and
-// ActivityField. Pure display: any mutation affordances come in via `actions`.
+// NoteCardList — presentational entry list used by ActivityField. Pure display:
+// any mutation affordances come in via `actions`.
 // ---------------------------------------------------------------------------
 
 export interface NoteCardItem {

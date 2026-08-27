@@ -52,8 +52,12 @@ Thumbs.db
 **/src/index.output.css
 
 # Workspace documentation and tickets (local only)
-.github/workspace-doc/
-/docs/SubAgent docs/
+.github/workspace-doc/subAgent-docs/*
+.github/workspace-doc/todos/*
+.github/workspace-doc/tracker/*
+.github/workspace-doc/tickets/*
+.github/workspace-doc/docs/*
+
 
 # Docusaurus generated artifacts
 apps/docs/build/

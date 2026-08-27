@@ -13,8 +13,8 @@ describe('field type registry', () => {
     resetFieldTypeRegistry();
   });
 
-  it('should have all 24 built-in types registered by default', () => {
-    expect(getRegisteredFieldTypes()).toHaveLength(24);
+  it('should have all 23 built-in types registered by default', () => {
+    expect(getRegisteredFieldTypes()).toHaveLength(23);
     for (const ft of FIELD_TYPES) {
       expect(getFieldTypeMeta(ft)).toBeDefined();
     }
@@ -36,7 +36,7 @@ describe('field type registry', () => {
 
     expect(getFieldTypeMeta('vitals')).toBeDefined();
     expect(getFieldTypeMeta('vitals')!.label).toBe('Vitals Field');
-    expect(getRegisteredFieldTypes()).toHaveLength(25);
+    expect(getRegisteredFieldTypes()).toHaveLength(24);
   });
 
   it('should allow overriding a built-in field type', () => {
@@ -50,7 +50,7 @@ describe('field type registry', () => {
     });
 
     expect(getFieldTypeMeta('text')!.label).toBe('Custom Text');
-    expect(getRegisteredFieldTypes()).toHaveLength(24);
+    expect(getRegisteredFieldTypes()).toHaveLength(23);
   });
 
   it('should reset to defaults', () => {
@@ -62,10 +62,10 @@ describe('field type registry', () => {
       hasMatrix: false,
       defaultProps: {},
     });
-    expect(getRegisteredFieldTypes()).toHaveLength(25);
+    expect(getRegisteredFieldTypes()).toHaveLength(24);
 
     resetFieldTypeRegistry();
-    expect(getRegisteredFieldTypes()).toHaveLength(24);
+    expect(getRegisteredFieldTypes()).toHaveLength(23);
     expect(getFieldTypeMeta('custom')).toBeUndefined();
   });
 

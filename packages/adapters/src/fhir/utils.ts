@@ -267,10 +267,6 @@ export function mapEsheetTypeToFhir(
     case 'file':
       return { type: 'attachment' };
 
-    case 'notes':
-      // One repeating text item; entry metadata is flattened into the answer.
-      return { type: 'text', repeats: true };
-
     case 'openchoice':
       return { type: 'choice', itemControl: 'open-choice' };
 

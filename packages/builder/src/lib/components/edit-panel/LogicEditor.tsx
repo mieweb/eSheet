@@ -1354,11 +1354,6 @@ function getOperatorsForTarget(target: TargetField): ConditionOperator[] {
     return ['empty', 'notEmpty'];
   }
 
-  // Notes answers are entry arrays — only presence checks are meaningful.
-  if (answerType === 'notes') {
-    return ['empty', 'notEmpty'];
-  }
-
   // Single-value selection fields (radio/dropdown/boolean etc.).
   if (answerType === 'selection') {
     const ops: ConditionOperator[] = [

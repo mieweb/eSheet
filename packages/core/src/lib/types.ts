@@ -25,7 +25,6 @@ export const FIELD_TYPES = [
   'signature',
   'diagram',
   'file',
-  'notes',
   'activity',
   'openchoice',
   'display',
@@ -287,7 +286,6 @@ export type FieldCategory =
  * - `multitext`      - per-option text (`field.options[].answer`)
  * - `matrix`         - row -> column mapping (`field.selected: Record`)
  * - `media`          - binary/base64 data
- * - `notes`          - array of note entries (`field.notes: NoteEntry[]`)
  * - `display`        - no answer (presentational only)
  * - `container`      - no own answer (children hold answers)
  * - `none`           - unsupported / no answer
@@ -299,7 +297,6 @@ export type AnswerType =
   | 'multitext'
   | 'matrix'
   | 'media'
-  | 'notes'
   | 'display'
   | 'container'
   | 'none';
@@ -692,28 +689,10 @@ export interface FileFieldDefinition extends BaseFieldDefinition {
   maxFiles?: number;
 }
 
-export interface NotesFieldDefinition extends BaseFieldDefinition {
-  fieldType: 'notes';
-  /** Allow file/image attachments per note. Default false. */
-  allowAttachments?: boolean;
-  /** Accept string for the attachment input (same semantics as FileFieldDefinition). */
-  accept?: string;
-  /** Maximum allowed attachment size in bytes (optional). */
-  maxFileSize?: number;
-  /** Maximum number of attachments per note (optional). */
-  maxAttachments?: number;
-  /** Maximum number of note entries (optional). */
-  maxNotes?: number;
-  /** Display order of the entry list. Default 'newest'. */
-  sortOrder?: 'newest' | 'oldest';
-  /** Label for one entry, e.g. "Note", "Letter", "Comment". Default "Note". */
-  entryLabel?: string;
-}
-
 /**
  * Read-only, append-only log of response changes over time. Rendered by the
  * `activity` field; entries live under the reserved `_activity` response key
- * and are GUID-keyed so the log union-merges exactly like notes.
+ * and are GUID-keyed so concurrent logs union-merge deterministically.
  */
 export interface ActivityFieldDefinition extends BaseFieldDefinition {
   fieldType: 'activity';
@@ -804,7 +783,6 @@ export type FieldDefinition =
   // Rich
   | ImageFieldDefinition
   | FileFieldDefinition
-  | NotesFieldDefinition
   | ActivityFieldDefinition
   | HtmlFieldDefinition
   | SignatureFieldDefinition
@@ -872,15 +850,6 @@ const FIELD_TYPE_PROPERTIES: Record<FieldType, readonly string[]> = {
   signature: ['padPlaceholder'],
   diagram: ['imageUri', 'padPlaceholder'],
   file: ['accept', 'maxFileSize', 'maxFiles'],
-  notes: [
-    'allowAttachments',
-    'accept',
-    'maxFileSize',
-    'maxAttachments',
-    'maxNotes',
-    'sortOrder',
-    'entryLabel',
-  ],
   activity: [],
   openchoice: ['options', 'maxCustomOptions', 'otherLabel', 'optionLayout'],
   display: ['content'],
@@ -1161,18 +1130,6 @@ const fileFieldSchema = z.strictObject({
   maxFiles: z.optional(z.number()),
 });
 
-const notesFieldSchema = z.strictObject({
-  ...baseFieldProps,
-  fieldType: z.literal('notes'),
-  allowAttachments: z.optional(z.boolean()),
-  accept: z.optional(z.string()),
-  maxFileSize: z.optional(z.number()),
-  maxAttachments: z.optional(z.number()),
-  maxNotes: z.optional(z.number()),
-  sortOrder: z.optional(z.enum(['newest', 'oldest'])),
-  entryLabel: z.optional(z.string()),
-});
-
 const activityFieldSchema = z.strictObject({
   ...baseFieldProps,
   fieldType: z.literal('activity'),
@@ -1251,7 +1208,6 @@ const builtInFieldDefinitionSchema = z.discriminatedUnion('fieldType', [
   // Rich
   imageFieldSchema,
   fileFieldSchema,
-  notesFieldSchema,
   activityFieldSchema,
   htmlFieldSchema,
   signatureFieldSchema,
@@ -1342,8 +1298,6 @@ export interface FieldResponse {
   markupImage?: string;
   /** File/attachment(s) uploaded by user (file field). Supports single or multiple files. */
   fileData?: AttachmentAnswer | AttachmentAnswer[];
-  /** Note entries (notes field). A set keyed by `NoteEntry.id`, not a positional array. */
-  notes?: NoteEntry[];
   /** Append-only response change log (reserved `_activity` key; activity field). */
   activity?: ActivityEntry[];
   /**
@@ -1553,28 +1507,8 @@ export const attachmentAnswerSchema = z.object({
 });
 
 /**
- * One entry in a notes field. Every entry carries a stable GUID so `notes[]`
- * merges as a set keyed by `id` (see `mergeNotes`), not a positional array.
- */
-export const noteEntrySchema = z.object({
-  /** GUID (crypto.randomUUID()), stable across edits. */
-  id: z.string(),
-  /** ISO 8601 creation timestamp. */
-  createdAt: z.string(),
-  /** ISO 8601 timestamp of the last edit (absent until first edit). */
-  updatedAt: z.optional(z.string()),
-  /** Host-supplied display name of the author. */
-  author: z.optional(z.string()),
-  /** The note body, raw markdown. */
-  markdown: z.string(),
-  /** Attachments on this note (reuses the file-field attachment shape). */
-  attachments: z.optional(z.array(attachmentAnswerSchema)),
-});
-export type NoteEntry = z.infer<typeof noteEntrySchema>;
-
-/**
  * One entry in the append-only response change log (activity page type).
- * GUID-keyed so concurrent logs union-merge exactly like notes.
+ * GUID-keyed so concurrent logs union-merge deterministically.
  */
 export const activityEntrySchema = z.object({
   /** GUID (crypto.randomUUID()). */
@@ -1605,7 +1539,6 @@ export type AnswerValue =
   | RankedAnswer[]
   | ResponseItem[]
   | AttachmentAnswer
-  | NoteEntry[]
   | Record<string, SelectedOption | SelectedOption[]>;
 
 /** A single item in the submission payload - one per answerable field. */

@@ -43,11 +43,6 @@ export function extractResponseValue(
     return response.multitextAnswers;
   }
 
-  // Notes entries (notes field)
-  if (response.notes !== undefined && response.notes.length > 0) {
-    return response.notes;
-  }
-
   // Signature: prefer stroke data, fall back to image
   if (response.signatureData !== undefined) {
     return {

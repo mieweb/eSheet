@@ -1003,10 +1003,6 @@ function getExpressionFieldValue(
     return files.length;
   }
 
-  if (definition.fieldType === 'notes') {
-    return response.notes?.length ?? 0;
-  }
-
   if (
     definition.fieldType === 'check' ||
     definition.fieldType === 'multiselectdropdown'
@@ -1102,11 +1098,6 @@ function getActualValue(
         ? null
         : files.map((f) => f.title ?? f.url ?? '');
     }
-
-    case 'notes':
-      return response.notes && response.notes.length > 0
-        ? response.notes.map((n) => n.id)
-        : null;
 
     default:
       return null;

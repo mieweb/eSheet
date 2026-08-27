@@ -92,7 +92,7 @@ export interface FormState {
   readonly normalized: NormalizedDefinition;
   /** Current responses keyed by field ID. */
   readonly responses: FieldResponseMap;
-  /** Host-supplied identity of the current user (stamps notes authorship). */
+  /** Host-supplied identity of the current user (stamps activity authorship). */
   readonly identity?: { name: string };
   /** Field IDs that have been explicitly edited by the user (not auto-calculated). */
   readonly userEditedFields: ReadonlySet<string>;

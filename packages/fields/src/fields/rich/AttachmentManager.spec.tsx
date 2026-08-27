@@ -5,7 +5,6 @@ import type {
   FieldComponentProps,
 } from '@esheet/core';
 import { FileField } from './FileField.js';
-import { NotesField } from './NotesField.js';
 import { createAttachmentManagerProvider } from '../../lib/AttachmentManagerProvider.js';
 
 // ---------------------------------------------------------------------------
@@ -104,86 +103,5 @@ describe('FileField attachment storage', () => {
 
     await waitFor(() => expect(manager.removed).toEqual([stored]));
     expect(fieldProps.onResponse).toHaveBeenCalledWith({ fileData: undefined });
-  });
-});
-
-describe('NotesField attachment storage', () => {
-  const openComposerAndSave = async (label: string) => {
-    fireEvent.click(screen.getByRole('button', { name: 'Add note' }));
-    const input = document.querySelector(
-      'input[type="file"]'
-    ) as HTMLInputElement;
-    fireEvent.change(input, { target: { files: [report()] } });
-    await screen.findByText(label);
-    fireEvent.change(screen.getByLabelText('Note text'), {
-      target: { value: 'Saw the patient' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
-  };
-
-  it('stores composed attachments before the note reaches the response', async () => {
-    const manager = fakeManager();
-    const fieldProps = props({
-      fieldType: 'notes',
-      question: 'Case notes',
-      allowAttachments: true,
-    });
-
-    render(withManager(manager, <NotesField {...fieldProps} />));
-    await openComposerAndSave('report.txt');
-
-    await waitFor(() => expect(fieldProps.onResponse).toHaveBeenCalled());
-    const { notes } = (fieldProps.onResponse as ReturnType<typeof vi.fn>).mock
-      .calls[0][0];
-    expect(notes[0].attachments).toEqual([
-      {
-        contentType: 'text/plain',
-        title: 'report.txt',
-        size: 5,
-        path: 'blobs/report.txt',
-      },
-    ]);
-  });
-
-  it('keeps composed attachments inline when no manager is supplied', async () => {
-    const fieldProps = props({
-      fieldType: 'notes',
-      question: 'Case notes',
-      allowAttachments: true,
-    });
-
-    render(<NotesField {...fieldProps} />);
-    await openComposerAndSave('report.txt');
-
-    await waitFor(() => expect(fieldProps.onResponse).toHaveBeenCalled());
-    const { notes } = (fieldProps.onResponse as ReturnType<typeof vi.fn>).mock
-      .calls[0][0];
-    expect(notes[0].attachments[0].dataUrl).toMatch(/^data:text\/plain/);
-  });
-
-  it('tells the manager when a note carrying attachments is deleted', async () => {
-    const manager = fakeManager();
-    const stored = { contentType: 'text/plain', title: 'report.txt', size: 5 };
-    const fieldProps = props(
-      { fieldType: 'notes', question: 'Case notes' },
-      {
-        response: {
-          notes: [
-            {
-              id: 'n1',
-              createdAt: '2026-01-01T00:00:00Z',
-              markdown: 'Saw the patient',
-              attachments: [stored],
-            },
-          ],
-        },
-      }
-    );
-
-    render(withManager(manager, <NotesField {...fieldProps} />));
-    fireEvent.click(screen.getByRole('button', { name: 'Delete note' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
-
-    await waitFor(() => expect(manager.removed).toEqual([stored]));
   });
 });
