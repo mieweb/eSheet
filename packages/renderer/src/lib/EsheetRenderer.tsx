@@ -109,8 +109,8 @@ export interface EsheetRendererProps {
   /** Optional wrappers supplied by field add-ons. */
   fieldProviders?: readonly FieldProvider[];
   /**
-    * Identity of the current user. When provided, activity entries are stamped
-    * with `identity.name`. Absent → entries save unstamped.
+   * Identity of the current user. When provided, activity entries are stamped
+   * with `identity.name`. Absent → entries save unstamped.
    */
   identity?: { name: string };
 }
