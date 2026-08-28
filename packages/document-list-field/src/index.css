@@ -392,6 +392,9 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
   padding: 0.25rem 0.5rem;
 }
 
@@ -422,8 +425,21 @@
 }
 
 .document-list-detail__preview {
-  min-width: 0;
   color: var(--mieweb-foreground, #1f2937);
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.document-list-detail__preview .md-prose {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.document-list-detail__preview .overflow-x-auto,
+.document-list-detail__preview pre {
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .document-list-detail__preview h1 {

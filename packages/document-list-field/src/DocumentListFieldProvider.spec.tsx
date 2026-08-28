@@ -36,7 +36,7 @@ vi.mock('@esheet/field-kerebron', async () => {
   const React = await import('react');
   return {
     configureRichTextField: vi.fn(),
-    KerebronMarkdownEditor: React.forwardRef(
+    KerebronEditor: React.forwardRef(
       (props: Record<string, unknown>, ref: React.ForwardedRef<unknown>) => {
         const value = props.value as string;
         React.useImperativeHandle(ref, () => ({

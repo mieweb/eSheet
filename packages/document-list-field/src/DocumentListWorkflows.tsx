@@ -10,8 +10,8 @@ import {
 } from 'react';
 import {
   configureRichTextField,
-  KerebronMarkdownEditor,
-  type KerebronMarkdownEditorHandle,
+  KerebronEditor,
+  type KerebronEditorHandle,
 } from '@esheet/field-kerebron';
 import { Button, Input, MarkdownRenderer } from '@mieweb/ui';
 import { Maximize2, Minimize2, X } from 'lucide-react';
@@ -187,7 +187,7 @@ interface DocumentListComposeEditorProps {
   readonly collab?: DraftBodyRoom;
 }
 
-type DocumentListComposeEditorHandle = KerebronMarkdownEditorHandle;
+type DocumentListComposeEditorHandle = KerebronEditorHandle;
 
 const FOCUSABLE_SELECTOR = [
   'button:not([disabled])',
@@ -207,7 +207,7 @@ const DocumentListComposeEditor = forwardRef<
   ref
 ): React.JSX.Element {
   return (
-    <KerebronMarkdownEditor
+    <KerebronEditor
       ref={ref}
       id={id}
       className="document-list-compose-editor"
@@ -1150,6 +1150,28 @@ export interface DocumentListDetailRowProps {
   readonly historyHref?: string;
 }
 
+const PIPE_TABLE_ROW = /^\s*\|(?:[^|\n]*\|)+\s*$/;
+const PIPE_TABLE_DELIMITER = /^\s*\|(?:\s*:?-+:?\s*\|)+\s*$/;
+
+function normalizeKerebronTables(markdown: string): string {
+  const lines = markdown.split('\n');
+  const normalized: string[] = [];
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    normalized.push(line);
+    if (!PIPE_TABLE_ROW.test(line) || PIPE_TABLE_DELIMITER.test(line)) continue;
+    if (index > 0 && PIPE_TABLE_ROW.test(lines[index - 1])) continue;
+    if (!PIPE_TABLE_ROW.test(lines[index + 1] ?? '')) continue;
+    if (PIPE_TABLE_DELIMITER.test(lines[index + 1])) continue;
+
+    const columnCount = line.split('|').length - 2;
+    normalized.push(`|${' --- |'.repeat(columnCount)}`);
+  }
+
+  return normalized.join('\n');
+}
+
 function DocumentListMarkdownPreview({
   content,
 }: {
@@ -1161,7 +1183,7 @@ function DocumentListMarkdownPreview({
       aria-label="Document content"
     >
       {/* Front matter is data, not prose: the reader sees the body only. */}
-      <MarkdownRenderer text={mdyBody(content)} />
+      <MarkdownRenderer text={normalizeKerebronTables(mdyBody(content))} />
     </div>
   );
 }

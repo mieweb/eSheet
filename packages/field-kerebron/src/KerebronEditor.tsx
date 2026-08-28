@@ -6,12 +6,8 @@ import { getAssetLoad } from './asset-load.js';
 import '@kerebron/editor/assets/index-light.css';
 import '@kerebron/editor-kits/assets/AdvancedEditorKit.css';
 
-// ---------------------------------------------------------------------------
-// KerebronMarkdownEditor — reusable controlled markdown editor.
-// ---------------------------------------------------------------------------
-
-const COMPOSER_STYLES = `
-  .kerebron-markdown-editor {
+const EDITOR_STYLES = `
+  .kerebron-editor {
     --kb-font-family: var(--mieweb-font-sans, sans-serif);
     --kb-color-primary: var(--mieweb-primary-500, #3b82f6);
     --kb-color-primary-hover: var(--mieweb-primary-600, #2563eb);
@@ -37,25 +33,37 @@ const COMPOSER_STYLES = `
     --kb-radius-md: var(--mieweb-radius-md, 6px);
     --kb-radius-lg: var(--mieweb-radius-lg, 8px);
   }
-  .kerebron-markdown-editor .kb-editor::selection,
-  .kerebron-markdown-editor .kb-editor::-moz-selection {
+  .kerebron-editor .kb-editor::selection,
+  .kerebron-editor .kb-editor::-moz-selection {
     background: color-mix(in srgb, var(--mieweb-primary-500, #3b82f6) 30%, transparent);
   }
-  .kerebron-markdown-editor .ProseMirror { outline: none; min-height: var(--kerebron-editor-min-height, 96px); padding: 8px 12px; }
-  .kerebron-markdown-editor .ProseMirror h1 { font-size: 2em; font-weight: bold; margin: 0.67em 0; }
-  .kerebron-markdown-editor .ProseMirror h2 { font-size: 1.5em; font-weight: bold; margin: 0.75em 0; }
-  .kerebron-markdown-editor .ProseMirror h3 { font-size: 1.17em; font-weight: bold; margin: 0.83em 0; }
-  .kerebron-markdown-editor .ProseMirror ul { list-style: disc; padding-left: 1.5em; }
-  .kerebron-markdown-editor .ProseMirror ol { list-style: decimal; padding-left: 1.5em; }
-  .kerebron-markdown-editor .ProseMirror blockquote { border-left: 3px solid var(--kb-color-border); color: var(--kb-color-text-muted); margin-left: 0; padding-left: 1em; }
-  .kerebron-markdown-editor .kb-custom-menu__editor { max-height: 320px; overflow-y: auto; }
-  .kerebron-markdown-editor .kb-menu__button[aria-pressed='true'],
-  .kerebron-markdown-editor .kb-menu__button--active {
+  .kerebron-editor .ProseMirror { outline: none; min-height: var(--kerebron-editor-min-height, 96px); padding: 8px 12px; }
+  .kerebron-editor .kb-editor,
+  .kerebron-editor .ProseMirror { color: var(--kb-color-text); }
+  .kerebron-editor .ProseMirror h1 { font-size: 2em; font-weight: bold; margin: 0.67em 0; }
+  .kerebron-editor .ProseMirror h2 { font-size: 1.5em; font-weight: bold; margin: 0.75em 0; }
+  .kerebron-editor .ProseMirror h3 { font-size: 1.17em; font-weight: bold; margin: 0.83em 0; }
+  .kerebron-editor .ProseMirror ul { list-style: disc; padding-left: 1.5em; }
+  .kerebron-editor .ProseMirror ol { list-style: decimal; padding-left: 1.5em; }
+  .kerebron-editor .ProseMirror blockquote { border-left: 3px solid var(--kb-color-border); color: var(--kb-color-text-muted); margin-left: 0; padding-left: 1em; }
+  .kerebron-editor .ProseMirror strong { font-weight: bold; }
+  .kerebron-editor .ProseMirror em { font-style: italic; }
+  .kerebron-editor .ProseMirror code { font-family: monospace; background: var(--kb-color-surface-elevated); padding: 0.1em 0.3em; border-radius: 3px; }
+  .kerebron-editor .ProseMirror hr { border: 0; border-top: 1px solid var(--kb-color-border-strong); margin: 1em 0; }
+  .kerebron-editor .tableWrapper { overflow-x: auto; }
+  .kerebron-editor .ProseMirror table { border-collapse: collapse; table-layout: fixed; width: 100%; }
+  .kerebron-editor .ProseMirror th,
+  .kerebron-editor .ProseMirror td { border: 1px solid var(--kb-color-border); box-sizing: border-box; min-width: 80px; padding: 6px 8px; position: relative; vertical-align: top; }
+  .kerebron-editor .ProseMirror .selectedCell::after { background: color-mix(in srgb, var(--kb-color-primary) 15%, transparent); content: ''; inset: 0; pointer-events: none; position: absolute; z-index: 2; }
+  .kerebron-editor .ProseMirror .column-resize-handle { background: var(--kb-color-primary); bottom: 0; pointer-events: none; position: absolute; right: -2px; top: 0; width: 4px; z-index: 20; }
+  .kerebron-editor .kb-custom-menu__editor { max-height: 320px; overflow-y: auto; }
+  .kerebron-editor .kb-menu__button[aria-pressed='true'],
+  .kerebron-editor .kb-menu__button--active {
     background: var(--kb-color-primary);
     border-color: var(--kb-color-primary);
     color: white;
   }
-  .kerebron-markdown-editor .kb-custom-menu__overflow-menu .kb-icon {
+  .kerebron-editor .kb-custom-menu__overflow-menu .kb-icon {
     display: inline-flex !important;
     align-items: center;
     justify-content: center;
@@ -63,7 +71,7 @@ const COMPOSER_STYLES = `
     min-height: 0 !important;
     line-height: 1;
   }
-  .kerebron-markdown-editor .kb-custom-menu__overflow-menu .kb-icon svg {
+  .kerebron-editor .kb-custom-menu__overflow-menu .kb-icon svg {
     width: 16px !important;
     height: 16px !important;
   }
@@ -71,22 +79,22 @@ const COMPOSER_STYLES = `
 
 if (
   typeof document !== 'undefined' &&
-  !document.getElementById('kerebron-markdown-editor-styles')
+  !document.getElementById('kerebron-editor-styles')
 ) {
   const style = document.createElement('style');
-  style.id = 'kerebron-markdown-editor-styles';
-  style.textContent = COMPOSER_STYLES;
+  style.id = 'kerebron-editor-styles';
+  style.textContent = EDITOR_STYLES;
   document.head.appendChild(style);
 }
 
 let initialLoadQueue: Promise<unknown> = Promise.resolve();
 
-export interface KerebronMarkdownEditorHandle {
+export interface KerebronEditorHandle {
   readonly focus: () => void;
   readonly getContent: () => Promise<string>;
 }
 
-export interface KerebronMarkdownEditorProps {
+export interface KerebronEditorProps {
   readonly value: string;
   readonly onChange: (value: string) => void;
   readonly ariaLabel: string;
@@ -97,10 +105,10 @@ export interface KerebronMarkdownEditorProps {
   readonly minHeight?: number;
 }
 
-export const KerebronMarkdownEditor = React.forwardRef<
-  KerebronMarkdownEditorHandle,
-  KerebronMarkdownEditorProps
->(function KerebronMarkdownEditor(
+export const KerebronEditor = React.forwardRef<
+  KerebronEditorHandle,
+  KerebronEditorProps
+>(function KerebronEditor(
   {
     value,
     onChange,
@@ -145,7 +153,7 @@ export const KerebronMarkdownEditor = React.forwardRef<
 
     const editor = CoreEditor.create({
       element: mount,
-      uri: 'file:///note.md',
+      uri: 'file:///document.md',
       assetLoad: getAssetLoad(),
       editorKits: [
         new AdvancedEditorKit(),
@@ -194,7 +202,7 @@ export const KerebronMarkdownEditor = React.forwardRef<
       try {
         await load;
       } catch (error) {
-        console.error('[KerebronMarkdownEditor] loadDocument failed:', error);
+        console.error('[KerebronEditor] loadDocument failed:', error);
       } finally {
         loadingRef.current = false;
       }
@@ -237,7 +245,7 @@ export const KerebronMarkdownEditor = React.forwardRef<
     <div
       ref={hostRef}
       id={id}
-      className={`kb-component kerebron-markdown-editor${
+      className={`kb-component kerebron-editor${
         className ? ` ${className}` : ''
       }`}
       aria-label={ariaLabel}

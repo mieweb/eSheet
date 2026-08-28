@@ -21,7 +21,7 @@ vi.mock('@esheet/field-kerebron', async () => {
   const React = await import('react');
   return {
     configureRichTextField: vi.fn(),
-    KerebronMarkdownEditor: React.forwardRef(
+    KerebronEditor: React.forwardRef(
       (props: Record<string, unknown>, ref: React.ForwardedRef<unknown>) => {
         const value = props.value as string;
         const inputRef = React.useRef<HTMLTextAreaElement>(null);
@@ -617,6 +617,22 @@ describe('document list detail row', () => {
     expect(preview).toBeTruthy();
     expect(preview?.textContent).not.toContain('# Visit note');
     expect(preview?.textContent).not.toContain('- First item');
+  });
+
+  it('renders Kerebron body-only pipe tables in the markdown preview', async () => {
+    const runtime = createRuntime(async () => ({
+      text: '| Name | Status |\n| Visit | Complete |\n| Follow-up | Open |',
+      contentType: 'text/x-markdown',
+      size: 64,
+    }));
+
+    const detailView = render(
+      <DocumentListDetailRow document={document} runtime={runtime} />
+    );
+
+    expect(await screen.findByRole('table')).toBeTruthy();
+    expect(detailView.container.querySelectorAll('tbody tr')).toHaveLength(2);
+    expect(screen.getByText('Follow-up')).toBeTruthy();
   });
 
   it('renders image references and says so when there is nothing to preview', async () => {
