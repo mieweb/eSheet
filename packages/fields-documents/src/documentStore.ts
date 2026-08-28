@@ -10,7 +10,7 @@
  * WebChart's adapter lives server-side (eCase `ED.48`) and implements this
  * same shape structurally. None of the three leaks into the field.
  */
-import { priorRevisionOf } from './data.js';
+import { createDocumentId, priorRevisionOf, today } from './data.js';
 import type {
   DocumentListContent,
   DocumentListContentInput,
@@ -94,17 +94,6 @@ export function unsupportedColumns(
 }
 
 const INLINE_COLUMNS = ['title', 'subject', 'docType', 'date'] as const;
-
-function createDocumentId(): string {
-  return (
-    globalThis.crypto?.randomUUID?.() ??
-    `document-${Date.now()}-${Math.random().toString(36).slice(2)}`
-  );
-}
-
-function today(at?: string): string {
-  return (at ?? new Date().toISOString()).slice(0, 10);
-}
 
 function findRow(
   registry: DocumentRowRegistry,

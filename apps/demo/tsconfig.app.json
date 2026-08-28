@@ -14,8 +14,8 @@
       "@esheet/builder": ["../../packages/builder/src/index.ts"],
       "@esheet/renderer": ["../../packages/renderer/src/index.ts"],
       "@esheet/core": ["../../packages/core/src/index.ts"],
-      "@esheet/document-list-field": [
-        "../../packages/document-list-field/src/index.ts"
+      "@esheet/fields-documents": [
+        "../../packages/fields-documents/src/index.ts"
       ],
       "@esheet/fields": ["../../packages/fields/src/index.ts"],
       "@esheet/adapters": ["../../packages/adapters/src/index.ts"]
@@ -51,7 +51,7 @@
       "path": "../../packages/field-health/tsconfig.lib.json"
     },
     {
-      "path": "../../packages/document-list-field/tsconfig.lib.json"
+      "path": "../../packages/fields-documents/tsconfig.lib.json"
     },
     {
       "path": "../../packages/core/tsconfig.lib.json"

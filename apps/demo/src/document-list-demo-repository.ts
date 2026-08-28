@@ -5,7 +5,7 @@ import type {
   DocumentListRepository,
   DocumentListRepositoryContext,
   DocumentListSnapshot,
-} from '@esheet/document-list-field';
+} from '@esheet/fields-documents';
 
 interface DemoDocumentBucket {
   readonly documents: Map<string, DocumentListDocument>;

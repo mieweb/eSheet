@@ -189,10 +189,10 @@ export default defineConfig(({ command, mode }) => {
           ),
         },
         {
-          find: '@esheet/document-list-field',
+          find: '@esheet/fields-documents',
           replacement: resolve(
             import.meta.dirname,
-            '../../packages/document-list-field/src/index.ts'
+            '../../packages/fields-documents/src/index.ts'
           ),
         },
         {

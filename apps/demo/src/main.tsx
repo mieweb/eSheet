@@ -9,7 +9,7 @@ import {
   RichTextEditorField,
 } from '@esheet/field-kerebron';
 import { registerHealthFieldTypes } from '@esheet/field-health';
-import { registerDocumentListFieldType } from '@esheet/document-list-field';
+import { registerDocumentListFieldType } from '@esheet/fields-documents';
 import { createAssetLoad } from '@kerebron/wasm/web';
 import { StrictMode } from 'react';
 import * as ReactDOM from 'react-dom/client';

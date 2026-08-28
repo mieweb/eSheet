@@ -503,7 +503,7 @@ describe('compose panel in draft mode (ED.37)', () => {
     // The saved row is a tombstone: rev + 1, action remove, reasoned marker.
     const runtimeState = formStore
       .getState()
-      .getExtension('@esheet/document-list-field', 'documents') as {
+      .getExtension('@esheet/fields-documents', 'documents') as {
       documents: Record<string, Record<string, unknown>>;
     };
     await waitFor(() => {

@@ -6,8 +6,8 @@ import {
   useRendererMcpToolHandler,
   type ResponseFormat,
 } from '@esheet/renderer';
-import { createDocumentListFieldProvider } from '@esheet/document-list-field';
-import { permissiveDocumentListCapabilities } from '@esheet/document-list-field';
+import { createDocumentListFieldProvider } from '@esheet/fields-documents';
+import { permissiveDocumentListCapabilities } from '@esheet/fields-documents';
 import { Navbar } from '../components/Navbar';
 import {
   Alert,

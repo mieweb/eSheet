@@ -2,7 +2,7 @@ import type { FormStore } from '@esheet/core';
 import { DOCUMENT_LIST_MARKDOWN_TYPE, priorRevisionOf } from './data.js';
 import type { DocumentListDocument, DocumentRevision } from './types.js';
 
-export const DOCUMENT_LIST_EXTENSION_NAMESPACE = '@esheet/document-list-field';
+export const DOCUMENT_LIST_EXTENSION_NAMESPACE = '@esheet/fields-documents';
 
 export interface DocumentListRepositoryContext {
   readonly formInstanceId: string;

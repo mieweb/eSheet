@@ -126,7 +126,7 @@ describe('DocumentListFieldProvider', () => {
     expect(
       formStore
         .getState()
-        .getExtension('@esheet/document-list-field', 'documents')
+        .getExtension('@esheet/fields-documents', 'documents')
     ).toBe(runtimeStores[0]);
     unmount();
   });
@@ -153,12 +153,12 @@ describe('DocumentListFieldProvider', () => {
     expect(
       firstFormStore
         .getState()
-        .getExtension('@esheet/document-list-field', 'documents')
+        .getExtension('@esheet/fields-documents', 'documents')
     ).toBeTruthy();
     expect(
       secondFormStore
         .getState()
-        .getExtension('@esheet/document-list-field', 'documents')
+        .getExtension('@esheet/fields-documents', 'documents')
     ).toBeTruthy();
   });
 

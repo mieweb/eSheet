@@ -18,7 +18,7 @@ const reactDomDir = packageDir('react-dom');
 
 function inlineCssDocumentListField(): import('vite').Plugin {
   return {
-    name: 'inline-css-document-list-field',
+    name: 'inline-css-fields-documents',
     apply: 'build',
     closeBundle() {
       const cssPath = path.resolve(import.meta.dirname, 'dist/index.css');
@@ -30,9 +30,9 @@ function inlineCssDocumentListField(): import('vite').Plugin {
       const injectCss =
         `(function(){` +
         `if(typeof document==='undefined')return;` +
-        `if(document.querySelector('#esheet-document-list-field-styles'))return;` +
+        `if(document.querySelector('#esheet-fields-documents-styles'))return;` +
         `var s=document.createElement('style');` +
-        `s.id='esheet-document-list-field-styles';` +
+        `s.id='esheet-fields-documents-styles';` +
         `s.textContent=${JSON.stringify(css)};` +
         `document.head.appendChild(s);` +
         `})();\n`;
@@ -45,7 +45,7 @@ function inlineCssDocumentListField(): import('vite').Plugin {
 
 export default defineConfig(() => ({
   root: import.meta.dirname,
-  cacheDir: '../../node_modules/.vite/packages/document-list-field',
+  cacheDir: '../../node_modules/.vite/packages/fields-documents',
   plugins: [
     react(),
     tailwindcss(),
@@ -65,7 +65,7 @@ export default defineConfig(() => ({
     },
     lib: {
       entry: 'src/index.ts',
-      name: '@esheet/document-list-field',
+      name: '@esheet/fields-documents',
       fileName: 'index',
       formats: ['es' as const],
     },
@@ -92,7 +92,7 @@ export default defineConfig(() => ({
     },
   },
   test: {
-    name: '@esheet/document-list-field',
+    name: '@esheet/fields-documents',
     watch: false,
     passWithNoTests: false,
     globals: true,

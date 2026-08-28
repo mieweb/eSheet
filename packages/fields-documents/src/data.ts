@@ -16,6 +16,17 @@ export const DOCUMENT_LIST_MARKDOWN_TYPE = 'text/x-markdown';
 /** Content type of MDY documents — front matter + markdown body (ED.45). */
 export const DOCUMENT_LIST_MDY_TYPE = 'text/x-mdy';
 
+export function createDocumentId(): string {
+  return (
+    globalThis.crypto?.randomUUID?.() ??
+    `document-${Date.now()}-${Math.random().toString(36).slice(2)}`
+  );
+}
+
+export function today(at?: string): string {
+  return (at ?? new Date().toISOString()).slice(0, 10);
+}
+
 /**
  * The serialization a doc type's saves use: its explicit choice, else what it
  * carries — a definition has answers for front matter, a plain type does not.

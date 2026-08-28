@@ -4,8 +4,8 @@ import {
   useBuilderMcpToolHandler,
   type FormDefinition,
 } from '@esheet/builder';
-import { createDocumentListFieldProvider } from '@esheet/document-list-field';
-import { permissiveDocumentListCapabilities } from '@esheet/document-list-field';
+import { createDocumentListFieldProvider } from '@esheet/fields-documents';
+import { permissiveDocumentListCapabilities } from '@esheet/fields-documents';
 import { Navbar } from '../components/Navbar.js';
 import { updateOzwellTools, FORMIE_KEY } from '../ozwell-setup.js';
 import { createDemoDocumentListRepository } from '../document-list-demo-repository.js';

@@ -22,8 +22,13 @@ import type {
   DocumentListRuntimeState,
 } from './document-list-runtime.js';
 import {
+  createDocumentId,
+  docTypeSerialization,
   DOCUMENT_LIST_DEFAULT_NOUN,
   DOCUMENT_LIST_MARKDOWN_TYPE,
+  DOCUMENT_LIST_MDY_TYPE,
+  priorRevisionOf,
+  today,
 } from './data.js';
 import {
   DocumentListDefinitionForm,
@@ -31,11 +36,6 @@ import {
   type DocumentListDefinitionFormHandle,
 } from './DocumentListDefinitionForm.js';
 import { createMdy, mdyBody } from './mdy.js';
-import {
-  docTypeSerialization,
-  DOCUMENT_LIST_MDY_TYPE,
-  priorRevisionOf,
-} from './data.js';
 import type { DocumentDraft, DraftBodyRoom } from './draftChannel.js';
 import type { DefinitionPrefill } from './ComposerSession.js';
 import type {
@@ -118,18 +118,6 @@ function requiredMessage(labels: readonly string[]): string {
   return `${labels.slice(0, -1).join(', ')} and ${
     labels[labels.length - 1]
   } are required.`;
-}
-
-function today(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function createDocumentId(): string {
-  const randomUuid = globalThis.crypto?.randomUUID?.();
-  return (
-    randomUuid ??
-    `document-${Date.now()}-${Math.random().toString(36).slice(2)}`
-  );
 }
 
 function contentSize(content: string | Blob): number {
