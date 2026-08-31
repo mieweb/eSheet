@@ -159,7 +159,7 @@ describe('ActivityField', () => {
     ).toEqual({ added: 'Added', cleared: 'Cleared', updated: 'Updated' });
   });
 
-  it('expands a highlighted before-and-after diff without edit controls', async () => {
+  it('expands an inline diff without edit controls', async () => {
     const previous = 'wha';
     const current = 'what';
     render(
@@ -187,12 +187,11 @@ describe('ActivityField', () => {
     expect(document.querySelector('.activity-field__added')?.textContent).toBe(
       't'
     );
-    expect(document.querySelector('.activity-field__previous')?.textContent).toContain(
-      previous
-    );
-    expect(document.querySelector('.activity-field__current')?.textContent).toContain(
-      current
-    );
+    expect(
+      document.querySelector('.activity-field__content')?.textContent
+    ).toBe(current);
+    expect(document.querySelector('.activity-field__previous')).toBeNull();
+    expect(document.querySelector('.activity-field__current')).toBeNull();
     expect(screen.queryByRole('textbox')).toBeNull();
   });
 

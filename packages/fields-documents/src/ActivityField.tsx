@@ -161,12 +161,9 @@ function useActivityView(rows: readonly ActivityRow[]): DataVisView {
     const key = sourceKey.current;
     publishRows(key, rows);
     const nextView = new NamedComputedView(
-      new Source(
-        { type: 'local', varName: key },
-        undefined,
-        undefined,
-        { name: `ActivitySource:${key}` }
-      ),
+      new Source({ type: 'local', varName: key }, undefined, undefined, {
+        name: `ActivitySource:${key}`,
+      }),
       { name: `ActivityView:${key}` }
     );
     viewRef.current = nextView;
@@ -235,40 +232,20 @@ function diffParts(previous: string, current: string): DiffParts {
 function ActivityDetail({ row }: { readonly row: ActivityRow }) {
   const diff = diffParts(row.from, row.to);
   return (
-    <div className="activity-field__detail ms:grid ms:grid-cols-1 ms:border-y ms:border-msborder ms:font-mono ms:text-sm ms:sm:grid-cols-2">
-      <div className="activity-field__previous ms:grid ms:grid-cols-[2rem_1fr] ms:bg-msdanger/10">
-        <div
-          className="ms:flex ms:justify-center ms:border-r ms:border-msdanger/20 ms:px-2 ms:py-3 ms:text-msdanger"
-          aria-hidden="true"
-        >
-          −
-        </div>
-        <div className="ms:whitespace-pre-wrap ms:break-words ms:px-3 ms:py-3 ms:text-mstext">
-          {diff.prefix}
-          {diff.previous && (
-            <del className="activity-field__removed ms:bg-msdanger/20 ms:text-msdanger ms:no-underline">
-              {diff.previous}
-            </del>
-          )}
-          {diff.suffix}
-        </div>
-      </div>
-      <div className="activity-field__current ms:grid ms:grid-cols-[2rem_1fr] ms:border-t ms:border-msborder ms:bg-msaccent/10 ms:sm:border-t-0 ms:sm:border-l">
-        <div
-          className="ms:flex ms:justify-center ms:border-r ms:border-msaccent/20 ms:px-2 ms:py-3 ms:text-msaccent"
-          aria-hidden="true"
-        >
-          +
-        </div>
-        <div className="ms:whitespace-pre-wrap ms:break-words ms:px-3 ms:py-3 ms:text-mstext">
-          {diff.prefix}
-          {diff.current && (
-            <ins className="activity-field__added ms:bg-msaccent/20 ms:text-msaccent ms:no-underline">
-              {diff.current}
-            </ins>
-          )}
-          {diff.suffix}
-        </div>
+    <div className="activity-field__detail ms:border-y ms:border-msborder ms:font-mono ms:text-sm">
+      <div className="activity-field__content ms:whitespace-pre-wrap ms:break-words ms:px-3 ms:py-3 ms:text-mstext">
+        {diff.prefix}
+        {diff.previous && (
+          <del className="activity-field__removed ms:text-msdanger ms:line-through">
+            {diff.previous}
+          </del>
+        )}
+        {diff.current && (
+          <ins className="activity-field__added ms:text-msaccent ms:no-underline">
+            {diff.current}
+          </ins>
+        )}
+        {diff.suffix}
       </div>
     </div>
   );
