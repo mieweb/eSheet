@@ -1,5 +1,10 @@
 import type { DocumentListDocument } from './types.js';
-import { createFormStore, type FormStore } from '@esheet/core';
+import {
+  createFormStore,
+  type FileInput,
+  type FileStore,
+  type FormStore,
+} from '@esheet/core';
 import type {
   DocumentListRepository,
   DocumentListRepositoryContext,
@@ -24,6 +29,7 @@ const documentOne: DocumentListDocument = {
   docId: '42',
   source: 'WebChart',
   file: '42.pdf',
+  fileReference: { id: 'file-1', contentType: 'text/plain' },
 };
 
 const documentTwo: DocumentListDocument = {
@@ -53,7 +59,22 @@ function createRepository(
     load: vi.fn(async () => ({ documents: [] })),
     save: vi.fn(async (_context, document) => document),
     remove: vi.fn(async () => undefined),
-    loadContent: vi.fn(async () => ({ text: 'Document content' })),
+    ...overrides,
+  };
+}
+
+function createFileStore(overrides: Partial<FileStore> = {}): FileStore {
+  return {
+    store: vi.fn(async (input) => ({
+      id: 'stored-file',
+      contentType: input.contentType,
+      size: input.size,
+    })),
+    load: vi.fn(async () => ({
+      content: 'Document content',
+      contentType: 'text/plain',
+    })),
+    remove: vi.fn(async () => undefined),
     ...overrides,
   };
 }
@@ -62,6 +83,7 @@ function createRuntime(
   options: {
     context?: DocumentListRepositoryContext;
     repository?: DocumentListRepository;
+    fileStore?: FileStore;
     initialDocuments?: readonly DocumentListDocument[];
     onDocumentsChange?: (documents: readonly DocumentListDocument[]) => void;
   } = {}
@@ -75,6 +97,7 @@ function createRuntime(
     formStore,
     context: runtimeContext,
     repository: options.repository,
+    fileStore: options.fileStore,
     initialDocuments: options.initialDocuments,
     onDocumentsChange: options.onDocumentsChange,
   });
@@ -168,14 +191,18 @@ describe('document list runtime store', () => {
     expect(store.getState().documentIds).toEqual(['doc-1', 'doc-2']);
   });
 
-  it('keeps a row with no content away from the repository', async () => {
+  it('saves file-backed metadata without storing new content', async () => {
     const repository = createRepository();
     const onDocumentsChange = vi.fn();
     const store = createRuntime({ repository, onDocumentsChange });
 
     await store.getState().saveDocument(documentOne);
 
-    expect(repository.save).not.toHaveBeenCalled();
+    expect(repository.save).toHaveBeenCalledWith(
+      context,
+      documentOne,
+      expect.any(AbortSignal)
+    );
     expect(onDocumentsChange).toHaveBeenCalledWith([documentOne]);
   });
 
@@ -191,10 +218,11 @@ describe('document list runtime store', () => {
     expect(onDocumentsChange).toHaveBeenCalledWith([documentTwo]);
   });
 
-  it('forwards transient content to the repository save operation', async () => {
+  it('stores content before saving file reference metadata', async () => {
     const repository = createRepository();
-    const store = createRuntime({ repository });
-    const content = {
+    const fileStore = createFileStore();
+    const store = createRuntime({ repository, fileStore });
+    const content: FileInput = {
       content: 'A composed note',
       contentType: 'text/plain',
       size: 15,
@@ -202,11 +230,18 @@ describe('document list runtime store', () => {
 
     await store.getState().saveDocument(documentOne, content);
 
+    expect(fileStore.store).toHaveBeenCalledWith(content);
     expect(repository.save).toHaveBeenCalledWith(
       context,
-      documentOne,
-      expect.any(AbortSignal),
-      content
+      expect.objectContaining({
+        id: documentOne.id,
+        fileReference: {
+          id: 'stored-file',
+          contentType: 'text/plain',
+          size: 15,
+        },
+      }),
+      expect.any(AbortSignal)
     );
   });
 
@@ -232,32 +267,72 @@ describe('document list runtime store', () => {
   });
 
   it('deduplicates content requests and caches the loaded result', async () => {
-    const contentRequest = deferred<{ text: string }>();
-    const repository = createRepository({
-      loadContent: vi.fn(() => contentRequest.promise),
+    const contentRequest = deferred<FileInput>();
+    const fileStore = createFileStore({
+      load: vi.fn(() => contentRequest.promise),
     });
     const store = createRuntime({
-      repository,
+      fileStore,
       initialDocuments: [documentOne],
     });
 
     const firstLoad = store.getState().loadContent(documentOne.id);
     const secondLoad = store.getState().loadContent(documentOne.id);
-    expect(repository.loadContent).toHaveBeenCalledOnce();
+    expect(fileStore.load).toHaveBeenCalledOnce();
 
-    contentRequest.resolve({ text: 'Loaded once' });
-    await expect(firstLoad).resolves.toEqual({ text: 'Loaded once' });
-    await expect(secondLoad).resolves.toEqual({ text: 'Loaded once' });
+    contentRequest.resolve({ content: 'Loaded once', contentType: 'text/plain' });
+    await expect(firstLoad).resolves.toEqual({
+      text: 'Loaded once',
+      contentType: 'text/plain',
+      size: undefined,
+    });
+    await expect(secondLoad).resolves.toEqual({
+      text: 'Loaded once',
+      contentType: 'text/plain',
+      size: undefined,
+    });
     expect(store.getState().contents[documentOne.id]).toEqual({
       status: 'loaded',
-      content: { text: 'Loaded once' },
+      content: {
+        text: 'Loaded once',
+        contentType: 'text/plain',
+        size: undefined,
+      },
     });
 
     await expect(store.getState().loadContent(documentOne.id)).resolves.toEqual(
       {
         text: 'Loaded once',
+        contentType: 'text/plain',
+        size: undefined,
       }
     );
-    expect(repository.loadContent).toHaveBeenCalledOnce();
+    expect(fileStore.load).toHaveBeenCalledOnce();
+  });
+
+  it('loads historical content from the revision file reference', async () => {
+    const historicalReference = {
+      id: 'file-0',
+      contentType: 'text/plain',
+    };
+    const fileStore = createFileStore();
+    const repository = createRepository({
+      listRevisions: vi.fn(async () => [
+        {
+          rev: 0,
+          action: 'create' as const,
+          fileReference: historicalReference,
+        },
+      ]),
+    });
+    const store = createRuntime({
+      repository,
+      fileStore,
+      initialDocuments: [{ ...documentOne, rev: 1 }],
+    });
+
+    await store.getState().loadContent(documentOne.id, 0);
+
+    expect(fileStore.load).toHaveBeenCalledWith(historicalReference);
   });
 });

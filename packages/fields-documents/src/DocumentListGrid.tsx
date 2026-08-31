@@ -25,6 +25,7 @@ import {
 } from './data.js';
 import type { FieldProvider } from '@esheet/fields';
 import { FormStoreContext } from '@esheet/fields';
+import type { FileStore } from '@esheet/core';
 import {
   createDocumentListRuntimeExtension,
   type DocumentListRepository,
@@ -68,6 +69,7 @@ export type DocumentListFieldAction = (
 export interface DocumentListFieldRuntimeOptions {
   readonly formInstanceId?: string;
   readonly repository?: DocumentListRepository;
+  readonly fileStore?: FileStore;
 }
 
 interface DocumentListRuntimeContextValue {
@@ -238,6 +240,7 @@ export function useDocumentListFieldRuntime(
         formStore,
         context: { formInstanceId, fieldId },
         repository: runtime?.options.repository,
+        fileStore: runtime?.options.fileStore,
         initialDocuments,
         // The extension outlives any one render, so the callback stays behind
         // a ref rather than being captured at creation.

@@ -117,20 +117,23 @@ export {
 
 // Optional host-supplied attachment byte storage
 export {
-  AttachmentManagerProvider,
-  createAttachmentManagerProvider,
-  useAttachmentManager,
-  storeAttachments,
-  removeUnreferenced,
-  type AttachmentManagerProviderProps,
-} from './lib/AttachmentManagerProvider.js';
+  FileStoreProvider,
+  createFileStoreProvider,
+  useFileStore,
+  storeFiles,
+  removeUnreferencedFiles,
+  type FileStoreProviderProps,
+} from './lib/FileStoreProvider.js';
 
 // Shared markdown-lite rendering
 export { renderMarkdownContent, renderMarkdownInline } from './lib/markdown.js';
 
 // Shared file/attachment helpers
 export {
+  fileToInput,
   formatFileSize,
   fileMatchesAccept,
+  getFileMetadata,
   readFileAsAttachment,
+  type FileMetadata,
 } from './lib/file-utils.js';

@@ -11,12 +11,7 @@
  * same shape structurally. None of the three leaks into the field.
  */
 import { createDocumentId, priorRevisionOf, today } from './data.js';
-import type {
-  DocumentListContent,
-  DocumentListContentInput,
-  DocumentListRepository,
-  DocumentListRepositoryContext,
-} from './document-list-runtime.js';
+import type { DocumentListContent } from './document-list-runtime.js';
 import type {
   DocumentListAuthor,
   DocumentListDocument,
@@ -38,7 +33,6 @@ export interface DocumentSave {
   /** Everyone who contributed to the draft since the last save (PM.7). */
   readonly contributors?: readonly DocumentListAuthor[];
 }
-
 export interface DocumentStore {
   /** Head revisions only; tombstoned rows included (the UI filters). */
   list(): Promise<readonly DocumentListDocument[]>;
@@ -212,152 +206,6 @@ export function createInlineDocumentStore(
       if (!reason.trim()) throw new Error('removal requires a reason');
       const prior = findRow(registry, id);
       const next = {
-        ...nextHead(prior, { action: 'remove', author }),
-        removed: {
-          ...(author ? { author } : {}),
-          at: new Date().toISOString(),
-          reason,
-        },
-      };
-      replaceRow(registry, next);
-      return next;
-    },
-
-    restore: async (id, author) => {
-      const prior = findRow(registry, id);
-      const { removed: _removed, ...rest } = nextHead(prior, {
-        action: 'restore',
-        author,
-      });
-      void _removed;
-      replaceRow(registry, rest);
-      return rest;
-    },
-  };
-}
-
-/**
- * The file-backed store: rows in the registry, bytes behind the repository —
- * today's `DocumentListRepository` (eCase's content-addressed blob store)
- * becomes the first implementation of the port, unchanged. Prior revisions
- * live wherever the repository keeps them (`listRevisions`); prior *content*
- * stays addressable when the backend retains it (the blob store keeps every
- * SHA forever), which is its documented policy, not this port's promise.
- */
-export function createFileDocumentStore(options: {
-  readonly registry: DocumentRowRegistry;
-  readonly repository: DocumentListRepository;
-  readonly context: DocumentListRepositoryContext;
-}): DocumentStore {
-  const { registry, repository, context } = options;
-  const signal = (): AbortSignal => new AbortController().signal;
-
-  // File-backed rows carry their revision *metadata* on the row — who, when,
-  // what kind of save — while the bytes live behind the repository (prior
-  // content stays addressable when the backend retains it, e.g. by SHA).
-  const metadataHistory = (prior: DocumentListDocument) => {
-    const { body: _body, ...entry } = priorRevisionOf(prior);
-    void _body;
-    return [...(prior.history ?? []), entry];
-  };
-
-  const nextHead = (
-    prior: DocumentListDocument,
-    save: DocumentSave
-  ): DocumentListDocument =>
-    withColumns(
-      {
-        ...prior,
-        date: today(save.at),
-        ...(save.author ? { author: save.author } : {}),
-        rev: (prior.rev ?? 0) + 1,
-        action: save.action,
-        history: metadataHistory(prior),
-      },
-      save.columns
-    );
-
-  const persist = async (
-    row: DocumentListDocument,
-    save: DocumentSave
-  ): Promise<DocumentListDocument> => {
-    const content: DocumentListContentInput | undefined =
-      save.bytes !== undefined
-        ? {
-            content: save.bytes,
-            contentType: save.contentType,
-            size: new Blob([save.bytes]).size,
-          }
-        : undefined;
-    return content !== undefined
-      ? repository.save(context, row, signal(), content)
-      : row;
-  };
-
-  return {
-    acceptedColumns: [...INLINE_COLUMNS, 'file', 'docId'],
-
-    list: async () => registry.rows(),
-
-    read: async (id, rev) => {
-      const row = findRow(registry, id);
-      if (rev !== undefined && rev !== (row.rev ?? 0)) {
-        // Prior bytes are the backend's business; the blob store keeps them
-        // by SHA but the row only names the head. ED.48's adapter reads its
-        // archive table here.
-        throw new Error(`revision ${rev} of '${id}' is not addressable here`);
-      }
-      return repository.loadContent(context, row, signal());
-    },
-
-    save: async (id, save) => {
-      if (id === null) {
-        const documentId = createDocumentId();
-        const created = withColumns(
-          {
-            id: documentId,
-            date: today(save.at),
-            title: '—',
-            subject: '—',
-            docType: '—',
-            docId: documentId,
-            source: 'Compose',
-            file: `${documentId}.md`,
-            ...(save.author ? { author: save.author } : {}),
-            action: 'create',
-          },
-          save.columns
-        );
-        const persisted = await persist(created, save);
-        registry.write([...registry.rows(), persisted]);
-        return persisted;
-      }
-      const prior = findRow(registry, id);
-      const next = nextHead(prior, save);
-      const persisted = await persist(next, save);
-      replaceRow(registry, persisted);
-      return persisted;
-    },
-
-    listRevisions: async (id) => {
-      const row = findRow(registry, id);
-      return [...(row.history ?? []), priorRevisionOf(row)].reverse();
-    },
-
-    link: async (id, toId, linkType, comment) => {
-      findRow(registry, toId);
-      const row = findRow(registry, id);
-      replaceRow(registry, {
-        ...row,
-        linkedTo: { id: toId, linkType, ...(comment ? { comment } : {}) },
-      });
-    },
-
-    remove: async (id, reason, author) => {
-      if (!reason.trim()) throw new Error('removal requires a reason');
-      const prior = findRow(registry, id);
-      // Tombstone the row; the blobs stay addressable (backend policy).
-      const next: DocumentListDocument = {
         ...nextHead(prior, { action: 'remove', author }),
         removed: {
           ...(author ? { author } : {}),

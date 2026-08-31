@@ -1,4 +1,4 @@
-import type { AttachmentAnswer } from '@esheet/core';
+import type { AttachmentAnswer, FileInput } from '@esheet/core';
 
 // ---------------------------------------------------------------------------
 // Shared file/attachment helpers used by FileField.
@@ -26,16 +26,32 @@ export const fileMatchesAccept = (file: File, accept?: string): boolean => {
   });
 };
 
+export interface FileMetadata {
+  readonly contentType: string;
+  readonly title: string;
+  readonly size: number;
+}
+
+/** Normalize metadata shared by inline attachments and external file stores. */
+export const getFileMetadata = (file: File): FileMetadata => ({
+  contentType: file.type || 'application/octet-stream',
+  title: file.name,
+  size: file.size,
+});
+
+export const fileToInput = (file: File): FileInput => ({
+  content: file,
+  ...getFileMetadata(file),
+});
+
 /** Read a File into the AttachmentAnswer shape (dataUrl-based). */
 export const readFileAsAttachment = (file: File): Promise<AttachmentAnswer> =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () =>
       resolve({
-        contentType: file.type || 'application/octet-stream',
+        ...getFileMetadata(file),
         dataUrl: reader.result as string,
-        title: file.name,
-        size: file.size,
       });
     reader.onerror = () => reject(reader.error);
     reader.readAsDataURL(file);

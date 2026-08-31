@@ -1,3 +1,5 @@
+import type { FileReference } from '@esheet/core';
+
 /** Who authored a row — identity id plus display name at authoring time. */
 export interface DocumentListAuthor {
   readonly id: string;
@@ -13,6 +15,8 @@ export interface DocumentListDocument {
   readonly docId: string;
   readonly source: string;
   readonly file: string;
+  /** External bytes for the current file-backed revision. */
+  readonly fileReference?: FileReference;
   /**
    * Who authored this row, stamped by the host at save. "Own" means author,
    * not source — `source` says which system, this says which person. Absent
@@ -117,6 +121,8 @@ export interface DocumentRevision {
   readonly at?: string;
   readonly contentType?: string;
   readonly size?: number;
+  /** External bytes for this historical file-backed revision. */
+  readonly fileReference?: FileReference;
   /**
    * The superseded prose, kept in full on inline rows — the case doc is the
    * store, so history travels with it. File-backed rows never carry this.

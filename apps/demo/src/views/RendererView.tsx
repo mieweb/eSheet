@@ -8,6 +8,7 @@ import {
 } from '@esheet/renderer';
 import { createDocumentListFieldProvider } from '@esheet/fields-documents';
 import { permissiveDocumentListCapabilities } from '@esheet/fields-documents';
+import { createFileStoreProvider } from '@esheet/fields';
 import { Navbar } from '../components/Navbar';
 import {
   Alert,
@@ -35,7 +36,10 @@ import {
 } from '@mieweb/ui';
 import { ClipboardList, SlidersHorizontal, Smartphone } from 'lucide-react';
 import { updateOzwellTools, FLOWIE_KEY } from '../ozwell-setup.js';
-import { createDemoDocumentListRepository } from '../document-list-demo-repository.js';
+import {
+  createDemoDocumentListRepository,
+  createDemoFileStore,
+} from '../document-list-demo-repository.js';
 
 interface SubmitResult {
   readonly kind: 'success' | 'error';
@@ -117,6 +121,7 @@ export function RendererView() {
     () => createDemoDocumentListRepository(),
     []
   );
+  const fileStore = useMemo(() => createDemoFileStore(), []);
 
   const resetFormKey = useCallback(() => {
     setFormKey((prev) => prev + 1);
@@ -218,8 +223,9 @@ export function RendererView() {
   const documentListProvider = createDocumentListFieldProvider(
     // A demo protects nothing; a real host resolves its own capabilities.
     { capabilities: permissiveDocumentListCapabilities },
-    { repository: documentRepository }
+    { repository: documentRepository, fileStore }
   );
+  const fileStoreProvider = createFileStoreProvider(fileStore);
 
   return (
     <>
@@ -395,7 +401,7 @@ export function RendererView() {
                       bottomNavigation={bottomNavigation}
                       validateNavigation={validateNavigation}
                       onRendererToolsReady={onRendererToolsReady}
-                      fieldProviders={[documentListProvider]}
+                      fieldProviders={[fileStoreProvider, documentListProvider]}
                       onReady={() => {
                         const def = rendererRef.current
                           ?.getFormStore()

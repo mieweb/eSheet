@@ -1,15 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
-  createFileDocumentStore,
   createInlineDocumentStore,
   unsupportedColumns,
   type DocumentRowRegistry,
 } from './documentStore.js';
 import { runDocumentStoreConformance } from './documentStoreConformance.js';
-import type {
-  DocumentListContent,
-  DocumentListRepository,
-} from './document-list-runtime.js';
 import type { DocumentListDocument } from './types.js';
 
 function memoryRegistry(): DocumentRowRegistry {
@@ -18,32 +13,6 @@ function memoryRegistry(): DocumentRowRegistry {
     rows: () => rows,
     write: (next) => {
       rows = next;
-    },
-  };
-}
-
-/**
- * A memory stand-in for eCase's blob repository: content by id, every
- * revision retained forever — the blob store's documented policy.
- */
-function memoryRepository(): DocumentListRepository {
-  const bytes = new Map<string, DocumentListContent>();
-  return {
-    load: async () => ({ documents: [] }),
-    save: async (_context, document, _signal, content) => {
-      if (content) {
-        bytes.set(document.id, {
-          text: typeof content.content === 'string' ? content.content : '',
-          contentType: content.contentType,
-        });
-      }
-      return document;
-    },
-    remove: async () => undefined,
-    loadContent: async (_context, document) => {
-      const content = bytes.get(document.id);
-      if (!content) throw new Error(`no content for '${document.id}'`);
-      return content;
     },
   };
 }
@@ -64,24 +33,6 @@ describe('DocumentStore conformance (ED.46/ED.47/ED.50)', () => {
       'appended prose',
       'appended prose',
     ]);
-  });
-
-  it('the file store keeps rows in the answer and bytes in the repository', async () => {
-    const registry = memoryRegistry();
-    const store = createFileDocumentStore({
-      registry,
-      repository: memoryRepository(),
-      context: { formInstanceId: 'conformance', fieldId: 'letterLog' },
-    });
-    await runDocumentStoreConformance(store, {
-      retainsContentAfterRemove: true,
-      // The row names only the head; prior bytes are the backend's business.
-      priorContentAddressable: false,
-    });
-    // Metadata history rides the row; the prose stays behind the repository.
-    const row = registry.rows()[0];
-    expect(row.history?.every((entry) => entry.body === undefined)).toBe(true);
-    expect(row.history).toHaveLength(5);
   });
 });
 

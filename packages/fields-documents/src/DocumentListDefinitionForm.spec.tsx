@@ -1,12 +1,9 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useState } from 'react';
-import type { FormDefinition } from '@esheet/core';
+import type { FileInput, FormDefinition } from '@esheet/core';
 import { DocumentListComposePanel } from './DocumentListWorkflows.js';
 import { parseMdy } from './mdy.js';
-import type {
-  DocumentListContentInput,
-  DocumentListRuntimeState,
-} from './document-list-runtime.js';
+import type { DocumentListRuntimeState } from './document-list-runtime.js';
 import type {
   DocumentListDocument,
   DocumentListWorkflowMode,
@@ -141,10 +138,10 @@ function ComposeHarness({
 
 function savedCall(
   runtime: DocumentListRuntimeState
-): [DocumentListDocument, DocumentListContentInput] {
+): [DocumentListDocument, FileInput] {
   return (runtime.saveDocument as ReturnType<typeof vi.fn>).mock.calls[0] as [
     DocumentListDocument,
-    DocumentListContentInput
+    FileInput
   ];
 }
 

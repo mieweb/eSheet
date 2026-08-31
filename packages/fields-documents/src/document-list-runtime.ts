@@ -1,4 +1,4 @@
-import type { FormStore } from '@esheet/core';
+import type { FileInput, FileStore, FormStore } from '@esheet/core';
 import { DOCUMENT_LIST_MARKDOWN_TYPE, priorRevisionOf } from './data.js';
 import type { DocumentListDocument, DocumentRevision } from './types.js';
 
@@ -22,12 +22,6 @@ export interface DocumentListContent {
   readonly revision?: string;
 }
 
-export interface DocumentListContentInput {
-  readonly content: string | Blob;
-  readonly contentType?: string;
-  readonly size?: number;
-}
-
 export interface DocumentListRepository {
   seed?: (
     context: DocumentListRepositoryContext,
@@ -40,19 +34,13 @@ export interface DocumentListRepository {
   save: (
     context: DocumentListRepositoryContext,
     document: DocumentListDocument,
-    signal: AbortSignal,
-    content?: DocumentListContentInput
+    signal: AbortSignal
   ) => Promise<DocumentListDocument>;
   remove: (
     context: DocumentListRepositoryContext,
     document: DocumentListDocument,
     signal: AbortSignal
   ) => Promise<void>;
-  loadContent: (
-    context: DocumentListRepositoryContext,
-    document: DocumentListDocument,
-    signal: AbortSignal
-  ) => Promise<DocumentListContent>;
   /**
    * Revisions of one document, oldest first, where the backend keeps them
    * (prior SHAs, an archive table). Absent means the row is the only source.
@@ -106,10 +94,13 @@ export interface DocumentListRuntimeState {
   upsertDocument: (document: DocumentListDocument) => void;
   saveDocument: (
     document: DocumentListDocument,
-    content?: DocumentListContentInput
+    content?: FileInput
   ) => Promise<DocumentListDocument>;
   removeDocument: (documentId: string) => Promise<void>;
-  loadContent: (documentId: string) => Promise<DocumentListContent | undefined>;
+  loadContent: (
+    documentId: string,
+    revision?: number
+  ) => Promise<DocumentListContent | undefined>;
   /** ED.43 — the document's history, newest first, head included. */
   listRevisions: (documentId: string) => Promise<readonly DocumentRevision[]>;
   refresh: () => Promise<void>;
@@ -121,6 +112,7 @@ export interface CreateDocumentListRuntimeExtensionOptions {
   readonly formStore: FormStore;
   readonly context: DocumentListRepositoryContext;
   readonly repository?: DocumentListRepository;
+  readonly fileStore?: FileStore;
   readonly initialDocuments?: readonly DocumentListDocument[];
   /**
    * Called whenever the row list changes, so the field can publish it as its
@@ -195,7 +187,8 @@ export function getDocumentListRuntimeState(
 export function createDocumentListRuntimeExtension(
   options: CreateDocumentListRuntimeExtensionOptions
 ): DocumentListRuntimeState | undefined {
-  const { formStore, context, repository, onDocumentsChange } = options;
+  const { formStore, context, repository, fileStore, onDocumentsChange } =
+    options;
   const existing = getDocumentListRuntimeState(formStore, context.fieldId);
   if (existing) return existing;
 
@@ -320,8 +313,12 @@ export function createDocumentListRuntimeExtension(
       const current = getState();
       if (!current || current.disposed) return document;
       current.upsertDocument(document);
-      // No bytes, no host: an inline row's content is already in the answer.
-      if (!repository || !content) return document;
+      // An inline row's content and metadata are already in the answer.
+      if (!content && document.body != null) return document;
+      if (!content && !repository) return document;
+      const contentStore = fileStore;
+      if (content && !contentStore)
+        throw new Error('FileStore is required for file-backed documents.');
 
       const operationKey = `save:${document.id}`;
       operationControllers.get(operationKey)?.abort();
@@ -340,9 +337,13 @@ export function createDocumentListRuntimeExtension(
       }));
 
       try {
-        const saved = content
-          ? await repository.save(context, document, controller.signal, content)
-          : await repository.save(context, document, controller.signal);
+        const stored = content
+          ? { ...document, fileReference: await contentStore!.store(content) }
+          : document;
+        if (controller.signal.aborted) throw controller.signal.reason;
+        const saved = repository
+          ? await repository.save(context, stored, controller.signal)
+          : stored;
         if (!getState() || operationRequestIds.get(operationKey) !== requestId)
           return saved;
         getState()?.upsertDocument(saved);
@@ -471,20 +472,39 @@ export function createDocumentListRuntimeExtension(
       }
     },
 
-    loadContent: (documentId) => {
-      const existing = contentRequests.get(documentId);
+    loadContent: async (documentId, revision) => {
+      const requestKey =
+        revision === undefined ? documentId : `${documentId}:${revision}`;
+      const existing = contentRequests.get(requestKey);
       if (existing) return existing.promise;
       const current = getState();
       if (!current) return Promise.resolve(undefined);
-      const cached = current.contents[documentId];
+      const cached = current.contents[requestKey];
       if (cached?.status === 'loaded' && cached.content)
         return Promise.resolve(cached.content);
       // An inline row carries its own content; the repository never saw it.
-      const inline = current.documents[documentId]?.body;
+      const row = current.documents[documentId];
+      const inline =
+        revision === undefined || revision === (row?.rev ?? 0)
+          ? row?.body
+          : row?.history?.find((entry) => entry.rev === revision)?.body;
       if (inline != null) return Promise.resolve(inlineContent(inline));
-      if (current.disposed || !repository) return Promise.resolve(undefined);
-      const document = current.documents[documentId];
-      if (!document) return Promise.resolve(undefined);
+      if (current.disposed || !fileStore) return Promise.resolve(undefined);
+      if (!row) return Promise.resolve(undefined);
+      const fileReference =
+        revision === undefined || revision === (row.rev ?? 0)
+          ? row.fileReference
+          : (
+              row.history ??
+              (repository?.listRevisions
+                ? await repository.listRevisions(
+                    context,
+                    row,
+                    new AbortController().signal
+                  )
+                : [])
+            ).find((entry) => entry.rev === revision)?.fileReference;
+      if (!fileReference) return Promise.resolve(undefined);
 
       const controller = new AbortController();
       const requestId = ++nextContentRequestId;
@@ -492,34 +512,46 @@ export function createDocumentListRuntimeExtension(
         ...next,
         contents: {
           ...next.contents,
-          [documentId]: { status: 'loading' },
+          [requestKey]: { status: 'loading' },
         },
         error: undefined,
       }));
 
-      const promise = repository
-        .loadContent(context, document, controller.signal)
-        .then((content) => {
-          const request = contentRequests.get(documentId);
+      const promise = fileStore
+        .load(fileReference)
+        .then(async (file) => {
+          if (controller.signal.aborted) throw controller.signal.reason;
+          let text: string | undefined;
+          let reference: string | undefined;
+          if (typeof file.content === 'string') text = file.content;
+          else if (file.contentType.startsWith('text/'))
+            text = await file.content.text();
+          else reference = URL.createObjectURL(file.content);
+          const content: DocumentListContent = {
+            ...(text !== undefined ? { text } : { reference }),
+            contentType: file.contentType,
+            size: file.size,
+          };
+          const request = contentRequests.get(requestKey);
           if (request?.requestId === requestId && getState()) {
             updateState((next) => ({
               ...next,
               contents: {
                 ...next.contents,
-                [documentId]: { status: 'loaded', content },
+                [requestKey]: { status: 'loaded', content },
               },
             }));
           }
           return content;
         })
         .catch((error: unknown) => {
-          const request = contentRequests.get(documentId);
+          const request = contentRequests.get(requestKey);
           if (request?.requestId === requestId && getState()) {
             updateState((next) => ({
               ...next,
               contents: {
                 ...next.contents,
-                [documentId]: {
+                [requestKey]: {
                   status: 'error',
                   error: errorMessage(error),
                 },
@@ -529,12 +561,12 @@ export function createDocumentListRuntimeExtension(
           throw error;
         })
         .finally(() => {
-          const request = contentRequests.get(documentId);
+          const request = contentRequests.get(requestKey);
           if (request?.requestId === requestId)
-            contentRequests.delete(documentId);
+            contentRequests.delete(requestKey);
         });
 
-      contentRequests.set(documentId, { requestId, controller, promise });
+      contentRequests.set(requestKey, { requestId, controller, promise });
       return promise;
     },
 

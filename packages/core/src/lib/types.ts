@@ -1,5 +1,6 @@
 import { z } from 'zod/mini';
 import { getFieldTypeMeta } from './registry.js';
+import type { FileReference } from './file-store.js';
 
 // ---------------------------------------------------------------------------
 // Field Types
@@ -1492,6 +1493,7 @@ export type AttachmentAnswer = {
   contentType: string;
   dataUrl?: string;
   url?: string;
+  fileReference?: FileReference;
   title?: string;
   /** File size in bytes (optional). */
   size?: number;
@@ -1502,6 +1504,7 @@ export const attachmentAnswerSchema = z.object({
   contentType: z.string(),
   dataUrl: z.optional(z.string()),
   url: z.optional(z.string()),
+  fileReference: z.optional(z.looseObject({ id: z.string() })),
   title: z.optional(z.string()),
   size: z.optional(z.number()),
 });

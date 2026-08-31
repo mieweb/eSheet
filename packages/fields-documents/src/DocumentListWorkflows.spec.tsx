@@ -1,8 +1,8 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useState } from 'react';
+import type { FileInput } from '@esheet/core';
 import type {
   DocumentListContent,
-  DocumentListContentInput,
   DocumentListRuntimeState,
 } from './document-list-runtime.js';
 import {
@@ -232,7 +232,7 @@ describe('the docked composer', () => {
     await waitFor(() => expect(runtime.saveDocument).toHaveBeenCalledOnce());
     const [savedDocument, content] = (
       runtime.saveDocument as ReturnType<typeof vi.fn>
-    ).mock.calls[0] as [DocumentListDocument, DocumentListContentInput];
+    ).mock.calls[0] as [DocumentListDocument, FileInput];
     expect(savedDocument.title).toBe('Visit note');
     expect(savedDocument.docType).toBe('Clinical note');
     expect(content.content).toBe('Employer confirmed return date.');
@@ -297,7 +297,7 @@ describe('document list workflow panels', () => {
     await waitFor(() => expect(runtime.saveDocument).toHaveBeenCalledOnce());
     const [savedDocument, content] = (
       runtime.saveDocument as ReturnType<typeof vi.fn>
-    ).mock.calls[0] as [typeof document, DocumentListContentInput];
+    ).mock.calls[0] as [typeof document, FileInput];
 
     expect(savedDocument).toEqual(
       expect.objectContaining({
@@ -382,7 +382,7 @@ describe('document list workflow panels', () => {
     await waitFor(() => expect(runtime.saveDocument).toHaveBeenCalledOnce());
     const [savedDocument, content] = (
       runtime.saveDocument as ReturnType<typeof vi.fn>
-    ).mock.calls[0] as [DocumentListDocument, DocumentListContentInput?];
+    ).mock.calls[0] as [DocumentListDocument, FileInput?];
 
     expect(savedDocument.docType).toBe('progress-note');
     expect(savedDocument.body).toBe('Employer confirmed return date.');
@@ -476,7 +476,7 @@ describe('document list workflow panels', () => {
     await waitFor(() => expect(runtime.saveDocument).toHaveBeenCalledOnce());
     const [savedDocument, content] = (
       runtime.saveDocument as ReturnType<typeof vi.fn>
-    ).mock.calls[0] as [typeof document, DocumentListContentInput];
+    ).mock.calls[0] as [typeof document, FileInput];
 
     expect(savedDocument).toEqual(
       expect.objectContaining({
@@ -493,6 +493,33 @@ describe('document list workflow panels', () => {
       })
     );
     expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it('rejects upload types excluded by the shared accept matcher', () => {
+    const runtime = createRuntime();
+    const file = new File(['image data'], 'photo.png', {
+      type: 'image/png',
+    });
+
+    render(
+      <DocumentListUploadPanel
+        open
+        onOpenChange={vi.fn()}
+        runtime={runtime}
+        inputPrefix="form-1-documents"
+        accept="application/pdf"
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText('Choose a file'), {
+      target: { files: [file] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save document' }));
+
+    expect(screen.getByRole('alert').textContent).toContain(
+      'File type not accepted: photo.png'
+    );
+    expect(runtime.saveDocument).not.toHaveBeenCalled();
   });
 
   it('resets upload form state when cancelled', () => {

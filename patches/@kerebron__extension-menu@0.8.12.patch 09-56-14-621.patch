@@ -1,0 +1,76 @@
+diff --git a/assets/custom-menu.css b/assets/custom-menu.css
+--- a/assets/custom-menu.css
++++ b/assets/custom-menu.css
+@@ -280,7 +280,7 @@
+ /* Overflow menu dropdown - Google Docs style */
+ .kb-custom-menu__overflow-menu {
+   position: absolute;
+-  top: 32px;
++  top: calc(100% + 4px);
+   right: var(--kb-space-xs);
+   width: auto;
+   min-width: 180px;
+diff --git a/esm/CustomMenuPlugin.js b/esm/CustomMenuPlugin.js
+--- a/esm/CustomMenuPlugin.js
++++ b/esm/CustomMenuPlugin.js
+@@ -622,7 +622,7 @@ export class CustomMenuView {
+                         const mousedownEvent = new MouseEvent('mousedown', {
+                             bubbles: true,
+                             cancelable: true,
+-                            view: dntShim.dntGlobalThis,
++                            view: this.editorView.dom.ownerDocument.defaultView,
+                         });
+                         dom.dispatchEvent(mousedownEvent);
+                     }
+@@ -759,7 +759,7 @@ export class CustomMenuView {
+                             const mousedownEvent = new MouseEvent('mousedown', {
+                                 bubbles: true,
+                                 cancelable: true,
+-                                view: dntShim.dntGlobalThis,
++                                view: this.editorView.dom.ownerDocument.defaultView,
+                             });
+                             dom.dispatchEvent(mousedownEvent);
+                         }
+@@ -771,7 +771,7 @@ export class CustomMenuView {
+                             const mousedownEvent = new MouseEvent('mousedown', {
+                                 bubbles: true,
+                                 cancelable: true,
+-                                view: dntShim.dntGlobalThis,
++                                view: this.editorView.dom.ownerDocument.defaultView,
+                             });
+                             dom.dispatchEvent(mousedownEvent);
+                         }
+@@ -905,6 +905,6 @@ export class CustomMenuView {
+             const isDropdown = tool.element.content !== undefined;
+             if (isDropdown) {
+-                const { dom } = tool.element.render(this.editorView);
++                const { dom, update } = tool.element.render(this.editorView);
+                 const dropdownMenu = dom.querySelector('.kb-dropdown__content');
+                 if (dropdownMenu) {
+                     dropdownMenu.style.display = 'none';
+@@ -913,9 +913,11 @@ export class CustomMenuView {
+                 }
+                 wrapper.appendChild(dom);
++                update(this.editorView.state);
+             }
+             else {
+-                const { dom } = tool.element.render(this.editorView);
++                const { dom, update } = tool.element.render(this.editorView);
+                 wrapper.appendChild(dom);
++                update(this.editorView.state);
+             }
+             // Temporarily add to toolbar to measure
+             this.toolbar.appendChild(wrapper);
+@@ -1513,11 +1515,7 @@ export class CustomMenuView {
+         }
+     }
+     update(view, prevState) {
+-        // Re-render tools to update their state (original approach)
+-        // Note: This is less efficient but more reliable than storing update functions
+-        this.tools.forEach((tool) => {
+-            tool.element.render(this.editorView);
+-        });
++        this.render();
+     }
+     destroy() {
+         // Clean up event listeners

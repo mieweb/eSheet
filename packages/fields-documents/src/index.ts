@@ -124,7 +124,6 @@ export type {
 } from './draftChannel.js';
 export { bindDraftAnswers } from './draftBinding.js';
 export {
-  createFileDocumentStore,
   createInlineDocumentStore,
   unsupportedColumns,
 } from './documentStore.js';
@@ -138,7 +137,6 @@ export type { DocumentStorePolicies } from './documentStoreConformance.js';
 export type {
   CreateDocumentListRuntimeExtensionOptions,
   DocumentListContent,
-  DocumentListContentInput,
   DocumentListContentState,
   DocumentListContentStatus,
   DocumentListPendingOperation,

@@ -6,9 +6,13 @@ import {
 } from '@esheet/builder';
 import { createDocumentListFieldProvider } from '@esheet/fields-documents';
 import { permissiveDocumentListCapabilities } from '@esheet/fields-documents';
+import { createFileStoreProvider } from '@esheet/fields';
 import { Navbar } from '../components/Navbar.js';
 import { updateOzwellTools, FORMIE_KEY } from '../ozwell-setup.js';
-import { createDemoDocumentListRepository } from '../document-list-demo-repository.js';
+import {
+  createDemoDocumentListRepository,
+  createDemoFileStore,
+} from '../document-list-demo-repository.js';
 
 const INITIAL_DEF: FormDefinition = {
   id: 'demo-builder',
@@ -80,6 +84,7 @@ export function BuilderView() {
     () => createDemoDocumentListRepository(),
     []
   );
+  const fileStore = useMemo(() => createDemoFileStore(), []);
 
   useEffect(() => {
     updateOzwellTools(FORMIE_KEY);
@@ -92,8 +97,9 @@ export function BuilderView() {
   const documentListProvider = createDocumentListFieldProvider(
     // A demo protects nothing; a real host resolves its own capabilities.
     { capabilities: permissiveDocumentListCapabilities },
-    { repository: documentRepository }
+    { repository: documentRepository, fileStore }
   );
+  const fileStoreProvider = createFileStoreProvider(fileStore);
 
   return (
     <div className="demo-builder-view w-full h-screen flex flex-col">
@@ -104,7 +110,7 @@ export function BuilderView() {
             definition={INITIAL_DEF}
             onBuilderToolsReady={onBuilderToolsReady}
             allowDangerousJS={true}
-            fieldProviders={[documentListProvider]}
+            fieldProviders={[fileStoreProvider, documentListProvider]}
           />
         </div>
       </div>

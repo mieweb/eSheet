@@ -13,12 +13,17 @@ import {
   KerebronEditor,
   type KerebronEditorHandle,
 } from '@esheet/field-kerebron';
+import {
+  fileMatchesAccept,
+  formatFileSize,
+  getFileMetadata,
+} from '@esheet/fields';
 import { Button, Input, MarkdownRenderer } from '@mieweb/ui';
 import { Maximize2, Minimize2, X } from 'lucide-react';
+import type { FileInput } from '@esheet/core';
 import '@mieweb/ui/markdown.css';
 import type {
   DocumentListContent,
-  DocumentListContentInput,
   DocumentListRuntimeState,
 } from './document-list-runtime.js';
 import {
@@ -1011,24 +1016,28 @@ export function DocumentListUploadPanel({
       setError('Choose a file and enter a stored filename.');
       return;
     }
+    if (!fileMatchesAccept(file, accept)) {
+      setError(`File type not accepted: ${file.name}`);
+      return;
+    }
     if (maxFileSize != null && file.size > maxFileSize) {
-      setError(`File is larger than the ${maxFileSize} byte limit.`);
+      setError(`File is larger than the ${formatFileSize(maxFileSize)} limit.`);
       return;
     }
 
     const id = createDocumentId();
-    const contentType = file.type || 'application/octet-stream';
-    const content: DocumentListContentInput = {
+    const metadata = getFileMetadata(file);
+    const content: FileInput = {
       content: file,
-      contentType,
-      size: file.size,
+      contentType: metadata.contentType,
+      size: metadata.size,
     };
     const document: DocumentListDocument = {
       id,
       date: today(),
-      title: file.name,
+      title: metadata.title,
       subject: 'Uploaded document',
-      docType: contentType,
+      docType: metadata.contentType,
       docId: id,
       source: 'Upload',
       file: trimmedStoredName,

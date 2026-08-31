@@ -1,35 +1,43 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import type {
   AttachmentAnswer,
-  AttachmentManager,
   FieldComponentProps,
+  FileReference,
+  FileStore,
 } from '@esheet/core';
 import { FileField } from './FileField.js';
-import { createAttachmentManagerProvider } from '../../lib/AttachmentManagerProvider.js';
+import { createFileStoreProvider } from '../../lib/FileStoreProvider.js';
 
 // ---------------------------------------------------------------------------
 // The contract: with a manager the response carries a reference and never the
 // bytes; without one it carries the bytes exactly as it always has.
 // ---------------------------------------------------------------------------
 
-function fakeManager(): AttachmentManager & { removed: AttachmentAnswer[] } {
-  const removed: AttachmentAnswer[] = [];
+function fakeStore(): FileStore & { removed: FileReference[] } {
+  const removed: FileReference[] = [];
   return {
     removed,
-    store: async ({ dataUrl: _dataUrl, ...rest }: AttachmentAnswer) => ({
-      ...rest,
-      path: `blobs/${rest.title}`,
+    store: async (input) => ({
+      id: `blobs/${input.title}`,
+      contentType: input.contentType,
+      title: input.title,
+      size: input.size,
     }),
-    load: async (attachment) => ({ ...attachment, dataUrl: 'data:,loaded' }),
-    remove: async (attachment) => {
-      removed.push(attachment);
+    load: async (reference) => ({
+      content: new Blob(['loaded']),
+      contentType: reference.contentType,
+      title: reference.title,
+      size: reference.size,
+    }),
+    remove: async (reference) => {
+      removed.push(reference);
     },
   };
 }
 
 /** Renders through the provider stack exactly as the renderer would. */
-function withManager(manager: AttachmentManager, children: React.ReactNode) {
-  return createAttachmentManagerProvider(manager)(children);
+function withStore(store: FileStore, children: React.ReactNode) {
+  return createFileStoreProvider(store)(children);
 }
 
 function props(
@@ -59,12 +67,12 @@ const pick = (label: string, file: File) => {
 
 const report = () => new File(['bytes'], 'report.txt', { type: 'text/plain' });
 
-describe('FileField attachment storage', () => {
-  it('stores through the manager and keeps only the reference', async () => {
-    const manager = fakeManager();
+describe('FileField file storage', () => {
+  it('stores through the file store and keeps only the reference', async () => {
+    const store = fakeStore();
     const fieldProps = props({ fieldType: 'file', question: 'Upload file' });
 
-    render(withManager(manager, <FileField {...fieldProps} />));
+    render(withStore(store, <FileField {...fieldProps} />));
     pick('Choose file or drag and drop', report());
 
     await waitFor(() => expect(fieldProps.onResponse).toHaveBeenCalled());
@@ -73,12 +81,17 @@ describe('FileField attachment storage', () => {
         contentType: 'text/plain',
         title: 'report.txt',
         size: 5,
-        path: 'blobs/report.txt',
+        fileReference: {
+          id: 'blobs/report.txt',
+          contentType: 'text/plain',
+          title: 'report.txt',
+          size: 5,
+        },
       },
     });
   });
 
-  it('keeps the bytes inline when no manager is supplied', async () => {
+  it('keeps the bytes inline when no file store is supplied', async () => {
     const fieldProps = props({ fieldType: 'file', question: 'Upload file' });
 
     render(<FileField {...fieldProps} />);
@@ -90,18 +103,29 @@ describe('FileField attachment storage', () => {
     expect(fileData.dataUrl).toMatch(/^data:text\/plain/);
   });
 
-  it('tells the manager when a file is removed', async () => {
-    const manager = fakeManager();
-    const stored = { contentType: 'text/plain', title: 'report.txt', size: 5 };
+  it('tells the file store when a file is removed', async () => {
+    const store = fakeStore();
+    const reference: FileReference = {
+      id: 'blobs/report.txt',
+      contentType: 'text/plain',
+      title: 'report.txt',
+      size: 5,
+    };
+    const stored: AttachmentAnswer = {
+      contentType: 'text/plain',
+      title: 'report.txt',
+      size: 5,
+      fileReference: reference,
+    };
     const fieldProps = props(
       { fieldType: 'file', question: 'Upload file' },
       { response: { fileData: stored } }
     );
 
-    render(withManager(manager, <FileField {...fieldProps} />));
+    render(withStore(store, <FileField {...fieldProps} />));
     fireEvent.click(screen.getByLabelText('Remove report.txt'));
 
-    await waitFor(() => expect(manager.removed).toEqual([stored]));
+    await waitFor(() => expect(store.removed).toEqual([reference]));
     expect(fieldProps.onResponse).toHaveBeenCalledWith({ fileData: undefined });
   });
 });

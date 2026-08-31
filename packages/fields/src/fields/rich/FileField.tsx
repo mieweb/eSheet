@@ -2,15 +2,16 @@ import React, { useCallback, useState } from 'react';
 import type { FieldComponentProps, FileFieldDefinition } from '@esheet/core';
 import { TrashIcon, UploadIcon } from '../../icons.js';
 import {
+  fileToInput,
   formatFileSize,
   fileMatchesAccept,
   readFileAsAttachment,
 } from '../../lib/file-utils.js';
 import {
-  removeUnreferenced,
-  storeAttachments,
-  useAttachmentManager,
-} from '../../lib/AttachmentManagerProvider.js';
+  removeUnreferencedFiles,
+  storeFiles,
+  useFileStore,
+} from '../../lib/FileStoreProvider.js';
 
 const PREDEFINED_FILE_TYPES = [
   { label: 'JPEG', value: 'image/jpeg', accept: '.jpg,.jpeg' },
@@ -95,7 +96,7 @@ export const FileField = React.memo(function FileField({
   const def = field.definition as FileFieldDefinition & { question?: string };
   const instanceId = form.getState().instanceId;
   const maxFiles = def.maxFiles ?? 1;
-  const attachmentManager = useAttachmentManager();
+  const fileStore = useFileStore();
   const [isDragActive, setIsDragActive] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [sizeUnit, setSizeUnit] = useState<SizeUnit>(
@@ -155,10 +156,9 @@ export const FileField = React.memo(function FileField({
       }
 
       void (async () => {
-        const read = await Promise.all(validFiles.map(readFileAsAttachment));
-        // The host's manager takes the bytes and hands back a reference; with
-        // no manager the data URL stays on the response, as it always has.
-        const stored = await storeAttachments(attachmentManager, read);
+        const stored = fileStore
+          ? await storeFiles(fileStore, validFiles.map(fileToInput))
+          : await Promise.all(validFiles.map(readFileAsAttachment));
         const updated = [...fileDataArr, ...stored];
         onResponse({ fileData: maxFiles === 1 ? updated[0] : updated });
       })();
@@ -169,14 +169,14 @@ export const FileField = React.memo(function FileField({
       def.maxFileSize,
       def.accept,
       onResponse,
-      attachmentManager,
+      fileStore,
     ]
   );
 
   const handleRemoveFile = useCallback(
     (index: number) => {
       const updated = fileDataArr.filter((_, i) => i !== index);
-      removeUnreferenced(attachmentManager, fileDataArr, updated);
+      removeUnreferencedFiles(fileStore, fileDataArr, updated);
       onResponse({
         fileData:
           updated.length === 0
@@ -186,7 +186,7 @@ export const FileField = React.memo(function FileField({
             : updated,
       });
     },
-    [fileDataArr, maxFiles, onResponse, attachmentManager]
+    [fileDataArr, maxFiles, onResponse, fileStore]
   );
 
   const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {

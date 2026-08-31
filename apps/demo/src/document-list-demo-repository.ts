@@ -1,6 +1,5 @@
+import type { FileInput, FileReference, FileStore } from '@esheet/core';
 import type {
-  DocumentListContent,
-  DocumentListContentInput,
   DocumentListDocument,
   DocumentListRepository,
   DocumentListRepositoryContext,
@@ -9,7 +8,6 @@ import type {
 
 interface DemoDocumentBucket {
   readonly documents: Map<string, DocumentListDocument>;
-  readonly contents: Map<string, DocumentListContentInput>;
   readonly listeners: Set<(snapshot: DocumentListSnapshot) => void>;
   revision: number;
   seeded: boolean;
@@ -22,10 +20,34 @@ function bucketKey(context: DocumentListRepositoryContext): string {
 function createBucket(): DemoDocumentBucket {
   return {
     documents: new Map(),
-    contents: new Map(),
     listeners: new Set(),
     revision: 0,
     seeded: false,
+  };
+}
+
+export function createDemoFileStore(): FileStore {
+  const files = new Map<string, FileInput>();
+
+  return {
+    store: async (input) => {
+      const id = globalThis.crypto.randomUUID();
+      files.set(id, input);
+      return {
+        id,
+        contentType: input.contentType,
+        title: input.title,
+        size: input.size,
+      } satisfies FileReference;
+    },
+    load: async (reference) => {
+      const file = files.get(reference.id);
+      if (!file) throw new Error(`File '${reference.id}' was not found.`);
+      return file;
+    },
+    remove: async (reference) => {
+      files.delete(reference.id);
+    },
   };
 }
 
@@ -73,11 +95,10 @@ export function createDemoDocumentListRepository(): DocumentListRepository {
       return snapshot(getBucket(context));
     },
 
-    save: async (context, document, signal, content) => {
+    save: async (context, document, signal) => {
       assertNotAborted(signal);
       const bucket = getBucket(context);
       bucket.documents.set(document.id, document);
-      if (content) bucket.contents.set(document.id, content);
       bucket.revision += 1;
       notify(bucket);
       return document;
@@ -87,50 +108,8 @@ export function createDemoDocumentListRepository(): DocumentListRepository {
       assertNotAborted(signal);
       const bucket = getBucket(context);
       bucket.documents.delete(document.id);
-      bucket.contents.delete(document.id);
       bucket.revision += 1;
       notify(bucket);
-    },
-
-    loadContent: async (
-      context,
-      document,
-      signal
-    ): Promise<DocumentListContent> => {
-      assertNotAborted(signal);
-      const savedContent = getBucket(context).contents.get(document.id);
-      if (!savedContent) {
-        return { reference: document.file };
-      }
-      const contentType =
-        savedContent.contentType ||
-        (typeof savedContent.content === 'string'
-          ? 'text/plain'
-          : savedContent.content.type || 'application/octet-stream');
-      const size =
-        savedContent.size ??
-        (typeof savedContent.content === 'string'
-          ? new Blob([savedContent.content]).size
-          : savedContent.content.size);
-      if (typeof savedContent.content === 'string') {
-        return { text: savedContent.content, contentType, size };
-      }
-      if (contentType.startsWith('text/')) {
-        return {
-          text: await savedContent.content.text(),
-          contentType,
-          size,
-        };
-      }
-      if (contentType.startsWith('image/')) {
-        const reference = URL.createObjectURL(savedContent.content);
-        return { reference, contentType, size };
-      }
-      return {
-        reference: document.file,
-        contentType,
-        size,
-      };
     },
 
     subscribe: (context, onSnapshot) => {

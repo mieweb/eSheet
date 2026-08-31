@@ -124,9 +124,7 @@ describe('DocumentListFieldProvider', () => {
       formStore.getState().getExtension('documents', 'documents')
     ).toBeUndefined();
     expect(
-      formStore
-        .getState()
-        .getExtension('@esheet/fields-documents', 'documents')
+      formStore.getState().getExtension('@esheet/fields-documents', 'documents')
     ).toBe(runtimeStores[0]);
     unmount();
   });
