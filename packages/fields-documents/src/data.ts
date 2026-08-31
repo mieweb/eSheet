@@ -8,6 +8,7 @@ import type {
   DocumentRevision,
   DocumentRevisionAction,
 } from './types.js';
+import type { FileReference } from '@esheet/core';
 import { DOCUMENT_REVISION_ACTIONS } from './types.js';
 
 /** Content type of composed and inline markdown documents. */
@@ -229,6 +230,15 @@ function historyValue(value: unknown): DocumentRevision[] | null {
   return revisions.length > 0 ? revisions : null;
 }
 
+function fileReferenceValue(value: unknown): FileReference | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const reference = value as Record<string, unknown>;
+  if (typeof reference.id !== 'string' || !reference.id) return null;
+  if (typeof reference.contentType !== 'string' || !reference.contentType)
+    return null;
+  return { ...reference, id: reference.id, contentType: reference.contentType };
+}
+
 export function normalizeDocumentRow(
   value: unknown
 ): DocumentListDocument | null {
@@ -242,6 +252,7 @@ export function normalizeDocumentRow(
   const linkedTo = linkValue(input.linkedTo);
   const removed = removedValue(input.removed);
   const history = historyValue(input.history);
+  const fileReference = fileReferenceValue(input.fileReference);
   return {
     id,
     date: displayValue(input.date),
@@ -259,6 +270,7 @@ export function normalizeDocumentRow(
     ...(linkedTo ? { linkedTo } : {}),
     ...(removed ? { removed } : {}),
     ...(history ? { history } : {}),
+    ...(fileReference ? { fileReference } : {}),
     // Host bookkeeping: carried through untouched, absent when not recorded.
     ...(typeof input.sha256 === 'string' && input.sha256
       ? { sha256: input.sha256 }
