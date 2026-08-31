@@ -204,6 +204,7 @@ export interface DocumentListInput {
   readonly removed?: unknown;
   readonly history?: unknown;
   readonly file?: unknown;
+  readonly fileReference?: unknown;
   readonly sha256?: unknown;
   readonly size?: unknown;
   readonly body?: unknown;

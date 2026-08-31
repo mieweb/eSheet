@@ -58,6 +58,22 @@ describe('document list data', () => {
     expect(parseDocumentListAnswer('{invalid')).toEqual([]);
   });
 
+  it('preserves the file reference needed to load a preview', () => {
+    const fileReference = {
+      id: 'attachments/letter.md',
+      contentType: 'text/markdown',
+      title: 'letter.md',
+      size: 12,
+      sha256: 'abc123',
+    };
+
+    expect(
+      parseDocumentListAnswer(
+        JSON.stringify({ documents: [{ id: 'doc-1', fileReference }] })
+      )[0].fileReference
+    ).toEqual(fileReference);
+  });
+
   it('round-trips a structured author and folds a legacy string one into source', () => {
     const [structured] = normalizeDocumentRows([
       { id: 'doc-1', title: 'Note', author: { id: 'u-1', name: 'Casey' } },
