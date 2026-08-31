@@ -280,7 +280,10 @@ describe('document list runtime store', () => {
     const secondLoad = store.getState().loadContent(documentOne.id);
     expect(fileStore.load).toHaveBeenCalledOnce();
 
-    contentRequest.resolve({ content: 'Loaded once', contentType: 'text/plain' });
+    contentRequest.resolve({
+      content: 'Loaded once',
+      contentType: 'text/plain',
+    });
     await expect(firstLoad).resolves.toEqual({
       text: 'Loaded once',
       contentType: 'text/plain',

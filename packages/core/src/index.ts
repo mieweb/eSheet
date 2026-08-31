@@ -120,11 +120,7 @@ export {
   extractResponseValue,
 } from './lib/functions/normalize-responses.js';
 
-export type {
-  FileInput,
-  FileReference,
-  FileStore,
-} from './lib/file-store.js';
+export type { FileInput, FileReference, FileStore } from './lib/file-store.js';
 
 export {
   ACTIVITY_RESPONSE_KEY,

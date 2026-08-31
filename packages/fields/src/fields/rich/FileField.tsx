@@ -163,14 +163,7 @@ export const FileField = React.memo(function FileField({
         onResponse({ fileData: maxFiles === 1 ? updated[0] : updated });
       })();
     },
-    [
-      fileDataArr,
-      maxFiles,
-      def.maxFileSize,
-      def.accept,
-      onResponse,
-      fileStore,
-    ]
+    [fileDataArr, maxFiles, def.maxFileSize, def.accept, onResponse, fileStore]
   );
 
   const handleRemoveFile = useCallback(
