@@ -18,10 +18,6 @@ const prosemirrorModelPath = require.resolve('prosemirror-model', {
   ],
 });
 
-/**
- * Serves Kerebron WASM directly from its npm package during development and
- * emits the assets into production builds without creating a local copy.
- */
 function kerebronWasmPlugin(command: 'build' | 'serve'): Plugin {
   const assetsDir = resolve(
     import.meta.dirname,
@@ -190,6 +186,13 @@ export default defineConfig(({ command, mode }) => {
           replacement: resolve(
             import.meta.dirname,
             '../../packages/field-health/src/index.ts'
+          ),
+        },
+        {
+          find: '@esheet/fields-documents',
+          replacement: resolve(
+            import.meta.dirname,
+            '../../packages/fields-documents/src/index.ts'
           ),
         },
         {

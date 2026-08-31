@@ -32,11 +32,9 @@
   ],
   "dependencies": {
     "@esheet/core": "workspace:*",
-    "@kerebron/editor": "^0.8.9",
-    "@kerebron/editor-kits": "^0.8.9",
-    "@kerebron/editor-react": "^0.8.9",
-    "@kerebron/extension-basic-editor": "^0.8.9",
-    "@kerebron/extension-menu": "^0.8.9",
+    "@kerebron/editor": "^0.8.12",
+    "@kerebron/editor-kits": "^0.8.12",
+    "@kerebron/extension-basic-editor": "^0.8.12",
     "react": "^19.2.4",
     "tslib": "^2.3.0"
   },

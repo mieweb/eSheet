@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { render, act, cleanup } from '@testing-library/react';
+import { render, act, cleanup, waitFor } from '@testing-library/react';
 import { fireEvent } from '@testing-library/react';
 import { EsheetRenderer, type EsheetRendererHandle } from './EsheetRenderer.js';
 
@@ -379,6 +379,122 @@ pages:
 
     expect(container.querySelector('.pages-nav-top')).toBeNull();
     expect(container.querySelector('.pages-nav-footer')).toBeNull();
+  });
+
+  // Issue #147 — the active page is host-addressable.
+  describe('page routing (initialPageId / onPageChange / handle)', () => {
+    const routedForm = {
+      id: 'page-routing',
+      pages: [
+        {
+          id: 'case',
+          title: 'Case',
+          fields: [{ id: 'first-field', fieldType: 'text', question: 'One' }],
+        },
+        {
+          id: 'assessment',
+          title: 'Assessment',
+          fields: [{ id: 'second-field', fieldType: 'text', question: 'Two' }],
+        },
+        {
+          id: 'documents',
+          title: 'Documents',
+          fields: [{ id: 'third-field', fieldType: 'text', question: 'Three' }],
+        },
+      ],
+    };
+
+    it('seeds the initial page from initialPageId without firing onPageChange', async () => {
+      const onPageChange = vi.fn();
+      const { container } = render(
+        <EsheetRenderer
+          formDataInput={routedForm}
+          topNavigation
+          initialPageId="documents"
+          onPageChange={onPageChange}
+        />
+      );
+
+      await waitFor(() =>
+        expect(
+          container.querySelector('[data-field-id="third-field"]')
+        ).not.toBeNull()
+      );
+      expect(onPageChange).not.toHaveBeenCalled();
+    });
+
+    it('falls back to the first page for an unknown initialPageId', async () => {
+      const { container } = render(
+        <EsheetRenderer
+          formDataInput={routedForm}
+          topNavigation
+          initialPageId="bogus"
+        />
+      );
+
+      await waitFor(() =>
+        expect(
+          container.querySelector('[data-field-id="first-field"]')
+        ).not.toBeNull()
+      );
+    });
+
+    it('reports user tab clicks through onPageChange', async () => {
+      const onPageChange = vi.fn();
+      const { container } = render(
+        <EsheetRenderer
+          formDataInput={routedForm}
+          topNavigation
+          validateNavigation={false}
+          onPageChange={onPageChange}
+        />
+      );
+      await waitFor(() =>
+        expect(container.querySelector('.pages-nav-top')).not.toBeNull()
+      );
+
+      const assessmentTab = Array.from(
+        container.querySelectorAll('.pages-nav-top button')
+      ).find((button) => button.textContent === 'Assessment');
+      await act(async () => {
+        fireEvent.click(assessmentTab as HTMLButtonElement);
+      });
+
+      expect(onPageChange).toHaveBeenCalledTimes(1);
+      expect(onPageChange).toHaveBeenCalledWith('assessment', 1);
+    });
+
+    it('exposes getCurrentPageId and setCurrentPage on the handle', async () => {
+      const onPageChange = vi.fn();
+      const ref = React.createRef<EsheetRendererHandle>();
+      const { container } = render(
+        <EsheetRenderer
+          formDataInput={routedForm}
+          topNavigation
+          onPageChange={onPageChange}
+          ref={ref}
+        />
+      );
+      await waitFor(() =>
+        expect(getRendererHandle(ref).getCurrentPageId()).toBe('case')
+      );
+
+      await act(async () => {
+        getRendererHandle(ref).setCurrentPage('documents');
+      });
+      expect(getRendererHandle(ref).getCurrentPageId()).toBe('documents');
+      expect(
+        container.querySelector('[data-field-id="third-field"]')
+      ).not.toBeNull();
+
+      // Programmatic moves and unknown targets are silent.
+      await act(async () => {
+        getRendererHandle(ref).setCurrentPage('bogus');
+        getRendererHandle(ref).setCurrentPage(99);
+      });
+      expect(getRendererHandle(ref).getCurrentPageId()).toBe('documents');
+      expect(onPageChange).not.toHaveBeenCalled();
+    });
   });
 
   it('uses page titles and shares navigation validation across both controls', async () => {

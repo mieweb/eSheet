@@ -5,14 +5,19 @@ import {
   registerAutocompleteFieldType,
 } from '@esheet/fields';
 import {
-  RichTextEditorField,
   configureRichTextField,
+  RichTextEditorField,
 } from '@esheet/field-kerebron';
 import { registerHealthFieldTypes } from '@esheet/field-health';
+import {
+  registerActivityFieldType,
+  registerDocumentListFieldType,
+} from '@esheet/fields-documents';
 import { createAssetLoad } from '@kerebron/wasm/web';
 import { StrictMode } from 'react';
 import * as ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { ToastContainer, ToastProvider, useToast } from '@mieweb/ui';
 import { LandingPage } from './views/LandingPage';
 import { BuilderView } from './views/BuilderView';
 import { RendererView } from './views/RendererView';
@@ -26,34 +31,42 @@ registerAutocompleteFieldType();
 registerHealthFieldTypes({
   indexUrl: `${import.meta.env.BASE_URL}codify`.replace(/\/$/, ''),
 });
+registerActivityFieldType();
+registerDocumentListFieldType();
 
-// The Vite plugin serves and emits these assets from the installed package.
-configureRichTextField({
-  assetLoad: createAssetLoad(
-    `${import.meta.env.BASE_URL}kerebron-wasm`.replace(/\/\//g, '/')
-  ),
-});
+const kerebronAssetLoad = createAssetLoad(
+  `${import.meta.env.BASE_URL}kerebron-wasm`.replace(/\/\//g, '/')
+);
+configureRichTextField({ assetLoad: kerebronAssetLoad });
 
 function App() {
   return (
-    <BrowserRouter basename={import.meta.env.BASE_URL}>
-      <BrandInitializer />
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <>
-              <Navbar />
-              <LandingPage />
-            </>
-          }
-        />
-        <Route path="/builder" element={<BuilderView />} />
-        <Route path="/renderer" element={<RendererView />} />
-        <Route path="/collab-live" element={<CollabPlaygroundView />} />
-      </Routes>
-    </BrowserRouter>
+    <ToastProvider>
+      <DemoToastContainer />
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
+        <BrandInitializer />
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <>
+                <Navbar />
+                <LandingPage />
+              </>
+            }
+          />
+          <Route path="/builder" element={<BuilderView />} />
+          <Route path="/renderer" element={<RendererView />} />
+          <Route path="/collab-live" element={<CollabPlaygroundView />} />
+        </Routes>
+      </BrowserRouter>
+    </ToastProvider>
   );
+}
+
+function DemoToastContainer() {
+  const { toasts, dismiss } = useToast();
+  return <ToastContainer toasts={toasts} onDismiss={dismiss} />;
 }
 
 const root = ReactDOM.createRoot(

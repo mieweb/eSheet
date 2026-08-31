@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { load } from 'js-yaml';
 import {
   EsheetRenderer,
@@ -6,6 +6,9 @@ import {
   useRendererMcpToolHandler,
   type ResponseFormat,
 } from '@esheet/renderer';
+import { createDocumentListFieldProvider } from '@esheet/fields-documents';
+import { permissiveDocumentListCapabilities } from '@esheet/fields-documents';
+import { createFileStoreProvider } from '@esheet/fields';
 import { Navbar } from '../components/Navbar';
 import {
   Alert,
@@ -33,6 +36,10 @@ import {
 } from '@mieweb/ui';
 import { ClipboardList, SlidersHorizontal, Smartphone } from 'lucide-react';
 import { updateOzwellTools, FLOWIE_KEY } from '../ozwell-setup.js';
+import {
+  createDemoDocumentListRepository,
+  createDemoFileStore,
+} from '../document-list-demo-repository.js';
 
 interface SubmitResult {
   readonly kind: 'success' | 'error';
@@ -110,6 +117,11 @@ export function RendererView() {
   const [pasteOpen, setPasteOpen] = useState(false);
   const [pasteText, setPasteText] = useState('');
   const [pasteError, setPasteError] = useState<string | null>(null);
+  const documentRepository = useMemo(
+    () => createDemoDocumentListRepository(),
+    []
+  );
+  const fileStore = useMemo(() => createDemoFileStore(), []);
 
   const resetFormKey = useCallback(() => {
     setFormKey((prev) => prev + 1);
@@ -208,6 +220,12 @@ export function RendererView() {
   };
 
   const hasForm = rawInput != null;
+  const documentListProvider = createDocumentListFieldProvider(
+    // A demo protects nothing; a real host resolves its own capabilities.
+    { capabilities: permissiveDocumentListCapabilities },
+    { repository: documentRepository, fileStore }
+  );
+  const fileStoreProvider = createFileStoreProvider(fileStore);
 
   return (
     <>
@@ -383,6 +401,7 @@ export function RendererView() {
                       bottomNavigation={bottomNavigation}
                       validateNavigation={validateNavigation}
                       onRendererToolsReady={onRendererToolsReady}
+                      fieldProviders={[fileStoreProvider, documentListProvider]}
                       onReady={() => {
                         const def = rendererRef.current
                           ?.getFormStore()

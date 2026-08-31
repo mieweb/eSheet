@@ -1,5 +1,6 @@
 import { z } from 'zod/mini';
 import { getFieldTypeMeta } from './registry.js';
+import type { FileReference } from './file-store.js';
 
 // ---------------------------------------------------------------------------
 // Field Types
@@ -25,6 +26,7 @@ export const FIELD_TYPES = [
   'signature',
   'diagram',
   'file',
+  'activity',
   'openchoice',
   'display',
   'section',
@@ -688,6 +690,15 @@ export interface FileFieldDefinition extends BaseFieldDefinition {
   maxFiles?: number;
 }
 
+/**
+ * Read-only, append-only log of response changes over time. Rendered by the
+ * `activity` field; entries live under the reserved `_activity` response key
+ * and are GUID-keyed so concurrent logs union-merge deterministically.
+ */
+export interface ActivityFieldDefinition extends BaseFieldDefinition {
+  fieldType: 'activity';
+}
+
 export interface OpenChoiceFieldDefinition extends BaseFieldDefinition {
   fieldType: 'openchoice';
   /** Predefined selectable options. */
@@ -773,6 +784,7 @@ export type FieldDefinition =
   // Rich
   | ImageFieldDefinition
   | FileFieldDefinition
+  | ActivityFieldDefinition
   | HtmlFieldDefinition
   | SignatureFieldDefinition
   | DiagramFieldDefinition
@@ -839,6 +851,7 @@ const FIELD_TYPE_PROPERTIES: Record<FieldType, readonly string[]> = {
   signature: ['padPlaceholder'],
   diagram: ['imageUri', 'padPlaceholder'],
   file: ['accept', 'maxFileSize', 'maxFiles'],
+  activity: [],
   openchoice: ['options', 'maxCustomOptions', 'otherLabel', 'optionLayout'],
   display: ['content'],
   // Organization category
@@ -1118,6 +1131,11 @@ const fileFieldSchema = z.strictObject({
   maxFiles: z.optional(z.number()),
 });
 
+const activityFieldSchema = z.strictObject({
+  ...baseFieldProps,
+  fieldType: z.literal('activity'),
+});
+
 const openChoiceFieldSchema = z.strictObject({
   ...baseFieldProps,
   fieldType: z.literal('openchoice'),
@@ -1191,6 +1209,7 @@ const builtInFieldDefinitionSchema = z.discriminatedUnion('fieldType', [
   // Rich
   imageFieldSchema,
   fileFieldSchema,
+  activityFieldSchema,
   htmlFieldSchema,
   signatureFieldSchema,
   diagramFieldSchema,
@@ -1280,6 +1299,8 @@ export interface FieldResponse {
   markupImage?: string;
   /** File/attachment(s) uploaded by user (file field). Supports single or multiple files. */
   fileData?: AttachmentAnswer | AttachmentAnswer[];
+  /** Append-only response change log (reserved `_activity` key; activity field). */
+  activity?: ActivityEntry[];
   /**
    * Extra attributes captured from the selected item (autocomplete field).
    * Keyed by the source object's property name, e.g. an address pick may
@@ -1472,10 +1493,43 @@ export type AttachmentAnswer = {
   contentType: string;
   dataUrl?: string;
   url?: string;
+  fileReference?: FileReference;
   title?: string;
   /** File size in bytes (optional). */
   size?: number;
 };
+
+/** Zod schema for AttachmentAnswer. */
+export const attachmentAnswerSchema = z.object({
+  contentType: z.string(),
+  dataUrl: z.optional(z.string()),
+  url: z.optional(z.string()),
+  fileReference: z.optional(z.looseObject({ id: z.string() })),
+  title: z.optional(z.string()),
+  size: z.optional(z.number()),
+});
+
+/**
+ * One entry in the append-only response change log (activity page type).
+ * GUID-keyed so concurrent logs union-merge deterministically.
+ */
+export const activityEntrySchema = z.object({
+  /** GUID (crypto.randomUUID()). */
+  id: z.string(),
+  /** ISO 8601 timestamp of the change. */
+  at: z.string(),
+  /** From renderer identity, when present. */
+  author: z.optional(z.string()),
+  /** Which response changed. */
+  fieldId: z.string(),
+  /** Field label at time of change. */
+  question: z.optional(z.string()),
+  /** Display form of the previous value. */
+  from: z.optional(z.string()),
+  /** Display form of the new value. */
+  to: z.optional(z.string()),
+});
+export type ActivityEntry = z.infer<typeof activityEntrySchema>;
 
 /** All possible answer value shapes in a submission payload. */
 export type AnswerValue =

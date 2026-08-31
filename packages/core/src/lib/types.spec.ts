@@ -21,7 +21,7 @@ describe('schema types', () => {
     expect(FIELD_TYPES).toContain('display');
     expect(FIELD_TYPES).toContain('file');
     expect(FIELD_TYPES).toContain('openchoice');
-    expect(FIELD_TYPES).toHaveLength(22);
+    expect(FIELD_TYPES).toHaveLength(23);
   });
 
   it('should allow constructing a valid FormDefinition', () => {

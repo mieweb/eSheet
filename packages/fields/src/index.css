@@ -24,3 +24,24 @@
   --color-msbackgroundhover: var(--mieweb-muted, #eceef1);
   --color-msoverlay: rgba(0, 0, 0, 0.5);
 }
+
+/* ------------------------------------------------------------------ */
+/* Condensed density                                                   */
+/* ------------------------------------------------------------------ */
+/* @mieweb/ui's density mode (`body.condensed`) only reaches components
+   carrying `data-slot`; eSheet's own controls (radio/checkbox pills,
+   custom dropdown triggers) would stay full-size beside condensed
+   inputs. They all read the `ms` theme variables, so one re-declaration
+   scales them to @mieweb/ui's condensed metrics (28px controls, 12px
+   text). Only the arbitrary `min-h-[38px]` values bypass the variables. */
+body.condensed .esheet-renderer-root,
+body.condensed .ms-builder-root .preview-layout {
+  --ms-spacing: 0.1875rem;
+  --ms-text-sm: 0.75rem;
+  --ms-text-sm--line-height: calc(1 / 0.75);
+}
+
+body.condensed .esheet-renderer-root [class*='min-h-[38px]'],
+body.condensed .ms-builder-root .preview-layout [class*='min-h-[38px]'] {
+  min-height: 1.75rem;
+}

@@ -1,10 +1,17 @@
 import React, { useCallback, useState } from 'react';
-import type {
-  FieldComponentProps,
-  AttachmentAnswer,
-  FileFieldDefinition,
-} from '@esheet/core';
+import type { FieldComponentProps, FileFieldDefinition } from '@esheet/core';
 import { TrashIcon, UploadIcon } from '../../icons.js';
+import {
+  fileToInput,
+  formatFileSize,
+  fileMatchesAccept,
+  readFileAsAttachment,
+} from '../../lib/file-utils.js';
+import {
+  removeUnreferencedFiles,
+  storeFiles,
+  useFileStore,
+} from '../../lib/FileStoreProvider.js';
 
 const PREDEFINED_FILE_TYPES = [
   { label: 'JPEG', value: 'image/jpeg', accept: '.jpg,.jpeg' },
@@ -53,14 +60,6 @@ const getSelectedTypes = (acceptString?: string): string[] => {
   }).map((ft) => ft.value);
 };
 
-const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
-};
-
 const SIZE_UNITS = {
   KB: 1024,
   MB: 1024 * 1024,
@@ -97,6 +96,7 @@ export const FileField = React.memo(function FileField({
   const def = field.definition as FileFieldDefinition & { question?: string };
   const instanceId = form.getState().instanceId;
   const maxFiles = def.maxFiles ?? 1;
+  const fileStore = useFileStore();
   const [isDragActive, setIsDragActive] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [sizeUnit, setSizeUnit] = useState<SizeUnit>(
@@ -121,23 +121,11 @@ export const FileField = React.memo(function FileField({
       const maxFileSize = def.maxFileSize;
 
       // Validate file types against accept filter
-      const acceptParts = def.accept
-        ? def.accept.split(',').map((s) => s.trim())
-        : [];
       const rejectedTypes: string[] = [];
       const typeAccepted: File[] = [];
 
       filesToProcess.forEach((file) => {
-        const ok =
-          acceptParts.length === 0 ||
-          acceptParts.some((part) => {
-            if (part.startsWith('.'))
-              return file.name.toLowerCase().endsWith(part.toLowerCase());
-            if (part.endsWith('/*'))
-              return file.type.startsWith(part.slice(0, -1));
-            return file.type === part;
-          });
-        if (ok) typeAccepted.push(file);
+        if (fileMatchesAccept(file, def.accept)) typeAccepted.push(file);
         else rejectedTypes.push(file.name);
       });
 
@@ -167,36 +155,21 @@ export const FileField = React.memo(function FileField({
         if (validFiles.length === 0) return;
       }
 
-      let processed = 0;
-      const newFiles: AttachmentAnswer[] = [];
-
-      validFiles.forEach((file) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const result = reader.result as string;
-          const ans: AttachmentAnswer = {
-            contentType: file.type || 'application/octet-stream',
-            dataUrl: result,
-            title: file.name,
-            size: file.size,
-          };
-          newFiles.push(ans);
-          processed++;
-
-          if (processed === validFiles.length) {
-            const updated = [...fileDataArr, ...newFiles];
-            onResponse({ fileData: maxFiles === 1 ? updated[0] : updated });
-          }
-        };
-        reader.readAsDataURL(file);
-      });
+      void (async () => {
+        const stored = fileStore
+          ? await storeFiles(fileStore, validFiles.map(fileToInput))
+          : await Promise.all(validFiles.map(readFileAsAttachment));
+        const updated = [...fileDataArr, ...stored];
+        onResponse({ fileData: maxFiles === 1 ? updated[0] : updated });
+      })();
     },
-    [fileDataArr, maxFiles, def.maxFileSize, def.accept, onResponse]
+    [fileDataArr, maxFiles, def.maxFileSize, def.accept, onResponse, fileStore]
   );
 
   const handleRemoveFile = useCallback(
     (index: number) => {
       const updated = fileDataArr.filter((_, i) => i !== index);
+      removeUnreferencedFiles(fileStore, fileDataArr, updated);
       onResponse({
         fileData:
           updated.length === 0
@@ -206,7 +179,7 @@ export const FileField = React.memo(function FileField({
             : updated,
       });
     },
-    [fileDataArr, maxFiles, onResponse]
+    [fileDataArr, maxFiles, onResponse, fileStore]
   );
 
   const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {

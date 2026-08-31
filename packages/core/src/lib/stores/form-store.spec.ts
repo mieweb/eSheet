@@ -170,6 +170,144 @@ describe('createFormStore', () => {
         expect(store.getState().responses).toEqual({});
       });
     });
+
+    describe('extensions', () => {
+      it('registers, reads, and updates typed namespaced state', () => {
+        const initial = { rows: ['doc-1'], loading: false };
+        expect(
+          store.getState().registerExtension('documents', 'q1', initial)
+        ).toBe(true);
+        expect(
+          store.getState().registerExtension('documents', 'q1', initial)
+        ).toBe(false);
+
+        store
+          .getState()
+          .updateExtension<typeof initial>('documents', 'q1', (state) => ({
+            ...state!,
+            loading: true,
+          }));
+
+        expect(
+          store.getState().getExtension<typeof initial>('documents', 'q1')
+        ).toEqual({ rows: ['doc-1'], loading: true });
+        expect(store.getState().getExtension('other', 'q1')).toBeUndefined();
+      });
+
+      it('isolates extensions between form store instances', () => {
+        const secondStore = createFormStore(form([field('q1')]));
+        store.getState().registerExtension('documents', 'q1', { value: 1 });
+        secondStore
+          .getState()
+          .registerExtension('documents', 'q1', { value: 2 });
+
+        expect(
+          store.getState().getExtension<{ value: number }>('documents', 'q1')
+        ).toEqual({ value: 1 });
+        expect(
+          secondStore
+            .getState()
+            .getExtension<{ value: number }>('documents', 'q1')
+        ).toEqual({ value: 2 });
+      });
+
+      it('disposes extensions on definition reload', () => {
+        const onDispose = vi.fn();
+        store
+          .getState()
+          .registerExtension('documents', 'q1', { value: 1 }, { onDispose });
+
+        store.getState().loadDefinition(form([field('q2')]));
+
+        expect(onDispose).toHaveBeenCalledOnce();
+        expect(store.getState().extensions).toEqual({});
+      });
+
+      it('disposes extensions for removed fields and descendants', () => {
+        store = createFormStore(
+          form([
+            field('s1', 'section', {
+              fields: [field('c1')],
+            } as Partial<FieldDefinition>),
+            field('q2'),
+          ])
+        );
+        const sectionDispose = vi.fn();
+        const childDispose = vi.fn();
+        store
+          .getState()
+          .registerExtension(
+            'documents',
+            's1',
+            {},
+            { onDispose: sectionDispose }
+          );
+        store
+          .getState()
+          .registerExtension(
+            'documents',
+            'c1',
+            {},
+            { onDispose: childDispose }
+          );
+        store.getState().registerExtension('documents', 'q2', { value: 2 });
+
+        expect(store.getState().removeField('s1')).toBe(true);
+
+        expect(sectionDispose).toHaveBeenCalledOnce();
+        expect(childDispose).toHaveBeenCalledOnce();
+        expect(store.getState().getExtension('documents', 'q2')).toEqual({
+          value: 2,
+        });
+      });
+
+      it('disposes an extension when its field is renamed', () => {
+        const onDispose = vi.fn();
+        store
+          .getState()
+          .registerExtension('documents', 'q1', {}, { onDispose });
+
+        expect(store.getState().updateField('q1', { id: 'q1-renamed' })).toBe(
+          true
+        );
+
+        expect(onDispose).toHaveBeenCalledOnce();
+        expect(
+          store.getState().getExtension('documents', 'q1')
+        ).toBeUndefined();
+      });
+
+      it('disposes an extension when a field changes type', () => {
+        const onDispose = vi.fn();
+        store
+          .getState()
+          .registerExtension('documents', 'q1', {}, { onDispose });
+
+        expect(store.getState().updateField('q1', { fieldType: 'radio' })).toBe(
+          true
+        );
+
+        expect(onDispose).toHaveBeenCalledOnce();
+        expect(
+          store.getState().getExtension('documents', 'q1')
+        ).toBeUndefined();
+      });
+
+      it('clears and disposes entries, then rejects registration after dispose', () => {
+        const onDispose = vi.fn();
+        store
+          .getState()
+          .registerExtension('documents', 'q1', {}, { onDispose });
+        store.getState().dispose();
+
+        expect(onDispose).toHaveBeenCalledOnce();
+        expect(store.getState().disposed).toBe(true);
+        expect(store.getState().extensions).toEqual({});
+        expect(store.getState().registerExtension('documents', 'q1', {})).toBe(
+          false
+        );
+      });
+    });
   });
 
   describe('validation and hydration', () => {

@@ -13,7 +13,13 @@ import {
   type BuilderTools,
   type FieldSummary,
 } from './builder-tools.js';
-import { FormStoreContext, UIContext, useTouchMode } from '@esheet/fields';
+import {
+  FieldProviderStack,
+  FormStoreContext,
+  UIContext,
+  useTouchMode,
+  type FieldProvider,
+} from '@esheet/fields';
 import {
   convertSurveyJS,
   isSurveyJSSchema,
@@ -93,6 +99,8 @@ export interface EsheetBuilderProps {
   touchMode?: boolean | 'auto';
   /** Called when touch mode changes (via auto-detection or programmatic toggle). */
   onTouchModeChange?: (enabled: boolean) => void;
+  /** Optional wrappers supplied by field add-ons. */
+  fieldProviders?: readonly FieldProvider[];
 }
 
 export interface EsheetBuilderHandle {
@@ -122,6 +130,7 @@ export const EsheetBuilder = React.forwardRef<
     touchMode: touchModeProp,
     onTouchModeChange,
     allowDangerousJS = false,
+    fieldProviders,
   },
   ref
 ) {
@@ -226,8 +235,10 @@ export const EsheetBuilder = React.forwardRef<
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form]);
 
-  // Apply disabled class when user explicitly disabled touch mode (prevents CSS media query)
-  const applyTouchDisabledClass = isManualOverride && !isTouchEnabled;
+  // Apply disabled class when touch mode is explicitly off — via prop or
+  // manual toggle — so touch-mode.css's own media query stands down too.
+  const applyTouchDisabledClass =
+    touchModeProp === false || (isManualOverride && !isTouchEnabled);
 
   // Build root class string
   const rootClasses = [
@@ -244,72 +255,74 @@ export const EsheetBuilder = React.forwardRef<
   return (
     <FormStoreContext.Provider value={form}>
       <UIContext.Provider value={ui}>
-        <InstanceIdContext.Provider value={instanceId}>
-          <div className={rootClasses}>
-            <div className="ms:sticky ms:top-0 ms:z-40 ms:bg-msbackground">
-              <BuilderHeader allowDangerousJS={allowDangerousJS} />
-            </div>
-            {children}
-            {mode === 'build' && (
-              <div className="builder-layout ms:grid ms:min-w-0 ms:grid-cols-1 ms:lg:grid-cols-[18rem_minmax(0,1fr)_340px] ms:gap-3">
-                <aside className="panel-tools-wrap panel-tools ms:max-lg:hidden ms:lg:flex ms:self-start ms:min-h-0 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto ms:flex-col ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
-                  <ToolPanel />
-                </aside>
-                <main className="panel-canvas ms:min-w-0 ms:self-start ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-hidden ms:flex ms:flex-col ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
-                  <Canvas form={form} ui={ui} dragEnabled={dragEnabled} />
-                  <div className="ms:max-lg:flex ms:lg:hidden ms:sticky ms:bottom-0 ms:z-20 ms:pt-2 ms:pb-3 ms:justify-center ms:pointer-events-none">
-                    <button
-                      type="button"
-                      onClick={() => setToolsModalOpen(true)}
-                      className="ms:pointer-events-auto ms:inline-flex ms:items-center ms:gap-1.5 ms:px-3.5 ms:py-2 ms:rounded-full ms:bg-mssurface/95 ms:backdrop-blur-sm ms:text-mstext ms:text-sm ms:font-semibold ms:border ms:border-msprimary/35 ms:shadow-lg ms:shadow-msprimary/10 ms:outline-none ms:focus:outline-none ms:hover:bg-mssurface ms:hover:border-msprimary/50 ms:hover:shadow-xl ms:hover:shadow-msprimary/15 ms:transition-all"
-                      aria-label="Open add field tools"
-                    >
-                      <PlusIcon className="ms:w-3.5 ms:h-3.5 ms:text-msprimary" />
-                      <span>Add field</span>
-                    </button>
-                  </div>
-                </main>
-                <aside className="panel-editor-wrap panel-editor ms:max-lg:hidden ms:lg:flex ms:self-start ms:min-h-0 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto ms:flex-col ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
-                  <EditPanel />
-                </aside>
-
-                <MobileBottomDrawer
-                  title="Add Field"
-                  open={toolsModalOpen}
-                  onClose={() => setToolsModalOpen(false)}
-                >
-                  <ToolPanel />
-                </MobileBottomDrawer>
-
-                <MobileBottomDrawer
-                  title="Edit Field"
-                  open={editModalOpen && !!selectedFieldId}
-                  onClose={() => ui.getState().setEditModalOpen(false)}
-                >
-                  <EditPanel />
-                </MobileBottomDrawer>
+        <FieldProviderStack providers={fieldProviders}>
+          <InstanceIdContext.Provider value={instanceId}>
+            <div className={rootClasses}>
+              <div className="ms:sticky ms:top-0 ms:z-40 ms:bg-msbackground">
+                <BuilderHeader allowDangerousJS={allowDangerousJS} />
               </div>
-            )}
-            {mode === 'code' && (
-              <div className="code-layout ms:flex ms:h-[calc(100dvh-12.5rem)] ms:min-h-0 ms:min-w-0 ms:overflow-hidden ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
-                <CodeView form={form} ui={ui} />
-              </div>
-            )}
-            {mode === 'preview' && (
-              <div className="preview-layout ms:flex-1 ms:min-h-0 ms:min-w-0 ms:w-full ms:max-w-5xl ms:mx-auto ms:p-4 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto">
-                <div className="ms:flex ms:items-center ms:justify-end ms:mb-3">
-                  <Switch
-                    size="sm"
-                    checked={isTouchEnabled}
-                    onCheckedChange={setTouchMode}
-                    label="Touch Mode"
-                  />
+              {children}
+              {mode === 'build' && (
+                <div className="builder-layout ms:grid ms:min-w-0 ms:grid-cols-1 ms:lg:grid-cols-[18rem_minmax(0,1fr)_340px] ms:gap-3">
+                  <aside className="panel-tools-wrap panel-tools ms:max-lg:hidden ms:lg:flex ms:self-start ms:min-h-0 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto ms:flex-col ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
+                    <ToolPanel />
+                  </aside>
+                  <main className="panel-canvas ms:min-w-0 ms:self-start ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-hidden ms:flex ms:flex-col ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
+                    <Canvas form={form} ui={ui} dragEnabled={dragEnabled} />
+                    <div className="ms:max-lg:flex ms:lg:hidden ms:sticky ms:bottom-0 ms:z-20 ms:pt-2 ms:pb-3 ms:justify-center ms:pointer-events-none">
+                      <button
+                        type="button"
+                        onClick={() => setToolsModalOpen(true)}
+                        className="ms:pointer-events-auto ms:inline-flex ms:items-center ms:gap-1.5 ms:px-3.5 ms:py-2 ms:rounded-full ms:bg-mssurface/95 ms:backdrop-blur-sm ms:text-mstext ms:text-sm ms:font-semibold ms:border ms:border-msprimary/35 ms:shadow-lg ms:shadow-msprimary/10 ms:outline-none ms:focus:outline-none ms:hover:bg-mssurface ms:hover:border-msprimary/50 ms:hover:shadow-xl ms:hover:shadow-msprimary/15 ms:transition-all"
+                        aria-label="Open add field tools"
+                      >
+                        <PlusIcon className="ms:w-3.5 ms:h-3.5 ms:text-msprimary" />
+                        <span>Add field</span>
+                      </button>
+                    </div>
+                  </main>
+                  <aside className="panel-editor-wrap panel-editor ms:max-lg:hidden ms:lg:flex ms:self-start ms:min-h-0 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto ms:flex-col ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
+                    <EditPanel />
+                  </aside>
+
+                  <MobileBottomDrawer
+                    title="Add Field"
+                    open={toolsModalOpen}
+                    onClose={() => setToolsModalOpen(false)}
+                  >
+                    <ToolPanel />
+                  </MobileBottomDrawer>
+
+                  <MobileBottomDrawer
+                    title="Edit Field"
+                    open={editModalOpen && !!selectedFieldId}
+                    onClose={() => ui.getState().setEditModalOpen(false)}
+                  >
+                    <EditPanel />
+                  </MobileBottomDrawer>
                 </div>
-                <Canvas form={form} ui={ui} dragEnabled={false} />
-              </div>
-            )}
-          </div>
-        </InstanceIdContext.Provider>
+              )}
+              {mode === 'code' && (
+                <div className="code-layout ms:flex ms:h-[calc(100dvh-12.5rem)] ms:min-h-0 ms:min-w-0 ms:overflow-hidden ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface">
+                  <CodeView form={form} ui={ui} />
+                </div>
+              )}
+              {mode === 'preview' && (
+                <div className="preview-layout ms:flex-1 ms:min-h-0 ms:min-w-0 ms:w-full ms:max-w-5xl ms:mx-auto ms:p-4 ms:max-h-[calc(100dvh-12.5rem)] ms:overflow-y-auto">
+                  <div className="ms:flex ms:items-center ms:justify-end ms:mb-3">
+                    <Switch
+                      size="sm"
+                      checked={isTouchEnabled}
+                      onCheckedChange={setTouchMode}
+                      label="Touch Mode"
+                    />
+                  </div>
+                  <Canvas form={form} ui={ui} dragEnabled={false} />
+                </div>
+              )}
+            </div>
+          </InstanceIdContext.Provider>
+        </FieldProviderStack>
       </UIContext.Provider>
     </FormStoreContext.Provider>
   );

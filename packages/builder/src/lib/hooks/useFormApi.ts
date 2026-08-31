@@ -14,6 +14,8 @@ import { useFormStore } from '@esheet/fields';
 
 export type FieldResponseMap = Record<string, FieldResponse>;
 
+const EMPTY_RESPONSES: FieldResponseMap = {};
+
 export interface FormApi {
   field: FieldNode | undefined;
   response: FieldResponse | undefined;
@@ -105,7 +107,9 @@ export function useFormApi(fieldId?: string): FormApi {
 
   // --- Reactive form-level state ---
   const normalized = useStore(form, (s) => s.normalized);
-  const responses = useStore(form, (s) => s.responses);
+  const responses = useStore(form, (s) =>
+    fieldId ? EMPTY_RESPONSES : s.responses
+  );
   const instanceId = useStore(form, (s) => s.instanceId);
 
   return React.useMemo(

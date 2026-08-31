@@ -194,7 +194,13 @@ export function validateField(
 // ---------------------------------------------------------------------------
 
 /** Field types that don't accept user input — skip validation. */
-const NON_INPUT_TYPES = new Set(['section', 'expression', 'html', 'image']);
+const NON_INPUT_TYPES = new Set([
+  'section',
+  'expression',
+  'html',
+  'image',
+  'activity',
+]);
 
 /**
  * Check whether a field response is effectively empty.

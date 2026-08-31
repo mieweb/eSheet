@@ -1,0 +1,43 @@
+id: document-list-demo
+title: Document List Demo
+pages:
+  - id: documents-page
+    title: Documents
+    fields:
+      - id: documents
+        fieldType: documentList
+        question: Patient documents
+        width: full
+        documents:
+          - id: demo-doc-1
+            date: '2026-08-18'
+            title: Hearing Test Results Letter
+            subject: Annual hearing screening
+            docType: Employee Letter
+            docId: '1842'
+            source: WebChart
+            file: 1842.pdf
+          - id: demo-doc-2
+            date: '2026-08-12'
+            title: Occupational Audiogram
+            subject: Audiometric test results
+            docType: Audiometric Test
+            docId: '1836'
+            source: Clinic interface
+            file: 1836.html
+          - id: demo-doc-3
+            date: '2026-07-31'
+            title: Referral note
+            subject: Follow-up requested
+            docType: Clinical Note
+            docId: '1821'
+            source: Internal
+            file: browser
+  - id: empty-documents-page
+    title: Empty Documents
+    fields:
+      - id: empty-documents
+        fieldType: documentList
+        question: No documents yet
+        width: full
+        documents: []

@@ -10,6 +10,7 @@ export {
   TrashIcon,
   PlusIcon,
   MinusIcon,
+  PencilIcon,
   ArrowUpIcon,
   ArrowDownIcon,
   UpDownArrowIcon,
@@ -102,3 +103,33 @@ export {
   useFieldGridLayout,
 } from './lib/FieldGrid.js';
 export type { FieldGridItemProps, FieldGridProps } from './lib/FieldGrid.js';
+
+// Optional field extension providers
+export {
+  FieldProviderStack,
+  type FieldProvider,
+  type FieldProviderStackProps,
+} from './lib/FieldProviders.js';
+
+// Optional host-supplied attachment byte storage
+export {
+  FileStoreProvider,
+  createFileStoreProvider,
+  useFileStore,
+  storeFiles,
+  removeUnreferencedFiles,
+  type FileStoreProviderProps,
+} from './lib/FileStoreProvider.js';
+
+// Shared markdown-lite rendering
+export { renderMarkdownContent, renderMarkdownInline } from './lib/markdown.js';
+
+// Shared file/attachment helpers
+export {
+  fileToInput,
+  formatFileSize,
+  fileMatchesAccept,
+  getFileMetadata,
+  readFileAsAttachment,
+  type FileMetadata,
+} from './lib/file-utils.js';

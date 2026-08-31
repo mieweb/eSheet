@@ -20,14 +20,19 @@ import {
 import { createRendererTools, type RendererTools } from './renderer-tools.js';
 import {
   FormStoreContext,
+  FieldProviderStack,
   UIContext,
   ZodIssuesPanel,
   FeedbackModal,
   useTouchMode,
+  type FieldProvider,
 } from '@esheet/fields';
 import { ensureDefaultFieldComponentsRegistered } from './register-defaults.js';
 import { useRendererInit } from './hooks/useRendererInit.js';
-import { RendererBody } from './components/RendererBody.js';
+import {
+  RendererBody,
+  type RendererPageNavigation,
+} from './components/RendererBody.js';
 
 export interface EsheetRendererProps {
   /** Form definition — accepts FormDefinition, SurveyJS schema, MCP elicitation envelope,
@@ -65,7 +70,7 @@ export interface EsheetRendererProps {
   /**
    * Enable touch-optimized mode with larger touch targets.
    * - `true`: Always enable touch mode
-   * - `false`: Never enable touch mode (CSS media query still applies)
+   * - `false`: Never enable touch mode (also disables the CSS media query)
    * - `'auto'`: Enable based on viewport width (<980px) via JavaScript
    * - `undefined`: Rely on CSS media query only (default)
    */
@@ -93,6 +98,21 @@ export interface EsheetRendererProps {
   bottomNavigation?: boolean;
   /** Block forward page navigation while required fields on the current page are unanswered. */
   validateNavigation?: boolean;
+  /** Page shown first, by id (issue #147). Unknown or absent → the first page. */
+  initialPageId?: string;
+  /**
+   * Fires when the user changes pages (tab click, prev/next) — never on the
+   * initial seed and never for programmatic `setCurrentPage`/`goToPage`, so a
+   * host syncing the URL cannot loop (issue #147).
+   */
+  onPageChange?: (pageId: string, pageIndex: number) => void;
+  /** Optional wrappers supplied by field add-ons. */
+  fieldProviders?: readonly FieldProvider[];
+  /**
+   * Identity of the current user. When provided, activity entries are stamped
+   * with `identity.name`. Absent → entries save unstamped.
+   */
+  identity?: { name: string };
 }
 
 // ---------------------------------------------------------------------------
@@ -159,6 +179,15 @@ export interface EsheetRendererHandle {
   setTouchMode: (enabled: boolean) => void;
   /** Reset to auto-detection mode (clears manual override). Only works when touchMode='auto'. */
   resetTouchMode: () => void;
+  /** Show the page with this id. Returns `false` when the form has no such page. */
+  goToPage: (pageId: string) => boolean;
+  /** The active page's id, or `null` before any pages exist (issue #147). */
+  getCurrentPageId: () => string | null;
+  /**
+   * Show a page by id or index. Unknown values are a silent no-op, and
+   * programmatic moves never fire `onPageChange` (issue #147).
+   */
+  setCurrentPage: (pageIdOrIndex: string | number) => void;
 }
 
 /**
@@ -203,12 +232,14 @@ export const EsheetRenderer = React.forwardRef<
   return (
     <FormStoreContext.Provider value={formStore}>
       <UIContext.Provider value={uiStore}>
-        <EsheetRendererInner
-          {...props}
-          formStore={formStore}
-          uiStore={uiStore}
-          ref={ref}
-        />
+        <FieldProviderStack providers={props.fieldProviders}>
+          <EsheetRendererInner
+            {...props}
+            formStore={formStore}
+            uiStore={uiStore}
+            ref={ref}
+          />
+        </FieldProviderStack>
       </UIContext.Provider>
     </FormStoreContext.Provider>
   );
@@ -242,6 +273,9 @@ const EsheetRendererInner = React.forwardRef<
     topNavigation = false,
     bottomNavigation = true,
     validateNavigation = true,
+    initialPageId,
+    onPageChange,
+    identity,
   },
   ref
 ) {
@@ -249,6 +283,11 @@ const EsheetRendererInner = React.forwardRef<
   const [softBypassOpen, setSoftBypassOpen] = React.useState(false);
   const [pendingResponse, setPendingResponse] =
     React.useState<FormResponse | null>(null);
+
+  // Keep the host-supplied identity in the form store for activity authorship.
+  React.useEffect(() => {
+    formStore.getState().setIdentity(identity);
+  }, [formStore, identity]);
 
   const handleSubmitClick = () => {
     const state = formStore.getState();
@@ -289,6 +328,21 @@ const EsheetRendererInner = React.forwardRef<
   );
 
   // Expose ref API
+  const goToPageRef = React.useRef<((pageId: string) => boolean) | null>(null);
+  const registerGoToPage = React.useCallback(
+    (goToPage: (pageId: string) => boolean) => {
+      goToPageRef.current = goToPage;
+    },
+    []
+  );
+  const pageNavigationRef = React.useRef<RendererPageNavigation | null>(null);
+  const registerPageNavigation = React.useCallback(
+    (api: RendererPageNavigation) => {
+      pageNavigationRef.current = api;
+    },
+    []
+  );
+
   React.useImperativeHandle(
     ref,
     () => ({
@@ -348,6 +402,11 @@ const EsheetRendererInner = React.forwardRef<
       isTouchModeEnabled: () => isTouchEnabled,
       setTouchMode: setTouchModeInternal,
       resetTouchMode: resetTouchModeInternal,
+      goToPage: (pageId: string) => goToPageRef.current?.(pageId) ?? false,
+      getCurrentPageId: () =>
+        pageNavigationRef.current?.getCurrentPageId() ?? null,
+      setCurrentPage: (pageIdOrIndex: string | number) =>
+        pageNavigationRef.current?.setCurrentPage(pageIdOrIndex),
     }),
     [
       formStore,
@@ -364,8 +423,10 @@ const EsheetRendererInner = React.forwardRef<
     touchMode === true ||
     ((touchMode === 'auto' || touchMode === undefined) && isTouchEnabled);
 
-  // Apply disabled class when user explicitly disabled touch mode (prevents CSS media query)
-  const applyDisabledClass = isManualOverride && !isTouchEnabled;
+  // Apply disabled class when touch mode is explicitly off — via prop or
+  // manual toggle — so touch-mode.css's own media query stands down too.
+  const applyDisabledClass =
+    touchMode === false || (isManualOverride && !isTouchEnabled);
 
   const rootClasses = [
     'esheet-renderer-root',
@@ -389,6 +450,10 @@ const EsheetRendererInner = React.forwardRef<
         topNavigation={topNavigation}
         bottomNavigation={bottomNavigation}
         validateNavigation={validateNavigation}
+        registerGoToPage={registerGoToPage}
+        initialPageId={initialPageId}
+        onPageChange={onPageChange}
+        registerPageNavigation={registerPageNavigation}
       />
       {onSubmit && (
         <div className="renderer-submit ms:mt-6 ms:flex ms:justify-end">

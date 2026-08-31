@@ -22,6 +22,8 @@ export {
   fieldValidatorSchema,
   fieldDefinitionSchema,
   formDefinitionSchema,
+  attachmentAnswerSchema,
+  activityEntrySchema,
   getFormDefinitionJSONSchema,
 
   // Types
@@ -65,6 +67,7 @@ export {
   type MultiMatrixFieldDefinition,
   type ImageFieldDefinition,
   type FileFieldDefinition,
+  type ActivityFieldDefinition,
   type HtmlFieldDefinition,
   type SignatureFieldDefinition,
   type DiagramFieldDefinition,
@@ -78,6 +81,7 @@ export {
   type FieldTypeRegistry,
   type RankedAnswer,
   type AttachmentAnswer,
+  type ActivityEntry,
   type AnswerValue,
   type ResponseItem,
   type FormResponse as FormResponseEnvelope,
@@ -116,6 +120,15 @@ export {
   extractResponseValue,
 } from './lib/functions/normalize-responses.js';
 
+export type { FileInput, FileReference, FileStore } from './lib/file-store.js';
+
+export {
+  ACTIVITY_RESPONSE_KEY,
+  ACTIVITY_DEBOUNCE_MS,
+  mergeActivity,
+  formatActivityValue,
+} from './lib/functions/activity.js';
+
 export {
   evaluateCondition,
   evaluateRule,
@@ -145,6 +158,8 @@ export {
   type FormState,
   type FormStore,
   type AddFieldOptions,
+  type FormExtensionOptions,
+  type FormExtensionState,
 } from './lib/stores/form-store.js';
 
 export {

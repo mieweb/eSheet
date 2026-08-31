@@ -21,6 +21,7 @@ import {
   UIContext,
 } from './EsheetBuilder.js';
 import { BuilderHeader } from './components/BuilderHeader.js';
+import { useFormApi } from './hooks/useFormApi.js';
 import type { StoreApi } from 'zustand';
 import { vi } from 'vitest';
 
@@ -39,6 +40,36 @@ function renderWithContexts(
 afterEach(cleanup);
 
 describe('EsheetBuilder', () => {
+  it('does not rerender a field consumer for another field response', () => {
+    const form = createFormStore({
+      id: 'response-isolation',
+      pages: [
+        {
+          id: 'page-1',
+          fields: [
+            { id: 'name', fieldType: 'text' },
+            { id: 'documents', fieldType: 'text' },
+          ],
+        },
+      ],
+    });
+    const ui = createUIStore();
+    let renders = 0;
+
+    function DocumentsFieldConsumer() {
+      useFormApi('documents');
+      renders += 1;
+      return null;
+    }
+
+    renderWithContexts(form, ui, <DocumentsFieldConsumer />);
+    const initialRenders = renders;
+
+    act(() => form.getState().setResponse('name', { answer: 'typed' }));
+
+    expect(renders).toBe(initialRenders);
+  });
+
   it('should render the 3-panel layout', () => {
     const { container } = render(<EsheetBuilder />);
     expect(container.querySelector('.ms-builder-root')).not.toBeNull();

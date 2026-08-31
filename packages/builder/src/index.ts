@@ -20,6 +20,7 @@ export {
   type BuilderTools,
   type FieldSummary,
 } from './lib/EsheetBuilder.js';
+export type { FieldProvider } from '@esheet/fields';
 
 export {
   FieldWrapper,
