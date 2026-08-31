@@ -1,6 +1,24 @@
 import './index.css';
 import { registerCustomFieldTypes } from '@esheet/fields';
+import { ActivityField } from './ActivityField.js';
 import { DocumentListField } from './DocumentListField.js';
+
+export function registerActivityFieldType(): void {
+  registerCustomFieldTypes({
+    activity: {
+      label: 'Activity',
+      category: 'rich',
+      answerType: 'display',
+      hasOptions: false,
+      hasMatrix: false,
+      defaultProps: {
+        question: 'Activity',
+        width: 'full',
+      },
+      component: ActivityField,
+    },
+  });
+}
 
 export function registerDocumentListFieldType(): void {
   registerCustomFieldTypes({
@@ -19,6 +37,7 @@ export function registerDocumentListFieldType(): void {
   });
 }
 
+export { ActivityField, ACTIVITY_COLUMNS } from './ActivityField.js';
 export { DocumentListField } from './DocumentListField.js';
 export {
   ComposerSessionOverlay,

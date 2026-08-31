@@ -27,7 +27,7 @@ export interface CanvasProps {
 // DraggableFieldItem — each field is both draggable and a drop target
 // ---------------------------------------------------------------------------
 
-function DraggableFieldItem({
+const DraggableFieldItem = React.memo(function DraggableFieldItem({
   id,
   form,
   ui,
@@ -140,7 +140,7 @@ function DraggableFieldItem({
       </div>
     </FieldGridItem>
   );
-}
+});
 
 // ---------------------------------------------------------------------------
 // Canvas — main field list panel with Sheet DnD

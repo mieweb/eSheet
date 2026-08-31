@@ -31,8 +31,6 @@ export {
   DiagramField,
   DisplayField,
   FileField,
-  ActivityField,
-  NoteCardList,
   HtmlField,
   ImageField,
   SignatureField,
@@ -42,7 +40,5 @@ export type {
   DrawingPadConfig,
   DrawingPadPayload,
   NormalizedPoint,
-  NoteCardItem,
-  NoteCardListProps,
   Stroke,
 } from './rich/index.js';

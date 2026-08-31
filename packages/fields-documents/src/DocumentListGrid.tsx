@@ -40,6 +40,10 @@ import type { DocumentDraftChannel } from './draftChannel.js';
 
 type DataVisGridProps = Partial<ComponentProps<typeof DataVisNitroGrid>>;
 type DataVisView = ContextType<typeof DataVisNitroContext>;
+const NamedComputedView = ComputedView as unknown as new (
+  source: Source,
+  options: { readonly name: string }
+) => ComputedView;
 const OptionalDataVisNitroGrid =
   DataVisNitroGrid as unknown as ComponentType<DataVisGridProps>;
 
@@ -227,15 +231,20 @@ export function useDocumentListFieldRuntime(
   const formStore = useContext(FormStoreContext);
   const runtime = useContext(DocumentListRuntimeContext);
   const onDocumentsChangeRef = useRef(onDocumentsChange);
+  const [runtimeState, setRuntimeState] =
+    useState<DocumentListRuntimeState | null>(null);
   onDocumentsChangeRef.current = onDocumentsChange;
-  runtime?.registerField(fieldId);
-  return useMemo(() => {
-    if (!formStore) return null;
+  useEffect(() => {
+    runtime?.registerField(fieldId);
+    if (!formStore) {
+      setRuntimeState(null);
+      return;
+    }
     const formInstanceId =
       formStore.getState().instanceId ??
       runtime?.options.formInstanceId ??
       'document-list-provider';
-    return (
+    setRuntimeState(
       createDocumentListRuntimeExtension({
         formStore,
         context: { formInstanceId, fieldId },
@@ -249,6 +258,7 @@ export function useDocumentListFieldRuntime(
       }) ?? null
     );
   }, [fieldId, formStore, initialDocuments, runtime]);
+  return runtimeState;
 }
 
 const DEFAULT_ROW_CAPABILITIES: DocumentListRowCapabilities = {
@@ -308,8 +318,11 @@ function useDocumentListView(rows: readonly DocumentListDocument[]): {
 
     const key = sourceKey.current;
     publishRows(key, rows);
-    const nextView = new ComputedView(
-      new Source({ type: 'local', varName: key })
+    const nextView = new NamedComputedView(
+      new Source({ type: 'local', varName: key }, undefined, undefined, {
+        name: `DocumentListSource:${key}`,
+      }),
+      { name: `DocumentListView:${key}` }
     );
     viewRef.current = nextView;
     setView(nextView as unknown as DataVisView);
@@ -359,106 +372,134 @@ export function DocumentListGrid({
   style,
 }: DocumentListGridProps): React.JSX.Element {
   const { view } = useDocumentListView(rows);
-  const gridColumns = renderActions
-    ? columns.some(
-        (column) => column.field === DOCUMENT_LIST_ACTIONS_COLUMN.field
-      )
-      ? columns
-      : [...columns, DOCUMENT_LIST_ACTIONS_COLUMN]
-    : columns;
-  const gridFormatCell: DataVisGridProps['formatCell'] =
-    formatCell || renderActions
-      ? (value, row, column) => {
-          const document = normalizeDocumentRow(row);
-          if (
-            column.field === DOCUMENT_LIST_ACTIONS_COLUMN.field &&
-            document &&
-            renderActions
-          ) {
-            return renderActions(
-              document,
-              getRowCapabilities?.(document) ?? DEFAULT_ROW_CAPABILITIES
+  const gridColumns = useMemo(
+    () =>
+      renderActions
+        ? columns.some(
+            (column) => column.field === DOCUMENT_LIST_ACTIONS_COLUMN.field
+          )
+          ? columns
+          : [...columns, DOCUMENT_LIST_ACTIONS_COLUMN]
+        : columns,
+    [columns, renderActions]
+  );
+  const gridFormatCell = useMemo<DataVisGridProps['formatCell']>(
+    () =>
+      formatCell || renderActions
+        ? (value, row, column) => {
+            const document = normalizeDocumentRow(row);
+            if (
+              column.field === DOCUMENT_LIST_ACTIONS_COLUMN.field &&
+              document &&
+              renderActions
+            ) {
+              return renderActions(
+                document,
+                getRowCapabilities?.(document) ?? DEFAULT_ROW_CAPABILITIES
+              );
+            }
+            const formatted = formatCell?.(value, row, column);
+            if (formatted !== undefined) return formatted;
+            // datavis renders exactly what formatCell returns — undefined is a
+            // blank cell, not a fallback — so plain cells return their value.
+            const text = value == null ? '' : String(value);
+            // An ISO date must never break on its hyphens.
+            return /^\d{4}-\d{2}-\d{2}$/.test(text) ? (
+              <span className="document-list-grid__nowrap">{text}</span>
+            ) : (
+              text
             );
           }
-          const formatted = formatCell?.(value, row, column);
-          if (formatted !== undefined) return formatted;
-          // datavis renders exactly what formatCell returns — undefined is a
-          // blank cell, not a fallback — so plain cells return their value.
-          const text = value == null ? '' : String(value);
-          // An ISO date must never break on its hyphens.
-          return /^\d{4}-\d{2}-\d{2}$/.test(text) ? (
-            <span className="document-list-grid__nowrap">{text}</span>
-          ) : (
-            text
-          );
-        }
-      : undefined;
-  const gridOnRowClick: DataVisGridProps['onRowClick'] = onRowClick
-    ? (row, event) => {
-        const document = documentFromTableRow(row);
-        if (document) onRowClick(document, event);
-      }
-    : undefined;
-  const gridOnRowDoubleClick: DataVisGridProps['onRowDoubleClick'] =
-    onRowDoubleClick
-      ? (row, event) => {
-          const document = documentFromTableRow(row);
-          if (document) onRowDoubleClick(document, event);
-        }
-      : undefined;
-  const gridRenderDetailRow: DataVisGridProps['renderDetailRow'] =
-    renderDetailRow
-      ? (row) => {
-          const document = documentFromTableRow(row);
-          return document ? renderDetailRow(document) : null;
-        }
-      : undefined;
-  const gridTitleActions =
-    titleActions || onToggleDetails || onCompose || onUpload ? (
-      <div className="document-list-grid__title-actions">
-        {onToggleDetails && (
-          <Button
-            type="button"
-            variant={detailRowsExpanded ? 'primary' : 'ghost'}
-            size="sm"
-            onClick={onToggleDetails}
-            aria-label="Toggle all document details"
-            aria-pressed={detailRowsExpanded ?? false}
-            title="Detail"
-            leftIcon={<LayoutList size={16} aria-hidden="true" />}
-          >
-            <span className="document-list-grid__action-label">Detail</span>
-          </Button>
-        )}
-        {onCompose && (
-          <Button
-            type="button"
-            variant="link"
-            size="sm"
-            onClick={onCompose}
-            aria-label={`Compose ${noun}`}
-            title="Compose"
-            leftIcon={<SquarePen size={16} aria-hidden="true" />}
-          >
-            <span className="document-list-grid__action-label">Compose</span>
-          </Button>
-        )}
-        {onUpload && (
-          <Button
-            type="button"
-            variant="link"
-            size="sm"
-            onClick={onUpload}
-            aria-label={`Upload ${noun}`}
-            title="Upload"
-            leftIcon={<Upload size={16} aria-hidden="true" />}
-          >
-            <span className="document-list-grid__action-label">Upload</span>
-          </Button>
-        )}
-        {titleActions}
-      </div>
-    ) : undefined;
+        : undefined,
+    [formatCell, getRowCapabilities, renderActions]
+  );
+  const gridOnRowClick = useMemo<DataVisGridProps['onRowClick']>(
+    () =>
+      onRowClick
+        ? (row, event) => {
+            const document = documentFromTableRow(row);
+            if (document) onRowClick(document, event);
+          }
+        : undefined,
+    [onRowClick]
+  );
+  const gridOnRowDoubleClick = useMemo<DataVisGridProps['onRowDoubleClick']>(
+    () =>
+      onRowDoubleClick
+        ? (row, event) => {
+            const document = documentFromTableRow(row);
+            if (document) onRowDoubleClick(document, event);
+          }
+        : undefined,
+    [onRowDoubleClick]
+  );
+  const gridRenderDetailRow = useMemo<DataVisGridProps['renderDetailRow']>(
+    () =>
+      renderDetailRow
+        ? (row) => {
+            const document = documentFromTableRow(row);
+            return document ? renderDetailRow(document) : null;
+          }
+        : undefined,
+    [renderDetailRow]
+  );
+  const gridTitleActions = useMemo(
+    () =>
+      titleActions || onToggleDetails || onCompose || onUpload ? (
+        <div className="document-list-grid__title-actions">
+          {onToggleDetails && (
+            <Button
+              type="button"
+              variant={detailRowsExpanded ? 'primary' : 'ghost'}
+              size="sm"
+              onClick={onToggleDetails}
+              aria-label="Toggle all document details"
+              aria-pressed={detailRowsExpanded ?? false}
+              title="Detail"
+              leftIcon={<LayoutList size={16} aria-hidden="true" />}
+            >
+              <span className="document-list-grid__action-label">Detail</span>
+            </Button>
+          )}
+          {onCompose && (
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              onClick={onCompose}
+              aria-label={`Compose ${noun}`}
+              title="Compose"
+              leftIcon={<SquarePen size={16} aria-hidden="true" />}
+            >
+              <span className="document-list-grid__action-label">Compose</span>
+            </Button>
+          )}
+          {onUpload && (
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              onClick={onUpload}
+              aria-label={`Upload ${noun}`}
+              title="Upload"
+              leftIcon={<Upload size={16} aria-hidden="true" />}
+            >
+              <span className="document-list-grid__action-label">Upload</span>
+            </Button>
+          )}
+          {titleActions}
+        </div>
+      ) : undefined,
+    [
+      detailRowsExpanded,
+      noun,
+      onCompose,
+      onToggleDetails,
+      onUpload,
+      titleActions,
+    ]
+  );
+  const gridStyle = useMemo(() => ({ width: '100%', ...style }), [style]);
 
   if (!view) {
     return (
@@ -493,7 +534,7 @@ export function DocumentListGrid({
           onRowDoubleClick={gridOnRowDoubleClick}
           renderDetailRow={gridRenderDetailRow}
           detailRowsExpanded={detailRowsExpanded}
-          style={{ width: '100%', ...style }}
+          style={gridStyle}
         />
       </div>
     </DataVisNitroContext.Provider>

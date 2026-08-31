@@ -48,8 +48,6 @@ export {
   ImageField,
   SignatureField,
   FileField,
-  ActivityField,
-  NoteCardList,
 } from './fields/index.js';
 export type {
   AutocompleteFieldDefinition,
@@ -57,8 +55,6 @@ export type {
   DrawingPadConfig,
   DrawingPadPayload,
   NormalizedPoint,
-  NoteCardItem,
-  NoteCardListProps,
   Stroke,
 } from './fields/index.js';
 
