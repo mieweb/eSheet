@@ -72,6 +72,38 @@
     border-radius: 8px !important;
   }
 
+  /* Floating-label fields (marked by the ui `peer` class) need their
+     asymmetric padding, so the flat rules above would break them. Bump
+     them to the ui lg floating metrics instead (h-16 / pt-6 pb-2 / text-lg);
+     labels keep their own rest/floated sizing. */
+  .esheet-renderer-root:not(.touch-mode-disabled) input.peer,
+  .ms-builder-root:not(.touch-mode-disabled) .preview-layout input.peer {
+    font-size: 1.125rem !important;
+    height: 4rem !important;
+    min-height: 4rem !important;
+    padding: 1.5rem 0.75rem 0.5rem !important;
+  }
+
+  .esheet-renderer-root:not(.touch-mode-disabled) textarea.peer,
+  .ms-builder-root:not(.touch-mode-disabled) .preview-layout textarea.peer {
+    font-size: 1.125rem !important;
+    height: auto !important;
+    min-height: 6rem !important;
+    padding: 1.5rem 0.75rem 0.75rem !important;
+  }
+
+  .esheet-renderer-root:not(.touch-mode-disabled)
+    [data-slot='select-trigger'].peer,
+  .ms-builder-root:not(.touch-mode-disabled)
+    .preview-layout
+    [data-slot='select-trigger'].peer {
+    font-size: 1.125rem !important;
+    height: auto !important;
+    min-height: 4rem !important;
+    /* Vertical spacing lives on the inner value span */
+    padding: 0 0.75rem !important;
+  }
+
   .esheet-renderer-root:not(.touch-mode-disabled) [data-slot='radio-indicator'],
   .ms-builder-root:not(.touch-mode-disabled)
     .preview-layout
@@ -150,12 +182,13 @@
     align-items: center !important;
   }
 
-  /* Only target field labels, not UI control labels (exclude Switch and other @mieweb/ui components) */
+  /* Only target field labels, not UI control labels (exclude Switch and other
+     @mieweb/ui components). Floating labels ([data-slot]) size themselves. */
   .esheet-renderer-root:not(.touch-mode-disabled) label:not([data-slot]),
   .ms-builder-root:not(.touch-mode-disabled)
     .preview-layout
     [class*='-field-preview']
-    label {
+    label:not([data-slot]) {
     font-size: 1rem !important;
     line-height: 1.4 !important;
   }
@@ -208,6 +241,37 @@
   height: auto !important;
   padding: 0.75rem !important;
   border-radius: 8px !important;
+}
+
+/* Floating-label fields (marked by the ui `peer` class) need their
+   asymmetric padding, so the flat rules above would break them. Bump
+   them to the ui lg floating metrics instead (h-16 / pt-6 pb-2 / text-lg);
+   labels keep their own rest/floated sizing. */
+.esheet-renderer-root.esheet-touch-active input.peer,
+.ms-builder-root.esheet-touch-active .preview-layout input.peer {
+  font-size: 1.125rem !important;
+  height: 4rem !important;
+  min-height: 4rem !important;
+  padding: 1.5rem 0.75rem 0.5rem !important;
+}
+
+.esheet-renderer-root.esheet-touch-active textarea.peer,
+.ms-builder-root.esheet-touch-active .preview-layout textarea.peer {
+  font-size: 1.125rem !important;
+  height: auto !important;
+  min-height: 6rem !important;
+  padding: 1.5rem 0.75rem 0.75rem !important;
+}
+
+.esheet-renderer-root.esheet-touch-active [data-slot='select-trigger'].peer,
+.ms-builder-root.esheet-touch-active
+  .preview-layout
+  [data-slot='select-trigger'].peer {
+  font-size: 1.125rem !important;
+  height: auto !important;
+  min-height: 4rem !important;
+  /* Vertical spacing lives on the inner value span */
+  padding: 0 0.75rem !important;
 }
 
 .esheet-renderer-root.esheet-touch-active [data-slot='radio-indicator'],
@@ -277,12 +341,13 @@
   align-items: center !important;
 }
 
-/* Only target field labels, not UI control labels (exclude Switch and other @mieweb/ui components) */
+/* Only target field labels, not UI control labels (exclude Switch and other
+   @mieweb/ui components). Floating labels ([data-slot]) size themselves. */
 .esheet-renderer-root.esheet-touch-active label:not([data-slot]),
 .ms-builder-root.esheet-touch-active
   .preview-layout
   [class*='-field-preview']
-  label {
+  label:not([data-slot]) {
   font-size: 1rem !important;
   line-height: 1.4 !important;
 }
