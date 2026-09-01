@@ -42,7 +42,7 @@
     "@esheet/adapters": "workspace:*",
     "@esheet/core": "workspace:*",
     "@esheet/fields": "workspace:*",
-    "@mieweb/ui": "0.7.3",
+    "@mieweb/ui": "0.7.3-dev.12",
     "@monaco-editor/react": "^4.7.0",
     "js-yaml": "^5.2.3",
     "react": "^19.2.4",
