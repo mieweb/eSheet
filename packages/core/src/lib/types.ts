@@ -507,6 +507,16 @@ export type FieldWidth = 'none' | 'full' | 'half' | 'third';
  */
 export type OptionLayout = 'stack' | 'wrap';
 
+/**
+ * How input labels are rendered.
+ * - `stacked`  - label sits above the input (default).
+ * - `floating` - label rests inside the input and floats up on focus/value.
+ *
+ * Set form-wide via `FormDefinition.labelVariant`; individual fields may
+ * override with their own `labelVariant`. Omitted means inherit / `stacked`.
+ */
+export type LabelVariant = 'stacked' | 'floating';
+
 /** A symmetric date range resolved relative to the day the form is rendered. */
 export interface RelativeDateRange {
   amount: number;
@@ -536,6 +546,8 @@ interface BaseFieldDefinition {
   width?: FieldWidth;
   /** When true, the field does not inherit its containing section's width. */
   overrideSectionWidth?: boolean;
+  /** Label rendering style. Overrides the form-level `labelVariant`; omitted = inherit. */
+  labelVariant?: LabelVariant;
   /** Validation rules applied to the field's response. */
   validators?: FieldValidator[];
   /** Conditional rules that control visibility, enabled state, or required state. */
@@ -978,12 +990,15 @@ export function normalizeFormDefinition(
  * Base schema properties shared by all field types.
  * Includes `question` and `required` for backward compatibility.
  */
+const labelVariantSchema = z.enum(['stacked', 'floating']);
+
 const baseFieldProps = {
   id: z.string(),
   question: z.optional(z.string()),
   required: z.optional(z.union([z.boolean(), z.literal('soft')])),
   width: z.optional(z.enum(['none', 'full', 'half', 'third'])),
   overrideSectionWidth: z.optional(z.boolean()),
+  labelVariant: z.optional(labelVariantSchema),
   validators: z.optional(z.array(fieldValidatorSchema)),
   rules: z.optional(z.array(conditionalRuleSchema)),
   /** JS expression that auto-computes this field's value (requires dangerouslyAllowJS on form). */
@@ -1337,6 +1352,8 @@ export const formDefinitionSchema = z.strictObject({
   description: z.optional(z.string()),
   /** When true, enables dangerously embedded JS - calculations on fields and conditionType 'js'. */
   dangerouslyAllowJS: z.optional(z.boolean()),
+  /** Default label rendering style for all fields. Fields may override. Defaults to 'stacked'. */
+  labelVariant: z.optional(labelVariantSchema),
   /** Pages array — required; every form must declare at least its fields inside pages. */
   pages: z.array(pageEntrySchema),
   _sourceData: z.optional(z.unknown()),
@@ -1353,6 +1370,7 @@ const builtInFormDefinitionSchema = z.strictObject({
   title: z.optional(z.string()),
   description: z.optional(z.string()),
   dangerouslyAllowJS: z.optional(z.boolean()),
+  labelVariant: z.optional(labelVariantSchema),
   pages: z.array(
     z.object({
       id: z.string(),

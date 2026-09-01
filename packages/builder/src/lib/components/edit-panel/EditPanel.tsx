@@ -1,16 +1,19 @@
 import React from 'react';
+import { useStore } from 'zustand';
 import {
   SECTION_ICON_GROUPS,
   getFieldTypeMeta,
   type FieldDefinition,
   type FieldWidth,
   type FieldOption,
+  type LabelVariant,
   type MatrixColumn,
   type MatrixRow,
   type EditTab,
   type SectionFieldDefinition,
   type SectionIconName,
 } from '@esheet/core';
+import { useFormStore } from '@esheet/fields';
 import { useInstanceId } from '../../EsheetBuilder.js';
 import { EditIcon, LogicIcon } from '../../icons.js';
 import { DraftIdEditor } from './DraftIdEditor.js';
@@ -39,6 +42,9 @@ export function EditPanel(_props: EditPanelProps) {
     setEditTab,
   } = useUiApi();
   const { normalized } = useFormApi(undefined);
+  const formStore = useFormStore();
+  const formLabelVariant = useStore(formStore, (s) => s.formLabelVariant);
+  const instanceId = useInstanceId();
 
   // Bind field actions to the selected field
   const { field_: selectedField_ } = useFormApi(selectedFieldId ?? undefined);
@@ -58,11 +64,42 @@ export function EditPanel(_props: EditPanelProps) {
     ? normalized.byId[selectedFieldId]
     : undefined;
 
-  // No selection
+  // No selection — show form-level settings
   if (!selectedFieldId || !activeField) {
     return (
-      <div className="edit-panel-empty ms:flex ms:flex-1 ms:min-h-0 ms:items-center ms:justify-center ms:text-mstextmuted ms:text-sm ms:p-4 ms:text-center">
-        Select a field to edit its properties
+      <div className="edit-panel-form-settings ms:flex ms:flex-1 ms:min-h-0 ms:flex-col ms:p-4 ms:space-y-4">
+        <div>
+          <h3 className="ms:text-sm ms:font-semibold ms:text-mstext ms:mb-3">
+            Form settings
+          </h3>
+          <label
+            htmlFor={`${instanceId}-form-labelvariant`}
+            className="edit-label ms:block ms:text-sm ms:font-medium ms:text-mstext ms:mb-1"
+          >
+            Label style
+          </label>
+          <select
+            id={`${instanceId}-form-labelvariant`}
+            value={formLabelVariant ?? 'stacked'}
+            onChange={(e) => {
+              const value = e.currentTarget.value as LabelVariant;
+              formStore
+                .getState()
+                .setFormLabelVariant(value === 'stacked' ? undefined : value);
+            }}
+            className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
+          >
+            <option value="stacked">Stacked (label above)</option>
+            <option value="floating">Floating (label inside)</option>
+          </select>
+          <p className="ms:mt-1 ms:text-xs ms:text-mstextmuted">
+            Default label style for supported inputs. Individual fields can
+            override it.
+          </p>
+        </div>
+        <div className="ms:flex ms:flex-1 ms:items-center ms:justify-center ms:text-mstextmuted ms:text-sm ms:text-center">
+          Select a field to edit its properties
+        </div>
       </div>
     );
   }

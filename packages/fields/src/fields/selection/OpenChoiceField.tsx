@@ -5,8 +5,10 @@ import type {
   OpenChoiceFieldDefinition,
   FieldOption,
 } from '@esheet/core';
+import { Input } from '@mieweb/ui';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 import { CustomRadioButton } from '../../fields-controls/CustomRadioButton.js';
+import { useLabelVariant } from '../../lib/context.js';
 
 export const OpenChoiceField = React.memo(function OpenChoiceField({
   field,
@@ -23,6 +25,7 @@ export const OpenChoiceField = React.memo(function OpenChoiceField({
     question?: string;
   };
   const instanceId = form.getState().instanceId;
+  const labelVariant = useLabelVariant(form, def);
   const options = def.options || [];
   const otherLabel = def.otherLabel || 'Other, please Specify:';
   const otherOptionId = `${def.id}-other`;
@@ -94,17 +97,17 @@ export const OpenChoiceField = React.memo(function OpenChoiceField({
 
         {isOtherSelected && (
           <div className="ms:mt-2">
-            <input
+            <Input
               id={`${instanceId}-openchoice-other-${def.id}`}
-              aria-label={otherLabel}
-              type="text"
+              label={otherLabel}
+              labelVariant={labelVariant}
+              hideLabel={labelVariant === 'stacked'}
               value={otherText}
               onChange={(e) => {
                 onResponse({
                   selected: { id: otherOptionId, value: e.target.value },
                 });
               }}
-              className="ms:w-full ms:min-h-[38px] ms:px-3 ms:py-2 ms:text-sm ms:rounded-lg ms:border ms:border-msborder ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary/30 ms:outline-none ms:bg-mssurface ms:text-mstext ms:cursor-text"
             />
           </div>
         )}

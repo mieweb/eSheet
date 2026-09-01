@@ -5,6 +5,7 @@ import type {
   DropdownFieldDefinition,
 } from '@esheet/core';
 import { Select } from '@mieweb/ui';
+import { useLabelVariant } from '../../lib/context.js';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 
 export const DropdownField = React.memo(function DropdownField({
@@ -20,6 +21,7 @@ export const DropdownField = React.memo(function DropdownField({
 }: FieldComponentProps) {
   const def = field.definition as DropdownFieldDefinition;
   const instanceId = form.getState().instanceId;
+  const labelVariant = useLabelVariant(form, def);
   const options = def.options || [];
   const selectedId =
     (response?.selected as SelectedOption | undefined)?.id ?? null;
@@ -32,22 +34,11 @@ export const DropdownField = React.memo(function DropdownField({
     ];
 
     return (
-      <div className="dropdown-field-preview ms:space-y-1.5">
-        <div className="ms:text-sm ms:font-medium ms:text-mstext ms:break-words ms:overflow-hidden">
-          {def.question || 'Question'}
-          {(isRequired || isSoftRequired) && (
-            <span
-              className={`ms:ml-0.5 ${
-                isSoftRequired ? 'ms:text-mswarning' : 'ms:text-msdanger'
-              }`}
-            >
-              *
-            </span>
-          )}
-        </div>
+      <div className="dropdown-field-preview">
         <Select
           id={`${instanceId}-dropdown-answer-${def.id}`}
-          aria-label={def.question || 'Question'}
+          label={def.question || 'Question'}
+          labelVariant={labelVariant}
           options={selectOptions}
           value={selectedId || ''}
           onValueChange={(val) => {
