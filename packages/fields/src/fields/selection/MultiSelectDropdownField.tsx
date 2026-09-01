@@ -14,6 +14,8 @@ export const MultiSelectDropdownField = React.memo(
     form,
     isPreview,
     isEnabled,
+    isRequired,
+    isSoftRequired,
     response,
     onUpdate,
     onResponse,
@@ -44,6 +46,8 @@ export const MultiSelectDropdownField = React.memo(
             id={`${instanceId}-multiselect-answer-${def.id}`}
             label={def.question || 'Question'}
             labelVariant={labelVariant}
+            required={isRequired || isSoftRequired}
+            requiredVariant={isSoftRequired ? 'warning' : undefined}
             options={options.map((o) => ({ value: o.id, label: o.value }))}
             value={selectedIds}
             onValueChange={handleChange}

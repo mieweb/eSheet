@@ -29,6 +29,7 @@ export const LongTextField = React.memo(function LongTextField({
           label={def.question || 'Question'}
           labelVariant={labelVariant}
           required={isRequired || isSoftRequired}
+          requiredVariant={isSoftRequired ? 'warning' : undefined}
           disabled={!isEnabled}
           aria-required={isRequired || undefined}
           value={response?.answer || ''}

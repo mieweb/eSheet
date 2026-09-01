@@ -39,6 +39,8 @@ export const DropdownField = React.memo(function DropdownField({
           id={`${instanceId}-dropdown-answer-${def.id}`}
           label={def.question || 'Question'}
           labelVariant={labelVariant}
+          required={isRequired || isSoftRequired}
+          requiredVariant={isSoftRequired ? 'warning' : undefined}
           options={selectOptions}
           value={selectedId || ''}
           onValueChange={(val) => {
