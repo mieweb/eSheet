@@ -3,36 +3,6 @@ import { defineConfig, type LibraryFormats } from 'vite';
 import react from '@vitejs/plugin-react';
 import dts from 'vite-plugin-dts';
 import { resolve } from 'path';
-import { readFileSync, writeFileSync, existsSync } from 'fs';
-
-// ---------------------------------------------------------------------------
-// Inline-CSS plugin (production build only)
-// ---------------------------------------------------------------------------
-function inlineCssFields(): import('vite').Plugin {
-  return {
-    name: 'inline-css-fields',
-    apply: 'build',
-    closeBundle() {
-      const cssPath = resolve(import.meta.dirname, 'src/index.output.css');
-      const jsPath = resolve(import.meta.dirname, 'dist/index.js');
-      if (!existsSync(cssPath) || !existsSync(jsPath)) return;
-      const cssContent = readFileSync(cssPath, 'utf-8');
-      const jsContent = readFileSync(jsPath, 'utf-8');
-      const iife =
-        `(function(){` +
-        `if(typeof document==='undefined')return;` +
-        `if(window.__ESHEET_FIELDS_CSS_INJECTED)return;` +
-        `if(!document.querySelector('#esheet-fields-styles')){` +
-        `var s=document.createElement('style');` +
-        `s.id='esheet-fields-styles';` +
-        `s.textContent=${JSON.stringify(cssContent)};` +
-        `document.head.appendChild(s);}` +
-        `window.__ESHEET_FIELDS_CSS_INJECTED=true;` +
-        `})();\n`;
-      writeFileSync(jsPath, iife + jsContent);
-    },
-  };
-}
 
 export default defineConfig(() => ({
   root: import.meta.dirname,
@@ -40,7 +10,6 @@ export default defineConfig(() => ({
   plugins: [
     react(),
     dts({ tsconfigPath: './tsconfig.lib.json', bundleTypes: true }),
-    inlineCssFields(),
   ],
   build: {
     lib: {

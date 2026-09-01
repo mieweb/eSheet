@@ -1,3 +1,5 @@
+import '@esheet/styles';
+
 // Controls
 export { CustomRadio } from './controls/CustomRadio.js';
 export { CustomCheckbox } from './controls/CustomCheckbox.js';

@@ -25,10 +25,7 @@
     "**/*.css"
   ],
   "scripts": {
-    "prebuild": "pnpm build:css",
     "build": "vite build",
-    "build:css": "tailwindcss -i src/index.css -o src/index.output.css",
-    "build:css:watch": "tailwindcss -i src/index.css -o src/index.output.css --watch",
     "lint": "eslint .",
     "pretypecheck": "pnpm --filter @esheet/fields build",
     "test": "vitest",
@@ -52,13 +49,12 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
-    "@tailwindcss/cli": "^4.3.3",
     "@testing-library/react": "^16.3.2",
     "@types/js-yaml": "^4.0.9",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.0.5",
     "jsdom": "^29.1.1",
-    "tailwindcss": "^4.3.3"
+    "vite-plugin-dts": "^5.0.3"
   }
 }

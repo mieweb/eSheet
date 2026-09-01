@@ -25,10 +25,7 @@
     "**/*.css"
   ],
   "scripts": {
-    "prebuild": "pnpm build:css",
     "build": "vite build",
-    "build:css": "tailwindcss -i src/index.css -o src/index.output.css",
-    "build:css:watch": "tailwindcss -i src/index.css -o src/index.output.css --watch",
     "lint": "eslint .",
     "pretypecheck": "pnpm --filter @esheet/fields build",
     "test": "vitest",
@@ -53,8 +50,5 @@
       "optional": true
     }
   },
-  "devDependencies": {
-    "@tailwindcss/cli": "^4.3.3",
-    "tailwindcss": "^4.3.3"
-  }
+  "devDependencies": {}
 }
