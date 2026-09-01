@@ -186,8 +186,8 @@ importers:
         specifier: ^0.8.10
         version: 0.8.10
       '@mieweb/ui':
-        specifier: 0.7.3-dev.12
-        version: 0.7.3-dev.12(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.10)(@mieweb/datavis@1.6.0(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.10)(@types/react@19.2.18)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(redux@5.0.1)(remark-gfm@4.0.1)(typescript@6.0.3))(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(remark-gfm@4.0.1)
+        specifier: 0.7.3-dev.13
+        version: 0.7.3-dev.13(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.10)(@mieweb/datavis@1.6.0(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.10)(@types/react@19.2.18)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(redux@5.0.1)(remark-gfm@4.0.1)(typescript@6.0.3))(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(remark-gfm@4.0.1)
       js-yaml:
         specifier: ^5.2.3
         version: 5.2.3
@@ -270,8 +270,8 @@ importers:
         specifier: workspace:*
         version: link:../fields
       '@mieweb/ui':
-        specifier: 0.7.3-dev.12
-        version: 0.7.3-dev.12(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@mieweb/datavis@1.6.0(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@types/react@19.2.18)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(redux@5.0.1)(remark-gfm@4.0.1)(typescript@6.0.3))(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(remark-gfm@4.0.1)
+        specifier: 0.7.3-dev.13
+        version: 0.7.3-dev.13(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@mieweb/datavis@1.6.0(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@types/react@19.2.18)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(redux@5.0.1)(remark-gfm@4.0.1)(typescript@6.0.3))(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(remark-gfm@4.0.1)
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.56.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -341,8 +341,8 @@ importers:
         specifier: workspace:*
         version: link:../fields
       '@mieweb/ui':
-        specifier: 0.7.3-dev.12
-        version: 0.7.3-dev.12(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@mieweb/datavis@1.6.0(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@types/react@19.2.18)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(redux@5.0.1)(remark-gfm@4.0.1)(typescript@6.0.3))(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(remark-gfm@4.0.1)
+        specifier: 0.7.3-dev.13
+        version: 0.7.3-dev.13(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@mieweb/datavis@1.6.0(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@types/react@19.2.18)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(redux@5.0.1)(remark-gfm@4.0.1)(typescript@6.0.3))(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(remark-gfm@4.0.1)
       lucide-react:
         specifier: ^1.31.0
         version: 1.31.0(react@19.2.8)
@@ -393,8 +393,8 @@ importers:
         specifier: workspace:*
         version: link:../core
       '@mieweb/ui':
-        specifier: 0.7.3-dev.12
-        version: 0.7.3-dev.12(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@mieweb/datavis@1.6.0(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@types/react@19.2.18)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(redux@5.0.1)(remark-gfm@4.0.1)(typescript@6.0.3))(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(remark-gfm@4.0.1)
+        specifier: 0.7.3-dev.13
+        version: 0.7.3-dev.13(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@mieweb/datavis@1.6.0(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@types/react@19.2.18)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(redux@5.0.1)(remark-gfm@4.0.1)(typescript@6.0.3))(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(remark-gfm@4.0.1)
       lucide-react:
         specifier: ^1.31.0
         version: 1.31.0(react@19.2.8)
@@ -448,8 +448,8 @@ importers:
         specifier: 1.6.0
         version: 1.6.0(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@types/react@19.2.18)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(redux@5.0.1)(remark-gfm@4.0.1)(typescript@6.0.3)
       '@mieweb/ui':
-        specifier: 0.7.3-dev.12
-        version: 0.7.3-dev.12(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@mieweb/datavis@1.6.0(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@types/react@19.2.18)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(redux@5.0.1)(remark-gfm@4.0.1)(typescript@6.0.3))(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(remark-gfm@4.0.1)
+        specifier: 0.7.3-dev.13
+        version: 0.7.3-dev.13(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@mieweb/datavis@1.6.0(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@types/react@19.2.18)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(redux@5.0.1)(remark-gfm@4.0.1)(typescript@6.0.3))(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(remark-gfm@4.0.1)
       ag-grid-community:
         specifier: ^35.1.0
         version: 35.3.1
@@ -2260,8 +2260,8 @@ packages:
       yjs:
         optional: true
 
-  '@mieweb/ui@0.7.3-dev.12':
-    resolution: {integrity: sha512-qeJw9yhbKGMpRupgyq84JvIAjI8BGbcYH3vqMxvQcW0pKrP6ysDLEiGSv4j24df5qlrr9Znp+fvvlYph686oOA==}
+  '@mieweb/ui@0.7.3-dev.13':
+    resolution: {integrity: sha512-Th3tZNoBIbKAQR9N1KZCsV4AChlymwEP2thnStI+kj6vWKIJpRB3ALI7RYca9TP0UxSCFDZw/+vcO1ZEOFNmxw==}
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
     peerDependencies:
@@ -12658,7 +12658,7 @@ snapshots:
       papaparse: 5.5.4
       remark-gfm: 4.0.1
 
-  '@mieweb/ui@0.7.3-dev.12(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.10)(@mieweb/datavis@1.6.0(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.10)(@types/react@19.2.18)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(redux@5.0.1)(remark-gfm@4.0.1)(typescript@6.0.3))(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(remark-gfm@4.0.1)':
+  '@mieweb/ui@0.7.3-dev.13(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.10)(@mieweb/datavis@1.6.0(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.10)(@types/react@19.2.18)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(redux@5.0.1)(remark-gfm@4.0.1)(typescript@6.0.3))(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(remark-gfm@4.0.1)':
     dependencies:
       '@swc/helpers': 0.5.23
       '@tanstack/react-virtual': 3.14.10(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -12688,7 +12688,7 @@ snapshots:
       papaparse: 5.5.4
       remark-gfm: 4.0.1
 
-  '@mieweb/ui@0.7.3-dev.12(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@mieweb/datavis@1.6.0(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@types/react@19.2.18)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(redux@5.0.1)(remark-gfm@4.0.1)(typescript@6.0.3))(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(remark-gfm@4.0.1)':
+  '@mieweb/ui@0.7.3-dev.13(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@mieweb/datavis@1.6.0(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@types/react@19.2.18)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(redux@5.0.1)(remark-gfm@4.0.1)(typescript@6.0.3))(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(remark-gfm@4.0.1)':
     dependencies:
       '@swc/helpers': 0.5.23
       '@tanstack/react-virtual': 3.14.10(react-dom@19.2.8(react@19.2.8))(react@19.2.8)

@@ -53,6 +53,7 @@ export function CommonEditor({
     def.fieldType === 'longtext' ||
     def.fieldType === 'multitext' ||
     def.fieldType === 'dropdown' ||
+    def.fieldType === 'multiselectdropdown' ||
     def.fieldType === 'openchoice';
   const labelVariant = (def as { labelVariant?: LabelVariant }).labelVariant;
   const question = (def as { question?: string }).question ?? '';
