@@ -42,6 +42,7 @@
     "@esheet/adapters": "workspace:*",
     "@esheet/core": "workspace:*",
     "@esheet/fields": "workspace:*",
+    "@esheet/styles": "workspace:*",
     "js-yaml": "^5.2.3"
   },
   "peerDependencies": {
