@@ -1,10 +1,12 @@
 @import 'tailwindcss/theme' prefix(ms);
 @import 'tailwindcss/utilities' prefix(ms);
-@import '../../../packages/fields/src/lib/touch-mode/touch-mode.css';
+@import '../../fields/src/lib/touch-mode/touch-mode.css';
 
-@source '../../../packages/builder/src';
-@source '../../../packages/fields/src';
-@source '../../../packages/renderer/src';
+@source '../../builder/src/**/*.{ts,tsx}';
+@source '../../fields/src/**/*.{ts,tsx}';
+@source '../../renderer/src/**/*.{ts,tsx}';
+@source '../../field-kerebron/src/**/*.{ts,tsx}';
+@source '../../fields-documents/src/**/*.{ts,tsx}';
 
 @theme {
   --color-msprimary: var(--mieweb-primary-500, #3b82f6);
@@ -24,14 +26,7 @@
   --color-msoverlay: rgba(0, 0, 0, 0.5);
 }
 
-@custom-variant dark (
-  &:where(
-    .ms-builder-root.dark,
-    .ms-builder-root.dark *,
-    .esheet-renderer-root.dark,
-    .esheet-renderer-root.dark *
-  )
-);
+@custom-variant dark (&:where(.ms-builder-root.dark, .ms-builder-root.dark *, .esheet-renderer-root.dark, .esheet-renderer-root.dark *));
 
 @layer base {
   .ms-builder-root,
@@ -49,7 +44,8 @@
     height: 8px;
   }
 
-  .ms-builder-root ::-webkit-scrollbar-track {
+  .ms-builder-root ::-webkit-scrollbar-track,
+  .ms-builder-root ::-webkit-scrollbar-button {
     background: var(--mieweb-background);
   }
 
@@ -59,19 +55,18 @@
   }
 
   .ms-builder-root ::-webkit-scrollbar-button {
-    background: var(--mieweb-background);
     display: block;
-    height: 0;
     width: 0;
+    height: 0;
   }
 
   .ms-builder-root,
-  .esheet-renderer-root,
   .ms-builder-root *,
-  .esheet-renderer-root *,
   .ms-builder-root *::before,
-  .esheet-renderer-root *::before,
   .ms-builder-root *::after,
+  .esheet-renderer-root,
+  .esheet-renderer-root *,
+  .esheet-renderer-root *::before,
   .esheet-renderer-root *::after {
     box-sizing: border-box;
     border-width: 0;
@@ -92,10 +87,19 @@
 }
 
 .singlematrix-field-grid [role='radiogroup'],
-.singlematrix-field-grid [role='radiogroup'] > div {
+.singlematrix-field-grid [role='radiogroup'] > div,
+.multimatrix-field-grid .ms\:flex.ms\:justify-center > div {
   display: contents;
 }
 
-.multimatrix-field-grid .ms\:flex.ms\:justify-center > div {
-  display: contents;
+body.condensed .esheet-renderer-root,
+body.condensed .ms-builder-root .preview-layout {
+  --ms-spacing: 0.1875rem;
+  --ms-text-sm: 0.75rem;
+  --ms-text-sm--line-height: calc(1 / 0.75);
+}
+
+body.condensed .esheet-renderer-root [class*='min-h-[38px]'],
+body.condensed .ms-builder-root .preview-layout [class*='min-h-[38px]'] {
+  min-height: 1.75rem;
 }

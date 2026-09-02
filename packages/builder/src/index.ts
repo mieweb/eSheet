@@ -1,3 +1,5 @@
+import '@esheet/styles';
+
 // Re-export UIStore from core for backward compat
 export {
   createUIStore,

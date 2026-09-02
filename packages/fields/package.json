@@ -23,14 +23,13 @@
   },
   "sideEffects": [
     "**/*.css",
+    "./src/index.ts",
+    "./dist/index.js",
     "**/component-registry.ts",
     "**/component-registry.js"
   ],
   "scripts": {
-    "prebuild": "pnpm build:css",
     "build": "vite build",
-    "build:css": "tailwindcss -i src/index.css -o src/index.output.css",
-    "build:css:watch": "tailwindcss -i src/index.css -o src/index.output.css --watch",
     "lint": "eslint .",
     "test": "vitest",
     "typecheck": "tsc --build --emitDeclarationOnly"
@@ -41,6 +40,7 @@
   ],
   "dependencies": {
     "@esheet/core": "workspace:*",
+    "@esheet/styles": "workspace:*",
     "@mieweb/ui": "0.7.3",
     "lucide-react": "^1.31.0",
     "react": "^19.2.4",
@@ -49,11 +49,9 @@
     "tslib": "^2.3.0"
   },
   "devDependencies": {
-    "@tailwindcss/cli": "^4.3.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.0.5",
-    "jsdom": "^29.1.1",
-    "tailwindcss": "^4.3.3"
+    "jsdom": "^29.1.1"
   }
 }

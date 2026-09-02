@@ -15,7 +15,14 @@ All eSheet components use Tailwind utility classes prefixed with `ms:`. For exam
 <div class="ms:flex ms:gap-2 ms:p-4 ms:bg-mssurface ms:text-mstext"></div>
 ```
 
-This means eSheet styles are **fully isolated** from your app's styles. You don't need to configure Tailwind in your own project to use eSheet.
+`@esheet/styles` compiles all eSheet utilities into one stylesheet and loads it automatically through the builder, renderer, and fields packages. You don't need to configure Tailwind in your own project to use eSheet.
+
+eSheet components also use `@mieweb/ui`. Applications must load the compiled UI stylesheet and select a brand separately:
+
+```css
+@import '@mieweb/ui/brands/bluehive.css' layer(theme);
+@import '@mieweb/ui/styles.css';
+```
 
 ## Semantic Color Tokens
 
@@ -41,14 +48,14 @@ eSheet uses semantic color tokens instead of hardcoded color values. These token
 
 ## Customizing Colors
 
-Override the CSS custom properties in your stylesheet:
+Override the underlying `@mieweb/ui` CSS custom properties in your stylesheet:
 
 ```css
 /* Override eSheet's primary color to green */
 :root {
-  --ms-color-primary: #059669;
-  --ms-color-danger: #dc2626;
-  --ms-color-surface: #fefefe;
+  --mieweb-primary-500: #059669;
+  --mieweb-destructive: #dc2626;
+  --mieweb-card: #fefefe;
 }
 ```
 

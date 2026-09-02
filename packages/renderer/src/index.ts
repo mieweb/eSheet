@@ -1,3 +1,5 @@
+import '@esheet/styles';
+
 // Main renderer component
 export {
   EsheetRenderer,

@@ -9,14 +9,8 @@
    override Tailwind's preflight resets (border-width: 0) by source order. */
 @import '@mieweb/ui/styles.css';
 
-/* 4. Tell Tailwind to scan demo app source files + @mieweb/ui dist + eSheet packages */
+/* 4. Generate utilities used by the demo application itself */
 @source "./";
-@source "../../../node_modules/@mieweb/ui/dist";
-@source "../../../packages/fields/src";
-@source "../../../packages/renderer/src";
-@source "../../../packages/builder/src";
-
-@import './index.output.css';
 
 /* 5. Define dark mode variant for Tailwind 4 */
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
