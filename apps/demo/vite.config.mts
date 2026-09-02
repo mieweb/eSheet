@@ -121,24 +121,10 @@ function codifyAssetsPlugin(
 export default defineConfig(({ command, mode }) => {
   const envDir = resolve(import.meta.dirname, '../..');
   const env = loadEnv(mode, envDir, '');
-
-  return {
-    root: import.meta.dirname,
-    envDir,
-    envPrefix: 'OZWELL_',
-    cacheDir: '../../node_modules/.vite/apps/demo',
-    // Keep local dev at / while producing /demo/ assets for canonical host routing.
-    base: command === 'serve' ? '/' : '/demo/',
-    // Resolve workspace packages to their TypeScript source for dev and build.
-    // Explicit aliases are needed because Vite's commonjs resolver doesn't respect
-    // custom export conditions (@esheet/source) during production builds.
-    resolve: {
-      dedupe: ['prosemirror-model'],
-      alias: [
-        {
-          find: 'prosemirror-model',
-          replacement: prosemirrorModelPath,
-        },
+  const useDist = process.env.ESHEET_USE_DIST === 'true';
+  const esheetAliases = useDist
+    ? []
+    : [
         {
           find: '@esheet/adapters',
           replacement: resolve(
@@ -202,6 +188,26 @@ export default defineConfig(({ command, mode }) => {
             '../../packages/fields-documents/src/index.ts'
           ),
         },
+      ];
+
+  return {
+    root: import.meta.dirname,
+    envDir,
+    envPrefix: 'OZWELL_',
+    cacheDir: '../../node_modules/.vite/apps/demo',
+    // Keep local dev at / while producing /demo/ assets for canonical host routing.
+    base: command === 'serve' ? '/' : '/demo/',
+    // Resolve workspace packages to their TypeScript source for dev and build.
+    // Explicit aliases are needed because Vite's commonjs resolver doesn't respect
+    // custom export conditions (@esheet/source) during production builds.
+    resolve: {
+      dedupe: ['prosemirror-model'],
+      alias: [
+        {
+          find: 'prosemirror-model',
+          replacement: prosemirrorModelPath,
+        },
+        ...esheetAliases,
         {
           find: /^@mieweb\/ui$/,
           replacement: resolve(
@@ -220,7 +226,9 @@ export default defineConfig(({ command, mode }) => {
       ],
     },
     optimizeDeps: {
-      entries: ['index.html', '../../packages/field-health/src/index.ts'],
+      entries: useDist
+        ? ['index.html']
+        : ['index.html', '../../packages/field-health/src/index.ts'],
     },
     server: {
       port: 3001,
