@@ -1,6 +1,11 @@
 import React from 'react';
-import type { FieldComponentProps, SelectedOption } from '@esheet/core';
+import type {
+  FieldComponentProps,
+  SelectedOption,
+  LabelVariant,
+} from '@esheet/core';
 import { Autocomplete } from '@mieweb/ui';
+import { useLabelVariant } from '../../lib/context.js';
 import { registerCustomFieldTypes } from '../../lib/component-registry.js';
 
 /**
@@ -39,6 +44,8 @@ export interface AutocompleteFieldDefinition {
   answerPlaceholder?: string;
   /** Minimum query length before searching. Default 2. */
   minQueryLength?: number;
+  /** Per-field label style override (falls back to the form-level setting). */
+  labelVariant?: LabelVariant;
 }
 
 const DEBOUNCE_MS = 250;
@@ -142,6 +149,7 @@ export const AutocompleteField = React.memo(function AutocompleteField({
 }: FieldComponentProps) {
   const def = field.definition as unknown as AutocompleteFieldDefinition;
   const instanceId = form.getState().instanceId;
+  const labelVariant = useLabelVariant(form, def);
   const selected = response?.selected as SelectedOption | undefined;
 
   const [query, setQuery] = React.useState(selected?.value ?? '');
@@ -210,20 +218,12 @@ export const AutocompleteField = React.memo(function AutocompleteField({
 
   if (isPreview) {
     return (
-      <div className="autocomplete-field-preview ms:space-y-1.5">
-        <div className="ms:text-sm ms:font-medium ms:text-mstext ms:break-words ms:overflow-hidden">
-          {def.question || 'Question'}
-          {(isRequired || isSoftRequired) && (
-            <span
-              className={`ms:ml-0.5 ${
-                isSoftRequired ? 'ms:text-mswarning' : 'ms:text-msdanger'
-              }`}
-            >
-              *
-            </span>
-          )}
-        </div>
+      <div className="autocomplete-field-preview">
         <Autocomplete<ParsedAutocompleteItem>
+          label={def.question || 'Question'}
+          labelVariant={labelVariant}
+          required={isRequired || isSoftRequired}
+          requiredVariant={isSoftRequired ? 'warning' : undefined}
           items={items}
           getItemKey={(item) => item.id}
           renderItem={(item) => <span>{item.value}</span>}
@@ -241,7 +241,6 @@ export const AutocompleteField = React.memo(function AutocompleteField({
           placeholder={def.answerPlaceholder || 'Start typing to search…'}
           emptyMessage={loading ? 'Searching…' : 'No results found.'}
           disabled={!isEnabled}
-          aria-label={def.question || 'Question'}
           inputProps={{ id: `${instanceId}-autocomplete-answer-${def.id}` }}
         />
       </div>
