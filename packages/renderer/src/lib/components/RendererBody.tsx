@@ -184,7 +184,7 @@ export function RendererBody({
   if (!isMultiPage || !hasPageNavigation) {
     return (
       <FieldGrid
-        className="canvas-fields renderer-body ms:p-4"
+        className="canvas-fields renderer-body"
         stackedClassName="ms:space-y-2 ms:lg:space-y-3"
       >
         {fields}
@@ -208,7 +208,7 @@ export function RendererBody({
       validateNavigation={validateNavigation}
     >
       <FieldGrid
-        className="canvas-fields renderer-body ms:p-4"
+        className="canvas-fields renderer-body ms:px-0"
         stackedClassName="ms:space-y-2 ms:lg:space-y-3"
       >
         {fields}
