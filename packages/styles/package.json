@@ -25,7 +25,8 @@
     "prebuild": "pnpm build:css",
     "build": "vite build",
     "build:css": "tailwindcss -i src/index.css -o src/index.output.css",
-    "build:css:watch": "tailwindcss -i src/index.css -o src/index.output.css --watch"
+    "build:css:watch": "tailwindcss -i src/index.css -o src/index.output.css --watch",
+    "test": "node --test test/*.test.mjs"
   },
   "files": [
     "dist"

@@ -1,5 +1,6 @@
 @import 'tailwindcss/theme' prefix(ms);
 @import 'tailwindcss/utilities' prefix(ms);
+@import '../../fields/src/lib/touch-mode/touch-mode.css';
 
 @source '../../builder/src/**/*.{ts,tsx}';
 @source '../../fields/src/**/*.{ts,tsx}';
@@ -26,3 +27,79 @@
 }
 
 @custom-variant dark (&:where(.ms-builder-root.dark, .ms-builder-root.dark *, .esheet-renderer-root.dark, .esheet-renderer-root.dark *));
+
+@layer base {
+  .ms-builder-root,
+  .esheet-renderer-root {
+    font-family: var(--mieweb-font-sans, 'Nunito'), ui-sans-serif, system-ui,
+      sans-serif;
+  }
+
+  .ms-builder-root {
+    scrollbar-color: var(--mieweb-muted-foreground) var(--mieweb-background);
+  }
+
+  .ms-builder-root ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .ms-builder-root ::-webkit-scrollbar-track,
+  .ms-builder-root ::-webkit-scrollbar-button {
+    background: var(--mieweb-background);
+  }
+
+  .ms-builder-root ::-webkit-scrollbar-thumb {
+    background: var(--mieweb-muted-foreground);
+    border-radius: 4px;
+  }
+
+  .ms-builder-root ::-webkit-scrollbar-button {
+    display: block;
+    width: 0;
+    height: 0;
+  }
+
+  .ms-builder-root,
+  .ms-builder-root *,
+  .ms-builder-root *::before,
+  .ms-builder-root *::after,
+  .esheet-renderer-root,
+  .esheet-renderer-root *,
+  .esheet-renderer-root *::before,
+  .esheet-renderer-root *::after {
+    box-sizing: border-box;
+    border-width: 0;
+    border-style: solid;
+    border-color: var(--ms-color-msborder, #e5e7eb);
+  }
+
+  .ms-builder-root button,
+  .ms-builder-root input,
+  .ms-builder-root select,
+  .ms-builder-root textarea,
+  .esheet-renderer-root button,
+  .esheet-renderer-root input,
+  .esheet-renderer-root select,
+  .esheet-renderer-root textarea {
+    font: inherit;
+  }
+}
+
+.singlematrix-field-grid [role='radiogroup'],
+.singlematrix-field-grid [role='radiogroup'] > div,
+.multimatrix-field-grid .ms\:flex.ms\:justify-center > div {
+  display: contents;
+}
+
+body.condensed .esheet-renderer-root,
+body.condensed .ms-builder-root .preview-layout {
+  --ms-spacing: 0.1875rem;
+  --ms-text-sm: 0.75rem;
+  --ms-text-sm--line-height: calc(1 / 0.75);
+}
+
+body.condensed .esheet-renderer-root [class*='min-h-[38px]'],
+body.condensed .ms-builder-root .preview-layout [class*='min-h-[38px]'] {
+  min-height: 1.75rem;
+}

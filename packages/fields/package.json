@@ -23,6 +23,8 @@
   },
   "sideEffects": [
     "**/*.css",
+    "./src/index.ts",
+    "./dist/index.js",
     "**/component-registry.ts",
     "**/component-registry.js"
   ],

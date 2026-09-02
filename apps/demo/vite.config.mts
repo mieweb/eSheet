@@ -154,6 +154,13 @@ export default defineConfig(({ command, mode }) => {
           ),
         },
         {
+          find: '@esheet/styles',
+          replacement: resolve(
+            import.meta.dirname,
+            '../../packages/styles/dist/index.js'
+          ),
+        },
+        {
           find: '@esheet/fields',
           replacement: resolve(
             import.meta.dirname,

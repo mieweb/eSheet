@@ -22,7 +22,9 @@
     }
   },
   "sideEffects": [
-    "**/*.css"
+    "**/*.css",
+    "./src/index.ts",
+    "./dist/index.js"
   ],
   "scripts": {
     "build": "vite build",

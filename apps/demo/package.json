@@ -3,9 +3,10 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "build": "pnpm build:css && vite build",
-    "build:css": "pnpm --filter @esheet/builder exec tailwindcss -i ../../apps/demo/src/esheet.css -o ../../apps/demo/src/index.output.css",
-    "dev": "pnpm build:css && vite",
+    "prebuild": "pnpm --filter @esheet/styles build",
+    "build": "vite build",
+    "predev": "pnpm --filter @esheet/styles build",
+    "dev": "vite",
     "lint": "eslint .",
     "preview": "vite preview",
     "typecheck": "tsc --build --emitDeclarationOnly --force"

@@ -24,6 +24,7 @@ export default defineConfig(() => ({
         'react-dom',
         'react/jsx-runtime',
         '@esheet/core',
+        '@esheet/styles',
         'tslib',
       ],
     },

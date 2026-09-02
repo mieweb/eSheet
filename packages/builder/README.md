@@ -117,7 +117,7 @@ registerCustomFieldTypes({
 
 ## CSS Architecture
 
-The builder uses Tailwind CSS v4 with `ms:` prefix. CSS is compiled via `@tailwindcss/cli` and embedded into the JS bundle at build time — consumers never need to import a stylesheet. A scoped reset on `.ms-builder-root` prevents style leakage in either direction.
+The builder uses Tailwind CSS v4 with an `ms:` prefix. `@esheet/styles` compiles the shared builder, renderer, and fields utility set and loads it automatically, so consumers do not need to import an eSheet stylesheet. Applications using `@mieweb/ui` components must still load `@mieweb/ui/styles.css` and select a brand stylesheet.
 
 ## Building
 

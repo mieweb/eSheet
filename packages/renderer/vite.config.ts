@@ -7,10 +7,7 @@ import { resolve } from 'path';
 export default defineConfig(() => ({
   root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/packages/renderer',
-  plugins: [
-    react(),
-    dts({ tsconfigPath: './tsconfig.lib.json' }),
-  ],
+  plugins: [react(), dts({ tsconfigPath: './tsconfig.lib.json' })],
   build: {
     lib: {
       entry: resolve(import.meta.dirname, 'src/index.ts'),
@@ -24,6 +21,7 @@ export default defineConfig(() => ({
         'react-dom',
         'react/jsx-runtime',
         '@esheet/core',
+        '@esheet/styles',
         // Must stay external: the field component registry lives in
         // @esheet/fields, and registerCustomFieldTypes() only reaches the
         // renderer when host and renderer share one module instance.

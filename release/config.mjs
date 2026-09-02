@@ -5,6 +5,7 @@ export const REPO = 'mieweb/eSheet';
 /** Publishable packages in dependency order (dependencies before dependents). */
 export const PACKAGES = [
   'packages/core',
+  'packages/styles',
   'packages/fields',
   'packages/field-kerebron',
   'packages/field-health',

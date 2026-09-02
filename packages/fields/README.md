@@ -48,12 +48,9 @@ registerCustomFieldTypes({
 
 ## CSS Architecture
 
-Fields use Tailwind CSS v4 with `ms:` prefix (e.g., `ms:bg-mssurface`, `ms:text-mstext`). Colors reference CSS custom properties (`--ms-color-*`) defined by the host root:
+Fields use Tailwind CSS v4 with an `ms:` prefix (for example, `ms:bg-mssurface` and `ms:text-mstext`). `@esheet/styles` loads the shared utility set automatically and maps `@mieweb/ui` brand variables to eSheet semantic colors.
 
-- **Light mode**: Defined in the host's `@theme` block
-- **Dark mode**: Overridden when the host root has `.dark` class
-
-Fields do **not** ship their own CSS resets or dark theme — they inherit from the consuming package.
+Applications must load `@mieweb/ui/styles.css` and select a brand stylesheet. The shared eSheet stylesheet uses fallback colors when brand variables are unavailable.
 
 ## Building
 

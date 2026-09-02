@@ -24,6 +24,7 @@ export default defineConfig(() => ({
         'react-dom',
         'react/jsx-runtime',
         '@esheet/core',
+        '@esheet/styles',
         // Must stay external for the same reason as the renderer: the field
         // component registry lives in @esheet/fields, and host-registered
         // custom field types only reach the builder when host and builder
