@@ -84,6 +84,11 @@
   .esheet-renderer-root textarea {
     font: inherit;
   }
+
+  .ms-builder-root :focus,
+  .esheet-renderer-root :focus {
+    --tw-ring-inset: inset;
+  }
 }
 
 .singlematrix-field-grid [role='radiogroup'],
