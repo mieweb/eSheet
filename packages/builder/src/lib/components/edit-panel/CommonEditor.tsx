@@ -54,7 +54,9 @@ export function CommonEditor({
     def.fieldType === 'multitext' ||
     def.fieldType === 'dropdown' ||
     def.fieldType === 'multiselectdropdown' ||
-    def.fieldType === 'openchoice';
+    def.fieldType === 'openchoice' ||
+    // Custom field type registered by @esheet/fields, not in the core union
+    (def.fieldType as string) === 'autocomplete';
   const labelVariant = (def as { labelVariant?: LabelVariant }).labelVariant;
   const question = (def as { question?: string }).question ?? '';
   const suggestedId = slugifyQuestion(question);
@@ -204,7 +206,7 @@ export function CommonEditor({
         </div>
       )}
 
-      {/* Label style (text / longtext / multitext / dropdown only) */}
+      {/* Label style (fields listed in showLabelVariant) */}
       {showLabelVariant && (
         <div>
           <label
