@@ -21,6 +21,7 @@ import {
   UIContext,
 } from './EsheetBuilder.js';
 import { BuilderHeader } from './components/BuilderHeader.js';
+import { EditPanel } from './components/edit-panel/EditPanel.js';
 import { useFormApi } from './hooks/useFormApi.js';
 import type { StoreApi } from 'zustand';
 import { vi } from 'vitest';
@@ -40,6 +41,45 @@ function renderWithContexts(
 afterEach(cleanup);
 
 describe('EsheetBuilder', () => {
+  it('updates Required on the Logic Editor target', () => {
+    const form = createFormStore({
+      id: 'logic-required-target',
+      pages: [
+        {
+          id: 'page-1',
+          fields: [
+            {
+              id: 'section-1',
+              fieldType: 'section',
+              fields: [{ id: 'child-1', fieldType: 'text' }],
+            },
+            { id: 'root-1', fieldType: 'text' },
+          ],
+        },
+      ],
+    });
+    const ui = createUIStore();
+    ui.getState().selectFieldChild('section-1', 'child-1');
+    ui.getState().setEditTab('logic');
+
+    renderWithContexts(form, ui, <EditPanel />);
+    fireEvent.click(screen.getByRole('button', { name: 'Required' }));
+
+    expect(
+      form.getState().normalized.byId['child-1']?.definition.required
+    ).toBe(true);
+    expect(
+      form.getState().normalized.byId['section-1']?.definition.required
+    ).toBeUndefined();
+
+    act(() => ui.getState().selectField('root-1'));
+    fireEvent.click(screen.getByRole('button', { name: 'Required' }));
+
+    expect(form.getState().normalized.byId['root-1']?.definition.required).toBe(
+      true
+    );
+  });
+
   it('does not rerender a field consumer for another field response', () => {
     const form = createFormStore({
       id: 'response-isolation',

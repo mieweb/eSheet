@@ -53,6 +53,7 @@ export function EditPanel(_props: EditPanelProps) {
     }
     return node;
   }, [normalized, selectedFieldId, selectedFieldChildId]);
+  const { field_: logicField_ } = useFormApi(logicField?.definition.id);
 
   const activeField = selectedFieldId
     ? normalized.byId[selectedFieldId]
@@ -88,6 +89,11 @@ export function EditPanel(_props: EditPanelProps) {
     patch: Partial<Omit<import('@esheet/core').FieldDefinition, 'fields'>>
   ) => {
     selectedField_.update(patch);
+  };
+  const handleLogicUpdate = (
+    patch: Partial<Omit<import('@esheet/core').FieldDefinition, 'fields'>>
+  ) => {
+    logicField_.update(patch);
   };
 
   const handleRenameId = (newId: string): boolean => {
@@ -161,7 +167,7 @@ export function EditPanel(_props: EditPanelProps) {
                   | 'soft'
                   | undefined,
               }}
-              onUpdateDef={handleUpdate}
+              onUpdateDef={handleLogicUpdate}
             />
           </div>
         ) : null}
