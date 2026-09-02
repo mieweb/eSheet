@@ -15,6 +15,7 @@ import type {
   FormDefinition,
   FieldDefinition,
   ConditionalRule,
+  LabelVariant,
 } from '../types.js';
 import { getFieldTypeMeta } from '../registry.js';
 import {
@@ -84,6 +85,8 @@ export interface FormState {
   readonly formTitle?: string;
   /** Human-readable form description preserved from the definition. */
   readonly formDescription?: string;
+  /** Form-wide default label rendering style ('stacked' when undefined). */
+  readonly formLabelVariant?: LabelVariant;
   /** Opaque metadata preserved from the original import source (e.g. MCP envelope fields). */
   readonly formSourceData?: unknown;
   /** When true, enables dangerously embedded JS — field calculations and conditionType 'js'. */
@@ -110,6 +113,8 @@ export interface FormState {
   setFormTitle: (title: string | undefined) => void;
   /** Update the form description. */
   setFormDescription: (description: string | undefined) => void;
+  /** Update the form-wide default label rendering style. */
+  setFormLabelVariant: (labelVariant: LabelVariant | undefined) => void;
   /** Enable or disable dangerously embedded JS for this form. */
   setDangerouslyAllowJS: (enabled: boolean) => void;
   /** Set the host-supplied identity of the current user. */
@@ -540,6 +545,7 @@ export function createFormStore(
     formId: initialFormId,
     formTitle: initial?.title,
     formDescription: initial?.description,
+    formLabelVariant: initial?.labelVariant,
     formSourceData: initial?._sourceData,
     dangerouslyAllowJS: (initial?.dangerouslyAllowJS ?? false) && _hostAllowsJS,
     normalized: initial ? normalizeDefinition(initial.pages) : EMPTY_NORMALIZED,
@@ -557,6 +563,7 @@ export function createFormStore(
           formId: definition.id,
           formTitle: definition.title,
           formDescription: definition.description,
+          formLabelVariant: definition.labelVariant,
           formSourceData: definition._sourceData,
           dangerouslyAllowJS:
             (definition.dangerouslyAllowJS ?? false) && _hostAllowsJS,
@@ -576,6 +583,9 @@ export function createFormStore(
     setFormTitle: (title) => set({ formTitle: title }),
 
     setFormDescription: (description) => set({ formDescription: description }),
+
+    setFormLabelVariant: (labelVariant) =>
+      set({ formLabelVariant: labelVariant }),
 
     setDangerouslyAllowJS: (enabled) =>
       set({ dangerouslyAllowJS: enabled && _hostAllowsJS }),
@@ -1446,6 +1456,7 @@ export function createFormStore(
         formId,
         formTitle,
         formDescription,
+        formLabelVariant,
         formSourceData,
         dangerouslyAllowJS,
       } = get();
@@ -1456,6 +1467,9 @@ export function createFormStore(
         ...(formTitle !== undefined && { title: formTitle }),
         ...(formDescription !== undefined && { description: formDescription }),
         ...(dangerouslyAllowJS && { dangerouslyAllowJS: true }),
+        ...(formLabelVariant !== undefined && {
+          labelVariant: formLabelVariant,
+        }),
         ...(formSourceData !== undefined && { _sourceData: formSourceData }),
         pages,
       } as FormDefinition;

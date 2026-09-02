@@ -5,6 +5,7 @@ import type {
   MultitextFieldDefinition,
 } from '@esheet/core';
 import { Input } from '@mieweb/ui';
+import { useLabelVariant } from '../../lib/context.js';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 
 export const MultiTextField = React.memo(function MultiTextField({
@@ -20,6 +21,7 @@ export const MultiTextField = React.memo(function MultiTextField({
 }: FieldComponentProps) {
   const def = field.definition as MultitextFieldDefinition;
   const instanceId = form.getState().instanceId;
+  const labelVariant = useLabelVariant(form, def);
   const options: readonly FieldOption[] = def.options || [];
   const isWrap = def.optionLayout === 'wrap';
   const multitextAnswers = response?.multitextAnswers || {};
@@ -54,18 +56,14 @@ export const MultiTextField = React.memo(function MultiTextField({
                 key={option.id}
                 className={
                   isWrap
-                    ? 'ms:flex ms:flex-col ms:gap-1 ms:flex-1 ms:min-w-[12rem]'
-                    : 'ms:flex ms:flex-col ms:gap-1'
+                    ? 'ms:flex ms:flex-col ms:flex-1 ms:min-w-[12rem]'
+                    : 'ms:flex ms:flex-col'
                 }
               >
-                <label
-                  htmlFor={inputId}
-                  className="ms:text-xs ms:font-medium ms:text-mstextmuted ms:px-0 ms:text-left"
-                >
-                  {option.value}
-                </label>
                 <Input
                   id={inputId}
+                  label={option.value}
+                  labelVariant={labelVariant}
                   type="text"
                   disabled={!isEnabled}
                   value={multitextAnswers[option.id] || ''}

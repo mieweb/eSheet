@@ -14,7 +14,10 @@ vi.mock('@mieweb/ui', async (importOriginal) => ({
 function createProps(definition: Record<string, unknown>): FieldComponentProps {
   return {
     field: { definition },
-    form: { getState: () => ({ instanceId: 'test' }) },
+    form: {
+      getState: () => ({ instanceId: 'test' }),
+      subscribe: () => () => {},
+    },
     isPreview: true,
     isEnabled: true,
     onResponse: vi.fn(),

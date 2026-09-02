@@ -47,6 +47,7 @@ export {
   type FieldDefinition,
   type FieldWidth,
   type OptionLayout,
+  type LabelVariant,
   type RelativeDateRange,
   type OptionBearingFieldDefinition,
   hasOptions,

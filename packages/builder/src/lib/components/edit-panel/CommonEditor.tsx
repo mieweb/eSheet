@@ -2,6 +2,7 @@ import { useStore } from 'zustand';
 import type {
   FieldDefinition,
   FieldWidth,
+  LabelVariant,
   OptionLayout,
   TextInputType,
 } from '@esheet/core';
@@ -47,6 +48,16 @@ export function CommonEditor({
     def.fieldType === 'multitext' ||
     def.fieldType === 'openchoice';
   const optionLayout = (def as { optionLayout?: OptionLayout }).optionLayout;
+  const showLabelVariant =
+    def.fieldType === 'text' ||
+    def.fieldType === 'longtext' ||
+    def.fieldType === 'multitext' ||
+    def.fieldType === 'dropdown' ||
+    def.fieldType === 'multiselectdropdown' ||
+    def.fieldType === 'openchoice' ||
+    // Custom field type registered by @esheet/fields, not in the core union
+    (def.fieldType as string) === 'autocomplete';
+  const labelVariant = (def as { labelVariant?: LabelVariant }).labelVariant;
   const question = (def as { question?: string }).question ?? '';
   const suggestedId = slugifyQuestion(question);
   const showSuggestion = suggestedId !== '' && suggestedId !== def.id;
@@ -191,6 +202,34 @@ export function CommonEditor({
           >
             <option value="stack">Stack (one per line)</option>
             <option value="wrap">Wrap (flow horizontally)</option>
+          </select>
+        </div>
+      )}
+
+      {/* Label style (fields listed in showLabelVariant) */}
+      {showLabelVariant && (
+        <div>
+          <label
+            htmlFor={`${instanceId}-editor-labelvariant-${fieldId}`}
+            className="edit-label ms:block ms:text-sm ms:font-medium ms:text-mstext ms:mb-1"
+          >
+            Label style
+          </label>
+          <select
+            id={`${instanceId}-editor-labelvariant-${fieldId}`}
+            value={labelVariant ?? ''}
+            onChange={(e) => {
+              const value = e.currentTarget.value;
+              onUpdate({
+                labelVariant:
+                  value === '' ? undefined : (value as LabelVariant),
+              } as Parameters<typeof onUpdate>[0]);
+            }}
+            className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
+          >
+            <option value="">Inherit (form default)</option>
+            <option value="stacked">Stacked (label above)</option>
+            <option value="floating">Floating (label inside)</option>
           </select>
         </div>
       )}

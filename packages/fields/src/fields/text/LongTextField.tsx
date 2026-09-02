@@ -4,6 +4,7 @@ import type {
   LongtextFieldDefinition,
 } from '@esheet/core';
 import { Textarea } from '@mieweb/ui';
+import { useLabelVariant } from '../../lib/context.js';
 
 export const LongTextField = React.memo(function LongTextField({
   field,
@@ -18,25 +19,17 @@ export const LongTextField = React.memo(function LongTextField({
 }: FieldComponentProps) {
   const def = field.definition as LongtextFieldDefinition;
   const instanceId = form.getState().instanceId;
+  const labelVariant = useLabelVariant(form, def);
 
   if (isPreview) {
     return (
-      <div className="longtext-field-preview ms:space-y-1.5">
-        <div className="ms:text-sm ms:font-medium ms:text-mstext ms:break-words ms:overflow-hidden">
-          {def.question || 'Question'}
-          {(isRequired || isSoftRequired) && (
-            <span
-              className={`ms:ml-0.5 ${
-                isSoftRequired ? 'ms:text-mswarning' : 'ms:text-msdanger'
-              }`}
-            >
-              *
-            </span>
-          )}
-        </div>
+      <div className="longtext-field-preview">
         <Textarea
           id={`${instanceId}-longtext-answer-${def.id}`}
-          aria-label={def.question || 'Question'}
+          label={def.question || 'Question'}
+          labelVariant={labelVariant}
+          required={isRequired || isSoftRequired}
+          requiredVariant={isSoftRequired ? 'warning' : undefined}
           disabled={!isEnabled}
           aria-required={isRequired || undefined}
           value={response?.answer || ''}

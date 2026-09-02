@@ -5,6 +5,7 @@ import type {
   LongtextFieldDefinition,
 } from '@esheet/core';
 import { Input, DateInput } from '@mieweb/ui';
+import { useLabelVariant } from '../../lib/context.js';
 
 function formatPhoneNumber(value: string): string {
   if (!value) return value;
@@ -109,6 +110,7 @@ export const TextField = React.memo(function TextField({
 }: FieldComponentProps) {
   const def = field.definition as TextFieldDefinition | LongtextFieldDefinition;
   const instanceId = form.getState().instanceId;
+  const labelVariant = useLabelVariant(form, def);
   const inputType = def.inputType as NonNullable<typeof def.inputType>;
   const unit = def.unit || '';
   const isTel = inputType === 'tel';
@@ -131,7 +133,9 @@ export const TextField = React.memo(function TextField({
             id={`${instanceId}-text-answer-${def.id}`}
             name={`esheet-${inputType}-answer-${def.id}`}
             label={def.question || 'Question'}
+            labelVariant={labelVariant}
             required={isRequired || isSoftRequired}
+            requiredVariant={isSoftRequired ? 'warning' : undefined}
             disabled={!isEnabled}
             aria-required={isRequired || undefined}
             value={
@@ -160,7 +164,9 @@ export const TextField = React.memo(function TextField({
         <Input
           id={`${instanceId}-text-answer-${def.id}`}
           label={def.question || 'Question'}
+          labelVariant={labelVariant}
           required={isRequired || isSoftRequired}
+          requiredVariant={isSoftRequired ? 'warning' : undefined}
           type={inputType}
           disabled={!isEnabled}
           aria-required={isRequired || undefined}
@@ -175,7 +181,13 @@ export const TextField = React.memo(function TextField({
           className={unit ? 'ms:pr-16' : ''}
         />
         {unit && (
-          <span className="ms:absolute ms:right-3 ms:bottom-0 ms:h-10 ms:flex ms:items-center ms:text-sm ms:text-mstextmuted ms:pointer-events-none">
+          <span
+            className={`ms:absolute ms:right-3 ms:flex ms:items-center ms:text-sm ms:text-mstextmuted ms:pointer-events-none ${
+              labelVariant === 'floating'
+                ? 'ms:inset-y-0'
+                : 'ms:bottom-0 ms:h-10'
+            }`}
+          >
             {unit}
           </span>
         )}

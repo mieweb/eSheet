@@ -4,7 +4,8 @@ import type {
   SelectedOption,
   MultiselectDropdownFieldDefinition,
 } from '@esheet/core';
-import { CustomDropdown } from '../../fields-controls/CustomDropdown.js';
+import { Select } from '@mieweb/ui';
+import { useLabelVariant } from '../../lib/context.js';
 import { TrashIcon, PlusIcon } from '../../icons.js';
 
 export const MultiSelectDropdownField = React.memo(
@@ -21,6 +22,7 @@ export const MultiSelectDropdownField = React.memo(
   }: FieldComponentProps) {
     const def = field.definition as MultiselectDropdownFieldDefinition;
     const instanceId = form.getState().instanceId;
+    const labelVariant = useLabelVariant(form, def);
     const options = def.options || [];
     const selectedArr =
       (response?.selected as SelectedOption[] | undefined) ?? [];
@@ -38,26 +40,19 @@ export const MultiSelectDropdownField = React.memo(
 
     if (isPreview) {
       return (
-        <div className="multiselect-dropdown-preview ms:text-mstext ms:space-y-1.5">
-          <div className="ms:text-sm ms:font-medium ms:text-mstext ms:break-words ms:overflow-hidden">
-            {def.question || 'Question'}
-            {(isRequired || isSoftRequired) && (
-              <span
-                className={`ms:ml-0.5 ${
-                  isSoftRequired ? 'ms:text-mswarning' : 'ms:text-msdanger'
-                }`}
-              >
-                *
-              </span>
-            )}
-          </div>
-          <CustomDropdown
-            options={options}
+        <div className="multiselect-dropdown-preview ms:text-mstext">
+          <Select
+            multiple
+            id={`${instanceId}-multiselect-answer-${def.id}`}
+            label={def.question || 'Question'}
+            labelVariant={labelVariant}
+            required={isRequired || isSoftRequired}
+            requiredVariant={isSoftRequired ? 'warning' : undefined}
+            options={options.map((o) => ({ value: o.id, label: o.value }))}
             value={selectedIds}
-            onChange={handleChange}
+            onValueChange={handleChange}
             placeholder="Select an option"
             disabled={!isEnabled}
-            isMulti
           />
         </div>
       );
