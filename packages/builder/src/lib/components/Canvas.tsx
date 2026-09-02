@@ -821,7 +821,7 @@ export const Canvas = React.memo(function Canvas({
             <FieldGrid
               ref={canvasRef}
               enabled={mode === 'preview'}
-              className="canvas-fields ms:flex-1 ms:min-h-0 ms:overflow-y-auto ms:px-4 ms:pt-3 ms:pb-4"
+              className="canvas-fields ms:flex-1 ms:min-h-0 ms:overflow-y-auto ms:p-2"
               stackedClassName="ms:space-y-2 ms:lg:space-y-3"
               data-sortable-list={dragEnabled ? 'true' : undefined}
               data-parent-id={activePagesId ?? ''}

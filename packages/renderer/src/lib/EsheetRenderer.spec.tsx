@@ -37,6 +37,7 @@ describe('EsheetRenderer', () => {
     );
 
     const body = container.querySelector<HTMLElement>('.renderer-body');
+    expect(body?.classList.contains('ms:p-4')).toBe(true);
     expect(body?.style.gridTemplateColumns).toBe('repeat(6, minmax(0, 1fr))');
     expect(
       container.querySelector<HTMLElement>('[data-field-id="full"]')?.style
@@ -78,6 +79,11 @@ describe('EsheetRenderer', () => {
       container.querySelector<HTMLElement>('[data-field-id="child"]')?.style
         .gridColumn
     ).toBe('span 3');
+    expect(
+      container
+        .querySelector<HTMLElement>('.section-children')
+        ?.classList.contains('ms:p-4')
+    ).toBe(false);
   });
 
   it('mounts and exposes ref handle', async () => {
