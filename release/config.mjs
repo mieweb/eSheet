@@ -11,6 +11,7 @@ export const PACKAGES = [
   'packages/field-health',
   'packages/adapters',
   'packages/renderer',
+  'packages/fields-documents',
   'packages/builder',
   'packages/renderer-blaze',
   'packages/renderer-standalone',
