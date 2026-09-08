@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { validateField, validateForm } from './validate.js';
 import type { FieldDefinition, ConditionalRule } from '../types.js';
 import { normalizeDefinition } from '../functions/normalize.js';
@@ -428,6 +428,78 @@ describe('validateField', () => {
         trigger: { answer: 'no' },
       });
       expect(errors).toEqual([]);
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // Intrinsic date input checks
+  // -----------------------------------------------------------------------
+
+  describe('intrinsic date input checks', () => {
+    it('fails hard on a malformed date answer', () => {
+      const normalized = norm([def('q1', 'text', { inputType: 'date' })]);
+      const errors = validateField('q1', normalized, {
+        q1: { answer: '3123-23-12' },
+      });
+      expect(errors).toEqual([
+        expect.objectContaining({ rule: 'dateFormat', severity: 'hard' }),
+      ]);
+    });
+
+    it('fails hard on a date outside the configured dateRange', () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date(2026, 6, 28));
+      const normalized = norm([
+        def('q1', 'text', {
+          inputType: 'date',
+          dateRange: { amount: 2, unit: 'years' },
+        }),
+      ]);
+      const errors = validateField('q1', normalized, {
+        q1: { answer: '2030-01-01' },
+      });
+      expect(errors).toEqual([
+        expect.objectContaining({ rule: 'dateRange', severity: 'hard' }),
+      ]);
+      vi.useRealTimers();
+    });
+
+    it('passes for a date within the configured dateRange', () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date(2026, 6, 28));
+      const normalized = norm([
+        def('q1', 'text', {
+          inputType: 'date',
+          dateRange: { amount: 2, unit: 'years' },
+        }),
+      ]);
+      const errors = validateField('q1', normalized, {
+        q1: { answer: '2027-01-15' },
+      });
+      expect(errors).toEqual([]);
+      vi.useRealTimers();
+    });
+
+    it('skips the check when the response is empty', () => {
+      const normalized = norm([
+        def('q1', 'text', {
+          inputType: 'date',
+          dateRange: { amount: 1, unit: 'months' },
+        }),
+      ]);
+      expect(validateField('q1', normalized, {})).toEqual([]);
+    });
+
+    it('fails hard on a malformed datetime-local answer', () => {
+      const normalized = norm([
+        def('q1', 'text', { inputType: 'datetime-local' }),
+      ]);
+      const errors = validateField('q1', normalized, {
+        q1: { answer: 'not-a-datetime' },
+      });
+      expect(errors).toEqual([
+        expect.objectContaining({ rule: 'dateFormat', severity: 'hard' }),
+      ]);
     });
   });
 

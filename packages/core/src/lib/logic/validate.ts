@@ -7,6 +7,7 @@ import type {
   FieldResponse,
   FieldResponseMap,
   FieldValidator,
+  RelativeDateRange,
   SelectedOption,
 } from '../types.js';
 import type { NormalizedDefinition } from '../functions/normalize.js';
@@ -186,6 +187,19 @@ export function validateField(
     }
   }
 
+  // --- Intrinsic date input checks (format + dateRange) ---
+  if (
+    (definition.fieldType === 'text' || definition.fieldType === 'longtext') &&
+    !isResponseEmpty(response)
+  ) {
+    const err = validateDateInput(
+      definition as { inputType?: string; dateRange?: RelativeDateRange },
+      response,
+      fieldId
+    );
+    if (err) errors.push(err);
+  }
+
   return errors;
 }
 
@@ -319,6 +333,82 @@ function parseTime(str: string): number | null {
   const m = /^(\d{1,2}):(\d{2})$/.exec(str.trim());
   if (!m) return null;
   return +m[1] * 60 + +m[2];
+}
+
+/** Mirror of the UI's date-range offset math (TextField.resolveDateRange). */
+function applyDateRangeOffset(
+  date: Date,
+  amount: number,
+  unit: 'days' | 'months' | 'years'
+): Date {
+  const result = new Date(date);
+  if (unit === 'days') {
+    result.setDate(result.getDate() + amount);
+  } else {
+    const monthOffset = unit === 'months' ? amount : amount * 12;
+    const day = result.getDate();
+    result.setDate(1);
+    result.setMonth(result.getMonth() + monthOffset);
+    const lastDay = new Date(
+      result.getFullYear(),
+      result.getMonth() + 1,
+      0
+    ).getDate();
+    result.setDate(Math.min(day, lastDay));
+  }
+  return result;
+}
+
+function formatWcDate(d: Date): string {
+  return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(
+    d.getDate()
+  ).padStart(2, '0')}/${d.getFullYear()}`;
+}
+
+/** Intrinsic format + dateRange checks for date/datetime text inputs. */
+function validateDateInput(
+  def: { inputType?: string; dateRange?: RelativeDateRange },
+  response: FieldResponse | undefined,
+  fieldId: string
+): ValidationError | null {
+  const isDate = def.inputType === 'date';
+  const isDatetime = def.inputType === 'datetime-local';
+  if (!isDate && !isDatetime) return null;
+
+  const raw = getRawAnswer(response);
+  if (!raw) return null;
+
+  const value = isDate ? parseWcDate(raw) : parseWcDatetime(raw);
+  if (!value) {
+    return {
+      fieldId,
+      rule: 'dateFormat',
+      message: isDate
+        ? 'Please enter a valid date'
+        : 'Please enter a valid date and time',
+      severity: 'hard',
+    };
+  }
+
+  if (!def.dateRange) return null;
+  const amount = Math.abs(def.dateRange.amount);
+  const today = new Date();
+  const min = dateOnly(
+    applyDateRangeOffset(today, -amount, def.dateRange.unit)
+  );
+  const max = dateOnly(applyDateRangeOffset(today, amount, def.dateRange.unit));
+  const v = dateOnly(value);
+  if (v < min || v > max) {
+    return {
+      fieldId,
+      rule: 'dateRange',
+      message: `Date must be between ${formatWcDate(min)} and ${formatWcDate(
+        max
+      )}`,
+      severity: 'hard',
+    };
+  }
+  return null;
 }
 
 function runValidator(
