@@ -60,6 +60,8 @@ const DEBOUNCE_MS = 250;
 export interface ParsedAutocompleteItem extends SelectedOption {
   /** The raw response object this option was parsed from, when available. */
   raw?: Record<string, unknown>;
+  /** Secondary text a provider attached, shown beside the value. */
+  description?: string;
   /** Attributes a provider attached directly (no `captureKeys` needed). */
   attributes?: Record<string, string>;
 }
@@ -205,9 +207,10 @@ export const AutocompleteField = React.memo(function AutocompleteField({
   ): Promise<ParsedAutocompleteItem[]> => {
     if (provider) {
       const options = await provider.fetch(q, resolveParams(), signal);
-      return options.map(({ id, value, attributes }) => ({
+      return options.map(({ id, value, description, attributes }) => ({
         id,
         value,
+        description,
         attributes,
       }));
     }
@@ -298,7 +301,16 @@ export const AutocompleteField = React.memo(function AutocompleteField({
         <Autocomplete<ParsedAutocompleteItem>
           items={items}
           getItemKey={(item) => item.id}
-          renderItem={(item) => <span>{item.value}</span>}
+          renderItem={(item) => (
+            <span>
+              {item.value}
+              {item.description && (
+                <span className="ms:ml-2 ms:text-xs ms:text-mstextmuted">
+                  {item.description}
+                </span>
+              )}
+            </span>
+          )}
           onSelect={(item) => {
             setQuery(item.value);
             onResponse({

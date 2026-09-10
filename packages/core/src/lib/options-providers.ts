@@ -24,6 +24,8 @@ export interface OptionsSource {
 
 /** An option a provider returns; `attributes` land on `response.attributes`. */
 export interface ProvidedOption extends SelectedOption {
+  /** Secondary text shown beside the value in the list (e.g. DOB, MRN). */
+  description?: string;
   attributes?: Record<string, string>;
 }
 

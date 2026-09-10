@@ -77,7 +77,7 @@ describe('AutocompleteField with an optionsSource', () => {
 
   it('resolves {field:…} params from sibling responses for a query provider', async () => {
     const fetch = vi.fn<OptionsProvider['fetch']>(async () => [
-      { id: 'p1', value: 'Pat Patient' },
+      { id: 'p1', value: 'Pat Patient', description: 'DOB 1980-01-02' },
     ]);
     registerOptionsProvider('patients', { fetch });
     renderField(
@@ -98,6 +98,7 @@ describe('AutocompleteField with an optionsSource', () => {
     });
     await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
     expect(fetch.mock.calls[0]?.[0]).toBe('pat');
+    expect(await screen.findByText('DOB 1980-01-02')).not.toBeNull();
     expect(fetch.mock.calls[0]?.[1]).toEqual({ partition: 'us' });
   });
 

@@ -49,7 +49,9 @@ registerOptionsProvider('staff', {
 });
 ```
 
-A provider returns `{ id, value, attributes? }[]`; `attributes` are copied onto
+A provider returns `{ id, value, description?, attributes? }[]`; `description`
+is shown as muted text beside the value in the list (a date of birth, an MRN),
+and `attributes` are copied onto
 `response.attributes` of the chosen item.
 
 #### `mode`
