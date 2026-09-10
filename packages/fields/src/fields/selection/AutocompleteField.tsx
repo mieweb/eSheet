@@ -58,6 +58,13 @@ export interface AutocompleteFieldDefinition {
    * A pick replaces it with `selected`.
    */
   allowFreeText?: boolean;
+  /**
+   * Sibling fields to fill from the picked option's attributes:
+   * `{ <attributeKey>: <fieldId> }`, e.g. `{ mrn: mrn, dateOfBirth: dob }`.
+   * Each named field gets `{ answer }`; attributes the option lacks clear
+   * the target so a stale value from an earlier pick does not linger.
+   */
+  fillFields?: Record<string, string>;
 }
 
 const DEBOUNCE_MS = 250;
@@ -321,11 +328,17 @@ export const AutocompleteField = React.memo(function AutocompleteField({
           )}
           onSelect={(item) => {
             setQuery(item.value);
+            const attributes =
+              item.attributes ?? captureAttributes(item.raw, def.captureKeys);
             onResponse({
               selected: { id: item.id, value: item.value },
-              attributes:
-                item.attributes ?? captureAttributes(item.raw, def.captureKeys),
+              attributes,
             });
+            for (const [key, fieldId] of Object.entries(def.fillFields ?? {})) {
+              form.getState().setResponse(fieldId, {
+                answer: attributes?.[key] ?? undefined,
+              });
+            }
           }}
           value={query}
           onValueChange={search}

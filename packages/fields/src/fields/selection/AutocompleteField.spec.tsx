@@ -19,9 +19,10 @@ function renderField(
   responses: Record<string, unknown> = {}
 ) {
   const onResponse = vi.fn();
+  const setResponse = vi.fn();
   const props = {
     field: { definition: { fieldType: 'autocomplete', ...definition } },
-    form: { getState: () => ({ instanceId: 't', responses }) },
+    form: { getState: () => ({ instanceId: 't', responses, setResponse }) },
     ui: {},
     isSelected: false,
     isPreview: true,
@@ -35,7 +36,7 @@ function renderField(
     onResponse,
   } as unknown as FieldComponentProps;
   render(<AutocompleteField {...props} />);
-  return { onResponse };
+  return { onResponse, setResponse };
 }
 
 describe('AutocompleteField with an optionsSource', () => {
@@ -156,6 +157,25 @@ describe('AutocompleteField with an optionsSource', () => {
       selected: undefined,
       answer: 'Marcus Webb',
     });
+  });
+
+  it("fills sibling fields from the picked option's attributes", async () => {
+    registerOptionsProvider('patients', {
+      mode: 'complete',
+      fetch: async () => [
+        { id: 'p1', value: 'Pat Patient', attributes: { mrn: 'EE-1' } },
+      ],
+    });
+    const { setResponse } = renderField({
+      id: 'employee',
+      question: 'Employee',
+      optionsSource: { provider: 'patients' },
+      fillFields: { mrn: 'mrn', dateOfBirth: 'dob' },
+    });
+    fireEvent.focus(screen.getByRole('combobox', { name: 'Employee' }));
+    fireEvent.click(await screen.findByText('Pat Patient'));
+    expect(setResponse).toHaveBeenCalledWith('mrn', { answer: 'EE-1' });
+    expect(setResponse).toHaveBeenCalledWith('dob', { answer: undefined });
   });
 
   it('shows no results when the named provider is not registered', () => {

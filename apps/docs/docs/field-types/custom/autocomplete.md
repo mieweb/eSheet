@@ -104,4 +104,5 @@ understood. `optionsSource` takes precedence when both are present.
 
 - `minQueryLength`: characters before searching (default `2`; ignored for `complete` providers)
 - `allowFreeText`: keep the typed text as a plain `answer` when nothing is picked, so the field also accepts names the source does not know
+- `fillFields`: `{ <attributeKey>: <fieldId> }` — on pick, copy the option's attributes into sibling fields as their `answer` (e.g. `{ mrn: mrn, dateOfBirth: dateOfBirth }`); attributes the option lacks clear the target
 - `answerPlaceholder`: input placeholder
