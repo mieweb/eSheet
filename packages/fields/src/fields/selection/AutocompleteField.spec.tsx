@@ -98,6 +98,39 @@ describe('AutocompleteField with an optionsSource', () => {
     expect(fetch.mock.calls[0]?.[1]).toEqual({ partition: 'us' });
   });
 
+  it('shows a legacy free-text answer until a real pick replaces it', () => {
+    registerOptionsProvider('staff', { mode: 'complete', fetch: async () => [] });
+    const onResponse = vi.fn();
+    const props = {
+      field: {
+        definition: {
+          fieldType: 'autocomplete',
+          id: 'caseManager',
+          question: 'Case manager',
+          optionsSource: { provider: 'staff' },
+        },
+      },
+      form: { getState: () => ({ instanceId: 't', responses: {} }) },
+      ui: {},
+      isSelected: false,
+      isPreview: true,
+      isEnabled: true,
+      isRequired: false,
+      isSoftRequired: false,
+      isReadOnly: false,
+      response: { answer: 'Typed Name' },
+      onRemove: vi.fn(),
+      onUpdate: vi.fn(),
+      onResponse,
+    } as unknown as FieldComponentProps;
+    render(<AutocompleteField {...props} />);
+
+    const input = screen.getByRole('combobox', { name: 'Case manager' });
+    expect((input as HTMLInputElement).value).toBe('Typed Name');
+    fireEvent.change(input, { target: { value: '' } });
+    expect(onResponse).toHaveBeenCalledWith({ selected: undefined, answer: undefined });
+  });
+
   it('shows no results when the named provider is not registered', () => {
     renderField({
       id: 'x',

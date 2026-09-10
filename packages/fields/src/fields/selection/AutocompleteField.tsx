@@ -187,7 +187,11 @@ export const AutocompleteField = React.memo(function AutocompleteField({
   // Re-fetch a `complete` set when a `{field:…}` dependency changes.
   const paramsKey = isComplete ? JSON.stringify(resolveParams()) : '';
 
-  const [query, setQuery] = React.useState(selected?.value ?? '');
+  // A free-text `answer` (e.g. a field that used to be `text`) is shown, not
+  // lost; it becomes a real selection once the user picks from the list.
+  const [query, setQuery] = React.useState(
+    selected?.value ?? response?.answer ?? ''
+  );
   const [items, setItems] = React.useState<ParsedAutocompleteItem[]>([]);
   const [loading, setLoading] = React.useState(false);
   const debounceTimer = React.useRef<ReturnType<typeof setTimeout> | undefined>(
@@ -258,7 +262,9 @@ export const AutocompleteField = React.memo(function AutocompleteField({
 
   const search = (q: string) => {
     setQuery(q);
-    if (!q && selected) onResponse({ selected: undefined });
+    if (!q && (selected || response?.answer)) {
+      onResponse({ selected: undefined, answer: undefined });
+    }
     if (isComplete) return;
     clearTimeout(debounceTimer.current);
     abortRef.current?.abort();
