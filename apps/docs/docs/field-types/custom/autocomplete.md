@@ -39,7 +39,10 @@ import { registerOptionsProvider } from '@esheet/core';
 registerOptionsProvider('staff', {
   mode: 'complete',
   fetch: async (_query, params, signal) => {
-    const res = await fetch(`/api/staff?realm=${encodeURIComponent(params.realm ?? '')}`, { signal });
+    const res = await fetch(
+      `/api/staff?realm=${encodeURIComponent(params.realm ?? '')}`,
+      { signal }
+    );
     const users: { id: string; name: string }[] = await res.json();
     return users.map((u) => ({ id: u.id, value: u.name }));
   },
@@ -51,10 +54,10 @@ A provider returns `{ id, value, attributes? }[]`; `attributes` are copied onto
 
 #### `mode`
 
-| mode | Provider is called… | Field behaviour |
-| --- | --- | --- |
-| `query` (default) | on every (debounced) keystroke with the typed text | provider does the searching; `minQueryLength` applies |
-| `complete` | once, with an empty query | the whole set is filtered locally and the list opens on focus, like a dropdown |
+| mode              | Provider is called…                                | Field behaviour                                                                |
+| ----------------- | -------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `query` (default) | on every (debounced) keystroke with the typed text | provider does the searching; `minQueryLength` applies                          |
+| `complete`        | once, with an empty query                          | the whole set is filtered locally and the list opens on focus, like a dropdown |
 
 Use `complete` for small reference sets (a handful to a few hundred rows). The
 host decides whether that set comes from the network or an offline cache; the

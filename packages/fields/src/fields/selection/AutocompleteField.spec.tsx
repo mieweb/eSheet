@@ -50,7 +50,10 @@ describe('AutocompleteField with an optionsSource', () => {
     const { onResponse } = renderField({
       id: 'caseManager',
       question: 'Case manager',
-      optionsSource: { provider: 'staff', params: { realm: 'Case Management' } },
+      optionsSource: {
+        provider: 'staff',
+        params: { realm: 'Case Management' },
+      },
     });
 
     await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
@@ -99,7 +102,10 @@ describe('AutocompleteField with an optionsSource', () => {
   });
 
   it('shows a legacy free-text answer until a real pick replaces it', () => {
-    registerOptionsProvider('staff', { mode: 'complete', fetch: async () => [] });
+    registerOptionsProvider('staff', {
+      mode: 'complete',
+      fetch: async () => [],
+    });
     const onResponse = vi.fn();
     const props = {
       field: {
@@ -128,7 +134,10 @@ describe('AutocompleteField with an optionsSource', () => {
     const input = screen.getByRole('combobox', { name: 'Case manager' });
     expect((input as HTMLInputElement).value).toBe('Typed Name');
     fireEvent.change(input, { target: { value: '' } });
-    expect(onResponse).toHaveBeenCalledWith({ selected: undefined, answer: undefined });
+    expect(onResponse).toHaveBeenCalledWith({
+      selected: undefined,
+      answer: undefined,
+    });
   });
 
   it('shows no results when the named provider is not registered', () => {

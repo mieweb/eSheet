@@ -234,7 +234,8 @@ export const AutocompleteField = React.memo(function AutocompleteField({
       if (abortRef.current !== ac) return;
       setItems(result);
     } catch (err) {
-      if ((err as Error).name === 'AbortError' || abortRef.current !== ac) return;
+      if ((err as Error).name === 'AbortError' || abortRef.current !== ac)
+        return;
       setItems([]);
     } finally {
       if (abortRef.current === ac) setLoading(false);
@@ -258,7 +259,7 @@ export const AutocompleteField = React.memo(function AutocompleteField({
     };
   }, []);
 
-  const minQueryLength = isComplete ? 0 : (def.minQueryLength ?? 2);
+  const minQueryLength = isComplete ? 0 : def.minQueryLength ?? 2;
 
   const search = (q: string) => {
     setQuery(q);
