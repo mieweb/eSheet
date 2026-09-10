@@ -52,6 +52,12 @@ export interface AutocompleteFieldDefinition {
   answerPlaceholder?: string;
   /** Minimum query length before searching. Default 2. */
   minQueryLength?: number;
+  /**
+   * Keep what the user typed as a plain `answer` when nothing is picked, so
+   * the field doubles as a text input for names the source does not know.
+   * A pick replaces it with `selected`.
+   */
+  allowFreeText?: boolean;
 }
 
 const DEBOUNCE_MS = 250;
@@ -266,7 +272,9 @@ export const AutocompleteField = React.memo(function AutocompleteField({
 
   const search = (q: string) => {
     setQuery(q);
-    if (!q && (selected || response?.answer)) {
+    if (def.allowFreeText) {
+      onResponse({ selected: undefined, answer: q || undefined });
+    } else if (!q && (selected || response?.answer)) {
       onResponse({ selected: undefined, answer: undefined });
     }
     if (isComplete) return;

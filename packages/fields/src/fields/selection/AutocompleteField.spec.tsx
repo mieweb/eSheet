@@ -141,6 +141,23 @@ describe('AutocompleteField with an optionsSource', () => {
     });
   });
 
+  it('keeps typed text as the answer when allowFreeText is set', () => {
+    registerOptionsProvider('patients', { fetch: async () => [] });
+    const { onResponse } = renderField({
+      id: 'employee',
+      question: 'Employee',
+      allowFreeText: true,
+      optionsSource: { provider: 'patients' },
+    });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Employee' }), {
+      target: { value: 'Marcus Webb' },
+    });
+    expect(onResponse).toHaveBeenLastCalledWith({
+      selected: undefined,
+      answer: 'Marcus Webb',
+    });
+  });
+
   it('shows no results when the named provider is not registered', () => {
     renderField({
       id: 'x',

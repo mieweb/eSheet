@@ -103,4 +103,5 @@ understood. `optionsSource` takes precedence when both are present.
 ## Other properties
 
 - `minQueryLength`: characters before searching (default `2`; ignored for `complete` providers)
+- `allowFreeText`: keep the typed text as a plain `answer` when nothing is picked, so the field also accepts names the source does not know
 - `answerPlaceholder`: input placeholder
