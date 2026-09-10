@@ -1,5 +1,12 @@
 import React from 'react';
-import type { FieldComponentProps, SelectedOption } from '@esheet/core';
+import {
+  getOptionsProvider,
+  resolveOptionsParams,
+  type FieldComponentProps,
+  type FieldResponse,
+  type OptionsSource,
+  type SelectedOption,
+} from '@esheet/core';
 import { Autocomplete } from '@mieweb/ui';
 import { registerCustomFieldTypes } from '../../lib/component-registry.js';
 
@@ -13,6 +20,12 @@ export interface AutocompleteFieldDefinition {
   /** Field id, assigned by the builder like every field definition. */
   id: string;
   question?: string;
+  /**
+   * Host-registered provider to source options from (see
+   * `registerOptionsProvider` in `@esheet/core`). Takes precedence over
+   * `dataSourceUrl`; the host owns fetching, auth and caching.
+   */
+  optionsSource?: OptionsSource;
   /**
    * Remote endpoint template. `{query}` is replaced with the URL-encoded
    * search text, e.g.
@@ -47,6 +60,24 @@ const DEBOUNCE_MS = 250;
 export interface ParsedAutocompleteItem extends SelectedOption {
   /** The raw response object this option was parsed from, when available. */
   raw?: Record<string, unknown>;
+  /** Attributes a provider attached directly (no `captureKeys` needed). */
+  attributes?: Record<string, string>;
+}
+
+/** The value a `{field:<id>}` param token reads from a sibling response. */
+export function responseTokenValue(
+  response: FieldResponse | undefined
+): string | undefined {
+  const selected = response?.selected;
+  if (selected && !Array.isArray(selected) && 'id' in selected) {
+    return String(selected.id);
+  }
+  return response?.answer || undefined;
+}
+
+/** Case-insensitive substring match used to filter a `complete` set locally. */
+export function matchesQuery(item: SelectedOption, query: string): boolean {
+  return item.value.toLowerCase().includes(query.trim().toLowerCase());
 }
 
 /**
@@ -144,6 +175,18 @@ export const AutocompleteField = React.memo(function AutocompleteField({
   const instanceId = form.getState().instanceId;
   const selected = response?.selected as SelectedOption | undefined;
 
+  const provider = def.optionsSource
+    ? getOptionsProvider(def.optionsSource.provider)
+    : undefined;
+  const isComplete = provider?.mode === 'complete';
+  const hasSource = !!provider || !!def.dataSourceUrl;
+  const resolveParams = () =>
+    resolveOptionsParams(def.optionsSource?.params, (id) =>
+      responseTokenValue(form.getState().responses[id])
+    );
+  // Re-fetch a `complete` set when a `{field:…}` dependency changes.
+  const paramsKey = isComplete ? JSON.stringify(resolveParams()) : '';
+
   const [query, setQuery] = React.useState(selected?.value ?? '');
   const [items, setItems] = React.useState<ParsedAutocompleteItem[]>([]);
   const [loading, setLoading] = React.useState(false);
@@ -151,6 +194,57 @@ export const AutocompleteField = React.memo(function AutocompleteField({
     undefined
   );
   const abortRef = React.useRef<AbortController | undefined>(undefined);
+
+  const load = async (
+    q: string,
+    signal: AbortSignal
+  ): Promise<ParsedAutocompleteItem[]> => {
+    if (provider) {
+      const options = await provider.fetch(q, resolveParams(), signal);
+      return options.map(({ id, value, attributes }) => ({
+        id,
+        value,
+        attributes,
+      }));
+    }
+    if (!def.dataSourceUrl) return [];
+    const url = def.dataSourceUrl.replace('{query}', encodeURIComponent(q));
+    const res = await fetch(url, { signal });
+    if (!res.ok) throw new Error(`Data source responded ${res.status}`);
+    return parseAutocompleteItems(
+      await res.json(),
+      def.labelKey,
+      def.valueKey,
+      def.resultsPath
+    );
+  };
+
+  /** Run `load`, letting only the latest request touch state. */
+  const request = async (q: string) => {
+    abortRef.current?.abort();
+    const ac = new AbortController();
+    abortRef.current = ac;
+    setLoading(true);
+    try {
+      const result = await load(q, ac.signal);
+      if (abortRef.current !== ac) return;
+      setItems(result);
+    } catch (err) {
+      if ((err as Error).name === 'AbortError' || abortRef.current !== ac) return;
+      setItems([]);
+    } finally {
+      if (abortRef.current === ac) setLoading(false);
+    }
+  };
+  // Effects call through the ref so they don't re-run on every render.
+  const requestRef = React.useRef(request);
+  requestRef.current = request;
+
+  // A `complete` provider hands over the whole set once; typing filters it.
+  React.useEffect(() => {
+    if (!isPreview || !isComplete) return;
+    void requestRef.current('');
+  }, [isPreview, isComplete, paramsKey]);
 
   // Cleanup on unmount: cancel the pending debounce and in-flight request.
   React.useEffect(() => {
@@ -160,52 +254,23 @@ export const AutocompleteField = React.memo(function AutocompleteField({
     };
   }, []);
 
-  const minQueryLength = def.minQueryLength ?? 2;
+  const minQueryLength = isComplete ? 0 : (def.minQueryLength ?? 2);
 
   const search = (q: string) => {
     setQuery(q);
+    if (!q && selected) onResponse({ selected: undefined });
+    if (isComplete) return;
     clearTimeout(debounceTimer.current);
     abortRef.current?.abort();
-    if (!q) {
-      setItems([]);
-      setLoading(false);
-      if (selected) onResponse({ selected: undefined });
-      return;
-    }
-    if (!def.dataSourceUrl || q.length < minQueryLength) {
+    if (!q || !hasSource || q.length < minQueryLength) {
       // Reset any earlier "Searching…" state so loading doesn't stick when
       // the query shrinks below the minimum (the request above was aborted).
       setItems([]);
       setLoading(false);
       return;
     }
-    const url = def.dataSourceUrl.replace('{query}', encodeURIComponent(q));
     setLoading(true);
-    debounceTimer.current = setTimeout(async () => {
-      const ac = new AbortController();
-      abortRef.current = ac;
-      try {
-        const res = await fetch(url, { signal: ac.signal });
-        if (!res.ok) throw new Error(`Data source responded ${res.status}`);
-        const data: unknown = await res.json();
-        // Ignore stale responses: only the latest request may update state.
-        if (abortRef.current !== ac) return;
-        setItems(
-          parseAutocompleteItems(
-            data,
-            def.labelKey,
-            def.valueKey,
-            def.resultsPath
-          )
-        );
-        setLoading(false);
-      } catch (err) {
-        if ((err as Error).name === 'AbortError') return;
-        if (abortRef.current !== ac) return;
-        setItems([]);
-        setLoading(false);
-      }
-    }, DEBOUNCE_MS);
+    debounceTimer.current = setTimeout(() => void request(q), DEBOUNCE_MS);
   };
 
   if (isPreview) {
@@ -231,14 +296,19 @@ export const AutocompleteField = React.memo(function AutocompleteField({
             setQuery(item.value);
             onResponse({
               selected: { id: item.id, value: item.value },
-              attributes: captureAttributes(item.raw, def.captureKeys),
+              attributes:
+                item.attributes ?? captureAttributes(item.raw, def.captureKeys),
             });
           }}
           value={query}
           onValueChange={search}
+          filter={isComplete ? matchesQuery : undefined}
           clearOnSelect={false}
           minQueryLength={minQueryLength}
-          placeholder={def.answerPlaceholder || 'Start typing to search…'}
+          placeholder={
+            def.answerPlaceholder ||
+            (isComplete ? 'Select…' : 'Start typing to search…')
+          }
           emptyMessage={loading ? 'Searching…' : 'No results found.'}
           disabled={!isEnabled}
           aria-label={def.question || 'Question'}
@@ -256,6 +326,21 @@ export const AutocompleteField = React.memo(function AutocompleteField({
         value={def.question || ''}
         onChange={(question) => onUpdate({ question })}
         placeholder="Enter question"
+      />
+
+      <EditInput
+        id={`${instanceId}-canvas-provider-${def.id}`}
+        label="Options provider"
+        value={def.optionsSource?.provider || ''}
+        onChange={(name) =>
+          onUpdate({
+            optionsSource: name
+              ? { ...def.optionsSource, provider: name }
+              : undefined,
+          })
+        }
+        placeholder="e.g. staff"
+        hint="Name of a provider the host app registers with registerOptionsProvider(). Takes precedence over the data source URL."
       />
 
       <EditInput
