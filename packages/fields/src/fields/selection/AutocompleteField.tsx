@@ -147,6 +147,14 @@ export const AutocompleteField = React.memo(function AutocompleteField({
   const [query, setQuery] = React.useState(selected?.value ?? '');
   const [items, setItems] = React.useState<ParsedAutocompleteItem[]>([]);
   const [loading, setLoading] = React.useState(false);
+
+  // The selection can arrive after mount (late-loading docs, collab peers);
+  // the input must follow it or the stored answer looks lost. Only a real
+  // value syncs — typing clears `selected`, and that must not erase the query.
+  React.useEffect(() => {
+    if (selected?.value) setQuery(selected.value);
+  }, [selected?.value]);
+
   const debounceTimer = React.useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined
   );
