@@ -118,8 +118,8 @@ export function DocumentListField({
   const capabilities = isReadOnly
     ? readOnlyDocumentListCapabilities
     : host
-      ? host.capabilities ?? readOnlyDocumentListCapabilities
-      : permissiveDocumentListCapabilities;
+    ? host.capabilities ?? readOnlyDocumentListCapabilities
+    : permissiveDocumentListCapabilities;
   const formStore = useContext(FormStoreContext);
   const initialRows = useMemo(
     () =>
@@ -496,9 +496,8 @@ export function DocumentListField({
       canDelete: capabilities.remove(row),
       canDownloadPdf: false,
     }));
-  const renderActions =
-    host?.renderActions ??
-    (draftChannel && host?.author
+  const defaultRenderActions =
+    draftChannel && host?.author
       ? (
           row: DocumentListDocument,
           caps: { canEdit: boolean; canAppend: boolean; canDelete: boolean }
@@ -560,7 +559,10 @@ export function DocumentListField({
               )}
             </span>
           )
-      : undefined);
+      : undefined;
+  const renderActions = isReadOnly
+    ? undefined
+    : host?.renderActions ?? defaultRenderActions;
 
   const titleActions = (
     <>

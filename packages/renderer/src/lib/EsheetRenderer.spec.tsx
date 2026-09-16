@@ -139,10 +139,14 @@ describe('EsheetRenderer', () => {
 
     // ...but host writes (collab bindings) still land.
     act(() => store.getState().setResponse('q1', { answer: 'from the doc' }));
-    expect(store.getState().responses['q1']).toEqual({ answer: 'from the doc' });
+    expect(store.getState().responses['q1']).toEqual({
+      answer: 'from the doc',
+    });
 
     // Reopening (readOnly off) restores editing.
-    rerender(<EsheetRenderer ref={ref} formDataInput={form} readOnly={false} />);
+    rerender(
+      <EsheetRenderer ref={ref} formDataInput={form} readOnly={false} />
+    );
     await act(async () => undefined);
     expect(container.querySelector('.renderer-readonly-banner')).toBeNull();
     fireEvent.change(container.querySelector('[data-field-id="q1"] input')!, {
@@ -151,6 +155,59 @@ describe('EsheetRenderer', () => {
     expect(store.getState().responses['q1']).toMatchObject({
       answer: 'edited after reopen',
     });
+  });
+
+  it('readOnly removes file deletion controls until editing resumes', async () => {
+    const form = {
+      id: 'frozen-file-form',
+      pages: [
+        {
+          id: 'page-1',
+          fields: [
+            { id: 'attachment', fieldType: 'file', question: 'Attachment' },
+          ],
+        },
+      ],
+    };
+    const initialResponses = {
+      attachment: {
+        fileData: {
+          title: 'report.pdf',
+          contentType: 'application/pdf',
+          size: 1024,
+        },
+      },
+    };
+    const { container, rerender } = render(
+      <EsheetRenderer
+        formDataInput={form}
+        initialResponses={initialResponses}
+        readOnly
+      />
+    );
+    await act(async () => undefined);
+
+    const wrapper = container.querySelector('[data-field-id="attachment"]');
+    expect(wrapper?.getAttribute('aria-readonly')).toBe('true');
+    expect(wrapper?.textContent).toContain('report.pdf');
+    expect(
+      wrapper?.querySelector('button[aria-label="Remove report.pdf"]')
+    ).toBeNull();
+
+    rerender(
+      <EsheetRenderer
+        formDataInput={form}
+        initialResponses={initialResponses}
+        readOnly={false}
+      />
+    );
+    await act(async () => undefined);
+
+    expect(
+      container.querySelector(
+        '[data-field-id="attachment"] button[aria-label="Remove report.pdf"]'
+      )
+    ).not.toBeNull();
   });
 
   it('loads a YAML string definition', async () => {
