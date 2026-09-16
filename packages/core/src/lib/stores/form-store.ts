@@ -98,6 +98,8 @@ export interface FormState {
   readonly userEditedFields: ReadonlySet<string>;
   /** Core-managed custom-field runtime state; excluded from response export. */
   readonly extensions: FormExtensionState;
+  /** Form-level freeze: when true every field reports read-only. */
+  readonly readOnly: boolean;
   /** True after `dispose()` has been called. */
   readonly disposed: boolean;
 
@@ -114,6 +116,13 @@ export interface FormState {
   setDangerouslyAllowJS: (enabled: boolean) => void;
   /** Set the host-supplied identity of the current user. */
   setIdentity: (identity: { name: string } | undefined) => void;
+  /**
+   * Freeze or unfreeze the whole form. While frozen, `isReadOnly` is true for
+   * every field. Host-driven writes (`setResponse` etc.) still apply — the
+   * freeze is enforced where user edits enter (the renderer), so collab
+   * bindings can keep hydrating the store.
+   */
+  setReadOnly: (readOnly: boolean) => void;
   /** Set (or replace) a single field's response. */
   setResponse: (fieldId: string, response: FieldResponse) => void;
   /** Remove a single field's response. */
@@ -226,7 +235,7 @@ export interface FormState {
   isRequired: (fieldId: string) => boolean;
   /** Whether a field is currently soft-required (warns but allows bypass). */
   isSoftRequired: (fieldId: string) => boolean;
-  /** Whether a field is currently read-only. Always false until readOnly is fully implemented. */
+  /** Whether a field is currently read-only (true for all fields while the form is frozen). */
   isReadOnly: (fieldId: string) => boolean;
   /** Validate a single field and return its errors. */
   getFieldErrors: (fieldId: string) => ValidationError[];
@@ -547,6 +556,7 @@ export function createFormStore(
     identity: undefined,
     userEditedFields: new Set<string>(),
     extensions: {},
+    readOnly: false,
     disposed: false,
 
     // --- Actions ---
@@ -581,6 +591,8 @@ export function createFormStore(
       set({ dangerouslyAllowJS: enabled && _hostAllowsJS }),
 
     setIdentity: (identity) => set({ identity }),
+
+    setReadOnly: (readOnly) => set({ readOnly }),
 
     setResponse: (fieldId, response) =>
       set((state) => {
@@ -1426,8 +1438,8 @@ export function createFormStore(
     },
 
     isReadOnly: (_fieldId) => {
-      // readOnly is not yet implemented — always returns false.
-      return false;
+      // Per-field readOnly rules don't exist yet — only the form-level freeze.
+      return get().readOnly;
     },
 
     getFieldErrors: (fieldId) => {

@@ -87,6 +87,7 @@ export const FileField = React.memo(function FileField({
   form,
   isPreview,
   isEnabled,
+  isReadOnly,
   isRequired,
   isSoftRequired,
   response,
@@ -259,7 +260,7 @@ export const FileField = React.memo(function FileField({
                     {file.size && <span>{formatFileSize(file.size)}</span>}
                   </div>
                 </div>
-                {isEnabled && (
+                {isEnabled && !isReadOnly && (
                   <button
                     type="button"
                     onClick={() => handleRemoveFile(index)}
