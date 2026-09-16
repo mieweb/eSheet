@@ -3,6 +3,8 @@ import React from 'react';
 import { render, act, cleanup, waitFor } from '@testing-library/react';
 import { fireEvent } from '@testing-library/react';
 import { EsheetRenderer, type EsheetRendererHandle } from './EsheetRenderer.js';
+import type { RendererTools } from './renderer-tools.js';
+import { executeToolCall } from './mcp/tool-executor.js';
 
 afterEach(cleanup);
 
@@ -108,6 +110,73 @@ describe('EsheetRenderer', () => {
     expect(typeof renderer.getUIStore).toBe('function');
   });
 
+  it('rejects renderer tool mutations while the form is read-only', async () => {
+    const ref = React.createRef<EsheetRendererHandle>();
+    let tools: RendererTools | undefined;
+    render(
+      <EsheetRenderer
+        ref={ref}
+        formDataInput={{
+          id: 'tool-form',
+          pages: [
+            {
+              id: 'page-1',
+              fields: [{ id: 'q1', fieldType: 'text', question: 'Name?' }],
+            },
+          ],
+        }}
+        initialResponses={{ q1: { answer: 'original' } }}
+        onRendererToolsReady={(rendererTools) => {
+          tools = rendererTools;
+        }}
+      />
+    );
+    await act(async () => undefined);
+
+    expect(tools).toBeDefined();
+    if (!tools) throw new Error('Expected renderer tools to be available');
+    const rendererTools = tools;
+    const store = getRendererHandle(ref).getFormStore();
+    act(() => store.getState().setReadOnly(true));
+
+    expect(
+      executeToolCall(
+        'fill_field',
+        { fieldId: 'q1', value: 'blocked' },
+        rendererTools
+      )
+    ).toBe('Error: form is read-only');
+    expect(
+      executeToolCall(
+        'bulk_fill',
+        { fields: [{ fieldId: 'q1', value: 'also blocked' }] },
+        rendererTools
+      )
+    ).toMatchObject({
+      results: [{ field: 'q1', status: 'Error: form is read-only' }],
+    });
+    expect(executeToolCall('clear_responses', {}, rendererTools)).toBe(
+      'Error: form is read-only'
+    );
+    expect(store.getState().responses.q1).toEqual({ answer: 'original' });
+
+    act(() => store.getState().setReadOnly(false));
+    let result: ReturnType<typeof executeToolCall> = '';
+    act(() => {
+      result = executeToolCall(
+        'fill_field',
+        { fieldId: 'q1', value: 'updated' },
+        rendererTools
+      );
+    });
+    expect(result).toMatchObject({ result: 'Field "q1" updated' });
+    act(() => {
+      result = executeToolCall('clear_responses', {}, rendererTools);
+    });
+    expect(result).toBe('Responses cleared');
+    expect(store.getState().responses).toEqual({});
+  });
+
   it('readOnly freezes user edits but not host store writes', async () => {
     const ref = React.createRef<EsheetRendererHandle>();
     const form = {
@@ -155,6 +224,17 @@ describe('EsheetRenderer', () => {
     expect(store.getState().responses['q1']).toMatchObject({
       answer: 'edited after reopen',
     });
+
+    act(() => store.getState().setReadOnly(true));
+    expect(container.querySelector('.renderer-readonly-banner')).not.toBeNull();
+    expect(
+      container
+        .querySelector('[data-field-id="q1"]')
+        ?.getAttribute('aria-readonly')
+    ).toBe('true');
+
+    act(() => store.getState().setReadOnly(false));
+    expect(container.querySelector('.renderer-readonly-banner')).toBeNull();
   });
 
   it('readOnly removes file deletion controls until editing resumes', async () => {
@@ -164,7 +244,12 @@ describe('EsheetRenderer', () => {
         {
           id: 'page-1',
           fields: [
-            { id: 'attachment', fieldType: 'file', question: 'Attachment' },
+            {
+              id: 'attachment',
+              fieldType: 'file',
+              question: 'Attachment',
+              maxFiles: 2,
+            },
           ],
         },
       ],
@@ -193,6 +278,7 @@ describe('EsheetRenderer', () => {
     expect(
       wrapper?.querySelector('button[aria-label="Remove report.pdf"]')
     ).toBeNull();
+    expect(wrapper?.querySelector('input[type="file"]')).toBeNull();
 
     rerender(
       <EsheetRenderer
@@ -207,6 +293,9 @@ describe('EsheetRenderer', () => {
       container.querySelector(
         '[data-field-id="attachment"] button[aria-label="Remove report.pdf"]'
       )
+    ).not.toBeNull();
+    expect(
+      container.querySelector('[data-field-id="attachment"] input[type="file"]')
     ).not.toBeNull();
   });
 

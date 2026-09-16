@@ -98,6 +98,10 @@ describe('DocumentListGrid host integration', () => {
   it('omits host row actions while the form is read-only', async () => {
     const formStore = createFormStore();
     const actionRenderer = vi.fn(() => <button type="button">Remove</button>);
+    const capabilities = {
+      ...permissiveDocumentListCapabilities,
+      view: vi.fn(() => false),
+    };
     const fieldProps = {
       field: {
         definition: {
@@ -115,7 +119,7 @@ describe('DocumentListGrid host integration', () => {
       <FormStoreContext.Provider value={formStore}>
         <DocumentListFieldProvider
           host={{
-            capabilities: permissiveDocumentListCapabilities,
+            capabilities,
             renderActions: actionRenderer,
           }}
         >
@@ -129,6 +133,11 @@ describe('DocumentListGrid host integration', () => {
     const props = captured.props as {
       columns: readonly { field: string }[];
     };
+    expect(capabilities.view).toHaveBeenCalledWith(row);
+    expect(
+      (window as unknown as Record<string, { data: unknown[] }>)[sourceKeys[0]]
+        .data
+    ).toEqual([]);
     expect(props.columns.map((column) => column.field)).not.toContain(
       '_actions'
     );

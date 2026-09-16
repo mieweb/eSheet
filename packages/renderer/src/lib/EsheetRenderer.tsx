@@ -290,6 +290,11 @@ const EsheetRendererInner = React.forwardRef<
   const [softBypassOpen, setSoftBypassOpen] = React.useState(false);
   const [pendingResponse, setPendingResponse] =
     React.useState<FormResponse | null>(null);
+  const formReadOnly = React.useSyncExternalStore(
+    (callback) => formStore.subscribe(callback),
+    () => formStore.getState().readOnly,
+    () => formStore.getState().readOnly
+  );
 
   // Keep the host-supplied identity in the form store for activity authorship.
   React.useEffect(() => {
@@ -455,7 +460,7 @@ const EsheetRendererInner = React.forwardRef<
   return (
     <div className={rootClasses}>
       <ZodIssuesPanel issues={validationErrors} />
-      {readOnly && (
+      {formReadOnly && (
         <div
           role="status"
           className="renderer-readonly-banner ms:mb-4 ms:flex ms:items-center ms:gap-2 ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackgroundsecondary ms:px-4 ms:py-2.5 ms:text-sm ms:text-mstextmuted"

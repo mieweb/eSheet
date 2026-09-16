@@ -57,8 +57,8 @@ export interface RendererTools {
   };
   /** Set a response value for one visible field. Returns true on success, false if field not found/visible, or an error string if the value format is invalid. */
   fillField: (fieldId: string, value: unknown) => boolean | string;
-  /** Clear all responses. */
-  clearResponses: () => void;
+  /** Clear all responses. Returns true on success or an error string. */
+  clearResponses: () => boolean | string;
   /** Full render tree with visibility/enabled/required per field. */
   getFormTree: () => RenderFieldNode[];
   /** Find a field ID by exact ID or partial question match. */
@@ -462,10 +462,17 @@ export function createRendererTools(formStore: FormStore): RendererTools {
       };
     },
 
-    fillField: (fieldId, value) =>
-      applyFieldValue(fieldId, value, true) as boolean | string,
+    fillField: (fieldId, value) => {
+      if (formStore.getState().readOnly) return 'Error: form is read-only';
+      return applyFieldValue(fieldId, value, true) as boolean | string;
+    },
 
-    clearResponses: () => formStore.getState().resetResponses(),
+    clearResponses: () => {
+      const state = formStore.getState();
+      if (state.readOnly) return 'Error: form is read-only';
+      state.resetResponses();
+      return true;
+    },
 
     getFormTree: () => getCurrentRenderTree(),
 

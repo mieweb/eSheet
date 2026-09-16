@@ -115,11 +115,19 @@ export function DocumentListField({
   // A bare field with no provider is a local preview with nothing to protect;
   // a host that says nothing gets read-only — absence must never widen access.
   // A read-only form trumps everything: browsing stays, writes go.
-  const capabilities = isReadOnly
-    ? readOnlyDocumentListCapabilities
-    : host
-    ? host.capabilities ?? readOnlyDocumentListCapabilities
-    : permissiveDocumentListCapabilities;
+  const capabilities = useMemo(
+    () =>
+      isReadOnly
+        ? {
+            ...readOnlyDocumentListCapabilities,
+            view:
+              host?.capabilities?.view ?? readOnlyDocumentListCapabilities.view,
+          }
+        : host
+        ? host.capabilities ?? readOnlyDocumentListCapabilities
+        : permissiveDocumentListCapabilities,
+    [host, isReadOnly]
+  );
   const formStore = useContext(FormStoreContext);
   const initialRows = useMemo(
     () =>
