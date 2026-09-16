@@ -109,6 +109,12 @@ export interface EsheetRendererProps {
   /** Optional wrappers supplied by field add-ons. */
   fieldProviders?: readonly FieldProvider[];
   /**
+   * Freeze the whole form: every field renders read-only and user edits are
+   * dropped. Host-driven store writes (e.g. collab bindings calling
+   * `setResponse`) still apply. Defaults to `false`.
+   */
+  readOnly?: boolean;
+  /**
    * Identity of the current user. When provided, activity entries are stamped
    * with `identity.name`. Absent → entries save unstamped.
    */
@@ -275,6 +281,7 @@ const EsheetRendererInner = React.forwardRef<
     validateNavigation = true,
     initialPageId,
     onPageChange,
+    readOnly = false,
     identity,
   },
   ref
@@ -288,6 +295,11 @@ const EsheetRendererInner = React.forwardRef<
   React.useEffect(() => {
     formStore.getState().setIdentity(identity);
   }, [formStore, identity]);
+
+  // The form-level freeze lives in the store so fields see it via isReadOnly.
+  React.useEffect(() => {
+    formStore.getState().setReadOnly(readOnly);
+  }, [formStore, readOnly]);
 
   const handleSubmitClick = () => {
     const state = formStore.getState();

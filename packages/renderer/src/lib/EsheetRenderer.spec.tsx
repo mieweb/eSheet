@@ -108,6 +108,49 @@ describe('EsheetRenderer', () => {
     expect(typeof renderer.getUIStore).toBe('function');
   });
 
+  it('readOnly freezes user edits but not host store writes', async () => {
+    const ref = React.createRef<EsheetRendererHandle>();
+    const form = {
+      id: 'frozen-form',
+      title: 'Frozen',
+      pages: [
+        {
+          id: 'page-1',
+          fields: [{ id: 'q1', fieldType: 'text', question: 'Name?' }],
+        },
+      ],
+    };
+    const { container, rerender } = render(
+      <EsheetRenderer ref={ref} formDataInput={form} readOnly />
+    );
+    await act(async () => undefined);
+
+    const store = getRendererHandle(ref).getFormStore();
+    const wrapper = container.querySelector('[data-field-id="q1"]')!;
+    expect(store.getState().isReadOnly('q1')).toBe(true);
+    expect(wrapper.getAttribute('aria-readonly')).toBe('true');
+    expect(wrapper.className).toContain('ms:pointer-events-none');
+
+    // Typing goes nowhere while frozen...
+    const input = wrapper.querySelector('input')!;
+    fireEvent.change(input, { target: { value: 'typed while frozen' } });
+    expect(store.getState().responses['q1']).toBeUndefined();
+
+    // ...but host writes (collab bindings) still land.
+    act(() => store.getState().setResponse('q1', { answer: 'from the doc' }));
+    expect(store.getState().responses['q1']).toEqual({ answer: 'from the doc' });
+
+    // Reopening (readOnly off) restores editing.
+    rerender(<EsheetRenderer ref={ref} formDataInput={form} readOnly={false} />);
+    await act(async () => undefined);
+    fireEvent.change(container.querySelector('[data-field-id="q1"] input')!, {
+      target: { value: 'edited after reopen' },
+    });
+    expect(store.getState().responses['q1']).toMatchObject({
+      answer: 'edited after reopen',
+    });
+  });
+
   it('loads a YAML string definition', async () => {
     const ref = React.createRef<EsheetRendererHandle>();
     await act(async () => {

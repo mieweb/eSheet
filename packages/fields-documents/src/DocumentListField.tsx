@@ -108,14 +108,18 @@ export function DocumentListField({
   form,
   response,
   onResponse,
+  isReadOnly,
 }: FieldComponentProps): React.JSX.Element {
   const definition = field.definition as DocumentListDefinition;
   const host = useDocumentListFieldHost();
   // A bare field with no provider is a local preview with nothing to protect;
   // a host that says nothing gets read-only — absence must never widen access.
-  const capabilities = host
-    ? host.capabilities ?? readOnlyDocumentListCapabilities
-    : permissiveDocumentListCapabilities;
+  // A read-only form trumps everything: browsing stays, writes go.
+  const capabilities = isReadOnly
+    ? readOnlyDocumentListCapabilities
+    : host
+      ? host.capabilities ?? readOnlyDocumentListCapabilities
+      : permissiveDocumentListCapabilities;
   const formStore = useContext(FormStoreContext);
   const initialRows = useMemo(
     () =>
@@ -480,8 +484,9 @@ export function DocumentListField({
 
   // The capability object answers per-row questions unless the host renders
   // its own actions; signature and PDF stay off until something backs them.
+  // While the form is read-only the host's wider grants don't apply.
   const getRowCapabilities =
-    host?.getRowCapabilities ??
+    (!isReadOnly && host?.getRowCapabilities) ||
     ((row: DocumentListDocument) => ({
       canView: capabilities.view(row),
       canCompose: mayCreate,
