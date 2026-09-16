@@ -455,6 +455,28 @@ const EsheetRendererInner = React.forwardRef<
   return (
     <div className={rootClasses}>
       <ZodIssuesPanel issues={validationErrors} />
+      {readOnly && (
+        <div
+          role="status"
+          className="renderer-readonly-banner ms:mb-4 ms:flex ms:items-center ms:gap-2 ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackgroundsecondary ms:px-4 ms:py-2.5 ms:text-sm ms:text-mstextmuted"
+        >
+          <svg
+            aria-hidden="true"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+          This form is read-only. Responses cannot be changed.
+        </div>
+      )}
       <RendererBody
         form={formStore}
         ui={uiStore}

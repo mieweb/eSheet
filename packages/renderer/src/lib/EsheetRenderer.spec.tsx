@@ -130,6 +130,7 @@ describe('EsheetRenderer', () => {
     expect(store.getState().isReadOnly('q1')).toBe(true);
     expect(wrapper.getAttribute('aria-readonly')).toBe('true');
     expect(wrapper.className).toContain('ms:pointer-events-none');
+    expect(container.querySelector('.renderer-readonly-banner')).not.toBeNull();
 
     // Typing goes nowhere while frozen...
     const input = wrapper.querySelector('input')!;
@@ -143,6 +144,7 @@ describe('EsheetRenderer', () => {
     // Reopening (readOnly off) restores editing.
     rerender(<EsheetRenderer ref={ref} formDataInput={form} readOnly={false} />);
     await act(async () => undefined);
+    expect(container.querySelector('.renderer-readonly-banner')).toBeNull();
     fireEvent.change(container.querySelector('[data-field-id="q1"] input')!, {
       target: { value: 'edited after reopen' },
     });
