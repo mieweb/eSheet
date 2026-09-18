@@ -200,7 +200,8 @@ export const AutocompleteField = React.memo(function AutocompleteField({
       responseTokenValue(form.getState().responses[id])
     );
   // Re-fetch a `complete` set when a `{field:…}` dependency changes.
-  const paramsSnapshot = () => (isComplete ? JSON.stringify(resolveParams()) : '');
+  const paramsSnapshot = () =>
+    isComplete ? JSON.stringify(resolveParams()) : '';
   const paramsKey = React.useSyncExternalStore(
     (cb) => form.subscribe(cb),
     paramsSnapshot,

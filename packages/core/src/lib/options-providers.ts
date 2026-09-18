@@ -50,7 +50,18 @@ export interface OptionsProvider {
   ): Promise<ProvidedOption[]>;
 }
 
-const providers = new Map<string, OptionsProvider>();
+// Bundled renderers (renderer-standalone, renderer-blaze) carry their own
+// copy of this module, so the registry lives on globalThis — every copy
+// reads and writes the same one.
+const REGISTRY_KEY = Symbol.for('esheet.optionsProviders');
+const globalStore = globalThis as unknown as Record<
+  symbol,
+  Map<string, OptionsProvider> | undefined
+>;
+const providers = (globalStore[REGISTRY_KEY] ??= new Map<
+  string,
+  OptionsProvider
+>());
 
 /** Register (or replace) the provider a definition may name. */
 export function registerOptionsProvider(

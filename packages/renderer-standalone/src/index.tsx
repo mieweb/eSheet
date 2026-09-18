@@ -6,6 +6,20 @@ import {
   type EsheetRendererProps,
 } from '@esheet/renderer';
 
+import {
+  registerOptionsProvider,
+  unregisterOptionsProvider,
+  type OptionsProvider,
+  type ProvidedOption,
+} from '@esheet/core';
+
+export {
+  registerOptionsProvider,
+  unregisterOptionsProvider,
+  type OptionsProvider,
+  type ProvidedOption,
+};
+
 export interface EsheetRendererStandaloneHandle {
   unmount: () => void;
   getResponse: () => ReturnType<EsheetRendererHandle['getRawResponse']> | null;
@@ -35,6 +49,8 @@ export function mountStandaloneRenderer(
 type GlobalWithStandalone = typeof globalThis & {
   EsheetRendererStandalone?: {
     mount: typeof mountStandaloneRenderer;
+    registerOptionsProvider: typeof registerOptionsProvider;
+    unregisterOptionsProvider: typeof unregisterOptionsProvider;
   };
 };
 
@@ -42,5 +58,7 @@ const globalWithStandalone = globalThis as GlobalWithStandalone;
 if (!globalWithStandalone.EsheetRendererStandalone) {
   globalWithStandalone.EsheetRendererStandalone = {
     mount: mountStandaloneRenderer,
+    registerOptionsProvider,
+    unregisterOptionsProvider,
   };
 }

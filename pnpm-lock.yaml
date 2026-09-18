@@ -492,6 +492,9 @@ importers:
 
   packages/renderer-blaze:
     dependencies:
+      '@esheet/core':
+        specifier: workspace:*
+        version: link:../core
       '@esheet/renderer':
         specifier: workspace:*
         version: link:../renderer
@@ -507,6 +510,9 @@ importers:
 
   packages/renderer-standalone:
     dependencies:
+      '@esheet/core':
+        specifier: workspace:*
+        version: link:../core
       '@esheet/renderer':
         specifier: workspace:*
         version: link:../renderer

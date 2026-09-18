@@ -126,7 +126,9 @@ describe('evaluateCondition', () => {
 
     it('equals — custom single-select field type compares selected id', () => {
       const def = customDef('f', 'autocomplete');
-      const resp: FieldResponse = { selected: { id: 'au', value: 'Australia' } };
+      const resp: FieldResponse = {
+        selected: { id: 'au', value: 'Australia' },
+      };
       expect(evaluateCondition(cond('f', 'equals', 'au'), def, resp)).toBe(
         true
       );
