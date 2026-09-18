@@ -51,6 +51,11 @@ function numericTextDef(id: string): Def {
   return { id, fieldType: 'text', inputType: 'number', question: 'Q' };
 }
 
+// A field type outside the built-in union, e.g. `autocomplete`.
+function customDef(id: string, fieldType: string): Def {
+  return { id, fieldType, question: 'Q' } as unknown as Def;
+}
+
 function cond(
   targetId: string,
   operator: Condition['operator'],
@@ -120,7 +125,7 @@ describe('evaluateCondition', () => {
     });
 
     it('equals — custom single-select field type compares selected id', () => {
-      const def = { id: 'f', fieldType: 'autocomplete', question: 'Q' } as Def;
+      const def = customDef('f', 'autocomplete');
       const resp: FieldResponse = { selected: { id: 'au', value: 'Australia' } };
       expect(evaluateCondition(cond('f', 'equals', 'au'), def, resp)).toBe(
         true
@@ -131,7 +136,7 @@ describe('evaluateCondition', () => {
     });
 
     it('equals — custom field type falls back to free-text answer', () => {
-      const def = { id: 'f', fieldType: 'autocomplete', question: 'Q' } as Def;
+      const def = customDef('f', 'autocomplete');
       const resp: FieldResponse = { answer: 'typed name' };
       expect(
         evaluateCondition(cond('f', 'equals', 'typed name'), def, resp)
