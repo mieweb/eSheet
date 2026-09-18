@@ -1099,8 +1099,21 @@ function getActualValue(
         : files.map((f) => f.title ?? f.url ?? '');
     }
 
-    default:
-      return null;
+    default: {
+      // Custom field types (e.g. `autocomplete`) that store the standard
+      // single-select `{ selected: { id } }` or free-text `answer` shapes
+      // still participate in rules.
+      const sel = response.selected;
+      if (
+        sel != null &&
+        !Array.isArray(sel) &&
+        typeof sel === 'object' &&
+        'id' in sel
+      ) {
+        return (sel as SelectedOption).id;
+      }
+      return response.answer ?? null;
+    }
   }
 }
 

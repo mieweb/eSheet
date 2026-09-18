@@ -51,6 +51,15 @@ describe('resolveOptionsParams', () => {
     ).toEqual({ keep: 'x' });
   });
 
+  it('drops a param when any of its tokens is unresolved', () => {
+    expect(
+      resolveOptionsParams(
+        { partition: '{field:country}/{field:site}' },
+        lookup
+      )
+    ).toEqual({});
+  });
+
   it('returns an empty object without params', () => {
     expect(resolveOptionsParams(undefined, lookup)).toEqual({});
   });

@@ -78,8 +78,8 @@ const FIELD_TOKEN = /\{field:([^}]+)\}/g;
 
 /**
  * Resolve `{field:<id>}` tokens in `params` against the form's responses.
- * A param whose tokens all resolve to nothing is dropped rather than sent
- * empty, so a dependent filter is simply absent until its field is answered.
+ * A param with any unresolved token is dropped rather than sent partially
+ * filled, so a dependent filter is simply absent until its fields answer.
  */
 export function resolveOptionsParams(
   params: Record<string, string> | undefined,
@@ -87,15 +87,13 @@ export function resolveOptionsParams(
 ): Record<string, string> {
   const resolved: Record<string, string> = {};
   for (const [key, template] of Object.entries(params ?? {})) {
-    let sawToken = false;
-    let sawValue = false;
+    let unresolved = false;
     const value = template.replace(FIELD_TOKEN, (_, fieldId: string) => {
-      sawToken = true;
       const v = lookup(fieldId.trim()) ?? '';
-      if (v) sawValue = true;
+      if (!v) unresolved = true;
       return v;
     });
-    if (sawToken && !sawValue) continue;
+    if (unresolved) continue;
     resolved[key] = value;
   }
   return resolved;

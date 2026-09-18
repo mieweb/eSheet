@@ -100,7 +100,7 @@ export {
   registerOptionsProvider,
   unregisterOptionsProvider,
   getOptionsProvider,
-  resetOptionsProviders,
+  // NOTE: resetOptionsProviders intentionally not exported - internal/test-only
   resolveOptionsParams,
   type OptionsSource,
   type OptionsProvider,

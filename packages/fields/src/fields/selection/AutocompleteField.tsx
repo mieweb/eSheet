@@ -194,13 +194,22 @@ export const AutocompleteField = React.memo(function AutocompleteField({
     ? getOptionsProvider(def.optionsSource.provider)
     : undefined;
   const isComplete = provider?.mode === 'complete';
-  const hasSource = !!provider || !!def.dataSourceUrl;
+  // A declared optionsSource is authoritative: an unregistered provider
+  // degrades to no source rather than falling through to the legacy URL.
+  const hasSource = def.optionsSource ? !!provider : !!def.dataSourceUrl;
   const resolveParams = () =>
     resolveOptionsParams(def.optionsSource?.params, (id) =>
       responseTokenValue(form.getState().responses[id])
     );
-  // Re-fetch a `complete` set when a `{field:…}` dependency changes.
-  const paramsKey = isComplete ? JSON.stringify(resolveParams()) : '';
+  // Re-fetch a `complete` set when a `{field:…}` dependency changes. The
+  // key subscribes to the store — sibling answers change without this field
+  // re-rendering (builder preview memoizes per-field).
+  const paramsSnapshot = () => (isComplete ? JSON.stringify(resolveParams()) : '');
+  const paramsKey = React.useSyncExternalStore(
+    (cb) => form.subscribe(cb),
+    paramsSnapshot,
+    paramsSnapshot
+  );
 
   // A free-text `answer` (e.g. a field that used to be `text`) is shown, not
   // lost; it becomes a real selection once the user picks from the list.
@@ -226,7 +235,9 @@ export const AutocompleteField = React.memo(function AutocompleteField({
     q: string,
     signal: AbortSignal
   ): Promise<ParsedAutocompleteItem[]> => {
-    if (provider) {
+    if (def.optionsSource) {
+      // Unregistered provider: empty results, never the legacy URL.
+      if (!provider) return [];
       const options = await provider.fetch(q, resolveParams(), signal);
       return options.map(({ id, value, description, attributes }) => ({
         id,
@@ -335,6 +346,9 @@ export const AutocompleteField = React.memo(function AutocompleteField({
             </span>
           )}
           onSelect={(item) => {
+            // fillFields writes bypass FieldNode's onResponse guard, so a
+            // frozen form must be checked here before either write.
+            if (form.getState().isReadOnly(def.id)) return;
             setQuery(item.value);
             const attributes =
               item.attributes ?? captureAttributes(item.raw, def.captureKeys);

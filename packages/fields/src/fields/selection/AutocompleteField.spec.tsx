@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import {
   registerOptionsProvider,
-  resetOptionsProviders,
+  unregisterOptionsProvider,
   type FieldComponentProps,
   type OptionsProvider,
 } from '@esheet/core';
@@ -22,7 +22,15 @@ function renderField(
   const setResponse = vi.fn();
   const props = {
     field: { definition: { fieldType: 'autocomplete', ...definition } },
-    form: { getState: () => ({ instanceId: 't', responses, setResponse }) },
+    form: {
+      getState: () => ({
+        instanceId: 't',
+        responses,
+        setResponse,
+        isReadOnly: () => false,
+      }),
+      subscribe: () => () => {},
+    },
     ui: {},
     isSelected: false,
     isPreview: true,
@@ -40,7 +48,10 @@ function renderField(
 }
 
 describe('AutocompleteField with an optionsSource', () => {
-  afterEach(() => resetOptionsProviders());
+  afterEach(() => {
+    unregisterOptionsProvider('staff');
+    unregisterOptionsProvider('patients');
+  });
 
   it('loads a complete provider once, opens on focus and filters locally', async () => {
     const fetch = vi.fn<OptionsProvider['fetch']>(async () => [
@@ -118,7 +129,14 @@ describe('AutocompleteField with an optionsSource', () => {
           optionsSource: { provider: 'staff' },
         },
       },
-      form: { getState: () => ({ instanceId: 't', responses: {} }) },
+      form: {
+        getState: () => ({
+          instanceId: 't',
+          responses: {},
+          isReadOnly: () => false,
+        }),
+        subscribe: () => () => {},
+      },
       ui: {},
       isSelected: false,
       isPreview: true,
@@ -188,6 +206,74 @@ describe('AutocompleteField with an optionsSource', () => {
       target: { value: 'abc' },
     });
     expect(screen.queryByText('Searching…')).toBeNull();
+  });
+
+  it('never falls back to dataSourceUrl when an optionsSource is declared', () => {
+    const urlFetch = vi.fn();
+    vi.stubGlobal('fetch', urlFetch);
+    try {
+      renderField({
+        id: 'x',
+        question: 'X',
+        optionsSource: { provider: 'nope' },
+        dataSourceUrl: 'https://example.com/search?q={query}',
+      });
+      fireEvent.change(screen.getByRole('combobox', { name: 'X' }), {
+        target: { value: 'abc' },
+      });
+      expect(screen.queryByText('Searching…')).toBeNull();
+      expect(urlFetch).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('drops a pick and its fillFields writes when the form is read-only', async () => {
+    registerOptionsProvider('patients', {
+      mode: 'complete',
+      fetch: async () => [
+        { id: 'p1', value: 'Pat Patient', attributes: { mrn: 'EE-1' } },
+      ],
+    });
+    const onResponse = vi.fn();
+    const setResponse = vi.fn();
+    const props = {
+      field: {
+        definition: {
+          fieldType: 'autocomplete',
+          id: 'employee',
+          question: 'Employee',
+          optionsSource: { provider: 'patients' },
+          fillFields: { mrn: 'mrn' },
+        },
+      },
+      form: {
+        getState: () => ({
+          instanceId: 't',
+          responses: {},
+          setResponse,
+          isReadOnly: () => true,
+        }),
+        subscribe: () => () => {},
+      },
+      ui: {},
+      isSelected: false,
+      isPreview: true,
+      isEnabled: true,
+      isRequired: false,
+      isSoftRequired: false,
+      isReadOnly: true,
+      response: undefined,
+      onRemove: vi.fn(),
+      onUpdate: vi.fn(),
+      onResponse,
+    } as unknown as FieldComponentProps;
+    render(<AutocompleteField {...props} />);
+
+    fireEvent.focus(screen.getByRole('combobox', { name: 'Employee' }));
+    fireEvent.click(await screen.findByText('Pat Patient'));
+    expect(onResponse).not.toHaveBeenCalled();
+    expect(setResponse).not.toHaveBeenCalled();
   });
 });
 

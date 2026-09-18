@@ -119,6 +119,27 @@ describe('evaluateCondition', () => {
       );
     });
 
+    it('equals — custom single-select field type compares selected id', () => {
+      // e.g. the `autocomplete` custom field: unknown to the built-in switch
+      // but stores the standard `{ selected: { id } }` shape.
+      const def = { id: 'f', fieldType: 'autocomplete', question: 'Q' } as Def;
+      const resp: FieldResponse = { selected: { id: 'au', value: 'Australia' } };
+      expect(evaluateCondition(cond('f', 'equals', 'au'), def, resp)).toBe(
+        true
+      );
+      expect(evaluateCondition(cond('f', 'equals', 'gb'), def, resp)).toBe(
+        false
+      );
+    });
+
+    it('equals — custom field type falls back to free-text answer', () => {
+      const def = { id: 'f', fieldType: 'autocomplete', question: 'Q' } as Def;
+      const resp: FieldResponse = { answer: 'typed name' };
+      expect(
+        evaluateCondition(cond('f', 'equals', 'typed name'), def, resp)
+      ).toBe(true);
+    });
+
     it('equals — array actual returns false', () => {
       const def = checkDef('f');
       const resp: FieldResponse = { selected: [{ id: 'opt_1', value: 'A' }] };
