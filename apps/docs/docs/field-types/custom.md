@@ -16,6 +16,7 @@ Use custom field types when built-in fields are not enough for your workflow.
 
 ## Available Custom Field Docs
 
+- [autocomplete](./custom/autocomplete)
 - [kerebron](./custom/kerebron)
 
 For the full registration API and examples, see:

@@ -97,6 +97,17 @@ export {
 } from './lib/registry.js';
 
 export {
+  registerOptionsProvider,
+  unregisterOptionsProvider,
+  getOptionsProvider,
+  resolveOptionsParams,
+  type OptionsSource,
+  type OptionsProvider,
+  type OptionsProviderMode,
+  type ProvidedOption,
+} from './lib/options-providers.js';
+
+export {
   generateFieldId,
   generateOptionId,
   generateRowId,

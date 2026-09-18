@@ -6,6 +6,13 @@ import {
   type EsheetRendererProps,
 } from '@esheet/renderer';
 
+export {
+  registerOptionsProvider,
+  unregisterOptionsProvider,
+  type OptionsProvider,
+  type ProvidedOption,
+} from '@esheet/core';
+
 export interface BlazeRendererOptions {
   /** Optional wrappers supplied by field add-ons. */
   fieldProviders?: EsheetRendererProps['fieldProviders'];
