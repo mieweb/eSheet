@@ -36,6 +36,8 @@ export {
   registerAutocompleteFieldType,
   parseAutocompleteItems,
   WIKIPEDIA_OPENSEARCH_URL,
+  CountryField,
+  registerCountryFieldType,
   RatingField,
   RankingField,
   SliderField,
@@ -53,6 +55,7 @@ export {
 } from './fields/index.js';
 export type {
   AutocompleteFieldDefinition,
+  CountryFieldDefinition,
   DrawingData,
   DrawingPadConfig,
   DrawingPadPayload,
