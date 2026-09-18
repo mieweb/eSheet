@@ -95,6 +95,55 @@ describe('DocumentListGrid host integration', () => {
     );
   });
 
+  it('omits host row actions while the form is read-only', async () => {
+    const formStore = createFormStore();
+    const actionRenderer = vi.fn(() => <button type="button">Remove</button>);
+    const capabilities = {
+      ...permissiveDocumentListCapabilities,
+      view: vi.fn(() => false),
+    };
+    const fieldProps = {
+      field: {
+        definition: {
+          id: 'documents',
+          question: 'Documents',
+          documents: [row],
+        },
+      },
+      form: formStore,
+      isReadOnly: true,
+      response: undefined,
+    } as unknown as FieldComponentProps;
+
+    render(
+      <FormStoreContext.Provider value={formStore}>
+        <DocumentListFieldProvider
+          host={{
+            capabilities,
+            renderActions: actionRenderer,
+          }}
+        >
+          <DocumentListField {...fieldProps} />
+        </DocumentListFieldProvider>
+      </FormStoreContext.Provider>
+    );
+
+    await waitFor(() => expect(captured.props).not.toBeNull());
+
+    const props = captured.props as {
+      columns: readonly { field: string }[];
+    };
+    expect(capabilities.view).toHaveBeenCalledWith(row);
+    expect(
+      (window as unknown as Record<string, { data: unknown[] }>)[sourceKeys[0]]
+        .data
+    ).toEqual([]);
+    expect(props.columns.map((column) => column.field)).not.toContain(
+      '_actions'
+    );
+    expect(actionRenderer).not.toHaveBeenCalled();
+  });
+
   it('maps DataVis row events and detail rows to document summaries', async () => {
     const onRowClick = vi.fn();
     const onRowDoubleClick = vi.fn();

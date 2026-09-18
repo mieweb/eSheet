@@ -109,6 +109,12 @@ export interface EsheetRendererProps {
   /** Optional wrappers supplied by field add-ons. */
   fieldProviders?: readonly FieldProvider[];
   /**
+   * Freeze the whole form: every field renders read-only and user edits are
+   * dropped. Host-driven store writes (e.g. collab bindings calling
+   * `setResponse`) still apply. Defaults to `false`.
+   */
+  readOnly?: boolean;
+  /**
    * Identity of the current user. When provided, activity entries are stamped
    * with `identity.name`. Absent → entries save unstamped.
    */
@@ -275,6 +281,7 @@ const EsheetRendererInner = React.forwardRef<
     validateNavigation = true,
     initialPageId,
     onPageChange,
+    readOnly = false,
     identity,
   },
   ref
@@ -283,11 +290,21 @@ const EsheetRendererInner = React.forwardRef<
   const [softBypassOpen, setSoftBypassOpen] = React.useState(false);
   const [pendingResponse, setPendingResponse] =
     React.useState<FormResponse | null>(null);
+  const formReadOnly = React.useSyncExternalStore(
+    (callback) => formStore.subscribe(callback),
+    () => formStore.getState().readOnly,
+    () => formStore.getState().readOnly
+  );
 
   // Keep the host-supplied identity in the form store for activity authorship.
   React.useEffect(() => {
     formStore.getState().setIdentity(identity);
   }, [formStore, identity]);
+
+  // The form-level freeze lives in the store so fields see it via isReadOnly.
+  React.useEffect(() => {
+    formStore.getState().setReadOnly(readOnly);
+  }, [formStore, readOnly]);
 
   const handleSubmitClick = () => {
     const state = formStore.getState();
@@ -443,6 +460,28 @@ const EsheetRendererInner = React.forwardRef<
   return (
     <div className={rootClasses}>
       <ZodIssuesPanel issues={validationErrors} />
+      {formReadOnly && (
+        <div
+          role="status"
+          className="renderer-readonly-banner ms:mb-4 ms:flex ms:items-center ms:gap-2 ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackgroundsecondary ms:px-4 ms:py-2.5 ms:text-sm ms:text-mstextmuted"
+        >
+          <svg
+            aria-hidden="true"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+          This form is read-only. Responses cannot be changed.
+        </div>
+      )}
       <RendererBody
         form={formStore}
         ui={uiStore}

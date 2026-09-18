@@ -87,6 +87,7 @@ export const FileField = React.memo(function FileField({
   form,
   isPreview,
   isEnabled,
+  isReadOnly,
   isRequired,
   isSoftRequired,
   response,
@@ -113,7 +114,7 @@ export const FileField = React.memo(function FileField({
 
   const handleFiles = useCallback(
     (files: FileList | null) => {
-      if (!files || files.length === 0) return;
+      if (isReadOnly || !files || files.length === 0) return;
 
       setErrorMsg('');
       const availableSlots = maxFiles - fileDataArr.length;
@@ -163,7 +164,15 @@ export const FileField = React.memo(function FileField({
         onResponse({ fileData: maxFiles === 1 ? updated[0] : updated });
       })();
     },
-    [fileDataArr, maxFiles, def.maxFileSize, def.accept, onResponse, fileStore]
+    [
+      fileDataArr,
+      maxFiles,
+      def.maxFileSize,
+      def.accept,
+      onResponse,
+      fileStore,
+      isReadOnly,
+    ]
   );
 
   const handleRemoveFile = useCallback(
@@ -206,11 +215,11 @@ export const FileField = React.memo(function FileField({
       e.preventDefault();
       e.stopPropagation();
       setIsDragActive(false);
-      if (isEnabled) {
+      if (isEnabled && !isReadOnly) {
         handleFiles(e.dataTransfer.files);
       }
     },
-    [isEnabled, handleFiles]
+    [isEnabled, isReadOnly, handleFiles]
   );
 
   if (isPreview) {
@@ -259,7 +268,7 @@ export const FileField = React.memo(function FileField({
                     {file.size && <span>{formatFileSize(file.size)}</span>}
                   </div>
                 </div>
-                {isEnabled && (
+                {isEnabled && !isReadOnly && (
                   <button
                     type="button"
                     onClick={() => handleRemoveFile(index)}
@@ -274,7 +283,7 @@ export const FileField = React.memo(function FileField({
           </div>
         )}
 
-        {canAddMore && (
+        {canAddMore && !isReadOnly && (
           <div
             onDragEnter={handleDragEnter}
             onDragLeave={handleDragLeave}
@@ -299,7 +308,7 @@ export const FileField = React.memo(function FileField({
                 (e.target as HTMLInputElement).value = '';
               }}
               onChange={(e) => handleFiles(e.target.files)}
-              disabled={!isEnabled}
+              disabled={!isEnabled || isReadOnly}
               className="ms:hidden"
             />
             <label

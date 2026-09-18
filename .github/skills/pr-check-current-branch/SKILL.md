@@ -6,13 +6,13 @@ description: Run a local PR check for the current branch using the CI workflow c
 # PR Check Current Branch
 
 Use **`gh act`** to validate the current branch against the exact `.github/workflows/ci.yml` contract.
-This is the canonical local CI/CD method — see `.github/workflows/TESTING-LOCALLY.md` for full details.
+This is the canonical local CI/CD method. See `.github/workflows/TESTING-LOCALLY.md` for prerequisites and troubleshooting.
 
 ## Default Flow
 
 1. Confirm branch: `git branch --show-current`
-2. Refresh CI base ref: `git fetch origin main --depth=1`
-3. Run CI workflow via gh act:
+2. Confirm Docker is available: `docker version`
+3. Run the CI workflow:
    ```bash
    gh act pull_request -W .github/workflows/ci.yml --pull=false
    ```
@@ -44,11 +44,15 @@ as **non-authoritative pre-check**:
 
 1. `pnpm install --frozen-lockfile`
 2. `pnpm format:check`
-3. `pnpm lint`, `pnpm test`, `pnpm typecheck`, and `pnpm build`
+3. `pnpm lint`
+4. `pnpm test`
+5. `pnpm typecheck`
+6. `pnpm build`
 
 ## Guardrails
 
-- `gh act` is the authoritative method. Do not use manual `nx run-many` chains as a CI equivalent by default.
+- `gh act` is the authoritative method; manual pnpm checks are only a fallback.
+- Run all fallback commands from the repository root using the root scripts.
 - Do NOT run npm installation commands locally. Use `pnpm install --frozen-lockfile` from the repository root if dependencies need repair.
-- If `remotes/origin/main` is missing/stale, fetch before running.
+- The workflow requires Node.js 24 or newer and the pinned pnpm version managed by Corepack.
 - Always check `.github/workflows/TESTING-LOCALLY.md` for workflow-specific flags and troubleshooting.

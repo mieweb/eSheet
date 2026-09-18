@@ -34,7 +34,7 @@ import {
   TabsTrigger,
   Textarea,
 } from '@mieweb/ui';
-import { ClipboardList, SlidersHorizontal, Smartphone } from 'lucide-react';
+import { ClipboardList, SlidersHorizontal } from 'lucide-react';
 import { updateOzwellTools, FLOWIE_KEY } from '../ozwell-setup.js';
 import {
   createDemoDocumentListRepository,
@@ -107,6 +107,7 @@ export function RendererView() {
   const rendererRef = useRef<EsheetRendererHandle>(null);
 
   const [touchMode, setTouchMode] = useState(false);
+  const [readOnly, setReadOnly] = useState(false);
   const [navigationOpen, setNavigationOpen] = useState(false);
   const [topNavigation, setTopNavigation] = useState(false);
   const [bottomNavigation, setBottomNavigation] = useState(true);
@@ -245,7 +246,7 @@ export function RendererView() {
       >
         <div className="sticky top-14 z-30 bg-card border-b border-border">
           <div className="max-w-4xl mx-auto px-3 py-1.5 flex flex-col sm:flex-row sm:items-center sm:h-11 gap-1.5 sm:gap-2">
-            {/* Left: view tabs, touch mode, and page navigation settings */}
+            {/* Left: view tabs and renderer options */}
             <div className="flex min-w-0 items-center gap-2">
               <TabsList>
                 <TabsTrigger value="form" disabled={!hasForm}>
@@ -256,25 +257,15 @@ export function RendererView() {
                 </TabsTrigger>
               </TabsList>
               <Button
-                variant={touchMode ? 'primary' : 'outline'}
-                size="sm"
-                disabled={!hasForm}
-                onClick={() => rendererRef.current?.setTouchMode(!touchMode)}
-                title={touchMode ? 'Disable touch mode' : 'Enable touch mode'}
-              >
-                <Smartphone size={14} />
-                <span className="hidden sm:inline ml-1">Touch</span>
-              </Button>
-              <Button
                 variant="outline"
                 size="sm"
                 className="shrink-0"
                 onClick={() => setNavigationOpen(true)}
                 aria-haspopup="dialog"
-                title="Configure page navigation"
+                title="Configure renderer options"
               >
                 <SlidersHorizontal size={14} />
-                <span className="ml-1">Navigation</span>
+                <span className="ml-1">Options</span>
               </Button>
             </div>
             {/* Right: format select + import + submit */}
@@ -397,6 +388,7 @@ export function RendererView() {
                       allowDangerousJS={true}
                       touchMode="auto"
                       onTouchModeChange={setTouchMode}
+                      readOnly={readOnly}
                       topNavigation={topNavigation}
                       bottomNavigation={bottomNavigation}
                       validateNavigation={validateNavigation}
@@ -439,14 +431,34 @@ export function RendererView() {
 
       <Modal open={navigationOpen} onOpenChange={setNavigationOpen}>
         <ModalHeader>
-          <ModalTitle>Page navigation</ModalTitle>
+          <ModalTitle>Renderer options</ModalTitle>
           <ModalClose />
         </ModalHeader>
         <ModalBody className="flex flex-col gap-4">
           <p className="text-sm text-muted-foreground">
-            Choose where page navigation appears in the renderer.
+            Configure how the renderer displays and behaves.
           </p>
           <div className="divide-y divide-border rounded-lg border border-border">
+            <div className="p-4">
+              <Switch
+                id="renderer-touch-mode"
+                label="Touch mode"
+                description="Larger, mobile-friendly controls."
+                checked={touchMode}
+                onCheckedChange={(checked) =>
+                  rendererRef.current?.setTouchMode(checked)
+                }
+              />
+            </div>
+            <div className="p-4">
+              <Switch
+                id="renderer-read-only"
+                label="Read-only"
+                description="Freeze the form so responses cannot be edited."
+                checked={readOnly}
+                onCheckedChange={setReadOnly}
+              />
+            </div>
             <div className="p-4">
               <Switch
                 id="renderer-top-navigation"

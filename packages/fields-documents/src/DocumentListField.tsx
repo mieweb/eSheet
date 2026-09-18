@@ -108,14 +108,26 @@ export function DocumentListField({
   form,
   response,
   onResponse,
+  isReadOnly,
 }: FieldComponentProps): React.JSX.Element {
   const definition = field.definition as DocumentListDefinition;
   const host = useDocumentListFieldHost();
   // A bare field with no provider is a local preview with nothing to protect;
   // a host that says nothing gets read-only — absence must never widen access.
-  const capabilities = host
-    ? host.capabilities ?? readOnlyDocumentListCapabilities
-    : permissiveDocumentListCapabilities;
+  // A read-only form trumps everything: browsing stays, writes go.
+  const capabilities = useMemo(
+    () =>
+      isReadOnly
+        ? {
+            ...readOnlyDocumentListCapabilities,
+            view:
+              host?.capabilities?.view ?? readOnlyDocumentListCapabilities.view,
+          }
+        : host
+        ? host.capabilities ?? readOnlyDocumentListCapabilities
+        : permissiveDocumentListCapabilities,
+    [host, isReadOnly]
+  );
   const formStore = useContext(FormStoreContext);
   const initialRows = useMemo(
     () =>
@@ -480,8 +492,9 @@ export function DocumentListField({
 
   // The capability object answers per-row questions unless the host renders
   // its own actions; signature and PDF stay off until something backs them.
+  // While the form is read-only the host's wider grants don't apply.
   const getRowCapabilities =
-    host?.getRowCapabilities ??
+    (!isReadOnly && host?.getRowCapabilities) ||
     ((row: DocumentListDocument) => ({
       canView: capabilities.view(row),
       canCompose: mayCreate,
@@ -491,9 +504,8 @@ export function DocumentListField({
       canDelete: capabilities.remove(row),
       canDownloadPdf: false,
     }));
-  const renderActions =
-    host?.renderActions ??
-    (draftChannel && host?.author
+  const defaultRenderActions =
+    draftChannel && host?.author
       ? (
           row: DocumentListDocument,
           caps: { canEdit: boolean; canAppend: boolean; canDelete: boolean }
@@ -555,7 +567,10 @@ export function DocumentListField({
               )}
             </span>
           )
-      : undefined);
+      : undefined;
+  const renderActions = isReadOnly
+    ? undefined
+    : host?.renderActions ?? defaultRenderActions;
 
   const titleActions = (
     <>

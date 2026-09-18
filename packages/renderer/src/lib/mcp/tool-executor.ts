@@ -18,9 +18,10 @@ export function executeToolCall(
       return tools.getValidResponse() as unknown as Record<string, unknown>;
     case 'fill_field':
       return fillField(args, tools);
-    case 'clear_responses':
-      tools.clearResponses();
-      return 'Responses cleared';
+    case 'clear_responses': {
+      const result = tools.clearResponses();
+      return typeof result === 'string' ? result : 'Responses cleared';
+    }
     case 'get_form_tree':
       return { fields: tools.getFormTree() };
     case 'bulk_fill':
