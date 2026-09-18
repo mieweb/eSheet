@@ -42,7 +42,7 @@
     "@esheet/core": "workspace:*",
     "@esheet/fields": "workspace:*",
     "@esheet/styles": "workspace:*",
-    "js-yaml": "^5.2.3"
+    "js-yaml": "^5.3.0"
   },
   "peerDependencies": {
     "react": ">=19.0.0"
