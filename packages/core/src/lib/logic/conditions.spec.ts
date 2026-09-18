@@ -120,8 +120,6 @@ describe('evaluateCondition', () => {
     });
 
     it('equals — custom single-select field type compares selected id', () => {
-      // e.g. the `autocomplete` custom field: unknown to the built-in switch
-      // but stores the standard `{ selected: { id } }` shape.
       const def = { id: 'f', fieldType: 'autocomplete', question: 'Q' } as Def;
       const resp: FieldResponse = { selected: { id: 'au', value: 'Australia' } };
       expect(evaluateCondition(cond('f', 'equals', 'au'), def, resp)).toBe(

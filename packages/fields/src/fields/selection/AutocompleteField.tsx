@@ -194,16 +194,12 @@ export const AutocompleteField = React.memo(function AutocompleteField({
     ? getOptionsProvider(def.optionsSource.provider)
     : undefined;
   const isComplete = provider?.mode === 'complete';
-  // A declared optionsSource is authoritative: an unregistered provider
-  // degrades to no source rather than falling through to the legacy URL.
   const hasSource = def.optionsSource ? !!provider : !!def.dataSourceUrl;
   const resolveParams = () =>
     resolveOptionsParams(def.optionsSource?.params, (id) =>
       responseTokenValue(form.getState().responses[id])
     );
-  // Re-fetch a `complete` set when a `{field:…}` dependency changes. The
-  // key subscribes to the store — sibling answers change without this field
-  // re-rendering (builder preview memoizes per-field).
+  // Re-fetch a `complete` set when a `{field:…}` dependency changes.
   const paramsSnapshot = () => (isComplete ? JSON.stringify(resolveParams()) : '');
   const paramsKey = React.useSyncExternalStore(
     (cb) => form.subscribe(cb),
@@ -236,7 +232,6 @@ export const AutocompleteField = React.memo(function AutocompleteField({
     signal: AbortSignal
   ): Promise<ParsedAutocompleteItem[]> => {
     if (def.optionsSource) {
-      // Unregistered provider: empty results, never the legacy URL.
       if (!provider) return [];
       const options = await provider.fetch(q, resolveParams(), signal);
       return options.map(({ id, value, description, attributes }) => ({
@@ -346,8 +341,7 @@ export const AutocompleteField = React.memo(function AutocompleteField({
             </span>
           )}
           onSelect={(item) => {
-            // fillFields writes bypass FieldNode's onResponse guard, so a
-            // frozen form must be checked here before either write.
+            // fillFields sibling writes bypass FieldNode's read-only guard.
             if (form.getState().isReadOnly(def.id)) return;
             setQuery(item.value);
             const attributes =

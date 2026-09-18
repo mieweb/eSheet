@@ -1100,9 +1100,7 @@ function getActualValue(
     }
 
     default: {
-      // Custom field types (e.g. `autocomplete`) that store the standard
-      // single-select `{ selected: { id } }` or free-text `answer` shapes
-      // still participate in rules.
+      // Custom field types (e.g. autocomplete) use the standard shapes.
       const sel = response.selected;
       if (
         sel != null &&
