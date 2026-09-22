@@ -104,5 +104,6 @@ understood. `optionsSource` takes precedence when both are present.
 
 - `minQueryLength`: characters before searching (default `2`; ignored for `complete` providers)
 - `allowFreeText`: keep the typed text as a plain `answer` when nothing is picked, so the field also accepts names the source does not know
+- `requireSelection`: only accept picks from the list — typed text just searches and is never stored, and on blur without a pick the input reverts to the stored selection (or clears), so a required field fails submission until something is picked. Takes precedence over `allowFreeText`
 - `fillFields`: `{ <attributeKey>: <fieldId> }` — on pick, copy the option's attributes into sibling fields as their `answer` (e.g. `{ mrn: mrn, dateOfBirth: dateOfBirth }`); attributes the option lacks clear the target
 - `answerPlaceholder`: input placeholder

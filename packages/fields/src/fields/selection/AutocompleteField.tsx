@@ -59,6 +59,13 @@ export interface AutocompleteFieldDefinition {
    */
   allowFreeText?: boolean;
   /**
+   * Only accept picks from the list: typed text just searches and is never
+   * stored, and on blur without a pick the input reverts to the stored
+   * selection (or clears). With no `selected`, a required field fails
+   * submission as usual. Takes precedence over `allowFreeText`.
+   */
+  requireSelection?: boolean;
+  /**
    * Sibling fields to fill from the picked option's attributes:
    * `{ <attributeKey>: <fieldId> }`, e.g. `{ mrn: mrn, dateOfBirth: dob }`.
    * Each named field gets `{ answer }`; attributes the option lacks clear
@@ -294,7 +301,7 @@ export const AutocompleteField = React.memo(function AutocompleteField({
 
   const search = (q: string) => {
     setQuery(q);
-    if (def.allowFreeText) {
+    if (def.allowFreeText && !def.requireSelection) {
       onResponse({ selected: undefined, answer: q || undefined });
     } else if (!q && (selected || response?.answer)) {
       onResponse({ selected: undefined, answer: undefined });
@@ -311,6 +318,28 @@ export const AutocompleteField = React.memo(function AutocompleteField({
     }
     setLoading(true);
     debounceTimer.current = setTimeout(() => void request(q), DEBOUNCE_MS);
+  };
+
+  // requireSelection: an unpicked query must not linger as if it were the
+  // answer — on blur the input falls back to the stored selection. Option
+  // clicks don't blur (the listbox prevents mousedown default), so a pick
+  // still lands first.
+  const revertToSelection = () => {
+    if (!def.requireSelection) return;
+    const stored = selected?.value ?? '';
+    if (query === stored) return;
+    setQuery(stored);
+    if (!isComplete) {
+      clearTimeout(debounceTimer.current);
+      abortRef.current?.abort();
+      setItems([]);
+      setLoading(false);
+    }
+    // A leftover free-text `answer` (e.g. from before requireSelection was
+    // set) must not survive as a submittable value.
+    if (!selected && response?.answer) {
+      onResponse({ selected: undefined, answer: undefined });
+    }
   };
 
   if (isPreview) {
@@ -369,7 +398,10 @@ export const AutocompleteField = React.memo(function AutocompleteField({
           emptyMessage={loading ? 'Searching…' : 'No results found.'}
           disabled={!isEnabled}
           aria-label={def.question || 'Question'}
-          inputProps={{ id: `${instanceId}-autocomplete-answer-${def.id}` }}
+          inputProps={{
+            id: `${instanceId}-autocomplete-answer-${def.id}`,
+            onBlur: revertToSelection,
+          }}
         />
       </div>
     );

@@ -16,7 +16,8 @@ import {
 
 function renderField(
   definition: Record<string, unknown>,
-  responses: Record<string, unknown> = {}
+  responses: Record<string, unknown> = {},
+  response: Record<string, unknown> | undefined = undefined
 ) {
   const onResponse = vi.fn();
   const setResponse = vi.fn();
@@ -38,7 +39,7 @@ function renderField(
     isRequired: false,
     isSoftRequired: false,
     isReadOnly: false,
-    response: undefined,
+    response,
     onRemove: vi.fn(),
     onUpdate: vi.fn(),
     onResponse,
@@ -174,6 +175,51 @@ describe('AutocompleteField with an optionsSource', () => {
     expect(onResponse).toHaveBeenLastCalledWith({
       selected: undefined,
       answer: 'Marcus Webb',
+    });
+  });
+
+  it('reverts an unpicked query on blur when requireSelection is set', () => {
+    registerOptionsProvider('patients', { fetch: async () => [] });
+    const { onResponse } = renderField(
+      {
+        id: 'employee',
+        question: 'Employee',
+        requireSelection: true,
+        allowFreeText: true, // requireSelection wins
+        optionsSource: { provider: 'patients' },
+      },
+      {},
+      { selected: { id: 'p1', value: 'Pat Patient' } }
+    );
+    const input = screen.getByRole('combobox', { name: 'Employee' });
+    expect((input as HTMLInputElement).value).toBe('Pat Patient');
+
+    fireEvent.change(input, { target: { value: 'Someone Else' } });
+    // Typing never stores free text…
+    expect(onResponse).not.toHaveBeenCalled();
+    // …and blur without a pick falls back to the stored selection.
+    fireEvent.blur(input);
+    expect((input as HTMLInputElement).value).toBe('Pat Patient');
+  });
+
+  it('clears a leftover free-text answer on blur when requireSelection is set', () => {
+    registerOptionsProvider('patients', { fetch: async () => [] });
+    const { onResponse } = renderField(
+      {
+        id: 'employee',
+        question: 'Employee',
+        requireSelection: true,
+        optionsSource: { provider: 'patients' },
+      },
+      {},
+      { answer: 'Typed Name' }
+    );
+    const input = screen.getByRole('combobox', { name: 'Employee' });
+    fireEvent.blur(input);
+    expect((input as HTMLInputElement).value).toBe('');
+    expect(onResponse).toHaveBeenCalledWith({
+      selected: undefined,
+      answer: undefined,
     });
   });
 

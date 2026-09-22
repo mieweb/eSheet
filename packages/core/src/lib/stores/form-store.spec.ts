@@ -1021,6 +1021,7 @@ describe('createFormStore', () => {
             required: true,
             rules: [requiredRule('trigger', 'yes')],
           }),
+          field('q4', 'text', { readOnly: true }),
         ])
       );
     });
@@ -1092,6 +1093,28 @@ describe('createFormStore', () => {
       it('returns true for static required field', () => {
         // q1 has required: true
         expect(store.getState().isRequired('q1')).toBe(true);
+      });
+    });
+
+    describe('isReadOnly', () => {
+      it('returns true for a field with readOnly: true', () => {
+        expect(store.getState().isReadOnly('q4')).toBe(true);
+      });
+
+      it('returns false for a normal field', () => {
+        expect(store.getState().isReadOnly('q1')).toBe(false);
+      });
+
+      it('returns true for all fields while the form is frozen', () => {
+        store.getState().setReadOnly(true);
+        expect(store.getState().isReadOnly('q1')).toBe(true);
+      });
+
+      it('still accepts programmatic writes to a readOnly field', () => {
+        store.getState().setResponse('q4', { answer: 'machine-filled' });
+        expect(store.getState().getResponse('q4')).toEqual({
+          answer: 'machine-filled',
+        });
       });
     });
 

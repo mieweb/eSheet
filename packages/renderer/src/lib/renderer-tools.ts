@@ -463,7 +463,11 @@ export function createRendererTools(formStore: FormStore): RendererTools {
     },
 
     fillField: (fieldId, value) => {
-      if (formStore.getState().readOnly) return 'Error: form is read-only';
+      const state = formStore.getState();
+      if (state.readOnly) return 'Error: form is read-only';
+      const resolved = resolveFieldId(fieldId);
+      if (resolved && state.isReadOnly(resolved))
+        return 'Error: field is read-only';
       return applyFieldValue(fieldId, value, true) as boolean | string;
     },
 
