@@ -235,7 +235,7 @@ export interface FormState {
   isRequired: (fieldId: string) => boolean;
   /** Whether a field is currently soft-required (warns but allows bypass). */
   isSoftRequired: (fieldId: string) => boolean;
-  /** Whether a field is currently read-only (true for all fields while the form is frozen). */
+  /** Whether a field is read-only (form frozen, or the field declares `readOnly: true`). */
   isReadOnly: (fieldId: string) => boolean;
   /** Validate a single field and return its errors. */
   getFieldErrors: (fieldId: string) => ValidationError[];
@@ -1437,9 +1437,14 @@ export function createFormStore(
       );
     },
 
-    isReadOnly: (_fieldId) => {
-      // Per-field readOnly rules don't exist yet — only the form-level freeze.
-      return get().readOnly;
+    isReadOnly: (fieldId) => {
+      // No conditional readOnly rule effect yet — see mieweb/eSheet#219.
+      if (get().readOnly) return true;
+      const node = get().normalized.byId[fieldId];
+      return (
+        (node?.definition as { readOnly?: boolean } | undefined)?.readOnly ===
+        true
+      );
     },
 
     getFieldErrors: (fieldId) => {

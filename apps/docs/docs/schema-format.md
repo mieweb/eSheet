@@ -83,6 +83,8 @@ interface FieldDefinition {
   question?: string;
   /** Whether a response is required */
   required?: boolean;
+  /** Shows the value but rejects user edits; programmatic writes still apply */
+  readOnly?: boolean;
   /** Conditional rules (see Conditional Logic) */
   rules?: ConditionalRule[];
   /** Width occupied by the field in the layout grid */

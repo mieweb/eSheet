@@ -538,6 +538,11 @@ interface BaseFieldDefinition {
   overrideSectionWidth?: boolean;
   /** Validation rules applied to the field's response. */
   validators?: FieldValidator[];
+  /**
+   * When true, the field displays its value but rejects user edits.
+   * Programmatic writes (host store, `fillFields`, calculations) still apply.
+   */
+  readOnly?: boolean;
   /** Conditional rules that control visibility, enabled state, or required state. */
   rules?: ConditionalRule[];
   /** JS expression that auto-computes this field's value. Requires dangerouslyAllowJS on form. */
@@ -868,6 +873,7 @@ const BASE_PROPERTIES = [
   'width',
   'overrideSectionWidth',
   'validators',
+  'readOnly',
   'calculation',
   'rules',
   '_sourceData',
@@ -985,6 +991,7 @@ const baseFieldProps = {
   width: z.optional(z.enum(['none', 'full', 'half', 'third'])),
   overrideSectionWidth: z.optional(z.boolean()),
   validators: z.optional(z.array(fieldValidatorSchema)),
+  readOnly: z.optional(z.boolean()),
   rules: z.optional(z.array(conditionalRuleSchema)),
   /** JS expression that auto-computes this field's value (requires dangerouslyAllowJS on form). */
   calculation: z.optional(z.string()),
