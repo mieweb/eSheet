@@ -13,8 +13,13 @@ export {
   registerAutocompleteFieldType,
   parseAutocompleteItems,
   WIKIPEDIA_OPENSEARCH_URL,
+  CountryField,
+  registerCountryFieldType,
 } from './selection/index.js';
-export type { AutocompleteFieldDefinition } from './selection/index.js';
+export type {
+  AutocompleteFieldDefinition,
+  CountryFieldDefinition,
+} from './selection/index.js';
 
 // Rating & Ranking
 export { RatingField, RankingField, SliderField } from './rating/index.js';

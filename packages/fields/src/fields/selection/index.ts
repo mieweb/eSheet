@@ -11,3 +11,5 @@ export {
   WIKIPEDIA_OPENSEARCH_URL,
 } from './AutocompleteField.js';
 export type { AutocompleteFieldDefinition } from './AutocompleteField.js';
+export { CountryField, registerCountryFieldType } from './CountryField.js';
+export type { CountryFieldDefinition } from './CountryField.js';
