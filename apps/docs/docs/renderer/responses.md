@@ -50,6 +50,7 @@ function MyForm() {
 | `singlematrix`                                     | `selected`                        | `Record<rowId, SelectedOption>`    |
 | `multimatrix`                                      | `selected`                        | `Record<rowId, SelectedOption[]>`  |
 | `signature`                                        | `signatureData`, `signatureImage` | Stroke JSON, base64 PNG            |
+| `responseReference` (registered add-on)            | `answer`                          | Serialized `ResponseReference`     |
 | `diagram`                                          | `markupData`, `markupImage`       | Stroke JSON, base64 PNG            |
 | `display`, `html`, `image`, `section`              | --                                | No response (presentational)       |
 
@@ -167,6 +168,139 @@ This is useful for:
 - **Editing previously submitted forms**
 - **Resuming partially completed forms**
 - **Displaying read-only form data** (combine with disabled styling)
+
+## Linking Independent Responses
+
+A **form definition** describes the questions and layout. A **response** stores one
+independently editable set of answers to that definition. Multiple responses can
+use the same definition; linking two responses does not merge their answers or
+make one response part of the other's definition.
+
+Use a `ResponseReference` to point to another response:
+
+```ts
+import {
+  parseResponseReference,
+  serializeResponseReference,
+} from '@esheet/core';
+
+const reference = {
+  collection: 'reviews',
+  id: 'review-7',
+  relationship: 'review', // Optional description of the relationship
+};
+
+const overviewResponses = {
+  linked_review: { answer: serializeResponseReference(reference) },
+};
+
+const parsed = parseResponseReference(overviewResponses.linked_review.answer);
+// { collection: 'reviews', id: 'review-7', relationship: 'review' }
+```
+
+Only `collection`, `id`, and optional `relationship` are allowed. The parser
+returns `null` for malformed references or extra keys, and the serializer throws
+for invalid input. The reference contains no target answers, display metadata,
+URLs, credentials, or access grants. Save the overview and review separately under
+their own response identifiers. A link to a response does not grant access to it.
+
+### Register the Field and Supply a Host Resolver
+
+Register the optional field type before loading a definition that uses it:
+
+```tsx
+import { useMemo } from 'react';
+import type { ResponseReferenceResolver } from '@esheet/core';
+import {
+  createResponseReferenceProvider,
+  registerResponseReferenceFieldType,
+} from '@esheet/fields';
+import { EsheetRenderer } from '@esheet/renderer';
+
+registerResponseReferenceFieldType();
+
+// hostApi is your application service. It authenticates the session and checks
+// target authorization before returning approved display metadata.
+const resolver: ResponseReferenceResolver = (reference, signal) =>
+  hostApi.resolveResponseLink(reference, { signal });
+
+function OverviewForm() {
+  const fieldProviders = useMemo(
+    () => [createResponseReferenceProvider(resolver)],
+    []
+  );
+
+  return (
+    <EsheetRenderer
+      formDataInput={overviewDefinition}
+      initialResponses={overviewResponses}
+      fieldProviders={fieldProviders}
+    />
+  );
+}
+```
+
+The committed YAML definition declares the field; the host assigns its reference
+in the response:
+
+```yaml
+id: overview
+title: Case overview
+pages:
+  - id: main
+    fields:
+      - id: linked_review
+        fieldType: responseReference
+        question: Review
+```
+
+The resolver receives a reference and an `AbortSignal`. It returns one of:
+
+```ts
+{ status: 'available', label: 'Open review', href: '/reviews/review-7' }
+{ status: 'restricted', label: 'Review access is required', href: '/access/reviews' }
+{ status: 'restricted' }
+{ status: 'missing', label: 'Review unavailable' }
+```
+
+For restricted responses, return only wording the current user may see. The
+optional restricted URL should lead to an explanatory or access-request page.
+The server must also authorize every target read and write, including direct URL
+navigation. Resolver output is display metadata, not an authorization decision
+that the client can enforce.
+
+Without a resolver, or when a target is missing or resolution fails, the field is
+disabled. Only HTTP(S) and relative browser URLs without embedded credentials are
+accepted. The field never fetches target answers. It aborts pending resolutions
+when the reference or resolver changes and discards stale results. Replace the
+resolver function when the active user, organization, or permission context
+changes so previous-session labels disappear immediately.
+
+Links work in read-only forms. Normal browser navigation is the default. Supply
+the optional second `createResponseReferenceProvider` argument to save the
+current response and navigate through your router on ordinary clicks:
+
+```tsx
+createResponseReferenceProvider(resolver, (reference, resolution) => {
+  // This callback returns void. Start and handle async work inside the host.
+  void saveCurrentResponse()
+    .then(() => {
+      if (resolution.status !== 'missing' && resolution.href) {
+        router.navigate(resolution.href);
+      }
+    })
+    .catch(showSaveError);
+});
+```
+
+Modified clicks and middle clicks keep native browser behavior. If your workflow
+must persist edits before those actions too, handle that in the host. Use
+`ResponseReferenceLink` directly for links outside a rendered form; it accepts
+the same provider or explicit `resolver` and `onNavigate` props.
+
+The demo's **Linked Responses** card opens `/linked-responses`, which demonstrates
+two YAML definitions with mutually linked, independently saved browser-local responses.
+Its local storage is a demonstration of persistence, not an authorization service.
 
 ## Hydrating Responses
 
