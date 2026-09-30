@@ -3,6 +3,7 @@ import './ozwell-setup.js';
 import {
   registerFieldComponents,
   registerAutocompleteFieldType,
+  registerResponseReferenceFieldType,
 } from '@esheet/fields';
 import {
   configureRichTextField,
@@ -22,12 +23,14 @@ import { LandingPage } from './views/LandingPage';
 import { BuilderView } from './views/BuilderView';
 import { RendererView } from './views/RendererView';
 import { CollabPlaygroundView } from './views/CollabPlaygroundView';
+import { LinkedResponsesView } from './views/LinkedResponsesView';
 import { Navbar } from './components/Navbar';
 import { BrandInitializer } from './components/BrandInitializer';
 
 // Register plugin fields (imports also self-register metadata + Zod schema)
 registerFieldComponents({ richtext: RichTextEditorField });
 registerAutocompleteFieldType();
+registerResponseReferenceFieldType();
 registerHealthFieldTypes({
   indexUrl: `${import.meta.env.BASE_URL}codify`.replace(/\/$/, ''),
 });
@@ -58,6 +61,7 @@ function App() {
           <Route path="/builder" element={<BuilderView />} />
           <Route path="/renderer" element={<RendererView />} />
           <Route path="/collab-live" element={<CollabPlaygroundView />} />
+          <Route path="/linked-responses" element={<LinkedResponsesView />} />
         </Routes>
       </BrowserRouter>
     </ToastProvider>

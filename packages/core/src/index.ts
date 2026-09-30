@@ -134,6 +134,15 @@ export {
 export type { FileInput, FileReference, FileStore } from './lib/file-store.js';
 
 export {
+  parseResponseReference,
+  serializeResponseReference,
+  type ResponseReference,
+  type ResponseReferenceResolution,
+  type ResponseReferenceResolver,
+  type ResponseReferenceNavigate,
+} from './lib/response-reference.js';
+
+export {
   ACTIVITY_RESPONSE_KEY,
   ACTIVITY_DEBOUNCE_MS,
   mergeActivity,

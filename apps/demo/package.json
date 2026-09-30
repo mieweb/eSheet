@@ -10,6 +10,7 @@
     "dev": "vite",
     "dev:dist": "pnpm --filter './packages/**' --recursive --if-present build && ESHEET_USE_DIST=true vite",
     "lint": "eslint .",
+    "test": "vitest run",
     "preview": "vite preview",
     "typecheck": "tsc --build --emitDeclarationOnly --force"
   },

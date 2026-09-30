@@ -126,6 +126,16 @@ export {
 // Shared markdown-lite rendering
 export { renderMarkdownContent, renderMarkdownInline } from './lib/markdown.js';
 
+export {
+  ResponseReferenceLink,
+  ResponseReferenceField,
+  ResponseReferenceProvider,
+  createResponseReferenceProvider,
+  registerResponseReferenceFieldType,
+  type ResponseReferenceLinkProps,
+  type ResponseReferenceProviderProps,
+} from './lib/ResponseReference.js';
+
 // Shared file/attachment helpers
 export {
   fileToInput,

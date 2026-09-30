@@ -56,7 +56,12 @@ export function LandingPage() {
             desc="Fill out questionnaires and see collected form responses."
             to="/renderer"
           />
-          <div className="md:col-span-2">
+          <DemoCard
+            title="Linked Responses"
+            desc="Edit two independent responses and follow their links in either direction."
+            to="/linked-responses"
+          />
+          <div>
             <DemoCard
               title="Collaboration"
               desc="Explore simulated presence, proposals, conflicts, and review actions."
