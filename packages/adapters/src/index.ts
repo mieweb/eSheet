@@ -25,3 +25,10 @@ export {
   type McpConstOption,
 } from './lib/mcp.js';
 export * from './fhir/index.js';
+export {
+  exportResponse,
+  responseExportLabels,
+  type ResponseExport,
+  type ResponseDocumentExportOptions,
+  type ResponseExportDiagnostic,
+} from './lib/export-response.js';

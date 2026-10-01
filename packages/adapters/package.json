@@ -26,6 +26,18 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./mdy": {
+      "@esheet/source": "./src/lib/mdy.ts",
+      "types": "./dist/lib/mdy.d.ts",
+      "import": "./dist/lib/mdy.js",
+      "default": "./dist/lib/mdy.js"
+    },
+    "./html": {
+      "@esheet/source": "./src/lib/export-html.ts",
+      "types": "./dist/lib/export-html.d.ts",
+      "import": "./dist/lib/export-html.js",
+      "default": "./dist/lib/export-html.js"
     }
   },
   "files": [
@@ -34,9 +46,16 @@
   ],
   "dependencies": {
     "@esheet/core": "workspace:*",
+    "@mieweb/templit": "0.2.0",
+    "handlebars": "^4.7.9",
+    "js-yaml": "^5.2.3",
+    "marked": "^16.3.0",
+    "sanitize-html": "^2.18.0",
     "tslib": "^2.3.0"
   },
   "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/sanitize-html": "^2.16.2",
     "vitest": "4.1.10"
   }
 }

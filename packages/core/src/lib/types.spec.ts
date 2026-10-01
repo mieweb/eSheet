@@ -4,6 +4,7 @@ import {
   SECTION_ICON_NAMES,
   formDefinitionSchema,
   fieldDefinitionSchema,
+  getFormDefinitionJSONSchema,
   normalizeFormDefinition,
 } from './types.js';
 import { registerFieldType, resetFieldTypeRegistry } from './registry.js';
@@ -38,6 +39,41 @@ describe('schema types', () => {
     };
 
     expect(form.pages[0].fields).toHaveLength(1);
+  });
+
+  it.each([undefined, '', '# Summary\n\n{{response.q1}}'])(
+    'should preserve optional outputTemplate %j through normalization and parsing',
+    (outputTemplate) => {
+      const form: FormDefinition = {
+        id: 'template-form',
+        ...(outputTemplate !== undefined && { outputTemplate }),
+        pages: [{ id: 'page-1' }],
+      };
+
+      expect(formDefinitionSchema.parse(form)).toEqual(form);
+      expect(formDefinitionSchema.parse(normalizeFormDefinition(form))).toEqual(
+        form
+      );
+    }
+  );
+
+  it.each([null, 123, {}, []])(
+    'should reject outputTemplate %j',
+    (outputTemplate) => {
+      expect(
+        formDefinitionSchema.safeParse({
+          id: 'template-form',
+          outputTemplate,
+          pages: [],
+        }).success
+      ).toBe(false);
+    }
+  );
+
+  it('should include outputTemplate in generated JSON schema', () => {
+    expect(getFormDefinitionJSONSchema()).toMatchObject({
+      properties: { outputTemplate: { type: 'string' } },
+    });
   });
 
   it('should allow constructing a response map', () => {

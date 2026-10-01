@@ -1177,6 +1177,33 @@ describe('createFormStore', () => {
   // -----------------------------------------------------------------------
 
   describe('hydrateDefinition', () => {
+    it.each(['', '# Summary\n\n{{response.q1}}'])(
+      'roundtrips outputTemplate %j through init, export, and reload',
+      (outputTemplate) => {
+        store = createFormStore({
+          ...form([field('q1')]),
+          outputTemplate,
+        });
+        expect(store.getState().formOutputTemplate).toBe(outputTemplate);
+
+        const exported = JSON.parse(
+          JSON.stringify(store.getState().hydrateDefinition())
+        );
+        expect(exported.outputTemplate).toBe(outputTemplate);
+
+        const reloaded = createFormStore();
+        reloaded.getState().loadDefinition(exported);
+        expect(reloaded.getState().formOutputTemplate).toBe(outputTemplate);
+        expect(reloaded.getState().hydrateDefinition()).toEqual(exported);
+
+        reloaded.getState().loadDefinition(form([field('q2')]));
+        expect(reloaded.getState().formOutputTemplate).toBeUndefined();
+        expect(reloaded.getState().hydrateDefinition()).not.toHaveProperty(
+          'outputTemplate'
+        );
+      }
+    );
+
     it('reconstructs a flat field list', () => {
       store = createFormStore(
         form([field('q1', 'text'), field('q2', 'number')])

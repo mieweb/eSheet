@@ -24,6 +24,8 @@ interface FormDefinition {
   title?: string;
   /** Optional form description */
   description?: string;
+  /** Optional Handlebars Markdown body for response export */
+  outputTemplate?: string;
   /** When true, enables dangerously embedded JS for calculations and conditions */
   dangerouslyAllowJS?: boolean;
   /** Pages — every form has at least one page; fields live inside pages */
@@ -311,3 +313,216 @@ Responses are wire/API payloads, so this example is shown in JSON. Form definiti
   }
 }
 ```
+
+## Response document export
+
+`exportResponse(form, response, options?)` from `@esheet/adapters` asynchronously
+returns `{ mdy, markdown, diagnostics }`. It accepts the `FormResponse` field-ID
+map above, not a submission envelope.
+
+- **`mdy` is the canonical full form-plus-response document:** YAML front matter
+  contains the complete supplied `form` and `response`, followed by the rendered
+  Markdown body. Metadata under `mdy` records `kind: document`, `schema: esheet`,
+  `renderedAt`, and, when used, the template name (form ID), engine, and source.
+- **`markdown` is the body only:** no YAML front matter or full structured data.
+  Use this value for display, Markdown download, or HTML conversion.
+- **`diagnostics` is an array of `{ code, fieldId? }`:** warnings can accompany a
+  successful export. Invalid input or templates reject the promise instead.
+
+**Export is not redaction.** Hidden answers, orphan response entries (IDs absent
+from the definition), and other supplied data remain in MDY even if absent from
+the prose. External files and documents remain references only: the exporter
+does not fetch, dereference, or embed their remote contents. Already-supplied
+inline data, including signature images, is still retained in the structured
+snapshot. Review the full MDY before sharing it; omitting a field from a template
+does not remove its data.
+
+### Output templates
+
+Set top-level `outputTemplate` to a **string containing a Handlebars Markdown
+body**, not an MDY document or YAML front matter. It composes answers independently
+of the form layout. For example:
+
+```yaml
+outputTemplate: |
+  # {{form.title}}
+
+  {{fields.employee_name}} requests {{fields.accommodation}} beginning
+  {{fields.start_date}} because {{fields.reason}}.
+
+  {{#if fields.duration.answered}}
+  Requested duration: {{fields.duration}}.
+  {{/if}}
+  {{#unless fields.reason.answered}}
+  A reason has not been provided.
+  {{/unless}}
+```
+
+Every referenced field must exist in the definition. The runnable demo definition
+is [../../demo/src/schemas/response-export.yaml](../../demo/src/schemas/response-export.yaml).
+It includes those fields, a date input, numeric duration with a unit, choice
+labels, and a section nested inside another section.
+
+The template context is deliberately limited:
+
+- `{{fields.employee_name}}`: implicit MDY link,
+  `[escaped display](#employee_name)`.
+- `{{fields.employee_name.display}}`: plain escaped display text, without a link.
+- `fields.employee_name.answered`: predicate for whether a display value was
+  produced, not required-field validation.
+- `{{form.title}}`: escaped form title, falling back to form ID when absent.
+- `{{form.id}}`, `{{form.description}}`: escaped form metadata; an absent
+  description is empty.
+- `{{#if ...}}`, `{{#unless ...}}`: conditional blocks, including `{{else}}`.
+- `{{#each fields}}...{{/each}}`: iterate all indexed fields, including containers
+  and hidden fields, not raw answer data.
+
+Inside `#each fields`, `{{this}}` produces an implicit field link;
+`{{this.display}}`, `this.answered`, `{{@key}}`, `{{@index}}`, `{{@first}}`, and
+`{{@last}}` are also permitted. For example, list only fields with a display value:
+
+```text
+{{#each fields}}
+{{#if this.answered}}
+- {{@key}}: {{this}}
+{{/if}}
+{{/each}}
+```
+
+There are no partials, decorators, `lookup`, arbitrary JavaScript, custom helpers,
+parent paths, or access to raw response objects. Unknown field references and
+unsupported properties (such as `fields.employee_name.answer`) are errors,
+**even inside untaken branches**. Malformed templates and unresolved template
+syntax in the result are errors too. Empty or whitespace-only templates are
+errors, not requests for the default layout.
+
+`options.template` overrides `form.outputTemplate` for that export without
+changing the supplied form. If neither is defined, the exporter generates the
+default layout. To request that layout for a form with a template, supply a copy
+of the form with `outputTemplate` omitted; an empty override will fail.
+
+All field-definition IDs, including section/container IDs, must match
+`^[a-z0-9_-]+$`: lowercase ASCII letters, digits, underscores, and hyphens only.
+The names `__proto__`, `constructor`, and `prototype` are reserved. Invalid IDs
+and duplicate IDs anywhere in the field tree throw errors before rendering,
+including for hidden or unreferenced fields. These are export restrictions; do
+not assume every ID accepted by a form editor is exportable.
+
+Explicit Markdown field links, such as `[Employee](#employee_name)` or
+`[Employee](mdy:employee_name)`, must reference real fields in the supplied form.
+This also applies to reference-style links and their referenced definitions.
+Unknown or malformed fragment (`#...`) and `mdy:` destinations throw errors.
+These are field references, not automatic heading-anchor links: a heading alone
+does not make its fragment a valid destination. Link examples inside code fences
+are not validated, and external links are allowed.
+
+### Default layout and display limitations
+
+Without a template, the body uses form/page/section headings and linked field
+answers in definition order. Declarative visibility is evaluated with JavaScript
+disabled; hidden fields are omitted from this body, not the MDY snapshot.
+Templates instead choose their own content and can reference hidden fields.
+
+- Text and long text display stored scalar answers. Numeric inputs use
+  `Intl.NumberFormat`; valid `YYYY-MM-DD` dates use `Intl.DateTimeFormat` in UTC.
+  Both honor `options.locale`. A text field's `unit` is appended. Other date/time
+  variants are not specially formatted, and invalid dates remain stored text.
+- Choices use definition option `text`, then `value`, with stored selection
+  `value` as a fallback. Multiple selections are comma-separated. Multitext and
+  matrix responses produce labeled entries; unknown choices can produce an
+  `unknown-option` diagnostic and the `Unknown option` label.
+- Absent/empty answers display **Not answered** by default. Override labels using
+  `options.labels`, for example `{ notAnswered: 'Not provided' }`. An `answered`
+  predicate tests display availability, not clinical meaning or completeness;
+  rich-value placeholders also count as display values. Fully cleared matrices
+  are unanswered (`answered: false`), display **Not answered**, and receive a
+  `missing-answer` diagnostic in the default layout. Partially answered matrices
+  remain answered and show **Not answered** for cleared or missing rows.
+- Files display titles or **Attachment reference**. Signatures and diagrams use
+  **Signature recorded** and **Diagram recorded** placeholders, not rendered
+  drawings. Activity uses **Activity retained in structured data**.
+- In the default layout, static display content is escaped text, with no
+  expression interpolation. Rich static HTML becomes **Value retained in
+  structured data**; images use a caption/alt/label rather than embedding media.
+- Custom values have no custom renderer: recognized scalar/selection shapes use
+  the generic formatting above; unsupported structured values use **Value
+  retained in structured data** with an `unsupported-value` diagnostic. Their
+  original data remains in MDY.
+
+Diagnostic codes are `missing-answer`, `unknown-option`, `unsupported-value`,
+`orphan-response`, and `javascript-disabled`. `missing-answer` is emitted for
+unanswered fields included by the default layout, not for every omitted answer in
+a template. `javascript-disabled` flags visible-rule handling when JavaScript is
+enabled on the form; it is not a calculation audit. Export permits incomplete
+responses and does not perform submission/completion validation.
+
+### Markdown, MDY, and printable HTML API
+
+This example uses a parsed, validated copy of the demo definition and a plain
+response snapshot. Keep dates in the response as strings, not `Date` objects.
+
+```typescript
+import type { FormDefinition, FormResponse } from '@esheet/core';
+import { exportResponse } from '@esheet/adapters';
+import { renderResponseHtml } from '@esheet/adapters/html';
+
+async function makeAccommodationDocument(form: FormDefinition) {
+  const response: FormResponse = {
+    employee_name: { answer: 'Jordan Rivera' },
+    accommodation: {
+      selected: { id: 'adjustable_desk', value: 'Adjustable desk' },
+    },
+    start_date: { answer: '2026-10-01' },
+    reason: { answer: 'Alternate sitting and standing during desk work.' },
+    duration: { answer: '6' },
+    hours_per_day: { answer: '4.5' },
+  };
+
+  const { mdy, markdown, diagnostics } = await exportResponse(form, response, {
+    locale: 'en-US',
+    labels: { notAnswered: 'Not provided' },
+    renderedAt: new Date('2026-10-01T12:00:00Z'),
+    // Optional per-export override; otherwise use form.outputTemplate:
+    // template: '# {{form.title}}\n\nRequested by {{fields.employee_name}}.',
+  });
+  const html = await renderResponseHtml(markdown, {
+    title: form.title ?? form.id,
+    language: 'en-US',
+    direction: 'ltr', // or 'rtl'
+  });
+  return { mdy, markdown, html, diagnostics };
+}
+```
+
+Supply detached **plain data snapshots**, not stores, functions, accessors, class
+instances, cyclic objects, or non-finite numbers. `renderedAt` is a separate
+option accepting a `Date`. Export does not execute calculations or embedded
+JavaScript, even with `dangerouslyAllowJS: true`; it formats answers already
+present in the snapshot. Any computation needed for the document must have
+occurred before the snapshot was taken.
+
+`renderResponseHtml(markdown, options?)` returns a standalone HTML document,
+**not a fragment**, and must receive the Markdown body, not MDY. It explicitly
+sanitizes the converted HTML using an allowlist; templit/marked conversion alone
+does **not** sanitize. Display values and form labels are escaped so untrusted
+values cannot introduce Markdown or HTML. Template-authored markup still needs
+the HTML sanitizer. Scripts, images, remote assets, event handlers, and user
+styles are not embedded. Links retain only allowed HTTP(S), mailto, or fragment
+destinations and navigate on activation; field links are structured-data
+references, not a promise of matching HTML scroll targets.
+
+The HTML includes a restrictive Content Security Policy and self-contained,
+scoped print CSS for headings, lists, tables, page breaks, and LTR/RTL text.
+Hosts converting Markdown by another route must provide their own explicit HTML
+sanitization before previewing or printing.
+
+### Try the demo
+
+In the demo renderer, select **Response Export - Accommodation Request**, enter
+answers (for example, the values above), and choose **Preview document**. The
+preview uses a detached snapshot without enforcing completion validation. It
+shows sanitized printable HTML, export diagnostics, and expandable **Preview
+Markdown (body only)** / **Preview MDY (full data)** sections. Actions include
+**Download MDY (full data)**, **Download Markdown (body only)**, **Download HTML**,
+and **Print document**. Printing is enabled after the preview frame loads. The
+full-data warning applies to the MDY preview and download as well as the API.

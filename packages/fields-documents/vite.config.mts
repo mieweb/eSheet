@@ -71,6 +71,7 @@ export default defineConfig(() => ({
     },
     rolldownOptions: {
       external: [
+        /^@esheet\/adapters(?:\/.*)?$/,
         '@esheet/core',
         '@esheet/field-kerebron',
         '@esheet/fields',

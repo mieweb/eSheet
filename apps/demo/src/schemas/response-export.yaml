@@ -1,0 +1,80 @@
+id: response-export
+title: Response Export - Accommodation Request
+description: Compose a response document from an accommodation request. MDY retains the full form and all stored answers; it is not a redacted export.
+# In the renderer, enter answers and choose Preview document.
+# Try Jordan Rivera, 2026-10-01, a duration of 6 weeks, and 4.5 hours/day.
+# This is a Markdown body, not MDY front matter. Values are escaped on export.
+outputTemplate: |
+  # {{form.title}}
+
+  {{form.description}}
+
+  {{fields.employee_name}} requests {{fields.accommodation}} beginning
+  {{fields.start_date}} because {{fields.reason}}.
+
+  {{#if fields.duration.answered}}
+  Requested duration: {{fields.duration}}.
+  {{/if}}
+  {{#if fields.hours_per_day.answered}}
+  Proposed schedule: {{fields.hours_per_day}}.
+  {{/if}}
+  {{#unless fields.reason.answered}}
+  A reason has not been provided.
+  {{/unless}}
+
+  ## Additional details
+
+  {{#if fields.notes.answered}}
+  {{fields.notes.display}}
+  {{else}}
+  No additional details provided.
+  {{/if}}
+
+  Form reference: {{form.id}}
+pages:
+  - id: request_page
+    title: Accommodation request
+    fields:
+      - id: employee_name
+        fieldType: text
+        question: Employee name
+        inputType: string
+        required: true
+      - id: request_details
+        fieldType: section
+        title: Request details
+        fields:
+          - id: accommodation
+            fieldType: radio
+            question: Requested accommodation
+            options:
+              - id: adjustable_desk
+                value: adjustable_desk
+                text: Adjustable desk
+              - id: modified_schedule
+                value: modified_schedule
+                text: Modified schedule
+          - id: start_date
+            fieldType: text
+            question: Requested start date
+            inputType: date
+          - id: reason
+            fieldType: longtext
+            question: Reason for the request
+          - id: schedule_details
+            fieldType: section
+            title: Proposed schedule
+            fields:
+              - id: duration
+                fieldType: text
+                question: Requested duration
+                inputType: number
+                unit: weeks
+              - id: hours_per_day
+                fieldType: text
+                question: Hours per day
+                inputType: number
+                unit: hours/day
+      - id: notes
+        fieldType: longtext
+        question: Additional details (optional)

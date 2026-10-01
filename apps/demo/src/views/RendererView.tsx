@@ -11,6 +11,11 @@ import { permissiveDocumentListCapabilities } from '@esheet/fields-documents';
 import { createFileStoreProvider } from '@esheet/fields';
 import { Navbar } from '../components/Navbar';
 import {
+  ResponseDocumentPreview,
+  responseDocumentLabels,
+  type ResponseDocumentSnapshot,
+} from '../components/ResponseDocumentPreview.js';
+import {
   Alert,
   AlertDescription,
   AlertTitle,
@@ -105,6 +110,54 @@ export function RendererView() {
   const [submitResult, setSubmitResult] = useState<SubmitResult | null>(null);
   const [definition, setDefinition] = useState<unknown>(null);
   const rendererRef = useRef<EsheetRendererHandle>(null);
+  const [documentSnapshot, setDocumentSnapshot] =
+    useState<ResponseDocumentSnapshot | null>(null);
+  const [snapshotError, setSnapshotError] = useState(false);
+  const previewSubscription = useRef<(() => void) | null>(null);
+
+  const closeDocumentPreview = useCallback(() => {
+    previewSubscription.current?.();
+    previewSubscription.current = null;
+    setDocumentSnapshot(null);
+  }, []);
+
+  useEffect(() => () => previewSubscription.current?.(), []);
+
+  const handleDocumentPreview = () => {
+    closeDocumentPreview();
+    setSnapshotError(false);
+    const renderer = rendererRef.current;
+    if (!renderer) return;
+    try {
+      const store = renderer.getFormStore();
+      const state = store.getState();
+      // Do not use getValidResponse/getResponse: preserve hidden and orphan data.
+      setDocumentSnapshot(
+        structuredClone({
+          form: state.hydrateDefinition(),
+          response: state.responses,
+        })
+      );
+      // Host-driven edits can still arrive while the modal is open.
+      previewSubscription.current = store.subscribe((next, previous) => {
+        if (
+          next.responses !== previous.responses ||
+          next.normalized !== previous.normalized ||
+          next.formId !== previous.formId ||
+          next.formTitle !== previous.formTitle ||
+          next.formDescription !== previous.formDescription ||
+          next.formOutputTemplate !== previous.formOutputTemplate ||
+          next.formSourceData !== previous.formSourceData ||
+          next.dangerouslyAllowJS !== previous.dangerouslyAllowJS ||
+          next.disposed
+        ) {
+          closeDocumentPreview();
+        }
+      });
+    } catch {
+      setSnapshotError(true);
+    }
+  };
 
   const [touchMode, setTouchMode] = useState(false);
   const [readOnly, setReadOnly] = useState(false);
@@ -125,8 +178,10 @@ export function RendererView() {
   const fileStore = useMemo(() => createDemoFileStore(), []);
 
   const resetFormKey = useCallback(() => {
+    closeDocumentPreview();
+    setSnapshotError(false);
     setFormKey((prev) => prev + 1);
-  }, []);
+  }, [closeDocumentPreview]);
 
   const handleLoadSchema = (fileName: string) => {
     const schema = TEST_SCHEMAS.find((s) => s.value === fileName);
@@ -313,9 +368,25 @@ export function RendererView() {
               >
                 Submit
               </Button>
+              <Button
+                onClick={handleDocumentPreview}
+                variant="outline"
+                size="sm"
+                className="shrink-0"
+                disabled={!hasForm}
+                aria-haspopup="dialog"
+              >
+                {responseDocumentLabels.open}
+              </Button>
             </div>
           </div>
         </div>
+
+        {snapshotError && (
+          <p role="alert" aria-live="assertive">
+            {responseDocumentLabels.snapshotError}
+          </p>
+        )}
 
         {submitResult && (
           <div className="bg-muted py-4 px-4">
@@ -428,6 +499,11 @@ export function RendererView() {
           )}
         </div>
       </Tabs>
+
+      <ResponseDocumentPreview
+        snapshot={documentSnapshot}
+        onClose={closeDocumentPreview}
+      />
 
       <Modal open={navigationOpen} onOpenChange={setNavigationOpen}>
         <ModalHeader>

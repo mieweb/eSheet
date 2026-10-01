@@ -947,6 +947,7 @@ export function normalizeFormDefinition(
     'id',
     'title',
     'description',
+    'outputTemplate',
     'pages',
     '_sourceData',
   ];
@@ -1342,6 +1343,8 @@ export const formDefinitionSchema = z.strictObject({
   id: z.string(),
   title: z.optional(z.string()),
   description: z.optional(z.string()),
+  /** Optional template for rendering form responses as output documents. */
+  outputTemplate: z.optional(z.string()),
   /** When true, enables dangerously embedded JS - calculations on fields and conditionType 'js'. */
   dangerouslyAllowJS: z.optional(z.boolean()),
   /** Pages array — required; every form must declare at least its fields inside pages. */
@@ -1359,6 +1362,7 @@ const builtInFormDefinitionSchema = z.strictObject({
   id: z.string(),
   title: z.optional(z.string()),
   description: z.optional(z.string()),
+  outputTemplate: z.optional(z.string()),
   dangerouslyAllowJS: z.optional(z.boolean()),
   pages: z.array(
     z.object({

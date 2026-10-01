@@ -126,7 +126,7 @@ export default defineConfig(({ command, mode }) => {
     ? []
     : [
         {
-          find: '@esheet/adapters',
+          find: /^@esheet\/adapters$/,
           replacement: resolve(
             import.meta.dirname,
             '../../packages/adapters/src/index.ts'
@@ -201,6 +201,10 @@ export default defineConfig(({ command, mode }) => {
     // Explicit aliases are needed because Vite's commonjs resolver doesn't respect
     // custom export conditions (@esheet/source) during production builds.
     resolve: {
+      // Subpath exports (e.g. adapters/html) must resolve through their package.
+      conditions: useDist
+        ? ['module', 'browser', 'development|production']
+        : ['@esheet/source', 'module', 'browser', 'development|production'],
       dedupe: ['prosemirror-model'],
       alias: [
         {

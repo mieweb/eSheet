@@ -1,0 +1,84 @@
+/* Scoped plain CSS: the demo does not currently depend on a Sass compiler. */
+.response-document-preview {
+  box-sizing: border-box;
+  inline-size: min(70rem, calc(100vw - 2rem));
+  max-block-size: calc(100dvh - 2rem);
+  overflow: auto;
+  padding: 1.25rem;
+  border: 1px solid var(--mieweb-border, #d1d5db);
+  border-radius: 0.75rem;
+  background: var(--mieweb-card, #fff);
+  color: var(--mieweb-foreground, #111827);
+  text-align: start;
+}
+
+.response-document-preview::backdrop {
+  background: rgb(0 0 0 / 55%);
+}
+
+.response-document-preview__header,
+.response-document-preview__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.response-document-preview__header {
+  justify-content: space-between;
+}
+
+.response-document-preview__warning {
+  padding: 0.75rem;
+  border-inline-start: 0.25rem solid var(--mieweb-primary-500, #2563eb);
+  background: var(--mieweb-muted, #f3f4f6);
+}
+
+.response-document-preview button {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--mieweb-border, #d1d5db);
+  border-radius: 0.375rem;
+  background: var(--mieweb-card, #fff);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.response-document-preview button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.response-document-preview button:focus-visible,
+.response-document-preview summary:focus-visible {
+  outline: 2px solid var(--mieweb-primary-500, #2563eb);
+  outline-offset: 3px;
+}
+
+.response-document-preview [role='alert'] {
+  color: var(--mieweb-destructive, #b91c1c);
+}
+
+.response-document-preview__frame {
+  display: block;
+  inline-size: 100%;
+  block-size: 55vh;
+  margin-block: 1rem;
+  border: 1px solid var(--mieweb-border, #d1d5db);
+  background: #fff;
+}
+
+.response-document-preview__source {
+  margin-block: 0.75rem;
+}
+
+.response-document-preview__source summary {
+  cursor: pointer;
+}
+
+.response-document-preview__source pre {
+  max-block-size: 20rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

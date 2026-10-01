@@ -84,6 +84,8 @@ export interface FormState {
   readonly formTitle?: string;
   /** Human-readable form description preserved from the definition. */
   readonly formDescription?: string;
+  /** Output document template preserved from the definition. */
+  readonly formOutputTemplate?: string;
   /** Opaque metadata preserved from the original import source (e.g. MCP envelope fields). */
   readonly formSourceData?: unknown;
   /** When true, enables dangerously embedded JS — field calculations and conditionType 'js'. */
@@ -549,6 +551,7 @@ export function createFormStore(
     formId: initialFormId,
     formTitle: initial?.title,
     formDescription: initial?.description,
+    formOutputTemplate: initial?.outputTemplate,
     formSourceData: initial?._sourceData,
     dangerouslyAllowJS: (initial?.dangerouslyAllowJS ?? false) && _hostAllowsJS,
     normalized: initial ? normalizeDefinition(initial.pages) : EMPTY_NORMALIZED,
@@ -567,6 +570,7 @@ export function createFormStore(
           formId: definition.id,
           formTitle: definition.title,
           formDescription: definition.description,
+          formOutputTemplate: definition.outputTemplate,
           formSourceData: definition._sourceData,
           dangerouslyAllowJS:
             (definition.dangerouslyAllowJS ?? false) && _hostAllowsJS,
@@ -1463,6 +1467,7 @@ export function createFormStore(
         formId,
         formTitle,
         formDescription,
+        formOutputTemplate,
         formSourceData,
         dangerouslyAllowJS,
       } = get();
@@ -1472,6 +1477,9 @@ export function createFormStore(
         id: formId,
         ...(formTitle !== undefined && { title: formTitle }),
         ...(formDescription !== undefined && { description: formDescription }),
+        ...(formOutputTemplate !== undefined && {
+          outputTemplate: formOutputTemplate,
+        }),
         ...(dangerouslyAllowJS && { dangerouslyAllowJS: true }),
         ...(formSourceData !== undefined && { _sourceData: formSourceData }),
         pages,
