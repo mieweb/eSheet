@@ -45,6 +45,7 @@ function inlineCssDocumentListField(): import('vite').Plugin {
 
 export default defineConfig(() => ({
   root: import.meta.dirname,
+  base: './',
   cacheDir: '../../node_modules/.vite/packages/fields-documents',
   plugins: [
     react(),
