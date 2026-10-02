@@ -229,6 +229,7 @@ export default defineConfig(({ command, mode }) => {
       entries: useDist
         ? ['index.html']
         : ['index.html', '../../packages/field-health/src/index.ts'],
+      include: ['@react-pdf/renderer'],
     },
     server: {
       port: 3001,

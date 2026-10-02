@@ -11,8 +11,8 @@ import { FormStoreContext } from '@esheet/fields';
 import { Button, Input } from '@mieweb/ui';
 import {
   ArchiveRestore,
+  FileDown,
   ListPlus,
-  Printer,
   SquarePen,
   Trash2,
 } from 'lucide-react';
@@ -179,9 +179,7 @@ export function DocumentListField({
   const [showRemoved, setShowRemoved] = useState(false);
   const [removing, setRemoving] = useState<DocumentListDocument | null>(null);
   const [renaming, setRenaming] = useState<DocumentListDocument | null>(null);
-  const [previewing, setPreviewing] = useState<DocumentListDocument | null>(
-    null
-  );
+  const [exporting, setExporting] = useState<DocumentListDocument | null>(null);
   const [dropActive, setDropActive] = useState(false);
   const removedCount = useMemo(
     () => rows.filter((row) => row.removed).length,
@@ -615,11 +613,11 @@ export function DocumentListField({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  aria-label={`Preview PDF for ${row.title}`}
-                  title="Preview PDF"
-                  onClick={() => setPreviewing(row)}
+                  aria-label={`Export ${row.title}`}
+                  title="Export"
+                  onClick={() => setExporting(row)}
                 >
-                  <Printer size={16} aria-hidden="true" />
+                  <FileDown size={16} aria-hidden="true" />
                 </Button>
               )}
             </span>
@@ -698,17 +696,17 @@ export function DocumentListField({
           }}
         />
       )}
-      {previewing && runtimeState && (
+      {exporting && runtimeState && (
         <DocumentListPdfPreview
-          document={previewing}
+          document={exporting}
           runtime={runtimeState}
-          onClose={() => setPreviewing(null)}
+          onClose={() => setExporting(null)}
           onReady={() =>
             form.getState().appendActivity({
               fieldId: field.definition.id,
               question: title,
-              category: 'Print / PDF opened',
-              detail: `${previewing.title} (${previewing.id})`,
+              category: 'Export opened',
+              detail: `${exporting.title} (${exporting.id})`,
             })
           }
         />

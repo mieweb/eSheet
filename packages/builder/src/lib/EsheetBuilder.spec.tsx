@@ -20,6 +20,7 @@ import {
   FormStoreContext,
   UIContext,
 } from './EsheetBuilder.js';
+import { registerCustomFieldTypes } from '@esheet/fields';
 import { BuilderHeader } from './components/BuilderHeader.js';
 import { EditPanel } from './components/edit-panel/EditPanel.js';
 import { useFormApi } from './hooks/useFormApi.js';
@@ -41,6 +42,72 @@ function renderWithContexts(
 afterEach(cleanup);
 
 describe('EsheetBuilder', () => {
+  it('renders registered property editors for root and section child fields', () => {
+    function PropertyEditor({
+      fieldId,
+      instanceId,
+      onUpdate,
+    }: import('@esheet/fields').FieldPropertyEditorProps) {
+      return (
+        <button
+          type="button"
+          id={`${instanceId}-property-${fieldId}`}
+          onClick={() => onUpdate({ question: `edited-${fieldId}` })}
+        >
+          Edit {fieldId} property
+        </button>
+      );
+    }
+
+    registerCustomFieldTypes({
+      propertyEditorTest: {
+        label: 'Property editor test',
+        category: 'rich',
+        answerType: 'text',
+        hasOptions: false,
+        hasMatrix: false,
+        defaultProps: {},
+        component: () => null,
+        propertyEditor: PropertyEditor,
+      },
+    });
+    const form = createFormStore({
+      id: 'property-editor-routing',
+      pages: [
+        {
+          id: 'page-1',
+          fields: [
+            { id: 'root-1', fieldType: 'propertyEditorTest' },
+            {
+              id: 'section-1',
+              fieldType: 'section',
+              fields: [{ id: 'child-1', fieldType: 'propertyEditorTest' }],
+            },
+          ],
+        },
+      ],
+    } as unknown as FormDefinition);
+    const ui = createUIStore();
+
+    ui.getState().selectField('root-1');
+    const view = renderWithContexts(form, ui, <EditPanel />);
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Edit root-1 property' })
+    );
+    expect(form.getState().normalized.byId['root-1']?.definition.question).toBe(
+      'edited-root-1'
+    );
+
+    act(() => ui.getState().selectFieldChild('section-1', 'child-1'));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Edit child-1 property' })
+    );
+    expect(
+      form.getState().normalized.byId['child-1']?.definition.question
+    ).toBe('edited-child-1');
+    view.unmount();
+  });
+
   it('updates Required on the Logic Editor target', () => {
     const form = createFormStore({
       id: 'logic-required-target',

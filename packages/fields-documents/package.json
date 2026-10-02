@@ -50,8 +50,10 @@
     "mdast-util-from-markdown": "^2.0.3",
     "mdast-util-gfm": "^3.1.0",
     "micromark-extension-gfm": "^3.0.0",
+    "pdfjs-dist": "^5.4.296",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "react-pdf": "^10.2.0",
     "tslib": "^2.3.0"
   },
   "peerDependencies": {

@@ -50,6 +50,18 @@ vi.mock('datavis-ace', () => {
   return { ComputedView, Source };
 });
 
+vi.mock('./DocumentListPdfPreview.js', () => ({
+  DocumentListPdfPreview: ({
+    document,
+  }: {
+    readonly document: { readonly title: string };
+  }) => (
+    <div role="dialog" aria-label={`Export document — ${document.title}`}>
+      <div role="alert">Content unavailable</div>
+    </div>
+  ),
+}));
+
 const row: DocumentListDocument = {
   id: 'doc-1',
   date: '2026-08-18',
@@ -301,7 +313,7 @@ describe('DocumentListGrid host integration', () => {
     expect(customDetail).toHaveBeenCalledWith(row);
   });
 
-  it('opens the native PDF preview when enabled', async () => {
+  it('opens document export when enabled', async () => {
     const formStore = createFormStore();
     formStore.getState().loadDefinition({
       id: 'case',
@@ -353,12 +365,10 @@ describe('DocumentListGrid host integration', () => {
     render(
       <>{props.formatCell(undefined, tableData, { field: '_actions' })}</>
     );
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Preview PDF for Letter' })
-    );
+    fireEvent.click(screen.getByRole('button', { name: 'Export Letter' }));
 
     expect(
-      screen.getByRole('dialog', { name: 'PDF preview — Letter' })
+      screen.getByRole('dialog', { name: 'Export document — Letter' })
     ).toBeTruthy();
     expect(await screen.findByRole('alert')).toBeTruthy();
     expect(onDownloadPdf).not.toHaveBeenCalled();
@@ -433,9 +443,7 @@ describe('DocumentListGrid host integration', () => {
     render(
       <>{props.formatCell(undefined, tableData, { field: '_actions' })}</>
     );
-    expect(
-      screen.getByRole('button', { name: 'Preview PDF for Letter' })
-    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Export Letter' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Edit Letter' })).toBeNull();
   });
 

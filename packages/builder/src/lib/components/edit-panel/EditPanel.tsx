@@ -11,6 +11,7 @@ import {
   type SectionFieldDefinition,
   type SectionIconName,
 } from '@esheet/core';
+import { getFieldPropertyEditor } from '@esheet/fields';
 import { useInstanceId } from '../../EsheetBuilder.js';
 import { EditIcon, LogicIcon } from '../../icons.js';
 import { DraftIdEditor } from './DraftIdEditor.js';
@@ -198,6 +199,7 @@ function EditTabContent({
   onRenameId,
 }: EditTabContentProps) {
   const isSection = def.fieldType === 'section';
+  const instanceId = useInstanceId();
 
   if (isSection) {
     return (
@@ -242,7 +244,41 @@ function EditTabContent({
           columns={(def as { columns?: MatrixColumn[] }).columns ?? []}
         />
       )}
+
+      <FieldSpecificEditor
+        fieldId={fieldId}
+        instanceId={instanceId}
+        def={def}
+        onUpdate={onUpdate}
+      />
     </div>
+  );
+}
+
+function FieldSpecificEditor({
+  fieldId,
+  instanceId,
+  def,
+  onUpdate,
+}: {
+  fieldId: string;
+  instanceId: string;
+  def: Omit<FieldDefinition, 'fields'>;
+  onUpdate: (patch: Partial<Omit<FieldDefinition, 'fields'>>) => void;
+}): React.JSX.Element | null {
+  const PropertyEditor = getFieldPropertyEditor(def.fieldType);
+  if (!PropertyEditor) return null;
+
+  return (
+    <>
+      <hr className="ms:border-msborder" />
+      <PropertyEditor
+        fieldId={fieldId}
+        instanceId={instanceId}
+        def={def}
+        onUpdate={onUpdate}
+      />
+    </>
   );
 }
 
@@ -646,6 +682,13 @@ function SectionEditContent({
               }
             />
           )}
+
+          <FieldSpecificEditor
+            fieldId={activeChildDef.id}
+            instanceId={instanceId}
+            def={activeChildDef}
+            onUpdate={handleUpdateChild}
+          />
         </div>
       )}
     </div>
