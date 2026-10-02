@@ -31,7 +31,11 @@ import {
   hydrateDefinition,
 } from '../functions/normalize.js';
 import { hydrateResponse } from '../functions/hydrate-response.js';
-import { recordActivity } from '../functions/activity.js';
+import {
+  appendActivityEvent,
+  recordActivity,
+  type ActivityEvent,
+} from '../functions/activity.js';
 import { resolveEffect } from '../logic/resolve.js';
 import {
   evaluateJsExpression,
@@ -125,6 +129,8 @@ export interface FormState {
   setReadOnly: (readOnly: boolean) => void;
   /** Set (or replace) a single field's response. */
   setResponse: (fieldId: string, response: FieldResponse) => void;
+  /** Append an explicit user action to the activity log, when configured. */
+  appendActivity: (event: ActivityEvent) => void;
   /** Remove a single field's response. */
   clearResponse: (fieldId: string) => void;
   /** Clear all responses. */
@@ -628,6 +634,9 @@ export function createFormStore(
           userEditedFields: nextEdited,
         };
       }),
+
+    appendActivity: (event) =>
+      set((state) => ({ responses: appendActivityEvent(state, event) })),
 
     clearResponse: (fieldId) =>
       set((state) => {

@@ -45,6 +45,40 @@ describe('store activity logging', () => {
     expect(log[0].id).toMatch(/[0-9a-f-]{36}/);
   });
 
+  it('appends an explicit event with identity and detail', () => {
+    const store = createFormStore();
+    store.getState().loadDefinition(activityForm);
+    store.getState().setIdentity({ name: 'Dr. Demo' });
+    store.getState().appendActivity({
+      fieldId: 'letters',
+      question: 'Letters',
+      category: 'Print / PDF opened',
+      detail: 'Return to work letter (letter-1)',
+    });
+
+    expect(getLog(store)).toHaveLength(1);
+    expect(getLog(store)[0]).toMatchObject({
+      fieldId: 'letters',
+      question: 'Letters',
+      category: 'Print / PDF opened',
+      author: 'Dr. Demo',
+      to: 'Return to work letter (letter-1)',
+    });
+  });
+
+  it('does not append an explicit event without an activity field', () => {
+    const store = createFormStore();
+    store.getState().loadDefinition({
+      id: 'plain',
+      pages: [{ id: 'p1', fields: [{ id: 'name', fieldType: 'text' }] }],
+    });
+    store.getState().appendActivity({
+      fieldId: 'letters',
+      category: 'Print / PDF opened',
+    });
+    expect(store.getState().responses[ACTIVITY_RESPONSE_KEY]).toBeUndefined();
+  });
+
   it('debounces keystrokes: rapid same-field changes collapse into one entry', () => {
     const store = createFormStore();
     store.getState().loadDefinition(activityForm);

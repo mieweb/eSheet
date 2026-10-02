@@ -279,6 +279,8 @@ export interface DocumentListDefinition {
    * button.
    */
   readonly workflows?: readonly DocumentListWorkflow[];
+  /** Optional per-row actions; absent means no row export actions. */
+  readonly actions?: readonly DocumentListAction[];
   /**
    * What one row is called, lowercase, so the same field reads as "Compose
    * note", "Compose letter", or the default "Compose document".

@@ -49,7 +49,7 @@ export const ACTIVITY_COLUMNS = [
     sortable: true,
     filterable: true,
     resizable: true,
-    width: 110,
+    width: 160,
   },
   {
     field: 'from',
@@ -75,14 +75,12 @@ export const ACTIVITY_COLUMNS = [
   },
 ] as const;
 
-type ActivityCategory = 'Added' | 'Updated' | 'Cleared';
-
 interface ActivityRow {
   readonly id: string;
   readonly at: string;
   readonly atDisplay: string;
   readonly field: string;
-  readonly category: ActivityCategory;
+  readonly category: string;
   readonly from: string;
   readonly to: string;
   readonly author: string;
@@ -104,7 +102,8 @@ function formatTimestamp(iso: string): string {
   return Number.isNaN(date.getTime()) ? iso : date.toLocaleString();
 }
 
-function categoryFor(entry: ActivityEntry): ActivityCategory {
+function categoryFor(entry: ActivityEntry): string {
+  if (entry.category) return entry.category;
   if (entry.from === undefined && entry.to !== undefined) return 'Added';
   if (entry.from !== undefined && entry.to === undefined) return 'Cleared';
   return 'Updated';

@@ -338,6 +338,66 @@ describe('compose panel in draft mode (ED.37)', () => {
     );
   });
 
+  it('keeps row actions available without a collaboration channel', async () => {
+    const row = {
+      id: 'doc-1',
+      date: '2026-08-14',
+      title: 'Existing note',
+      subject: 'Original subject',
+      docType: 'progress-note',
+      docId: 'doc-1',
+      source: 'Compose',
+      file: 'doc-1.md',
+      rev: 0,
+      body: 'local prose',
+    };
+    const formStore = createFormStore();
+    const fieldProps = {
+      field: {
+        definition: {
+          id: 'documents',
+          question: 'Documents',
+          documents: [row],
+        },
+      },
+      form: formStore,
+      response: undefined,
+    } as unknown as FieldComponentProps;
+
+    render(
+      <FormStoreContext.Provider value={formStore}>
+        <DocumentListFieldProvider
+          host={{
+            capabilities: permissiveDocumentListCapabilities,
+            author: { id: 'u-casey', name: 'Casey Manager' },
+          }}
+        >
+          <DocumentListField {...fieldProps} />
+        </DocumentListFieldProvider>
+      </FormStoreContext.Provider>
+    );
+
+    await waitFor(() => expect(captured.props).not.toBeNull());
+    const gridProps = captured.props as {
+      formatCell: (
+        value: unknown,
+        data: Record<string, unknown>,
+        column: { field: string }
+      ) => ReactNode;
+    };
+    const actions = render(
+      <>{gridProps.formatCell(undefined, { ...row }, { field: '_actions' })}</>
+    );
+    expect(actions.getByRole('button', { name: 'Edit Existing note' })).toBeTruthy();
+    expect(actions.getByRole('button', { name: 'Append to Existing note' })).toBeTruthy();
+    expect(actions.getByRole('button', { name: 'Remove Existing note' })).toBeTruthy();
+
+    fireEvent.click(actions.getByRole('button', { name: 'Edit Existing note' }));
+
+    expect(await screen.findByText('Revise document (rev 0)')).toBeTruthy();
+    await waitFor(() => expect(editorValues).toContain('local prose'));
+  });
+
   // ED.41 — one Append action, two shapes, the author picks.
   describe('append', () => {
     const prior = {

@@ -143,10 +143,12 @@ export {
 } from './lib/response-reference.js';
 
 export {
+  appendActivityEvent,
   ACTIVITY_RESPONSE_KEY,
   ACTIVITY_DEBOUNCE_MS,
   mergeActivity,
   formatActivityValue,
+  type ActivityEvent,
 } from './lib/functions/activity.js';
 
 export {

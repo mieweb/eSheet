@@ -70,6 +70,11 @@ export type DocumentListFieldAction = (
   runtime: DocumentListRuntimeState
 ) => void | Promise<void>;
 
+export type DocumentListPrintAction = (
+  document: DocumentListDocument,
+  runtime: DocumentListRuntimeState
+) => boolean | Promise<boolean>;
+
 export interface DocumentListFieldRuntimeOptions {
   readonly formInstanceId?: string;
   readonly repository?: DocumentListRepository;
@@ -123,6 +128,8 @@ export type DocumentListFieldHost = Pick<
 > & {
   readonly onCompose?: DocumentListFieldAction;
   readonly onUpload?: DocumentListFieldAction;
+  /** @deprecated PDF preview is handled natively by DocumentListField. */
+  readonly onDownloadPdf?: DocumentListPrintAction;
   /**
    * Who may do what, resolved by the host — the field never sees roles,
    * levels or a grant table. Rows the object cannot `view` are hidden and

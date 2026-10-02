@@ -9,7 +9,13 @@ import {
 import type { FieldComponentProps } from '@esheet/core';
 import { FormStoreContext } from '@esheet/fields';
 import { Button, Input } from '@mieweb/ui';
-import { ArchiveRestore, ListPlus, SquarePen, Trash2 } from 'lucide-react';
+import {
+  ArchiveRestore,
+  ListPlus,
+  Printer,
+  SquarePen,
+  Trash2,
+} from 'lucide-react';
 import type { DraftPresence } from './draftChannel.js';
 import { mdyBody, parseMdy } from './mdy.js';
 import { priorRevisionOf } from './data.js';
@@ -37,6 +43,7 @@ import {
   type DocumentListRuntimeState,
 } from './document-list-runtime.js';
 import { DocumentListDetailRow } from './DocumentListWorkflows.js';
+import { DocumentListPdfPreview } from './DocumentListPdfPreview.js';
 import type {
   DocumentListCapabilities,
   DocumentListDefinition,
@@ -57,6 +64,13 @@ function offers(
   workflow: DocumentListWorkflow
 ): boolean {
   return !definition.workflows || definition.workflows.includes(workflow);
+}
+
+function offersAction(
+  definition: DocumentListDefinition,
+  action: 'downloadPdf'
+): boolean {
+  return definition.actions?.includes(action) ?? false;
 }
 
 /** Uploads carry their MIME type as `docType`; composed types never do.
@@ -165,6 +179,9 @@ export function DocumentListField({
   const [showRemoved, setShowRemoved] = useState(false);
   const [removing, setRemoving] = useState<DocumentListDocument | null>(null);
   const [renaming, setRenaming] = useState<DocumentListDocument | null>(null);
+  const [previewing, setPreviewing] = useState<DocumentListDocument | null>(
+    null
+  );
   const [dropActive, setDropActive] = useState(false);
   const removedCount = useMemo(
     () => rows.filter((row) => row.removed).length,
@@ -199,10 +216,27 @@ export function DocumentListField({
     const offs = ids.map((id) =>
       draftChannel.presenceOf(id, (present) =>
         setPresenceByRow((current) => {
-          if (present.length === 0 && !(id in current)) return current;
+          const currentAuthorName = host?.author?.name
+            .trim()
+            .toLocaleLowerCase();
+          const seenAuthors = new Set<string>();
+          const otherAuthors = present.filter(({ user }) => {
+            const userName = user.name.trim().toLocaleLowerCase();
+            const identity = userName || user.id;
+            if (
+              user.id === host?.author?.id ||
+              (currentAuthorName && userName === currentAuthorName) ||
+              seenAuthors.has(identity)
+            ) {
+              return false;
+            }
+            seenAuthors.add(identity);
+            return true;
+          });
+          if (otherAuthors.length === 0 && !(id in current)) return current;
           const next = { ...current };
-          if (present.length === 0) delete next[id];
-          else next[id] = present;
+          if (otherAuthors.length === 0) delete next[id];
+          else next[id] = otherAuthors;
           return next;
         })
       )
@@ -210,7 +244,7 @@ export function DocumentListField({
     return () => {
       for (const off of offs) off();
     };
-  }, [draftChannel, rowIdKey]);
+  }, [draftChannel, host?.author?.id, host?.author?.name, rowIdKey]);
 
   const presenceFormatCell = useMemo(() => {
     if (!draftChannel) return undefined;
@@ -365,11 +399,13 @@ export function DocumentListField({
     options?: { append?: boolean }
   ): Promise<void> => {
     const openedBy = host?.author;
-    if (!draftChannel || !openedBy || !runtimeState) return;
-    const documentDraft = await draftChannel.open(row.id, {
-      openedBy,
-      baseRev: row.rev ?? 0,
-    });
+    if (!openedBy || !runtimeState) return;
+    const documentDraft = draftChannel
+      ? await draftChannel.open(row.id, {
+          openedBy,
+          baseRev: row.rev ?? 0,
+        })
+      : undefined;
     const display = (value: string): string => (value === '—' ? '' : value);
     const composeDraft = {
       title: display(row.title),
@@ -378,7 +414,7 @@ export function DocumentListField({
       note: '',
     };
     let definitionPrefill: DefinitionPrefill | undefined;
-    if (documentDraft.isNew) {
+    if (!documentDraft || documentDraft.isNew) {
       let text = row.body ?? '';
       if (row.body == null) {
         try {
@@ -401,7 +437,7 @@ export function DocumentListField({
         // A head with no front matter revises as a note even when its type
         // has a definition since (ED.40's parse-failure rule) — recorded on
         // the draft so joiners land in the same tier as the opener.
-        if (typed?.definition) documentDraft.setAnswer('meta:tier', 'note');
+        if (typed?.definition) documentDraft?.setAnswer('meta:tier', 'note');
       }
     }
     session.open({
@@ -490,8 +526,11 @@ export function DocumentListField({
       )
     : undefined;
 
+  const canPrint =
+    offersAction(definition, 'downloadPdf') && runtimeState !== null;
+
   // The capability object answers per-row questions unless the host renders
-  // its own actions; signature and PDF stay off until something backs them.
+  // its own actions. Printing requires both definition and host opt-in.
   // While the form is read-only the host's wider grants don't apply.
   const getRowCapabilities =
     (!isReadOnly && host?.getRowCapabilities) ||
@@ -502,16 +541,22 @@ export function DocumentListField({
       canAppend: capabilities.append(row),
       canRequestSignature: false,
       canDelete: capabilities.remove(row),
-      canDownloadPdf: false,
+      canDownloadPdf: canPrint && capabilities.view(row),
     }));
+  const canManageRows = Boolean(!isReadOnly && runtimeState && host?.author);
   const defaultRenderActions =
-    draftChannel && host?.author
+    canManageRows || canPrint
       ? (
           row: DocumentListDocument,
-          caps: { canEdit: boolean; canAppend: boolean; canDelete: boolean }
+          caps: {
+            canEdit: boolean;
+            canAppend: boolean;
+            canDelete: boolean;
+            canDownloadPdf: boolean;
+          }
         ) =>
           row.removed ? (
-            caps.canDelete ? (
+            canManageRows && caps.canDelete ? (
               <Button
                 type="button"
                 variant="ghost"
@@ -525,7 +570,7 @@ export function DocumentListField({
             ) : null
           ) : (
             <span className="document-list-field__row-actions">
-              {caps.canEdit && (
+              {canManageRows && caps.canEdit && (
                 <Button
                   type="button"
                   variant="ghost"
@@ -541,7 +586,7 @@ export function DocumentListField({
                   <SquarePen size={16} aria-hidden="true" />
                 </Button>
               )}
-              {caps.canAppend && !isFileRow(row) && (
+              {canManageRows && caps.canAppend && !isFileRow(row) && (
                 <Button
                   type="button"
                   variant="ghost"
@@ -553,7 +598,7 @@ export function DocumentListField({
                   <ListPlus size={16} aria-hidden="true" />
                 </Button>
               )}
-              {caps.canDelete && (
+              {canManageRows && caps.canDelete && (
                 <Button
                   type="button"
                   variant="ghost"
@@ -565,11 +610,25 @@ export function DocumentListField({
                   <Trash2 size={16} aria-hidden="true" />
                 </Button>
               )}
+              {caps.canDownloadPdf && runtimeState && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`Preview PDF for ${row.title}`}
+                  title="Preview PDF"
+                  onClick={() => setPreviewing(row)}
+                >
+                  <Printer size={16} aria-hidden="true" />
+                </Button>
+              )}
             </span>
           )
       : undefined;
   const renderActions = isReadOnly
-    ? undefined
+    ? canPrint
+      ? defaultRenderActions
+      : undefined
     : host?.renderActions ?? defaultRenderActions;
 
   const titleActions = (
@@ -637,6 +696,21 @@ export function DocumentListField({
             setRenaming(null);
             await rename(renaming, title);
           }}
+        />
+      )}
+      {previewing && runtimeState && (
+        <DocumentListPdfPreview
+          document={previewing}
+          runtime={runtimeState}
+          onClose={() => setPreviewing(null)}
+          onReady={() =>
+            form.getState().appendActivity({
+              fieldId: field.definition.id,
+              question: title,
+              category: 'Print / PDF opened',
+              detail: `${previewing.title} (${previewing.id})`,
+            })
+          }
         />
       )}
       {!sharedSession && <ComposerSessionOverlay value={ownSession} />}

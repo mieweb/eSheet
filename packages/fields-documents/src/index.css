@@ -1,3 +1,29 @@
+.document-list-pdf-preview {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 0;
+}
+
+.document-list-pdf-preview__frame {
+  background: var(--mieweb-card, #fff);
+  border: 1px solid var(--mieweb-border, #d1d5db);
+  flex: 1;
+  min-height: min(70vh, 52rem);
+  width: 100%;
+}
+
+.document-list-pdf-preview__error {
+  color: var(--mieweb-destructive, #b91c1c);
+}
+
+.document-list-pdf-preview__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
 @import 'tailwindcss/theme';
 @import 'tailwindcss/utilities';
 
