@@ -388,11 +388,19 @@ describe('compose panel in draft mode (ED.37)', () => {
     const actions = render(
       <>{gridProps.formatCell(undefined, { ...row }, { field: '_actions' })}</>
     );
-    expect(actions.getByRole('button', { name: 'Edit Existing note' })).toBeTruthy();
-    expect(actions.getByRole('button', { name: 'Append to Existing note' })).toBeTruthy();
-    expect(actions.getByRole('button', { name: 'Remove Existing note' })).toBeTruthy();
+    expect(
+      actions.getByRole('button', { name: 'Edit Existing note' })
+    ).toBeTruthy();
+    expect(
+      actions.getByRole('button', { name: 'Append to Existing note' })
+    ).toBeTruthy();
+    expect(
+      actions.getByRole('button', { name: 'Remove Existing note' })
+    ).toBeTruthy();
 
-    fireEvent.click(actions.getByRole('button', { name: 'Edit Existing note' }));
+    fireEvent.click(
+      actions.getByRole('button', { name: 'Edit Existing note' })
+    );
 
     expect(await screen.findByText('Revise document (rev 0)')).toBeTruthy();
     await waitFor(() => expect(editorValues).toContain('local prose'));
