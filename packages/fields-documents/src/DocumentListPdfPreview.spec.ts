@@ -1,4 +1,10 @@
-import { createElement, useEffect, useRef, type ReactNode } from 'react';
+import {
+  createElement,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import {
   cleanup,
   fireEvent,
@@ -23,9 +29,17 @@ vi.mock('react-pdf', () => ({
     readonly children: ReactNode;
     readonly onLoadSuccess: (result: { numPages: number }) => void;
   }) => {
+    const [loaded, setLoaded] = useState(false);
     const onLoadSuccessRef = useRef(onLoadSuccess);
-    useEffect(() => onLoadSuccessRef.current({ numPages: 2 }), []);
-    return createElement('div', { 'data-testid': 'pdf-document' }, children);
+    useEffect(() => {
+      onLoadSuccessRef.current({ numPages: 2 });
+      setLoaded(true);
+    }, []);
+    return createElement(
+      'div',
+      { 'data-testid': 'pdf-document' },
+      loaded ? children : null
+    );
   },
   Page: ({
     pageNumber,
@@ -76,26 +90,40 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function stubResizeObserver(): void {
+function stubResizeObserver(): ReturnType<typeof vi.fn> {
+  const observeMock = vi.fn();
   vi.stubGlobal(
     'ResizeObserver',
     class {
-      observe(): void {}
+      observe(element: Element): void {
+        observeMock(element);
+      }
       disconnect(): void {}
     }
+  );
+  return observeMock;
+}
+
+function observedPdfPage(observe: ReturnType<typeof vi.fn>): boolean {
+  return observe.mock.calls.some(
+    ([element]) =>
+      element instanceof HTMLElement &&
+      element.classList.contains('document-list-pdf-preview__page')
   );
 }
 
 describe('documentPdfBlob', () => {
   it('renders Markdown as a PDF', async () => {
+    const runtime = runtimeWith({
+      text: '# Return to work\n\nThe employee **may return** Monday.',
+      contentType: 'text/x-markdown',
+    });
     const blob = await documentPdfBlob(
-      document,
-      runtimeWith({
-        text: '# Return to work\n\nThe employee **may return** Monday.',
-        contentType: 'text/x-markdown',
-      })
+      { ...document, rev: 3 },
+      runtime
     );
 
+    expect(runtime.loadContent).toHaveBeenCalledWith(document.id, 3);
     expect(blob.type).toBe('application/pdf');
     expect(
       new TextDecoder().decode((await blob.arrayBuffer()).slice(0, 5))
@@ -153,7 +181,7 @@ describe('documentPdfBlob', () => {
       createObjectURL,
       revokeObjectURL,
     });
-    stubResizeObserver();
+    const observeResize = stubResizeObserver();
     const nativePrint = vi.fn();
     const addEventListener = vi.fn(
       (_event: string, listener: EventListenerOrEventListenerObject) => {
@@ -164,24 +192,28 @@ describe('documentPdfBlob', () => {
       .spyOn(window, 'open')
       .mockReturnValue({ addEventListener, print: nativePrint } as never);
 
+    const runtime = runtimeWith({
+      reference: 'blob:existing-pdf',
+      contentType: 'application/pdf',
+    });
     const view = render(
       createElement(DocumentListPdfPreview, {
         document: { ...document, rev: 2 },
-        runtime: runtimeWith({
-          reference: 'blob:existing-pdf',
-          contentType: 'application/pdf',
-        }),
+        runtime,
         onClose,
         onReady,
       })
     );
 
+    expect(observedPdfPage(observeResize)).toBe(false);
     expect(screen.getByRole('dialog')).toBeTruthy();
     expect(screen.getByRole('heading', { name: document.title })).toBeTruthy();
     expect(screen.getByText(/Export document/)).toBeTruthy();
     expect(screen.getByText(/Revision 2/)).toBeTruthy();
     await screen.findByLabelText(`PDF preview of ${document.title}`);
     await waitFor(() => expect(onReady).toHaveBeenCalledOnce());
+    expect(runtime.loadContent).toHaveBeenCalledWith(document.id, 2);
+    expect(observedPdfPage(observeResize)).toBe(true);
     expect(screen.getByRole('button', { name: /^Download PDF/ })).toBeTruthy();
     expect(
       screen.queryByRole('button', { name: /^Download Markdown/ })
@@ -237,6 +269,7 @@ describe('documentPdfBlob', () => {
 
     await screen.findByTestId('pdf-page');
     expect(loadContent).toHaveBeenCalledOnce();
+    expect(loadContent).toHaveBeenLastCalledWith(document.id, 0);
     view.rerender(
       createElement(DocumentListPdfPreview, {
         document: { ...document },

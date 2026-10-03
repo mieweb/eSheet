@@ -88,14 +88,16 @@ describe('document PDF content', () => {
   it('normalizes Kerebron pipe tables before rendering', async () => {
     await documentPdfBlob(
       document,
-      runtimeWith('| Frequency | Left |\n| 500 Hz | 10 dB |')
+      runtimeWith(
+        '| Frequency | Left |\n| 500 Hz | ![Threshold chart](chart.png) |'
+      )
     );
 
     expect(countElements(rendererState.document as ReactNode, 'pdf-view')).toBe(
       3
     );
     expect(renderedText(rendererState.document as ReactNode)).toContain(
-      'FrequencyLeft500 Hz10 dB'
+      'FrequencyLeft500 Hz[Image: Threshold chart]'
     );
   });
 

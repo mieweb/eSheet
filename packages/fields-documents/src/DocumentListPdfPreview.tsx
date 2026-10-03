@@ -57,6 +57,9 @@ function filenameFor(title: string): string {
 }
 
 function textOf(node: MarkdownNode): string {
+  if (node.type === 'image') {
+    return node.alt ? `[Image: ${node.alt}]` : '[Image]';
+  }
   if (node.value != null) return node.value;
   return node.children?.map(textOf).join('') ?? '';
 }
@@ -265,7 +268,7 @@ export async function documentPdfBlob(
   document: DocumentListDocument,
   runtime: DocumentListRuntimeState
 ): Promise<Blob> {
-  const content = await runtime.loadContent(document.id);
+  const content = await runtime.loadContent(document.id, document.rev ?? 0);
   if (!content) throw new Error('Document content is unavailable.');
   return pdfBlobForContent(content);
 }
@@ -316,7 +319,7 @@ export function DocumentListPdfPreview({
     setPageCount(0);
     setPageNumber(1);
     setReady(false);
-    void loadContent(document.id)
+    void loadContent(document.id, document.rev ?? 0)
       .then(async (content) => {
         if (!content) throw new Error('Document content is unavailable.');
         const blob = await pdfBlobForContent(content);
@@ -332,7 +335,7 @@ export function DocumentListPdfPreview({
       active = false;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [document.id, loadContent]);
+  }, [document.id, document.rev, loadContent]);
 
   useEffect(() => {
     const element = pageContainerRef.current;
@@ -343,7 +346,7 @@ export function DocumentListPdfPreview({
     });
     observer.observe(element);
     return () => observer.disconnect();
-  }, [previewUrl]);
+  }, [pageCount, previewUrl]);
 
   useEffect(() => {
     if (!previewUrl || ready || error) return;
