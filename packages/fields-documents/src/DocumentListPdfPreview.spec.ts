@@ -118,10 +118,7 @@ describe('documentPdfBlob', () => {
       text: '# Return to work\n\nThe employee **may return** Monday.',
       contentType: 'text/x-markdown',
     });
-    const blob = await documentPdfBlob(
-      { ...document, rev: 3 },
-      runtime
-    );
+    const blob = await documentPdfBlob({ ...document, rev: 3 }, runtime);
 
     expect(runtime.loadContent).toHaveBeenCalledWith(document.id, 3);
     expect(blob.type).toBe('application/pdf');

@@ -91,21 +91,22 @@ describe('normalizeKerebronTables', () => {
   it('adds a delimiter to compact pipe tables', () => {
     expect(
       normalizeKerebronTables('| Frequency | Left |\n| 500 Hz | 10 dB |')
-    ).toBe(
-      '| Frequency | Left |\n| --- | --- |\n| 500 Hz | 10 dB |'
-    );
+    ).toBe('| Frequency | Left |\n| --- | --- |\n| 500 Hz | 10 dB |');
   });
 
-  it.each(['```', '~~~'])('does not alter pipe rows inside %s fences', (fence) => {
-    const markdown = [
-      `${fence}markdown`,
-      '| Frequency | Left |',
-      '| 500 Hz | 10 dB |',
-      fence,
-    ].join('\n');
+  it.each(['```', '~~~'])(
+    'does not alter pipe rows inside %s fences',
+    (fence) => {
+      const markdown = [
+        `${fence}markdown`,
+        '| Frequency | Left |',
+        '| 500 Hz | 10 dB |',
+        fence,
+      ].join('\n');
 
-    expect(normalizeKerebronTables(markdown)).toBe(markdown);
-  });
+      expect(normalizeKerebronTables(markdown)).toBe(markdown);
+    }
+  );
 });
 
 describe('round-trip', () => {

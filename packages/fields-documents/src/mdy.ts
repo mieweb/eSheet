@@ -112,7 +112,9 @@ export function mdyBody(text: string): string {
 export function normalizeKerebronTables(markdown: string): string {
   const lines = markdown.split('\n');
   const normalized: string[] = [];
-  let codeFence: { readonly marker: string; readonly length: number } | undefined;
+  let codeFence:
+    | { readonly marker: string; readonly length: number }
+    | undefined;
 
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index];
