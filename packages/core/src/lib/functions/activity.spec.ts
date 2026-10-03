@@ -79,6 +79,30 @@ describe('store activity logging', () => {
     expect(store.getState().responses[ACTIVITY_RESPONSE_KEY]).toBeUndefined();
   });
 
+  it('does not debounce a response change into an explicit event', () => {
+    const store = createFormStore();
+    store.getState().loadDefinition(activityForm);
+    store.getState().appendActivity({
+      fieldId: 'name',
+      question: 'Your name',
+      category: 'Print / PDF opened',
+      detail: 'Profile document',
+    });
+    store.getState().setResponse('name', { answer: 'Ada' });
+
+    expect(getLog(store)).toHaveLength(2);
+    expect(getLog(store)[0]).toMatchObject({
+      fieldId: 'name',
+      category: 'Print / PDF opened',
+      to: 'Profile document',
+    });
+    expect(getLog(store)[1]).toMatchObject({
+      fieldId: 'name',
+      to: 'Ada',
+    });
+    expect(getLog(store)[1].category).toBeUndefined();
+  });
+
   it('debounces keystrokes: rapid same-field changes collapse into one entry', () => {
     const store = createFormStore();
     store.getState().loadDefinition(activityForm);

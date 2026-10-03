@@ -404,6 +404,52 @@ describe('DocumentListGrid host integration', () => {
     ).not.toContain('_actions');
   });
 
+  it('does not let host row capabilities bypass the PDF definition opt-in', async () => {
+    const formStore = createFormStore();
+    const fieldProps = {
+      field: {
+        definition: { id: 'letterLog', question: 'Letters', documents: [row] },
+      },
+      form: formStore,
+      response: undefined,
+    } as unknown as FieldComponentProps;
+
+    render(
+      <FormStoreContext.Provider value={formStore}>
+        <DocumentListFieldProvider
+          host={{
+            capabilities: permissiveDocumentListCapabilities,
+            author: { id: 'u-casey', name: 'Casey Manager' },
+            getRowCapabilities: () => ({
+              canView: true,
+              canCompose: true,
+              canEdit: true,
+              canAppend: true,
+              canRequestSignature: false,
+              canDelete: true,
+              canDownloadPdf: true,
+            }),
+          }}
+        >
+          <DocumentListField {...fieldProps} />
+        </DocumentListFieldProvider>
+      </FormStoreContext.Provider>
+    );
+
+    await waitFor(() => expect(captured.props).not.toBeNull());
+    const props = captured.props as {
+      formatCell: (
+        value: unknown,
+        data: Record<string, unknown>,
+        column: { field: string }
+      ) => ReactNode;
+    };
+    render(
+      <>{props.formatCell(undefined, tableData, { field: '_actions' })}</>
+    );
+    expect(screen.queryByRole('button', { name: 'Export Letter' })).toBeNull();
+  });
+
   it('keeps Print available while the form is read-only', async () => {
     const formStore = createFormStore();
     const fieldProps = {
@@ -445,6 +491,56 @@ describe('DocumentListGrid host integration', () => {
     );
     expect(screen.getByRole('button', { name: 'Export Letter' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Edit Letter' })).toBeNull();
+  });
+
+  it('keeps PDF export available for a visible removed row', async () => {
+    const removedRow: DocumentListDocument = {
+      ...row,
+      removed: { at: '2026-10-02T10:00:00.000Z', reason: 'Duplicate' },
+    };
+    const formStore = createFormStore();
+    const fieldProps = {
+      field: {
+        definition: {
+          id: 'letterLog',
+          question: 'Letters',
+          documents: [removedRow],
+          actions: ['downloadPdf'],
+        },
+      },
+      form: formStore,
+      isReadOnly: true,
+      response: undefined,
+    } as unknown as FieldComponentProps;
+
+    render(
+      <FormStoreContext.Provider value={formStore}>
+        <DocumentListFieldProvider
+          host={{ capabilities: permissiveDocumentListCapabilities }}
+        >
+          <DocumentListField {...fieldProps} />
+        </DocumentListFieldProvider>
+      </FormStoreContext.Provider>
+    );
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Show removed (1)' })
+    );
+    await waitFor(() => expect(captured.props).not.toBeNull());
+    const props = captured.props as {
+      formatCell: (
+        value: unknown,
+        data: Record<string, unknown>,
+        column: { field: string }
+      ) => ReactNode;
+    };
+    render(
+      <>
+        {props.formatCell(undefined, { ...removedRow }, { field: '_actions' })}
+      </>
+    );
+    expect(screen.getByRole('button', { name: 'Export Letter' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Restore Letter' })).toBeNull();
   });
 
   it('publishes an empty source for malformed field responses', async () => {
@@ -545,7 +641,7 @@ describe('DocumentListGrid host integration', () => {
                 color: '#123456',
               },
               {
-                user: { id: 'second-riley-session', name: 'Riley Reviewer' },
+                user: { id: 'u-riley', name: 'Riley Reviewer' },
                 color: '#fedcba',
               },
             ]);
@@ -582,12 +678,12 @@ describe('DocumentListGrid host integration', () => {
     );
     expect(
       container.querySelector(
-        '[aria-label="Draft in progress — Riley Reviewer"]'
+        '[aria-label="Draft in progress — Casey Manager, Riley Reviewer"]'
       )
     ).toBeTruthy();
     expect(
       container.querySelectorAll('.document-list-row-presence__dot')
-    ).toHaveLength(1);
+    ).toHaveLength(2);
     expect(
       (
         container.querySelector(

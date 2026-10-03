@@ -69,6 +69,10 @@ vi.mock('datavis-ace', () => {
   return { ComputedView, Source };
 });
 
+vi.mock('./DocumentListPdfPreview.js', () => ({
+  DocumentListPdfPreview: () => null,
+}));
+
 function fakeDraft(options?: { isNew?: boolean }): DocumentDraft & {
   answers: Map<string, unknown>;
   emit: () => void;
@@ -134,7 +138,8 @@ describe('compose panel in draft mode (ED.37)', () => {
       />
     );
     await waitFor(() => expect(editorProps.length).toBeGreaterThan(0));
-    const props = editorProps.at(-1)!;
+    const props = editorProps.at(-1);
+    if (!props) throw new Error('Expected editor props');
     expect(props.minHeight).toBe(160);
     expect(props.disabled).toBe(false);
   });
@@ -288,6 +293,27 @@ describe('compose panel in draft mode (ED.37)', () => {
           id: 'documents',
           question: 'Documents',
           documents: [row],
+          docTypes: [
+            {
+              id: 'progress-note',
+              label: 'Progress note',
+              definition: {
+                id: 'progress-note-form',
+                pages: [
+                  {
+                    id: 'page-1',
+                    fields: [
+                      {
+                        id: 'summary',
+                        fieldType: 'text',
+                        question: 'Summary',
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+          ],
         },
       },
       form: formStore,
@@ -404,6 +430,7 @@ describe('compose panel in draft mode (ED.37)', () => {
 
     expect(await screen.findByText('Revise document (rev 0)')).toBeTruthy();
     await waitFor(() => expect(editorValues).toContain('local prose'));
+    expect(screen.queryByLabelText('Summary')).toBeNull();
   });
 
   // ED.41 — one Append action, two shapes, the author picks.

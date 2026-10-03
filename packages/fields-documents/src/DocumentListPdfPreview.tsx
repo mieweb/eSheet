@@ -21,21 +21,23 @@ import {
 } from '@mieweb/ui';
 import { ChevronLeft, ChevronRight, Download, Printer } from 'lucide-react';
 import { Document as PdfDocument, Page as PdfPage, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/Page/TextLayer.css';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?worker&url';
 import type { DocumentProps } from '@react-pdf/renderer';
 import type {
   DocumentListContent,
   DocumentListRuntimeState,
 } from './document-list-runtime.js';
-import { DOCUMENT_LIST_MDY_TYPE } from './data.js';
-import { mdyBody } from './mdy.js';
+import { mdyBody, normalizeKerebronTables } from './mdy.js';
 import type { DocumentListDocument } from './types.js';
 
 interface MarkdownNode {
   readonly type: string;
   readonly value?: string;
   readonly url?: string;
+  readonly alt?: string;
   readonly ordered?: boolean;
+  readonly start?: number | null;
   readonly children?: readonly MarkdownNode[];
 }
 
@@ -94,6 +96,10 @@ function inlineNodes(
         inlineNodes(node.children ?? [], renderer, key)
       );
     }
+    if (node.type === 'break') return '\n';
+    if (node.type === 'image') {
+      return node.alt ? `[Image: ${node.alt}]` : '[Image]';
+    }
     return node.children
       ? createElement(
           renderer.Text,
@@ -143,7 +149,7 @@ function blockNodes(
           createElement(
             renderer.Text,
             { style: { width: 22 } },
-            node.ordered ? `${itemIndex + 1}.` : '•'
+            node.ordered ? `${(node.start ?? 1) + itemIndex}.` : '•'
           ),
           createElement(
             renderer.View,
@@ -229,7 +235,7 @@ function blockNodes(
 
 async function markdownPdf(markdown: string): Promise<Blob> {
   const renderer = await import('@react-pdf/renderer');
-  const tree = fromMarkdown(markdown, {
+  const tree = fromMarkdown(normalizeKerebronTables(markdown), {
     extensions: [gfm()],
     mdastExtensions: [gfmFromMarkdown()],
   }) as MarkdownNode;
@@ -271,11 +277,7 @@ async function pdfBlobForContent(content: DocumentListContent): Promise<Blob> {
     return response.blob();
   }
   if (content.text != null) {
-    const markdown =
-      content.contentType === DOCUMENT_LIST_MDY_TYPE
-        ? mdyBody(content.text)
-        : content.text;
-    return markdownPdf(markdown);
+    return markdownPdf(mdyBody(content.text));
   }
   throw new Error(
     `PDF preview does not support ${content.contentType || 'this file type'}.`
@@ -301,13 +303,20 @@ export function DocumentListPdfPreview({
   const [pageCount, setPageCount] = useState(0);
   const [pageNumber, setPageNumber] = useState(1);
   const [ready, setReady] = useState(false);
+  const [pageWidth, setPageWidth] = useState(816);
+  const pageContainerRef = useRef<HTMLDivElement>(null);
   const pdfFilename = filenameFor(document.title);
+  const loadContent = runtime.loadContent;
 
   useEffect(() => {
     let active = true;
     let objectUrl: string | undefined;
-    void runtime
-      .loadContent(document.id)
+    setPreviewUrl(undefined);
+    setError(undefined);
+    setPageCount(0);
+    setPageNumber(1);
+    setReady(false);
+    void loadContent(document.id)
       .then(async (content) => {
         if (!content) throw new Error('Document content is unavailable.');
         const blob = await pdfBlobForContent(content);
@@ -323,7 +332,18 @@ export function DocumentListPdfPreview({
       active = false;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [document, runtime]);
+  }, [document.id, loadContent]);
+
+  useEffect(() => {
+    const element = pageContainerRef.current;
+    if (!element || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(([entry]) => {
+      const width = Math.floor(entry.contentRect.width);
+      if (width > 0) setPageWidth(Math.min(816, width));
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [previewUrl]);
 
   useEffect(() => {
     if (!previewUrl || ready || error) return;
@@ -416,13 +436,16 @@ export function DocumentListPdfPreview({
                 onLoadSuccess={handlePdfReady}
                 onLoadError={(cause) => setError(cause.message)}
               >
-                <div className="document-list-pdf-preview__page">
+                <div
+                  ref={pageContainerRef}
+                  className="document-list-pdf-preview__page"
+                >
                   <PdfPage
                     pageNumber={pageNumber}
-                    width={816}
+                    width={pageWidth}
                     devicePixelRatio={1}
                     renderAnnotationLayer={false}
-                    renderTextLayer={false}
+                    renderTextLayer
                     loading={null}
                     onRenderSuccess={() => {
                       if (!ready) {

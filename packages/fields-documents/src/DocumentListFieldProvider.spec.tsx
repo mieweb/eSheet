@@ -11,6 +11,10 @@ import {
 import type { DocumentListDocument } from './types.js';
 import { permissiveDocumentListCapabilities } from './types.js';
 
+vi.mock('./DocumentListPdfPreview.js', () => ({
+  DocumentListPdfPreview: () => null,
+}));
+
 vi.mock('@mieweb/ui/datavis', () => ({
   DataVisNitroContext: {
     Provider: ({ children }: { children: ReactNode }) => children,

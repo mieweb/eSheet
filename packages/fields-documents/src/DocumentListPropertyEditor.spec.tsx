@@ -8,6 +8,10 @@ import { DOCUMENT_LIST_COLUMNS } from './data.js';
 import { DocumentListPropertyEditor } from './DocumentListPropertyEditor.js';
 import { registerDocumentListFieldType } from './index.js';
 
+vi.mock('./DocumentListPdfPreview.js', () => ({
+  DocumentListPdfPreview: () => null,
+}));
+
 const baseDefinition = {
   id: 'documents',
   fieldType: 'documentList',
@@ -199,6 +203,45 @@ describe('DocumentListPropertyEditor', () => {
         { id: 'type-3', label: 'New type' },
       ],
     });
+  });
+
+  it('keeps the Type ID input mounted while its value changes', () => {
+    const onUpdate = vi.fn();
+    const view = render(
+      <DocumentListPropertyEditor
+        fieldId="documents"
+        instanceId="test-builder"
+        def={
+          {
+            ...baseDefinition,
+            workflows: ['compose'],
+            docTypes: [{ id: 'progress-note', label: 'Progress note' }],
+          } as unknown as FieldPropertyEditorProps['def']
+        }
+        onUpdate={onUpdate as FieldPropertyEditorProps['onUpdate']}
+      />
+    );
+    const input = screen.getByLabelText('Type ID') as HTMLInputElement;
+    input.focus();
+
+    view.rerender(
+      <DocumentListPropertyEditor
+        fieldId="documents"
+        instanceId="test-builder"
+        def={
+          {
+            ...baseDefinition,
+            workflows: ['compose'],
+            docTypes: [{ id: 'progress-notes', label: 'Progress note' }],
+          } as unknown as FieldPropertyEditorProps['def']
+        }
+        onUpdate={onUpdate as FieldPropertyEditorProps['onUpdate']}
+      />
+    );
+
+    expect(screen.getByLabelText('Type ID')).toBe(input);
+    expect(document.activeElement).toBe(input);
+    expect(input.value).toBe('progress-notes');
   });
 
   it('reorders and removes document types', () => {

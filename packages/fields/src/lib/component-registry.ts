@@ -88,6 +88,7 @@ export function registerCustomFieldTypes(
     registerFieldType(key, coreMeta);
     components[key] = component;
     if (propertyEditor) propertyEditorRegistry.set(key, propertyEditor);
+    else propertyEditorRegistry.delete(key);
   }
   registerFieldComponents(components);
 }

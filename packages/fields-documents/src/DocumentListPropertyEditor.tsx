@@ -220,7 +220,7 @@ export function DocumentListPropertyEditor({
           <div className="ms:space-y-2">
             {docTypes.map((docType, index) => (
               <div
-                key={`${docType.id}-${index}`}
+                key={index}
                 className="document-list-property-editor__type ms:grid ms:grid-cols-[1fr_auto] ms:gap-2 ms:border ms:border-msborder ms:rounded ms:p-2"
               >
                 <div className="ms:space-y-2 ms:min-w-0">

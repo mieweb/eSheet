@@ -70,6 +70,7 @@
 
 .document-list-pdf-preview__page .react-pdf__Page {
   min-width: 0 !important;
+  position: relative;
   width: 100% !important;
 }
 
@@ -77,6 +78,11 @@
   display: block;
   height: auto !important;
   width: 100% !important;
+}
+
+.document-list-pdf-preview__page .textLayer {
+  max-height: 100%;
+  max-width: 100%;
 }
 
 .document-list-pdf-preview__navigation {

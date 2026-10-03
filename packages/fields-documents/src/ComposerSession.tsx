@@ -58,6 +58,8 @@ export interface ComposerSession {
   readonly append?: boolean;
   /** Definition-tier prefill from the last saved revision (ED.40). */
   readonly definitionPrefill?: DefinitionPrefill;
+  /** Force a definition-backed legacy revision to remain on the note tier. */
+  readonly noteTier?: boolean;
   /** A file dropped on the list, handed to the upload panel pre-selected. */
   readonly initialFile?: File;
 }
@@ -79,6 +81,7 @@ export interface ComposerSessionValue {
     documentId?: string;
     append?: boolean;
     definitionPrefill?: DefinitionPrefill;
+    noteTier?: boolean;
     initialFile?: File;
     /** Prefill for the compose draft (e.g. the head revision, ED.40). */
     draft?: DocumentListComposeDraft;
@@ -118,6 +121,7 @@ export function useComposerSessionValue(): ComposerSessionValue {
         documentId,
         append,
         definitionPrefill,
+        noteTier,
         initialFile,
         draft,
       }) =>
@@ -141,6 +145,7 @@ export function useComposerSessionValue(): ComposerSessionValue {
             documentId,
             append,
             definitionPrefill,
+            noteTier,
             initialFile,
             draft:
               draft ??
@@ -196,6 +201,7 @@ export function ComposerSessionOverlay({
         documentId={session.documentId}
         appendMode={session.append}
         definitionPrefill={session.definitionPrefill}
+        noteTier={session.noteTier}
         mode={session.mode}
         onModeChange={setMode}
         draft={session.draft}

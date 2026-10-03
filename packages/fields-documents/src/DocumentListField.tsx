@@ -214,21 +214,12 @@ export function DocumentListField({
     const offs = ids.map((id) =>
       draftChannel.presenceOf(id, (present) =>
         setPresenceByRow((current) => {
-          const currentAuthorName = host?.author?.name
-            .trim()
-            .toLocaleLowerCase();
-          const seenAuthors = new Set<string>();
+          const seenAuthorIds = new Set<string>();
           const otherAuthors = present.filter(({ user }) => {
-            const userName = user.name.trim().toLocaleLowerCase();
-            const identity = userName || user.id;
-            if (
-              user.id === host?.author?.id ||
-              (currentAuthorName && userName === currentAuthorName) ||
-              seenAuthors.has(identity)
-            ) {
+            if (user.id === host?.author?.id || seenAuthorIds.has(user.id)) {
               return false;
             }
-            seenAuthors.add(identity);
+            seenAuthorIds.add(user.id);
             return true;
           });
           if (otherAuthors.length === 0 && !(id in current)) return current;
@@ -242,7 +233,7 @@ export function DocumentListField({
     return () => {
       for (const off of offs) off();
     };
-  }, [draftChannel, host?.author?.id, host?.author?.name, rowIdKey]);
+  }, [draftChannel, host?.author?.id, rowIdKey]);
 
   const presenceFormatCell = useMemo(() => {
     if (!draftChannel) return undefined;
@@ -412,6 +403,7 @@ export function DocumentListField({
       note: '',
     };
     let definitionPrefill: DefinitionPrefill | undefined;
+    let noteTier = false;
     if (!documentDraft || documentDraft.isNew) {
       let text = row.body ?? '';
       if (row.body == null) {
@@ -435,7 +427,10 @@ export function DocumentListField({
         // A head with no front matter revises as a note even when its type
         // has a definition since (ED.40's parse-failure rule) — recorded on
         // the draft so joiners land in the same tier as the opener.
-        if (typed?.definition) documentDraft?.setAnswer('meta:tier', 'note');
+        if (typed?.definition) {
+          noteTier = true;
+          documentDraft?.setAnswer('meta:tier', 'note');
+        }
       }
     }
     session.open({
@@ -448,6 +443,7 @@ export function DocumentListField({
       append: options?.append,
       draft: composeDraft,
       definitionPrefill,
+      noteTier,
     });
   };
   const handleToggleDetails =
@@ -552,76 +548,81 @@ export function DocumentListField({
             canDelete: boolean;
             canDownloadPdf: boolean;
           }
-        ) =>
-          row.removed ? (
-            canManageRows && caps.canDelete ? (
+        ) => (
+          <span className="document-list-field__row-actions">
+            {row.removed ? (
+              canManageRows && caps.canDelete ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`Restore ${row.title}`}
+                  title="Restore"
+                  onClick={() => void restore(row)}
+                >
+                  <ArchiveRestore size={16} aria-hidden="true" />
+                </Button>
+              ) : null
+            ) : (
+              <>
+                {canManageRows && caps.canEdit && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={
+                      isFileRow(row)
+                        ? `Rename ${row.title}`
+                        : `Edit ${row.title}`
+                    }
+                    title={isFileRow(row) ? 'Rename' : 'Edit'}
+                    onClick={() =>
+                      isFileRow(row) ? setRenaming(row) : void openEdit(row)
+                    }
+                  >
+                    <SquarePen size={16} aria-hidden="true" />
+                  </Button>
+                )}
+                {canManageRows && caps.canAppend && !isFileRow(row) && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Append to ${row.title}`}
+                    title="Append"
+                    onClick={() => void openEdit(row, { append: true })}
+                  >
+                    <ListPlus size={16} aria-hidden="true" />
+                  </Button>
+                )}
+                {canManageRows && caps.canDelete && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Remove ${row.title}`}
+                    title="Remove"
+                    onClick={() => setRemoving(row)}
+                  >
+                    <Trash2 size={16} aria-hidden="true" />
+                  </Button>
+                )}
+              </>
+            )}
+            {canPrint && caps.canDownloadPdf && runtimeState && (
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                aria-label={`Restore ${row.title}`}
-                title="Restore"
-                onClick={() => void restore(row)}
+                aria-label={`Export ${row.title}`}
+                title="Export"
+                onClick={() => setExporting(row)}
               >
-                <ArchiveRestore size={16} aria-hidden="true" />
+                <FileDown size={16} aria-hidden="true" />
               </Button>
-            ) : null
-          ) : (
-            <span className="document-list-field__row-actions">
-              {canManageRows && caps.canEdit && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label={
-                    isFileRow(row) ? `Rename ${row.title}` : `Edit ${row.title}`
-                  }
-                  title={isFileRow(row) ? 'Rename' : 'Edit'}
-                  onClick={() =>
-                    isFileRow(row) ? setRenaming(row) : void openEdit(row)
-                  }
-                >
-                  <SquarePen size={16} aria-hidden="true" />
-                </Button>
-              )}
-              {canManageRows && caps.canAppend && !isFileRow(row) && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label={`Append to ${row.title}`}
-                  title="Append"
-                  onClick={() => void openEdit(row, { append: true })}
-                >
-                  <ListPlus size={16} aria-hidden="true" />
-                </Button>
-              )}
-              {canManageRows && caps.canDelete && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label={`Remove ${row.title}`}
-                  title="Remove"
-                  onClick={() => setRemoving(row)}
-                >
-                  <Trash2 size={16} aria-hidden="true" />
-                </Button>
-              )}
-              {caps.canDownloadPdf && runtimeState && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label={`Export ${row.title}`}
-                  title="Export"
-                  onClick={() => setExporting(row)}
-                >
-                  <FileDown size={16} aria-hidden="true" />
-                </Button>
-              )}
-            </span>
-          )
+            )}
+          </span>
+        )
       : undefined;
   const renderActions = isReadOnly
     ? canPrint

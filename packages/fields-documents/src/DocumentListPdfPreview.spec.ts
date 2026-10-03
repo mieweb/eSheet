@@ -30,15 +30,20 @@ vi.mock('react-pdf', () => ({
   Page: ({
     pageNumber,
     onRenderSuccess,
+    renderTextLayer,
   }: {
     readonly pageNumber: number;
     readonly onRenderSuccess: () => void;
+    readonly renderTextLayer?: boolean;
   }) => {
     const onRenderSuccessRef = useRef(onRenderSuccess);
     useEffect(() => onRenderSuccessRef.current(), []);
     return createElement(
       'div',
-      { 'data-testid': 'pdf-page' },
+      {
+        'data-testid': 'pdf-page',
+        'data-render-text-layer': String(renderTextLayer),
+      },
       `Page ${pageNumber}`
     );
   },
@@ -185,6 +190,7 @@ describe('documentPdfBlob', () => {
     expect(globalThis.document.querySelector('embed')).toBeNull();
     expect(globalThis.document.querySelector('object')).toBeNull();
     expect(screen.getByTestId('pdf-page').textContent).toBe('Page 1');
+    expect(screen.getByTestId('pdf-page').dataset.renderTextLayer).toBe('true');
 
     fireEvent.click(screen.getByRole('button', { name: 'Next PDF page' }));
     expect(screen.getByTestId('pdf-page').textContent).toBe('Page 2');
@@ -201,6 +207,53 @@ describe('documentPdfBlob', () => {
     expect(onClose).toHaveBeenCalledOnce();
     view.unmount();
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:preview-pdf');
+  });
+
+  it('does not reload for an equivalent runtime snapshot', async () => {
+    const source = new Blob(['%PDF-existing'], { type: 'application/pdf' });
+    const loadContent = vi.fn(async () => ({
+      reference: 'blob:existing-pdf',
+      contentType: 'application/pdf',
+    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({ ok: true, blob: async () => source }))
+    );
+    vi.stubGlobal('URL', {
+      ...URL,
+      createObjectURL: vi.fn(() => 'blob:preview-pdf'),
+      revokeObjectURL: vi.fn(),
+    });
+    stubResizeObserver();
+    const runtime = (): DocumentListRuntimeState =>
+      ({ loadContent } as unknown as DocumentListRuntimeState);
+    const view = render(
+      createElement(DocumentListPdfPreview, {
+        document,
+        runtime: runtime(),
+        onClose: vi.fn(),
+      })
+    );
+
+    await screen.findByTestId('pdf-page');
+    expect(loadContent).toHaveBeenCalledOnce();
+    view.rerender(
+      createElement(DocumentListPdfPreview, {
+        document: { ...document },
+        runtime: runtime(),
+        onClose: vi.fn(),
+      })
+    );
+    await waitFor(() => expect(loadContent).toHaveBeenCalledOnce());
+
+    view.rerender(
+      createElement(DocumentListPdfPreview, {
+        document: { ...document, id: 'letter-2' },
+        runtime: runtime(),
+        onClose: vi.fn(),
+      })
+    );
+    await waitFor(() => expect(loadContent).toHaveBeenCalledTimes(2));
   });
 
   it('offers only PDF download for MDY source', async () => {
