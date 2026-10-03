@@ -121,7 +121,7 @@ export function normalizeKerebronTables(markdown: string): string {
     normalized.push(line);
     if (codeFence) {
       const closingFence = new RegExp(
-        `^ {0,3}${codeFence.marker}{${codeFence.length},}[ \\t]*$`
+        `^ {0,3}${codeFence.marker}{${codeFence.length},}[ \\t]*\\r?$`
       );
       if (closingFence.test(line)) codeFence = undefined;
       continue;
