@@ -224,7 +224,7 @@ describe('the docked composer', () => {
     await typeDraft('Employer confirmed return date.');
     fireEvent.click(screen.getByRole('button', { name: 'Collapse to dock' }));
     fireEvent.click(screen.getByRole('button', { name: 'Restore' }));
-    fireEvent.change(screen.getByLabelText('Document type'), {
+    fireEvent.change(screen.getByLabelText('Document Type'), {
       target: { value: 'Clinical note' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Save document' }));
@@ -265,6 +265,24 @@ describe('the docked composer', () => {
 });
 
 describe('document list workflow panels', () => {
+  it.each([
+    ['document', 'Document Type'],
+    ['letter', 'Letter Type'],
+    ['note', 'Note Type'],
+  ])('labels the %s type field from its noun', (noun, expectedLabel) => {
+    render(
+      <DocumentListComposePanel
+        open
+        onOpenChange={vi.fn()}
+        runtime={createRuntime()}
+        inputPrefix={`form-1-${noun}`}
+        noun={noun}
+      />
+    );
+
+    expect(screen.getByLabelText(expectedLabel)).toBeTruthy();
+  });
+
   it('submits editable compose metadata and markdown content', async () => {
     const runtime = createRuntime();
     const onOpenChange = vi.fn();
@@ -284,7 +302,7 @@ describe('document list workflow panels', () => {
     fireEvent.change(screen.getByLabelText('Subject'), {
       target: { value: 'Follow-up visit' },
     });
-    fireEvent.change(screen.getByLabelText('Document type'), {
+    fireEvent.change(screen.getByLabelText('Document Type'), {
       target: { value: 'Clinical note' },
     });
     const noteEditor = await composeEditorInput();
@@ -336,7 +354,7 @@ describe('document list workflow panels', () => {
     fireEvent.change(screen.getByLabelText('Subject'), {
       target: { value: 'Follow-up visit' },
     });
-    fireEvent.change(screen.getByLabelText('Document type'), {
+    fireEvent.change(screen.getByLabelText('Document Type'), {
       target: { value: 'Clinical note' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Save document' }));
@@ -403,7 +421,7 @@ describe('document list workflow panels', () => {
     );
 
     expect(screen.queryByLabelText('Subject')).toBeNull();
-    expect(screen.queryByLabelText('Document type')).toBeNull();
+    expect(screen.queryByLabelText('Document Type')).toBeNull();
 
     fireEvent.change(screen.getByLabelText('Title'), {
       target: { value: 'Called employer' },
@@ -431,7 +449,7 @@ describe('document list workflow panels', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Save document' }));
     expect(screen.getByRole('alert').textContent).toContain(
-      'Title, Subject and Document type are required.'
+      'Title, Subject and Document Type are required.'
     );
     expect(runtime.saveDocument).not.toHaveBeenCalled();
 

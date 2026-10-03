@@ -452,13 +452,14 @@ export function DocumentListComposePanel({
   const asksTitle = asks(fields, 'title');
   const asksSubject = asks(fields, 'subject');
   const asksDocType = asks(fields, 'docType');
+  const docTypeLabel = `${noun.charAt(0).toUpperCase()}${noun.slice(1)} Type`;
   const dirty = definition
     ? definitionDirty || activeDraft.docType !== defaultDocType
     : isComposeDraftDirty(activeDraft, defaultDocType);
   const requiredLabels = [
     ...(asksTitle ? ['Title'] : []),
     ...(asksSubject ? ['Subject'] : []),
-    ...(asksDocType ? ['Document type'] : []),
+    ...(asksDocType ? [docTypeLabel] : []),
   ];
 
   const activeDraftRef = useRef(activeDraft);
@@ -754,7 +755,7 @@ export function DocumentListComposePanel({
 
   if (!open) return null;
 
-  const docTypeLabel =
+  const selectedDocTypeLabel =
     docTypes?.find((option) => option.id === activeDraft.docType)?.label ??
     activeDraft.docType;
   // The title says which act this is: composing new, revising, or appending.
@@ -778,9 +779,9 @@ export function DocumentListComposePanel({
           <span className="document-list-workflow-dock__title">
             {activeDraft.title.trim() || `Untitled ${noun}`}
           </span>
-          {asksDocType && docTypeLabel && (
+          {asksDocType && selectedDocTypeLabel && (
             <span className="document-list-workflow-dock__type">
-              {docTypeLabel}
+              {selectedDocTypeLabel}
             </span>
           )}
           {dirty && (
@@ -860,7 +861,7 @@ export function DocumentListComposePanel({
                     htmlFor={inputId(inputPrefix, 'compose-type')}
                     data-slot="select-label"
                   >
-                    Document type
+                    {docTypeLabel}
                   </label>
                   <select
                     id={inputId(inputPrefix, 'compose-type')}
@@ -883,7 +884,7 @@ export function DocumentListComposePanel({
               ) : (
                 <Input
                   id={inputId(inputPrefix, 'compose-type')}
-                  label="Document type"
+                  label={docTypeLabel}
                   value={activeDraft.docType}
                   onChange={(event) =>
                     updateDraft({ docType: event.target.value })
