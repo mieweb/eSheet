@@ -2,6 +2,7 @@ import './index.css';
 import { registerCustomFieldTypes } from '@esheet/fields';
 import { ActivityField } from './ActivityField.js';
 import { DocumentListField } from './DocumentListField.js';
+import { DocumentListPropertyEditor } from './DocumentListPropertyEditor.js';
 
 export function registerActivityFieldType(): void {
   registerCustomFieldTypes({
@@ -33,12 +34,14 @@ export function registerDocumentListFieldType(): void {
         width: 'full',
       },
       component: DocumentListField,
+      propertyEditor: DocumentListPropertyEditor,
     },
   });
 }
 
 export { ActivityField, ACTIVITY_COLUMNS } from './ActivityField.js';
 export { DocumentListField } from './DocumentListField.js';
+export { DocumentListPropertyEditor } from './DocumentListPropertyEditor.js';
 export {
   ComposerSessionOverlay,
   ComposerSessionProvider,

@@ -40,7 +40,7 @@ import {
   answerText,
   type DocumentListDefinitionFormHandle,
 } from './DocumentListDefinitionForm.js';
-import { createMdy, mdyBody } from './mdy.js';
+import { createMdy, mdyBody, normalizeKerebronTables } from './mdy.js';
 import type { DocumentDraft, DraftBodyRoom } from './draftChannel.js';
 import type { DefinitionPrefill } from './ComposerSession.js';
 import type {
@@ -97,6 +97,8 @@ export interface DocumentListWorkflowPanelProps {
   readonly appendMode?: boolean;
   /** Definition-tier prefill parsed from the last saved revision (ED.40). */
   readonly definitionPrefill?: DefinitionPrefill;
+  /** Keep a definition-backed legacy revision on the note tier. */
+  readonly noteTier?: boolean;
   /** Full-screen unless the owner has collapsed the panel to the dock. */
   readonly mode?: DocumentListWorkflowMode;
   /** Supplying this makes the panel dockable; omitting it keeps it modal. */
@@ -411,6 +413,7 @@ export function DocumentListComposePanel({
   documentId,
   appendMode,
   definitionPrefill,
+  noteTier,
   mode = 'full',
   onModeChange,
   draft,
@@ -440,7 +443,7 @@ export function DocumentListComposePanel({
   // head with no front matter says `meta:tier: note` (ED.40's parse-failure
   // rule) — the legacy body revises as a note, for opener and joiners alike.
   const definition =
-    documentDraft?.getAnswers()['meta:tier'] === 'note'
+    noteTier || documentDraft?.getAnswers()['meta:tier'] === 'note'
       ? undefined
       : selectedType?.definition;
   // Title is asked like subject/docType: a field whose columns don't carry it
@@ -1145,28 +1148,6 @@ export interface DocumentListDetailRowProps {
   readonly related?: readonly DocumentListDocument[];
   /** The host's full-page document view (revision history lives there). */
   readonly historyHref?: string;
-}
-
-const PIPE_TABLE_ROW = /^\s*\|(?:[^|\n]*\|)+\s*$/;
-const PIPE_TABLE_DELIMITER = /^\s*\|(?:\s*:?-+:?\s*\|)+\s*$/;
-
-function normalizeKerebronTables(markdown: string): string {
-  const lines = markdown.split('\n');
-  const normalized: string[] = [];
-
-  for (let index = 0; index < lines.length; index += 1) {
-    const line = lines[index];
-    normalized.push(line);
-    if (!PIPE_TABLE_ROW.test(line) || PIPE_TABLE_DELIMITER.test(line)) continue;
-    if (index > 0 && PIPE_TABLE_ROW.test(lines[index - 1])) continue;
-    if (!PIPE_TABLE_ROW.test(lines[index + 1] ?? '')) continue;
-    if (PIPE_TABLE_DELIMITER.test(lines[index + 1])) continue;
-
-    const columnCount = line.split('|').length - 2;
-    normalized.push(`|${' --- |'.repeat(columnCount)}`);
-  }
-
-  return normalized.join('\n');
 }
 
 function DocumentListMarkdownPreview({

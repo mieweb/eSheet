@@ -9,7 +9,13 @@ import {
 import type { FieldComponentProps } from '@esheet/core';
 import { FormStoreContext } from '@esheet/fields';
 import { Button, Input } from '@mieweb/ui';
-import { ArchiveRestore, ListPlus, SquarePen, Trash2 } from 'lucide-react';
+import {
+  ArchiveRestore,
+  FileDown,
+  ListPlus,
+  SquarePen,
+  Trash2,
+} from 'lucide-react';
 import type { DraftPresence } from './draftChannel.js';
 import { mdyBody, parseMdy } from './mdy.js';
 import { priorRevisionOf } from './data.js';
@@ -37,6 +43,7 @@ import {
   type DocumentListRuntimeState,
 } from './document-list-runtime.js';
 import { DocumentListDetailRow } from './DocumentListWorkflows.js';
+import { DocumentListPdfPreview } from './DocumentListPdfPreview.js';
 import type {
   DocumentListCapabilities,
   DocumentListDefinition,
@@ -57,6 +64,13 @@ function offers(
   workflow: DocumentListWorkflow
 ): boolean {
   return !definition.workflows || definition.workflows.includes(workflow);
+}
+
+function offersAction(
+  definition: DocumentListDefinition,
+  action: 'downloadPdf'
+): boolean {
+  return definition.actions?.includes(action) ?? false;
 }
 
 /** Uploads carry their MIME type as `docType`; composed types never do.
@@ -165,6 +179,7 @@ export function DocumentListField({
   const [showRemoved, setShowRemoved] = useState(false);
   const [removing, setRemoving] = useState<DocumentListDocument | null>(null);
   const [renaming, setRenaming] = useState<DocumentListDocument | null>(null);
+  const [exporting, setExporting] = useState<DocumentListDocument | null>(null);
   const [dropActive, setDropActive] = useState(false);
   const removedCount = useMemo(
     () => rows.filter((row) => row.removed).length,
@@ -199,10 +214,18 @@ export function DocumentListField({
     const offs = ids.map((id) =>
       draftChannel.presenceOf(id, (present) =>
         setPresenceByRow((current) => {
-          if (present.length === 0 && !(id in current)) return current;
+          const seenAuthorIds = new Set<string>();
+          const otherAuthors = present.filter(({ user }) => {
+            if (user.id === host?.author?.id || seenAuthorIds.has(user.id)) {
+              return false;
+            }
+            seenAuthorIds.add(user.id);
+            return true;
+          });
+          if (otherAuthors.length === 0 && !(id in current)) return current;
           const next = { ...current };
-          if (present.length === 0) delete next[id];
-          else next[id] = present;
+          if (otherAuthors.length === 0) delete next[id];
+          else next[id] = otherAuthors;
           return next;
         })
       )
@@ -210,7 +233,7 @@ export function DocumentListField({
     return () => {
       for (const off of offs) off();
     };
-  }, [draftChannel, rowIdKey]);
+  }, [draftChannel, host?.author?.id, rowIdKey]);
 
   const presenceFormatCell = useMemo(() => {
     if (!draftChannel) return undefined;
@@ -365,11 +388,13 @@ export function DocumentListField({
     options?: { append?: boolean }
   ): Promise<void> => {
     const openedBy = host?.author;
-    if (!draftChannel || !openedBy || !runtimeState) return;
-    const documentDraft = await draftChannel.open(row.id, {
-      openedBy,
-      baseRev: row.rev ?? 0,
-    });
+    if (!openedBy || !runtimeState) return;
+    const documentDraft = draftChannel
+      ? await draftChannel.open(row.id, {
+          openedBy,
+          baseRev: row.rev ?? 0,
+        })
+      : undefined;
     const display = (value: string): string => (value === '—' ? '' : value);
     const composeDraft = {
       title: display(row.title),
@@ -378,7 +403,8 @@ export function DocumentListField({
       note: '',
     };
     let definitionPrefill: DefinitionPrefill | undefined;
-    if (documentDraft.isNew) {
+    let noteTier = false;
+    if (!documentDraft || documentDraft.isNew) {
       let text = row.body ?? '';
       if (row.body == null) {
         try {
@@ -401,7 +427,10 @@ export function DocumentListField({
         // A head with no front matter revises as a note even when its type
         // has a definition since (ED.40's parse-failure rule) — recorded on
         // the draft so joiners land in the same tier as the opener.
-        if (typed?.definition) documentDraft.setAnswer('meta:tier', 'note');
+        if (typed?.definition) {
+          noteTier = true;
+          documentDraft?.setAnswer('meta:tier', 'note');
+        }
       }
     }
     session.open({
@@ -414,6 +443,7 @@ export function DocumentListField({
       append: options?.append,
       draft: composeDraft,
       definitionPrefill,
+      noteTier,
     });
   };
   const handleToggleDetails =
@@ -490,8 +520,11 @@ export function DocumentListField({
       )
     : undefined;
 
+  const canPrint =
+    offersAction(definition, 'downloadPdf') && runtimeState !== null;
+
   // The capability object answers per-row questions unless the host renders
-  // its own actions; signature and PDF stay off until something backs them.
+  // its own actions. Printing requires both definition and host opt-in.
   // While the form is read-only the host's wider grants don't apply.
   const getRowCapabilities =
     (!isReadOnly && host?.getRowCapabilities) ||
@@ -502,74 +535,99 @@ export function DocumentListField({
       canAppend: capabilities.append(row),
       canRequestSignature: false,
       canDelete: capabilities.remove(row),
-      canDownloadPdf: false,
+      canDownloadPdf: canPrint && capabilities.view(row),
     }));
+  const canManageRows = Boolean(!isReadOnly && runtimeState && host?.author);
   const defaultRenderActions =
-    draftChannel && host?.author
+    canManageRows || canPrint
       ? (
           row: DocumentListDocument,
-          caps: { canEdit: boolean; canAppend: boolean; canDelete: boolean }
-        ) =>
-          row.removed ? (
-            caps.canDelete ? (
+          caps: {
+            canEdit: boolean;
+            canAppend: boolean;
+            canDelete: boolean;
+            canDownloadPdf: boolean;
+          }
+        ) => (
+          <span className="document-list-field__row-actions">
+            {row.removed ? (
+              canManageRows && caps.canDelete ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`Restore ${row.title}`}
+                  title="Restore"
+                  onClick={() => void restore(row)}
+                >
+                  <ArchiveRestore size={16} aria-hidden="true" />
+                </Button>
+              ) : null
+            ) : (
+              <>
+                {canManageRows && caps.canEdit && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={
+                      isFileRow(row)
+                        ? `Rename ${row.title}`
+                        : `Edit ${row.title}`
+                    }
+                    title={isFileRow(row) ? 'Rename' : 'Edit'}
+                    onClick={() =>
+                      isFileRow(row) ? setRenaming(row) : void openEdit(row)
+                    }
+                  >
+                    <SquarePen size={16} aria-hidden="true" />
+                  </Button>
+                )}
+                {canManageRows && caps.canAppend && !isFileRow(row) && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Append to ${row.title}`}
+                    title="Append"
+                    onClick={() => void openEdit(row, { append: true })}
+                  >
+                    <ListPlus size={16} aria-hidden="true" />
+                  </Button>
+                )}
+                {canManageRows && caps.canDelete && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Remove ${row.title}`}
+                    title="Remove"
+                    onClick={() => setRemoving(row)}
+                  >
+                    <Trash2 size={16} aria-hidden="true" />
+                  </Button>
+                )}
+              </>
+            )}
+            {canPrint && caps.canDownloadPdf && runtimeState && (
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                aria-label={`Restore ${row.title}`}
-                title="Restore"
-                onClick={() => void restore(row)}
+                aria-label={`Export ${row.title}`}
+                title="Export"
+                onClick={() => setExporting(row)}
               >
-                <ArchiveRestore size={16} aria-hidden="true" />
+                <FileDown size={16} aria-hidden="true" />
               </Button>
-            ) : null
-          ) : (
-            <span className="document-list-field__row-actions">
-              {caps.canEdit && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label={
-                    isFileRow(row) ? `Rename ${row.title}` : `Edit ${row.title}`
-                  }
-                  title={isFileRow(row) ? 'Rename' : 'Edit'}
-                  onClick={() =>
-                    isFileRow(row) ? setRenaming(row) : void openEdit(row)
-                  }
-                >
-                  <SquarePen size={16} aria-hidden="true" />
-                </Button>
-              )}
-              {caps.canAppend && !isFileRow(row) && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label={`Append to ${row.title}`}
-                  title="Append"
-                  onClick={() => void openEdit(row, { append: true })}
-                >
-                  <ListPlus size={16} aria-hidden="true" />
-                </Button>
-              )}
-              {caps.canDelete && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label={`Remove ${row.title}`}
-                  title="Remove"
-                  onClick={() => setRemoving(row)}
-                >
-                  <Trash2 size={16} aria-hidden="true" />
-                </Button>
-              )}
-            </span>
-          )
+            )}
+          </span>
+        )
       : undefined;
   const renderActions = isReadOnly
-    ? undefined
+    ? canPrint
+      ? defaultRenderActions
+      : undefined
     : host?.renderActions ?? defaultRenderActions;
 
   const titleActions = (
@@ -637,6 +695,21 @@ export function DocumentListField({
             setRenaming(null);
             await rename(renaming, title);
           }}
+        />
+      )}
+      {exporting && runtimeState && (
+        <DocumentListPdfPreview
+          document={exporting}
+          runtime={runtimeState}
+          onClose={() => setExporting(null)}
+          onReady={() =>
+            form.getState().appendActivity({
+              fieldId: field.definition.id,
+              question: title,
+              category: 'Export opened',
+              detail: `${exporting.title} (${exporting.id})`,
+            })
+          }
         />
       )}
       {!sharedSession && <ComposerSessionOverlay value={ownSession} />}

@@ -10,6 +10,7 @@ import { createFileStoreProvider } from '@esheet/fields';
 import { Navbar } from '../components/Navbar.js';
 import { updateOzwellTools, FORMIE_KEY } from '../ozwell-setup.js';
 import {
+  DEMO_DOCUMENT_AUTHOR,
   createDemoDocumentListRepository,
   createDemoFileStore,
 } from '../document-list-demo-repository.js';
@@ -59,6 +60,18 @@ const INITIAL_DEF: FormDefinition = {
               docId: '1842',
               source: 'WebChart',
               file: '1842.pdf',
+              body: `# Hearing Test Results Letter
+
+Your annual hearing screening results have been reviewed.
+
+| Frequency | Left ear | Right ear |
+| --- | ---: | ---: |
+| 500 Hz | 10 dB | 10 dB |
+| 1000 Hz | 10 dB | 15 dB |
+| 2000 Hz | 15 dB | 15 dB |
+| 4000 Hz | 20 dB | 20 dB |
+
+No significant threshold shift was identified. Continue using the hearing protection required for your work area.`,
             },
             {
               id: 'builder-doc-2',
@@ -96,7 +109,10 @@ export function BuilderView() {
 
   const documentListProvider = createDocumentListFieldProvider(
     // A demo protects nothing; a real host resolves its own capabilities.
-    { capabilities: permissiveDocumentListCapabilities },
+    {
+      capabilities: permissiveDocumentListCapabilities,
+      author: DEMO_DOCUMENT_AUTHOR,
+    },
     { repository: documentRepository, fileStore }
   );
   const fileStoreProvider = createFileStoreProvider(fileStore);

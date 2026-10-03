@@ -1531,6 +1531,8 @@ export const activityEntrySchema = z.object({
   fieldId: z.string(),
   /** Field label at time of change. */
   question: z.optional(z.string()),
+  /** Explicit event category; response changes derive one when absent. */
+  category: z.optional(z.string()),
   /** Display form of the previous value. */
   from: z.optional(z.string()),
   /** Display form of the new value. */

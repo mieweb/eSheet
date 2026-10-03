@@ -37,6 +37,7 @@ import {
 import { ClipboardList, SlidersHorizontal } from 'lucide-react';
 import { updateOzwellTools, FLOWIE_KEY } from '../ozwell-setup.js';
 import {
+  DEMO_DOCUMENT_AUTHOR,
   createDemoDocumentListRepository,
   createDemoFileStore,
 } from '../document-list-demo-repository.js';
@@ -223,7 +224,10 @@ export function RendererView() {
   const hasForm = rawInput != null;
   const documentListProvider = createDocumentListFieldProvider(
     // A demo protects nothing; a real host resolves its own capabilities.
-    { capabilities: permissiveDocumentListCapabilities },
+    {
+      capabilities: permissiveDocumentListCapabilities,
+      author: DEMO_DOCUMENT_AUTHOR,
+    },
     { repository: documentRepository, fileStore }
   );
   const fileStoreProvider = createFileStoreProvider(fileStore);

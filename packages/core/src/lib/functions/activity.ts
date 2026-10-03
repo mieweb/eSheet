@@ -40,6 +40,13 @@ export const ACTIVITY_RESPONSE_KEY = '_activity';
  */
 export const ACTIVITY_DEBOUNCE_MS = 2000;
 
+export interface ActivityEvent {
+  readonly fieldId: string;
+  readonly question?: string;
+  readonly category: string;
+  readonly detail?: string;
+}
+
 /**
  * Merge two activity logs as a set keyed by entry GUID; output sorted by `at`.
  */
@@ -53,6 +60,42 @@ export function mergeActivity(
     (entry) => entry.at,
     (entry) => entry.at
   );
+}
+
+/** Append a user event to the activity log when this form has one. */
+export function appendActivityEvent(
+  state: {
+    normalized: NormalizedDefinition;
+    responses: FieldResponseMap;
+    identity?: { name: string };
+  },
+  event: ActivityEvent,
+  nowIso: string = new Date().toISOString()
+): FieldResponseMap {
+  const hasActivityField = Object.values(state.normalized.byId).some(
+    (node) => node.definition.fieldType === 'activity'
+  );
+  if (!hasActivityField) return state.responses;
+
+  const log = state.responses[ACTIVITY_RESPONSE_KEY]?.activity ?? [];
+  return {
+    ...state.responses,
+    [ACTIVITY_RESPONSE_KEY]: {
+      ...state.responses[ACTIVITY_RESPONSE_KEY],
+      activity: [
+        ...log,
+        {
+          id: crypto.randomUUID(),
+          at: nowIso,
+          ...(state.identity?.name ? { author: state.identity.name } : {}),
+          fieldId: event.fieldId,
+          ...(event.question ? { question: event.question } : {}),
+          category: event.category,
+          ...(event.detail ? { to: event.detail } : {}),
+        },
+      ],
+    },
+  };
 }
 
 /** `N entry`/`N entries`, the log's display for any structured collection. */
@@ -157,6 +200,7 @@ export function recordActivity(
   const withinDebounce =
     last !== undefined &&
     last.fieldId === fieldId &&
+    last.category === undefined &&
     Date.parse(nowIso) - Date.parse(last.at) < ACTIVITY_DEBOUNCE_MS;
 
   const nextLog = withinDebounce

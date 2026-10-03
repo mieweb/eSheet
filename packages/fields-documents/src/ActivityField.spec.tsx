@@ -159,6 +159,25 @@ describe('ActivityField', () => {
     ).toEqual({ added: 'Added', cleared: 'Cleared', updated: 'Updated' });
   });
 
+  it('uses an explicit event category when present', async () => {
+    render(
+      <ActivityField
+        {...createProps([
+          entry('printed', '2026-01-01T10:00:00Z', {
+            category: 'Print / PDF opened',
+            to: 'Return to work letter (letter-1)',
+          }),
+        ])}
+      />
+    );
+
+    await waitFor(() => expect(sourceKeys).toHaveLength(1));
+    expect(publishedRows()[0]).toMatchObject({
+      category: 'Print / PDF opened',
+      to: 'Return to work letter (letter-1)',
+    });
+  });
+
   it('expands an inline diff without edit controls', async () => {
     const previous = 'wha';
     const current = 'what';

@@ -1,3 +1,187 @@
+.document-list-pdf-modal {
+  height: calc(100dvh - 2rem);
+  overflow: hidden;
+}
+
+.document-list-pdf-modal__header {
+  gap: 1rem;
+}
+
+.document-list-pdf-modal__heading {
+  min-width: 0;
+}
+
+.document-list-pdf-modal__heading h2 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.document-list-pdf-modal__description,
+.document-list-pdf-modal__filename {
+  color: var(--mieweb-muted-foreground, #6b7280);
+  font-size: 0.8125rem;
+}
+
+.document-list-pdf-modal__description {
+  margin: 0.375rem 0 0;
+}
+
+.document-list-pdf-modal__body {
+  background: var(--mieweb-muted, #f3f4f6);
+  display: flex;
+  overflow: hidden;
+  padding: 1rem;
+}
+
+.document-list-pdf-preview {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.document-list-pdf-preview__surface {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  position: relative;
+  width: 100%;
+}
+
+.document-list-pdf-preview__surface .react-pdf__Document {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  width: 100%;
+}
+
+.document-list-pdf-preview__page {
+  background: var(--mieweb-card, #fff);
+  border: 1px solid var(--mieweb-border, #d1d5db);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.16);
+  margin: 0 auto 1rem;
+  max-width: 100%;
+  overflow: hidden;
+  width: 51rem;
+}
+
+.document-list-pdf-preview__page .react-pdf__Page {
+  min-width: 0 !important;
+  position: relative;
+  width: 100% !important;
+}
+
+.document-list-pdf-preview__page canvas {
+  display: block;
+  height: auto !important;
+  width: 100% !important;
+}
+
+.document-list-pdf-preview__page .textLayer {
+  max-height: 100%;
+  max-width: 100%;
+}
+
+.document-list-pdf-preview__navigation {
+  align-items: center;
+  background: var(--mieweb-card, #fff);
+  border: 1px solid var(--mieweb-border, #d1d5db);
+  border-radius: var(--mieweb-radius-md, 0.375rem);
+  bottom: 0.75rem;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.16);
+  display: flex;
+  gap: 0.75rem;
+  margin: 0 auto;
+  padding: 0.375rem;
+  position: sticky;
+  width: fit-content;
+}
+
+.document-list-pdf-preview__navigation span {
+  color: var(--mieweb-foreground, #111827);
+  font-size: 0.8125rem;
+  min-width: 6rem;
+  text-align: center;
+}
+
+.document-list-pdf-preview__message {
+  align-items: center;
+  color: var(--mieweb-muted-foreground, #6b7280);
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.75rem;
+  justify-content: center;
+  min-height: 18rem;
+}
+
+.document-list-pdf-preview__error {
+  color: var(--mieweb-destructive, #b91c1c);
+}
+
+.document-list-pdf-preview__spinner {
+  animation: document-list-pdf-spin 0.8s linear infinite;
+  border: 2px solid var(--mieweb-border, #d1d5db);
+  border-radius: 999px;
+  border-top-color: var(--mieweb-primary-500, #2563eb);
+  height: 1.5rem;
+  width: 1.5rem;
+}
+
+.document-list-pdf-modal__footer {
+  justify-content: space-between;
+}
+
+.document-list-pdf-modal__filename {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.document-list-pdf-modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+@keyframes document-list-pdf-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 639px) {
+  .document-list-pdf-modal {
+    height: 100dvh;
+  }
+
+  .document-list-pdf-modal__body {
+    padding: 0.5rem;
+  }
+
+  .document-list-pdf-modal__footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .document-list-pdf-modal__actions > * {
+    flex: 1;
+  }
+
+  .document-list-pdf-modal__actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .document-list-pdf-modal__actions > :first-child {
+    grid-column: 1 / -1;
+  }
+}
 @import 'tailwindcss/theme';
 @import 'tailwindcss/utilities';
 

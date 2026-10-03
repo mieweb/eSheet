@@ -55,6 +55,9 @@ export interface MdyFile {
 const OPENING_FENCE = /^---[ \t]*\r?\n/;
 /** ...and closes with a line that is exactly `---`, possibly the next one. */
 const CLOSING_FENCE = /(^|\r?\n)---[ \t]*(\r?\n|$)/;
+const PIPE_TABLE_ROW = /^\s*\|(?:[^|\n]*\|)+\s*$/;
+const PIPE_TABLE_DELIMITER = /^\s*\|(?:\s*:?-+:?\s*\|)+\s*$/;
+const CODE_FENCE = /^ {0,3}(`{3,}|~{3,})/;
 
 function asMapping(value: unknown): MdyFrontMatter | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
@@ -103,6 +106,41 @@ export function serializeMdy(file: MdyFile): string {
 /** The markdown to hand an editor — front matter never reaches it. */
 export function mdyBody(text: string): string {
   return parseMdy(text).body;
+}
+
+/** Add the GFM delimiter row omitted by Kerebron's compact pipe tables. */
+export function normalizeKerebronTables(markdown: string): string {
+  const lines = markdown.split('\n');
+  const normalized: string[] = [];
+  let codeFence:
+    | { readonly marker: string; readonly length: number }
+    | undefined;
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    normalized.push(line);
+    if (codeFence) {
+      const closingFence = new RegExp(
+        `^ {0,3}${codeFence.marker}{${codeFence.length},}[ \\t]*\\r?$`
+      );
+      if (closingFence.test(line)) codeFence = undefined;
+      continue;
+    }
+    const openingFence = CODE_FENCE.exec(line)?.[1];
+    if (openingFence) {
+      codeFence = { marker: openingFence[0], length: openingFence.length };
+      continue;
+    }
+    if (!PIPE_TABLE_ROW.test(line) || PIPE_TABLE_DELIMITER.test(line)) continue;
+    if (index > 0 && PIPE_TABLE_ROW.test(lines[index - 1])) continue;
+    if (!PIPE_TABLE_ROW.test(lines[index + 1] ?? '')) continue;
+    if (PIPE_TABLE_DELIMITER.test(lines[index + 1])) continue;
+
+    const columnCount = line.split('|').length - 2;
+    normalized.push(`|${' --- |'.repeat(columnCount)}`);
+  }
+
+  return normalized.join('\n');
 }
 
 /**

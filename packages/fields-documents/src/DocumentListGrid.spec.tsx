@@ -50,6 +50,18 @@ vi.mock('datavis-ace', () => {
   return { ComputedView, Source };
 });
 
+vi.mock('./DocumentListPdfPreview.js', () => ({
+  DocumentListPdfPreview: ({
+    document,
+  }: {
+    readonly document: { readonly title: string };
+  }) => (
+    <div role="dialog" aria-label={`Export document — ${document.title}`}>
+      <div role="alert">Content unavailable</div>
+    </div>
+  ),
+}));
+
 const row: DocumentListDocument = {
   id: 'doc-1',
   date: '2026-08-18',
@@ -301,6 +313,236 @@ describe('DocumentListGrid host integration', () => {
     expect(customDetail).toHaveBeenCalledWith(row);
   });
 
+  it('opens document export when enabled', async () => {
+    const formStore = createFormStore();
+    formStore.getState().loadDefinition({
+      id: 'case',
+      pages: [
+        {
+          id: 'letters-page',
+          fields: [
+            { id: 'letterLog', fieldType: 'text', question: 'Letters' },
+            { id: 'activityLog', fieldType: 'activity', question: 'Activity' },
+          ],
+        },
+      ],
+    });
+    const onDownloadPdf = vi.fn(async () => true);
+    const fieldProps = {
+      field: {
+        definition: {
+          id: 'letterLog',
+          question: 'Letters',
+          documents: [row],
+          actions: ['downloadPdf'],
+        },
+      },
+      form: formStore,
+      response: undefined,
+    } as unknown as FieldComponentProps;
+
+    render(
+      <FormStoreContext.Provider value={formStore}>
+        <DocumentListFieldProvider
+          host={{
+            capabilities: permissiveDocumentListCapabilities,
+            onDownloadPdf,
+          }}
+        >
+          <DocumentListField {...fieldProps} />
+        </DocumentListFieldProvider>
+      </FormStoreContext.Provider>
+    );
+
+    await waitFor(() => expect(captured.props).not.toBeNull());
+    const props = captured.props as {
+      formatCell: (
+        value: unknown,
+        data: Record<string, unknown>,
+        column: { field: string }
+      ) => ReactNode;
+    };
+    render(
+      <>{props.formatCell(undefined, tableData, { field: '_actions' })}</>
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Export Letter' }));
+
+    expect(
+      screen.getByRole('dialog', { name: 'Export document — Letter' })
+    ).toBeTruthy();
+    expect(await screen.findByRole('alert')).toBeTruthy();
+    expect(onDownloadPdf).not.toHaveBeenCalled();
+  });
+
+  it('omits Print when the definition does not enable it', async () => {
+    const formStore = createFormStore();
+    const fieldProps = {
+      field: {
+        definition: { id: 'letterLog', question: 'Letters', documents: [row] },
+      },
+      form: formStore,
+      response: undefined,
+    } as unknown as FieldComponentProps;
+
+    render(
+      <FormStoreContext.Provider value={formStore}>
+        <DocumentListFieldProvider
+          host={{
+            capabilities: permissiveDocumentListCapabilities,
+          }}
+        >
+          <DocumentListField {...fieldProps} />
+        </DocumentListFieldProvider>
+      </FormStoreContext.Provider>
+    );
+
+    await waitFor(() => expect(captured.props).not.toBeNull());
+    expect(
+      (captured.props as { columns: readonly { field: string }[] }).columns.map(
+        (column) => column.field
+      )
+    ).not.toContain('_actions');
+  });
+
+  it('does not let host row capabilities bypass the PDF definition opt-in', async () => {
+    const formStore = createFormStore();
+    const fieldProps = {
+      field: {
+        definition: { id: 'letterLog', question: 'Letters', documents: [row] },
+      },
+      form: formStore,
+      response: undefined,
+    } as unknown as FieldComponentProps;
+
+    render(
+      <FormStoreContext.Provider value={formStore}>
+        <DocumentListFieldProvider
+          host={{
+            capabilities: permissiveDocumentListCapabilities,
+            author: { id: 'u-casey', name: 'Casey Manager' },
+            getRowCapabilities: () => ({
+              canView: true,
+              canCompose: true,
+              canEdit: true,
+              canAppend: true,
+              canRequestSignature: false,
+              canDelete: true,
+              canDownloadPdf: true,
+            }),
+          }}
+        >
+          <DocumentListField {...fieldProps} />
+        </DocumentListFieldProvider>
+      </FormStoreContext.Provider>
+    );
+
+    await waitFor(() => expect(captured.props).not.toBeNull());
+    const props = captured.props as {
+      formatCell: (
+        value: unknown,
+        data: Record<string, unknown>,
+        column: { field: string }
+      ) => ReactNode;
+    };
+    render(
+      <>{props.formatCell(undefined, tableData, { field: '_actions' })}</>
+    );
+    expect(screen.queryByRole('button', { name: 'Export Letter' })).toBeNull();
+  });
+
+  it('keeps Print available while the form is read-only', async () => {
+    const formStore = createFormStore();
+    const fieldProps = {
+      field: {
+        definition: {
+          id: 'letterLog',
+          question: 'Letters',
+          documents: [row],
+          actions: ['downloadPdf'],
+        },
+      },
+      form: formStore,
+      isReadOnly: true,
+      response: undefined,
+    } as unknown as FieldComponentProps;
+
+    render(
+      <FormStoreContext.Provider value={formStore}>
+        <DocumentListFieldProvider
+          host={{
+            capabilities: permissiveDocumentListCapabilities,
+          }}
+        >
+          <DocumentListField {...fieldProps} />
+        </DocumentListFieldProvider>
+      </FormStoreContext.Provider>
+    );
+
+    await waitFor(() => expect(captured.props).not.toBeNull());
+    const props = captured.props as {
+      formatCell: (
+        value: unknown,
+        data: Record<string, unknown>,
+        column: { field: string }
+      ) => ReactNode;
+    };
+    render(
+      <>{props.formatCell(undefined, tableData, { field: '_actions' })}</>
+    );
+    expect(screen.getByRole('button', { name: 'Export Letter' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Edit Letter' })).toBeNull();
+  });
+
+  it('keeps PDF export available for a visible removed row', async () => {
+    const removedRow: DocumentListDocument = {
+      ...row,
+      removed: { at: '2026-10-02T10:00:00.000Z', reason: 'Duplicate' },
+    };
+    const formStore = createFormStore();
+    const fieldProps = {
+      field: {
+        definition: {
+          id: 'letterLog',
+          question: 'Letters',
+          documents: [removedRow],
+          actions: ['downloadPdf'],
+        },
+      },
+      form: formStore,
+      isReadOnly: true,
+      response: undefined,
+    } as unknown as FieldComponentProps;
+
+    render(
+      <FormStoreContext.Provider value={formStore}>
+        <DocumentListFieldProvider
+          host={{ capabilities: permissiveDocumentListCapabilities }}
+        >
+          <DocumentListField {...fieldProps} />
+        </DocumentListFieldProvider>
+      </FormStoreContext.Provider>
+    );
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Show removed (1)' })
+    );
+    await waitFor(() => expect(captured.props).not.toBeNull());
+    const props = captured.props as {
+      formatCell: (
+        value: unknown,
+        data: Record<string, unknown>,
+        column: { field: string }
+      ) => ReactNode;
+    };
+    render(
+      <>
+        {props.formatCell(undefined, { ...removedRow }, { field: '_actions' })}
+      </>
+    );
+    expect(screen.getByRole('button', { name: 'Export Letter' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Restore Letter' })).toBeNull();
+  });
+
   it('publishes an empty source for malformed field responses', async () => {
     const field = {
       definition: {
@@ -387,8 +629,20 @@ describe('DocumentListGrid host integration', () => {
           if (documentId === 'doc-1') {
             listener([
               {
+                user: { id: 'u-casey', name: 'Casey Manager' },
+                color: '#654321',
+              },
+              {
+                user: { id: 'stale-casey-session', name: 'Casey Manager' },
+                color: '#abcdef',
+              },
+              {
                 user: { id: 'u-riley', name: 'Riley Reviewer' },
                 color: '#123456',
+              },
+              {
+                user: { id: 'u-riley', name: 'Riley Reviewer' },
+                color: '#fedcba',
               },
             ]);
           }
@@ -403,6 +657,7 @@ describe('DocumentListGrid host integration', () => {
           host={{
             capabilities: permissiveDocumentListCapabilities,
             draftChannel,
+            author: { id: 'u-casey', name: 'Casey Manager' },
           }}
         >
           <DocumentListField {...fieldProps} />
@@ -423,9 +678,12 @@ describe('DocumentListGrid host integration', () => {
     );
     expect(
       container.querySelector(
-        '[aria-label="Draft in progress — Riley Reviewer"]'
+        '[aria-label="Draft in progress — Casey Manager, Riley Reviewer"]'
       )
     ).toBeTruthy();
+    expect(
+      container.querySelectorAll('.document-list-row-presence__dot')
+    ).toHaveLength(2);
     expect(
       (
         container.querySelector(

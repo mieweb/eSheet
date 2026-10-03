@@ -85,9 +85,11 @@ export {
 // Field component registry
 export {
   getFieldComponent,
+  getFieldPropertyEditor,
   getRegisteredComponentKeys,
   registerFieldComponents,
   registerCustomFieldTypes,
+  type FieldPropertyEditorProps,
   // NOTE: resetComponentRegistry intentionally not exported - internal/test-only
 } from './lib/component-registry.js';
 

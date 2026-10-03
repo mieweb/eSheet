@@ -1,10 +1,16 @@
 import type { FileInput, FileReference, FileStore } from '@esheet/core';
 import type {
+  DocumentListAuthor,
   DocumentListDocument,
   DocumentListRepository,
   DocumentListRepositoryContext,
   DocumentListSnapshot,
 } from '@esheet/fields-documents';
+
+export const DEMO_DOCUMENT_AUTHOR: DocumentListAuthor = {
+  id: 'demo-user',
+  name: 'Demo User',
+};
 
 interface DemoDocumentBucket {
   readonly documents: Map<string, DocumentListDocument>;
