@@ -1,6 +1,7 @@
 import { Button } from '@mieweb/ui';
 import type { FieldPropertyEditorProps } from '@esheet/fields';
 import { ArrowDown, ArrowUp, Plus, RotateCcw, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { DOCUMENT_LIST_COLUMNS } from './data.js';
 import {
   DOCUMENT_LIST_WORKFLOWS,
@@ -47,6 +48,68 @@ function EditorSection({
       <h3 className="ms:text-xs ms:font-semibold ms:text-mstext">{title}</h3>
       {children}
     </section>
+  );
+}
+
+function DocumentTypeIdInput({
+  inputId,
+  index,
+  value,
+  docTypes,
+  onCommit,
+}: {
+  readonly inputId: string;
+  readonly index: number;
+  readonly value: string;
+  readonly docTypes: readonly DocumentListDocTypeOption[];
+  readonly onCommit: (value: string) => void;
+}): React.JSX.Element {
+  const [draft, setDraft] = useState(value);
+  useEffect(() => setDraft(value), [value]);
+
+  const normalizedDraft = draft.trim();
+  const duplicate = docTypes.some(
+    (docType, candidateIndex) =>
+      candidateIndex !== index && docType.id === normalizedDraft
+  );
+  const error = !normalizedDraft
+    ? 'Type ID is required.'
+    : duplicate
+    ? 'Type IDs must be unique.'
+    : undefined;
+  const errorId = `${inputId}-error`;
+
+  return (
+    <>
+      <input
+        id={inputId}
+        type="text"
+        required
+        value={draft}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId : undefined}
+        onChange={(event) => {
+          const nextDraft = event.currentTarget.value;
+          setDraft(nextDraft);
+          const nextId = nextDraft.trim();
+          if (
+            nextId &&
+            !docTypes.some(
+              (docType, candidateIndex) =>
+                candidateIndex !== index && docType.id === nextId
+            )
+          ) {
+            onCommit(nextId);
+          }
+        }}
+        className="ms:w-full ms:px-2 ms:py-1.5 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext"
+      />
+      {error ? (
+        <p id={errorId} className="ms:text-xs ms:text-msdanger">
+          {error}
+        </p>
+      ) : null}
+    </>
   );
 }
 
@@ -230,15 +293,12 @@ export function DocumentListPropertyEditor({
                   >
                     Type ID
                   </label>
-                  <input
-                    id={id(`type-id-${index}`)}
-                    type="text"
-                    required
+                  <DocumentTypeIdInput
+                    inputId={id(`type-id-${index}`)}
+                    index={index}
                     value={docType.id}
-                    onChange={(event) =>
-                      updateDocType(index, { id: event.currentTarget.value })
-                    }
-                    className="ms:w-full ms:px-2 ms:py-1.5 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext"
+                    docTypes={docTypes}
+                    onCommit={(nextId) => updateDocType(index, { id: nextId })}
                   />
                   <label
                     htmlFor={id(`type-label-${index}`)}

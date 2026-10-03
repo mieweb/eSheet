@@ -244,6 +244,36 @@ describe('DocumentListPropertyEditor', () => {
     expect(input.value).toBe('progress-notes');
   });
 
+  it('commits only nonempty, unique document type IDs', () => {
+    const onUpdate = renderEditor({
+      workflows: ['compose'],
+      docTypes: [
+        { id: 'first', label: 'First' },
+        { id: 'second', label: 'Second' },
+      ],
+    });
+    const secondId = screen.getAllByLabelText('Type ID')[1] as HTMLInputElement;
+
+    fireEvent.change(secondId, { target: { value: 'first' } });
+    expect(secondId.value).toBe('first');
+    expect(secondId.getAttribute('aria-invalid')).toBe('true');
+    expect(screen.getByText('Type IDs must be unique.')).toBeTruthy();
+    expect(onUpdate).not.toHaveBeenCalled();
+
+    fireEvent.change(secondId, { target: { value: '' } });
+    expect(screen.getByText('Type ID is required.')).toBeTruthy();
+    expect(onUpdate).not.toHaveBeenCalled();
+
+    fireEvent.change(secondId, { target: { value: 'third' } });
+    expect(secondId.getAttribute('aria-invalid')).toBeNull();
+    expect(onUpdate).toHaveBeenLastCalledWith({
+      docTypes: [
+        { id: 'first', label: 'First' },
+        { id: 'third', label: 'Second' },
+      ],
+    });
+  });
+
   it('reorders and removes document types', () => {
     const onUpdate = renderEditor({
       workflows: ['compose'],
