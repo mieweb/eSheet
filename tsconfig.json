@@ -4,6 +4,9 @@
   "files": [],
   "references": [
     {
+      "path": "./packages/catalog"
+    },
+    {
       "path": "./packages/core"
     },
     {

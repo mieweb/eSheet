@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import {
   registerOptionsProvider,
   unregisterOptionsProvider,
@@ -21,6 +27,7 @@ function renderField(
 ) {
   const onResponse = vi.fn();
   const setResponse = vi.fn();
+  const listeners = new Set<() => void>();
   const props = {
     field: { definition: { fieldType: 'autocomplete', ...definition } },
     form: {
@@ -30,7 +37,10 @@ function renderField(
         setResponse,
         isReadOnly: () => false,
       }),
-      subscribe: () => () => {},
+      subscribe: (callback: () => void) => {
+        listeners.add(callback);
+        return () => listeners.delete(callback);
+      },
     },
     ui: {},
     isSelected: false,
@@ -45,13 +55,179 @@ function renderField(
     onResponse,
   } as unknown as FieldComponentProps;
   render(<AutocompleteField {...props} />);
-  return { onResponse, setResponse };
+  return {
+    onResponse,
+    setResponse,
+    updateResponses: (next: Record<string, unknown>) => {
+      Object.assign(responses, next);
+      act(() => listeners.forEach((listener) => listener()));
+    },
+  };
 }
 
 describe('AutocompleteField with an optionsSource', () => {
   afterEach(() => {
     unregisterOptionsProvider('staff');
     unregisterOptionsProvider('patients');
+    unregisterOptionsProvider('localOptions');
+  });
+
+  it('searches an empty query on focus only when minQueryLength is zero', async () => {
+    const fetch = vi.fn<OptionsProvider['fetch']>(async () => [
+      { id: '001', value: 'First office' },
+    ]);
+    registerOptionsProvider('localOptions', { fetch });
+    renderField({
+      id: 'location',
+      question: 'Location',
+      minQueryLength: 0,
+      optionsSource: { provider: 'localOptions' },
+    });
+    expect(fetch).not.toHaveBeenCalled();
+    const input = screen.getByRole('combobox', { name: 'Location' });
+    fireEvent.focus(input);
+    expect(await screen.findByText('First office')).not.toBeNull();
+    expect(fetch.mock.calls[0]?.[0]).toBe('');
+    fireEvent.change(input, { target: { value: 'o' } });
+    fireEvent.change(input, { target: { value: '' } });
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
+    expect(fetch.mock.calls[1]?.[0]).toBe('');
+  });
+
+  it('keeps patients default min2 and does not fetch on focus or one character', async () => {
+    const fetch = vi.fn<OptionsProvider['fetch']>(async () => []);
+    registerOptionsProvider('patients', { fetch });
+    renderField({
+      id: 'patient',
+      question: 'Patient',
+      optionsSource: { provider: 'patients' },
+    });
+    const input = screen.getByRole('combobox', { name: 'Patient' });
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: 'p' } });
+    expect(fetch).not.toHaveBeenCalled();
+    fireEvent.change(input, { target: { value: 'pa' } });
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
+  });
+
+  it('aborts stale query results and repeats unchanged input when params change', async () => {
+    let finishOld!: (
+      options: Awaited<ReturnType<OptionsProvider['fetch']>>
+    ) => void;
+    const fetch = vi
+      .fn<OptionsProvider['fetch']>()
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finishOld = resolve;
+          })
+      )
+      .mockResolvedValue([{ id: 'new', value: 'New office' }]);
+    registerOptionsProvider('localOptions', { fetch });
+    const { onResponse, updateResponses } = renderField(
+      {
+        id: 'location',
+        question: 'Location',
+        minQueryLength: 0,
+        optionsSource: {
+          provider: 'localOptions',
+          params: { country: '{field:country}' },
+        },
+      },
+      { country: { answer: 'US' } },
+      {
+        selected: { id: 'saved', value: 'Saved office' },
+        attributes: { Country: 'US' },
+      }
+    );
+    const input = screen.getByRole('combobox', { name: 'Location' });
+    fireEvent.focus(input);
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
+    updateResponses({ country: { answer: 'AO' } });
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
+    expect(fetch.mock.calls[0]?.[2].aborted).toBe(true);
+    expect(fetch.mock.calls[1]?.slice(0, 2)).toEqual([
+      'Saved office',
+      { country: 'AO' },
+    ]);
+    await act(async () => finishOld([{ id: 'old', value: 'Old office' }]));
+    expect(await screen.findByText('New office')).not.toBeNull();
+    expect(screen.queryByText('Old office')).toBeNull();
+    expect((input as HTMLInputElement).value).toBe('Saved office');
+    expect(onResponse).not.toHaveBeenCalled();
+  });
+
+  it('ignores late results even if a provider ignores cancellation below min length', async () => {
+    let finish!: (
+      options: Awaited<ReturnType<OptionsProvider['fetch']>>
+    ) => void;
+    const fetch = vi.fn<OptionsProvider['fetch']>(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        })
+    );
+    registerOptionsProvider('patients', { fetch });
+    renderField({
+      id: 'patient',
+      question: 'Patient',
+      optionsSource: { provider: 'patients' },
+    });
+    const input = screen.getByRole('combobox', { name: 'Patient' });
+    fireEvent.change(input, { target: { value: 'pat' } });
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
+    fireEvent.change(input, { target: { value: 'p' } });
+    await act(async () => finish([{ id: 'old', value: 'Stale patient' }]));
+    expect(fetch.mock.calls[0]?.[2].aborted).toBe(true);
+    expect(screen.queryByText('Stale patient')).toBeNull();
+    expect(screen.queryByText('Searching…')).toBeNull();
+  });
+
+  it('refetches complete providers after resolved params change', async () => {
+    const fetch = vi.fn<OptionsProvider['fetch']>(async () => []);
+    registerOptionsProvider('staff', { mode: 'complete', fetch });
+    const { updateResponses } = renderField(
+      {
+        id: 'staff',
+        optionsSource: {
+          provider: 'staff',
+          params: { realm: '{field:realm}' },
+        },
+      },
+      { realm: { answer: 'One' } }
+    );
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
+    updateResponses({ realm: { answer: 'Two' } });
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
+    expect(fetch.mock.calls[1]?.slice(0, 2)).toEqual(['', { realm: 'Two' }]);
+  });
+
+  it('offers retry after provider failure without erasing a saved selection', async () => {
+    const fetch = vi
+      .fn<OptionsProvider['fetch']>()
+      .mockRejectedValueOnce(new Error('Unavailable'))
+      .mockResolvedValue([{ id: 'new', value: 'Available office' }]);
+    registerOptionsProvider('localOptions', { fetch });
+    const { onResponse } = renderField(
+      {
+        id: 'location',
+        question: 'Location',
+        minQueryLength: 0,
+        optionsSource: { provider: 'localOptions' },
+      },
+      {},
+      { selected: { id: 'saved', value: 'Saved office' } }
+    );
+    const input = screen.getByRole('combobox', { name: 'Location' });
+    fireEvent.focus(input);
+    expect(await screen.findByRole('status')).not.toBeNull();
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Retry loading options' })
+    );
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(screen.queryByRole('status')).toBeNull());
+    expect((input as HTMLInputElement).value).toBe('Saved office');
+    expect(onResponse).not.toHaveBeenCalled();
   });
 
   it('loads a complete provider once, opens on focus and filters locally', async () => {

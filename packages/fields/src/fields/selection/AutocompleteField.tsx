@@ -206,9 +206,8 @@ export const AutocompleteField = React.memo(function AutocompleteField({
     resolveOptionsParams(def.optionsSource?.params, (id) =>
       responseTokenValue(form.getState().responses[id])
     );
-  // Re-fetch a `complete` set when a `{field:…}` dependency changes.
-  const paramsSnapshot = () =>
-    isComplete ? JSON.stringify(resolveParams()) : '';
+  // Both provider modes must invalidate results when a dependency changes.
+  const paramsSnapshot = () => JSON.stringify(resolveParams());
   const paramsKey = React.useSyncExternalStore(
     (cb) => form.subscribe(cb),
     paramsSnapshot,
@@ -222,6 +221,10 @@ export const AutocompleteField = React.memo(function AutocompleteField({
   );
   const [items, setItems] = React.useState<ParsedAutocompleteItem[]>([]);
   const [loading, setLoading] = React.useState(false);
+  const [loadFailed, setLoadFailed] = React.useState(false);
+  const queryRef = React.useRef(query);
+  queryRef.current = query;
+  const hasSearched = React.useRef(false);
 
   // The selection can arrive after mount (late-loading docs, collab peers);
   // the input must follow it or the stored answer looks lost. Only a real
@@ -234,6 +237,12 @@ export const AutocompleteField = React.memo(function AutocompleteField({
     undefined
   );
   const abortRef = React.useRef<AbortController | undefined>(undefined);
+  const cancelRequest = () => {
+    clearTimeout(debounceTimer.current);
+    abortRef.current?.abort();
+    abortRef.current = undefined;
+  };
+  const minQueryLength = isComplete ? 0 : def.minQueryLength ?? 2;
 
   const load = async (
     q: string,
@@ -263,41 +272,55 @@ export const AutocompleteField = React.memo(function AutocompleteField({
 
   /** Run `load`, letting only the latest request touch state. */
   const request = async (q: string) => {
-    abortRef.current?.abort();
+    cancelRequest();
     const ac = new AbortController();
     abortRef.current = ac;
     setLoading(true);
+    setLoadFailed(false);
+    setItems([]);
+    const requestParams = paramsSnapshot();
+    const isCurrent = () =>
+      abortRef.current === ac &&
+      !ac.signal.aborted &&
+      requestParams === paramsSnapshot();
     try {
       const result = await load(q, ac.signal);
-      if (abortRef.current !== ac) return;
+      if (!isCurrent()) return;
       setItems(result);
     } catch (err) {
-      if ((err as Error).name === 'AbortError' || abortRef.current !== ac)
-        return;
+      if ((err as Error).name === 'AbortError' || !isCurrent()) return;
       setItems([]);
+      setLoadFailed(true);
     } finally {
-      if (abortRef.current === ac) setLoading(false);
+      if (isCurrent()) setLoading(false);
     }
   };
   // Effects call through the ref so they don't re-run on every render.
   const requestRef = React.useRef(request);
   requestRef.current = request;
 
-  // A `complete` provider hands over the whole set once; typing filters it.
+  // Parameter/source changes cancel even providers that ignore AbortSignal.
+  // Complete mode loads once; query mode repeats only an initiated search.
   React.useEffect(() => {
-    if (!isPreview || !isComplete) return;
-    void requestRef.current('');
-  }, [isPreview, isComplete, paramsKey]);
-
-  // Cleanup on unmount: cancel the pending debounce and in-flight request.
-  React.useEffect(() => {
-    return () => {
-      clearTimeout(debounceTimer.current);
-      abortRef.current?.abort();
-    };
-  }, []);
-
-  const minQueryLength = isComplete ? 0 : def.minQueryLength ?? 2;
+    cancelRequest();
+    setItems([]);
+    setLoading(false);
+    setLoadFailed(false);
+    if (isPreview && hasSource) {
+      if (isComplete) void requestRef.current('');
+      else if (hasSearched.current && queryRef.current.length >= minQueryLength)
+        void requestRef.current(queryRef.current);
+    }
+    return cancelRequest;
+  }, [
+    isPreview,
+    isComplete,
+    paramsKey,
+    provider,
+    hasSource,
+    def.dataSourceUrl,
+    minQueryLength,
+  ]);
 
   const search = (q: string) => {
     setQuery(q);
@@ -307,9 +330,11 @@ export const AutocompleteField = React.memo(function AutocompleteField({
       onResponse({ selected: undefined, answer: undefined });
     }
     if (isComplete) return;
-    clearTimeout(debounceTimer.current);
-    abortRef.current?.abort();
-    if (!q || !hasSource || q.length < minQueryLength) {
+    hasSearched.current = true;
+    cancelRequest();
+    setItems([]);
+    setLoadFailed(false);
+    if (!hasSource || q.length < minQueryLength) {
       // Reset any earlier "Searching…" state so loading doesn't stick when
       // the query shrinks below the minimum (the request above was aborted).
       setItems([]);
@@ -330,8 +355,7 @@ export const AutocompleteField = React.memo(function AutocompleteField({
     if (query === stored) return;
     setQuery(stored);
     if (!isComplete) {
-      clearTimeout(debounceTimer.current);
-      abortRef.current?.abort();
+      cancelRequest();
       setItems([]);
       setLoading(false);
     }
@@ -401,8 +425,33 @@ export const AutocompleteField = React.memo(function AutocompleteField({
           inputProps={{
             id: `${instanceId}-autocomplete-answer-${def.id}`,
             onBlur: revertToSelection,
+            // Do not override Autocomplete's own focus/open handler.
+            onFocusCapture: () => {
+              if (!isComplete && hasSource && minQueryLength === 0) {
+                hasSearched.current = true;
+                void request(query);
+              }
+            },
           }}
         />
+        {loadFailed && (
+          <div
+            className="autocomplete-field-error ms:text-sm ms:text-msdanger"
+            role="status"
+            aria-live="polite"
+          >
+            Could not load options.{' '}
+            <button
+              type="button"
+              aria-label="Retry loading options"
+              className="ms:underline ms:focus-visible:outline-2"
+              disabled={!isEnabled}
+              onClick={() => void request(isComplete ? '' : query)}
+            >
+              Retry
+            </button>
+          </div>
+        )}
       </div>
     );
   }

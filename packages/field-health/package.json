@@ -35,6 +35,7 @@
     "!**/*.tsbuildinfo"
   ],
   "dependencies": {
+    "@esheet/catalog": "workspace:*",
     "@esheet/core": "workspace:*",
     "@esheet/fields": "workspace:*",
     "@mieweb/ui": "0.8.0-dev.21",
