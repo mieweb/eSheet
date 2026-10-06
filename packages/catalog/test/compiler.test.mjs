@@ -96,6 +96,14 @@ test('browser root contains no runtime imports; compiler has a Node-only export'
     await readFile(new URL('../package.json', import.meta.url))
   );
   assert.deepEqual(Object.keys(pkg.exports['./compiler']), ['node']);
+});
+
+test('catalog is released before the health package that depends on it', async () => {
+  const { PACKAGES } = await import('../../../release/config.mjs');
+  const catalogIndex = PACKAGES.indexOf('packages/catalog');
+  assert.ok(catalogIndex >= 0, 'catalog must be included in releases');
+  assert.ok(catalogIndex < PACKAGES.indexOf('packages/field-health'));
+});
 
 test('discovers single-column CSV/TSV; deterministic gzip, hash and exact API', async (t) => {
   const { compile, directory } = await fixture(t, {
