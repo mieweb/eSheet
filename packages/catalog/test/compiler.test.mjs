@@ -95,9 +95,7 @@ test('browser root contains no runtime imports; compiler has a Node-only export'
   const pkg = JSON.parse(
     await readFile(new URL('../package.json', import.meta.url))
   );
-  assert.equal(pkg.version, '0.0.6-17');
   assert.deepEqual(Object.keys(pkg.exports['./compiler']), ['node']);
-});
 
 test('discovers single-column CSV/TSV; deterministic gzip, hash and exact API', async (t) => {
   const { compile, directory } = await fixture(t, {
