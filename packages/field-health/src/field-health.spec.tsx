@@ -62,10 +62,7 @@ describe('CodeLookup worker', () => {
     postMessage = vi.fn();
     terminate = vi.fn();
 
-    constructor(
-      readonly url: string | URL,
-      readonly options?: WorkerOptions
-    ) {
+    constructor(readonly url: string | URL, readonly options?: WorkerOptions) {
       WorkerMock.instances.push(this);
     }
   }

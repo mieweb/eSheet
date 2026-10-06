@@ -147,7 +147,9 @@ export const CodeLookup = React.forwardRef<HTMLDivElement, CodeLookupProps>(
       let worker: Worker;
       try {
         worker = workerUrl
-          ? new Worker(new URL(workerUrl, window.location.href), { type: 'module' })
+          ? new Worker(new URL(workerUrl, window.location.href), {
+              type: 'module',
+            })
           : new Worker(new URL('./codify.worker.ts', import.meta.url), {
               type: 'module',
             });
@@ -155,7 +157,10 @@ export const CodeLookup = React.forwardRef<HTMLDivElement, CodeLookupProps>(
         workerRef.current = null;
         setStatus({
           state: 'error',
-          message: error instanceof Error ? error.message : 'Code index worker failed to start',
+          message:
+            error instanceof Error
+              ? error.message
+              : 'Code index worker failed to start',
         });
         return;
       }
