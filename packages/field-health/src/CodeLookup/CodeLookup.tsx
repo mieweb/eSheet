@@ -12,8 +12,8 @@ import {
 } from 'lucide-react';
 import * as React from 'react';
 import { createPortal } from 'react-dom';
-import type { CodifyResult } from './engine.js';
-import { familyKey, familyTerm } from './engine.js';
+import type { CodifyResult } from '@esheet/catalog/runtime';
+import { familyKey, familyTerm } from '@esheet/catalog/runtime';
 import { useAnchoredPosition } from './useAnchoredPosition.js';
 
 export type CodifyDomain =
@@ -28,6 +28,8 @@ export type CodifyDomain =
 export interface CodeLookupProps
   extends Omit<React.HTMLAttributes<HTMLDivElement>, 'className' | 'onSelect'> {
   indexUrl: string;
+  /** Emitted codify worker URL for apps hosted beneath an origin sub-path. */
+  workerUrl?: string;
   locale?: string;
   domains?: CodifyDomain[];
   programsUrl?: string;
@@ -82,6 +84,7 @@ export const CodeLookup = React.forwardRef<HTMLDivElement, CodeLookupProps>(
   (
     {
       indexUrl,
+      workerUrl,
       locale = 'en',
       domains,
       searchDomains,
@@ -141,13 +144,34 @@ export const CodeLookup = React.forwardRef<HTMLDivElement, CodeLookupProps>(
       setActiveIndex(-1);
       setOpen(false);
       setDrill(null);
-      const worker = new Worker(
-        new URL('./codify.worker.ts', import.meta.url),
-        {
-          type: 'module',
-        }
-      );
+      let worker: Worker;
+      try {
+        worker = workerUrl
+          ? new Worker(new URL(workerUrl, window.location.href), {
+              type: 'module',
+            })
+          : new Worker(new URL('./codify.worker.ts', import.meta.url), {
+              type: 'module',
+            });
+      } catch (error) {
+        workerRef.current = null;
+        setStatus({
+          state: 'error',
+          message:
+            error instanceof Error
+              ? error.message
+              : 'Code index worker failed to start',
+        });
+        return;
+      }
       workerRef.current = worker;
+      worker.onerror = (event) => {
+        event.preventDefault();
+        setStatus({
+          state: 'error',
+          message: event.message || 'Code index worker failed to load',
+        });
+      };
       worker.onmessage = (e: MessageEvent) => {
         const msg = e.data;
         if (msg.type === 'progress') {
@@ -196,7 +220,7 @@ export const CodeLookup = React.forwardRef<HTMLDivElement, CodeLookupProps>(
         programsUrl,
       });
       return () => worker.terminate();
-    }, [indexUrl, locale, domainsKey, programsUrl]);
+    }, [indexUrl, workerUrl, locale, domainsKey, programsUrl]);
 
     React.useEffect(() => {
       if (status.state !== 'ready') return;

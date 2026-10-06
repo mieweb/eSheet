@@ -238,7 +238,7 @@ describe('compose panel in draft mode (ED.37)', () => {
     fireEvent.change(screen.getByLabelText(/^Subject/), {
       target: { value: 'Revised subject' },
     });
-    fireEvent.change(screen.getByLabelText(/^Document type/), {
+    fireEvent.change(screen.getByLabelText(/^Document Type/), {
       target: { value: 'progress-note' },
     });
     fireEvent.click(screen.getByRole('button', { name: /^Save/ }));
@@ -485,7 +485,7 @@ describe('compose panel in draft mode (ED.37)', () => {
       fireEvent.change(screen.getByLabelText(/^Subject/), {
         target: { value: 'More information' },
       });
-      fireEvent.change(screen.getByLabelText(/^Document type/), {
+      fireEvent.change(screen.getByLabelText(/^Document Type/), {
         target: { value: 'progress-note' },
       });
       fireEvent.click(screen.getByRole('button', { name: /^Save/ }));

@@ -158,7 +158,7 @@ describe('a document type with a definition', () => {
       globalThis.document.querySelector('.document-list-compose-editor')
     ).toBeNull();
     // The type picker stays: it is what chooses the form.
-    expect(screen.getByLabelText('Document type')).toBeTruthy();
+    expect(screen.getByLabelText('Letter Type')).toBeTruthy();
   });
 
   it('saves the answers as front matter and the richtext field as the body', async () => {
@@ -230,7 +230,7 @@ describe('a document type with a definition', () => {
     await waitFor(() =>
       expect(screen.getByLabelText('Recipient')).toBeTruthy()
     );
-    fireEvent.change(screen.getByLabelText('Document type'), {
+    fireEvent.change(screen.getByLabelText('Letter Type'), {
       target: { value: 'note' },
     });
 

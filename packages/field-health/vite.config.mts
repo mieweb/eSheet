@@ -61,6 +61,7 @@ export default defineConfig(() => ({
     },
     rolldownOptions: {
       external: [
+        '@esheet/catalog/runtime',
         '@esheet/core',
         '@esheet/fields',
         '@mieweb/ui',

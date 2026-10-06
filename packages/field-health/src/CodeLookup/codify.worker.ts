@@ -8,8 +8,10 @@ import {
   parseShard,
   searchShards,
   findByCodes,
+  createCatalogHandler,
+  maybeGunzip,
   type CodifyShard,
-} from './engine.js';
+} from '@esheet/catalog/runtime';
 
 interface WorkerScope {
   onmessage: ((event: MessageEvent) => void) | null;
@@ -19,6 +21,9 @@ interface WorkerScope {
 const workerScope = globalThis as unknown as WorkerScope;
 
 const shards = new Map<string, CodifyShard>();
+const handleCatalog = createCatalogHandler((reply) =>
+  workerScope.postMessage(reply)
+);
 
 export interface ProgramMeta {
   kind?: 'surveillance' | 'fitness' | 'credential' | 'quality';
@@ -124,21 +129,6 @@ async function readCachedManifest(
   } catch {
     return null;
   }
-}
-
-async function maybeGunzip(buf: ArrayBuffer): Promise<ArrayBuffer> {
-  if (buf.byteLength < 2) return buf;
-  const head = new Uint8Array(buf, 0, 2);
-  if (head[0] !== 0x1f || head[1] !== 0x8b) return buf;
-  if (typeof DecompressionStream === 'undefined') {
-    throw new Error(
-      'shard is gzip-compressed but this browser lacks DecompressionStream — serve the .mcdx shards uncompressed for this browser'
-    );
-  }
-  const body = new Response(buf).body;
-  if (!body) throw new Error('could not stream shard for gzip decompression');
-  const stream = body.pipeThrough(new DecompressionStream('gzip'));
-  return await new Response(stream).arrayBuffer();
 }
 
 function shardUnchanged(
@@ -259,7 +249,13 @@ async function load(baseUrl: string, domains?: string[], programsUrl?: string) {
 
 workerScope.onmessage = (e: MessageEvent) => {
   const msg = e.data;
-  if (msg.type === 'load') {
+  if (
+    msg.type === 'catalog-load' ||
+    msg.type === 'catalog-search' ||
+    msg.type === 'catalog-clear'
+  ) {
+    void handleCatalog(msg);
+  } else if (msg.type === 'load') {
     load(msg.baseUrl, msg.domains, msg.programsUrl).catch((err) =>
       workerScope.postMessage({
         type: 'error',

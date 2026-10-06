@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import type { FieldComponentProps } from '@esheet/core';
 import type {
   AllergyManagerProps,
@@ -52,6 +52,62 @@ function createProps(
 
 beforeEach(() => {
   vi.clearAllMocks();
+});
+
+describe('CodeLookup worker', () => {
+  class WorkerMock {
+    static instances: WorkerMock[] = [];
+    onmessage: ((event: MessageEvent) => void) | null = null;
+    onerror: ((event: ErrorEvent) => void) | null = null;
+    postMessage = vi.fn();
+    terminate = vi.fn();
+
+    constructor(readonly url: string | URL, readonly options?: WorkerOptions) {
+      WorkerMock.instances.push(this);
+    }
+  }
+
+  beforeEach(() => {
+    WorkerMock.instances = [];
+    vi.stubGlobal('Worker', WorkerMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('resolves the emitted worker beneath a host asset base', () => {
+    render(
+      <CodeLookup
+        indexUrl="/ecase/codify"
+        workerUrl="/ecase/assets/codify.worker-test.js"
+      />
+    );
+
+    const worker = WorkerMock.instances[0];
+    expect(new URL(worker.url).pathname).toBe(
+      '/ecase/assets/codify.worker-test.js'
+    );
+    expect(worker.options).toEqual({ type: 'module' });
+    expect(worker.postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'load',
+        baseUrl: '/ecase/codify/en',
+      })
+    );
+  });
+
+  it('reports a worker load failure instead of remaining at zero percent', () => {
+    render(<CodeLookup indexUrl="/ecase/codify" />);
+
+    act(() => {
+      WorkerMock.instances[0].onerror?.(
+        new ErrorEvent('error', { message: 'worker: HTTP 404' })
+      );
+    });
+
+    expect(screen.getByPlaceholderText('Code index unavailable')).toBeTruthy();
+  });
 });
 
 describe('field-health', () => {

@@ -1,17 +1,23 @@
 /**
- * Offline MedicalCodify search engine — parses .mcdx shards (built by
- * scripts/codify/build-index.mjs; see that file for the binary layout) and
- * runs multi-word-prefix BM25-ish scoring with alias and typo support.
+ * Shared offline MCDX reader/search engine for medical codes and catalogs.
+ * Reads indexes from this package's compiler or Codify's medical build pipeline
+ * and runs multi-word-prefix BM25-ish scoring with alias and typo support.
  *
  * Runs on the main thread or inside a worker (no DOM access).
  *
  * Full pipeline & design docs:
  *   https://github.com/mieweb/ui/blob/main/src/components/CodeLookup/README.md
- *   (local: ./README.md)
  */
+
+import type { CatalogOption } from '../index.js';
 
 export interface CodifyShard {
   domain: string;
+  /** Generic option catalog, never interpreted as medical codes. */
+  catalog?: boolean;
+  attributesBlob?: Uint8Array;
+  attributesOffsets?: Uint32Array;
+  attributesCache?: Map<number, Record<string, string>>;
   /** BCP-47-ish locale the shard was built for ('en' when absent, v1) */
   locale: string;
   docCount: number;
@@ -50,6 +56,7 @@ export interface CodifyShard {
 
 export interface CodifyResult {
   fullid: string;
+  attributes?: Record<string, string>;
   label: string;
   codetype: string;
   fullcode: string;
@@ -155,33 +162,155 @@ const SHORT_PRIOR_WEIGHT = 3;
 const LEAD_BONUS = 2.5;
 
 export function parseShard(buf: ArrayBuffer): CodifyShard {
+  if (buf.byteLength < 12) throw new Error('Truncated shard header');
   const view = new DataView(buf);
   if (view.getUint32(0, true) !== MAGIC) throw new Error('Bad shard magic');
   const version = view.getUint32(4, true);
   if (version !== 1 && version !== 2)
     throw new Error('Unsupported shard version');
   const metaLen = view.getUint32(8, true);
+  if (metaLen > buf.byteLength - 12)
+    throw new Error('Truncated shard metadata');
   const meta = JSON.parse(
     new TextDecoder().decode(new Uint8Array(buf, 12, metaLen))
   ) as {
     domain: string;
     locale?: string;
+    catalog?: boolean;
     docCount: number;
     tokenCount: number;
+    postingsCount?: number;
     codetypes: string[];
     sections: Record<string, [number, number]>;
   };
+  if (
+    !meta ||
+    typeof meta.domain !== 'string' ||
+    (meta.locale !== undefined && typeof meta.locale !== 'string') ||
+    (meta.catalog !== undefined && typeof meta.catalog !== 'boolean') ||
+    !Number.isSafeInteger(meta.docCount) ||
+    meta.docCount < 0 ||
+    meta.docCount > buf.byteLength ||
+    !Number.isSafeInteger(meta.tokenCount) ||
+    meta.tokenCount < 0 ||
+    meta.tokenCount > buf.byteLength ||
+    !Array.isArray(meta.codetypes) ||
+    meta.codetypes.length > 256 ||
+    !meta.codetypes.every((ct) => typeof ct === 'string') ||
+    !meta.sections ||
+    typeof meta.sections !== 'object' ||
+    Array.isArray(meta.sections)
+  ) {
+    throw new Error('Invalid shard metadata');
+  }
+  const ranges: [number, number][] = [];
+  for (const [name, section] of Object.entries(meta.sections)) {
+    if (
+      !Array.isArray(section) ||
+      section.length !== 2 ||
+      !section.every(Number.isSafeInteger) ||
+      section[0] < 12 + metaLen ||
+      section[1] < 0 ||
+      section[0] > buf.byteLength - section[1]
+    ) {
+      throw new Error(`Invalid shard section: ${name}`);
+    }
+    if (section[1]) ranges.push([section[0], section[0] + section[1]]);
+  }
+  ranges.sort((a, b) => a[0] - b[0]);
+  for (let i = 1; i < ranges.length; i++) {
+    if (ranges[i][0] < ranges[i - 1][1])
+      throw new Error('Overlapping shard sections');
+  }
   const u8 = (name: string) => {
+    if (!Object.hasOwn(meta.sections, name))
+      throw new Error(`Missing shard section: ${name}`);
     const [off, len] = meta.sections[name];
     return new Uint8Array(buf, off, len);
   };
   const u32 = (name: string) => {
+    if (!Object.hasOwn(meta.sections, name))
+      throw new Error(`Missing shard section: ${name}`);
     const [off, len] = meta.sections[name];
+    if (off % 4 || len % 4) throw new Error(`Unaligned shard section: ${name}`);
     return new Uint32Array(buf, off, len >>> 2);
   };
+  const checkCount = (name: string, length: number, count: number) => {
+    if (length !== count) throw new Error(`Invalid shard count: ${name}`);
+  };
+  const checkOffsets = (
+    name: string,
+    offsets: Uint32Array,
+    count: number,
+    length: number
+  ) => {
+    checkCount(name, offsets.length, count + 1);
+    if (offsets[0] !== 0 || offsets[count] !== length)
+      throw new Error(`Invalid shard offsets: ${name}`);
+    for (let i = 1; i < offsets.length; i++) {
+      if (offsets[i] < offsets[i - 1] || offsets[i] > length)
+        throw new Error(`Invalid shard offsets: ${name}`);
+    }
+  };
+  const tokenBlob = u8('tokenBlob');
+  const tokenOffsets = u32('tokenOffsets');
+  const labelBlob = u8('labelBlob');
+  const labelOffsets = u32('labelOffsets');
+  const codeBlob = u8('codeBlob');
+  const codeOffsets = u32('codeOffsets');
+  const fullidBlob = u8('fullidBlob');
+  const fullidOffsets = u32('fullidOffsets');
   const postStart = u32('postStart');
   const postings = u32('postings');
+  if (meta.postingsCount !== undefined)
+    checkCount('postings', postings.length, meta.postingsCount);
   const docPrior = meta.sections.docPrior ? u8('docPrior') : null;
+  const docCodetype = u8('docCodetype');
+  const docLen = u8('docLen');
+  const docFirstTok = meta.sections.docFirstTok ? u32('docFirstTok') : null;
+  const attributesBlob = meta.sections.attributesBlob
+    ? u8('attributesBlob')
+    : undefined;
+  const attributesOffsets = meta.sections.attributesOffsets
+    ? u32('attributesOffsets')
+    : undefined;
+  if (!!attributesBlob !== !!attributesOffsets)
+    throw new Error('Incomplete shard attributes sections');
+  checkOffsets('tokenOffsets', tokenOffsets, meta.tokenCount, tokenBlob.length);
+  checkOffsets('postStart', postStart, meta.tokenCount, postings.length);
+  checkOffsets('labelOffsets', labelOffsets, meta.docCount, labelBlob.length);
+  checkOffsets('codeOffsets', codeOffsets, meta.docCount, codeBlob.length);
+  checkOffsets(
+    'fullidOffsets',
+    fullidOffsets,
+    meta.docCount,
+    fullidBlob.length
+  );
+  if (attributesBlob && attributesOffsets)
+    checkOffsets(
+      'attributesOffsets',
+      attributesOffsets,
+      meta.docCount,
+      attributesBlob.length
+    );
+  checkCount('docCodetype', docCodetype.length, meta.docCount);
+  checkCount('docLen', docLen.length, meta.docCount);
+  if (docPrior) checkCount('docPrior', docPrior.length, meta.docCount);
+  if (docFirstTok) checkCount('docFirstTok', docFirstTok.length, meta.docCount);
+  for (const posting of postings) {
+    if (posting >>> 1 >= meta.docCount)
+      throw new Error('Invalid shard posting document');
+  }
+  for (let d = 0; d < meta.docCount; d++) {
+    if (docCodetype[d] >= meta.codetypes.length)
+      throw new Error('Invalid shard document codetype');
+    if (
+      docFirstTok &&
+      docFirstTok[d] !== 0xffffffff &&
+      docFirstTok[d] >= meta.tokenCount
+    )
+      throw new Error('Invalid shard first token');
+  }
 
   let tokenPrior: Uint8Array | null = null;
   if (docPrior) {
@@ -202,25 +331,28 @@ export function parseShard(buf: ArrayBuffer): CodifyShard {
 
   return {
     domain: meta.domain,
+    catalog: meta.catalog === true,
+    attributesBlob,
+    attributesOffsets,
     locale: meta.locale ?? 'en',
     docCount: meta.docCount,
     tokenCount: meta.tokenCount,
     codetypes: meta.codetypes,
-    tokenBlob: u8('tokenBlob'),
-    tokenOffsets: u32('tokenOffsets'),
+    tokenBlob,
+    tokenOffsets,
     postStart,
     postings,
-    labelBlob: u8('labelBlob'),
-    labelOffsets: u32('labelOffsets'),
-    codeBlob: u8('codeBlob'),
-    codeOffsets: u32('codeOffsets'),
-    fullidBlob: u8('fullidBlob'),
-    fullidOffsets: u32('fullidOffsets'),
-    docCodetype: u8('docCodetype'),
-    docLen: u8('docLen'),
+    labelBlob,
+    labelOffsets,
+    codeBlob,
+    codeOffsets,
+    fullidBlob,
+    fullidOffsets,
+    docCodetype,
+    docLen,
     docPrior,
     tokenPrior,
-    docFirstTok: meta.sections.docFirstTok ? u32('docFirstTok') : null,
+    docFirstTok,
     scoreBuf: new Float32Array(meta.docCount),
     maskBuf: new Uint8Array(meta.docCount),
     aliasBuf: new Uint8Array(meta.docCount),
@@ -350,6 +482,91 @@ export interface SearchOptions {
   collapse?: boolean;
   boostCodetypes?: string[];
   billableOnly?: boolean;
+  /** Generic catalogs bypass medical ranking/code paths. */
+  catalog?: boolean;
+  /** Applied to postings before candidate scoring or truncation. */
+  acceptDoc?: (shard: CodifyShard, doc: number) => boolean;
+}
+
+function attributesAt(
+  s: CodifyShard,
+  d: number
+): Record<string, string> | undefined {
+  if (!s.attributesBlob || !s.attributesOffsets) return undefined;
+  const cached = s.attributesCache?.get(d);
+  if (cached) return cached;
+  const text = td.decode(
+    s.attributesBlob.subarray(
+      s.attributesOffsets[d],
+      s.attributesOffsets[d + 1]
+    )
+  );
+  const attributes: unknown = text ? JSON.parse(text) : {};
+  if (
+    !attributes ||
+    typeof attributes !== 'object' ||
+    Array.isArray(attributes) ||
+    !Object.values(attributes).every((v) => typeof v === 'string')
+  )
+    throw new Error('Invalid catalog attributes');
+  const result = attributes as Record<string, string>;
+  (s.attributesCache ??= new Map()).set(d, result);
+  return result;
+}
+
+/** Search a generic catalog without rewriting or sharing saved selections. */
+export function searchCatalog(
+  shard: CodifyShard,
+  query: string,
+  filters: Record<string, string>,
+  limit = 20
+): CatalogOption[] {
+  if (!shard.catalog) throw new Error('Not a catalog shard');
+  if (!Number.isFinite(limit) || limit < 0)
+    throw new Error('Invalid catalog limit');
+  limit = Math.min(Math.floor(limit), shard.docCount);
+  if (!limit) return [];
+  const entries = Object.entries(filters).filter(([, value]) => value !== '');
+  // Resolve eligibility before touching reusable scoring buffers, even if a
+  // malformed lazy attribute throws. Neutral/missing attributes pass through.
+  const eligible = new Uint8Array(shard.docCount);
+  for (let d = 0; d < shard.docCount; d++) {
+    const attrs = entries.length ? attributesAt(shard, d) : undefined;
+    eligible[d] = entries.every(([key, value]) => {
+      const actual =
+        attrs && Object.hasOwn(attrs, key) ? attrs[key] : undefined;
+      return !actual || actual === value;
+    })
+      ? 1
+      : 0;
+  }
+  const opts: SearchOptions = {
+    catalog: true,
+    acceptDoc: (_, d) => eligible[d] === 1,
+  };
+  let results: CodifyResult[];
+  if (normalize(query)) {
+    try {
+      results = searchShards([shard], query, limit, false, opts);
+    } catch (error) {
+      // A malformed lazily decoded attribute must not poison the next search.
+      shard.scoreBuf.fill(0);
+      shard.maskBuf.fill(0);
+      shard.aliasBuf.fill(0);
+      shard.fuzzyBuf.fill(0);
+      throw error;
+    }
+  } else {
+    results = [];
+    for (let d = 0; d < shard.docCount && results.length < limit; d++) {
+      if (eligible[d]) pushResult(results, shard, d, 0, false, false, limit);
+    }
+  }
+  return results.map((r) => ({
+    id: r.fullid,
+    value: r.label,
+    ...(r.attributes ? { attributes: { ...r.attributes } } : {}),
+  }));
 }
 
 const CODETYPE_BOOST = 3;
@@ -462,7 +679,7 @@ export function searchShards(
     .split(' ')
     .filter(Boolean)
     .slice(0, MAX_QUERY_TOKENS);
-  const codeQ = codeQueryKey(query);
+  const codeQ = opts?.catalog ? null : codeQueryKey(query);
   if (qTokens.length === 0 && !codeQ) return [];
   let results: CodifyResult[] = [];
 
@@ -530,17 +747,19 @@ function searchShard(
     let penalty = 1;
     let expansions: number[] | null = null;
     if (lo >= hi && q.length >= 3) {
-      expansions = fuzzyCandidates(s, q, 8);
+      expansions = fuzzyCandidates(s, q, opts?.catalog ? s.tokenCount : 8);
       penalty = 0.6;
       if (expansions.length === 0) return bail();
     } else if (lo >= hi) {
       return bail();
-    } else if (hi - lo > MAX_EXPANSIONS && s.tokenPrior) {
+    } else if (!opts?.catalog && hi - lo > MAX_EXPANSIONS && s.tokenPrior) {
       expansions = topPriorTokens(s, lo, hi, MAX_EXPANSIONS);
     }
 
     const count = expansions
       ? expansions.length
+      : opts?.catalog
+      ? hi - lo
       : Math.min(hi - lo, MAX_EXPANSIONS);
     for (let e = 0; e < count; e++) {
       const t = expansions ? expansions[e] : lo + e;
@@ -556,6 +775,7 @@ function searchShard(
         const v = s.postings[p];
         const d = v >>> 1;
         const alias = v & 1;
+        if (opts?.acceptDoc && !opts.acceptDoc(s, d)) continue;
         if (maskBuf[d] & bit) continue;
         if (qi > 0 && maskBuf[d] === 0) continue;
         if (maskBuf[d] === 0) s.touched[touchedCount++] = d;
@@ -588,7 +808,7 @@ function searchShard(
     const d = s.touched[i];
     if (maskBuf[d] === fullMask && (!billable || billable[d] === 1)) {
       const lenNorm = 1 / (1 + 0.25 * Math.max(0, s.docLen[d] - 1));
-      const prior = s.docPrior ? s.docPrior[d] / 255 : 0;
+      const prior = !opts?.catalog && s.docPrior ? s.docPrior[d] / 255 : 0;
       const leading =
         firstTok && firstTok[d] >= firstLo && firstTok[d] < firstHi;
       const score =
@@ -663,6 +883,7 @@ function pushResult(
     out.splice(minI, 1);
   }
   out.push({
+    ...(s.catalog ? { attributes: attributesAt(s, d) } : {}),
     fullid: td.decode(
       s.fullidBlob.subarray(s.fullidOffsets[d], s.fullidOffsets[d + 1])
     ),
