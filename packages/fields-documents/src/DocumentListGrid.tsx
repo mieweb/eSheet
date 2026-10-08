@@ -127,6 +127,11 @@ export type DocumentListFieldHost = Pick<
   | 'error'
 > & {
   readonly onCompose?: DocumentListFieldAction;
+  readonly registerComposeAction?: (
+    fieldId: string,
+    compose: (() => void) | undefined
+  ) => () => void;
+  readonly onComposeDirtyChange?: (dirty: boolean) => void;
   readonly onUpload?: DocumentListFieldAction;
   /** @deprecated PDF preview is handled natively by DocumentListField. */
   readonly onDownloadPdf?: DocumentListPrintAction;
@@ -209,7 +214,9 @@ export function DocumentListFieldProvider({
   return (
     <DocumentListFieldHostContext.Provider value={host}>
       <DocumentListRuntimeContext.Provider value={runtimeContext}>
-        <ComposerSessionProvider>{children}</ComposerSessionProvider>
+        <ComposerSessionProvider onDirtyChange={host.onComposeDirtyChange}>
+          {children}
+        </ComposerSessionProvider>
       </DocumentListRuntimeContext.Provider>
     </DocumentListFieldHostContext.Provider>
   );

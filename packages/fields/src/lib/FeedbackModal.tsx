@@ -1,5 +1,5 @@
 import { ZodIssuesPanel } from './ZodIssuesPanel.js';
-import type { ReactNode } from 'react';
+import { useEffect, useId, useRef, type ReactNode } from 'react';
 
 export type FeedbackModalVariant = 'info' | 'success' | 'warning' | 'error';
 
@@ -46,18 +46,50 @@ export function FeedbackModal({
   onConfirm,
   onClose,
 }: FeedbackModalProps) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  const cancelButton = useRef<HTMLButtonElement>(null);
+  const titleId = useId();
+  const messageId = useId();
+
+  useEffect(() => {
+    const element = dialog.current;
+    if (!open || !element) return;
+    const previousFocus = document.activeElement;
+    element.showModal();
+    cancelButton.current?.focus();
+    return () => {
+      element.close();
+      if (previousFocus instanceof HTMLElement && previousFocus.isConnected) {
+        previousFocus.focus();
+      }
+    };
+  }, [open]);
+
   if (!open) return null;
 
   return (
-    <div
-      className="feedback-modal-overlay ms:fixed ms:inset-0 ms:z-50 ms:flex ms:items-center ms:justify-center ms:bg-msoverlay ms:px-4 ms:py-8"
+    <dialog
+      ref={dialog}
+      className="feedback-modal-overlay ms:fixed ms:inset-0 ms:m-0 ms:h-full ms:w-full ms:max-h-none ms:max-w-none ms:border-0 ms:z-50 ms:flex ms:items-center ms:justify-center ms:bg-msoverlay ms:px-4 ms:py-8"
       role="dialog"
       aria-modal="true"
-      aria-label={title}
+      aria-labelledby={titleId}
+      aria-describedby={messageId}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          event.stopPropagation();
+          onClose();
+        }
+      }}
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
       onClick={onClose}
     >
       <div
-        className="feedback-modal-content ms:w-full ms:max-w-2xl ms:rounded-xl ms:bg-mssurface ms:border ms:border-msborder ms:shadow-2xl ms:p-5"
+        className="feedback-modal-content ms:w-full ms:max-w-2xl ms:max-h-full ms:overflow-auto ms:rounded-xl ms:bg-mssurface ms:border ms:border-msborder ms:shadow-2xl ms:p-5"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="ms:flex ms:items-start ms:gap-3 ms:mb-3">
@@ -67,10 +99,16 @@ export function FeedbackModal({
             i
           </div>
           <div className="ms:min-w-0">
-            <h3 className="ms:text-base ms:font-semibold ms:text-mstext">
+            <h3
+              id={titleId}
+              className="ms:text-base ms:font-semibold ms:text-mstext"
+            >
               {title}
             </h3>
-            <p className="ms:text-sm ms:text-mstextmuted ms:mt-1 ms:whitespace-pre-wrap">
+            <p
+              id={messageId}
+              className="ms:text-sm ms:text-mstextmuted ms:mt-1 ms:whitespace-pre-wrap"
+            >
               {message}
             </p>
           </div>
@@ -102,12 +140,13 @@ export function FeedbackModal({
 
         {content}
 
-        <div className="ms:mt-4 ms:flex ms:justify-end ms:gap-2">
+        <div className="ms:mt-4 ms:flex ms:flex-wrap ms:justify-end ms:gap-2">
           {showCancel && (
             <button
+              ref={cancelButton}
               type="button"
               onClick={onClose}
-              className="ms:px-4 ms:py-2 ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:text-sm ms:font-medium ms:hover:bg-msbackground ms:transition-colors ms:outline-none ms:focus:outline-none ms:cursor-pointer"
+              className="ms:px-4 ms:py-2 ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:text-sm ms:font-medium ms:hover:bg-msbackground ms:transition-colors ms:focus-visible:outline-2 ms:focus-visible:outline-offset-2 ms:focus-visible:outline-msprimary ms:cursor-pointer"
             >
               {cancelLabel}
             </button>
@@ -115,12 +154,12 @@ export function FeedbackModal({
           <button
             type="button"
             onClick={onConfirm ?? onClose}
-            className="ms:px-4 ms:py-2 ms:rounded-lg ms:bg-msprimary ms:text-mstextsecondary ms:text-sm ms:font-medium ms:hover:bg-msprimary/90 ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none ms:cursor-pointer"
+            className="ms:px-4 ms:py-2 ms:rounded-lg ms:bg-msprimary ms:text-mstextsecondary ms:text-sm ms:font-medium ms:hover:bg-msprimary/90 ms:transition-colors ms:border-0 ms:focus-visible:outline-2 ms:focus-visible:outline-offset-2 ms:focus-visible:outline-msprimary ms:cursor-pointer"
           >
             {confirmLabel}
           </button>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }

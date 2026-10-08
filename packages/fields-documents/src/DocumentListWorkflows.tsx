@@ -14,6 +14,7 @@ import {
   type KerebronEditorHandle,
 } from '@esheet/field-kerebron';
 import {
+  FeedbackModal,
   fileMatchesAccept,
   formatFileSize,
   getFileMetadata,
@@ -109,6 +110,7 @@ export interface DocumentListWorkflowPanelProps {
    */
   readonly draft?: DocumentListComposeDraft;
   readonly onDraftChange?: (draft: DocumentListComposeDraft) => void;
+  readonly onDirtyChange?: (dirty: boolean) => void;
 }
 
 /** Compose asks for the columns the list shows — title included, so a field
@@ -241,6 +243,7 @@ export function DocumentListWorkflowPanel({
   dockSummary,
 }: DocumentListWorkflowShellProps): React.JSX.Element {
   const panelRef = useRef<HTMLDivElement>(null);
+  const [discardRequested, setDiscardRequested] = useState(false);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
   const onModeChangeRef = useRef(onModeChange);
@@ -253,8 +256,8 @@ export function DocumentListWorkflowPanel({
   const docked = dockable && mode === 'docked';
 
   const requestClose = (): void => {
-    const view = panelRef.current?.ownerDocument.defaultView;
-    if (dirty && view?.confirm && !view.confirm(`Discard this ${title}?`)) {
+    if (dirty) {
+      setDiscardRequested(true);
       return;
     }
     onClose();
@@ -265,6 +268,10 @@ export function DocumentListWorkflowPanel({
       if (event.key !== 'Escape') return;
       if (dockable && dirtyRef.current && modeRef.current === 'full') {
         onModeChangeRef.current?.('docked');
+        return;
+      }
+      if (dirtyRef.current) {
+        setDiscardRequested(true);
         return;
       }
       onCloseRef.current();
@@ -390,6 +397,20 @@ export function DocumentListWorkflowPanel({
             {children}
           </div>
         </div>
+        <FeedbackModal
+          open={discardRequested}
+          title="Discard draft?"
+          message={`Discard this ${title}?`}
+          variant="warning"
+          showCancel
+          cancelLabel="Keep editing"
+          confirmLabel="Discard draft"
+          onClose={() => setDiscardRequested(false)}
+          onConfirm={() => {
+            setDiscardRequested(false);
+            onClose();
+          }}
+        />
       </div>
       <p className="document-list-workflow__announcer" aria-live="polite">
         {docked ? `${title} collapsed to dock` : ''}
@@ -418,6 +439,7 @@ export function DocumentListComposePanel({
   onModeChange,
   draft,
   onDraftChange,
+  onDirtyChange,
 }: DocumentListWorkflowPanelProps): React.JSX.Element | null {
   const defaultDocType = composeDefaultDocType(docTypes);
   const [localDraft, setLocalDraft] = useState<DocumentListComposeDraft>(
@@ -456,6 +478,9 @@ export function DocumentListComposePanel({
   const dirty = definition
     ? definitionDirty || activeDraft.docType !== defaultDocType
     : isComposeDraftDirty(activeDraft, defaultDocType);
+  useEffect(() => {
+    onDirtyChange?.(dirty);
+  }, [dirty, onDirtyChange]);
   const requiredLabels = [
     ...(asksTitle ? ['Title'] : []),
     ...(asksSubject ? ['Subject'] : []),
