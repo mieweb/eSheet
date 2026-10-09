@@ -237,7 +237,7 @@ describe('the docked composer', () => {
         />
       );
       await typeDraft('Keep this draft until confirmed.');
-      fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
       expect(
         screen.getByRole('dialog', { name: 'Discard draft?' })
       ).toBeTruthy();

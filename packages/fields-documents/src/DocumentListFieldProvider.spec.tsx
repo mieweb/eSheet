@@ -15,6 +15,27 @@ vi.mock('./DocumentListPdfPreview.js', () => ({
   DocumentListPdfPreview: () => null,
 }));
 
+vi.mock('./FeedbackModal.js', () => ({
+  FeedbackModal: ({
+    open,
+    title,
+    confirmLabel,
+    onConfirm,
+  }: {
+    open: boolean;
+    title: string;
+    confirmLabel: string;
+    onConfirm: () => void;
+  }) =>
+    open ? (
+      <div role="dialog" aria-label={title}>
+        <button type="button" onClick={onConfirm}>
+          {confirmLabel}
+        </button>
+      </div>
+    ) : null,
+}));
+
 vi.mock('@mieweb/ui/datavis', () => ({
   DataVisNitroContext: {
     Provider: ({ children }: { children: ReactNode }) => children,
@@ -211,6 +232,47 @@ describe('DocumentListFieldProvider', () => {
     expect(screen.getByText('Visit note')).toBeTruthy();
     expect((screen.getByLabelText(/^Title/) as HTMLInputElement).value).toBe(
       'Visit note'
+    );
+  });
+
+  it('reports composer dirty state until the draft is discarded', async () => {
+    const formStore = createFormStore();
+    const onComposeDirtyChange = vi.fn();
+    const fieldProps = {
+      field: {
+        definition: { id: 'documents', question: 'Documents' },
+      },
+      form: formStore,
+      response: undefined,
+    } as unknown as FieldComponentProps;
+    render(
+      <FormStoreContext.Provider value={formStore}>
+        <DocumentListFieldProvider
+          host={{
+            capabilities: permissiveDocumentListCapabilities,
+            onComposeDirtyChange,
+          }}
+        >
+          <DocumentListField {...fieldProps} />
+        </DocumentListFieldProvider>
+      </FormStoreContext.Provider>
+    );
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Compose document' })
+    );
+    fireEvent.change(await screen.findByLabelText(/^Title/), {
+      target: { value: 'Visit note' },
+    });
+    await waitFor(() =>
+      expect(onComposeDirtyChange).toHaveBeenLastCalledWith(true)
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Discard draft' }));
+
+    await waitFor(() =>
+      expect(onComposeDirtyChange).toHaveBeenLastCalledWith(false)
     );
   });
 });
