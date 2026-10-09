@@ -131,7 +131,7 @@ export type DocumentListFieldHost = Pick<
     fieldId: string,
     compose: (() => void) | undefined
   ) => () => void;
-  readonly onComposeDirtyChange?: (dirty: boolean) => void;
+  readonly onComposeDirtyChange?: (dirty: boolean, fieldId?: string) => void;
   readonly onUpload?: DocumentListFieldAction;
   /** @deprecated PDF preview is handled natively by DocumentListField. */
   readonly onDownloadPdf?: DocumentListPrintAction;

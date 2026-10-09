@@ -269,14 +269,14 @@ describe('DocumentListFieldProvider', () => {
       target: { value: 'Visit note' },
     });
     await waitFor(() =>
-      expect(onComposeDirtyChange).toHaveBeenLastCalledWith(true)
+      expect(onComposeDirtyChange).toHaveBeenLastCalledWith(true, 'documents')
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     fireEvent.click(screen.getByRole('button', { name: 'Discard draft' }));
 
     await waitFor(() =>
-      expect(onComposeDirtyChange).toHaveBeenLastCalledWith(false)
+      expect(onComposeDirtyChange).toHaveBeenLastCalledWith(false, undefined)
     );
   });
 });

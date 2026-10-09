@@ -248,14 +248,15 @@ export function ComposerSessionProvider({
   onDirtyChange,
 }: {
   readonly children: ReactNode;
-  readonly onDirtyChange?: (dirty: boolean) => void;
+  readonly onDirtyChange?: (dirty: boolean, fieldId?: string) => void;
 }): React.JSX.Element {
   const value = useComposerSessionValue();
   const dirty = value.session !== null && sessionIsDirty(value.session);
+  const fieldId = value.session?.fieldId;
   useEffect(() => {
-    onDirtyChange?.(dirty);
+    onDirtyChange?.(dirty, fieldId);
     return () => onDirtyChange?.(false);
-  }, [dirty, onDirtyChange]);
+  }, [dirty, fieldId, onDirtyChange]);
   return (
     <ComposerSessionContext.Provider value={value}>
       {children}
