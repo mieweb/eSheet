@@ -124,6 +124,25 @@ describe('compose panel in draft mode (ED.37)', () => {
   beforeEach(() => {
     editorProps.length = 0;
     editorValues.length = 0;
+    Object.defineProperties(HTMLDialogElement.prototype, {
+      showModal: {
+        configurable: true,
+        value: function (this: HTMLDialogElement) {
+          this.open = true;
+        },
+      },
+      close: {
+        configurable: true,
+        value: function (this: HTMLDialogElement) {
+          this.open = false;
+        },
+      },
+    });
+  });
+
+  afterEach(() => {
+    Reflect.deleteProperty(HTMLDialogElement.prototype, 'showModal');
+    Reflect.deleteProperty(HTMLDialogElement.prototype, 'close');
   });
 
   it('creates the direct editor without seeding a joiner draft', async () => {
@@ -188,6 +207,7 @@ describe('compose panel in draft mode (ED.37)', () => {
       target: { value: 'Half-written' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Discard draft' }));
 
     expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(draft.closed()).toBe(1);

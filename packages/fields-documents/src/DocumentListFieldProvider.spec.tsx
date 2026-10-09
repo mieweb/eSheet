@@ -15,26 +15,30 @@ vi.mock('./DocumentListPdfPreview.js', () => ({
   DocumentListPdfPreview: () => null,
 }));
 
-vi.mock('./FeedbackModal.js', () => ({
-  FeedbackModal: ({
-    open,
-    title,
-    confirmLabel,
-    onConfirm,
-  }: {
-    open: boolean;
-    title: string;
-    confirmLabel: string;
-    onConfirm: () => void;
-  }) =>
-    open ? (
-      <div role="dialog" aria-label={title}>
-        <button type="button" onClick={onConfirm}>
-          {confirmLabel}
-        </button>
-      </div>
-    ) : null,
-}));
+vi.mock('@esheet/fields', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@esheet/fields')>();
+  return {
+    ...actual,
+    FeedbackModal: ({
+      open,
+      title,
+      confirmLabel,
+      onConfirm,
+    }: {
+      open: boolean;
+      title: string;
+      confirmLabel: string;
+      onConfirm: () => void;
+    }) =>
+      open ? (
+        <div role="dialog" aria-label={title}>
+          <button type="button" onClick={onConfirm}>
+            {confirmLabel}
+          </button>
+        </div>
+      ) : null,
+  };
+});
 
 vi.mock('@mieweb/ui/datavis', () => ({
   DataVisNitroContext: {
