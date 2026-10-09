@@ -14,6 +14,7 @@ import {
   type KerebronEditorHandle,
 } from '@esheet/field-kerebron';
 import {
+  FeedbackModal,
   fileMatchesAccept,
   formatFileSize,
   getFileMetadata,
@@ -109,6 +110,7 @@ export interface DocumentListWorkflowPanelProps {
    */
   readonly draft?: DocumentListComposeDraft;
   readonly onDraftChange?: (draft: DocumentListComposeDraft) => void;
+  readonly onDirtyChange?: (dirty: boolean) => void;
 }
 
 /** Compose asks for the columns the list shows — title included, so a field
@@ -219,7 +221,7 @@ const DocumentListComposeEditor = forwardRef<
 export interface DocumentListWorkflowShellProps {
   readonly onClose: () => void;
   readonly title: string;
-  readonly children: ReactNode;
+  readonly children: ReactNode | ((requestClose: () => void) => ReactNode);
   readonly size?: 'md' | 'xl';
   readonly mode?: DocumentListWorkflowMode;
   /** Supplying this makes the panel dockable; omitting it keeps it modal. */
@@ -241,6 +243,7 @@ export function DocumentListWorkflowPanel({
   dockSummary,
 }: DocumentListWorkflowShellProps): React.JSX.Element {
   const panelRef = useRef<HTMLDivElement>(null);
+  const [discardRequested, setDiscardRequested] = useState(false);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
   const onModeChangeRef = useRef(onModeChange);
@@ -253,8 +256,8 @@ export function DocumentListWorkflowPanel({
   const docked = dockable && mode === 'docked';
 
   const requestClose = (): void => {
-    const view = panelRef.current?.ownerDocument.defaultView;
-    if (dirty && view?.confirm && !view.confirm(`Discard this ${title}?`)) {
+    if (dirty) {
+      setDiscardRequested(true);
       return;
     }
     onClose();
@@ -265,6 +268,10 @@ export function DocumentListWorkflowPanel({
       if (event.key !== 'Escape') return;
       if (dockable && dirtyRef.current && modeRef.current === 'full') {
         onModeChangeRef.current?.('docked');
+        return;
+      }
+      if (dirtyRef.current) {
+        setDiscardRequested(true);
         return;
       }
       onCloseRef.current();
@@ -387,9 +394,23 @@ export function DocumentListWorkflowPanel({
             </div>
           </div>
           <div className="document-list-workflow-panel__content">
-            {children}
+            {typeof children === 'function' ? children(requestClose) : children}
           </div>
         </div>
+        <FeedbackModal
+          open={discardRequested}
+          title="Discard draft?"
+          message={`Discard this ${title}?`}
+          variant="warning"
+          showCancel
+          cancelLabel="Keep editing"
+          confirmLabel="Discard draft"
+          onClose={() => setDiscardRequested(false)}
+          onConfirm={() => {
+            setDiscardRequested(false);
+            onClose();
+          }}
+        />
       </div>
       <p className="document-list-workflow__announcer" aria-live="polite">
         {docked ? `${title} collapsed to dock` : ''}
@@ -418,6 +439,7 @@ export function DocumentListComposePanel({
   onModeChange,
   draft,
   onDraftChange,
+  onDirtyChange,
 }: DocumentListWorkflowPanelProps): React.JSX.Element | null {
   const defaultDocType = composeDefaultDocType(docTypes);
   const [localDraft, setLocalDraft] = useState<DocumentListComposeDraft>(
@@ -456,6 +478,9 @@ export function DocumentListComposePanel({
   const dirty = definition
     ? definitionDirty || activeDraft.docType !== defaultDocType
     : isComposeDraftDirty(activeDraft, defaultDocType);
+  useEffect(() => {
+    onDirtyChange?.(dirty);
+  }, [dirty, onDirtyChange]);
   const requiredLabels = [
     ...(asksTitle ? ['Title'] : []),
     ...(asksSubject ? ['Subject'] : []),
@@ -794,179 +819,183 @@ export function DocumentListComposePanel({
         </>
       }
     >
-      <form
-        className="document-list-workflow-panel__form"
-        onSubmit={handleSubmit}
-        noValidate
-      >
-        <div className="document-list-workflow-panel__body document-list-workflow-panel__body--compose">
-          {appendMode && (
-            <fieldset className="document-list-workflow__append-shape">
-              <legend>Append as</legend>
-              <label>
-                <input
-                  type="radio"
-                  name={inputId(inputPrefix, 'append-shape')}
-                  checked={appendShape === 'revision'}
-                  onChange={() => setAppendShape('revision')}
-                  disabled={saving}
-                />
-                A new revision — this {noun} should now read differently
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  name={inputId(inputPrefix, 'append-shape')}
-                  checked={appendShape === 'linked'}
-                  onChange={() => setAppendShape('linked')}
-                  disabled={saving}
-                />
-                A linked {noun} — further information; the original stays
-                untouched
-              </label>
-            </fieldset>
-          )}
-          <div className="document-list-workflow-panel__meta">
-            {!definition && asksTitle && (
-              <Input
-                id={inputId(inputPrefix, 'compose-title')}
-                label="Title"
-                value={activeDraft.title}
-                onChange={(event) => updateDraft({ title: event.target.value })}
-                disabled={saving}
-                required
-              />
+      {(requestClose) => (
+        <form
+          className="document-list-workflow-panel__form"
+          onSubmit={handleSubmit}
+          noValidate
+        >
+          <div className="document-list-workflow-panel__body document-list-workflow-panel__body--compose">
+            {appendMode && (
+              <fieldset className="document-list-workflow__append-shape">
+                <legend>Append as</legend>
+                <label>
+                  <input
+                    type="radio"
+                    name={inputId(inputPrefix, 'append-shape')}
+                    checked={appendShape === 'revision'}
+                    onChange={() => setAppendShape('revision')}
+                    disabled={saving}
+                  />
+                  A new revision — this {noun} should now read differently
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name={inputId(inputPrefix, 'append-shape')}
+                    checked={appendShape === 'linked'}
+                    onChange={() => setAppendShape('linked')}
+                    disabled={saving}
+                  />
+                  A linked {noun} — further information; the original stays
+                  untouched
+                </label>
+              </fieldset>
             )}
-            {!definition && asksSubject && (
-              <Input
-                id={inputId(inputPrefix, 'compose-subject')}
-                label="Subject"
-                value={activeDraft.subject}
-                onChange={(event) =>
-                  updateDraft({ subject: event.target.value })
-                }
-                disabled={saving}
-                required
-              />
-            )}
-            {asksDocType &&
-              (docTypes?.length ? (
-                // Native select, but wearing @mieweb/ui's Select slots so
-                // condensed/touch density reaches it like it does the Inputs.
-                <div
-                  className="document-list-workflow__field"
-                  data-slot="select-wrapper"
-                >
-                  <label
-                    htmlFor={inputId(inputPrefix, 'compose-type')}
-                    data-slot="select-label"
+            <div className="document-list-workflow-panel__meta">
+              {!definition && asksTitle && (
+                <Input
+                  id={inputId(inputPrefix, 'compose-title')}
+                  label="Title"
+                  value={activeDraft.title}
+                  onChange={(event) =>
+                    updateDraft({ title: event.target.value })
+                  }
+                  disabled={saving}
+                  required
+                />
+              )}
+              {!definition && asksSubject && (
+                <Input
+                  id={inputId(inputPrefix, 'compose-subject')}
+                  label="Subject"
+                  value={activeDraft.subject}
+                  onChange={(event) =>
+                    updateDraft({ subject: event.target.value })
+                  }
+                  disabled={saving}
+                  required
+                />
+              )}
+              {asksDocType &&
+                (docTypes?.length ? (
+                  // Native select, but wearing @mieweb/ui's Select slots so
+                  // condensed/touch density reaches it like it does the Inputs.
+                  <div
+                    className="document-list-workflow__field"
+                    data-slot="select-wrapper"
                   >
-                    {docTypeLabel}
-                  </label>
-                  <select
+                    <label
+                      htmlFor={inputId(inputPrefix, 'compose-type')}
+                      data-slot="select-label"
+                    >
+                      {docTypeLabel}
+                    </label>
+                    <select
+                      id={inputId(inputPrefix, 'compose-type')}
+                      className="document-list-workflow__select"
+                      data-slot="select-trigger"
+                      value={activeDraft.docType}
+                      onChange={(event) =>
+                        updateDraft({ docType: event.target.value })
+                      }
+                      disabled={saving}
+                      required
+                    >
+                      {docTypes.map((option) => (
+                        <option key={option.id} value={option.id}>
+                          {option.label ?? option.id}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : (
+                  <Input
                     id={inputId(inputPrefix, 'compose-type')}
-                    className="document-list-workflow__select"
-                    data-slot="select-trigger"
+                    label={docTypeLabel}
                     value={activeDraft.docType}
                     onChange={(event) =>
                       updateDraft({ docType: event.target.value })
                     }
                     disabled={saving}
                     required
+                  />
+                ))}
+            </div>
+            <div className="document-list-workflow__field document-list-workflow__field--grow">
+              {definition ? (
+                awaitingTemplate ? (
+                  <p role="status">Preparing the template…</p>
+                ) : (
+                  <DocumentListDefinitionForm
+                    // Switching type swaps the form, and with it the store.
+                    key={activeDraft.docType}
+                    ref={definitionRef}
+                    definition={definition}
+                    docType={activeDraft.docType}
+                    definitionVersion={selectedType?.definitionVersion}
+                    onDirtyChange={setDefinitionDirty}
+                    draft={documentDraft}
+                    initialResponses={definitionPrefill?.responses}
+                    initialBody={
+                      definitionPrefill?.body ?? templateBody ?? undefined
+                    }
+                  />
+                )
+              ) : (
+                <>
+                  <label
+                    id={inputId(inputPrefix, 'compose-note-label')}
+                    htmlFor={inputId(inputPrefix, 'compose-note')}
                   >
-                    {docTypes.map((option) => (
-                      <option key={option.id} value={option.id}>
-                        {option.label ?? option.id}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              ) : (
-                <Input
-                  id={inputId(inputPrefix, 'compose-type')}
-                  label={docTypeLabel}
-                  value={activeDraft.docType}
-                  onChange={(event) =>
-                    updateDraft({ docType: event.target.value })
-                  }
-                  disabled={saving}
-                  required
-                />
-              ))}
-          </div>
-          <div className="document-list-workflow__field document-list-workflow__field--grow">
-            {definition ? (
-              awaitingTemplate ? (
-                <p role="status">Preparing the template…</p>
-              ) : (
-                <DocumentListDefinitionForm
-                  // Switching type swaps the form, and with it the store.
-                  key={activeDraft.docType}
-                  ref={definitionRef}
-                  definition={definition}
-                  docType={activeDraft.docType}
-                  definitionVersion={selectedType?.definitionVersion}
-                  onDirtyChange={setDefinitionDirty}
-                  draft={documentDraft}
-                  initialResponses={definitionPrefill?.responses}
-                  initialBody={
-                    definitionPrefill?.body ?? templateBody ?? undefined
-                  }
-                />
-              )
-            ) : (
-              <>
-                <label
-                  id={inputId(inputPrefix, 'compose-note-label')}
-                  htmlFor={inputId(inputPrefix, 'compose-note')}
-                >
-                  Note
-                </label>
-                <DocumentListComposeEditor
-                  ref={editorRef}
-                  id={inputId(inputPrefix, 'compose-note')}
-                  ariaLabel="Note"
-                  labelledBy={inputId(inputPrefix, 'compose-note-label')}
-                  // Joiners must not seed the shared body: only the opener's
-                  // prefill loads; after that the CRDT owns the content.
-                  value={
-                    documentDraft && !documentDraft.isNew
-                      ? ''
-                      : activeDraft.note
-                  }
-                  onChange={(note) => updateDraft({ note })}
-                  disabled={saving}
-                  collab={documentDraft?.body}
-                />
-              </>
+                    Note
+                  </label>
+                  <DocumentListComposeEditor
+                    ref={editorRef}
+                    id={inputId(inputPrefix, 'compose-note')}
+                    ariaLabel="Note"
+                    labelledBy={inputId(inputPrefix, 'compose-note-label')}
+                    // Joiners must not seed the shared body: only the opener's
+                    // prefill loads; after that the CRDT owns the content.
+                    value={
+                      documentDraft && !documentDraft.isNew
+                        ? ''
+                        : activeDraft.note
+                    }
+                    onChange={(note) => updateDraft({ note })}
+                    disabled={saving}
+                    collab={documentDraft?.body}
+                  />
+                </>
+              )}
+            </div>
+            {error && (
+              <p className="document-list-workflow__error" role="alert">
+                {error}
+              </p>
             )}
           </div>
-          {error && (
-            <p className="document-list-workflow__error" role="alert">
-              {error}
-            </p>
-          )}
-        </div>
-        <div className="document-list-workflow-panel__footer">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => handleOpenChange(false)}
-            disabled={saving}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            size="sm"
-            disabled={saving || remoteDiscard}
-          >
-            {saving ? 'Saving…' : `Save ${noun}`}
-          </Button>
-        </div>
-      </form>
+          <div className="document-list-workflow-panel__footer">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={requestClose}
+              disabled={saving}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              size="sm"
+              disabled={saving || remoteDiscard}
+            >
+              {saving ? 'Saving…' : `Save ${noun}`}
+            </Button>
+          </div>
+        </form>
+      )}
     </DocumentListWorkflowPanel>
   );
 }

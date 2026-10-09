@@ -1,6 +1,8 @@
 import {
   createContext,
+  useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -50,6 +52,7 @@ export interface ComposerSession {
   readonly runtime: DocumentListRuntimeState;
   readonly config: ComposerSessionConfig;
   readonly draft: DocumentListComposeDraft;
+  readonly contentDirty?: boolean;
   /** The shared draft this session edits (ED.36/37); absent when composing new. */
   readonly documentDraft?: DocumentDraft;
   /** The row the shared draft revises. */
@@ -88,6 +91,7 @@ export interface ComposerSessionValue {
   }) => void;
   readonly setMode: (mode: DocumentListWorkflowMode) => void;
   readonly setDraft: (draft: DocumentListComposeDraft) => void;
+  readonly setContentDirty: (dirty: boolean) => void;
   readonly close: () => void;
 }
 
@@ -95,9 +99,12 @@ const ComposerSessionContext = createContext<ComposerSessionValue | null>(null);
 
 function sessionIsDirty(session: ComposerSession): boolean {
   if (session.kind !== 'compose') return false;
-  return isComposeDraftDirty(
-    session.draft,
-    composeDefaultDocType(session.config.docTypes)
+  return (
+    Boolean(session.contentDirty) ||
+    isComposeDraftDirty(
+      session.draft,
+      composeDefaultDocType(session.config.docTypes)
+    )
   );
 }
 
@@ -108,10 +115,18 @@ function sessionIsDirty(session: ComposerSession): boolean {
 export function useComposerSessionValue(): ComposerSessionValue {
   const [session, setSession] = useState<ComposerSession | null>(null);
   const nextIdRef = useRef(0);
+  const setContentDirty = useCallback((contentDirty: boolean) => {
+    setSession((current) =>
+      current && current.contentDirty !== contentDirty
+        ? { ...current, contentDirty }
+        : current
+    );
+  }, []);
 
   return useMemo<ComposerSessionValue>(
     () => ({
       session,
+      setContentDirty,
       open: ({
         kind,
         fieldId,
@@ -158,7 +173,7 @@ export function useComposerSessionValue(): ComposerSessionValue {
         setSession((current) => (current ? { ...current, draft } : current)),
       close: () => setSession(null),
     }),
-    [session]
+    [session, setContentDirty]
   );
 }
 
@@ -175,7 +190,7 @@ export function ComposerSessionOverlay({
 }: {
   readonly value: ComposerSessionValue;
 }): React.JSX.Element | null {
-  const { session, setMode, setDraft, close } = value;
+  const { session, setMode, setDraft, setContentDirty, close } = value;
   if (!session || typeof document === 'undefined' || !document.body) {
     return null;
   }
@@ -206,6 +221,7 @@ export function ComposerSessionOverlay({
         onModeChange={setMode}
         draft={session.draft}
         onDraftChange={setDraft}
+        onDirtyChange={setContentDirty}
       />
     ) : (
       <DocumentListUploadPanel
@@ -229,10 +245,17 @@ export function ComposerSessionOverlay({
 
 export function ComposerSessionProvider({
   children,
+  onDirtyChange,
 }: {
   readonly children: ReactNode;
+  readonly onDirtyChange?: (dirty: boolean) => void;
 }): React.JSX.Element {
   const value = useComposerSessionValue();
+  const dirty = value.session !== null && sessionIsDirty(value.session);
+  useEffect(() => {
+    onDirtyChange?.(dirty);
+    return () => onDirtyChange?.(false);
+  }, [dirty, onDirtyChange]);
   return (
     <ComposerSessionContext.Provider value={value}>
       {children}

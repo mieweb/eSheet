@@ -3,6 +3,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
 } from 'react';
@@ -472,6 +473,17 @@ export function DocumentListField({
         ? () => void host.onUpload?.(runtimeState)
         : openSession('upload', runtimeState)
       : undefined;
+  const composeActionRef = useRef(handleCompose);
+  composeActionRef.current = handleCompose;
+  const canCompose = Boolean(handleCompose);
+  useEffect(
+    () =>
+      host?.registerComposeAction?.(
+        field.definition.id,
+        canCompose ? () => composeActionRef.current?.() : undefined
+      ),
+    [host, field.definition.id, canCompose]
+  );
   // The whole field is a drop target when the session-based uploader is on:
   // a dropped file opens the upload panel with the file already selected.
   const acceptsDrop =

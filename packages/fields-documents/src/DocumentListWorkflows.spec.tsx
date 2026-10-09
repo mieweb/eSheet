@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { useState } from 'react';
 import type { FileInput } from '@esheet/core';
 import type {
@@ -142,9 +148,11 @@ function createRuntime(
 function ComposeHarness({
   runtime,
   onOpenChange,
+  noun,
 }: {
   runtime: DocumentListRuntimeState;
   onOpenChange: (open: boolean) => void;
+  noun?: string;
 }): React.JSX.Element {
   const [mode, setMode] = useState<DocumentListWorkflowMode>('full');
   const [draft, setDraft] = useState<DocumentListComposeDraft>(() =>
@@ -155,6 +163,7 @@ function ComposeHarness({
       open
       onOpenChange={onOpenChange}
       runtime={runtime}
+      noun={noun}
       inputPrefix="form-1-documents"
       mode={mode}
       onModeChange={setMode}
@@ -191,6 +200,81 @@ async function typeDraft(note: string): Promise<void> {
 }
 
 describe('the docked composer', () => {
+  beforeEach(() => {
+    Object.defineProperties(HTMLDialogElement.prototype, {
+      showModal: {
+        configurable: true,
+        value: function (this: HTMLDialogElement) {
+          this.open = true;
+        },
+      },
+      close: {
+        configurable: true,
+        value: function (this: HTMLDialogElement) {
+          this.open = false;
+        },
+      },
+    });
+  });
+
+  afterEach(() => {
+    cleanup();
+    Reflect.deleteProperty(HTMLDialogElement.prototype, 'showModal');
+    Reflect.deleteProperty(HTMLDialogElement.prototype, 'close');
+    vi.restoreAllMocks();
+  });
+
+  it.each(['document', 'letter', 'note'])(
+    'confirms discarding a dirty %s without a native dialog',
+    async (noun) => {
+      const onOpenChange = vi.fn();
+      const confirm = vi.spyOn(window, 'confirm');
+      render(
+        <ComposeHarness
+          runtime={createRuntime()}
+          onOpenChange={onOpenChange}
+          noun={noun}
+        />
+      );
+      await typeDraft('Keep this draft until confirmed.');
+      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+      expect(
+        screen.getByRole('dialog', { name: 'Discard draft?' })
+      ).toBeTruthy();
+      expect(screen.getByText(`Discard this Compose ${noun}?`)).toBeTruthy();
+      expect(onOpenChange).not.toHaveBeenCalled();
+      expect(confirm).not.toHaveBeenCalled();
+      expect(globalThis.document.activeElement).toBe(
+        screen.getByRole('button', { name: 'Keep editing' })
+      );
+      fireEvent.click(screen.getByRole('button', { name: 'Keep editing' }));
+      expect(
+        screen.queryByRole('dialog', { name: 'Discard draft?' })
+      ).toBeNull();
+      expect((await composeEditorInput()).value).toBe(
+        'Keep this draft until confirmed.'
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: 'Collapse to dock' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Discard' }));
+      fireEvent.keyDown(screen.getByRole('button', { name: 'Keep editing' }), {
+        key: 'Escape',
+      });
+      expect(
+        screen.queryByRole('dialog', { name: 'Discard draft?' })
+      ).toBeNull();
+      expect(onOpenChange).not.toHaveBeenCalled();
+
+      fireEvent.keyDown(globalThis.document, { key: 'Escape' });
+      expect(
+        screen.getByRole('dialog', { name: 'Discard draft?' })
+      ).toBeTruthy();
+      fireEvent.click(screen.getByRole('button', { name: 'Discard draft' }));
+      expect(onOpenChange).toHaveBeenCalledExactlyOnceWith(false);
+      expect(confirm).not.toHaveBeenCalled();
+    }
+  );
+
   it('keeps the draft and the editor alive across a collapse', async () => {
     render(<ComposeHarness runtime={createRuntime()} onOpenChange={vi.fn()} />);
 
