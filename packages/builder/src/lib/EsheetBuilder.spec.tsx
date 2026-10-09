@@ -39,7 +39,28 @@ function renderWithContexts(
   );
 }
 
-afterEach(cleanup);
+beforeEach(() => {
+  Object.defineProperties(HTMLDialogElement.prototype, {
+    showModal: {
+      configurable: true,
+      value: function (this: HTMLDialogElement) {
+        this.open = true;
+      },
+    },
+    close: {
+      configurable: true,
+      value: function (this: HTMLDialogElement) {
+        this.open = false;
+      },
+    },
+  });
+});
+
+afterEach(() => {
+  cleanup();
+  Reflect.deleteProperty(HTMLDialogElement.prototype, 'showModal');
+  Reflect.deleteProperty(HTMLDialogElement.prototype, 'close');
+});
 
 describe('EsheetBuilder', () => {
   it('renders registered property editors for root and section child fields', () => {
