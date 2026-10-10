@@ -197,7 +197,10 @@ describe('EsheetRenderer', () => {
     const store = getRendererHandle(ref).getFormStore();
     const wrapper = container.querySelector('[data-field-id="q1"]')!;
     expect(store.getState().isReadOnly('q1')).toBe(true);
-    expect(wrapper.getAttribute('aria-readonly')).toBe('true');
+    // Generic layout wrappers cannot expose aria-readonly; controls retain
+    // their own semantics and the store continues to reject frozen edits.
+    expect(wrapper.getAttribute('data-readonly')).toBe('true');
+    expect(wrapper.hasAttribute('aria-readonly')).toBe(false);
     expect(wrapper.className).toContain('ms:pointer-events-none');
     expect(container.querySelector('.renderer-readonly-banner')).not.toBeNull();
 
@@ -230,11 +233,13 @@ describe('EsheetRenderer', () => {
     expect(
       container
         .querySelector('[data-field-id="q1"]')
-        ?.getAttribute('aria-readonly')
+        ?.getAttribute('data-readonly')
     ).toBe('true');
 
     act(() => store.getState().setReadOnly(false));
     expect(container.querySelector('.renderer-readonly-banner')).toBeNull();
+    expect(wrapper.hasAttribute('data-readonly')).toBe(false);
+    expect(wrapper.hasAttribute('aria-readonly')).toBe(false);
   });
 
   it('readOnly removes file deletion controls until editing resumes', async () => {
@@ -273,7 +278,8 @@ describe('EsheetRenderer', () => {
     await act(async () => undefined);
 
     const wrapper = container.querySelector('[data-field-id="attachment"]');
-    expect(wrapper?.getAttribute('aria-readonly')).toBe('true');
+    expect(wrapper?.getAttribute('data-readonly')).toBe('true');
+    expect(wrapper?.hasAttribute('aria-readonly')).toBe(false);
     expect(wrapper?.textContent).toContain('report.pdf');
     expect(
       wrapper?.querySelector('button[aria-label="Remove report.pdf"]')
