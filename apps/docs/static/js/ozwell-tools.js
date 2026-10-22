@@ -1,13 +1,4 @@
 (function () {
-  // Inject icon override: hide the default broken icon and replace with a chat SVG.
-  (function injectIconStyle() {
-    const style = document.createElement('style');
-    style.textContent =
-      '.ozwell-chat-icon{display:none!important;}' +
-      ".ozwell-chat-button::after{content:'';display:block;width:24px;height:24px;background:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath stroke='none' d='M0 0h24v24H0z' fill='none'/%3E%3Cpath d='M21 14l-3 -3h-7a1 1 0 0 1 -1 -1v-6a1 1 0 0 1 1 -1h9a1 1 0 0 1 1 1v10'/%3E%3Cpath d='M14 15v2a1 1 0 0 1 -1 1h-7l-3 3v-10a1 1 0 0 1 1 -1h2'/%3E%3C/svg%3E\") center/contain no-repeat}";
-    document.head.appendChild(style);
-  })();
-
   // Load all doc content from the pre-built static bundle
   let docContentPromise = null;
   function getDocContent() {

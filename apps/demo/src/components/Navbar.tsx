@@ -9,10 +9,9 @@ import {
   PillSelect,
   Select,
 } from '@mieweb/ui';
-import { MessageCircle, Menu, Settings, X } from 'lucide-react';
+import { Menu, Settings, X } from 'lucide-react';
 import { useTheme, type Theme } from '../hooks/useTheme';
 import { useBrand, type BrandId } from '../hooks/useBrand';
-import { openOzwellChat } from '../ozwell-setup.js';
 
 interface LocoLanguage {
   code: string;
@@ -142,19 +141,6 @@ export function Navbar() {
           </div>
 
           <div className="ml-auto flex shrink-0 items-center gap-2">
-            <Button
-              variant="primary"
-              size="sm"
-              leftIcon={<MessageCircle size={16} />}
-              aria-label="Open Ozwell AI"
-              onClick={() => {
-                void openOzwellChat().catch((error: unknown) =>
-                  console.warn(error)
-                );
-              }}
-            >
-              Ozwell AI
-            </Button>
             <Dropdown
               open={settingsOpen}
               onOpenChange={handleSettingsOpenChange}
