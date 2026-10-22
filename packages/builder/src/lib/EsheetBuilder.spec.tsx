@@ -63,6 +63,74 @@ afterEach(() => {
 });
 
 describe('EsheetBuilder', () => {
+  it('edits and clears the longtext row limits', () => {
+    const form = createFormStore({
+      id: 'longtext-rows',
+      pages: [
+        {
+          id: 'page-1',
+          fields: [
+            { id: 'notes', fieldType: 'longtext' },
+            { id: 'name', fieldType: 'text' },
+          ],
+        },
+      ],
+    });
+    const ui = createUIStore();
+    ui.getState().selectField('notes');
+    renderWithContexts(form, ui, <EditPanel />);
+
+    const input = screen.getByLabelText('Minimum rows') as HTMLInputElement;
+    const maximum = screen.getByLabelText('Maximum rows') as HTMLInputElement;
+    expect(input.value).toBe('');
+    expect(maximum.value).toBe('');
+    expect(input.id).toContain('-editor-rows-notes');
+    expect(maximum.id).toContain('-editor-maxrows-notes');
+
+    fireEvent.change(input, { target: { value: '5' } });
+    expect(form.getState().normalized.byId.notes?.definition).toEqual(
+      expect.objectContaining({ rows: 5 })
+    );
+
+    for (const value of ['0', '-1', '1.5']) {
+      fireEvent.change(input, { target: { value } });
+      expect(form.getState().normalized.byId.notes?.definition).toEqual(
+        expect.objectContaining({ rows: 5 })
+      );
+    }
+
+    fireEvent.change(maximum, { target: { value: '8' } });
+    expect(form.getState().normalized.byId.notes?.definition).toEqual(
+      expect.objectContaining({ rows: 5, maxRows: 8 })
+    );
+
+    for (const value of ['0', '-1', '1.5', '4']) {
+      fireEvent.change(maximum, { target: { value } });
+      expect(form.getState().normalized.byId.notes?.definition).toEqual(
+        expect.objectContaining({ rows: 5, maxRows: 8 })
+      );
+    }
+
+    fireEvent.change(input, { target: { value: '9' } });
+    expect(form.getState().normalized.byId.notes?.definition).toEqual(
+      expect.objectContaining({ rows: 5, maxRows: 8 })
+    );
+
+    fireEvent.change(maximum, { target: { value: '' } });
+    expect(form.getState().normalized.byId.notes?.definition).toEqual(
+      expect.objectContaining({ maxRows: undefined })
+    );
+
+    fireEvent.change(input, { target: { value: '' } });
+    expect(form.getState().normalized.byId.notes?.definition).toEqual(
+      expect.objectContaining({ rows: undefined })
+    );
+
+    act(() => ui.getState().selectField('name'));
+    expect(screen.queryByLabelText('Minimum rows')).toBeNull();
+    expect(screen.queryByLabelText('Maximum rows')).toBeNull();
+  });
+
   it('renders registered property editors for root and section child fields', () => {
     function PropertyEditor({
       fieldId,

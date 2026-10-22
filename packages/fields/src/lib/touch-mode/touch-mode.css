@@ -51,11 +51,15 @@
   .ms-builder-root:not(.touch-mode-disabled) .preview-layout input[type='email'],
   .ms-builder-root:not(.touch-mode-disabled) .preview-layout input[type='tel'],
   .ms-builder-root:not(.touch-mode-disabled) .preview-layout input:not([type]) {
+    --esheet-textarea-padding-y: 0.75rem;
     font-size: 16px !important;
     min-height: 48px !important;
-    height: auto !important;
     padding: 0.75rem !important;
     border-radius: 8px !important;
+
+    &:not(textarea[data-auto-resize='true']) {
+      height: auto !important;
+    }
   }
 
   /* Dropdown triggers are buttons, so the rule above misses them; line-height
@@ -189,11 +193,15 @@
 .ms-builder-root.esheet-touch-active .preview-layout input[type='email'],
 .ms-builder-root.esheet-touch-active .preview-layout input[type='tel'],
 .ms-builder-root.esheet-touch-active .preview-layout input:not([type]) {
+  --esheet-textarea-padding-y: 0.75rem;
   font-size: 16px !important;
   min-height: 48px !important;
-  height: auto !important;
   padding: 0.75rem !important;
   border-radius: 8px !important;
+
+  &:not(textarea[data-auto-resize='true']) {
+    height: auto !important;
+  }
 }
 
 /* Dropdown triggers are buttons, so the rule above misses them; line-height

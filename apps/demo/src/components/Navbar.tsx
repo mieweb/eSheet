@@ -4,7 +4,6 @@ import {
   Button,
   Dropdown,
   DropdownContent,
-  DropdownItem,
   DropdownLabel,
   DropdownSeparator,
   PillSelect,
@@ -113,7 +112,7 @@ export function Navbar() {
     <>
       {/* ── Main navbar bar ── */}
       <nav className="demo-navbar bg-card border-b border-border sticky top-0 z-50">
-        <div className="flex items-center gap-3 px-6 h-14">
+        <div className="flex flex-wrap items-center gap-3 px-3 py-2 min-h-14 sm:flex-nowrap sm:px-6 sm:py-0">
           {/* Hamburger — mobile only, left side (matches Docusaurus) */}
           <button
             onClick={() => openMobileMenu()}
@@ -142,7 +141,20 @@ export function Navbar() {
             </a>
           </div>
 
-          <div className="ml-auto flex items-center gap-1">
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            <Button
+              variant="primary"
+              size="sm"
+              leftIcon={<MessageCircle size={16} />}
+              aria-label="Open Ozwell AI"
+              onClick={() => {
+                void openOzwellChat().catch((error: unknown) =>
+                  console.warn(error)
+                );
+              }}
+            >
+              Ozwell AI
+            </Button>
             <Dropdown
               open={settingsOpen}
               onOpenChange={handleSettingsOpenChange}
@@ -210,20 +222,6 @@ export function Navbar() {
                     })),
                   ]}
                 />
-              </DropdownContent>
-              <DropdownSeparator />
-              <DropdownContent>
-                <DropdownItem
-                  icon={<MessageCircle size={16} />}
-                  onClick={() => {
-                    setSettingsOpen(false);
-                    void openOzwellChat().catch((error: unknown) =>
-                      console.warn(error)
-                    );
-                  }}
-                >
-                  Open Ozwell
-                </DropdownItem>
               </DropdownContent>
             </Dropdown>
           </div>

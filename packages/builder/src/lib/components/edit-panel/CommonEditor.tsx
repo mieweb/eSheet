@@ -2,6 +2,7 @@ import { useStore } from 'zustand';
 import type {
   FieldDefinition,
   FieldWidth,
+  LongtextFieldDefinition,
   OptionLayout,
   TextInputType,
 } from '@esheet/core';
@@ -123,6 +124,46 @@ export function CommonEditor({
             onUpdate(patch as Parameters<typeof onUpdate>[0])
           }
         />
+      )}
+
+      {def.fieldType === 'longtext' && (
+        <div className="ms:grid ms:grid-cols-2 ms:gap-3">
+          {(['rows', 'maxRows'] as const).map((property) => {
+            const longtextDef = def as LongtextFieldDefinition;
+            const isMinimum = property === 'rows';
+            const purpose = isMinimum ? 'rows' : 'maxrows';
+
+            return (
+              <div key={property}>
+                <label
+                  htmlFor={`${instanceId}-editor-${purpose}-${fieldId}`}
+                  className="edit-label ms:block ms:text-sm ms:font-medium ms:text-mstext ms:mb-1"
+                >
+                  {isMinimum ? 'Minimum rows' : 'Maximum rows'}
+                </label>
+                <input
+                  id={`${instanceId}-editor-${purpose}-${fieldId}`}
+                  type="number"
+                  min={isMinimum ? 1 : longtextDef.rows ?? 1}
+                  max={isMinimum ? longtextDef.maxRows : undefined}
+                  step={1}
+                  value={longtextDef[property] ?? ''}
+                  placeholder={isMinimum ? '1' : undefined}
+                  onChange={(e) => {
+                    if (!e.currentTarget.validity.valid) return;
+                    onUpdate({
+                      [property]:
+                        e.currentTarget.value === ''
+                          ? undefined
+                          : e.currentTarget.valueAsNumber,
+                    } as Parameters<typeof onUpdate>[0]);
+                  }}
+                  className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
+                />
+              </div>
+            );
+          })}
+        </div>
       )}
 
       {/* Row width */}

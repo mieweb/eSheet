@@ -18,6 +18,14 @@ export const LongTextField = React.memo(function LongTextField({
 }: FieldComponentProps) {
   const def = field.definition as LongtextFieldDefinition;
   const instanceId = form.getState().instanceId;
+  const sizingKey = `${def.rows ?? 1}-${def.maxRows ?? ''}`;
+  const textareaStyle: React.CSSProperties = {
+    maxHeight:
+      def.maxRows === undefined
+        ? undefined
+        : `calc(${def.maxRows}lh + 2 * var(--esheet-textarea-padding-y, 7px) + 2px)`,
+    overflowY: def.maxRows === undefined ? undefined : 'auto',
+  };
 
   if (isPreview) {
     return (
@@ -35,6 +43,7 @@ export const LongTextField = React.memo(function LongTextField({
           )}
         </div>
         <Textarea
+          key={sizingKey}
           id={`${instanceId}-longtext-answer-${def.id}`}
           aria-label={def.question || 'Question'}
           disabled={!isEnabled}
@@ -42,8 +51,8 @@ export const LongTextField = React.memo(function LongTextField({
           value={response?.answer || ''}
           onChange={(e) => onResponse({ answer: e.target.value })}
           placeholder="Type your answer"
-          rows={4}
-          className="ms:max-h-56 ms:resize-y"
+          rows={def.rows}
+          style={textareaStyle}
         />
       </div>
     );
@@ -68,13 +77,14 @@ export const LongTextField = React.memo(function LongTextField({
           className="ms:px-3 ms:py-2 ms:h-10 ms:w-full ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:rounded-lg ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary/30 ms:outline-none ms:transition-colors"
         />
       </div>
-      <textarea
+      <Textarea
+        key={sizingKey}
         id={`${instanceId}-canvas-preview-${def.id}`}
         aria-label="Answer preview"
         value=""
         placeholder="Type your answer"
-        className="ms:px-3 ms:py-2 ms:w-full ms:border ms:border-msborder ms:shadow-sm ms:rounded-lg ms:min-h-24 ms:max-h-56 ms:resize-y ms:bg-msbackground ms:text-mstextmuted"
-        rows={4}
+        rows={def.rows}
+        style={textareaStyle}
         disabled
       />
     </div>

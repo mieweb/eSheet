@@ -567,6 +567,8 @@ export interface TextFieldDefinition extends BaseFieldDefinition {
 
 export interface LongtextFieldDefinition extends BaseFieldDefinition {
   fieldType: 'longtext';
+  rows?: number;
+  maxRows?: number;
   inputType?: TextInputType;
   unit?: string;
   dateRange?: RelativeDateRange;
@@ -1014,14 +1016,27 @@ const textFieldSchema = z.strictObject({
   timeFormat: z.optional(z.enum(['12-hour', '24-hour'])),
 });
 
-const longtextFieldSchema = z.strictObject({
-  ...baseFieldProps,
-  fieldType: z.literal('longtext'),
-  inputType: z.optional(textInputTypeSchema),
-  unit: z.optional(z.string()),
-  dateRange: z.optional(relativeDateRangeSchema),
-  timeFormat: z.optional(z.enum(['12-hour', '24-hour'])),
-});
+const longtextFieldSchema = z
+  .strictObject({
+    ...baseFieldProps,
+    fieldType: z.literal('longtext'),
+    rows: z.optional(z.int().check(z.gte(1))),
+    maxRows: z.optional(z.int().check(z.gte(1))),
+    inputType: z.optional(textInputTypeSchema),
+    unit: z.optional(z.string()),
+    dateRange: z.optional(relativeDateRangeSchema),
+    timeFormat: z.optional(z.enum(['12-hour', '24-hour'])),
+  })
+  .check(
+    z.refine(
+      (field) =>
+        field.maxRows === undefined || field.maxRows >= (field.rows ?? 1),
+      {
+        message: 'Maximum rows must be at least minimum rows',
+        path: ['maxRows'],
+      }
+    )
+  );
 
 const multitextFieldSchema = z.strictObject({
   ...baseFieldProps,
