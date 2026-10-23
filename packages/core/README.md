@@ -46,6 +46,29 @@ form.getState().setResponse('fieldId', 'value');
 const responses = form.getState().responses; // Record<string, unknown>
 ```
 
+### Definition-owned initial answers
+
+Choice options can carry `defaultOption: true`. The default stays attached
+when its option ID or label is edited, and disappears when the option is
+removed. Single-choice fields allow one default; checkbox and multi-select
+dropdown fields allow several. Text-answer fields use `defaultAnswer`.
+The builder exposes these properties in the field editor, including section
+children. Text defaults are preserved when normalizing definitions.
+
+`defaultResponses(definition.pages)` derives response objects using the
+options' current IDs and labels. `createFormStore(definition)` and
+`store.getState().loadDefinition(definition)` apply these defaults once.
+To load saved answers, pass the authoritative response map:
+`createFormStore(definition, false, savedResponses)` or
+`loadDefinition(definition, savedResponses)`. An explicit empty map means
+existing unanswered fields stay blank. Clearing/resetting responses and
+editing definitions do not reapply defaults. The renderer follows the same
+contract through `initialResponses`.
+Supplied response keys are treated as user-edited, protecting saved manual
+answers from subsequent calculations; definition-derived defaults remain
+eligible for calculation. Builder Code view edits preserve the current
+response map.
+
 ### Selectors
 
 ```ts

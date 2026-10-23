@@ -5,6 +5,7 @@ import {
   formDefinitionSchema,
   fieldDefinitionSchema,
   normalizeFormDefinition,
+  getFormDefinitionJSONSchema,
 } from './types.js';
 import { registerFieldType, resetFieldTypeRegistry } from './registry.js';
 import type {
@@ -247,6 +248,55 @@ describe('schema types', () => {
       },
     ]);
   });
+
+  it('preserves text defaults through normalization at the root and inside sections', () => {
+    const fields: FieldDefinition[] = [
+      { id: 'text', fieldType: 'text', defaultAnswer: 'Short answer' },
+      { id: 'longtext', fieldType: 'longtext', defaultAnswer: 'Long answer' },
+    ];
+    const definition: FormDefinition = {
+      id: 'defaults',
+      pages: [
+        {
+          id: 'page',
+          fields: [...fields, { id: 'section', fieldType: 'section', fields }],
+        },
+      ],
+    };
+
+    expect(normalizeFormDefinition(definition)).toEqual(definition);
+    expect(formDefinitionSchema.safeParse(definition).success).toBe(true);
+  });
+
+  it('only exposes defaultAnswer on text fields in the generated JSON Schema', () => {
+    const seen = new Set<string>();
+    function check(value: unknown) {
+      if (!value || typeof value !== 'object') return;
+      if (
+        'properties' in value &&
+        value.properties &&
+        typeof value.properties === 'object' &&
+        'fieldType' in value.properties
+      ) {
+        const fieldType = value.properties.fieldType;
+        if (
+          fieldType &&
+          typeof fieldType === 'object' &&
+          'const' in fieldType &&
+          typeof fieldType.const === 'string'
+        ) {
+          seen.add(fieldType.const);
+          expect('defaultAnswer' in value.properties).toBe(
+            fieldType.const === 'text' || fieldType.const === 'longtext'
+          );
+        }
+      }
+      for (const child of Object.values(value)) check(child);
+    }
+
+    check(getFormDefinitionJSONSchema());
+    expect([...seen].sort()).toEqual([...FIELD_TYPES].sort());
+  });
 });
 
 describe('section icon validation', () => {
@@ -342,6 +392,34 @@ describe('custom field type validation', () => {
     });
 
     expect(result.success).toBe(true);
+  });
+
+  it('validates defaults on registered custom fields by response type', () => {
+    registerVitals();
+    const field = {
+      id: 'v1',
+      fieldType: 'vitals',
+      defaultAnswer: 'Initial vitals',
+    };
+    expect(fieldDefinitionSchema.parse(field)).toEqual(field);
+    expect(
+      fieldDefinitionSchema.safeParse({ ...field, defaultAnswer: 42 }).success
+    ).toBe(false);
+
+    registerFieldType('customChoice', {
+      label: 'Custom choice',
+      category: 'selection',
+      answerType: 'selection',
+      hasOptions: true,
+      hasMatrix: false,
+      defaultProps: {},
+    });
+    expect(
+      fieldDefinitionSchema.safeParse({
+        ...field,
+        fieldType: 'customChoice',
+      }).success
+    ).toBe(false);
   });
 
   it('should reject an unregistered field type', () => {

@@ -5,6 +5,7 @@ import { fireEvent } from '@testing-library/react';
 import { EsheetRenderer, type EsheetRendererHandle } from './EsheetRenderer.js';
 import type { RendererTools } from './renderer-tools.js';
 import { executeToolCall } from './mcp/tool-executor.js';
+import type { FormResponse } from '@esheet/core';
 
 afterEach(cleanup);
 
@@ -19,6 +20,42 @@ function getRendererHandle(ref: React.RefObject<EsheetRendererHandle | null>) {
 }
 
 describe('EsheetRenderer', () => {
+  it.each<FormResponse | undefined>([
+    undefined,
+    {},
+    { q1: { answer: 'Saved' } },
+  ])(
+    'initializes defaults only when responses were not supplied: %j',
+    async (initialResponses) => {
+      const ref = React.createRef<EsheetRendererHandle>();
+      await act(async () => {
+        render(
+          <EsheetRenderer
+            ref={ref}
+            initialResponses={initialResponses}
+            formDataInput={{
+              id: 'defaults',
+              pages: [
+                {
+                  id: 'main',
+                  fields: [
+                    { id: 'q1', fieldType: 'text', defaultAnswer: 'Default' },
+                  ],
+                },
+              ],
+            }}
+          />
+        );
+      });
+      const store = getRendererHandle(ref).getFormStore();
+      expect(store.getState().responses).toEqual(
+        initialResponses ?? { q1: { answer: 'Default' } }
+      );
+      act(() => store.getState().clearResponse('q1'));
+      expect(store.getState().responses.q1).toBeUndefined();
+    }
+  );
+
   it('uses builder row widths to lay fields out on a six-column grid', async () => {
     const { container } = render(
       <EsheetRenderer

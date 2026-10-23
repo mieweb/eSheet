@@ -332,6 +332,8 @@ export const fieldOptionSchema = z.object({
   text: z.optional(z.string()),
   /** Numeric score for scored surveys (PHQ-9, GAD-7, etc.). */
   score: z.optional(z.number()),
+  /** Select this option when initializing a new response. */
+  defaultOption: z.optional(z.boolean()),
   rules: z.optional(
     z.array(z.lazy((): z.ZodMiniType<ConditionalRule> => conditionalRuleSchema))
   ),
@@ -525,6 +527,8 @@ interface BaseFieldDefinition {
   id: string;
   /** The question / label shown to the user. */
   question?: string;
+  /** Initial text answer, used only for a new response. */
+  defaultAnswer?: string;
   /**
    * Required state for this field.
    * - `true`    - hard required (blocks submission).
@@ -721,6 +725,7 @@ export interface DisplayFieldDefinition {
   fieldType: 'display';
   /** Display fields have no question text. */
   question?: never;
+  defaultAnswer?: never;
   /** Markdown-like content with inline expression placeholders. */
   content?: string;
   /** Display fields are never required. */
@@ -834,8 +839,8 @@ export function hasOptions(
 /** Properties allowed for each field type (beyond base properties). */
 const FIELD_TYPE_PROPERTIES: Record<FieldType, readonly string[]> = {
   // Text category
-  text: ['inputType', 'unit', 'dateRange', 'timeFormat'],
-  longtext: ['inputType', 'unit', 'dateRange', 'timeFormat'],
+  text: ['inputType', 'unit', 'dateRange', 'timeFormat', 'defaultAnswer'],
+  longtext: ['inputType', 'unit', 'dateRange', 'timeFormat', 'defaultAnswer'],
   multitext: ['options', 'optionLayout'],
   // Selection category
   radio: ['options', 'optionLayout'],
@@ -1008,6 +1013,7 @@ const relativeDateRangeSchema = z.object({
 const textFieldSchema = z.strictObject({
   ...baseFieldProps,
   fieldType: z.literal('text'),
+  defaultAnswer: z.optional(z.string()),
   inputType: z.optional(textInputTypeSchema),
   unit: z.optional(z.string()),
   dateRange: z.optional(relativeDateRangeSchema),
@@ -1017,6 +1023,7 @@ const textFieldSchema = z.strictObject({
 const longtextFieldSchema = z.strictObject({
   ...baseFieldProps,
   fieldType: z.literal('longtext'),
+  defaultAnswer: z.optional(z.string()),
   inputType: z.optional(textInputTypeSchema),
   unit: z.optional(z.string()),
   dateRange: z.optional(relativeDateRangeSchema),
@@ -1235,6 +1242,7 @@ const builtInFieldDefinitionSchema = z.discriminatedUnion('fieldType', [
  */
 const customFieldDefinitionSchema = z.looseObject({
   ...baseFieldProps,
+  defaultAnswer: z.optional(z.string()),
   fieldType: z
     .string()
     .check(
@@ -1253,10 +1261,29 @@ const customFieldDefinitionSchema = z.looseObject({
  * the built-in `FieldDefinition` union (custom definitions are accessed via
  * `field.definition as { ... }` in their components).
  */
-export const fieldDefinitionSchema = z.union([
-  builtInFieldDefinitionSchema,
-  customFieldDefinitionSchema,
-]) as unknown as z.ZodMiniType<FieldDefinition>;
+export const fieldDefinitionSchema = z
+  .union([builtInFieldDefinitionSchema, customFieldDefinitionSchema])
+  .check(
+    z.refine((field) => {
+      const meta = getFieldTypeMeta(field.fieldType);
+      if (
+        'defaultAnswer' in field &&
+        field.defaultAnswer !== undefined &&
+        meta?.answerType !== 'text'
+      )
+        return false;
+      const options =
+        'options' in field && Array.isArray(field.options) ? field.options : [];
+      const defaults = options.filter(
+        (option) => option?.defaultOption === true
+      );
+      if (!defaults.length) return true;
+      return (
+        (meta?.answerType === 'selection' && defaults.length === 1) ||
+        (meta?.answerType === 'multiselection' && field.fieldType !== 'ranking')
+      );
+    }, 'Defaults must match the field response type; single-choice fields allow one default option')
+  ) as unknown as z.ZodMiniType<FieldDefinition>;
 
 // ---------------------------------------------------------------------------
 // Field Response Values (answers only)

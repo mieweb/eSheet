@@ -1,5 +1,5 @@
 import React from 'react';
-import type { FieldOption } from '@esheet/core';
+import { getFieldTypeMeta, type FieldOption } from '@esheet/core';
 import { TrashIcon } from '@esheet/fields';
 import { useInstanceId } from '../../EsheetBuilder.js';
 import { useFormApi } from '../../hooks/useFormApi.js';
@@ -29,6 +29,10 @@ export function OptionListEditor({
     () => new Set()
   );
   const isBoolean = fieldType === 'boolean';
+  const answerType = getFieldTypeMeta(fieldType)?.answerType;
+  const canDefault =
+    answerType === 'selection' ||
+    (answerType === 'multiselection' && fieldType !== 'ranking');
   const canScore = fieldType !== 'multitext' && fieldType !== 'ranking';
   const isScored = canScore && options.some((o) => o.score != null);
   const label = fieldType === 'multitext' ? 'Text Inputs' : 'Options';
@@ -111,6 +115,19 @@ export function OptionListEditor({
                   }}
                   className="ms:w-16 ms:shrink-0 ms:outline-none ms:bg-transparent ms:text-mstext ms:border ms:border-msborder ms:rounded ms:px-1 ms:py-0.5 ms:text-sm ms:text-right"
                 />
+              )}
+              {canDefault && (
+                <label className="option-default ms:flex ms:items-center ms:gap-1 ms:text-sm">
+                  <input
+                    type="checkbox"
+                    aria-label={`Default option ${idx + 1}`}
+                    checked={opt.defaultOption ?? false}
+                    onChange={(event) =>
+                      option.setDefault(opt.id, event.currentTarget.checked)
+                    }
+                  />
+                  Default
+                </label>
               )}
               <button
                 type="button"
