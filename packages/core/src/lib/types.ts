@@ -839,8 +839,8 @@ export function hasOptions(
 /** Properties allowed for each field type (beyond base properties). */
 const FIELD_TYPE_PROPERTIES: Record<FieldType, readonly string[]> = {
   // Text category
-  text: ['inputType', 'unit', 'dateRange', 'timeFormat'],
-  longtext: ['inputType', 'unit', 'dateRange', 'timeFormat'],
+  text: ['inputType', 'unit', 'dateRange', 'timeFormat', 'defaultAnswer'],
+  longtext: ['inputType', 'unit', 'dateRange', 'timeFormat', 'defaultAnswer'],
   multitext: ['options', 'optionLayout'],
   // Selection category
   radio: ['options', 'optionLayout'],
@@ -992,7 +992,6 @@ export function normalizeFormDefinition(
 const baseFieldProps = {
   id: z.string(),
   question: z.optional(z.string()),
-  defaultAnswer: z.optional(z.string()),
   required: z.optional(z.union([z.boolean(), z.literal('soft')])),
   width: z.optional(z.enum(['none', 'full', 'half', 'third'])),
   overrideSectionWidth: z.optional(z.boolean()),
@@ -1014,6 +1013,7 @@ const relativeDateRangeSchema = z.object({
 const textFieldSchema = z.strictObject({
   ...baseFieldProps,
   fieldType: z.literal('text'),
+  defaultAnswer: z.optional(z.string()),
   inputType: z.optional(textInputTypeSchema),
   unit: z.optional(z.string()),
   dateRange: z.optional(relativeDateRangeSchema),
@@ -1023,6 +1023,7 @@ const textFieldSchema = z.strictObject({
 const longtextFieldSchema = z.strictObject({
   ...baseFieldProps,
   fieldType: z.literal('longtext'),
+  defaultAnswer: z.optional(z.string()),
   inputType: z.optional(textInputTypeSchema),
   unit: z.optional(z.string()),
   dateRange: z.optional(relativeDateRangeSchema),
@@ -1241,6 +1242,7 @@ const builtInFieldDefinitionSchema = z.discriminatedUnion('fieldType', [
  */
 const customFieldDefinitionSchema = z.looseObject({
   ...baseFieldProps,
+  defaultAnswer: z.optional(z.string()),
   fieldType: z
     .string()
     .check(

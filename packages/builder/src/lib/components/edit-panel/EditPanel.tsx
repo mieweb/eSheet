@@ -221,23 +221,6 @@ function EditTabContent({
         onUpdate={onUpdate}
         onRenameId={onRenameId}
       />
-      {meta?.answerType === 'text' && (
-        <label className="field-default ms:block ms:space-y-1 ms:text-sm">
-          <span>Default answer</span>
-          <input
-            type="text"
-            aria-label="Default answer"
-            value={'defaultAnswer' in def ? def.defaultAnswer ?? '' : ''}
-            onChange={(event) =>
-              onUpdate({
-                defaultAnswer: event.currentTarget.value || undefined,
-              })
-            }
-            className="ms:w-full ms:bg-mssurface ms:text-mstext ms:border ms:border-msborder ms:rounded ms:p-2"
-          />
-        </label>
-      )}
-
       {/* Divider */}
       {(meta?.hasOptions || meta?.hasMatrix) && (
         <hr className="ms:border-msborder" />

@@ -120,6 +120,47 @@ describe('createFormStore', () => {
       expect(loaded.getState().responses).toEqual({});
     });
 
+    it.each(['create', 'load'] as const)(
+      'protects saved manual answers from calculations on %s',
+      (entryPoint) => {
+        const definition: FormDefinition = {
+          ...form([
+            {
+              id: 'calculated',
+              fieldType: 'text',
+              calculation: '"Calculated"',
+              defaultAnswer: 'Default',
+            },
+            { id: 'other', fieldType: 'text' },
+          ]),
+          dangerouslyAllowJS: true,
+        };
+        const saved = { calculated: { answer: 'Manual override' } };
+        const loaded =
+          entryPoint === 'create'
+            ? createFormStore(definition, true, saved)
+            : createFormStore(undefined, true);
+        if (entryPoint === 'load') {
+          loaded.getState().loadDefinition(definition, saved);
+        }
+        loaded.getState().setResponse('other', { answer: 'Changed' });
+        expect(loaded.getState().responses.calculated).toEqual(
+          saved.calculated
+        );
+
+        const fresh =
+          entryPoint === 'create'
+            ? createFormStore(definition, true)
+            : createFormStore(undefined, true);
+        if (entryPoint === 'load') fresh.getState().loadDefinition(definition);
+        expect(fresh.getState().userEditedFields.size).toBe(0);
+        fresh.getState().setResponse('other', { answer: 'Changed' });
+        expect(fresh.getState().responses.calculated).toEqual({
+          answer: 'Calculated',
+        });
+      }
+    );
+
     it('does not reapply defaults after clearing or resetting responses or editing options', () => {
       const loaded = createFormStore(definition);
       loaded.getState().clearResponse('type');

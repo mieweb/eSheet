@@ -571,7 +571,7 @@ export function createFormStore(
     responses:
       initialResponses ?? (initial ? defaultResponses(initial.pages) : {}),
     identity: undefined,
-    userEditedFields: new Set<string>(),
+    userEditedFields: new Set(Object.keys(initialResponses ?? {})),
     extensions: {},
     readOnly: false,
     disposed: false,
@@ -590,7 +590,7 @@ export function createFormStore(
             (definition.dangerouslyAllowJS ?? false) && _hostAllowsJS,
           normalized: normalizeDefinition(definition.pages),
           responses: initial,
-          userEditedFields: new Set<string>(),
+          userEditedFields: new Set(Object.keys(responses ?? {})),
           extensions: {},
         });
       })(),
