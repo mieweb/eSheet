@@ -5,7 +5,7 @@
 // without relying on package entry side-effect imports.
 // ---------------------------------------------------------------------------
 
-import { registerFieldComponents } from '@esheet/fields';
+import { getFieldComponent, registerFieldComponents } from '@esheet/fields';
 import {
   TextField,
   LongTextField,
@@ -67,7 +67,7 @@ export function ensureDefaultFieldComponentsRegistered(): void {
     return;
   }
 
-  registerFieldComponents({
+  const defaults = {
     text: TextField,
     longtext: LongTextField,
     multitext: MultiTextField,
@@ -89,7 +89,15 @@ export function ensureDefaultFieldComponentsRegistered(): void {
     file: FileField,
     html: HtmlField,
     display: DisplayField,
-  });
+  };
+  // Hosts may pre-register their own components for built-in types (e.g. a
+  // custom section renderer) before the first render — keep those and only
+  // fill in the missing defaults.
+  registerFieldComponents(
+    Object.fromEntries(
+      Object.entries(defaults).filter(([key]) => !getFieldComponent(key))
+    )
+  );
 
   defaultsRegistered = true;
 }
