@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react';
 import { useStore } from 'zustand';
 import type {
   FieldDefinition,
   FieldWidth,
+  LongtextFieldDefinition,
   OptionLayout,
   TextInputType,
 } from '@esheet/core';
@@ -143,6 +145,39 @@ export function CommonEditor({
         />
       )}
 
+      {def.fieldType === 'longtext' && (
+        <div className="ms:grid ms:grid-cols-2 ms:gap-3">
+          {(['rows', 'maxRows'] as const).map((property) => {
+            const longtextDef = def as LongtextFieldDefinition;
+            const isMinimum = property === 'rows';
+            const purpose = isMinimum ? 'rows' : 'maxrows';
+
+            return (
+              <div key={`${fieldId}-${property}`}>
+                <label
+                  htmlFor={`${instanceId}-editor-${purpose}-${fieldId}`}
+                  className="edit-label ms:block ms:text-sm ms:font-medium ms:text-mstext ms:mb-1"
+                >
+                  {isMinimum ? 'Minimum rows' : 'Maximum rows'}
+                </label>
+                <RowLimitEditor
+                  id={`${instanceId}-editor-${purpose}-${fieldId}`}
+                  min={isMinimum ? 1 : longtextDef.rows ?? 1}
+                  max={isMinimum ? longtextDef.maxRows : undefined}
+                  value={longtextDef[property]}
+                  placeholder={isMinimum ? '1' : undefined}
+                  onCommit={(value) => {
+                    onUpdate({
+                      [property]: value,
+                    } as Parameters<typeof onUpdate>[0]);
+                  }}
+                />
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* Row width */}
       <div>
         <label
@@ -242,5 +277,54 @@ export function CommonEditor({
         </div>
       )}
     </div>
+  );
+}
+
+function RowLimitEditor({
+  id,
+  value,
+  min,
+  max,
+  placeholder,
+  onCommit,
+}: {
+  id: string;
+  value: number | undefined;
+  min: number;
+  max: number | undefined;
+  placeholder: string | undefined;
+  onCommit: (value: number | undefined) => void;
+}) {
+  const [draft, setDraft] = useState(value?.toString() ?? '');
+
+  useEffect(() => {
+    setDraft(value?.toString() ?? '');
+  }, [value]);
+
+  return (
+    <input
+      id={id}
+      type="number"
+      min={min}
+      max={max}
+      step={1}
+      value={draft}
+      placeholder={placeholder}
+      onChange={(e) => setDraft(e.currentTarget.value)}
+      onBlur={(e) => {
+        if (!e.currentTarget.reportValidity()) {
+          setDraft(value?.toString() ?? '');
+          return;
+        }
+        onCommit(draft === '' ? undefined : e.currentTarget.valueAsNumber);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          e.currentTarget.blur();
+        }
+      }}
+      className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
+    />
   );
 }

@@ -38,21 +38,15 @@ function injectWidget(): Promise<void> {
   });
 
   const style = document.createElement('style');
-  style.textContent = '.ozwell-chat-button{display:none!important;}';
+  style.textContent =
+    'html:not([data-ozwell-active]) :is(.ozwell-chat-button, .ozwell-chat-wrapper), .ozwell-chat-wrapper.hidden{display:none!important;}';
   document.head.appendChild(style);
 
   return widgetLoad;
 }
 
-// Only inject the widget on builder/renderer views, not on the landing page.
-const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
-const currentPath = window.location.pathname;
-if (currentPath !== basePath && currentPath !== basePath + '/') {
-  void injectWidget().catch((error: unknown) => console.warn(error));
-}
-
 /**
- * Call on view mount to switch the active agent.
+ * Call on view mount to enable chat and switch the active agent; return its cleanup.
  * Pass FORMIE_KEY for the builder view, FLOWIE_KEY for the renderer view.
  */
 export { FORMIE_KEY, FLOWIE_KEY };
@@ -63,11 +57,17 @@ export async function openOzwellChat(): Promise<void> {
   window.OzwellChat?.open();
 }
 
-export function updateOzwellTools(agentKey: string): void {
+export function updateOzwellTools(agentKey: string): () => void {
+  document.documentElement.setAttribute('data-ozwell-active', '');
   window.OzwellChatConfig = { ...window.OzwellChatConfig, apiKey: agentKey };
   if (window.OzwellChat) {
     window.OzwellChat.configure({ apiKey: agentKey });
   } else {
     void injectWidget().catch((error: unknown) => console.warn(error));
   }
+
+  return () => {
+    document.documentElement.removeAttribute('data-ozwell-active');
+    window.OzwellChat?.close();
+  };
 }

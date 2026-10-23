@@ -101,6 +101,58 @@ describe('schema types', () => {
     expect(result.success).toBe(false);
   });
 
+  it('accepts an optional positive integer minimum row count for longtext', () => {
+    const field = { id: 'notes', fieldType: 'longtext' };
+
+    expect(fieldDefinitionSchema.parse(field)).not.toHaveProperty('rows');
+    expect(fieldDefinitionSchema.parse({ ...field, rows: 5 })).toEqual({
+      ...field,
+      rows: 5,
+    });
+  });
+
+  it.each([0, -1, 1.5, '4', null])(
+    'rejects an invalid longtext row count: %s',
+    (rows) => {
+      expect(
+        fieldDefinitionSchema.safeParse({
+          id: 'notes',
+          fieldType: 'longtext',
+          rows,
+        }).success
+      ).toBe(false);
+    }
+  );
+
+  it('accepts an optional maximum row count and matching row bounds', () => {
+    const field = { id: 'notes', fieldType: 'longtext' };
+
+    expect(fieldDefinitionSchema.parse(field)).not.toHaveProperty('maxRows');
+    expect(fieldDefinitionSchema.parse({ ...field, maxRows: 5 })).toEqual({
+      ...field,
+      maxRows: 5,
+    });
+    expect(
+      fieldDefinitionSchema.safeParse({ ...field, rows: 5, maxRows: 5 }).success
+    ).toBe(true);
+    expect(
+      fieldDefinitionSchema.safeParse({ ...field, rows: 6, maxRows: 5 }).success
+    ).toBe(false);
+  });
+
+  it.each([0, -1, 1.5, '4', null])(
+    'rejects an invalid longtext maximum row count: %s',
+    (maxRows) => {
+      expect(
+        fieldDefinitionSchema.safeParse({
+          id: 'notes',
+          fieldType: 'longtext',
+          maxRows,
+        }).success
+      ).toBe(false);
+    }
+  );
+
   it('should accept conditional rules on options', () => {
     const result = formDefinitionSchema.safeParse({
       id: 'option-rules',
@@ -249,10 +301,16 @@ describe('schema types', () => {
     ]);
   });
 
-  it('preserves text defaults through normalization at the root and inside sections', () => {
+  it('preserves text defaults and row limits through normalization at the root and inside sections', () => {
     const fields: FieldDefinition[] = [
       { id: 'text', fieldType: 'text', defaultAnswer: 'Short answer' },
-      { id: 'longtext', fieldType: 'longtext', defaultAnswer: 'Long answer' },
+      {
+        id: 'longtext',
+        fieldType: 'longtext',
+        defaultAnswer: 'Long answer',
+        rows: 2,
+        maxRows: 8,
+      },
     ];
     const definition: FormDefinition = {
       id: 'defaults',

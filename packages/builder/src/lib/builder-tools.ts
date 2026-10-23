@@ -464,7 +464,7 @@ export function createBuilderTools(form: FormStore): BuilderTools {
             : def.question,
           required: def.required ?? false,
           options: def.options ?? [],
-          rows: def.rows ?? [],
+          rows: isMatrix ? def.rows ?? [] : [],
           columns: def.columns ?? [],
           editWith: isMatrix
             ? 'add_row / add_column (NOT add_option)'

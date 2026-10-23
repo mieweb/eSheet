@@ -24,6 +24,8 @@ import { registerCustomFieldTypes } from '@esheet/fields';
 import { BuilderHeader } from './components/BuilderHeader.js';
 import { EditPanel } from './components/edit-panel/EditPanel.js';
 import { useFormApi } from './hooks/useFormApi.js';
+import { createBuilderTools } from './builder-tools.js';
+import { executeToolCall } from './mcp/tool-executor.js';
 import type { StoreApi } from 'zustand';
 import { vi } from 'vitest';
 
@@ -63,6 +65,226 @@ afterEach(() => {
 });
 
 describe('EsheetBuilder', () => {
+  it('updates longtext row limits through tools without allowing invalid limits or matrix arrays', () => {
+    const form = createFormStore({
+      id: 'tool-row-limits',
+      pages: [
+        {
+          id: 'page',
+          fields: [
+            { id: 'notes', fieldType: 'longtext', rows: 2, maxRows: 8 },
+            { id: 'matrix', fieldType: 'singlematrix', rows: [], columns: [] },
+          ],
+        },
+      ],
+    });
+    const tools = createBuilderTools(form);
+    expect(
+      executeToolCall(
+        'update_field',
+        { fieldId: 'notes', updates: { rows: 5 } },
+        tools
+      )
+    ).toBe('Updated field notes');
+    const saved = tools.getField('notes')?.definition;
+    expect(saved).toMatchObject({ rows: 5, maxRows: 8 });
+    for (const updates of [
+      { rows: 0 },
+      { rows: 1.5 },
+      { rows: '5' },
+      { rows: [] },
+      { rows: 9 },
+      { maxRows: 4 },
+      { question: 'Must not persist', rows: -1 },
+    ]) {
+      expect(
+        executeToolCall('update_field', { fieldId: 'notes', updates }, tools)
+      ).toContain('Invalid longtext row limits');
+      expect(tools.getField('notes')?.definition).toEqual(saved);
+    }
+    for (const fieldId of ['notes', 'matrix']) {
+      expect(
+        executeToolCall(
+          'update_field',
+          { fieldId, updates: { columns: [] } },
+          tools
+        )
+      ).toContain('Cannot set rows/columns');
+    }
+    expect(
+      executeToolCall(
+        'update_field',
+        { fieldId: 'matrix', updates: { rows: [] } },
+        tools
+      )
+    ).toContain('Cannot set rows/columns');
+    expect(
+      executeToolCall(
+        'update_field',
+        { fieldId: 'notes', updates: { rows: 10, maxRows: 12 } },
+        tools
+      )
+    ).toBe('Updated field notes');
+  });
+
+  it('keeps summary rows as arrays for longtext and matrix fields', () => {
+    const rows = [{ id: 'row-1', value: 'First row' }];
+    const form = createFormStore({
+      id: 'summary-rows',
+      pages: [
+        {
+          id: 'page-1',
+          fields: [
+            { id: 'notes', fieldType: 'longtext', rows: 5 },
+            { id: 'single', fieldType: 'singlematrix', rows, columns: [] },
+            { id: 'multi', fieldType: 'multimatrix', rows, columns: [] },
+          ],
+        },
+      ],
+    });
+
+    const { fields } = createBuilderTools(form).getFormSummary();
+    expect(fields.map((field) => field.rows)).toEqual([[], rows, rows]);
+    expect(fields[0].rows.map((row) => row.id)).toEqual([]);
+  });
+
+  it('edits and clears the longtext row limits', () => {
+    const form = createFormStore({
+      id: 'longtext-rows',
+      pages: [
+        {
+          id: 'page-1',
+          fields: [
+            { id: 'notes', fieldType: 'longtext' },
+            { id: 'name', fieldType: 'text' },
+          ],
+        },
+      ],
+    });
+    const ui = createUIStore();
+    ui.getState().selectField('notes');
+    renderWithContexts(form, ui, <EditPanel />);
+
+    const input = screen.getByLabelText('Minimum rows') as HTMLInputElement;
+    const maximum = screen.getByLabelText('Maximum rows') as HTMLInputElement;
+    expect(input.value).toBe('');
+    expect(maximum.value).toBe('');
+    expect(input.id).toContain('-editor-rows-notes');
+    expect(maximum.id).toContain('-editor-maxrows-notes');
+
+    fireEvent.change(input, { target: { value: '5' } });
+    fireEvent.blur(input);
+    expect(form.getState().normalized.byId.notes?.definition).toEqual(
+      expect.objectContaining({ rows: 5 })
+    );
+
+    for (const value of ['0', '-1', '1.5']) {
+      fireEvent.change(input, { target: { value } });
+      expect(input.value).toBe(value);
+      fireEvent.blur(input);
+      expect(input.value).toBe('5');
+      expect(form.getState().normalized.byId.notes?.definition).toEqual(
+        expect.objectContaining({ rows: 5 })
+      );
+    }
+
+    fireEvent.change(maximum, { target: { value: '8' } });
+    fireEvent.blur(maximum);
+    expect(form.getState().normalized.byId.notes?.definition).toEqual(
+      expect.objectContaining({ rows: 5, maxRows: 8 })
+    );
+
+    for (const value of ['0', '-1', '1.5', '4']) {
+      fireEvent.change(maximum, { target: { value } });
+      fireEvent.blur(maximum);
+      expect(maximum.value).toBe('8');
+      expect(form.getState().normalized.byId.notes?.definition).toEqual(
+        expect.objectContaining({ rows: 5, maxRows: 8 })
+      );
+    }
+
+    fireEvent.change(input, { target: { value: '9' } });
+    fireEvent.blur(input);
+    expect(form.getState().normalized.byId.notes?.definition).toEqual(
+      expect.objectContaining({ rows: 5, maxRows: 8 })
+    );
+
+    fireEvent.change(maximum, { target: { value: '' } });
+    fireEvent.blur(maximum);
+    expect(form.getState().normalized.byId.notes?.definition).toEqual(
+      expect.objectContaining({ maxRows: undefined })
+    );
+
+    fireEvent.change(input, { target: { value: '' } });
+    fireEvent.blur(input);
+    expect(form.getState().normalized.byId.notes?.definition).toEqual(
+      expect.objectContaining({ rows: undefined })
+    );
+
+    act(() => ui.getState().selectField('name'));
+    expect(screen.queryByLabelText('Minimum rows')).toBeNull();
+    expect(screen.queryByLabelText('Maximum rows')).toBeNull();
+  });
+
+  it('preserves intermediate row-limit digits until blur or Enter', () => {
+    const form = createFormStore({
+      id: 'row-limit-drafts',
+      pages: [
+        {
+          id: 'page-1',
+          fields: [
+            { id: 'notes', fieldType: 'longtext', rows: 5 },
+            { id: 'other', fieldType: 'longtext', rows: 3 },
+          ],
+        },
+      ],
+    });
+    const ui = createUIStore();
+    ui.getState().selectField('notes');
+    renderWithContexts(form, ui, <EditPanel />);
+
+    const minimum = screen.getByLabelText('Minimum rows') as HTMLInputElement;
+    const maximum = screen.getByLabelText('Maximum rows') as HTMLInputElement;
+    fireEvent.change(maximum, { target: { value: '1' } });
+    expect(maximum.value).toBe('1');
+    expect(
+      form.getState().normalized.byId.notes?.definition
+    ).not.toHaveProperty('maxRows');
+    fireEvent.change(maximum, { target: { value: `${maximum.value}2` } });
+    expect(maximum.value).toBe('12');
+    expect(
+      form.getState().normalized.byId.notes?.definition
+    ).not.toHaveProperty('maxRows');
+    fireEvent.blur(maximum);
+    expect(form.getState().normalized.byId.notes?.definition).toEqual(
+      expect.objectContaining({ maxRows: 12 })
+    );
+
+    act(() => minimum.focus());
+    fireEvent.change(minimum, { target: { value: '' } });
+    fireEvent.change(minimum, { target: { value: '1' } });
+    fireEvent.change(minimum, { target: { value: `${minimum.value}0` } });
+    expect(form.getState().normalized.byId.notes?.definition).toEqual(
+      expect.objectContaining({ rows: 5 })
+    );
+    fireEvent.keyDown(minimum, { key: 'Enter' });
+    expect(form.getState().normalized.byId.notes?.definition).toEqual(
+      expect.objectContaining({ rows: 10 })
+    );
+
+    act(() => form.getState().updateField('notes', { rows: 6 }));
+    expect(minimum.value).toBe('6');
+
+    fireEvent.change(maximum, { target: { value: '2' } });
+    act(() => ui.getState().selectField('other'));
+    expect(
+      (screen.getByLabelText('Minimum rows') as HTMLInputElement).value
+    ).toBe('3');
+    expect(
+      (screen.getByLabelText('Maximum rows') as HTMLInputElement).value
+    ).toBe('');
+  });
+
   it('edits default options and text answers through core store actions', () => {
     const form = createFormStore({
       id: 'defaults',
