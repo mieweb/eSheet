@@ -63,6 +63,56 @@ afterEach(() => {
 });
 
 describe('EsheetBuilder', () => {
+  it('edits default options and text answers through core store actions', () => {
+    const form = createFormStore({
+      id: 'defaults',
+      pages: [
+        {
+          id: 'main',
+          fields: [
+            {
+              id: 'choice',
+              fieldType: 'dropdown',
+              options: [
+                { id: 'a', value: 'First', defaultOption: true },
+                { id: 'b', value: 'Second' },
+              ],
+            },
+            { id: 'text', fieldType: 'text' },
+          ],
+        },
+      ],
+    });
+    const ui = createUIStore();
+    ui.getState().selectField('choice');
+    renderWithContexts(form, ui, <EditPanel />);
+    expect(
+      (screen.getByLabelText('Default option 1') as HTMLInputElement).checked
+    ).toBe(true);
+    fireEvent.click(screen.getByLabelText('Default option 2'));
+    expect(
+      (screen.getByLabelText('Default option 1') as HTMLInputElement).checked
+    ).toBe(false);
+    expect(
+      (screen.getByLabelText('Default option 2') as HTMLInputElement).checked
+    ).toBe(true);
+    fireEvent.change(screen.getByLabelText('Option 2'), {
+      target: { value: 'Renamed second' },
+    });
+    expect(
+      (screen.getByLabelText('Default option 2') as HTMLInputElement).checked
+    ).toBe(true);
+    fireEvent.click(screen.getByLabelText('Remove option 2'));
+    expect(screen.queryByLabelText('Default option 2')).toBeNull();
+    act(() => ui.getState().selectField('text'));
+    fireEvent.change(screen.getByLabelText('Default answer'), {
+      target: { value: 'Initial text' },
+    });
+    expect(form.getState().getField('text')?.definition).toMatchObject({
+      defaultAnswer: 'Initial text',
+    });
+  });
+
   it('renders registered property editors for root and section child fields', () => {
     function PropertyEditor({
       fieldId,

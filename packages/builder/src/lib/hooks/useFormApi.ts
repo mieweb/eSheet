@@ -53,6 +53,7 @@ export interface FormApi {
   option: {
     add: (value?: string) => string | null;
     update: (optId: string, value: string) => boolean;
+    setDefault: (optId: string, selected: boolean) => boolean;
     updateRules: (optId: string, rules: ConditionalRule[]) => boolean;
     setScore: (optId: string, score: number | undefined) => boolean;
     remove: (optId: string) => boolean;
@@ -150,6 +151,10 @@ export function useFormApi(fieldId?: string): FormApi {
       },
 
       option: {
+        setDefault: (optId: string, selected: boolean) =>
+          fieldId
+            ? form.getState().setOptionDefault(fieldId, optId, selected)
+            : false,
         add: (value?: string) =>
           fieldId ? form.getState().addOption(fieldId, value) : null,
         update: (optId: string, value: string) =>

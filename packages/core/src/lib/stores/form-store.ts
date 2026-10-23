@@ -31,6 +31,7 @@ import {
   hydrateDefinition,
 } from '../functions/normalize.js';
 import { hydrateResponse } from '../functions/hydrate-response.js';
+import { defaultResponses } from '../functions/default-responses.js';
 import {
   appendActivityEvent,
   recordActivity,
@@ -109,7 +110,10 @@ export interface FormState {
 
   // --- Lifecycle Actions ---
   /** Load a form definition (tree), normalizing it into the flat index. */
-  loadDefinition: (definition: FormDefinition) => void;
+  loadDefinition: (
+    definition: FormDefinition,
+    responses?: FieldResponseMap
+  ) => void;
   /** Update the top-level form id without replacing fields. */
   setFormId: (id: string) => void;
   /** Update the form title. */
@@ -193,6 +197,11 @@ export interface FormState {
   addOption: (fieldId: string, value?: string) => string | null;
   /** Update an option's value. */
   updateOption: (fieldId: string, optionId: string, value: string) => boolean;
+  setOptionDefault: (
+    fieldId: string,
+    optionId: string,
+    selected: boolean
+  ) => boolean;
   /** Update an option's conditional visibility rules. */
   updateOptionRules: (
     fieldId: string,
@@ -530,7 +539,8 @@ function withoutExtension(
 
 export function createFormStore(
   initial?: FormDefinition,
-  hostAllowsJS = false
+  hostAllowsJS = false,
+  initialResponses?: FieldResponseMap
 ): FormStore {
   const initialFormId = initial?.id?.trim() || createTemporaryFormId();
   // Sealed at creation time — cannot be overridden by store mutations.
@@ -558,7 +568,8 @@ export function createFormStore(
     formSourceData: initial?._sourceData,
     dangerouslyAllowJS: (initial?.dangerouslyAllowJS ?? false) && _hostAllowsJS,
     normalized: initial ? normalizeDefinition(initial.pages) : EMPTY_NORMALIZED,
-    responses: {},
+    responses:
+      initialResponses ?? (initial ? defaultResponses(initial.pages) : {}),
     identity: undefined,
     userEditedFields: new Set<string>(),
     extensions: {},
@@ -566,8 +577,9 @@ export function createFormStore(
     disposed: false,
 
     // --- Actions ---
-    loadDefinition: (definition) =>
+    loadDefinition: (definition, responses) =>
       (() => {
+        const initial = responses ?? defaultResponses(definition.pages);
         disposeAllExtensions();
         set({
           formId: definition.id,
@@ -577,7 +589,7 @@ export function createFormStore(
           dangerouslyAllowJS:
             (definition.dangerouslyAllowJS ?? false) && _hostAllowsJS,
           normalized: normalizeDefinition(definition.pages),
-          responses: {},
+          responses: initial,
           userEditedFields: new Set<string>(),
           extensions: {},
         });
@@ -1165,6 +1177,37 @@ export function createFormStore(
       if (!result) return false;
       set({ normalized: result });
       return true;
+    },
+
+    setOptionDefault: (fieldId, optionId, selected) => {
+      const node = get().normalized.byId[fieldId];
+      if (!node) throw new Error(`Unknown field: ${fieldId}`);
+      const meta = getFieldTypeMeta(node.definition.fieldType);
+      if (
+        meta?.answerType !== 'selection' &&
+        (meta?.answerType !== 'multiselection' ||
+          node.definition.fieldType === 'ranking')
+      ) {
+        throw new Error(`Field ${fieldId} does not support default options`);
+      }
+      const options =
+        'options' in node.definition && Array.isArray(node.definition.options)
+          ? node.definition.options
+          : [];
+      if (!options.some((option) => option.id === optionId)) {
+        throw new Error(`Unknown option ${optionId} on field ${fieldId}`);
+      }
+      return get().updateField(fieldId, {
+        options: options.map((option) => ({
+          ...option,
+          defaultOption:
+            option.id === optionId
+              ? selected
+              : selected && meta.answerType === 'selection'
+              ? false
+              : option.defaultOption,
+        })),
+      });
     },
 
     updateOptionRules: (fieldId, optionId, rules) => {

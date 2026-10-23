@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createFormStore } from './form-store.js';
+import { defaultResponses } from '../functions/default-responses.js';
+import { formDefinitionSchema } from '../types.js';
 import type { FormStore } from './form-store.js';
 import { getFieldForRender } from '../field-component-props.js';
 import type {
@@ -61,6 +63,144 @@ function requiredRule(targetId: string, expected: string): ConditionalRule {
 
 describe('createFormStore', () => {
   let store: FormStore;
+
+  describe('definition-owned defaults', () => {
+    const definition = form([
+      {
+        id: 'type',
+        fieldType: 'dropdown',
+        options: [
+          { id: 'original', value: 'Original', defaultOption: true },
+          { id: 'other', value: 'Other' },
+        ],
+      },
+      { id: 'note', fieldType: 'text', defaultAnswer: 'Initial text' },
+      {
+        id: 'many',
+        fieldType: 'check',
+        options: [
+          { id: 'a', value: 'A', defaultOption: true },
+          { id: 'b', value: 'B', defaultOption: true },
+        ],
+      },
+    ]);
+
+    it('initializes answers in core for a new store and a newly loaded definition', () => {
+      const expected = {
+        type: { selected: { id: 'original', value: 'Original' } },
+        note: { answer: 'Initial text' },
+        many: {
+          selected: [
+            { id: 'a', value: 'A' },
+            { id: 'b', value: 'B' },
+          ],
+        },
+      };
+      expect(defaultResponses(definition.pages)).toEqual(expected);
+      expect(createFormStore(definition).getState().responses).toEqual(
+        expected
+      );
+      const loaded = createFormStore();
+      loaded.getState().loadDefinition(definition);
+      expect(loaded.getState().responses).toEqual(expected);
+    });
+
+    it('treats supplied responses, even an empty map, as authoritative', () => {
+      expect(
+        createFormStore(definition, false, {}).getState().responses
+      ).toEqual({});
+      const loaded = createFormStore(definition);
+      loaded
+        .getState()
+        .loadDefinition(definition, { note: { answer: 'Saved text' } });
+      expect(loaded.getState().responses).toEqual({
+        note: { answer: 'Saved text' },
+      });
+      loaded.getState().loadDefinition(definition, {});
+      expect(loaded.getState().responses).toEqual({});
+    });
+
+    it('does not reapply defaults after clearing or resetting responses or editing options', () => {
+      const loaded = createFormStore(definition);
+      loaded.getState().clearResponse('type');
+      loaded.getState().updateOption('type', 'original', 'Changed label');
+      expect(loaded.getState().responses.type).toBeUndefined();
+      loaded.getState().resetResponses();
+      expect(loaded.getState().responses).toEqual({});
+    });
+
+    it('keeps defaults attached to options through label/ID changes and deletion', () => {
+      const loaded = createFormStore(definition);
+      loaded.getState().updateOption('type', 'original', 'Renamed');
+      const options = loaded.getState().getField('type')?.definition;
+      if (
+        !options ||
+        !('options' in options) ||
+        !Array.isArray(options.options)
+      ) {
+        throw new Error('Expected dropdown options');
+      }
+      loaded.getState().updateField('type', {
+        options: options.options.map((option) =>
+          option.id === 'original' ? { ...option, id: 'renamed' } : option
+        ),
+      });
+      expect(
+        defaultResponses(loaded.getState().hydrateDefinition().pages).type
+      ).toEqual({
+        selected: { id: 'renamed', value: 'Renamed' },
+      });
+      loaded.getState().removeOption('type', 'renamed');
+      expect(
+        defaultResponses(loaded.getState().hydrateDefinition().pages).type
+      ).toBeUndefined();
+    });
+
+    it('switches a single-choice default atomically and permits multiple checkbox defaults', () => {
+      const loaded = createFormStore(definition);
+      loaded.getState().setOptionDefault('type', 'other', true);
+      const defaults = defaultResponses(
+        loaded.getState().hydrateDefinition().pages
+      );
+      expect(defaults.type).toEqual({
+        selected: { id: 'other', value: 'Other' },
+      });
+      expect(defaults.many?.selected).toHaveLength(2);
+      loaded.getState().setOptionDefault('type', 'other', false);
+      expect(
+        defaultResponses(loaded.getState().hydrateDefinition().pages).type
+      ).toBeUndefined();
+      expect(() =>
+        loaded.getState().setOptionDefault('type', 'missing', true)
+      ).toThrow(/Unknown option/);
+    });
+
+    it('rejects conflicting single-choice defaults and unsupported text defaults', () => {
+      const invalid = form([
+        {
+          id: 'type',
+          fieldType: 'dropdown',
+          options: [
+            { id: 'a', value: 'A', defaultOption: true },
+            { id: 'b', value: 'B', defaultOption: true },
+          ],
+        },
+      ]);
+      expect(formDefinitionSchema.safeParse(invalid).success).toBe(false);
+      expect(() => defaultResponses(invalid.pages)).toThrow(/single-choice/);
+      expect(
+        formDefinitionSchema.safeParse(
+          form([
+            {
+              id: 'type',
+              fieldType: 'dropdown',
+              defaultAnswer: 'not a selection',
+            },
+          ])
+        ).success
+      ).toBe(false);
+    });
+  });
 
   // -----------------------------------------------------------------------
   // Factory
