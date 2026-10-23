@@ -25,6 +25,7 @@ import { BuilderHeader } from './components/BuilderHeader.js';
 import { EditPanel } from './components/edit-panel/EditPanel.js';
 import { useFormApi } from './hooks/useFormApi.js';
 import { createBuilderTools } from './builder-tools.js';
+import { executeToolCall } from './mcp/tool-executor.js';
 import type { StoreApi } from 'zustand';
 import { vi } from 'vitest';
 
@@ -64,6 +65,68 @@ afterEach(() => {
 });
 
 describe('EsheetBuilder', () => {
+  it('updates longtext row limits through tools without allowing invalid limits or matrix arrays', () => {
+    const form = createFormStore({
+      id: 'tool-row-limits',
+      pages: [
+        {
+          id: 'page',
+          fields: [
+            { id: 'notes', fieldType: 'longtext', rows: 2, maxRows: 8 },
+            { id: 'matrix', fieldType: 'singlematrix', rows: [], columns: [] },
+          ],
+        },
+      ],
+    });
+    const tools = createBuilderTools(form);
+    expect(
+      executeToolCall(
+        'update_field',
+        { fieldId: 'notes', updates: { rows: 5 } },
+        tools
+      )
+    ).toBe('Updated field notes');
+    const saved = tools.getField('notes')?.definition;
+    expect(saved).toMatchObject({ rows: 5, maxRows: 8 });
+    for (const updates of [
+      { rows: 0 },
+      { rows: 1.5 },
+      { rows: '5' },
+      { rows: [] },
+      { rows: 9 },
+      { maxRows: 4 },
+      { question: 'Must not persist', rows: -1 },
+    ]) {
+      expect(
+        executeToolCall('update_field', { fieldId: 'notes', updates }, tools)
+      ).toContain('Invalid longtext row limits');
+      expect(tools.getField('notes')?.definition).toEqual(saved);
+    }
+    for (const fieldId of ['notes', 'matrix']) {
+      expect(
+        executeToolCall(
+          'update_field',
+          { fieldId, updates: { columns: [] } },
+          tools
+        )
+      ).toContain('Cannot set rows/columns');
+    }
+    expect(
+      executeToolCall(
+        'update_field',
+        { fieldId: 'matrix', updates: { rows: [] } },
+        tools
+      )
+    ).toContain('Cannot set rows/columns');
+    expect(
+      executeToolCall(
+        'update_field',
+        { fieldId: 'notes', updates: { rows: 10, maxRows: 12 } },
+        tools
+      )
+    ).toBe('Updated field notes');
+  });
+
   it('keeps summary rows as arrays for longtext and matrix fields', () => {
     const rows = [{ id: 'row-1', value: 'First row' }];
     const form = createFormStore({

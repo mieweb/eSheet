@@ -842,7 +842,15 @@ export function hasOptions(
 const FIELD_TYPE_PROPERTIES: Record<FieldType, readonly string[]> = {
   // Text category
   text: ['inputType', 'unit', 'dateRange', 'timeFormat', 'defaultAnswer'],
-  longtext: ['inputType', 'unit', 'dateRange', 'timeFormat', 'defaultAnswer'],
+  longtext: [
+    'inputType',
+    'unit',
+    'dateRange',
+    'timeFormat',
+    'defaultAnswer',
+    'rows',
+    'maxRows',
+  ],
   multitext: ['options', 'optionLayout'],
   // Selection category
   radio: ['options', 'optionLayout'],

@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from '@testing-library/react';
 import type { FieldComponentProps } from '@esheet/core';
 import { TextField } from './TextField.js';
 import { LongTextField } from './LongTextField.js';
@@ -128,6 +134,64 @@ describe('LongTextField', () => {
     id: 'notes',
     question: 'Additional notes',
   };
+
+  it.each([
+    ['esheet-renderer-root', undefined],
+    ['esheet-renderer-root', 5],
+    ['ms-builder-root', undefined],
+    ['ms-builder-root', 5],
+  ])(
+    'remeasures at fixed width without replacing the answer when %s toggles touch mode with cap %s',
+    async (rootClass, maxRows) => {
+      const onResponse = vi.fn();
+      const { container } = render(
+        <div className={`${rootClass} touch-mode-disabled`}>
+          <div className="preview-layout">
+            <LongTextField
+              {...createProps({ ...definition, rows: 2, maxRows })}
+              response={{ answer: 'First\nSecond\nThird' }}
+              onResponse={onResponse}
+            />
+          </div>
+        </div>
+      );
+      const root = container.firstElementChild as HTMLElement;
+      const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+      const padding = () =>
+        root.classList.contains('esheet-touch-active') ? 24 : 14;
+      Object.defineProperties(textarea, {
+        offsetWidth: { get: () => 320 },
+        offsetHeight: { get: () => textarea.rows * 24 + padding() + 2 },
+        clientHeight: { get: () => textarea.rows * 24 + padding() },
+        scrollHeight: { get: () => 3 * 24 + padding() },
+      });
+      textarea.focus();
+      textarea.setSelectionRange(2, 7);
+
+      await act(async () => {
+        root.classList.remove('touch-mode-disabled');
+        root.classList.add('esheet-touch-active');
+      });
+      expect(textarea.style.height).toBe('98px');
+      expect(screen.getByRole('textbox')).toBe(textarea);
+      expect(document.activeElement).toBe(textarea);
+      expect([textarea.selectionStart, textarea.selectionEnd]).toEqual([2, 7]);
+      expect(textarea.value).toBe('First\nSecond\nThird');
+      expect(textarea.style.maxHeight).toBe(
+        maxRows === undefined
+          ? ''
+          : 'calc(5lh + 2 * var(--esheet-textarea-padding-y, 7px) + 2px)'
+      );
+
+      await act(async () => {
+        root.classList.remove('esheet-touch-active');
+        root.classList.add('touch-mode-disabled');
+      });
+      expect(textarea.style.height).toBe('88px');
+      expect(document.activeElement).toBe(textarea);
+      expect(onResponse).not.toHaveBeenCalled();
+    }
+  );
 
   it('uses the shared single-line auto-growing default without a height cap', () => {
     render(<LongTextField {...createProps(definition)} />);

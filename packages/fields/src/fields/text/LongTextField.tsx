@@ -19,6 +19,30 @@ export const LongTextField = React.memo(function LongTextField({
   const def = field.definition as LongtextFieldDefinition;
   const instanceId = form.getState().instanceId;
   const sizingKey = `${def.rows ?? 1}-${def.maxRows ?? ''}`;
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+  React.useEffect(() => {
+    const textarea = textareaRef.current;
+    const root = textarea?.closest('.esheet-renderer-root, .ms-builder-root');
+    if (!textarea || !root) return;
+
+    const touchState = () =>
+      `${root.classList.contains(
+        'esheet-touch-active'
+      )}-${root.classList.contains('touch-mode-disabled')}`;
+    let previous = touchState();
+    const observer = new MutationObserver(() => {
+      const current = touchState();
+      if (current === previous) return;
+      previous = current;
+      textarea.style.height = 'auto';
+      const borders = textarea.offsetHeight - textarea.clientHeight;
+      textarea.style.height = `${textarea.scrollHeight + borders}px`;
+    });
+    observer.observe(root, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, [sizingKey, isPreview]);
+
   const textareaStyle: React.CSSProperties = {
     maxHeight:
       def.maxRows === undefined
@@ -44,6 +68,7 @@ export const LongTextField = React.memo(function LongTextField({
         </div>
         <Textarea
           key={sizingKey}
+          ref={textareaRef}
           id={`${instanceId}-longtext-answer-${def.id}`}
           aria-label={def.question || 'Question'}
           disabled={!isEnabled}
@@ -79,6 +104,7 @@ export const LongTextField = React.memo(function LongTextField({
       </div>
       <Textarea
         key={sizingKey}
+        ref={textareaRef}
         id={`${instanceId}-canvas-preview-${def.id}`}
         aria-label="Answer preview"
         value=""

@@ -301,10 +301,16 @@ describe('schema types', () => {
     ]);
   });
 
-  it('preserves text defaults through normalization at the root and inside sections', () => {
+  it('preserves text defaults and row limits through normalization at the root and inside sections', () => {
     const fields: FieldDefinition[] = [
       { id: 'text', fieldType: 'text', defaultAnswer: 'Short answer' },
-      { id: 'longtext', fieldType: 'longtext', defaultAnswer: 'Long answer' },
+      {
+        id: 'longtext',
+        fieldType: 'longtext',
+        defaultAnswer: 'Long answer',
+        rows: 2,
+        maxRows: 8,
+      },
     ];
     const definition: FormDefinition = {
       id: 'defaults',
