@@ -222,6 +222,56 @@ describe('EsheetBuilder', () => {
     ).toBe('');
   });
 
+  it('edits default options and text answers through core store actions', () => {
+    const form = createFormStore({
+      id: 'defaults',
+      pages: [
+        {
+          id: 'main',
+          fields: [
+            {
+              id: 'choice',
+              fieldType: 'dropdown',
+              options: [
+                { id: 'a', value: 'First', defaultOption: true },
+                { id: 'b', value: 'Second' },
+              ],
+            },
+            { id: 'text', fieldType: 'text' },
+          ],
+        },
+      ],
+    });
+    const ui = createUIStore();
+    ui.getState().selectField('choice');
+    renderWithContexts(form, ui, <EditPanel />);
+    expect(
+      (screen.getByLabelText('Default option 1') as HTMLInputElement).checked
+    ).toBe(true);
+    fireEvent.click(screen.getByLabelText('Default option 2'));
+    expect(
+      (screen.getByLabelText('Default option 1') as HTMLInputElement).checked
+    ).toBe(false);
+    expect(
+      (screen.getByLabelText('Default option 2') as HTMLInputElement).checked
+    ).toBe(true);
+    fireEvent.change(screen.getByLabelText('Option 2'), {
+      target: { value: 'Renamed second' },
+    });
+    expect(
+      (screen.getByLabelText('Default option 2') as HTMLInputElement).checked
+    ).toBe(true);
+    fireEvent.click(screen.getByLabelText('Remove option 2'));
+    expect(screen.queryByLabelText('Default option 2')).toBeNull();
+    act(() => ui.getState().selectField('text'));
+    fireEvent.change(screen.getByLabelText('Default answer'), {
+      target: { value: 'Initial text' },
+    });
+    expect(form.getState().getField('text')?.definition).toMatchObject({
+      defaultAnswer: 'Initial text',
+    });
+  });
+
   it('renders registered property editors for root and section child fields', () => {
     function PropertyEditor({
       fieldId,
@@ -277,6 +327,12 @@ describe('EsheetBuilder', () => {
     expect(form.getState().normalized.byId['root-1']?.definition.question).toBe(
       'edited-root-1'
     );
+    fireEvent.change(screen.getByLabelText('Default answer'), {
+      target: { value: 'Root default' },
+    });
+    expect(form.getState().getField('root-1')?.definition).toMatchObject({
+      defaultAnswer: 'Root default',
+    });
 
     act(() => ui.getState().selectFieldChild('section-1', 'child-1'));
     fireEvent.click(
@@ -285,8 +341,57 @@ describe('EsheetBuilder', () => {
     expect(
       form.getState().normalized.byId['child-1']?.definition.question
     ).toBe('edited-child-1');
+    fireEvent.change(screen.getByLabelText('Default answer'), {
+      target: { value: 'Child default' },
+    });
+    expect(form.getState().getField('child-1')?.definition).toMatchObject({
+      defaultAnswer: 'Child default',
+    });
     view.unmount();
   });
+
+  it.each(['text', 'longtext'] as const)(
+    'sets and clears defaults for root and section child %s fields',
+    (fieldType) => {
+      const form = createFormStore({
+        id: 'nested-defaults',
+        pages: [
+          {
+            id: 'main',
+            fields: [
+              { id: 'root', fieldType },
+              {
+                id: 'section',
+                fieldType: 'section',
+                fields: [{ id: 'child', fieldType }],
+              },
+            ],
+          },
+        ],
+      });
+      const ui = createUIStore();
+      ui.getState().selectField('root');
+      renderWithContexts(form, ui, <EditPanel />);
+
+      for (const id of ['root', 'child']) {
+        if (id === 'child') {
+          act(() => ui.getState().selectFieldChild('section', id));
+        }
+        fireEvent.change(screen.getByLabelText('Default answer'), {
+          target: { value: 'Initial answer' },
+        });
+        expect(form.getState().getField(id)?.definition).toMatchObject({
+          defaultAnswer: 'Initial answer',
+        });
+        fireEvent.change(screen.getByLabelText('Default answer'), {
+          target: { value: '' },
+        });
+        expect(
+          form.getState().getField(id)?.definition.defaultAnswer
+        ).toBeUndefined();
+      }
+    }
+  );
 
   it('updates Required on the Logic Editor target', () => {
     const form = createFormStore({

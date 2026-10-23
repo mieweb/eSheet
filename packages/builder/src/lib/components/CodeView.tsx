@@ -227,7 +227,8 @@ export function CodeView({ form, ui }: CodeViewProps) {
         fs.getState().loadDefinition(
           next as Parameters<
             ReturnType<typeof fs.getState>['loadDefinition']
-          >[0]
+          >[0],
+          fs.getState().responses
         );
         uiApi.getState().setCodeEditorHasError(false);
       } catch {

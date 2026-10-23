@@ -7,7 +7,7 @@ import type {
   OptionLayout,
   TextInputType,
 } from '@esheet/core';
-import { slugifyQuestion } from '@esheet/core';
+import { getFieldTypeMeta, slugifyQuestion } from '@esheet/core';
 import { useFormStore } from '@esheet/fields';
 import { useInstanceId } from '../../EsheetBuilder.js';
 import { DraftIdEditor } from './DraftIdEditor.js';
@@ -100,6 +100,24 @@ export function CommonEditor({
             className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:placeholder:text-mstextmuted ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
           />
         </div>
+      )}
+
+      {getFieldTypeMeta(def.fieldType)?.answerType === 'text' && (
+        <label className="field-default ms:block ms:space-y-1 ms:text-sm">
+          <span>Default answer</span>
+          <input
+            id={`${instanceId}-editor-default-answer-${fieldId}`}
+            type="text"
+            aria-label="Default answer"
+            value={'defaultAnswer' in def ? def.defaultAnswer ?? '' : ''}
+            onChange={(event) =>
+              onUpdate({
+                defaultAnswer: event.currentTarget.value || undefined,
+              })
+            }
+            className="ms:w-full ms:bg-mssurface ms:text-mstext ms:border ms:border-msborder ms:rounded ms:p-2"
+          />
+        </label>
       )}
 
       {/* Input Type (text/longtext only) */}
