@@ -26,6 +26,9 @@ when omitted). Clear **Maximum rows** or omit `maxRows` for unlimited growth.
 The cap follows the current line height and includes the control's padding and
 borders, including touch-mode padding.
 
+In the builder, row-limit edits are applied when you leave the input or press
+Enter. Invalid limits are rejected and the previous value is restored.
+
 The shared `@mieweb/ui` textarea provides auto-sizing. Host styles can deliberately
 cap its height with CSS `max-height`; content then scrolls within that limit.
 
