@@ -1,4 +1,5 @@
 import './index.css';
+import { registerAssessmentPlanFieldType } from './AssessmentPlanField.js';
 import { registerAllergyListFieldType } from './AllergyListField.js';
 import { CodeLookup } from './CodeLookup/index.js';
 import { registerMedicationListFieldType } from './MedicationListField.js';
@@ -20,6 +21,7 @@ export function registerHealthFieldTypes(
 
   registerMedicationListFieldType({ codeLookup });
   registerAllergyListFieldType({ codeLookup });
+  registerAssessmentPlanFieldType({ codeLookup });
 }
 
 export {
@@ -51,3 +53,11 @@ export type {
   MedicationListFieldProps,
   MedicationListFieldValue,
 } from './MedicationListField.js';
+export {
+  AssessmentPlanField,
+  registerAssessmentPlanFieldType,
+} from './AssessmentPlanField.js';
+export type {
+  AssessmentPlanFieldProps,
+  AssessmentPlanFieldValue,
+} from './AssessmentPlanField.js';
