@@ -52,6 +52,24 @@ Fields use Tailwind CSS v4 with an `ms:` prefix (for example, `ms:bg-mssurface` 
 
 Applications must load `@mieweb/ui/styles.css` and select a brand stylesheet. The shared eSheet stylesheet uses fallback colors when brand variables are unavailable.
 
+## Autocomplete recovery
+
+Autocomplete fields retain loaded selections and choices picked during the current
+form session, including their captured attributes. If a choice disappears from the
+source, it remains selectable after clearing or changing the input, even below the
+source's minimum search length. Retained choices are labeled “Previously selected”;
+a successful complete-list provider can confirm removal and labels them “No longer
+active” instead. Live source results take precedence over retained copies.
+
+Recovery is scoped to the form instance and field, survives page/tab changes, and
+uses core's runtime extensions rather than exported responses, browser storage, or
+server history. Loading another definition or disposing the form clears it. Another
+record never inherits these choices; reopening starts from its saved selection.
+Hosts can opt into a longer recovery lifetime by restoring and subscribing to
+`AUTOCOMPLETE_HISTORY_NAMESPACE` extensions (per-field arrays of retained items).
+The host must scope persistence by identity and record and handle logout cleanup;
+eSheet itself does not write browser storage.
+
 ## Building
 
 Run `pnpm --filter @esheet/fields build` to build the library.

@@ -75,6 +75,13 @@ export interface AutocompleteFieldDefinition {
 }
 
 const DEBOUNCE_MS = 250;
+/** Form extension namespace for per-field arrays of retained autocomplete items. */
+export const AUTOCOMPLETE_HISTORY_NAMESPACE = '@esheet/fields/autocomplete';
+const EMPTY_HISTORY: readonly ParsedAutocompleteItem[] = [];
+const HISTORY_LABELS = {
+  previous: 'Previously selected',
+  inactive: 'No longer active',
+};
 
 /** An option plus the raw source object it came from (for attribute capture). */
 export interface ParsedAutocompleteItem extends SelectedOption {
@@ -196,6 +203,49 @@ export const AutocompleteField = React.memo(function AutocompleteField({
   const def = field.definition as unknown as AutocompleteFieldDefinition;
   const instanceId = form.getState().instanceId;
   const selected = response?.selected as SelectedOption | undefined;
+  const historySnapshot = () =>
+    form
+      .getState()
+      .getExtension<readonly ParsedAutocompleteItem[]>(
+        AUTOCOMPLETE_HISTORY_NAMESPACE,
+        def.id
+      ) ?? EMPTY_HISTORY;
+  const history = React.useSyncExternalStore(
+    (cb) => form.subscribe(cb),
+    historySnapshot,
+    historySnapshot
+  );
+  const remember = React.useCallback(
+    (item: ParsedAutocompleteItem) => {
+      const state = form.getState();
+      const previous =
+        state.getExtension<readonly ParsedAutocompleteItem[]>(
+          AUTOCOMPLETE_HISTORY_NAMESPACE,
+          def.id
+        ) ?? EMPTY_HISTORY;
+      const existing = previous.find((option) => option.id === item.id);
+      if (
+        existing?.value === item.value &&
+        existing.attributes === item.attributes
+      )
+        return;
+      state.setExtension(AUTOCOMPLETE_HISTORY_NAMESPACE, def.id, [
+        ...previous.filter((option) => option.id !== item.id),
+        item,
+      ]);
+    },
+    [form, def.id]
+  );
+
+  React.useEffect(() => {
+    if (isPreview && selected) {
+      remember({
+        id: selected.id,
+        value: selected.value,
+        attributes: response?.attributes,
+      });
+    }
+  }, [isPreview, selected, response?.attributes, remember, history]);
 
   const provider = def.optionsSource
     ? getOptionsProvider(def.optionsSource.provider)
@@ -222,6 +272,7 @@ export const AutocompleteField = React.memo(function AutocompleteField({
   const [items, setItems] = React.useState<ParsedAutocompleteItem[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [loadFailed, setLoadFailed] = React.useState(false);
+  const [loadedParams, setLoadedParams] = React.useState<string>();
   const queryRef = React.useRef(query);
   queryRef.current = query;
   const hasSearched = React.useRef(false);
@@ -277,6 +328,7 @@ export const AutocompleteField = React.memo(function AutocompleteField({
     abortRef.current = ac;
     setLoading(true);
     setLoadFailed(false);
+    setLoadedParams(undefined);
     setItems([]);
     const requestParams = paramsSnapshot();
     const isCurrent = () =>
@@ -287,6 +339,7 @@ export const AutocompleteField = React.memo(function AutocompleteField({
       const result = await load(q, ac.signal);
       if (!isCurrent()) return;
       setItems(result);
+      setLoadedParams(requestParams);
     } catch (err) {
       if ((err as Error).name === 'AbortError' || !isCurrent()) return;
       setItems([]);
@@ -306,6 +359,7 @@ export const AutocompleteField = React.memo(function AutocompleteField({
     setItems([]);
     setLoading(false);
     setLoadFailed(false);
+    setLoadedParams(undefined);
     if (isPreview && hasSource) {
       if (isComplete) void requestRef.current('');
       else if (hasSearched.current && queryRef.current.length >= minQueryLength)
@@ -366,6 +420,13 @@ export const AutocompleteField = React.memo(function AutocompleteField({
     }
   };
 
+  const retainedItems = history.filter(
+    (option) => !items.some((item) => item.id === option.id)
+  );
+  const retainedIds = new Set(retainedItems.map((item) => item.id));
+  const confirmedInactive =
+    isComplete && loadedParams === paramsKey && !loading && !loadFailed;
+
   if (isPreview) {
     return (
       <div className="autocomplete-field-preview ms:space-y-1.5">
@@ -382,7 +443,7 @@ export const AutocompleteField = React.memo(function AutocompleteField({
           )}
         </div>
         <Autocomplete<ParsedAutocompleteItem>
-          items={items}
+          items={[...items, ...retainedItems]}
           getItemKey={(item) => item.id}
           renderItem={(item) => (
             <span>
@@ -390,6 +451,13 @@ export const AutocompleteField = React.memo(function AutocompleteField({
               {item.description && (
                 <span className="ms:ml-2 ms:text-xs ms:text-mstextmuted">
                   {item.description}
+                </span>
+              )}
+              {retainedIds.has(item.id) && (
+                <span className="ms:ml-2 ms:text-xs ms:text-mstextmuted">
+                  {confirmedInactive
+                    ? HISTORY_LABELS.inactive
+                    : HISTORY_LABELS.previous}
                 </span>
               )}
             </span>
@@ -400,6 +468,7 @@ export const AutocompleteField = React.memo(function AutocompleteField({
             setQuery(item.value);
             const attributes =
               item.attributes ?? captureAttributes(item.raw, def.captureKeys);
+            remember({ ...item, attributes });
             onResponse({
               selected: { id: item.id, value: item.value },
               attributes,
@@ -412,9 +481,13 @@ export const AutocompleteField = React.memo(function AutocompleteField({
           }}
           value={query}
           onValueChange={search}
-          filter={isComplete ? matchesQuery : undefined}
+          filter={
+            isComplete
+              ? (item, q) => retainedIds.has(item.id) || matchesQuery(item, q)
+              : undefined
+          }
           clearOnSelect={false}
-          minQueryLength={minQueryLength}
+          minQueryLength={retainedItems.length ? 0 : minQueryLength}
           placeholder={
             def.answerPlaceholder ||
             (isComplete ? 'Select…' : 'Start typing to search…')
