@@ -116,6 +116,20 @@ describe('store activity logging', () => {
     expect(log[0].to).toBe('Ada');
   });
 
+  it('debounces rapid same-field changes with an empty identity name', () => {
+    const store = createFormStore(activityForm);
+    store.getState().setIdentity({ name: '' });
+    store.getState().setResponse('name', { answer: 'A' });
+    store.getState().setResponse('name', { answer: 'Ad' });
+    store.getState().setResponse('name', { answer: 'Ada' });
+
+    const log = getLog(store);
+    expect(log).toHaveLength(1);
+    expect(log[0].author).toBeUndefined();
+    expect(log[0].from).toBeUndefined();
+    expect(log[0].to).toBe('Ada');
+  });
+
   it('separate fields produce separate entries with from/to', () => {
     const store = createFormStore();
     store.getState().loadDefinition(activityForm);
@@ -145,6 +159,19 @@ describe('store activity logging', () => {
     const log2 = getLog(store2);
     expect(log2).toHaveLength(2);
     expect(log2.map((e) => e.fieldId)).toEqual(['a', 'b']);
+  });
+
+  it('debounces rapid same-field changes by the same named author', () => {
+    const store = createFormStore(activityForm);
+    store.getState().setIdentity({ name: 'Original author' });
+    store.getState().setResponse('name', { answer: 'A' });
+    store.getState().setResponse('name', { answer: 'Ad' });
+    store.getState().setResponse('name', { answer: 'Ada' });
+
+    const log = getLog(store);
+    expect(log).toHaveLength(1);
+    expect(log[0]).toMatchObject({ author: 'Original author', to: 'Ada' });
+    expect(log[0].from).toBeUndefined();
   });
 
   it('does not debounce changes by different authors into one activity', () => {
