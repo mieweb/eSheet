@@ -161,6 +161,19 @@ describe('store activity logging', () => {
     expect(log2.map((e) => e.fieldId)).toEqual(['a', 'b']);
   });
 
+  it('debounces rapid same-field changes by the same named author', () => {
+    const store = createFormStore(activityForm);
+    store.getState().setIdentity({ name: 'Original author' });
+    store.getState().setResponse('name', { answer: 'A' });
+    store.getState().setResponse('name', { answer: 'Ad' });
+    store.getState().setResponse('name', { answer: 'Ada' });
+
+    const log = getLog(store);
+    expect(log).toHaveLength(1);
+    expect(log[0]).toMatchObject({ author: 'Original author', to: 'Ada' });
+    expect(log[0].from).toBeUndefined();
+  });
+
   it('does not debounce changes by different authors into one activity', () => {
     const store = createFormStore(activityForm);
     store.getState().setIdentity({ name: 'Original author' });
