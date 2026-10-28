@@ -161,6 +161,19 @@ describe('store activity logging', () => {
     expect(log2.map((e) => e.fieldId)).toEqual(['a', 'b']);
   });
 
+  it('does not debounce changes by different authors into one activity', () => {
+    const store = createFormStore(activityForm);
+    store.getState().setIdentity({ name: 'Original author' });
+    store.getState().setResponse('name', { answer: 'Ada' });
+    store.getState().setIdentity({ name: 'Next author' });
+    store.getState().setResponse('name', { answer: 'Grace' });
+
+    expect(getLog(store)).toMatchObject([
+      { author: 'Original author', to: 'Ada' },
+      { author: 'Next author', from: 'Ada', to: 'Grace' },
+    ]);
+  });
+
   it('does not log when the form has no activity field', () => {
     const store = createFormStore();
     store.getState().loadDefinition({

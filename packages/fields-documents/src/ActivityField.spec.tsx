@@ -1,6 +1,16 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import type { ReactNode } from 'react';
-import type { ActivityEntry, FieldComponentProps } from '@esheet/core';
+import {
+  createFormStore,
+  type ActivityEntry,
+  type FieldComponentProps,
+} from '@esheet/core';
 import { ActivityField, ACTIVITY_COLUMNS } from './ActivityField.js';
 
 const captured = {
@@ -157,6 +167,60 @@ describe('ActivityField', () => {
     expect(
       Object.fromEntries(publishedRows().map((row) => [row.id, row.category]))
     ).toEqual({ added: 'Added', cleared: 'Cleared', updated: 'Updated' });
+  });
+
+  it('keeps saved authors when the viewer changes and stamps only new edits', async () => {
+    const saved = entry('saved', '2026-01-01T10:00:00Z', {
+      author: 'Alice',
+    });
+    const unknown = entry('unknown', '2026-01-01T09:00:00Z');
+    const form = createFormStore(
+      {
+        id: 'case',
+        pages: [
+          {
+            id: 'main',
+            fields: [
+              { id: 'status', fieldType: 'text' },
+              { id: 'log', fieldType: 'activity' },
+            ],
+          },
+        ],
+      },
+      false,
+      {
+        status: { answer: 'Closed' },
+        _activity: { activity: [unknown, saved] },
+      }
+    );
+    form.getState().setIdentity({ name: 'Bob' });
+    render(<ActivityField {...createProps([])} form={form} />);
+
+    await waitFor(() => {
+      expect(publishedRows().map((row) => row.author)).toEqual(['Alice', '—']);
+    });
+
+    act(() => form.getState().setResponse('status', { answer: 'Reopened' }));
+    await waitFor(() => {
+      expect(publishedRows()[0]).toMatchObject({
+        author: 'Bob',
+        from: 'Closed',
+        to: 'Reopened',
+      });
+    });
+
+    act(() => form.getState().setIdentity({ name: 'Carol' }));
+    await waitFor(() => {
+      expect(publishedRows().map((row) => row.author)).toEqual([
+        'Bob',
+        'Alice',
+        '—',
+      ]);
+    });
+    expect(form.getState().responses._activity?.activity?.slice(0, 2)).toEqual([
+      unknown,
+      saved,
+    ]);
   });
 
   it('uses an explicit event category when present', async () => {
