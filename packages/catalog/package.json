@@ -1,6 +1,6 @@
 {
   "name": "@esheet/catalog",
-  "version": "0.0.7",
+  "version": "0.0.7-1",
   "description": "MCDX catalog compiler, browser search runtime and standalone worker",
   "repository": {
     "type": "git",
