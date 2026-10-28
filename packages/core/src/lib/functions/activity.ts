@@ -200,6 +200,7 @@ export function recordActivity(
   const withinDebounce =
     last !== undefined &&
     last.fieldId === fieldId &&
+    last.author === (state.identity?.name || undefined) &&
     last.category === undefined &&
     Date.parse(nowIso) - Date.parse(last.at) < ACTIVITY_DEBOUNCE_MS;
 
