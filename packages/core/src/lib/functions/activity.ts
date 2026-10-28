@@ -156,7 +156,7 @@ export function formatActivityValue(value: unknown): string | undefined {
  *
  * No-op (returns `next` unchanged) when the form has no `activity` field,
  * when the changed field IS the log, or when the display value did not
- * change. Consecutive changes to the same field within
+ * change. Consecutive changes by the same named author to the same field within
  * `ACTIVITY_DEBOUNCE_MS` update the last entry's `to`/`at` in place
  * (keeping the original `from`) instead of appending.
  */
@@ -200,6 +200,7 @@ export function recordActivity(
   const withinDebounce =
     last !== undefined &&
     last.fieldId === fieldId &&
+    last.author === state.identity?.name &&
     last.category === undefined &&
     Date.parse(nowIso) - Date.parse(last.at) < ACTIVITY_DEBOUNCE_MS;
 
