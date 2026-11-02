@@ -1304,6 +1304,8 @@ export interface FieldResponse {
   markupData?: string;
   /** Base64 diagram image (diagram field). */
   markupImage?: string;
+  /** Image (data URL) the respondent attached to draw on, replacing the authored background (diagram field). */
+  markupBackground?: string;
   /** File/attachment(s) uploaded by user (file field). Supports single or multiple files. */
   fileData?: AttachmentAnswer | AttachmentAnswer[];
   /** Append-only response change log (reserved `_activity` key; activity field). */
