@@ -76,6 +76,8 @@ export interface DrawingPadProps {
    */
   existingData?: string;
   onChange?: (payload: DrawingPadPayload) => void;
+  /** Emit `onChange` (with the composited image) whenever a new background finishes loading. */
+  emitOnBackgroundLoad?: boolean;
   disabled?: boolean;
 }
 
@@ -90,6 +92,7 @@ export const DrawingPad = React.memo(function DrawingPad({
   placeholder = 'Draw here',
   existingData,
   onChange,
+  emitOnBackgroundLoad = false,
   disabled = false,
 }: DrawingPadProps) {
   const {
@@ -654,6 +657,7 @@ export const DrawingPad = React.memo(function DrawingPad({
       bgImageRef.current = img;
       bgLoadedRef.current = true;
       repaint(displaySize.width, displaySize.height);
+      if (emitOnBackgroundLoad) emitChange();
     };
     img.onerror = () => {
       bgImageRef.current = null;

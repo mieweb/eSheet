@@ -2,6 +2,8 @@ import React from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import {
   EsheetRenderer,
+  createDocumentPickerProvider,
+  type DocumentPicker,
   type EsheetRendererHandle,
   type EsheetRendererProps,
 } from '@esheet/renderer';
@@ -20,6 +22,13 @@ export {
   type ProvidedOption,
 };
 
+export type { DocumentPicker };
+
+export type EsheetStandaloneRendererProps = EsheetRendererProps & {
+  /** Adds a "Choose from chart" button to file fields, backed by this host-supplied source. */
+  documentPicker?: DocumentPicker;
+};
+
 export interface EsheetRendererStandaloneHandle {
   unmount: () => void;
   getResponse: () => ReturnType<EsheetRendererHandle['getRawResponse']> | null;
@@ -30,13 +39,23 @@ export interface EsheetRendererStandaloneHandle {
 
 export function mountStandaloneRenderer(
   container: Parameters<typeof createRoot>[0],
-  props: EsheetRendererProps
+  { documentPicker, ...props }: EsheetStandaloneRendererProps
 ): EsheetRendererStandaloneHandle {
   const root: Root = createRoot(container);
   const rendererRef = React.createRef<EsheetRendererHandle>();
+  const fieldProviders = documentPicker
+    ? [
+        ...(props.fieldProviders ?? []),
+        createDocumentPickerProvider(documentPicker),
+      ]
+    : props.fieldProviders;
 
   root.render(
-    React.createElement(EsheetRenderer, { ...props, ref: rendererRef })
+    React.createElement(EsheetRenderer, {
+      ...props,
+      fieldProviders,
+      ref: rendererRef,
+    })
   );
 
   return {

@@ -1,5 +1,9 @@
 import React, { useCallback, useState } from 'react';
-import type { FieldComponentProps, FileFieldDefinition } from '@esheet/core';
+import type {
+  DocumentPickerItem,
+  FieldComponentProps,
+  FileFieldDefinition,
+} from '@esheet/core';
 import { TrashIcon, UploadIcon } from '../../icons.js';
 import {
   fileToInput,
@@ -12,6 +16,8 @@ import {
   storeFiles,
   useFileStore,
 } from '../../lib/FileStoreProvider.js';
+import { useDocumentPicker } from '../../lib/DocumentPickerProvider.js';
+import { DocumentPickerDialog } from '../../lib/DocumentPickerDialog.js';
 
 const PREDEFINED_FILE_TYPES = [
   { label: 'JPEG', value: 'image/jpeg', accept: '.jpg,.jpeg' },
@@ -98,6 +104,9 @@ export const FileField = React.memo(function FileField({
   const instanceId = form.getState().instanceId;
   const maxFiles = def.maxFiles ?? 1;
   const fileStore = useFileStore();
+  const documentPicker = useDocumentPicker();
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [loadingDocument, setLoadingDocument] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [sizeUnit, setSizeUnit] = useState<SizeUnit>(
@@ -172,6 +181,52 @@ export const FileField = React.memo(function FileField({
       onResponse,
       fileStore,
       isReadOnly,
+    ]
+  );
+
+  const handlePickDocument = useCallback(
+    (item: DocumentPickerItem) => {
+      if (!documentPicker || isReadOnly) return;
+      setPickerOpen(false);
+      setErrorMsg('');
+      setLoadingDocument(true);
+      void (async () => {
+        try {
+          const input = await documentPicker.fetch(item);
+          const file = new File([input.content], input.title ?? item.title, {
+            type: input.contentType,
+          });
+          if (def.maxFileSize && file.size > def.maxFileSize) {
+            setErrorMsg(
+              `File exceeds max size of ${formatFileSize(def.maxFileSize)}: ${
+                file.name
+              } (${formatFileSize(file.size)})`
+            );
+            return;
+          }
+          const stored = fileStore
+            ? await storeFiles(fileStore, [fileToInput(file)])
+            : [await readFileAsAttachment(file)];
+          const updated = [...fileDataArr, ...stored];
+          onResponse({ fileData: maxFiles === 1 ? updated[0] : updated });
+        } catch (err) {
+          if (err instanceof Error && err.name === 'AbortError') return;
+          setErrorMsg(
+            err instanceof Error ? err.message : 'Failed to load document'
+          );
+        } finally {
+          setLoadingDocument(false);
+        }
+      })();
+    },
+    [
+      documentPicker,
+      isReadOnly,
+      def.maxFileSize,
+      fileStore,
+      fileDataArr,
+      maxFiles,
+      onResponse,
     ]
   );
 
@@ -331,6 +386,33 @@ export const FileField = React.memo(function FileField({
               </div>
             </label>
           </div>
+        )}
+
+        {canAddMore && !isReadOnly && documentPicker && (
+          <button
+            type="button"
+            disabled={!isEnabled || loadingDocument}
+            onClick={() => setPickerOpen(true)}
+            className="file-chart-picker-button ms:self-start ms:px-4 ms:py-2 ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:text-sm ms:font-medium ms:hover:bg-msbackground ms:transition-colors ms:cursor-pointer ms:disabled:opacity-50 ms:disabled:cursor-not-allowed"
+          >
+            {documentPicker.label ?? 'Choose from chart'}
+          </button>
+        )}
+
+        {loadingDocument && (
+          <div role="status" className="ms:text-sm ms:text-mstextmuted">
+            Loading document...
+          </div>
+        )}
+
+        {pickerOpen && documentPicker && (
+          <DocumentPickerDialog
+            picker={documentPicker}
+            fieldId={def.id}
+            question={def.question}
+            onSelect={handlePickDocument}
+            onClose={() => setPickerOpen(false)}
+          />
         )}
       </div>
     );
