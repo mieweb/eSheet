@@ -212,6 +212,21 @@ describe('mapFhirTypeToEsheet', () => {
     expect(result.fieldType).toBe('openchoice');
   });
 
+  it('maps attachment with the drawing itemControl to diagram', () => {
+    const result = mapFhirTypeToEsheet(
+      'attachment',
+      makeItem('attachment', {
+        extension: [
+          {
+            url: FHIR_EXT.ITEM_CONTROL,
+            valueCodeableConcept: { coding: [{ code: 'drawing' }] },
+          },
+        ],
+      })
+    );
+    expect(result.fieldType).toBe('diagram');
+  });
+
   it('maps attachment with signatureRequired to signature', () => {
     const result = mapFhirTypeToEsheet(
       'attachment',
