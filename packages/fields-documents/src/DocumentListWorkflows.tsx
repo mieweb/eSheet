@@ -671,8 +671,8 @@ export function DocumentListComposePanel({
               : {}),
             ...(inline ? { body: content } : {}),
           };
-    // An inline type keeps its prose on the row, so there is nothing for
-    // the repository to store.
+    // Inline content travels on the row; a host repository may persist it
+    // and return a native reference before the runtime publishes the answer.
     await runtime.saveDocument(
       document,
       inline

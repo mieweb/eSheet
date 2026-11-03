@@ -206,6 +206,141 @@ describe('document list runtime store', () => {
     expect(onDocumentsChange).toHaveBeenCalledWith([documentOne]);
   });
 
+  it('keeps the existing inline save behavior unless the repository opts in', async () => {
+    const repository = createRepository();
+    const onDocumentsChange = vi.fn();
+    const store = createRuntime({ repository, onDocumentsChange });
+    const inline = { ...documentOne, body: 'Saved inline note' };
+
+    await expect(store.getState().saveDocument(inline)).resolves.toEqual(
+      inline
+    );
+
+    expect(repository.save).not.toHaveBeenCalled();
+    expect(onDocumentsChange).toHaveBeenCalledWith([inline]);
+  });
+
+  it('publishes only the returned reference after an inline repository save succeeds', async () => {
+    const request = deferred<DocumentListDocument>();
+    const repository = createRepository({
+      persistInline: true,
+      save: vi.fn(() => request.promise),
+    });
+    const onDocumentsChange = vi.fn();
+    const fileStore = createFileStore();
+    const store = createRuntime({ repository, fileStore, onDocumentsChange });
+    const inline = { ...documentOne, body: 'Private until saved' };
+
+    const saving = store.getState().saveDocument(inline);
+
+    expect(repository.save).toHaveBeenCalledWith(
+      context,
+      inline,
+      expect.any(AbortSignal)
+    );
+    expect(onDocumentsChange).not.toHaveBeenCalled();
+    expect(store.getState().documentIds).toEqual([]);
+    expect(store.getState().syncStatus).toBe('saving');
+    request.resolve(documentOne);
+    await expect(saving).resolves.toEqual(documentOne);
+
+    expect(onDocumentsChange).toHaveBeenCalledExactlyOnceWith([documentOne]);
+    expect(store.getState().documents[documentOne.id]).toEqual(documentOne);
+    expect(store.getState().pendingOperations).toEqual({});
+    expect(store.getState().syncStatus).toBe('idle');
+    expect(fileStore.store).not.toHaveBeenCalled();
+  });
+
+  it.each([false, true])(
+    'does not publish a failed inline save (existing record: %s)',
+    async (existing) => {
+      const repository = createRepository({
+        persistInline: true,
+        save: vi.fn(async () => {
+          throw new Error('Native save refused');
+        }),
+      });
+      const onDocumentsChange = vi.fn();
+      const store = createRuntime({
+        repository,
+        initialDocuments: existing ? [documentOne] : [],
+        onDocumentsChange,
+      });
+
+      await expect(
+        store.getState().saveDocument({
+          ...documentOne,
+          body: 'Unsaved changes',
+        })
+      ).rejects.toThrow('Native save refused');
+
+      expect(onDocumentsChange).not.toHaveBeenCalled();
+      expect(store.getState().documents[documentOne.id]).toEqual(
+        existing ? documentOne : undefined
+      );
+      expect(store.getState().pendingOperations).toEqual({});
+      expect(store.getState().syncStatus).toBe('error');
+      expect(store.getState().error).toBe('Native save refused');
+    }
+  );
+
+  it('does not publish a superseded inline save that finishes after its replacement', async () => {
+    const first = deferred<DocumentListDocument>();
+    const second = deferred<DocumentListDocument>();
+    const repository = createRepository({
+      persistInline: true,
+      save: vi
+        .fn()
+        .mockReturnValueOnce(first.promise)
+        .mockReturnValueOnce(second.promise),
+    });
+    const onDocumentsChange = vi.fn();
+    const store = createRuntime({ repository, onDocumentsChange });
+    const firstSave = store.getState().saveDocument({
+      ...documentOne,
+      body: 'First',
+    });
+    const aborted = expect(firstSave).rejects.toMatchObject({
+      name: 'AbortError',
+    });
+    const secondSave = store.getState().saveDocument({
+      ...documentOne,
+      body: 'Second',
+    });
+    const latest = { ...documentOne, title: 'Latest native revision' };
+    second.resolve(latest);
+    await secondSave;
+    first.resolve(documentOne);
+    await aborted;
+
+    expect(onDocumentsChange).toHaveBeenCalledExactlyOnceWith([latest]);
+    expect(store.getState().documents[documentOne.id]).toEqual(latest);
+    expect(store.getState().pendingOperations).toEqual({});
+    expect(store.getState().syncStatus).toBe('idle');
+  });
+
+  it('does not publish an inline save after disposal even if its backend ignores cancellation', async () => {
+    const request = deferred<DocumentListDocument>();
+    const repository = createRepository({
+      persistInline: true,
+      save: vi.fn(() => request.promise),
+    });
+    const onDocumentsChange = vi.fn();
+    const store = createRuntime({ repository, onDocumentsChange });
+    const saving = store.getState().saveDocument({
+      ...documentOne,
+      body: 'Pending note',
+    });
+    const aborted = expect(saving).rejects.toMatchObject({
+      name: 'AbortError',
+    });
+    store.getState().dispose();
+    request.resolve(documentOne);
+    await aborted;
+
+    expect(onDocumentsChange).not.toHaveBeenCalled();
+  });
+
   it('publishes the row list when a document is removed', async () => {
     const onDocumentsChange = vi.fn();
     const store = createRuntime({

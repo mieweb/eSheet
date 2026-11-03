@@ -23,6 +23,12 @@ export interface DocumentListContent {
 }
 
 export interface DocumentListRepository {
+  /**
+   * Persist inline bodies through save before publishing the returned row.
+   * Native document hosts can return a reference instead of sharing the body.
+   * Omitted keeps inline content in the form answer without a repository write.
+   */
+  persistInline?: boolean;
   seed?: (
     context: DocumentListRepositoryContext,
     snapshot: DocumentListSnapshot
@@ -312,9 +318,11 @@ export function createDocumentListRuntimeExtension(
     saveDocument: async (document, content) => {
       const current = getState();
       if (!current || current.disposed) return document;
-      current.upsertDocument(document);
+      const persistInline =
+        !content && document.body != null && repository?.persistInline === true;
+      if (!persistInline) current.upsertDocument(document);
       // An inline row's content and metadata are already in the answer.
-      if (!content && document.body != null) return document;
+      if (!content && document.body != null && !persistInline) return document;
       if (!content && !repository) return document;
       const contentStore = fileStore;
       if (content && !contentStore)
@@ -344,6 +352,8 @@ export function createDocumentListRuntimeExtension(
         const saved = repository
           ? await repository.save(context, stored, controller.signal)
           : stored;
+        if (persistInline && controller.signal.aborted)
+          throw controller.signal.reason;
         if (!getState() || operationRequestIds.get(operationKey) !== requestId)
           return saved;
         getState()?.upsertDocument(saved);
