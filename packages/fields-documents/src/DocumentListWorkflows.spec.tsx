@@ -23,6 +23,18 @@ import type {
   DocumentListWorkflowMode,
 } from './types.js';
 
+vi.mock('./DocumentListPdfPreview.js', () => ({
+  DocumentListPdfViewer: ({
+    reference,
+    title,
+  }: {
+    readonly reference: string;
+    readonly title: string;
+  }) => (
+    <div aria-label={`PDF preview of ${title}`} data-reference={reference} />
+  ),
+}));
+
 vi.mock('@esheet/field-kerebron', async () => {
   const React = await import('react');
   return {
@@ -707,6 +719,39 @@ describe('document list workflow panels', () => {
 });
 
 describe('document list detail row', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('sizes the PDF below its measured screen position and updates on resize and scroll', async () => {
+    const bounds = vi
+      .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      .mockReturnValue(new DOMRect(0, 180, 848, 0));
+    const runtime = createRuntime(async () => ({
+      reference: 'blob:uploaded-pdf',
+      contentType: 'application/pdf',
+    }));
+    const view = render(
+      <DocumentListDetailRow document={document} runtime={runtime} />
+    );
+    await screen.findByLabelText(`PDF preview of ${document.title}`);
+    const preview = view.container.querySelector<HTMLDivElement>(
+      '.document-list-detail__pdf'
+    );
+    if (!preview) throw new Error('PDF preview was not rendered.');
+    expect(preview.style.getPropertyValue('--document-list-pdf-top')).toBe(
+      '180px'
+    );
+    bounds.mockReturnValue(new DOMRect(0, 240, 848, 0));
+    fireEvent(window, new Event('resize'));
+    expect(preview.style.getPropertyValue('--document-list-pdf-top')).toBe(
+      '240px'
+    );
+    bounds.mockReturnValue(new DOMRect(0, 120, 848, 0));
+    fireEvent.scroll(window);
+    expect(preview.style.getPropertyValue('--document-list-pdf-top')).toBe(
+      '120px'
+    );
+  });
+
   it('renders loaded text content inline', async () => {
     const content: DocumentListContent = {
       text: 'Loaded note',
@@ -782,8 +827,8 @@ describe('document list detail row', () => {
     imageView.unmount();
 
     const fallbackRuntime = createRuntime(async () => ({
-      reference: 'document.pdf',
-      contentType: 'application/pdf',
+      reference: 'document.bin',
+      contentType: 'application/octet-stream',
       size: 2048,
     }));
     render(
@@ -796,6 +841,55 @@ describe('document list detail row', () => {
     // The grid already carries the row's date, title, type and source.
     expect(screen.queryByText(document.docType)).toBeNull();
     expect(screen.queryByText(document.source)).toBeNull();
+  });
+
+  it.each(['application/pdf', 'APPLICATION/PDF; version=1.7'])(
+    'renders an uploaded PDF reference inline for %s',
+    async (contentType) => {
+      const reference = 'blob:https://example.test/uploaded-pdf';
+      const runtime = createRuntime(async () => ({
+        reference,
+        contentType,
+        size: 2048,
+      }));
+      const view = render(
+        <DocumentListDetailRow document={document} runtime={runtime} />
+      );
+
+      const preview = await screen.findByLabelText(
+        `PDF preview of ${document.title}`
+      );
+      expect(preview.getAttribute('data-reference')).toBe(reference);
+      expect(view.container.querySelector('iframe, embed, object')).toBeNull();
+      expect(screen.queryByText('No preview for this document.')).toBeNull();
+      expect(screen.queryByRole('status')).toBeNull();
+    }
+  );
+
+  it('does not embed a PDF without a content reference', async () => {
+    const runtime = createRuntime(async () => ({
+      contentType: 'application/pdf',
+    }));
+    render(<DocumentListDetailRow document={document} runtime={runtime} />);
+
+    expect(
+      await screen.findByText('No preview for this document.')
+    ).toBeTruthy();
+    expect(screen.queryByTitle(document.title)).toBeNull();
+  });
+
+  it('reports a PDF download failure instead of embedding a missing file', async () => {
+    const runtime = createRuntime(async () => {
+      throw new Error('Document download failed (HTTP 404).');
+    });
+    render(<DocumentListDetailRow document={document} runtime={runtime} />);
+
+    expect(await screen.findByRole('alert')).toHaveProperty(
+      'textContent',
+      'Could not load document content: Document download failed (HTTP 404).'
+    );
+    expect(screen.queryByTitle(document.title)).toBeNull();
+    expect(screen.queryByText('No preview for this document.')).toBeNull();
   });
 
   it('reports a content loading failure', async () => {
