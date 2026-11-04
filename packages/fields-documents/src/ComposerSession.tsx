@@ -69,6 +69,7 @@ export interface ComposerSession {
 
 /** The reverse of the ED.30 save: front-matter answers plus the body prose. */
 export interface DefinitionPrefill {
+  readonly frontMatterSource?: string;
   readonly responses: Readonly<Record<string, unknown>>;
   readonly body: string;
 }

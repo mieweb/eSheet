@@ -79,6 +79,57 @@ function createFileStore(overrides: Partial<FileStore> = {}): FileStore {
   };
 }
 
+describe('authoritative native storage', () => {
+  it('does not publish saved native content or accept Yjs answer hydration', async () => {
+    const publish = vi.fn();
+    const repository = createRepository({
+      ownsField: () => true,
+      persistInline: true,
+      load: async () => ({ documents: [documentOne] }),
+    });
+    const store = createRuntime({
+      repository,
+      initialDocuments: [documentTwo],
+      onDocumentsChange: publish,
+    });
+    expect(store.getState().documentIds).toEqual([]);
+    store.getState().hydrateSnapshot({ documents: [documentTwo] });
+    store.getState().applyRemoteSnapshot({ documents: [documentTwo] });
+    expect(store.getState().documentIds).toEqual([]);
+    await store.getState().refresh();
+    expect(store.getState().documentIds).toEqual([documentOne.id]);
+    await store
+      .getState()
+      .saveDocument({ ...documentOne, body: 'Saved only after explicit Save' });
+    expect(repository.save).toHaveBeenCalledOnce();
+    expect(publish).not.toHaveBeenCalled();
+  });
+
+  it('passes composed letter bytes directly to native storage without a legacy upload', async () => {
+    const fileStore = createFileStore();
+    const repository = createRepository({ ownsField: () => true });
+    const publish = vi.fn();
+    const store = createRuntime({
+      repository,
+      fileStore,
+      onDocumentsChange: publish,
+    });
+    const content = {
+      content: '---\nresponse: {}\n---\nLetter prose',
+      contentType: 'text/markdown',
+    };
+    await store.getState().saveDocument(documentOne, content);
+    expect(repository.save).toHaveBeenCalledWith(
+      context,
+      documentOne,
+      expect.any(AbortSignal),
+      content
+    );
+    expect(fileStore.store).not.toHaveBeenCalled();
+    expect(publish).not.toHaveBeenCalled();
+  });
+});
+
 function createRuntime(
   options: {
     context?: DocumentListRepositoryContext;
@@ -380,15 +431,17 @@ describe('document list runtime store', () => {
     );
   });
 
-  it('rolls back an optimistic delete when the repository fails', async () => {
+  it('does not publish a removal when the repository fails', async () => {
     const repository = createRepository({
       remove: vi.fn(async () => {
         throw new Error('delete failed');
       }),
     });
+    const onDocumentsChange = vi.fn();
     const store = createRuntime({
       repository,
       initialDocuments: [documentOne],
+      onDocumentsChange,
     });
 
     await expect(
@@ -399,6 +452,153 @@ describe('document list runtime store', () => {
     expect(store.getState().documentIds).toEqual([documentOne.id]);
     expect(store.getState().pendingOperations).toEqual({});
     expect(store.getState().syncStatus).toBe('error');
+    expect(onDocumentsChange).not.toHaveBeenCalled();
+  });
+
+  it('waits for both original bytes and native association before publishing an upload', async () => {
+    const upload = deferred<DocumentListDocument>();
+    const onDocumentsChange = vi.fn();
+    const repository = createRepository({
+      save: vi.fn(() => upload.promise),
+    });
+    const fileStore = createFileStore();
+    const store = createRuntime({
+      repository,
+      fileStore,
+      onDocumentsChange,
+    });
+    const saving = store.getState().saveDocument(documentOne, {
+      content: new Blob([new Uint8Array([0, 255, 13, 10])]),
+      contentType: 'application/octet-stream',
+    });
+    await vi.waitFor(() => expect(repository.save).toHaveBeenCalledOnce());
+    expect(onDocumentsChange).not.toHaveBeenCalled();
+    expect(store.getState().documentIds).toEqual([]);
+    upload.resolve(documentOne);
+    await saving;
+    expect(onDocumentsChange).toHaveBeenCalledExactlyOnceWith([documentOne]);
+  });
+
+  it.each(['bytes', 'association'])(
+    'does not publish a file save when %s persistence fails',
+    async (stage) => {
+      const onDocumentsChange = vi.fn();
+      const repository = createRepository({
+        save: vi.fn(async () => {
+          throw new Error('Association refused');
+        }),
+      });
+      const fileStore = createFileStore(
+        stage === 'bytes'
+          ? {
+              store: vi.fn(async () => {
+                throw new Error('Upload refused');
+              }),
+            }
+          : {}
+      );
+      const store = createRuntime({
+        repository,
+        fileStore,
+        initialDocuments: [documentOne],
+        onDocumentsChange,
+      });
+      await expect(
+        store
+          .getState()
+          .saveDocument(
+            { ...documentOne, title: 'Uncommitted replacement' },
+            { content: 'bytes', contentType: 'text/plain' }
+          )
+      ).rejects.toThrow(
+        stage === 'bytes' ? 'Upload refused' : 'Association refused'
+      );
+      expect(store.getState().documents[documentOne.id]).toEqual(documentOne);
+      expect(onDocumentsChange).not.toHaveBeenCalled();
+      expect(store.getState().syncStatus).toBe('error');
+    }
+  );
+
+  it('asks the authoritative inline repository to remove before publishing', async () => {
+    const removal = deferred<void>();
+    const repository = createRepository({
+      persistInline: true,
+      remove: vi.fn(() => removal.promise),
+    });
+    const onDocumentsChange = vi.fn();
+    const inline = { ...documentOne, body: 'Saved native prose' };
+    const store = createRuntime({
+      repository,
+      initialDocuments: [inline],
+      onDocumentsChange,
+    });
+    const removing = store.getState().removeDocument(inline.id);
+    expect(repository.remove).toHaveBeenCalledWith(
+      context,
+      inline,
+      expect.any(AbortSignal)
+    );
+    expect(store.getState().documents[inline.id]).toEqual(inline);
+    expect(onDocumentsChange).not.toHaveBeenCalled();
+    removal.resolve();
+    await removing;
+    expect(onDocumentsChange).toHaveBeenCalledExactlyOnceWith([]);
+  });
+
+  it('refetches canonical head content instead of serving stale inline answers', async () => {
+    let text = 'Native original';
+    const loadContent = vi.fn(async () => ({
+      text,
+      contentType: 'text/markdown',
+    }));
+    const repository = createRepository({ loadContent });
+    const store = createRuntime({
+      repository,
+      initialDocuments: [{ ...documentOne, body: 'Stale Yjs prose' }],
+    });
+    expect(await store.getState().loadContent(documentOne.id)).toEqual({
+      text: 'Native original',
+      contentType: 'text/markdown',
+    });
+    text = 'Native edit';
+    expect(await store.getState().loadContent(documentOne.id)).toEqual({
+      text: 'Native edit',
+      contentType: 'text/markdown',
+    });
+    expect(loadContent).toHaveBeenCalledTimes(2);
+    expect(loadContent).toHaveBeenLastCalledWith(
+      context,
+      expect.objectContaining({ id: documentOne.id }),
+      expect.any(AbortSignal),
+      undefined
+    );
+  });
+
+  it('deduplicates native revision requests and surfaces refused content reads', async () => {
+    const request = deferred<{
+      text: string;
+      contentType: string;
+    }>();
+    const repository = createRepository({
+      loadContent: vi.fn(() => request.promise),
+    });
+    const store = createRuntime({
+      repository,
+      initialDocuments: [documentOne],
+    });
+    const first = store.getState().loadContent(documentOne.id, 0);
+    const second = store.getState().loadContent(documentOne.id, 0);
+    const refused = Promise.all([
+      expect(first).rejects.toThrow('Read forbidden'),
+      expect(second).rejects.toThrow('Read forbidden'),
+    ]);
+    expect(repository.loadContent).toHaveBeenCalledOnce();
+    request.reject(new Error('Read forbidden'));
+    await refused;
+    expect(store.getState().contents[`${documentOne.id}:0`]).toEqual({
+      status: 'error',
+      error: 'Read forbidden',
+    });
   });
 
   it('deduplicates content requests and caches the loaded result', async () => {

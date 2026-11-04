@@ -13,6 +13,8 @@ export interface DocumentListDocument {
   readonly subject: string;
   readonly docType: string;
   readonly docId: string;
+  readonly nativeDocType?: string;
+  readonly nativeVersion?: string;
   readonly source: string;
   readonly file: string;
   /** External bytes for the current file-backed revision. */
@@ -189,6 +191,8 @@ export const readOnlyDocumentListCapabilities: DocumentListCapabilities = {
 };
 
 export interface DocumentListInput {
+  readonly nativeDocType?: unknown;
+  readonly nativeVersion?: unknown;
   readonly id?: unknown;
   readonly date?: unknown;
   readonly title?: unknown;
@@ -223,6 +227,8 @@ export type DocumentListWorkflowMode = 'full' | 'docked';
 
 /** What the user has typed so far — the part of a draft worth surviving. */
 export interface DocumentListComposeDraft {
+  readonly nativeVersion?: string;
+  readonly frontMatterSource?: string;
   readonly title: string;
   readonly subject: string;
   readonly docType: string;

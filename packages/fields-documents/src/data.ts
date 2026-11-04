@@ -260,6 +260,12 @@ export function normalizeDocumentRow(
     subject: displayValue(input.subject),
     docType: displayValue(input.docType),
     docId: displayValue(input.docId),
+    ...(typeof input.nativeDocType === 'string'
+      ? { nativeDocType: input.nativeDocType }
+      : {}),
+    ...(typeof input.nativeVersion === 'string'
+      ? { nativeVersion: input.nativeVersion }
+      : {}),
     source: displayValue(
       input.source ?? input.from ?? (author ? undefined : input.author)
     ),

@@ -41,7 +41,12 @@ import {
   answerText,
   type DocumentListDefinitionFormHandle,
 } from './DocumentListDefinitionForm.js';
-import { createMdy, mdyBody, normalizeKerebronTables } from './mdy.js';
+import {
+  createMdy,
+  mdyBody,
+  normalizeKerebronTables,
+  updateMdyForm,
+} from './mdy.js';
 import type { DocumentDraft, DraftBodyRoom } from './draftChannel.js';
 import type { DefinitionPrefill } from './ComposerSession.js';
 import type {
@@ -489,6 +494,19 @@ export function DocumentListComposePanel({
 
   const activeDraftRef = useRef(activeDraft);
   activeDraftRef.current = activeDraft;
+  const createId = useRef<string | undefined>(undefined);
+  const baseDocument = useRef(
+    documentId ? runtime.documents[documentId] : undefined
+  );
+  useEffect(() => {
+    if (!open) return;
+    createId.current = undefined;
+    baseDocument.current = documentId
+      ? runtime.documents[documentId]
+      : undefined;
+    // A refresh while writing must not silently advance the draft's base.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, documentId]);
 
   // Composing is writing: the note editor takes focus as the panel opens.
   // The definition tier focuses its own first field; title-less notes have
@@ -629,18 +647,24 @@ export function DocumentListComposePanel({
     row: { title: string; subject: string; docType: string; date?: string },
     content: string
   ): Promise<void> => {
-    const prior = documentId ? runtime.documents[documentId] : undefined;
+    if (!definition && activeDraft.frontMatterSource)
+      content = activeDraft.frontMatterSource + content;
+    const prior = baseDocument.current;
     const asLinked = appendMode && appendShape === 'linked';
     const inline =
       prior && !asLinked
         ? prior.body != null // a revision never changes the row's tier
         : selectedType?.inline ?? defaultInline ?? false;
-    const id = prior && !asLinked ? prior.id : createDocumentId();
+    const id =
+      prior && !asLinked ? prior.id : (createId.current ??= createDocumentId());
     const document: DocumentListDocument =
       prior && !asLinked
         ? {
             ...prior,
             ...row,
+            ...(activeDraft.nativeVersion
+              ? { nativeVersion: activeDraft.nativeVersion }
+              : {}),
             date: row.date ?? today(),
             // Whoever saves owns the revision.
             ...(author ? { author } : {}),
@@ -724,7 +748,13 @@ export function DocumentListComposePanel({
         projected,
         // ED.45 — a type that opted out of front matter saves only the body.
         docTypeSerialization(selectedType) === 'mdy'
-          ? createMdy(collected.frontMatter, collected.body)
+          ? definitionPrefill?.frontMatterSource
+            ? updateMdyForm(
+                definitionPrefill.frontMatterSource,
+                collected.frontMatter,
+                collected.body
+              )
+            : createMdy(collected.frontMatter, collected.body)
           : collected.body
       );
     } catch (saveError) {

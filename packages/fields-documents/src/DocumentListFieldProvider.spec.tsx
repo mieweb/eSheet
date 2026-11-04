@@ -11,6 +11,8 @@ import {
 import type { DocumentListDocument } from './types.js';
 import { permissiveDocumentListCapabilities } from './types.js';
 
+const gridProbe: { row?: DocumentListDocument } = vi.hoisted(() => ({}));
+
 vi.mock('./DocumentListPdfPreview.js', () => ({
   DocumentListPdfPreview: () => null,
 }));
@@ -44,8 +46,23 @@ vi.mock('@mieweb/ui/datavis', () => ({
   DataVisNitroContext: {
     Provider: ({ children }: { children: ReactNode }) => children,
   },
-  DataVisNitroGrid: (props: Record<string, unknown>) =>
-    (props.titleActions as ReactNode) ?? null,
+  DataVisNitroGrid: ({
+    titleActions,
+    formatCell,
+  }: {
+    titleActions?: ReactNode;
+    formatCell?: (
+      value: unknown,
+      row: DocumentListDocument,
+      column: { field: string }
+    ) => ReactNode;
+  }) => (
+    <>
+      {titleActions}
+      {gridProbe.row &&
+        formatCell?.(null, gridProbe.row, { field: '_actions' })}
+    </>
+  ),
 }));
 
 vi.mock('datavis-ace', () => {
@@ -118,7 +135,84 @@ function RuntimeProbe({ fieldId }: { fieldId: string }): React.JSX.Element {
 describe('DocumentListFieldProvider', () => {
   beforeEach(() => {
     runtimeStores.length = 0;
+    gridProbe.row = undefined;
   });
+
+  it.each(['forbidden', 'unavailable', 'missing-metadata', 'invalid-metadata'])(
+    'refuses to open a destructive empty or downgraded draft after %s',
+    async (failure) => {
+      const formStore = createFormStore();
+      const row = { ...document, docType: 'Letter', file: 'letter.md' };
+      gridProbe.row = row;
+      const typed = failure.includes('metadata');
+      const onResponse = vi.fn();
+      const fieldProps = {
+        field: {
+          definition: {
+            id: 'documents',
+            question: 'Documents',
+            ...(typed
+              ? {
+                  docTypes: [
+                    {
+                      id: 'Letter',
+                      label: 'Letter',
+                      definition: { id: 'letter', pages: [] },
+                    },
+                  ],
+                }
+              : {}),
+          },
+        },
+        form: formStore,
+        response: { answer: JSON.stringify({ documents: [row] }) },
+        onResponse,
+      } as unknown as FieldComponentProps;
+      render(
+        <FormStoreContext.Provider value={formStore}>
+          <DocumentListFieldProvider
+            host={{
+              author: { id: 'wc-8', name: 'Synthetic author' },
+              capabilities: permissiveDocumentListCapabilities,
+            }}
+            runtime={{
+              repository: {
+                load: async () => ({ documents: [row] }),
+                loadContent: async () => {
+                  if (failure === 'forbidden')
+                    throw new Error('Read forbidden');
+                  if (failure === 'unavailable') return {};
+                  return {
+                    text:
+                      failure === 'missing-metadata'
+                        ? 'Native prose without form metadata'
+                        : '---\nresponse: [broken\n---\nPreserved prose',
+                  };
+                },
+                save: vi.fn(),
+                remove: vi.fn(),
+              },
+            }}
+          >
+            <DocumentListField {...fieldProps} />
+          </DocumentListFieldProvider>
+        </FormStoreContext.Provider>
+      );
+      fireEvent.click(
+        await screen.findByRole('button', { name: 'Edit Letter' })
+      );
+      const alert = await screen.findByRole('alert');
+      expect(alert.textContent).toMatch(
+        failure === 'forbidden'
+          ? /Read forbidden/
+          : failure === 'unavailable'
+          ? /content is unavailable/
+          : /metadata is missing or invalid/
+      );
+      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(onResponse).not.toHaveBeenCalled();
+    }
+  );
 
   it('makes host controls available without changing the field value', () => {
     render(

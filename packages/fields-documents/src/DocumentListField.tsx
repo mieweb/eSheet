@@ -181,6 +181,7 @@ export function DocumentListField({
   const [removing, setRemoving] = useState<DocumentListDocument | null>(null);
   const [renaming, setRenaming] = useState<DocumentListDocument | null>(null);
   const [exporting, setExporting] = useState<DocumentListDocument | null>(null);
+  const [editError, setEditError] = useState<string>();
   const [dropActive, setDropActive] = useState(false);
   const removedCount = useMemo(
     () => rows.filter((row) => row.removed).length,
@@ -390,6 +391,7 @@ export function DocumentListField({
   ): Promise<void> => {
     const openedBy = host?.author;
     if (!openedBy || !runtimeState) return;
+    setEditError(undefined);
     const documentDraft = draftChannel
       ? await draftChannel.open(row.id, {
           openedBy,
@@ -402,36 +404,53 @@ export function DocumentListField({
       subject: display(row.subject),
       docType: display(row.docType),
       note: '',
+      nativeVersion: row.nativeVersion,
+      frontMatterSource: '',
     };
     let definitionPrefill: DefinitionPrefill | undefined;
-    let noteTier = false;
     if (!documentDraft || documentDraft.isNew) {
       let text = row.body ?? '';
       if (row.body == null) {
         try {
-          text = (await runtimeState.loadContent(row.id))?.text ?? '';
-        } catch {
-          text = '';
+          const content = await runtimeState.loadContent(row.id);
+          if (content?.text === undefined) {
+            setEditError(
+              'Document content is unavailable. Reload before editing.'
+            );
+            return;
+          }
+          text = content.text;
+          if (content.document) {
+            row = content.document;
+            composeDraft.title = display(row.title);
+            composeDraft.subject = display(row.subject);
+            composeDraft.docType = display(row.docType);
+            composeDraft.nativeVersion = row.nativeVersion;
+          }
+        } catch (error) {
+          setEditError(error instanceof Error ? error.message : String(error));
+          return;
         }
       }
       const typed = definition.docTypes?.find(
         (docType) => docType.id === row.docType
       );
       const mdy = parseMdy(text);
+      if (typed?.definition && !mdy.frontMatter) {
+        setEditError(
+          'Form metadata is missing or invalid. Reconcile this document before editing.'
+        );
+        return;
+      }
       if (typed?.definition && mdy.frontMatter) {
         definitionPrefill = {
+          frontMatterSource: mdy.frontMatterSource,
           responses: mdy.frontMatter.response ?? {},
           body: mdy.body,
         };
       } else {
+        composeDraft.frontMatterSource = mdy.frontMatterSource;
         composeDraft.note = mdyBody(text);
-        // A head with no front matter revises as a note even when its type
-        // has a definition since (ED.40's parse-failure rule) — recorded on
-        // the draft so joiners land in the same tier as the opener.
-        if (typed?.definition) {
-          noteTier = true;
-          documentDraft?.setAnswer('meta:tier', 'note');
-        }
       }
     }
     session.open({
@@ -444,7 +463,6 @@ export function DocumentListField({
       append: options?.append,
       draft: composeDraft,
       definitionPrefill,
-      noteTier,
     });
   };
   const handleToggleDetails =
@@ -686,7 +704,7 @@ export function DocumentListField({
         loading={
           host?.loading === true || runtimeState?.syncStatus === 'loading'
         }
-        error={runtimeState?.error ?? host?.error}
+        error={editError ?? runtimeState?.error ?? host?.error}
       />
       {removing && (
         <RemoveDocumentDialog

@@ -7,7 +7,38 @@ import {
   serializeMdy,
   withMdyBody,
   withMdyFrontMatter,
+  updateMdyForm,
 } from './mdy.js';
+
+describe('saved form metadata', () => {
+  it('retains the byte-exact block and unknown keys when only prose changes', () => {
+    const source =
+      "---\r\ncustom: 'retain' # comment\r\nresponse: { title: { answer: Exact } }\r\n---\r\n";
+    expect(
+      updateMdyForm(
+        source,
+        { response: { title: { answer: 'Exact' } } },
+        'Native-edited prose'
+      )
+    ).toBe(source + 'Native-edited prose');
+  });
+  it('retains unknown answers and metadata when a known form answer changes', () => {
+    const source =
+      '---\ncustom: retained\nresponse: { old: { answer: preserved }, title: { answer: Before } }\n---\n';
+    const result = parseMdy(
+      updateMdyForm(
+        source,
+        { response: { title: { answer: 'After' } } },
+        'Current prose'
+      )
+    );
+    expect(result.frontMatter).toEqual({
+      custom: 'retained',
+      response: { old: { answer: 'preserved' }, title: { answer: 'After' } },
+    });
+    expect(result.body).toBe('Current prose');
+  });
+});
 
 const LETTER = `---
 docType: acknowledgement

@@ -290,7 +290,7 @@ describe('compose panel in draft mode (ED.37)', () => {
 
   // ED.40 — Edit on a row opens (or joins) its draft, prefilled from the last
   // saved revision, and the panel says it is revising.
-  it('the Edit action opens the draft prefilled from the head revision', async () => {
+  it('the Edit action opens a plain-note draft prefilled from the head revision', async () => {
     const row = {
       id: 'doc-1',
       date: '2026-08-14',
@@ -317,21 +317,6 @@ describe('compose panel in draft mode (ED.37)', () => {
             {
               id: 'progress-note',
               label: 'Progress note',
-              definition: {
-                id: 'progress-note-form',
-                pages: [
-                  {
-                    id: 'page-1',
-                    fields: [
-                      {
-                        id: 'summary',
-                        fieldType: 'text',
-                        question: 'Summary',
-                      },
-                    ],
-                  },
-                ],
-              },
             },
           ],
         },
