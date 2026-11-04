@@ -6,6 +6,7 @@ import {
   type ReactNode,
 } from 'react';
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -15,6 +16,7 @@ import {
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   DocumentListPdfPreview,
+  DocumentListPdfViewer,
   documentPdfBlob,
 } from './DocumentListPdfPreview.js';
 import type { DocumentListRuntimeState } from './document-list-runtime.js';
@@ -24,17 +26,28 @@ vi.mock('react-pdf', () => ({
   pdfjs: { GlobalWorkerOptions: {} },
   Document: ({
     children,
+    file,
     onLoadSuccess,
+    onLoadError,
   }: {
     readonly children: ReactNode;
+    readonly file: string;
     readonly onLoadSuccess: (result: { numPages: number }) => void;
+    readonly onLoadError: (error: Error) => void;
   }) => {
     const [loaded, setLoaded] = useState(false);
     const onLoadSuccessRef = useRef(onLoadSuccess);
+    const onLoadErrorRef = useRef(onLoadError);
     useEffect(() => {
-      onLoadSuccessRef.current({ numPages: 2 });
+      if (file === 'blob:broken-pdf') {
+        onLoadErrorRef.current(new Error('Invalid PDF structure.'));
+        return;
+      }
+      onLoadSuccessRef.current({
+        numPages: file === 'blob:single-page' ? 1 : 2,
+      });
       setLoaded(true);
-    }, []);
+    }, [file]);
     return createElement(
       'div',
       { 'data-testid': 'pdf-document' },
@@ -43,10 +56,12 @@ vi.mock('react-pdf', () => ({
   },
   Page: ({
     pageNumber,
+    width,
     onRenderSuccess,
     renderTextLayer,
   }: {
     readonly pageNumber: number;
+    readonly width: number;
     readonly onRenderSuccess: () => void;
     readonly renderTextLayer?: boolean;
   }) => {
@@ -57,6 +72,7 @@ vi.mock('react-pdf', () => ({
       {
         'data-testid': 'pdf-page',
         'data-render-text-layer': String(renderTextLayer),
+        'data-width': width,
       },
       `Page ${pageNumber}`
     );
@@ -95,8 +111,9 @@ function stubResizeObserver(): ReturnType<typeof vi.fn> {
   vi.stubGlobal(
     'ResizeObserver',
     class {
+      constructor(private readonly callback: ResizeObserverCallback) {}
       observe(element: Element): void {
-        observeMock(element);
+        observeMock(element, this.callback, this);
       }
       disconnect(): void {}
     }
@@ -111,6 +128,102 @@ function observedPdfPage(observe: ReturnType<typeof vi.fn>): boolean {
       element.classList.contains('document-list-pdf-preview__page')
   );
 }
+
+describe('DocumentListPdfViewer', () => {
+  it('renders at the available width when its container shrinks or grows', async () => {
+    const observe = stubResizeObserver();
+    render(
+      createElement(DocumentListPdfViewer, {
+        reference: 'blob:uploaded-pdf',
+        title: 'Uploaded PDF',
+      })
+    );
+    await screen.findByTestId('pdf-page');
+    const observation = observe.mock.calls.find(
+      ([element]) =>
+        element instanceof HTMLElement &&
+        element.classList.contains('document-list-pdf-preview__page')
+    );
+    if (!observation)
+      throw new Error('PDF page was not observed for resizing.');
+    const [target, callback, observer] = observation;
+
+    for (const width of [320, 1240, 640]) {
+      await act(async () => {
+        callback(
+          [
+            {
+              target,
+              contentRect: new DOMRectReadOnly(0, 0, width, 0),
+              borderBoxSize: [],
+              contentBoxSize: [],
+              devicePixelContentBoxSize: [],
+            },
+          ],
+          observer
+        );
+      });
+      expect(screen.getByTestId('pdf-page').dataset.width).toBe(String(width));
+    }
+  });
+
+  it('renders inline with the shared PDF.js pages and navigation, not a native embed', async () => {
+    const onReady = vi.fn();
+    const view = render(
+      createElement(DocumentListPdfViewer, {
+        reference: 'blob:uploaded-pdf',
+        title: 'Uploaded PDF',
+        onReady,
+      })
+    );
+
+    await screen.findByTestId('pdf-page');
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(view.container.querySelector('iframe, embed, object')).toBeNull();
+    expect(screen.getByTestId('pdf-page').dataset.renderTextLayer).toBe('true');
+    expect(onReady).toHaveBeenCalledOnce();
+    const previous = screen.getByRole('button', { name: 'Previous PDF page' });
+    const next = screen.getByRole('button', { name: 'Next PDF page' });
+    const surface = screen.getByLabelText('PDF preview of Uploaded PDF');
+    expect(
+      surface.contains(screen.getByRole('navigation', { name: 'PDF pages' }))
+    ).toBe(false);
+    expect(previous.hasAttribute('disabled')).toBe(true);
+    surface.scrollTop = 200;
+    fireEvent.click(next);
+    expect(surface.scrollTop).toBe(0);
+    expect(screen.getByText('Page 2 of 2')).toBeTruthy();
+    expect(screen.getByTestId('pdf-page').textContent).toBe('Page 2');
+    expect(next.hasAttribute('disabled')).toBe(true);
+    fireEvent.click(previous);
+    expect(screen.getByText('Page 1 of 2')).toBeTruthy();
+  });
+
+  it('does not show page controls for a single-page PDF', async () => {
+    render(
+      createElement(DocumentListPdfViewer, {
+        reference: 'blob:single-page',
+        title: 'Single page',
+      })
+    );
+    await screen.findByTestId('pdf-page');
+    expect(screen.queryByRole('navigation', { name: 'PDF pages' })).toBeNull();
+  });
+
+  it('reports PDF.js loading errors explicitly', async () => {
+    render(
+      createElement(DocumentListPdfViewer, {
+        reference: 'blob:broken-pdf',
+        title: 'Broken PDF',
+      })
+    );
+
+    expect((await screen.findByRole('alert')).textContent).toBe(
+      'Invalid PDF structure.'
+    );
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+});
 
 describe('documentPdfBlob', () => {
   it('renders Markdown as a PDF', async () => {

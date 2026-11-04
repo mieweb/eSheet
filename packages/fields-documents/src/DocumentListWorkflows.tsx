@@ -1,5 +1,7 @@
 import {
   forwardRef,
+  lazy,
+  Suspense,
   useEffect,
   useRef,
   useState,
@@ -58,6 +60,11 @@ import type {
 } from './types.js';
 
 const COMPOSE_CONTENT_TYPE = DOCUMENT_LIST_MARKDOWN_TYPE;
+const DocumentListPdfViewer = lazy(() =>
+  import('./DocumentListPdfPreview.js').then((module) => ({
+    default: module.DocumentListPdfViewer,
+  }))
+);
 
 export function configureDocumentListComposeEditor(
   options: Parameters<typeof configureRichTextField>[0]
@@ -1232,6 +1239,7 @@ export function DocumentListDetailRow({
   related,
   historyHref,
 }: DocumentListDetailRowProps): React.JSX.Element {
+  const pdfContainerRef = useRef<HTMLDivElement>(null);
   const [content, setContent] = useState<DocumentListContent | undefined>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1264,10 +1272,33 @@ export function DocumentListDetailRow({
     content?.reference &&
       content.contentType?.toLowerCase().startsWith('image/')
   );
+  const pdfReference =
+    content?.contentType?.split(';')[0].trim().toLowerCase() ===
+    'application/pdf'
+      ? content.reference
+      : undefined;
   const isMarkdown =
     (content?.contentType === COMPOSE_CONTENT_TYPE ||
       content?.contentType === DOCUMENT_LIST_MDY_TYPE) &&
     content.text != null;
+
+  useEffect(() => {
+    const element = pdfContainerRef.current;
+    if (!element) return;
+    const updateTop = (): void => {
+      element.style.setProperty(
+        '--document-list-pdf-top',
+        `${Math.max(0, element.getBoundingClientRect().top)}px`
+      );
+    };
+    updateTop();
+    window.addEventListener('resize', updateTop);
+    window.addEventListener('scroll', updateTop, true);
+    return () => {
+      window.removeEventListener('resize', updateTop);
+      window.removeEventListener('scroll', updateTop, true);
+    };
+  }, [loading, pdfReference]);
 
   return (
     // The row is the document. Date, title, type and source are already
@@ -1293,11 +1324,26 @@ export function DocumentListDetailRow({
           alt={document.title}
         />
       )}
-      {!loading && !error && content?.text == null && !isImage && (
-        <p className="document-list-detail__empty">
-          No preview for this document.
-        </p>
+      {!loading && pdfReference && (
+        <div ref={pdfContainerRef} className="document-list-detail__pdf">
+          <Suspense fallback={<p role="status">Loading document content…</p>}>
+            <DocumentListPdfViewer
+              key={pdfReference}
+              reference={pdfReference}
+              title={document.title}
+            />
+          </Suspense>
+        </div>
       )}
+      {!loading &&
+        !error &&
+        content?.text == null &&
+        !isImage &&
+        !pdfReference && (
+          <p className="document-list-detail__empty">
+            No preview for this document.
+          </p>
+        )}
       {related && related.length > 0 && (
         <ul className="document-list-detail__addenda" aria-label="Addenda">
           {related.map((addendum) => (
