@@ -2,6 +2,7 @@
 
 ### Bug Fixes
 
+- **fields-documents:** refresh canonical edit prefills, clean up failed new drafts, retain inline routing for reference-only saves, preserve cleared form answers, and allow text-serialized definition revisions.
 - **fields:** keep feedback confirmations clickable inside composer wrappers that disable pointer events.
 - **fields-documents:** use `@mieweb/ui` Select for document/letter types and WebChart categories in compose/upload modals; Escape dismisses an open dropdown before closing or docking the modal.
 

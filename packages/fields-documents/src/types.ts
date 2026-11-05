@@ -68,6 +68,8 @@ export interface DocumentListDocument {
    * prose for free. `file` still names it, for hosts that later export.
    */
   readonly body?: string;
+  /** Retains the inline save tier when a repository returns a bodyless reference. */
+  readonly inline?: boolean;
 }
 
 export interface DocumentListValue {
@@ -212,6 +214,7 @@ export interface DocumentListInput {
   readonly sha256?: unknown;
   readonly size?: unknown;
   readonly body?: unknown;
+  readonly inline?: unknown;
 }
 
 /** The workflows a field's toolbar offers. */

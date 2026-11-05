@@ -140,7 +140,8 @@ export interface DocumentListRuntimeState {
   removeDocument: (documentId: string) => Promise<void>;
   loadContent: (
     documentId: string,
-    revision?: number
+    revision?: number,
+    options?: { readonly refresh?: boolean }
   ) => Promise<DocumentListContent | undefined>;
   /** ED.43 — the document's history, newest first, head included. */
   listRevisions: (documentId: string) => Promise<readonly DocumentRevision[]>;
@@ -453,7 +454,8 @@ export function createDocumentListRuntimeExtension(
         if (!getState() || operationRequestIds.get(operationKey) !== requestId)
           return saved;
         invalidateContent(document.id);
-        getState()?.upsertDocument(saved);
+        const canonical = persistInline ? { ...saved, inline: true } : saved;
+        getState()?.upsertDocument(canonical);
         updateState((next) => {
           const { [document.id]: _completed, ...pendingOperations } =
             next.pendingOperations;
@@ -464,7 +466,7 @@ export function createDocumentListRuntimeExtension(
             syncStatus: syncStatusFor(pendingOperations),
           };
         });
-        return saved;
+        return canonical;
       } catch (error) {
         if (getState() && operationRequestIds.get(operationKey) === requestId) {
           updateState((next) => {
@@ -573,7 +575,8 @@ export function createDocumentListRuntimeExtension(
       }
     },
 
-    loadContent: async (documentId, revision) => {
+    loadContent: async (documentId, revision, options) => {
+      if (options?.refresh) invalidateContent(documentId);
       const requestKey =
         revision === undefined ? documentId : `${documentId}:${revision}`;
       const existing = contentRequests.get(requestKey);

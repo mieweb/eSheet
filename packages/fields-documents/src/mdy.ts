@@ -175,13 +175,20 @@ export function withMdyFrontMatter(
 export function updateMdyForm(
   source: string,
   frontMatter: MdyFrontMatter,
-  body: string
+  body: string,
+  fieldIds: readonly string[] = Object.keys(frontMatter.response ?? {})
 ): string {
   const file = parseMdy(source);
+  const knownFields = new Set(fieldIds);
+  const unknownResponses = Object.fromEntries(
+    Object.entries(file.frontMatter?.response ?? {}).filter(
+      ([fieldId]) => !knownFields.has(fieldId)
+    )
+  );
   const next = {
     ...file.frontMatter,
     ...frontMatter,
-    response: { ...file.frontMatter?.response, ...frontMatter.response },
+    response: { ...unknownResponses, ...frontMatter.response },
   };
   const same =
     file.frontMatter &&

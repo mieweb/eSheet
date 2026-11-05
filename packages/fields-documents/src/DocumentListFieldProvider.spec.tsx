@@ -10,6 +10,7 @@ import {
 } from './DocumentListGrid.js';
 import type { DocumentListDocument } from './types.js';
 import { permissiveDocumentListCapabilities } from './types.js';
+import type { DocumentDraft } from './draftChannel.js';
 
 const gridProbe: { row?: DocumentListDocument } = vi.hoisted(() => ({}));
 
@@ -133,6 +134,98 @@ function RuntimeProbe({ fieldId }: { fieldId: string }): React.JSX.Element {
 }
 
 describe('DocumentListFieldProvider', () => {
+  it('loads canonical edit content even when the shared row has a stale inline body', async () => {
+    const formStore = createFormStore();
+    const row = { ...document, body: 'Stale shared prose' };
+    gridProbe.row = row;
+    const loadContent = vi.fn(async () => ({
+      text: 'Canonical native prose',
+      document: { ...row, nativeVersion: 'fresh-version' },
+    }));
+    render(
+      <FormStoreContext.Provider value={formStore}>
+        <DocumentListFieldProvider
+          host={{
+            author: { id: 'wc-8', name: 'Author' },
+            capabilities: permissiveDocumentListCapabilities,
+          }}
+          runtime={{
+            repository: {
+              load: async () => ({ documents: [row] }),
+              loadContent,
+              save: vi.fn(),
+              remove: vi.fn(),
+            },
+          }}
+        >
+          <DocumentListField
+            {...({
+              field: { definition: { id: 'documents' } },
+              form: formStore,
+              response: { answer: JSON.stringify({ documents: [row] }) },
+            } as unknown as FieldComponentProps)}
+          />
+        </DocumentListFieldProvider>
+      </FormStoreContext.Provider>
+    );
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit Letter' }));
+    expect(
+      await screen.findByDisplayValue('Canonical native prose')
+    ).toBeTruthy();
+    expect(loadContent).toHaveBeenCalledOnce();
+  });
+
+  it.each(['edit', 'append'])(
+    'opens a text-serialized definition for %s without requiring front matter',
+    async (action) => {
+      const formStore = createFormStore();
+      const row = { ...document, body: 'Body without metadata' };
+      gridProbe.row = row;
+      render(
+        <FormStoreContext.Provider value={formStore}>
+          <DocumentListFieldProvider
+            host={{
+              author: { id: 'wc-8', name: 'Author' },
+              capabilities: permissiveDocumentListCapabilities,
+            }}
+          >
+            <DocumentListField
+              {...({
+                field: {
+                  definition: {
+                    id: 'documents',
+                    docTypes: [
+                      {
+                        id: row.docType,
+                        serialization: 'text',
+                        definition: { id: 'letter', pages: [] },
+                      },
+                    ],
+                  },
+                },
+                form: formStore,
+                response: { answer: JSON.stringify({ documents: [row] }) },
+              } as unknown as FieldComponentProps)}
+            />
+          </DocumentListFieldProvider>
+        </FormStoreContext.Provider>
+      );
+      fireEvent.click(
+        await screen.findByRole('button', {
+          name: action === 'edit' ? 'Edit Letter' : 'Append to Letter',
+        })
+      );
+      expect(
+        await screen.findByText(
+          action === 'edit'
+            ? 'Revise document (rev 0)'
+            : 'Append to document (rev 0)'
+        )
+      ).toBeTruthy();
+      expect(screen.queryByRole('alert')).toBeNull();
+    }
+  );
+
   beforeEach(() => {
     runtimeStores.length = 0;
     gridProbe.row = undefined;
@@ -146,6 +239,10 @@ describe('DocumentListFieldProvider', () => {
       gridProbe.row = row;
       const typed = failure.includes('metadata');
       const onResponse = vi.fn();
+      const discard = vi.fn(async () => {});
+      const close = vi.fn();
+      const draft = { isNew: true, discard, close } as unknown as DocumentDraft;
+      const open = vi.fn(async () => draft);
       const fieldProps = {
         field: {
           definition: {
@@ -174,6 +271,7 @@ describe('DocumentListFieldProvider', () => {
             host={{
               author: { id: 'wc-8', name: 'Synthetic author' },
               capabilities: permissiveDocumentListCapabilities,
+              draftChannel: { open, presenceOf: () => () => {} },
             }}
             runtime={{
               repository: {
@@ -211,6 +309,12 @@ describe('DocumentListFieldProvider', () => {
       );
       expect(screen.queryByRole('dialog')).toBeNull();
       expect(onResponse).not.toHaveBeenCalled();
+      await waitFor(() => expect(discard).toHaveBeenCalledOnce());
+      expect(close).toHaveBeenCalledOnce();
+      fireEvent.click(screen.getByRole('button', { name: 'Edit Letter' }));
+      await waitFor(() => expect(discard).toHaveBeenCalledTimes(2));
+      expect(close).toHaveBeenCalledTimes(2);
+      expect(screen.queryByRole('dialog')).toBeNull();
     }
   );
 

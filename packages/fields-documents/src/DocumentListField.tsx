@@ -17,9 +17,9 @@ import {
   SquarePen,
   Trash2,
 } from 'lucide-react';
-import type { DraftPresence } from './draftChannel.js';
+import type { DocumentDraft, DraftPresence } from './draftChannel.js';
 import { mdyBody, parseMdy } from './mdy.js';
-import { priorRevisionOf } from './data.js';
+import { docTypeSerialization, priorRevisionOf } from './data.js';
 import {
   ComposerSessionOverlay,
   useComposerSession,
@@ -392,78 +392,96 @@ export function DocumentListField({
     const openedBy = host?.author;
     if (!openedBy || !runtimeState) return;
     setEditError(undefined);
-    const documentDraft = draftChannel
-      ? await draftChannel.open(row.id, {
-          openedBy,
-          baseRev: row.rev ?? 0,
-        })
-      : undefined;
-    const display = (value: string): string => (value === '—' ? '' : value);
-    const composeDraft = {
-      title: display(row.title),
-      subject: display(row.subject),
-      docType: display(row.docType),
-      note: '',
-      nativeVersion: row.nativeVersion,
-      frontMatterSource: '',
-    };
-    let definitionPrefill: DefinitionPrefill | undefined;
-    if (!documentDraft || documentDraft.isNew) {
-      let text = row.body ?? '';
-      if (row.body == null) {
-        try {
-          const content = await runtimeState.loadContent(row.id);
-          if (content?.text === undefined) {
-            setEditError(
-              'Document content is unavailable. Reload before editing.'
-            );
-            return;
-          }
-          text = content.text;
-          if (content.document) {
-            row = content.document;
-            composeDraft.title = display(row.title);
-            composeDraft.subject = display(row.subject);
-            composeDraft.docType = display(row.docType);
-            composeDraft.nativeVersion = row.nativeVersion;
-          }
-        } catch (error) {
-          setEditError(error instanceof Error ? error.message : String(error));
+    let documentDraft: DocumentDraft | undefined;
+    let displayed = false;
+    try {
+      documentDraft = draftChannel
+        ? await draftChannel.open(row.id, {
+            openedBy,
+            baseRev: row.rev ?? 0,
+          })
+        : undefined;
+      const display = (value: string): string => (value === '—' ? '' : value);
+      const composeDraft = {
+        title: display(row.title),
+        subject: display(row.subject),
+        docType: display(row.docType),
+        note: '',
+        nativeVersion: row.nativeVersion,
+        frontMatterSource: '',
+      };
+      let definitionPrefill: DefinitionPrefill | undefined;
+      if (!documentDraft || documentDraft.isNew) {
+        const content = await runtimeState.loadContent(row.id, undefined, {
+          refresh: true,
+        });
+        if (content?.text === undefined) {
+          setEditError(
+            'Document content is unavailable. Reload before editing.'
+          );
           return;
         }
-      }
-      const typed = definition.docTypes?.find(
-        (docType) => docType.id === row.docType
-      );
-      const mdy = parseMdy(text);
-      if (typed?.definition && !mdy.frontMatter) {
-        setEditError(
-          'Form metadata is missing or invalid. Reconcile this document before editing.'
+        const text = content.text;
+        if (content.document) {
+          row = content.document;
+          composeDraft.title = display(row.title);
+          composeDraft.subject = display(row.subject);
+          composeDraft.docType = display(row.docType);
+          composeDraft.nativeVersion = row.nativeVersion;
+        }
+        const typed = definition.docTypes?.find(
+          (docType) => docType.id === row.docType
         );
-        return;
+        const mdy = parseMdy(text);
+        const textOnly = docTypeSerialization(typed) === 'text';
+        if (typed?.definition && !textOnly && !mdy.frontMatter) {
+          setEditError(
+            'Form metadata is missing or invalid. Reconcile this document before editing.'
+          );
+          return;
+        }
+        if (typed?.definition) {
+          definitionPrefill = {
+            frontMatterSource: textOnly ? '' : mdy.frontMatterSource,
+            responses: textOnly
+              ? {
+                  title: { answer: row.title },
+                  subject: { answer: row.subject },
+                  date: { answer: row.date },
+                }
+              : mdy.frontMatter?.response ?? {},
+            body: textOnly ? text : mdy.body,
+          };
+        } else {
+          composeDraft.frontMatterSource = mdy.frontMatterSource;
+          composeDraft.note = mdyBody(text);
+        }
       }
-      if (typed?.definition && mdy.frontMatter) {
-        definitionPrefill = {
-          frontMatterSource: mdy.frontMatterSource,
-          responses: mdy.frontMatter.response ?? {},
-          body: mdy.body,
-        };
-      } else {
-        composeDraft.frontMatterSource = mdy.frontMatterSource;
-        composeDraft.note = mdyBody(text);
+      session.open({
+        kind: 'compose',
+        fieldId: field.definition.id,
+        runtime: runtimeState,
+        config: composerConfig,
+        documentDraft,
+        documentId: row.id,
+        append: options?.append,
+        draft: composeDraft,
+        definitionPrefill,
+      });
+      displayed = true;
+    } catch (error) {
+      setEditError(error instanceof Error ? error.message : String(error));
+    } finally {
+      if (documentDraft && !displayed) {
+        try {
+          if (documentDraft.isNew) await documentDraft.discard();
+        } catch (error) {
+          setEditError(error instanceof Error ? error.message : String(error));
+        } finally {
+          documentDraft.close();
+        }
       }
     }
-    session.open({
-      kind: 'compose',
-      fieldId: field.definition.id,
-      runtime: runtimeState,
-      config: composerConfig,
-      documentDraft,
-      documentId: row.id,
-      append: options?.append,
-      draft: composeDraft,
-      definitionPrefill,
-    });
   };
   const handleToggleDetails =
     host?.onToggleDetails ??

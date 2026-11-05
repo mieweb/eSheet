@@ -781,7 +781,7 @@ export function DocumentListComposePanel({
     const asLinked = appendMode && appendShape === 'linked';
     const inline =
       prior && !asLinked
-        ? prior.body != null // a revision never changes the row's tier
+        ? prior.inline ?? prior.body != null
         : selectedType?.inline ?? defaultInline ?? false;
     const id =
       prior && !asLinked ? prior.id : (createId.current ??= createDocumentId());
@@ -801,6 +801,7 @@ export function DocumentListComposePanel({
             ...(inline
               ? {
                   body: content,
+                  inline: true,
                   // The superseded prose rides along in full — the case doc is
                   // the inline tier's store (ED.47 formalizes this in the port).
                   history: [...(prior.history ?? []), priorRevisionOf(prior)],
@@ -821,7 +822,7 @@ export function DocumentListComposePanel({
             ...(asLinked && prior
               ? { linkedTo: { id: prior.id, linkType: 'addendum' } }
               : {}),
-            ...(inline ? { body: content } : {}),
+            ...(inline ? { body: content, inline: true } : {}),
           };
     // Inline content travels on the row; a host repository may persist it
     // and return a native reference before the runtime publishes the answer.
@@ -882,7 +883,8 @@ export function DocumentListComposePanel({
             ? updateMdyForm(
                 definitionPrefill.frontMatterSource,
                 collected.frontMatter,
-                collected.body
+                collected.body,
+                collected.fieldIds
               )
             : createMdy(collected.frontMatter, collected.body)
           : collected.body

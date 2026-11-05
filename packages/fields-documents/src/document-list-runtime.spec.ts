@@ -504,10 +504,11 @@ describe('document list runtime store', () => {
     expect(store.getState().documentIds).toEqual([]);
     expect(store.getState().syncStatus).toBe('saving');
     request.resolve(documentOne);
-    await expect(saving).resolves.toEqual(documentOne);
+    const canonical = { ...documentOne, inline: true };
+    await expect(saving).resolves.toEqual(canonical);
 
-    expect(onDocumentsChange).toHaveBeenCalledExactlyOnceWith([documentOne]);
-    expect(store.getState().documents[documentOne.id]).toEqual(documentOne);
+    expect(onDocumentsChange).toHaveBeenCalledExactlyOnceWith([canonical]);
+    expect(store.getState().documents[documentOne.id]).toEqual(canonical);
     expect(store.getState().pendingOperations).toEqual({});
     expect(store.getState().syncStatus).toBe('idle');
     expect(fileStore.store).not.toHaveBeenCalled();
@@ -569,7 +570,11 @@ describe('document list runtime store', () => {
       ...documentOne,
       body: 'Second',
     });
-    const latest = { ...documentOne, title: 'Latest native revision' };
+    const latest = {
+      ...documentOne,
+      title: 'Latest native revision',
+      inline: true,
+    };
     second.resolve(latest);
     await secondSave;
     first.resolve(documentOne);

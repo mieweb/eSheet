@@ -11,6 +11,20 @@ import {
 } from './mdy.js';
 
 describe('saved form metadata', () => {
+  it('keeps unknown answers but does not restore cleared fields in the current definition', () => {
+    const saved = parseMdy(
+      updateMdyForm(
+        '---\nresponse: { removed: { answer: clear }, unknown: { answer: keep }, body: { answer: stale } }\n---\n',
+        { response: {} },
+        'Current body',
+        ['removed', 'body']
+      )
+    );
+    expect(saved.frontMatter?.response).toEqual({
+      unknown: { answer: 'keep' },
+    });
+    expect(saved.body).toBe('Current body');
+  });
   it('retains the byte-exact block and unknown keys when only prose changes', () => {
     const source =
       "---\r\ncustom: 'retain' # comment\r\nresponse: { title: { answer: Exact } }\r\n---\r\n";

@@ -285,6 +285,7 @@ export function normalizeDocumentRow(
       ? { size: input.size }
       : {}),
     ...(typeof input.body === 'string' ? { body: input.body } : {}),
+    ...(typeof input.inline === 'boolean' ? { inline: input.inline } : {}),
   };
 }
 
