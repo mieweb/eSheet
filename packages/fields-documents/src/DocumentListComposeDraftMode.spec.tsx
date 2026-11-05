@@ -121,6 +121,43 @@ const runtime = {
 } as unknown as DocumentListRuntimeState;
 
 describe('compose panel in draft mode (ED.37)', () => {
+  it('preserves the shared original front matter when a note draft is joined', async () => {
+    const draft = fakeDraft({ isNew: false });
+    const source = "---\r\ncustom: 'retain' # comment\r\n---\r\n";
+    draft.setAnswer('meta:frontMatterSource', source);
+    draft.setAnswer('meta:nativeVersion', 'original-version');
+    const saveDocument = vi.fn(async (document) => document);
+    render(
+      <DocumentListComposePanel
+        open
+        onOpenChange={vi.fn()}
+        runtime={
+          {
+            documents: { 'doc-1': { id: 'doc-1', inline: true } },
+            saveDocument,
+          } as unknown as DocumentListRuntimeState
+        }
+        inputPrefix="joined-note"
+        documentId="doc-1"
+        documentDraft={draft}
+        draft={{
+          title: 'Title',
+          subject: 'Subject',
+          docType: 'note',
+          note: 'Edited prose',
+        }}
+      />
+    );
+    fireEvent.click(await screen.findByRole('button', { name: /^Save/ }));
+    await waitFor(() => expect(saveDocument).toHaveBeenCalledOnce());
+    expect(saveDocument).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: source,
+        nativeVersion: 'original-version',
+      }),
+      undefined
+    );
+  });
   it('revises a bodyless inline reference through the inline save boundary', async () => {
     const prior = {
       id: 'doc-1',

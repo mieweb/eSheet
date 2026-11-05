@@ -8,6 +8,7 @@ import type {
   DocumentListDocument,
   DocumentListWorkflowMode,
 } from './types.js';
+import type { DocumentDraft } from './draftChannel.js';
 
 /**
  * The renderer is tested in `@esheet/renderer`. This stand-in drives the real
@@ -146,6 +147,49 @@ function savedCall(
 }
 
 describe('a document type with a definition', () => {
+  it('preserves original metadata for a joiner without reseeding shared answers', async () => {
+    const source =
+      "---\r\ncustom: 'retained' # comment\r\nresponse: { title: { answer: Original } }\r\n---\r\n";
+    const answers: Record<string, unknown> = {
+      'meta:frontMatterSource': source,
+      title: { answer: 'Shared title' },
+      body: { answer: 'Shared prose' },
+    };
+    const setAnswer = vi.fn();
+    const draft = {
+      isNew: false,
+      getAnswers: () => answers,
+      setAnswer,
+      onAnswers: () => () => {},
+      onPresence: () => () => {},
+      onDiscarded: () => () => {},
+      publishFocus: vi.fn(),
+      discard: vi.fn(async () => {}),
+      close: vi.fn(),
+    } as unknown as DocumentDraft;
+    const runtime = createRuntime();
+    render(
+      <DocumentListComposePanel
+        open
+        onOpenChange={vi.fn()}
+        runtime={runtime}
+        inputPrefix="joined-definition"
+        documentDraft={draft}
+        docTypes={[{ id: 'acknowledgement', definition: acknowledgement }]}
+      />
+    );
+    expect(await screen.findByDisplayValue('Shared title')).toBeTruthy();
+    expect(screen.getByDisplayValue('Shared prose')).toBeTruthy();
+    expect(setAnswer).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Save document' }));
+    await waitFor(() => expect(runtime.saveDocument).toHaveBeenCalledOnce());
+    const saved = parseMdy(savedCall(runtime)[1].content as string);
+    expect(saved.frontMatter?.custom).toBe('retained');
+    expect(saved.frontMatter?.response).toEqual({
+      title: { answer: 'Shared title' },
+    });
+    expect(saved.body).toBe('Shared prose');
+  });
   it('keeps host filing categories beside the definition form and reloads them when the subtype changes', async () => {
     const loadOptions = vi.fn(async () => [
       { id: 'LETTER', label: 'Correspondence' },

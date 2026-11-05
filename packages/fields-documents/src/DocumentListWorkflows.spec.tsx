@@ -398,6 +398,38 @@ describe('the docked composer', () => {
 });
 
 describe('document list workflow panels', () => {
+  it('clears an open preview after a failed authorization refresh without refetching stale content', async () => {
+    const formStore = createFormStore();
+    const load = vi.fn(async () => ({ documents: [document] }));
+    const loadContent = vi.fn(async () => ({ text: 'Private preview', contentType: 'text/plain' }));
+    const runtime = createDocumentListRuntimeExtension({
+      formStore,
+      context: { formInstanceId: 'case-1', fieldId: 'private-preview' },
+      repository: { ownsField: () => true, load, loadContent, save: async (_context, row) => row, remove: async () => {} },
+    });
+    function Detail() {
+      const current = useSyncExternalStore(formStore.subscribe, () => getDocumentListRuntimeState(formStore, 'private-preview'));
+      return current ? <DocumentListDetailRow document={document} runtime={current} /> : null;
+    }
+    await runtime?.refresh();
+    render(<Detail />);
+    expect(await screen.findByText('Private preview')).toBeTruthy();
+    load.mockRejectedValueOnce(new Error('Read forbidden'));
+    await act(async () => { await expect(runtime?.refresh()).rejects.toThrow('Read forbidden'); });
+    expect(screen.queryByText('Private preview')).toBeNull();
+    expect(screen.getByRole('alert').textContent).toContain('Read forbidden');
+    expect(loadContent).toHaveBeenCalledOnce();
+    runtime?.dispose();
+  });
+
+  it('renders a PDF from canonical bytes without a reference URL', async () => {
+    render(<DocumentListDetailRow document={document} runtime={createRuntime(async () => ({
+      blob: new Blob(['%PDF'], { type: 'application/pdf' }),
+      contentType: 'application/pdf',
+    }))} />);
+    expect(await screen.findByLabelText(`PDF preview of ${document.title}`)).toBeTruthy();
+    expect(screen.queryByText('No preview for this document.')).toBeNull();
+  });
   it.each([
     ['document', 'Document Type'],
     ['letter', 'Letter Type'],

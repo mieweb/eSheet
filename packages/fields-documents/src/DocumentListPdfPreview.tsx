@@ -294,7 +294,7 @@ export function DocumentListPdfViewer({
   title,
   onReady,
 }: {
-  readonly reference: string;
+  readonly reference?: string;
   readonly blob?: Blob;
   readonly title: string;
   readonly onReady?: () => void;

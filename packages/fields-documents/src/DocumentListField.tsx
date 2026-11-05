@@ -456,6 +456,11 @@ export function DocumentListField({
           composeDraft.frontMatterSource = mdy.frontMatterSource;
           composeDraft.note = mdyBody(text);
         }
+        documentDraft?.setAnswer(
+          'meta:frontMatterSource',
+          definitionPrefill?.frontMatterSource ?? composeDraft.frontMatterSource
+        );
+        documentDraft?.setAnswer('meta:nativeVersion', row.nativeVersion);
       }
       session.open({
         kind: 'compose',

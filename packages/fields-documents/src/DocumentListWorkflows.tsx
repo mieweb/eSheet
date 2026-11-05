@@ -775,8 +775,11 @@ export function DocumentListComposePanel({
     row: { title: string; subject: string; docType: string; date?: string },
     content: string
   ): Promise<void> => {
-    if (!definition && activeDraft.frontMatterSource)
-      content = activeDraft.frontMatterSource + content;
+    const sharedAnswers = documentDraft?.getAnswers();
+    const originalBlock = sharedAnswers?.['meta:frontMatterSource'] ?? activeDraft.frontMatterSource;
+    const nativeVersion = sharedAnswers?.['meta:nativeVersion'] ?? activeDraft.nativeVersion;
+    if (!definition && typeof originalBlock === 'string')
+      content = originalBlock + content;
     const prior = baseDocument.current;
     const asLinked = appendMode && appendShape === 'linked';
     const inline =
@@ -790,8 +793,8 @@ export function DocumentListComposePanel({
         ? {
             ...prior,
             ...row,
-            ...(activeDraft.nativeVersion
-              ? { nativeVersion: activeDraft.nativeVersion }
+            ...(typeof nativeVersion === 'string'
+              ? { nativeVersion }
               : {}),
             date: row.date ?? today(),
             // Whoever saves owns the revision.
@@ -875,13 +878,15 @@ export function DocumentListComposePanel({
       };
       const dateAnswer = answerText(collected.responses.date).trim();
       if (fields?.includes('date') && dateAnswer) projected.date = dateAnswer;
+      const source = documentDraft?.getAnswers()['meta:frontMatterSource'] ??
+        definitionPrefill?.frontMatterSource;
       await save(
         projected,
         // ED.45 — a type that opted out of front matter saves only the body.
         docTypeSerialization(selectedType) === 'mdy'
-          ? definitionPrefill?.frontMatterSource
+          ? typeof source === 'string' && source
             ? updateMdyForm(
-                definitionPrefill.frontMatterSource,
+                source,
                 collected.frontMatter,
                 collected.body,
                 collected.fieldIds
@@ -1390,6 +1395,8 @@ export function DocumentListDetailRow({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { loadContent } = runtime;
+  const contentVersion = runtime.contentVersions?.[document.id] ?? 0;
+  const refreshError = runtime.syncStatus === 'error' ? runtime.error : undefined;
   const viewedDocument = useRef<string | undefined>(undefined);
   const onViewedRef = useRef(onViewed);
   onViewedRef.current = onViewed;
@@ -1404,6 +1411,11 @@ export function DocumentListDetailRow({
     setContent(undefined);
     setLoading(true);
     setError(null);
+    if (refreshError) {
+      setLoading(false);
+      setError(refreshError);
+      return;
+    }
     void loadContent(document.id)
       .then((loadedContent) => {
         if (!active) return;
@@ -1431,17 +1443,17 @@ export function DocumentListDetailRow({
     document.fileReference?.id,
     loadContent,
     recordView,
+    contentVersion,
+    refreshError,
   ]);
 
   const isImage = Boolean(
     content?.reference &&
       content.contentType?.toLowerCase().startsWith('image/')
   );
-  const pdfReference =
+  const isPdf = Boolean((content?.blob || content?.reference) &&
     content?.contentType?.split(';')[0].trim().toLowerCase() ===
-    'application/pdf'
-      ? content.reference
-      : undefined;
+    'application/pdf');
   const isMarkdown =
     (content?.contentType === COMPOSE_CONTENT_TYPE ||
       content?.contentType === DOCUMENT_LIST_MDY_TYPE) &&
@@ -1472,12 +1484,12 @@ export function DocumentListDetailRow({
           onLoad={recordView}
         />
       )}
-      {!loading && pdfReference && (
+      {!loading && isPdf && (
         <div className="document-list-detail__pdf">
           <Suspense fallback={<p role="status">Loading document content…</p>}>
             <DocumentListPdfViewer
-              key={pdfReference}
-              reference={pdfReference}
+              key={`${document.id}:${contentVersion}`}
+              reference={content?.reference}
               blob={content?.blob}
               title={document.title}
               onReady={recordView}
@@ -1499,7 +1511,7 @@ export function DocumentListDetailRow({
         !error &&
         content?.text == null &&
         !isImage &&
-        !pdfReference && (
+        !isPdf && (
           <p className="document-list-detail__empty">
             No preview for this document.
           </p>

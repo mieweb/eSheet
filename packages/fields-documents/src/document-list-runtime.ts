@@ -121,6 +121,7 @@ export interface DocumentListRuntimeState {
   readonly documents: Readonly<Record<string, DocumentListDocument>>;
   readonly documentIds: readonly string[];
   readonly contents: Readonly<Record<string, DocumentListContentState>>;
+  readonly contentVersions?: Readonly<Record<string, number>>;
   readonly pendingOperations: Readonly<
     Record<string, DocumentListPendingOperation>
   >;
@@ -307,6 +308,10 @@ export function createDocumentListRuntimeExtension(
     }
     updateState((current) => ({
       ...current,
+      contentVersions: {
+        ...current.contentVersions,
+        [documentId]: (current.contentVersions?.[documentId] ?? 0) + 1,
+      },
       contents: Object.fromEntries(
         Object.entries(current.contents).filter(([key]) => !matches(key))
       ),
