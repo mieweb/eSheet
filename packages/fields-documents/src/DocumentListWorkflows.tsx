@@ -1239,7 +1239,6 @@ export function DocumentListDetailRow({
   related,
   historyHref,
 }: DocumentListDetailRowProps): React.JSX.Element {
-  const pdfContainerRef = useRef<HTMLDivElement>(null);
   const [content, setContent] = useState<DocumentListContent | undefined>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1282,24 +1281,6 @@ export function DocumentListDetailRow({
       content?.contentType === DOCUMENT_LIST_MDY_TYPE) &&
     content.text != null;
 
-  useEffect(() => {
-    const element = pdfContainerRef.current;
-    if (!element) return;
-    const updateTop = (): void => {
-      element.style.setProperty(
-        '--document-list-pdf-top',
-        `${Math.max(0, element.getBoundingClientRect().top)}px`
-      );
-    };
-    updateTop();
-    window.addEventListener('resize', updateTop);
-    window.addEventListener('scroll', updateTop, true);
-    return () => {
-      window.removeEventListener('resize', updateTop);
-      window.removeEventListener('scroll', updateTop, true);
-    };
-  }, [loading, pdfReference]);
-
   return (
     // The row is the document. Date, title, type and source are already
     // columns in the grid above, so repeating them here says nothing.
@@ -1325,7 +1306,7 @@ export function DocumentListDetailRow({
         />
       )}
       {!loading && pdfReference && (
-        <div ref={pdfContainerRef} className="document-list-detail__pdf">
+        <div className="document-list-detail__pdf">
           <Suspense fallback={<p role="status">Loading document content…</p>}>
             <DocumentListPdfViewer
               key={pdfReference}

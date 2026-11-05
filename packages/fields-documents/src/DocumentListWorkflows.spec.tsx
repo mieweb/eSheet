@@ -719,39 +719,6 @@ describe('document list workflow panels', () => {
 });
 
 describe('document list detail row', () => {
-  afterEach(() => vi.restoreAllMocks());
-
-  it('sizes the PDF below its measured screen position and updates on resize and scroll', async () => {
-    const bounds = vi
-      .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
-      .mockReturnValue(new DOMRect(0, 180, 848, 0));
-    const runtime = createRuntime(async () => ({
-      reference: 'blob:uploaded-pdf',
-      contentType: 'application/pdf',
-    }));
-    const view = render(
-      <DocumentListDetailRow document={document} runtime={runtime} />
-    );
-    await screen.findByLabelText(`PDF preview of ${document.title}`);
-    const preview = view.container.querySelector<HTMLDivElement>(
-      '.document-list-detail__pdf'
-    );
-    if (!preview) throw new Error('PDF preview was not rendered.');
-    expect(preview.style.getPropertyValue('--document-list-pdf-top')).toBe(
-      '180px'
-    );
-    bounds.mockReturnValue(new DOMRect(0, 240, 848, 0));
-    fireEvent(window, new Event('resize'));
-    expect(preview.style.getPropertyValue('--document-list-pdf-top')).toBe(
-      '240px'
-    );
-    bounds.mockReturnValue(new DOMRect(0, 120, 848, 0));
-    fireEvent.scroll(window);
-    expect(preview.style.getPropertyValue('--document-list-pdf-top')).toBe(
-      '120px'
-    );
-  });
-
   it('renders loaded text content inline', async () => {
     const content: DocumentListContent = {
       text: 'Loaded note',

@@ -57,11 +57,13 @@ vi.mock('react-pdf', () => ({
   Page: ({
     pageNumber,
     width,
+    height,
     onRenderSuccess,
     renderTextLayer,
   }: {
     readonly pageNumber: number;
     readonly width: number;
+    readonly height?: number;
     readonly onRenderSuccess: () => void;
     readonly renderTextLayer?: boolean;
   }) => {
@@ -73,6 +75,7 @@ vi.mock('react-pdf', () => ({
         'data-testid': 'pdf-page',
         'data-render-text-layer': String(renderTextLayer),
         'data-width': width,
+        'data-height': height ?? 'auto',
       },
       `Page ${pageNumber}`
     );
@@ -164,6 +167,7 @@ describe('DocumentListPdfViewer', () => {
         );
       });
       expect(screen.getByTestId('pdf-page').dataset.width).toBe(String(width));
+      expect(screen.getByTestId('pdf-page').dataset.height).toBe('auto');
     }
   });
 

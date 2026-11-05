@@ -665,10 +665,6 @@
   display: flex;
   width: min(100%, 53rem);
   margin-inline: auto;
-  max-height: max(
-    18rem,
-    calc(100dvh - var(--document-list-pdf-top, 10rem) - 2rem)
-  );
   min-width: 0;
   overflow: hidden;
   border: 1px solid var(--mieweb-border, #e2e8f0);
