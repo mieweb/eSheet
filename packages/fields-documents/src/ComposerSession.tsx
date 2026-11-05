@@ -22,6 +22,7 @@ import type {
   DocumentListAuthor,
   DocumentListComposeDraft,
   DocumentListDocTypeOption,
+  DocumentListDocument,
   DocumentListWorkflow,
   DocumentListWorkflowMode,
 } from './types.js';
@@ -57,6 +58,7 @@ export interface ComposerSession {
   readonly documentDraft?: DocumentDraft;
   /** The row the shared draft revises. */
   readonly documentId?: string;
+  readonly revisionBase?: DocumentListDocument;
   /** This session appends (ED.41): the panel offers the two shapes. */
   readonly append?: boolean;
   /** Definition-tier prefill from the last saved revision (ED.40). */
@@ -83,6 +85,7 @@ export interface ComposerSessionValue {
     config: ComposerSessionConfig;
     documentDraft?: DocumentDraft;
     documentId?: string;
+    revisionBase?: DocumentListDocument;
     append?: boolean;
     definitionPrefill?: DefinitionPrefill;
     noteTier?: boolean;
@@ -135,6 +138,7 @@ export function useComposerSessionValue(): ComposerSessionValue {
         config,
         documentDraft,
         documentId,
+        revisionBase,
         append,
         definitionPrefill,
         noteTier,
@@ -159,6 +163,7 @@ export function useComposerSessionValue(): ComposerSessionValue {
             config,
             documentDraft,
             documentId,
+            revisionBase,
             append,
             definitionPrefill,
             noteTier,
@@ -215,6 +220,7 @@ export function ComposerSessionOverlay({
         renderTemplate={config.renderTemplate}
         documentDraft={session.documentDraft}
         documentId={session.documentId}
+        revisionBase={session.revisionBase}
         appendMode={session.append}
         definitionPrefill={session.definitionPrefill}
         noteTier={session.noteTier}

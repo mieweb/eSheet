@@ -37,6 +37,7 @@ import {
   DOCUMENT_LIST_COLUMNS,
   documentListValueFromRows,
   normalizeDocumentRows,
+  normalizeDocumentRow,
   parseDocumentListAnswer,
 } from './data.js';
 import {
@@ -461,6 +462,7 @@ export function DocumentListField({
           definitionPrefill?.frontMatterSource ?? composeDraft.frontMatterSource
         );
         documentDraft?.setAnswer('meta:nativeVersion', row.nativeVersion);
+        documentDraft?.setAnswer('meta:revisionBase', row);
       }
       session.open({
         kind: 'compose',
@@ -469,6 +471,12 @@ export function DocumentListField({
         config: composerConfig,
         documentDraft,
         documentId: row.id,
+        revisionBase:
+          documentDraft && !documentDraft.isNew
+            ? normalizeDocumentRow(
+                documentDraft.getAnswers()['meta:revisionBase']
+              ) ?? row
+            : row,
         append: options?.append,
         draft: composeDraft,
         definitionPrefill,

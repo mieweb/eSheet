@@ -140,8 +140,14 @@ describe('DocumentListFieldProvider', () => {
     gridProbe.row = row;
     const loadContent = vi.fn(async () => ({
       text: 'Canonical native prose',
-      document: { ...row, nativeVersion: 'fresh-version' },
+      document: {
+        ...row,
+        nativeVersion: 'fresh-version',
+        rev: 3,
+        body: 'Canonical native prose',
+      },
     }));
+    const save = vi.fn(async (_context, saved) => saved);
     render(
       <FormStoreContext.Provider value={formStore}>
         <DocumentListFieldProvider
@@ -153,7 +159,8 @@ describe('DocumentListFieldProvider', () => {
             repository: {
               load: async () => ({ documents: [row] }),
               loadContent,
-              save: vi.fn(),
+              persistInline: true,
+              save,
               remove: vi.fn(),
             },
           }}
@@ -173,6 +180,19 @@ describe('DocumentListFieldProvider', () => {
       await screen.findByDisplayValue('Canonical native prose')
     ).toBeTruthy();
     expect(loadContent).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByRole('button', { name: 'Save document' }));
+    await waitFor(() => expect(save).toHaveBeenCalledOnce());
+    expect(save).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        rev: 4,
+        nativeVersion: 'fresh-version',
+        history: [
+          expect.objectContaining({ rev: 3, body: 'Canonical native prose' }),
+        ],
+      }),
+      expect.any(AbortSignal)
+    );
   });
 
   it.each(['edit', 'append'])(

@@ -208,6 +208,7 @@ export interface DocumentListWorkflowPanelProps {
   readonly documentDraft?: DocumentDraft;
   /** The row `documentDraft` revises; a draft without one composes new. */
   readonly documentId?: string;
+  readonly revisionBase?: DocumentListDocument;
   /** This panel appends (ED.41): the author picks one of the two shapes. */
   readonly appendMode?: boolean;
   /** Definition-tier prefill parsed from the last saved revision (ED.40). */
@@ -552,6 +553,7 @@ export function DocumentListComposePanel({
   renderTemplate,
   documentDraft,
   documentId,
+  revisionBase,
   appendMode,
   definitionPrefill,
   noteTier,
@@ -623,14 +625,13 @@ export function DocumentListComposePanel({
   activeDraftRef.current = activeDraft;
   const createId = useRef<string | undefined>(undefined);
   const baseDocument = useRef(
-    documentId ? runtime.documents[documentId] : undefined
+    revisionBase ?? (documentId ? runtime.documents[documentId] : undefined)
   );
   useEffect(() => {
     if (!open) return;
     createId.current = undefined;
-    baseDocument.current = documentId
-      ? runtime.documents[documentId]
-      : undefined;
+    baseDocument.current =
+      revisionBase ?? (documentId ? runtime.documents[documentId] : undefined);
     // A refresh while writing must not silently advance the draft's base.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, documentId]);
@@ -776,8 +777,11 @@ export function DocumentListComposePanel({
     content: string
   ): Promise<void> => {
     const sharedAnswers = documentDraft?.getAnswers();
-    const originalBlock = sharedAnswers?.['meta:frontMatterSource'] ?? activeDraft.frontMatterSource;
-    const nativeVersion = sharedAnswers?.['meta:nativeVersion'] ?? activeDraft.nativeVersion;
+    const originalBlock =
+      sharedAnswers?.['meta:frontMatterSource'] ??
+      activeDraft.frontMatterSource;
+    const nativeVersion =
+      sharedAnswers?.['meta:nativeVersion'] ?? activeDraft.nativeVersion;
     if (!definition && typeof originalBlock === 'string')
       content = originalBlock + content;
     const prior = baseDocument.current;
@@ -793,9 +797,7 @@ export function DocumentListComposePanel({
         ? {
             ...prior,
             ...row,
-            ...(typeof nativeVersion === 'string'
-              ? { nativeVersion }
-              : {}),
+            ...(typeof nativeVersion === 'string' ? { nativeVersion } : {}),
             date: row.date ?? today(),
             // Whoever saves owns the revision.
             ...(author ? { author } : {}),
@@ -878,7 +880,8 @@ export function DocumentListComposePanel({
       };
       const dateAnswer = answerText(collected.responses.date).trim();
       if (fields?.includes('date') && dateAnswer) projected.date = dateAnswer;
-      const source = documentDraft?.getAnswers()['meta:frontMatterSource'] ??
+      const source =
+        documentDraft?.getAnswers()['meta:frontMatterSource'] ??
         definitionPrefill?.frontMatterSource;
       await save(
         projected,
@@ -1396,7 +1399,8 @@ export function DocumentListDetailRow({
   const [error, setError] = useState<string | null>(null);
   const { loadContent } = runtime;
   const contentVersion = runtime.contentVersions?.[document.id] ?? 0;
-  const refreshError = runtime.syncStatus === 'error' ? runtime.error : undefined;
+  const refreshError =
+    runtime.syncStatus === 'error' ? runtime.error : undefined;
   const viewedDocument = useRef<string | undefined>(undefined);
   const onViewedRef = useRef(onViewed);
   onViewedRef.current = onViewed;
@@ -1451,9 +1455,11 @@ export function DocumentListDetailRow({
     content?.reference &&
       content.contentType?.toLowerCase().startsWith('image/')
   );
-  const isPdf = Boolean((content?.blob || content?.reference) &&
-    content?.contentType?.split(';')[0].trim().toLowerCase() ===
-    'application/pdf');
+  const isPdf = Boolean(
+    (content?.blob || content?.reference) &&
+      content?.contentType?.split(';')[0].trim().toLowerCase() ===
+        'application/pdf'
+  );
   const isMarkdown =
     (content?.contentType === COMPOSE_CONTENT_TYPE ||
       content?.contentType === DOCUMENT_LIST_MDY_TYPE) &&
@@ -1507,15 +1513,11 @@ export function DocumentListDetailRow({
           Download original file
         </a>
       )}
-      {!loading &&
-        !error &&
-        content?.text == null &&
-        !isImage &&
-        !isPdf && (
-          <p className="document-list-detail__empty">
-            No preview for this document.
-          </p>
-        )}
+      {!loading && !error && content?.text == null && !isImage && !isPdf && (
+        <p className="document-list-detail__empty">
+          No preview for this document.
+        </p>
+      )}
       {related && related.length > 0 && (
         <ul className="document-list-detail__addenda" aria-label="Addenda">
           {related.map((addendum) => (
