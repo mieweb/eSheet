@@ -1026,6 +1026,60 @@ describe('document list workflow panels', () => {
     expect(loadOptions).not.toHaveBeenCalled();
   });
 
+  it('uses the frozen canonical category rather than the stale list category when revising', async () => {
+    const stale = {
+      ...document,
+      nativeDocType: 'OLD',
+      body: 'Old prose',
+      rev: 1,
+    };
+    const canonical = {
+      ...stale,
+      nativeDocType: 'CURRENT',
+      body: 'Current prose',
+      rev: 3,
+    };
+    const runtime = {
+      ...createRuntime(),
+      documents: { [stale.id]: stale },
+      saveCategory: saveCategory(vi.fn()),
+    };
+    render(
+      <DocumentListComposePanel
+        open
+        runtime={runtime}
+        documentId={stale.id}
+        revisionBase={canonical}
+        onOpenChange={vi.fn()}
+        inputPrefix="canonical-category"
+        draft={{
+          title: canonical.title,
+          subject: canonical.subject,
+          docType: canonical.docType,
+          note: canonical.body,
+        }}
+      />
+    );
+    expect(screen.getByLabelText('WebChart category')).toHaveProperty(
+      'value',
+      'CURRENT'
+    );
+    expect(screen.getByLabelText('WebChart category')).toHaveProperty(
+      'readOnly',
+      true
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Save document' }));
+    await waitFor(() => expect(runtime.saveDocument).toHaveBeenCalledOnce());
+    expect(runtime.saveDocument).toHaveBeenCalledWith(
+      expect.objectContaining({
+        rev: 4,
+        nativeDocType: 'CURRENT',
+        body: 'Current prose',
+      }),
+      undefined
+    );
+  });
+
   it('keeps an editable title separate from the original technical filename', async () => {
     const runtime = createRuntime();
     const onOpenChange = vi.fn();

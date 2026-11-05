@@ -424,7 +424,13 @@ export function DocumentListField({
         }
         const text = content.text;
         if (content.document) {
-          row = content.document;
+          row = {
+            ...content.document,
+            inline:
+              content.document.inline ??
+              row.inline ??
+              (row.body != null ? true : undefined),
+          };
           composeDraft.title = display(row.title);
           composeDraft.subject = display(row.subject);
           composeDraft.docType = display(row.docType);

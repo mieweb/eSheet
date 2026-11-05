@@ -11,6 +11,7 @@ import {
 import type { DocumentListDocument } from './types.js';
 import { permissiveDocumentListCapabilities } from './types.js';
 import type { DocumentDraft } from './draftChannel.js';
+import { createDocumentListRuntimeExtension } from './document-list-runtime.js';
 
 const gridProbe: { row?: DocumentListDocument } = vi.hoisted(() => ({}));
 
@@ -134,6 +135,68 @@ function RuntimeProbe({ fieldId }: { fieldId: string }): React.JSX.Element {
 }
 
 describe('DocumentListFieldProvider', () => {
+  it('keeps reference-only inline saves inline through the full canonical Edit flow without a FileStore', async () => {
+    const formStore = createFormStore();
+    const canonical = { ...document, nativeVersion: 'v1', rev: 0 };
+    const save = vi.fn(async () => canonical);
+    const repository = {
+      persistInline: true,
+      load: async () => ({ documents: [canonical] }),
+      loadContent: vi.fn(async () => ({
+        text: 'Saved prose',
+        document: canonical,
+      })),
+      save,
+      remove: vi.fn(),
+    };
+    const runtime = createDocumentListRuntimeExtension({
+      formStore,
+      context: {
+        formInstanceId: formStore.getState().instanceId,
+        fieldId: 'documents',
+      },
+      repository,
+    });
+    const saved = await runtime?.saveDocument({
+      ...document,
+      body: 'Saved prose',
+    });
+    expect(saved).toMatchObject({ inline: true });
+    expect(saved?.body).toBeUndefined();
+    if (!saved) throw new Error('Expected canonical inline save');
+    gridProbe.row = saved;
+    render(
+      <FormStoreContext.Provider value={formStore}>
+        <DocumentListFieldProvider
+          host={{
+            author: { id: 'wc-8', name: 'Author' },
+            capabilities: permissiveDocumentListCapabilities,
+          }}
+          runtime={{ repository }}
+        >
+          <DocumentListField
+            {...({
+              field: { definition: { id: 'documents' } },
+              form: formStore,
+              response: { answer: JSON.stringify({ documents: [saved] }) },
+            } as unknown as FieldComponentProps)}
+          />
+        </DocumentListFieldProvider>
+      </FormStoreContext.Provider>
+    );
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit Letter' }));
+    fireEvent.change(await screen.findByDisplayValue('Saved prose'), {
+      target: { value: 'Revised prose' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save document' }));
+    await waitFor(() => expect(save).toHaveBeenCalledTimes(2));
+    expect(save).toHaveBeenLastCalledWith(
+      expect.anything(),
+      expect.objectContaining({ body: 'Revised prose', inline: true, rev: 1 }),
+      expect.any(AbortSignal)
+    );
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
   it('loads canonical edit content even when the shared row has a stale inline body', async () => {
     const formStore = createFormStore();
     const row = { ...document, body: 'Stale shared prose' };

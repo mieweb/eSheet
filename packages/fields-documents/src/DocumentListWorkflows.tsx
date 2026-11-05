@@ -579,9 +579,19 @@ export function DocumentListComposePanel({
   const definitionRef = useRef<DocumentListDefinitionFormHandle>(null);
   const [definitionDirty, setDefinitionDirty] = useState(false);
   const activeDraft = draft ?? localDraft;
+  const baseDocument = useRef(
+    revisionBase ?? (documentId ? runtime.documents[documentId] : undefined)
+  );
+  useEffect(() => {
+    if (!open) return;
+    baseDocument.current =
+      revisionBase ?? (documentId ? runtime.documents[documentId] : undefined);
+    // A refresh while writing must not silently advance the draft's base.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, documentId]);
   const savedCategory =
     documentId && !(appendMode && appendShape === 'linked')
-      ? runtime.documents[documentId]?.nativeDocType
+      ? baseDocument.current?.nativeDocType
       : undefined;
   const category = useSaveCategory(
     runtime.saveCategory,
@@ -624,16 +634,9 @@ export function DocumentListComposePanel({
   const activeDraftRef = useRef(activeDraft);
   activeDraftRef.current = activeDraft;
   const createId = useRef<string | undefined>(undefined);
-  const baseDocument = useRef(
-    revisionBase ?? (documentId ? runtime.documents[documentId] : undefined)
-  );
   useEffect(() => {
     if (!open) return;
     createId.current = undefined;
-    baseDocument.current =
-      revisionBase ?? (documentId ? runtime.documents[documentId] : undefined);
-    // A refresh while writing must not silently advance the draft's base.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, documentId]);
 
   // Composing is writing: the note editor takes focus as the panel opens.
