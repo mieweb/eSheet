@@ -96,14 +96,6 @@ export const DOCUMENT_LIST_COLUMNS = [
     filterable: true,
     resizable: true,
   },
-  {
-    field: 'file',
-    header: 'File',
-    sortable: true,
-    filterable: true,
-    resizable: true,
-    width: 120,
-  },
 ] as const;
 
 export const DOCUMENT_LIST_ACTIONS_COLUMN = {

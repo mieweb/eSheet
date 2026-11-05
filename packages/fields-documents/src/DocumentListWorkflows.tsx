@@ -1171,7 +1171,7 @@ export function DocumentListUploadPanel({
   initialFile,
 }: DocumentListWorkflowPanelProps): React.JSX.Element | null {
   const [file, setFile] = useState<File | null>(initialFile ?? null);
-  const [storedName, setStoredName] = useState(initialFile?.name ?? '');
+  const [title, setTitle] = useState(initialFile?.name ?? '');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [dragActive, setDragActive] = useState(false);
@@ -1188,7 +1188,7 @@ export function DocumentListUploadPanel({
   const reset = (): void => {
     uploadId.current = undefined;
     setFile(null);
-    setStoredName('');
+    setTitle('');
     resetFormState(setError, setSaving);
   };
 
@@ -1202,7 +1202,7 @@ export function DocumentListUploadPanel({
     uploadId.current = undefined;
     const selectedFile = event.target.files?.[0] ?? null;
     setFile(selectedFile);
-    setStoredName(selectedFile?.name ?? '');
+    setTitle(selectedFile?.name ?? '');
     setError(null);
   };
 
@@ -1210,16 +1210,16 @@ export function DocumentListUploadPanel({
     if (!dropped) return;
     uploadId.current = undefined;
     setFile(dropped);
-    setStoredName(dropped.name);
+    setTitle(dropped.name);
     setError(null);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (saving || !category.ready) return;
-    const trimmedStoredName = storedName.trim();
-    if (!file || !trimmedStoredName) {
-      setError('Choose a file and enter a stored filename.');
+    const trimmedTitle = title.trim();
+    if (!file || !trimmedTitle) {
+      setError('Choose a file and enter a title.');
       return;
     }
     if (!fileMatchesAccept(file, accept)) {
@@ -1241,12 +1241,12 @@ export function DocumentListUploadPanel({
     const document: DocumentListDocument = {
       id,
       date: today(),
-      title: metadata.title,
+      title: trimmedTitle,
       subject: 'Uploaded document',
       docType: metadata.contentType,
       docId: id,
       source: 'Upload',
-      file: trimmedStoredName,
+      file: file.name,
       ...(category.value ? { nativeDocType: category.value } : {}),
       ...(author ? { author } : {}),
     };
@@ -1308,15 +1308,14 @@ export function DocumentListUploadPanel({
           </div>
           {file && (
             <p className="document-list-workflow__hint">
-              Title: {file.name} · Type:{' '}
-              {file.type || 'application/octet-stream'}
+              Type: {file.type || 'application/octet-stream'}
             </p>
           )}
           <Input
-            id={inputId(inputPrefix, 'upload-filename')}
-            label="Stored filename"
-            value={storedName}
-            onChange={(event) => setStoredName(event.target.value)}
+            id={inputId(inputPrefix, 'upload-title')}
+            label="Title"
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
             disabled={saving || !file}
             required
           />

@@ -149,12 +149,15 @@ describe('document list data', () => {
   });
 
   it('publishes a fresh DataVis payload without mutating rows', () => {
-    const rows = normalizeDocumentRows([{ id: 'doc-1', title: 'Letter' }]);
+    const rows = normalizeDocumentRows([
+      { id: 'doc-1', title: 'Letter', file: 'original.pdf' },
+    ]);
     const payload = createLocalSourcePayload(rows);
 
     // The payload defaults `rev` for display; the rows stay untouched.
     expect(payload.data).toEqual(rows.map((row) => ({ ...row, rev: 0 })));
     expect(rows[0].rev).toBeUndefined();
+    expect(payload.data[0].file).toBe('original.pdf');
     expect(
       payload.typeInfo.map((entry: { field: string }) => entry.field)
     ).toEqual([
@@ -165,7 +168,6 @@ describe('document list data', () => {
       'docId',
       'rev',
       'source',
-      'file',
     ]);
   });
 });

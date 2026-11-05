@@ -1026,7 +1026,7 @@ describe('document list workflow panels', () => {
     expect(loadOptions).not.toHaveBeenCalled();
   });
 
-  it('derives upload metadata from the original file and forwards the renamed file', async () => {
+  it('keeps an editable title separate from the original technical filename', async () => {
     const runtime = createRuntime();
     const onOpenChange = vi.fn();
     const file = new File(['image data'], 'original.png', {
@@ -1045,8 +1045,13 @@ describe('document list workflow panels', () => {
     fireEvent.change(screen.getByLabelText('Choose a file'), {
       target: { files: [file] },
     });
-    fireEvent.change(screen.getByLabelText('Stored filename'), {
-      target: { value: 'renamed-image.png' },
+    expect(screen.queryByLabelText('Stored filename')).toBeNull();
+    expect(screen.getByLabelText('Title')).toHaveProperty(
+      'value',
+      'original.png'
+    );
+    fireEvent.change(screen.getByLabelText('Title'), {
+      target: { value: 'Clinical image' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Save document' }));
 
@@ -1057,9 +1062,9 @@ describe('document list workflow panels', () => {
 
     expect(savedDocument).toEqual(
       expect.objectContaining({
-        title: 'original.png',
+        title: 'Clinical image',
         docType: 'image/png',
-        file: 'renamed-image.png',
+        file: 'original.png',
       })
     );
     expect(content).toEqual(
@@ -1096,6 +1101,29 @@ describe('document list workflow panels', () => {
     await waitFor(() => expect(save).toHaveBeenCalledTimes(2));
     expect(save.mock.calls[0][0].id).toBe(save.mock.calls[1][0].id);
     expect(save.mock.calls[1][1]?.content).toBe(file);
+  });
+
+  it('requires a title without changing the technical filename', () => {
+    const runtime = createRuntime();
+    render(
+      <DocumentListUploadPanel
+        open
+        onOpenChange={vi.fn()}
+        runtime={runtime}
+        inputPrefix="required-title"
+        initialFile={
+          new File(['data'], 'original.pdf', { type: 'application/pdf' })
+        }
+      />
+    );
+    fireEvent.change(screen.getByLabelText('Title'), {
+      target: { value: '   ' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save document' }));
+    expect(screen.getByRole('alert').textContent).toBe(
+      'Choose a file and enter a title.'
+    );
+    expect(runtime.saveDocument).not.toHaveBeenCalled();
   });
 
   it('rejects upload types excluded by the shared accept matcher', () => {
@@ -1142,8 +1170,8 @@ describe('document list workflow panels', () => {
         files: [new File(['draft'], 'draft.pdf', { type: 'application/pdf' })],
       },
     });
-    fireEvent.change(screen.getByLabelText('Stored filename'), {
-      target: { value: 'draft.pdf' },
+    fireEvent.change(screen.getByLabelText('Title'), {
+      target: { value: 'Draft title' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(onOpenChange).toHaveBeenCalledWith(false);
@@ -1156,9 +1184,7 @@ describe('document list workflow panels', () => {
         inputPrefix="form-1-documents"
       />
     );
-    expect(
-      (screen.getByLabelText('Stored filename') as HTMLInputElement).value
-    ).toBe('');
+    expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe('');
   });
 
   it('adopts a file dropped on the drop zone', () => {
@@ -1183,9 +1209,9 @@ describe('document list workflow panels', () => {
     fireEvent.drop(dropzone, {
       dataTransfer: { files: [file], types: ['Files'] },
     });
-    expect(
-      (screen.getByLabelText('Stored filename') as HTMLInputElement).value
-    ).toBe('dropped.pdf');
+    expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe(
+      'dropped.pdf'
+    );
   });
 
   it('arrives pre-selected when given an initial file', () => {
@@ -1201,9 +1227,9 @@ describe('document list workflow panels', () => {
         }
       />
     );
-    expect(
-      (screen.getByLabelText('Stored filename') as HTMLInputElement).value
-    ).toBe('prefilled.png');
+    expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe(
+      'prefilled.png'
+    );
   });
 });
 

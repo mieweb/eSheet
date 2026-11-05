@@ -83,6 +83,36 @@ describe('DocumentListGrid host integration', () => {
     sourceKeys.length = 0;
   });
 
+  it.each([undefined, ['date', 'title', 'file']])(
+    'omits the filename column, including from legacy definitions (%j)',
+    async (columns) => {
+      const formStore = createFormStore();
+      const fieldProps = {
+        field: {
+          definition: {
+            id: 'caseDocuments',
+            question: 'Documents',
+            documents: [row],
+            columns,
+          },
+        },
+        form: formStore,
+      } as unknown as FieldComponentProps;
+      render(
+        <FormStoreContext.Provider value={formStore}>
+          <DocumentListField {...fieldProps} />
+        </FormStoreContext.Provider>
+      );
+      await waitFor(() => expect(captured.props).not.toBeNull());
+      const fields = (
+        captured.props as { columns: readonly { field: string }[] }
+      ).columns.map((column) => column.field);
+      expect(fields).toContain('title');
+      expect(fields).not.toContain('file');
+      if (columns) expect(fields).toEqual(['date', 'title']);
+    }
+  );
+
   it.each(['caseNotes', 'letterLog', 'caseDocuments'])(
     'records each successful %s detail opening, including cached reopens',
     async (fieldId) => {
