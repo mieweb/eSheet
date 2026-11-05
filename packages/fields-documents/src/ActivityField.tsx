@@ -84,6 +84,8 @@ interface ActivityRow {
   readonly from: string;
   readonly to: string;
   readonly author: string;
+  readonly viewCount: number;
+  readonly firstAt: string;
 }
 
 type DataVisTableRow = Record<string, unknown> & {
@@ -119,7 +121,42 @@ function activityRow(entry: ActivityEntry): ActivityRow {
     from: entry.from ?? '—',
     to: entry.to ?? '—',
     author: entry.author ?? '—',
+    viewCount: entry.category === 'Viewed' ? 1 : 0,
+    firstAt: entry.at,
   };
+}
+
+function activityRows(entries: readonly ActivityEntry[]): ActivityRow[] {
+  const sorted = [...entries].sort(
+    (left, right) =>
+      right.at.localeCompare(left.at) || right.id.localeCompare(left.id)
+  );
+  const rows: ActivityRow[] = [];
+  let previous: ActivityEntry | undefined;
+  for (const entry of sorted) {
+    const last = rows[rows.length - 1];
+    if (
+      last &&
+      entry.category === 'Viewed' &&
+      previous?.category === 'Viewed' &&
+      entry.fieldId === previous.fieldId &&
+      entry.author &&
+      entry.author === previous.author &&
+      entry.to &&
+      entry.to === previous.to &&
+      entry.from === previous.from
+    ) {
+      rows[rows.length - 1] = {
+        ...last,
+        viewCount: last.viewCount + 1,
+        firstAt: entry.at,
+      };
+    } else {
+      rows.push(activityRow(entry));
+    }
+    previous = entry;
+  }
+  return rows;
 }
 
 function activityFromTableRow(row: DataVisTableRow): ActivityRow | null {
@@ -232,6 +269,12 @@ function ActivityDetail({ row }: { readonly row: ActivityRow }) {
   const diff = diffParts(row.from, row.to);
   return (
     <div className="activity-field__detail ms:border-y ms:border-msborder ms:font-mono ms:text-sm">
+      {row.viewCount > 1 && (
+        <p className="activity-field__view-summary ms:px-3 ms:py-3 ms:text-mstextmuted">
+          Viewed {row.viewCount} times, from {formatTimestamp(row.firstAt)} to{' '}
+          {row.atDisplay}.
+        </p>
+      )}
       <div className="activity-field__content ms:whitespace-pre-wrap ms:break-words ms:px-3 ms:py-3 ms:text-mstext">
         {diff.prefix}
         {diff.previous && (
@@ -262,12 +305,7 @@ export function ActivityField({
     () => form.getState()
   );
   const [detailRowsExpanded, setDetailRowsExpanded] = useState(false);
-  const rows = [...(responses[ACTIVITY_RESPONSE_KEY]?.activity ?? [])]
-    .sort(
-      (left, right) =>
-        right.at.localeCompare(left.at) || right.id.localeCompare(left.id)
-    )
-    .map(activityRow);
+  const rows = activityRows(responses[ACTIVITY_RESPONSE_KEY]?.activity ?? []);
   const view = useActivityView(rows);
 
   if (!view) {
@@ -318,12 +356,14 @@ export function ActivityField({
           titleActions={titleActions}
           columns={ACTIVITY_COLUMNS as unknown as DataVisGridProps['columns']}
           formatCell={(value, _row, column) => {
+            const row = activityFromTableRow(
+              _row as unknown as DataVisTableRow
+            );
             if (column.field === 'at') {
-              const row = activityFromTableRow(
-                _row as unknown as DataVisTableRow
-              );
               return row?.atDisplay ?? String(value ?? '');
             }
+            if (column.field === 'category' && row && row.viewCount > 1)
+              return `Viewed (${row.viewCount} times)`;
             return String(value ?? '');
           }}
           renderDetailRow={(tableRow) => {

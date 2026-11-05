@@ -17,9 +17,9 @@ import {
   SquarePen,
   Trash2,
 } from 'lucide-react';
-import type { DraftPresence } from './draftChannel.js';
+import type { DocumentDraft, DraftPresence } from './draftChannel.js';
 import { mdyBody, parseMdy } from './mdy.js';
-import { priorRevisionOf } from './data.js';
+import { docTypeSerialization, priorRevisionOf } from './data.js';
 import {
   ComposerSessionOverlay,
   useComposerSession,
@@ -37,6 +37,7 @@ import {
   DOCUMENT_LIST_COLUMNS,
   documentListValueFromRows,
   normalizeDocumentRows,
+  normalizeDocumentRow,
   parseDocumentListAnswer,
 } from './data.js';
 import {
@@ -181,6 +182,7 @@ export function DocumentListField({
   const [removing, setRemoving] = useState<DocumentListDocument | null>(null);
   const [renaming, setRenaming] = useState<DocumentListDocument | null>(null);
   const [exporting, setExporting] = useState<DocumentListDocument | null>(null);
+  const [editError, setEditError] = useState<string>();
   const [dropActive, setDropActive] = useState(false);
   const removedCount = useMemo(
     () => rows.filter((row) => row.removed).length,
@@ -390,62 +392,115 @@ export function DocumentListField({
   ): Promise<void> => {
     const openedBy = host?.author;
     if (!openedBy || !runtimeState) return;
-    const documentDraft = draftChannel
-      ? await draftChannel.open(row.id, {
-          openedBy,
-          baseRev: row.rev ?? 0,
-        })
-      : undefined;
-    const display = (value: string): string => (value === '—' ? '' : value);
-    const composeDraft = {
-      title: display(row.title),
-      subject: display(row.subject),
-      docType: display(row.docType),
-      note: '',
-    };
-    let definitionPrefill: DefinitionPrefill | undefined;
-    let noteTier = false;
-    if (!documentDraft || documentDraft.isNew) {
-      let text = row.body ?? '';
-      if (row.body == null) {
-        try {
-          text = (await runtimeState.loadContent(row.id))?.text ?? '';
-        } catch {
-          text = '';
+    setEditError(undefined);
+    let documentDraft: DocumentDraft | undefined;
+    let displayed = false;
+    try {
+      documentDraft = draftChannel
+        ? await draftChannel.open(row.id, {
+            openedBy,
+            baseRev: row.rev ?? 0,
+          })
+        : undefined;
+      const display = (value: string): string => (value === '—' ? '' : value);
+      const composeDraft = {
+        title: display(row.title),
+        subject: display(row.subject),
+        docType: display(row.docType),
+        note: '',
+        nativeVersion: row.nativeVersion,
+        frontMatterSource: '',
+      };
+      let definitionPrefill: DefinitionPrefill | undefined;
+      if (!documentDraft || documentDraft.isNew) {
+        const content = await runtimeState.loadContent(row.id, undefined, {
+          refresh: true,
+        });
+        if (content?.text === undefined) {
+          setEditError(
+            'Document content is unavailable. Reload before editing.'
+          );
+          return;
         }
-      }
-      const typed = definition.docTypes?.find(
-        (docType) => docType.id === row.docType
-      );
-      const mdy = parseMdy(text);
-      if (typed?.definition && mdy.frontMatter) {
-        definitionPrefill = {
-          responses: mdy.frontMatter.response ?? {},
-          body: mdy.body,
-        };
-      } else {
-        composeDraft.note = mdyBody(text);
-        // A head with no front matter revises as a note even when its type
-        // has a definition since (ED.40's parse-failure rule) — recorded on
-        // the draft so joiners land in the same tier as the opener.
+        const text = content.text;
+        if (content.document) {
+          row = {
+            ...content.document,
+            inline:
+              content.document.inline ??
+              row.inline ??
+              (row.body != null ? true : undefined),
+          };
+          composeDraft.title = display(row.title);
+          composeDraft.subject = display(row.subject);
+          composeDraft.docType = display(row.docType);
+          composeDraft.nativeVersion = row.nativeVersion;
+        }
+        const typed = definition.docTypes?.find(
+          (docType) => docType.id === row.docType
+        );
+        const mdy = parseMdy(text);
+        const textOnly = docTypeSerialization(typed) === 'text';
+        if (typed?.definition && !textOnly && !mdy.frontMatter) {
+          setEditError(
+            'Form metadata is missing or invalid. Reconcile this document before editing.'
+          );
+          return;
+        }
         if (typed?.definition) {
-          noteTier = true;
-          documentDraft?.setAnswer('meta:tier', 'note');
+          definitionPrefill = {
+            frontMatterSource: textOnly ? '' : mdy.frontMatterSource,
+            responses: textOnly
+              ? {
+                  title: { answer: row.title },
+                  subject: { answer: row.subject },
+                  date: { answer: row.date },
+                }
+              : mdy.frontMatter?.response ?? {},
+            body: textOnly ? text : mdy.body,
+          };
+        } else {
+          composeDraft.frontMatterSource = mdy.frontMatterSource;
+          composeDraft.note = mdyBody(text);
+        }
+        documentDraft?.setAnswer(
+          'meta:frontMatterSource',
+          definitionPrefill?.frontMatterSource ?? composeDraft.frontMatterSource
+        );
+        documentDraft?.setAnswer('meta:nativeVersion', row.nativeVersion);
+        documentDraft?.setAnswer('meta:revisionBase', row);
+      }
+      session.open({
+        kind: 'compose',
+        fieldId: field.definition.id,
+        runtime: runtimeState,
+        config: composerConfig,
+        documentDraft,
+        documentId: row.id,
+        revisionBase:
+          documentDraft && !documentDraft.isNew
+            ? normalizeDocumentRow(
+                documentDraft.getAnswers()['meta:revisionBase']
+              ) ?? row
+            : row,
+        append: options?.append,
+        draft: composeDraft,
+        definitionPrefill,
+      });
+      displayed = true;
+    } catch (error) {
+      setEditError(error instanceof Error ? error.message : String(error));
+    } finally {
+      if (documentDraft && !displayed) {
+        try {
+          if (documentDraft.isNew) await documentDraft.discard();
+        } catch (error) {
+          setEditError(error instanceof Error ? error.message : String(error));
+        } finally {
+          documentDraft.close();
         }
       }
     }
-    session.open({
-      kind: 'compose',
-      fieldId: field.definition.id,
-      runtime: runtimeState,
-      config: composerConfig,
-      documentDraft,
-      documentId: row.id,
-      append: options?.append,
-      draft: composeDraft,
-      definitionPrefill,
-      noteTier,
-    });
   };
   const handleToggleDetails =
     host?.onToggleDetails ??
@@ -524,6 +579,14 @@ export function DocumentListField({
           document={row}
           runtime={runtimeState}
           historyHref={host?.documentHref?.(row) ?? undefined}
+          onViewed={() =>
+            form.getState().appendActivity({
+              fieldId: field.definition.id,
+              question: title,
+              category: 'Viewed',
+              detail: `${row.title} (${row.id}), rev ${row.rev ?? 0}`,
+            })
+          }
           // ED.41 — the original renders its addenda beneath itself.
           related={rows.filter(
             (candidate) => candidate.linkedTo?.id === row.id
@@ -686,7 +749,7 @@ export function DocumentListField({
         loading={
           host?.loading === true || runtimeState?.syncStatus === 'loading'
         }
-        error={runtimeState?.error ?? host?.error}
+        error={editError ?? runtimeState?.error ?? host?.error}
       />
       {removing && (
         <RemoveDocumentDialog

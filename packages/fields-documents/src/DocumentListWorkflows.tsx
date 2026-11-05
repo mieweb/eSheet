@@ -1,5 +1,8 @@
 import {
   forwardRef,
+  lazy,
+  Suspense,
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -19,13 +22,14 @@ import {
   formatFileSize,
   getFileMetadata,
 } from '@esheet/fields';
-import { Button, Input, MarkdownRenderer } from '@mieweb/ui';
+import { Button, Input, MarkdownRenderer, Select } from '@mieweb/ui';
 import { Maximize2, Minimize2, X } from 'lucide-react';
 import type { FileInput } from '@esheet/core';
 import '@mieweb/ui/markdown.css';
 import type {
   DocumentListContent,
   DocumentListRuntimeState,
+  DocumentListSaveCategory,
 } from './document-list-runtime.js';
 import {
   createDocumentId,
@@ -41,7 +45,12 @@ import {
   answerText,
   type DocumentListDefinitionFormHandle,
 } from './DocumentListDefinitionForm.js';
-import { createMdy, mdyBody, normalizeKerebronTables } from './mdy.js';
+import {
+  createMdy,
+  mdyBody,
+  normalizeKerebronTables,
+  updateMdyForm,
+} from './mdy.js';
 import type { DocumentDraft, DraftBodyRoom } from './draftChannel.js';
 import type { DefinitionPrefill } from './ComposerSession.js';
 import type {
@@ -53,6 +62,111 @@ import type {
 } from './types.js';
 
 const COMPOSE_CONTENT_TYPE = DOCUMENT_LIST_MARKDOWN_TYPE;
+const DocumentListPdfViewer = lazy(() =>
+  import('./DocumentListPdfPreview.js').then((module) => ({
+    default: module.DocumentListPdfViewer,
+  }))
+);
+
+function useSaveCategory(
+  config: DocumentListSaveCategory | undefined,
+  open: boolean,
+  docType: string,
+  existing: string | undefined,
+  saving: boolean,
+  id: string
+) {
+  const [options, setOptions] = useState<
+    readonly { id: string; label: string }[]
+  >([]);
+  const [selected, setSelected] = useState('');
+  const [loadedType, setLoadedType] = useState<string>();
+  const [error, setError] = useState<string>();
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    setSelected('');
+    setLoadedType(undefined);
+    setOptions([]);
+    setError(undefined);
+    if (!config || !open || existing) return;
+    const controller = new AbortController();
+    void config.loadOptions(docType, controller.signal).then(
+      (choices) => {
+        if (controller.signal.aborted) return;
+        setOptions(choices);
+        setSelected(choices.length === 1 ? choices[0].id : '');
+        setLoadedType(docType);
+        if (!choices.length) setError(config.empty);
+      },
+      (failure: unknown) => {
+        if (!controller.signal.aborted) {
+          setError(
+            failure instanceof Error ? failure.message : String(failure)
+          );
+        }
+      }
+    );
+    return () => controller.abort();
+  }, [config, open, docType, existing, attempt]);
+  const value = existing ?? (loadedType === docType ? selected : '');
+  const loading = !existing && loadedType !== docType && !error;
+  return {
+    value,
+    ready: !config || Boolean(value),
+    field: config && (
+      <div className="document-list-workflow__field">
+        {existing ? (
+          <Input
+            id={id}
+            label={config.label}
+            helperText={config.hint}
+            value={existing}
+            readOnly
+          />
+        ) : (
+          <Select
+            id={id}
+            label={config.label}
+            helperText={config.hint}
+            value={value}
+            onValueChange={setSelected}
+            placeholder={loading ? config.loading : config.placeholder}
+            options={options.map((option) => ({
+              value: option.id,
+              label:
+                option.label === option.id
+                  ? option.label
+                  : `${option.label} (${option.id})`,
+            }))}
+            disabled={config.readOnly || saving || loading || Boolean(error)}
+            required
+          />
+        )}
+        {loading && (
+          <p className="document-list-workflow__hint" role="status">
+            {config.loading}
+          </p>
+        )}
+        {error && (
+          <>
+            <p className="document-list-workflow__error" role="alert">
+              {error}
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setAttempt((value) => value + 1)}
+              disabled={saving}
+            >
+              {config.retry}
+            </Button>
+          </>
+        )}
+      </div>
+    ),
+  };
+}
 
 export function configureDocumentListComposeEditor(
   options: Parameters<typeof configureRichTextField>[0]
@@ -94,6 +208,7 @@ export interface DocumentListWorkflowPanelProps {
   readonly documentDraft?: DocumentDraft;
   /** The row `documentDraft` revises; a draft without one composes new. */
   readonly documentId?: string;
+  readonly revisionBase?: DocumentListDocument;
   /** This panel appends (ED.41): the author picks one of the two shapes. */
   readonly appendMode?: boolean;
   /** Definition-tier prefill parsed from the last saved revision (ED.40). */
@@ -266,6 +381,12 @@ export function DocumentListWorkflowPanel({
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent): void => {
       if (event.key !== 'Escape') return;
+      if (
+        panelRef.current?.querySelector(
+          '[role="combobox"][aria-expanded="true"]'
+        )
+      )
+        return;
       if (dockable && dirtyRef.current && modeRef.current === 'full') {
         onModeChangeRef.current?.('docked');
         return;
@@ -278,7 +399,7 @@ export function DocumentListWorkflowPanel({
     };
     document.addEventListener('keydown', handleEscape);
     panelRef.current
-      ?.querySelector<HTMLElement>('input, select, textarea')
+      ?.querySelector<HTMLElement>('input, select, textarea, [role="combobox"]')
       ?.focus();
     return () => document.removeEventListener('keydown', handleEscape);
   }, [dockable]);
@@ -432,6 +553,7 @@ export function DocumentListComposePanel({
   renderTemplate,
   documentDraft,
   documentId,
+  revisionBase,
   appendMode,
   definitionPrefill,
   noteTier,
@@ -457,6 +579,28 @@ export function DocumentListComposePanel({
   const definitionRef = useRef<DocumentListDefinitionFormHandle>(null);
   const [definitionDirty, setDefinitionDirty] = useState(false);
   const activeDraft = draft ?? localDraft;
+  const baseDocument = useRef(
+    revisionBase ?? (documentId ? runtime.documents[documentId] : undefined)
+  );
+  useEffect(() => {
+    if (!open) return;
+    baseDocument.current =
+      revisionBase ?? (documentId ? runtime.documents[documentId] : undefined);
+    // A refresh while writing must not silently advance the draft's base.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, documentId]);
+  const savedCategory =
+    documentId && !(appendMode && appendShape === 'linked')
+      ? baseDocument.current?.nativeDocType
+      : undefined;
+  const category = useSaveCategory(
+    runtime.saveCategory,
+    open,
+    activeDraft.docType,
+    savedCategory,
+    saving,
+    inputId(inputPrefix, 'compose-category')
+  );
   const selectedType = docTypes?.find(
     (option) => option.id === activeDraft.docType
   );
@@ -489,6 +633,11 @@ export function DocumentListComposePanel({
 
   const activeDraftRef = useRef(activeDraft);
   activeDraftRef.current = activeDraft;
+  const createId = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (!open) return;
+    createId.current = undefined;
+  }, [open, documentId]);
 
   // Composing is writing: the note editor takes focus as the panel opens.
   // The definition tier focuses its own first field; title-less notes have
@@ -602,6 +751,7 @@ export function DocumentListComposePanel({
   };
 
   const handleOpenChange = (nextOpen: boolean): void => {
+    if (!nextOpen && saving) return;
     if (!nextOpen && !saving) {
       // Leaving is not discarding: the draft stays for whoever else is in it.
       documentDraft?.close();
@@ -629,18 +779,28 @@ export function DocumentListComposePanel({
     row: { title: string; subject: string; docType: string; date?: string },
     content: string
   ): Promise<void> => {
-    const prior = documentId ? runtime.documents[documentId] : undefined;
+    const sharedAnswers = documentDraft?.getAnswers();
+    const originalBlock =
+      sharedAnswers?.['meta:frontMatterSource'] ??
+      activeDraft.frontMatterSource;
+    const nativeVersion =
+      sharedAnswers?.['meta:nativeVersion'] ?? activeDraft.nativeVersion;
+    if (!definition && typeof originalBlock === 'string')
+      content = originalBlock + content;
+    const prior = baseDocument.current;
     const asLinked = appendMode && appendShape === 'linked';
     const inline =
       prior && !asLinked
-        ? prior.body != null // a revision never changes the row's tier
+        ? prior.inline ?? prior.body != null
         : selectedType?.inline ?? defaultInline ?? false;
-    const id = prior && !asLinked ? prior.id : createDocumentId();
+    const id =
+      prior && !asLinked ? prior.id : (createId.current ??= createDocumentId());
     const document: DocumentListDocument =
       prior && !asLinked
         ? {
             ...prior,
             ...row,
+            ...(typeof nativeVersion === 'string' ? { nativeVersion } : {}),
             date: row.date ?? today(),
             // Whoever saves owns the revision.
             ...(author ? { author } : {}),
@@ -649,6 +809,7 @@ export function DocumentListComposePanel({
             ...(inline
               ? {
                   body: content,
+                  inline: true,
                   // The superseded prose rides along in full — the case doc is
                   // the inline tier's store (ED.47 formalizes this in the port).
                   history: [...(prior.history ?? []), priorRevisionOf(prior)],
@@ -669,12 +830,14 @@ export function DocumentListComposePanel({
             ...(asLinked && prior
               ? { linkedTo: { id: prior.id, linkType: 'addendum' } }
               : {}),
-            ...(inline ? { body: content } : {}),
+            ...(inline ? { body: content, inline: true } : {}),
           };
-    // An inline type keeps its prose on the row, so there is nothing for
-    // the repository to store.
+    // Inline content travels on the row; a host repository may persist it
+    // and return a native reference before the runtime publishes the answer.
     await runtime.saveDocument(
-      document,
+      category.value
+        ? { ...document, nativeDocType: category.value }
+        : document,
       inline
         ? undefined
         : {
@@ -720,11 +883,21 @@ export function DocumentListComposePanel({
       };
       const dateAnswer = answerText(collected.responses.date).trim();
       if (fields?.includes('date') && dateAnswer) projected.date = dateAnswer;
+      const source =
+        documentDraft?.getAnswers()['meta:frontMatterSource'] ??
+        definitionPrefill?.frontMatterSource;
       await save(
         projected,
         // ED.45 — a type that opted out of front matter saves only the body.
         docTypeSerialization(selectedType) === 'mdy'
-          ? createMdy(collected.frontMatter, collected.body)
+          ? typeof source === 'string' && source
+            ? updateMdyForm(
+                source,
+                collected.frontMatter,
+                collected.body,
+                collected.fieldIds
+              )
+            : createMdy(collected.frontMatter, collected.body)
           : collected.body
       );
     } catch (saveError) {
@@ -737,6 +910,7 @@ export function DocumentListComposePanel({
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (saving || !category.ready) return;
     if (definition) {
       await submitDefinition();
       return;
@@ -879,36 +1053,18 @@ export function DocumentListComposePanel({
               )}
               {asksDocType &&
                 (docTypes?.length ? (
-                  // Native select, but wearing @mieweb/ui's Select slots so
-                  // condensed/touch density reaches it like it does the Inputs.
-                  <div
-                    className="document-list-workflow__field"
-                    data-slot="select-wrapper"
-                  >
-                    <label
-                      htmlFor={inputId(inputPrefix, 'compose-type')}
-                      data-slot="select-label"
-                    >
-                      {docTypeLabel}
-                    </label>
-                    <select
-                      id={inputId(inputPrefix, 'compose-type')}
-                      className="document-list-workflow__select"
-                      data-slot="select-trigger"
-                      value={activeDraft.docType}
-                      onChange={(event) =>
-                        updateDraft({ docType: event.target.value })
-                      }
-                      disabled={saving}
-                      required
-                    >
-                      {docTypes.map((option) => (
-                        <option key={option.id} value={option.id}>
-                          {option.label ?? option.id}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <Select
+                    id={inputId(inputPrefix, 'compose-type')}
+                    label={docTypeLabel}
+                    value={activeDraft.docType}
+                    onValueChange={(docType) => updateDraft({ docType })}
+                    options={docTypes.map((option) => ({
+                      value: option.id,
+                      label: option.label ?? option.id,
+                    }))}
+                    disabled={saving}
+                    required
+                  />
                 ) : (
                   <Input
                     id={inputId(inputPrefix, 'compose-type')}
@@ -922,6 +1078,7 @@ export function DocumentListComposePanel({
                   />
                 ))}
             </div>
+            {category.field}
             <div className="document-list-workflow__field document-list-workflow__field--grow">
               {definition ? (
                 awaitingTemplate ? (
@@ -969,6 +1126,11 @@ export function DocumentListComposePanel({
                 </>
               )}
             </div>
+            {saving && runtime.saveCategory && (
+              <p className="document-list-workflow__hint" role="status">
+                {runtime.saveCategory.saving}
+              </p>
+            )}
             {error && (
               <p className="document-list-workflow__error" role="alert">
                 {error}
@@ -989,7 +1151,7 @@ export function DocumentListComposePanel({
               type="submit"
               variant="primary"
               size="sm"
-              disabled={saving || remoteDiscard}
+              disabled={saving || remoteDiscard || !category.ready}
             >
               {saving ? 'Saving…' : `Save ${noun}`}
             </Button>
@@ -1012,41 +1174,55 @@ export function DocumentListUploadPanel({
   initialFile,
 }: DocumentListWorkflowPanelProps): React.JSX.Element | null {
   const [file, setFile] = useState<File | null>(initialFile ?? null);
-  const [storedName, setStoredName] = useState(initialFile?.name ?? '');
+  const [title, setTitle] = useState(initialFile?.name ?? '');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const uploadId = useRef<string | undefined>(undefined);
+  const category = useSaveCategory(
+    runtime.saveCategory,
+    open,
+    file ? getFileMetadata(file).contentType : 'application/octet-stream',
+    undefined,
+    saving,
+    inputId(inputPrefix, 'upload-category')
+  );
 
   const reset = (): void => {
+    uploadId.current = undefined;
     setFile(null);
-    setStoredName('');
+    setTitle('');
     resetFormState(setError, setSaving);
   };
 
   const handleOpenChange = (nextOpen: boolean): void => {
-    if (!nextOpen && !saving) reset();
+    if (!nextOpen && saving) return;
+    if (!nextOpen) reset();
     onOpenChange(nextOpen);
   };
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>): void => {
+    uploadId.current = undefined;
     const selectedFile = event.target.files?.[0] ?? null;
     setFile(selectedFile);
-    setStoredName(selectedFile?.name ?? '');
+    setTitle(selectedFile?.name ?? '');
     setError(null);
   };
 
   const adoptFile = (dropped: File | undefined): void => {
     if (!dropped) return;
+    uploadId.current = undefined;
     setFile(dropped);
-    setStoredName(dropped.name);
+    setTitle(dropped.name);
     setError(null);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const trimmedStoredName = storedName.trim();
-    if (!file || !trimmedStoredName) {
-      setError('Choose a file and enter a stored filename.');
+    if (saving || !category.ready) return;
+    const trimmedTitle = title.trim();
+    if (!file || !trimmedTitle) {
+      setError('Choose a file and enter a title.');
       return;
     }
     if (!fileMatchesAccept(file, accept)) {
@@ -1058,7 +1234,7 @@ export function DocumentListUploadPanel({
       return;
     }
 
-    const id = createDocumentId();
+    const id = (uploadId.current ??= createDocumentId());
     const metadata = getFileMetadata(file);
     const content: FileInput = {
       content: file,
@@ -1068,12 +1244,13 @@ export function DocumentListUploadPanel({
     const document: DocumentListDocument = {
       id,
       date: today(),
-      title: metadata.title,
+      title: trimmedTitle,
       subject: 'Uploaded document',
       docType: metadata.contentType,
       docId: id,
       source: 'Upload',
-      file: trimmedStoredName,
+      file: file.name,
+      ...(category.value ? { nativeDocType: category.value } : {}),
       ...(author ? { author } : {}),
     };
 
@@ -1134,18 +1311,28 @@ export function DocumentListUploadPanel({
           </div>
           {file && (
             <p className="document-list-workflow__hint">
-              Title: {file.name} · Type:{' '}
-              {file.type || 'application/octet-stream'}
+              Type: {file.type || 'application/octet-stream'}
             </p>
           )}
           <Input
-            id={inputId(inputPrefix, 'upload-filename')}
-            label="Stored filename"
-            value={storedName}
-            onChange={(event) => setStoredName(event.target.value)}
+            id={inputId(inputPrefix, 'upload-title')}
+            label="Title"
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
             disabled={saving || !file}
             required
           />
+          {category.field}
+          {file && !saving && !error && runtime.saveCategory && (
+            <p className="document-list-workflow__hint" role="status">
+              {runtime.saveCategory.pending}
+            </p>
+          )}
+          {saving && runtime.saveCategory && (
+            <p className="document-list-workflow__hint" role="status">
+              {runtime.saveCategory.saving}
+            </p>
+          )}
           {error && (
             <p className="document-list-workflow__error" role="alert">
               {error}
@@ -1162,7 +1349,12 @@ export function DocumentListUploadPanel({
           >
             Cancel
           </Button>
-          <Button type="submit" variant="primary" size="sm" disabled={saving}>
+          <Button
+            type="submit"
+            variant="primary"
+            size="sm"
+            disabled={saving || !category.ready}
+          >
             {saving ? 'Saving…' : `Save ${noun}`}
           </Button>
         </div>
@@ -1178,6 +1370,7 @@ export interface DocumentListDetailRowProps {
   readonly related?: readonly DocumentListDocument[];
   /** The host's full-page document view (revision history lives there). */
   readonly historyHref?: string;
+  readonly onViewed?: () => void;
 }
 
 function DocumentListMarkdownPreview({
@@ -1201,22 +1394,39 @@ export function DocumentListDetailRow({
   runtime,
   related,
   historyHref,
+  onViewed,
 }: DocumentListDetailRowProps): React.JSX.Element {
   const [content, setContent] = useState<DocumentListContent | undefined>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { loadContent } = runtime;
+  const contentVersion = runtime.contentVersions?.[document.id] ?? 0;
+  const { refreshError } = runtime;
+  const viewedDocument = useRef<string | undefined>(undefined);
+  const onViewedRef = useRef(onViewed);
+  onViewedRef.current = onViewed;
+  const recordView = useCallback(() => {
+    if (viewedDocument.current === document.id) return;
+    viewedDocument.current = document.id;
+    onViewedRef.current?.();
+  }, [document.id]);
 
   useEffect(() => {
     let active = true;
     setContent(undefined);
     setLoading(true);
     setError(null);
-    void runtime
-      .loadContent(document.id)
+    if (refreshError) {
+      setLoading(false);
+      setError(refreshError);
+      return;
+    }
+    void loadContent(document.id)
       .then((loadedContent) => {
         if (!active) return;
         setContent(loadedContent);
         setLoading(false);
+        if (loadedContent?.text != null) recordView();
       })
       .catch((loadError: unknown) => {
         if (!active) return;
@@ -1228,11 +1438,28 @@ export function DocumentListDetailRow({
     return () => {
       active = false;
     };
-  }, [document.id, runtime]);
+  }, [
+    document.id,
+    document.rev,
+    document.nativeVersion,
+    document.sha256,
+    document.docId,
+    document.body,
+    document.fileReference?.id,
+    loadContent,
+    recordView,
+    contentVersion,
+    refreshError,
+  ]);
 
   const isImage = Boolean(
     content?.reference &&
       content.contentType?.toLowerCase().startsWith('image/')
+  );
+  const isPdf = Boolean(
+    (content?.blob || content?.reference) &&
+      content?.contentType?.split(';')[0].trim().toLowerCase() ===
+        'application/pdf'
   );
   const isMarkdown =
     (content?.contentType === COMPOSE_CONTENT_TYPE ||
@@ -1261,9 +1488,33 @@ export function DocumentListDetailRow({
           className="document-list-detail__image"
           src={content?.reference}
           alt={document.title}
+          onLoad={recordView}
         />
       )}
-      {!loading && !error && content?.text == null && !isImage && (
+      {!loading && isPdf && (
+        <div className="document-list-detail__pdf">
+          <Suspense fallback={<p role="status">Loading document content…</p>}>
+            <DocumentListPdfViewer
+              key={`${document.id}:${contentVersion}`}
+              reference={content?.reference}
+              blob={content?.blob}
+              title={document.title}
+              onReady={recordView}
+            />
+          </Suspense>
+        </div>
+      )}
+      {!loading && content?.reference && content.downloadName && (
+        <a
+          className="document-list-detail__download"
+          href={content.reference}
+          download={content.downloadName}
+          aria-label={`Download original ${content.downloadName}`}
+        >
+          Download original file
+        </a>
+      )}
+      {!loading && !error && content?.text == null && !isImage && !isPdf && (
         <p className="document-list-detail__empty">
           No preview for this document.
         </p>

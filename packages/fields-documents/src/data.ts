@@ -96,14 +96,6 @@ export const DOCUMENT_LIST_COLUMNS = [
     filterable: true,
     resizable: true,
   },
-  {
-    field: 'file',
-    header: 'File',
-    sortable: true,
-    filterable: true,
-    resizable: true,
-    width: 120,
-  },
 ] as const;
 
 export const DOCUMENT_LIST_ACTIONS_COLUMN = {
@@ -260,6 +252,12 @@ export function normalizeDocumentRow(
     subject: displayValue(input.subject),
     docType: displayValue(input.docType),
     docId: displayValue(input.docId),
+    ...(typeof input.nativeDocType === 'string'
+      ? { nativeDocType: input.nativeDocType }
+      : {}),
+    ...(typeof input.nativeVersion === 'string'
+      ? { nativeVersion: input.nativeVersion }
+      : {}),
     source: displayValue(
       input.source ?? input.from ?? (author ? undefined : input.author)
     ),
@@ -279,6 +277,7 @@ export function normalizeDocumentRow(
       ? { size: input.size }
       : {}),
     ...(typeof input.body === 'string' ? { body: input.body } : {}),
+    ...(typeof input.inline === 'boolean' ? { inline: input.inline } : {}),
   };
 }
 
