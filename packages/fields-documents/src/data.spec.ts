@@ -155,7 +155,9 @@ describe('document list data', () => {
     const payload = createLocalSourcePayload(rows);
 
     // The payload defaults `rev` for display; the rows stay untouched.
-    expect(payload.data).toEqual(rows.map((row) => ({ ...row, rev: 0 })));
+    expect(payload.data).toEqual(
+      rows.map((row) => ({ ...row, rev: 0, documentType: row.docType }))
+    );
     expect(rows[0].rev).toBeUndefined();
     expect(payload.data[0].file).toBe('original.pdf');
     expect(
@@ -168,6 +170,34 @@ describe('document list data', () => {
       'docId',
       'rev',
       'source',
+      'documentType',
     ]);
+  });
+
+  it('projects WebChart classification for display and sorting without replacing the MIME subtype', () => {
+    const rows = normalizeDocumentRows([
+      {
+        id: 'native',
+        docType: 'application/pdf',
+        nativeDocType: 'NOTE',
+        nativeDocTypeLabel: 'Clinical note',
+      },
+      {
+        id: 'code-only',
+        docType: 'image/png',
+        nativeDocType: 'IMAGE',
+        nativeDocTypeLabel: ' ',
+      },
+      { id: 'standalone', docType: 'progress-note' },
+    ]);
+    const payload = createLocalSourcePayload(rows);
+    expect(payload.data.map((row) => row.documentType)).toEqual([
+      'Clinical note',
+      'IMAGE',
+      'progress-note',
+    ]);
+    expect(payload.data[0].docType).toBe('application/pdf');
+    expect(rows[0].nativeDocTypeLabel).toBe('Clinical note');
+    expect(rows[0]).not.toHaveProperty('documentType');
   });
 });

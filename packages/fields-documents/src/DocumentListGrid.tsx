@@ -386,17 +386,18 @@ export function DocumentListGrid({
   style,
 }: DocumentListGridProps): React.JSX.Element {
   const { view } = useDocumentListView(rows);
-  const gridColumns = useMemo(
-    () =>
-      renderActions
-        ? columns.some(
-            (column) => column.field === DOCUMENT_LIST_ACTIONS_COLUMN.field
-          )
-          ? columns
-          : [...columns, DOCUMENT_LIST_ACTIONS_COLUMN]
-        : columns,
-    [columns, renderActions]
-  );
+  const gridColumns = useMemo(() => {
+    const displayed = columns.map((column) =>
+      column.field === 'docType' ? { ...column, field: 'documentType' } : column
+    );
+    return renderActions
+      ? columns.some(
+          (column) => column.field === DOCUMENT_LIST_ACTIONS_COLUMN.field
+        )
+        ? displayed
+        : [...displayed, DOCUMENT_LIST_ACTIONS_COLUMN]
+      : displayed;
+  }, [columns, renderActions]);
   const gridFormatCell = useMemo<DataVisGridProps['formatCell']>(
     () =>
       formatCell || renderActions
@@ -412,7 +413,13 @@ export function DocumentListGrid({
                 getRowCapabilities?.(document) ?? DEFAULT_ROW_CAPABILITIES
               );
             }
-            const formatted = formatCell?.(value, row, column);
+            const formatted = formatCell?.(
+              value,
+              row,
+              column.field === 'documentType'
+                ? { ...column, field: 'docType' }
+                : column
+            );
             if (formatted !== undefined) return formatted;
             // datavis renders exactly what formatCell returns — undefined is a
             // blank cell, not a fallback — so plain cells return their value.
