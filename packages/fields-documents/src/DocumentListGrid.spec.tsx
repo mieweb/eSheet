@@ -9,6 +9,7 @@ import {
 } from './DocumentListGrid.js';
 import type { DocumentListDocument } from './types.js';
 import { permissiveDocumentListCapabilities } from './types.js';
+import { getDocumentListRuntimeState } from './document-list-runtime.js';
 
 const captured = {
   props: null as Record<string, unknown> | null,
@@ -81,6 +82,88 @@ describe('DocumentListGrid host integration', () => {
     captured.props = null;
     sourceKeys.length = 0;
   });
+
+  it.each(['caseNotes', 'letterLog', 'caseDocuments'])(
+    'records each successful %s detail opening, including cached reopens',
+    async (fieldId) => {
+      const formStore = createFormStore();
+      formStore.getState().loadDefinition({
+        id: 'case',
+        pages: [
+          {
+            id: 'page',
+            fields: [
+              { id: fieldId, fieldType: 'text', question: 'Document list' },
+              { id: 'log', fieldType: 'activity', question: 'Activity' },
+            ],
+          },
+        ],
+      });
+      formStore.getState().setIdentity({ name: 'Case Viewer' });
+      const repository = {
+        load: vi.fn(async () => ({ documents: [row] })),
+        loadContent: vi.fn(async () => ({ text: 'Private document prose' })),
+        save: vi.fn(
+          async (_context: unknown, document: DocumentListDocument) => document
+        ),
+        remove: vi.fn(async () => undefined),
+      };
+      const props = {
+        field: { definition: { id: fieldId, question: 'Document list' } },
+        form: formStore,
+      } as unknown as FieldComponentProps;
+      render(
+        <FormStoreContext.Provider value={formStore}>
+          <DocumentListFieldProvider
+            host={{ capabilities: permissiveDocumentListCapabilities }}
+            runtime={{ repository }}
+          >
+            <DocumentListField {...props} />
+          </DocumentListFieldProvider>
+        </FormStoreContext.Provider>
+      );
+      await waitFor(() =>
+        expect(
+          getDocumentListRuntimeState(formStore, fieldId)?.documents[row.id]
+        ).toBeTruthy()
+      );
+      expect(
+        formStore.getState().responses._activity?.activity
+      ).toBeUndefined();
+      const grid = captured.props as {
+        renderDetailRow: (tableRow: {
+          data: Record<string, unknown>;
+        }) => ReactNode;
+      };
+      const first = render(<>{grid.renderDetailRow({ data: tableData })}</>);
+      expect(await screen.findByText('Private document prose')).toBeTruthy();
+      expect(formStore.getState().responses._activity?.activity).toEqual([
+        expect.objectContaining({
+          fieldId,
+          question: 'Document list',
+          category: 'Viewed',
+          author: 'Case Viewer',
+          to: 'Letter (doc-1), rev 0',
+          at: expect.any(String),
+        }),
+      ]);
+      first.rerender(<>{grid.renderDetailRow({ data: tableData })}</>);
+      expect(formStore.getState().responses._activity?.activity).toHaveLength(
+        1
+      );
+      first.unmount();
+      const reopened = render(<>{grid.renderDetailRow({ data: tableData })}</>);
+      expect(await screen.findByText('Private document prose')).toBeTruthy();
+      expect(formStore.getState().responses._activity?.activity).toHaveLength(
+        2
+      );
+      expect(repository.loadContent).toHaveBeenCalledOnce();
+      expect(
+        JSON.stringify(formStore.getState().responses._activity)
+      ).not.toContain('Private document prose');
+      reopened.unmount();
+    }
+  );
 
   it('adds the Actions column and renders host actions for a stable row', async () => {
     const actionRenderer = vi.fn(() => <button type="button">View</button>);

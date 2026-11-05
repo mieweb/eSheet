@@ -1,15 +1,21 @@
 import {
+  act,
   cleanup,
   fireEvent,
   render,
   screen,
   waitFor,
 } from '@testing-library/react';
-import { useState } from 'react';
-import type { FileInput } from '@esheet/core';
+import { useState, useSyncExternalStore } from 'react';
+import { createFormStore, type FileInput } from '@esheet/core';
 import type {
   DocumentListContent,
   DocumentListRuntimeState,
+  DocumentListSaveCategory,
+} from './document-list-runtime.js';
+import {
+  createDocumentListRuntimeExtension,
+  getDocumentListRuntimeState,
 } from './document-list-runtime.js';
 import {
   DocumentListComposePanel,
@@ -23,16 +29,25 @@ import type {
   DocumentListWorkflowMode,
 } from './types.js';
 
+const pdfPreview = vi.hoisted(() => ({
+  onReady: undefined as (() => void) | undefined,
+}));
+
 vi.mock('./DocumentListPdfPreview.js', () => ({
   DocumentListPdfViewer: ({
     reference,
     title,
+    onReady,
   }: {
     readonly reference: string;
     readonly title: string;
-  }) => (
-    <div aria-label={`PDF preview of ${title}`} data-reference={reference} />
-  ),
+    readonly onReady?: () => void;
+  }) => {
+    pdfPreview.onReady = onReady;
+    return (
+      <div aria-label={`PDF preview of ${title}`} data-reference={reference} />
+    );
+  },
 }));
 
 vi.mock('@esheet/field-kerebron', async () => {
@@ -78,16 +93,21 @@ vi.mock('@mieweb/ui', async (importOriginal) => {
   const Input = ({
     label,
     error,
+    helperText,
     ...props
   }: React.InputHTMLAttributes<HTMLInputElement> & {
     label?: string;
     error?: string;
+    helperText?: string;
   }) => (
-    <label>
-      {label}
-      <input {...props} />
-      {error && <span>{error}</span>}
-    </label>
+    <>
+      <label>
+        {label}
+        <input {...props} />
+        {error && <span>{error}</span>}
+      </label>
+      {helperText && <span>{helperText}</span>}
+    </>
   );
   const Textarea = ({
     label,
@@ -123,6 +143,7 @@ vi.mock('@mieweb/ui', async (importOriginal) => {
   return {
     // The detail preview renders markdown with the real MarkdownRenderer.
     MarkdownRenderer: actual.MarkdownRenderer,
+    Select: actual.Select,
     Button,
     Input,
     Modal,
@@ -154,6 +175,22 @@ function createRuntime(
     loadContent,
     listRevisions: vi.fn(async () => []),
   } as unknown as DocumentListRuntimeState;
+}
+
+function saveCategory(
+  loadOptions: DocumentListSaveCategory['loadOptions']
+): DocumentListSaveCategory {
+  return {
+    label: 'WebChart category',
+    hint: 'Category in the patient chart.',
+    placeholder: 'Choose a category',
+    loading: 'Loading categories...',
+    empty: 'No categories available.',
+    retry: 'Retry categories',
+    saving: 'Saving to WebChart...',
+    pending: 'File selected; not saved yet.',
+    loadOptions,
+  };
 }
 
 /** Stands in for the composer session: owns the draft and the mode. */
@@ -379,6 +416,55 @@ describe('document list workflow panels', () => {
     expect(screen.getByLabelText(expectedLabel)).toBeTruthy();
   });
 
+  it.each([
+    ['document', 'Document Type'],
+    ['letter', 'Letter Type'],
+    ['note', 'Note Type'],
+  ])(
+    'uses the UI Select for %s types with keyboard navigation',
+    (noun, label) => {
+      const onOpenChange = vi.fn();
+      const onModeChange = vi.fn();
+      const view = render(
+        <DocumentListComposePanel
+          open
+          onOpenChange={onOpenChange}
+          onModeChange={onModeChange}
+          runtime={createRuntime()}
+          inputPrefix={`custom-${noun}-type`}
+          noun={noun}
+          fields={['docType']}
+          docTypes={[
+            { id: 'progress', label: 'Progress note' },
+            { id: 'referral', label: 'Referral' },
+          ]}
+        />
+      );
+      const select = screen.getByRole('combobox', {
+        name: new RegExp(label),
+      });
+      expect(view.container.querySelector('select')).toBeNull();
+      select.focus();
+      fireEvent.keyDown(select, { key: 'ArrowDown' });
+      expect(screen.getByRole('listbox')).toBeTruthy();
+      fireEvent.keyDown(select, { key: 'End' });
+      fireEvent.keyDown(select, { key: 'Enter' });
+      expect(select.textContent).toContain('Referral');
+      expect(screen.queryByRole('listbox')).toBeNull();
+      expect(globalThis.document.activeElement).toBe(select);
+
+      fireEvent.click(select);
+      fireEvent.keyDown(select, { key: 'Escape' });
+      expect(screen.queryByRole('listbox')).toBeNull();
+      expect(onOpenChange).not.toHaveBeenCalled();
+      expect(onModeChange).not.toHaveBeenCalled();
+      expect(screen.queryByRole('alertdialog')).toBeNull();
+
+      fireEvent.keyDown(select, { key: 'Escape' });
+      expect(onModeChange).toHaveBeenCalledWith('docked');
+    }
+  );
+
   it('submits editable compose metadata and markdown content', async () => {
     const runtime = createRuntime();
     const onOpenChange = vi.fn();
@@ -563,6 +649,281 @@ describe('document list workflow panels', () => {
     );
   });
 
+  it('shows the fixed host category selected and disabled and saves it with the letter', async () => {
+    const config = {
+      ...saveCategory(async () => [{ id: 'LETTER', label: 'Letter' }]),
+      readOnly: true,
+    };
+    const runtime = { ...createRuntime(), saveCategory: config };
+    render(
+      <DocumentListComposePanel
+        open
+        runtime={runtime}
+        onOpenChange={vi.fn()}
+        inputPrefix="fixed-letter-category"
+        noun="letter"
+        fields={['title', 'docType']}
+        docTypes={[{ id: 'acknowledgement', label: 'Acknowledgement' }]}
+        draft={{
+          ...emptyComposeDraft('acknowledgement'),
+          title: 'Welcome',
+          note: 'Body',
+        }}
+      />
+    );
+    const category = screen.getByRole('combobox', {
+      name: /WebChart category/,
+    });
+    await waitFor(() =>
+      expect(category.textContent).toContain('Letter (LETTER)')
+    );
+    expect(category).toHaveProperty('disabled', true);
+    fireEvent.click(category);
+    expect(screen.queryByRole('listbox')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Save letter' }));
+    await waitFor(() => expect(runtime.saveDocument).toHaveBeenCalledOnce());
+    expect(vi.mocked(runtime.saveDocument).mock.calls[0][0]).toMatchObject({
+      docType: 'acknowledgement',
+      nativeDocType: 'LETTER',
+    });
+  });
+
+  it('chooses a category inside compose before saving without opening another dialog', async () => {
+    const loadOptions = vi.fn(async () => [
+      { id: 'NOTE', label: 'Clinical note' },
+      { id: 'LETTER', label: 'Correspondence' },
+    ]);
+    const runtime = {
+      ...createRuntime(),
+      saveCategory: saveCategory(loadOptions),
+    };
+    render(
+      <DocumentListComposePanel
+        open
+        runtime={runtime}
+        onOpenChange={vi.fn()}
+        inputPrefix="category-compose"
+        noun="letter"
+        fields={['title', 'docType']}
+        docTypes={[{ id: 'acknowledgement', label: 'Acknowledgement' }]}
+        draft={{
+          ...emptyComposeDraft('acknowledgement'),
+          title: 'Welcome',
+          note: 'Body',
+        }}
+      />
+    );
+    const select = screen.getByRole('combobox', { name: /WebChart category/ });
+    await waitFor(() => expect(select).toHaveProperty('disabled', false));
+    expect(loadOptions).toHaveBeenCalledWith(
+      'acknowledgement',
+      expect.any(AbortSignal)
+    );
+    const save = screen.getByRole('button', { name: 'Save letter' });
+    expect(save).toHaveProperty('disabled', true);
+    expect(runtime.saveDocument).not.toHaveBeenCalled();
+    fireEvent.click(select);
+    fireEvent.click(
+      screen.getByRole('option', { name: 'Correspondence (LETTER)' })
+    );
+    expect(screen.queryByRole('listbox')).toBeNull();
+    fireEvent.click(save);
+    await waitFor(() => expect(runtime.saveDocument).toHaveBeenCalledOnce());
+    expect(vi.mocked(runtime.saveDocument).mock.calls[0][0]).toMatchObject({
+      docType: 'acknowledgement',
+      nativeDocType: 'LETTER',
+    });
+    expect(globalThis.document.querySelector('dialog')).toBeNull();
+  });
+
+  it('preselects the only category and keeps upload errors, progress and retry in the dialog', async () => {
+    const runtime = {
+      ...createRuntime(),
+      saveCategory: saveCategory(async () => [
+        { id: 'GENERAL', label: 'General document' },
+      ]),
+    };
+    const save = vi.mocked(runtime.saveDocument);
+    save.mockRejectedValueOnce(new Error('WebChart unavailable'));
+    let resolveSave: (() => void) | undefined;
+    save.mockImplementationOnce(
+      (document) =>
+        new Promise((resolve) => {
+          resolveSave = () => resolve(document);
+        })
+    );
+    const onOpenChange = vi.fn();
+    const file = new File(['%PDF-1.4'], 'original.pdf', {
+      type: 'application/pdf',
+    });
+    render(
+      <DocumentListUploadPanel
+        open
+        runtime={runtime}
+        onOpenChange={onOpenChange}
+        inputPrefix="category-upload"
+        initialFile={file}
+      />
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByRole('combobox', { name: /WebChart category/ }).textContent
+      ).toContain('General document (GENERAL)')
+    );
+    expect(screen.getByText('File selected; not saved yet.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Save document' }));
+    await screen.findByText('WebChart unavailable');
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole('combobox', { name: /WebChart category/ }).textContent
+    ).toContain('General document (GENERAL)');
+    fireEvent.click(screen.getByRole('button', { name: 'Save document' }));
+    await screen.findByText('Saving to WebChart...');
+    expect(screen.getByRole('button', { name: 'Cancel' })).toHaveProperty(
+      'disabled',
+      true
+    );
+    expect(save.mock.calls[0][0].id).toBe(save.mock.calls[1][0].id);
+    expect(save.mock.calls[1][0].nativeDocType).toBe('GENERAL');
+    expect(save.mock.calls[1][1]?.content).toBe(file);
+    resolveSave?.();
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+  });
+
+  it('reports category lookup failures and empty results inline and allows retry', async () => {
+    const loadOptions = vi
+      .fn<DocumentListSaveCategory['loadOptions']>()
+      .mockRejectedValueOnce(new Error('Categories unavailable'))
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ id: 'GENERAL', label: 'General' }]);
+    const runtime = {
+      ...createRuntime(),
+      saveCategory: saveCategory(loadOptions),
+    };
+    render(
+      <DocumentListUploadPanel
+        open
+        runtime={runtime}
+        onOpenChange={vi.fn()}
+        inputPrefix="category-retry"
+      />
+    );
+    await screen.findByText('Categories unavailable');
+    expect(
+      screen.getByRole('button', { name: 'Save document' })
+    ).toHaveProperty('disabled', true);
+    fireEvent.click(screen.getByRole('button', { name: 'Retry categories' }));
+    await screen.findByText('No categories available.');
+    fireEvent.click(screen.getByRole('button', { name: 'Retry categories' }));
+    await waitFor(() =>
+      expect(
+        screen.getByRole('combobox', { name: /WebChart category/ }).textContent
+      ).toContain('General (GENERAL)')
+    );
+    expect(runtime.saveDocument).not.toHaveBeenCalled();
+  });
+
+  it('aborts category loading when the dialog closes', async () => {
+    const loadOptions = vi.fn<DocumentListSaveCategory['loadOptions']>(
+      () => new Promise(() => {})
+    );
+    const runtime = {
+      ...createRuntime(),
+      saveCategory: saveCategory(loadOptions),
+    };
+    const props = {
+      runtime,
+      onOpenChange: vi.fn(),
+      inputPrefix: 'category-abort',
+    };
+    const { rerender } = render(<DocumentListUploadPanel {...props} open />);
+    await waitFor(() => expect(loadOptions).toHaveBeenCalledOnce());
+    const signal = loadOptions.mock.calls[0][1];
+    rerender(<DocumentListUploadPanel {...props} open={false} />);
+    expect(signal.aborted).toBe(true);
+    expect(runtime.saveDocument).not.toHaveBeenCalled();
+  });
+
+  it('ignores stale category results after selecting a different file type', async () => {
+    let resolveFirst:
+      | ((choices: readonly { id: string; label: string }[]) => void)
+      | undefined;
+    const loadOptions = vi
+      .fn<DocumentListSaveCategory['loadOptions']>()
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveFirst = resolve;
+          })
+      )
+      .mockResolvedValue([{ id: 'PDF', label: 'PDF documents' }]);
+    const runtime = {
+      ...createRuntime(),
+      saveCategory: saveCategory(loadOptions),
+    };
+    render(
+      <DocumentListUploadPanel
+        open
+        runtime={runtime}
+        onOpenChange={vi.fn()}
+        inputPrefix="category-stale"
+      />
+    );
+    await waitFor(() => expect(loadOptions).toHaveBeenCalledOnce());
+    const firstSignal = loadOptions.mock.calls[0][1];
+    fireEvent.change(screen.getByLabelText('Choose a file'), {
+      target: {
+        files: [new File(['%PDF'], 'file.pdf', { type: 'application/pdf' })],
+      },
+    });
+    await waitFor(() =>
+      expect(
+        screen.getByRole('combobox', { name: /WebChart category/ }).textContent
+      ).toContain('PDF documents (PDF)')
+    );
+    expect(firstSignal.aborted).toBe(true);
+    await act(async () => {
+      resolveFirst?.([{ id: 'STALE', label: 'Old choices' }]);
+    });
+    expect(
+      screen.getByRole('combobox', { name: /WebChart category/ }).textContent
+    ).toContain('PDF documents (PDF)');
+    fireEvent.click(
+      screen.getByRole('combobox', { name: /WebChart category/ })
+    );
+    expect(
+      screen.queryByRole('option', { name: 'Old choices (STALE)' })
+    ).toBeNull();
+  });
+
+  it('displays an existing document category without requesting a new choice', async () => {
+    const loadOptions = vi.fn(async () => [{ id: 'OTHER', label: 'Other' }]);
+    const existing = { ...document, nativeDocType: 'LETTER' };
+    const runtime = {
+      ...createRuntime(),
+      documents: { [existing.id]: existing },
+      saveCategory: saveCategory(loadOptions),
+    };
+    render(
+      <DocumentListComposePanel
+        open
+        runtime={runtime}
+        documentId={existing.id}
+        onOpenChange={vi.fn()}
+        inputPrefix="category-existing"
+      />
+    );
+    expect(screen.getByLabelText('WebChart category')).toHaveProperty(
+      'value',
+      'LETTER'
+    );
+    expect(screen.getByLabelText('WebChart category')).toHaveProperty(
+      'readOnly',
+      true
+    );
+    expect(loadOptions).not.toHaveBeenCalled();
+  });
+
   it('derives upload metadata from the original file and forwards the renamed file', async () => {
     const runtime = createRuntime();
     const onOpenChange = vi.fn();
@@ -607,6 +968,32 @@ describe('document list workflow panels', () => {
       })
     );
     expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it('keeps the upload identity and selected bytes when retrying an uncertain save', async () => {
+    const runtime = createRuntime();
+    const save = vi.mocked(runtime.saveDocument);
+    save.mockRejectedValueOnce(new Error('Response lost'));
+    const file = new File(['%PDF-1.4'], 'original.pdf', {
+      type: 'application/pdf',
+    });
+    render(
+      <DocumentListUploadPanel
+        open
+        onOpenChange={vi.fn()}
+        runtime={runtime}
+        inputPrefix="retry-documents"
+      />
+    );
+    fireEvent.change(screen.getByLabelText('Choose a file'), {
+      target: { files: [file] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save document' }));
+    await screen.findByText('Response lost');
+    fireEvent.click(screen.getByRole('button', { name: 'Save document' }));
+    await waitFor(() => expect(save).toHaveBeenCalledTimes(2));
+    expect(save.mock.calls[0][0].id).toBe(save.mock.calls[1][0].id);
+    expect(save.mock.calls[1][1]?.content).toBe(file);
   });
 
   it('rejects upload types excluded by the shared accept matcher', () => {
@@ -719,6 +1106,223 @@ describe('document list workflow panels', () => {
 });
 
 describe('document list detail row', () => {
+  it('records a PDF view only after the viewer is ready, once per opening', async () => {
+    const onViewed = vi.fn();
+    render(
+      <DocumentListDetailRow
+        document={document}
+        runtime={createRuntime(async () => ({
+          reference: '/file.pdf',
+          contentType: 'application/pdf',
+        }))}
+        onViewed={onViewed}
+      />
+    );
+    expect(
+      await screen.findByLabelText(`PDF preview of ${document.title}`)
+    ).toBeTruthy();
+    expect(onViewed).not.toHaveBeenCalled();
+    act(() => {
+      pdfPreview.onReady?.();
+      pdfPreview.onReady?.();
+    });
+    expect(onViewed).toHaveBeenCalledOnce();
+  });
+
+  it('does not record failed or closed-before-loaded previews as viewed', async () => {
+    const onViewed = vi.fn();
+    const failed = render(
+      <DocumentListDetailRow
+        document={document}
+        runtime={createRuntime(async () => {
+          throw new Error('Access denied');
+        })}
+        onViewed={onViewed}
+      />
+    );
+    expect(await screen.findByRole('alert')).toBeTruthy();
+    expect(onViewed).not.toHaveBeenCalled();
+    failed.unmount();
+
+    let finish!: (content: DocumentListContent) => void;
+    const loading = new Promise<DocumentListContent>((resolve) => {
+      finish = resolve;
+    });
+    const closed = render(
+      <DocumentListDetailRow
+        document={document}
+        runtime={createRuntime(() => loading)}
+        onViewed={onViewed}
+      />
+    );
+    closed.unmount();
+    await act(async () => {
+      finish({ text: 'Loaded after close' });
+    });
+    expect(onViewed).not.toHaveBeenCalled();
+  });
+
+  it('records an image view only when the image loads, once per opening', async () => {
+    const onViewed = vi.fn();
+    render(
+      <DocumentListDetailRow
+        document={document}
+        runtime={createRuntime(async () => ({
+          reference: '/image.png',
+          contentType: 'image/png',
+        }))}
+        onViewed={onViewed}
+      />
+    );
+    const image = await screen.findByRole('img');
+    expect(onViewed).not.toHaveBeenCalled();
+    fireEvent.load(image);
+    fireEvent.load(image);
+    expect(onViewed).toHaveBeenCalledOnce();
+  });
+
+  it.each(['caseNotes', 'letterLog', 'caseDocuments'])(
+    'caches text detail content for %s across closing and reopening',
+    async (fieldId) => {
+      const formStore = createFormStore();
+      const row = { ...document, nativeVersion: 'v1' };
+      const loadContent = vi.fn(async () => ({
+        document: row,
+        text: 'Cached detail content',
+        contentType: 'text/plain',
+      }));
+      const runtime = createDocumentListRuntimeExtension({
+        formStore,
+        context: { formInstanceId: 'case-1', fieldId },
+        repository: {
+          ownsField: () => true,
+          load: async () => ({ documents: [row] }),
+          loadContent,
+          save: async (_context, saved) => saved,
+          remove: async () => undefined,
+        },
+      });
+      function Detail(): React.JSX.Element | null {
+        const current = useSyncExternalStore(formStore.subscribe, () =>
+          getDocumentListRuntimeState(formStore, fieldId)
+        );
+        return current ? (
+          <DocumentListDetailRow document={row} runtime={current} />
+        ) : null;
+      }
+      try {
+        await runtime?.refresh();
+        const first = render(<Detail />);
+        expect(await screen.findByText('Cached detail content')).toBeTruthy();
+        first.unmount();
+
+        const reopened = render(<Detail />);
+        expect(await screen.findByText('Cached detail content')).toBeTruthy();
+        expect(loadContent).toHaveBeenCalledOnce();
+        reopened.unmount();
+
+        await runtime?.saveDocument(row);
+        const afterSave = render(<Detail />);
+        expect(await screen.findByText('Cached detail content')).toBeTruthy();
+        expect(loadContent).toHaveBeenCalledTimes(2);
+        afterSave.unmount();
+      } finally {
+        runtime?.dispose();
+      }
+    }
+  );
+
+  it('downloads a PDF only once across closing and reopening the subscribed detail row', async () => {
+    const fetchFile = vi.fn(async () => new Response('%PDF-original'));
+    vi.stubGlobal('fetch', fetchFile);
+    const formStore = createFormStore();
+    const row = { ...document, nativeVersion: 'v1' };
+    const loadContent = vi.fn(async () => ({
+      document: row,
+      reference: '/api/original.pdf',
+      contentType: 'application/pdf',
+    }));
+    const runtime = createDocumentListRuntimeExtension({
+      formStore,
+      context: { formInstanceId: 'case-1', fieldId: 'documents' },
+      repository: {
+        ownsField: () => true,
+        load: async () => ({ documents: [row] }),
+        loadContent,
+        save: async (_context, saved) => saved,
+        remove: async () => undefined,
+      },
+    });
+    function Detail(): React.JSX.Element | null {
+      const current = useSyncExternalStore(formStore.subscribe, () =>
+        getDocumentListRuntimeState(formStore, 'documents')
+      );
+      return current ? (
+        <DocumentListDetailRow document={row} runtime={current} />
+      ) : null;
+    }
+    try {
+      await runtime?.refresh();
+      const first = render(<Detail />);
+      expect(
+        await screen.findByLabelText(`PDF preview of ${document.title}`)
+      ).toBeTruthy();
+      expect(loadContent).toHaveBeenCalledOnce();
+      first.unmount();
+
+      const reopened = render(<Detail />);
+      expect(
+        await screen.findByLabelText(`PDF preview of ${document.title}`)
+      ).toBeTruthy();
+      expect(loadContent).toHaveBeenCalledOnce();
+      expect(fetchFile).toHaveBeenCalledOnce();
+      reopened.unmount();
+    } finally {
+      runtime?.dispose();
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('does not reload for runtime state updates but reloads when the document version changes', async () => {
+    const loadContent = vi.fn(async () => ({
+      text: 'Loaded note',
+      contentType: 'text/plain',
+    }));
+    const runtime = createRuntime(loadContent);
+    const row = { ...document, nativeVersion: 'v1', rev: 1 };
+    const view = render(
+      <DocumentListDetailRow document={row} runtime={runtime} />
+    );
+    expect(await screen.findByText('Loaded note')).toBeTruthy();
+
+    view.rerender(
+      <DocumentListDetailRow
+        document={{ ...row }}
+        runtime={{ ...runtime, syncStatus: 'loading' }}
+      />
+    );
+    expect(loadContent).toHaveBeenCalledOnce();
+    expect(screen.queryByRole('status')).toBeNull();
+
+    view.rerender(
+      <DocumentListDetailRow
+        document={{ ...row, nativeVersion: 'v2' }}
+        runtime={runtime}
+      />
+    );
+    await waitFor(() => expect(loadContent).toHaveBeenCalledTimes(2));
+    expect(await screen.findByText('Loaded note')).toBeTruthy();
+
+    view.rerender(
+      <DocumentListDetailRow
+        document={{ ...row, nativeVersion: 'v2', rev: 2 }}
+        runtime={runtime}
+      />
+    );
+    await waitFor(() => expect(loadContent).toHaveBeenCalledTimes(3));
+    expect(await screen.findByText('Loaded note')).toBeTruthy();
+  });
+
   it('renders loaded text content inline', async () => {
     const content: DocumentListContent = {
       text: 'Loaded note',

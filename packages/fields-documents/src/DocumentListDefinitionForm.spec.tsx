@@ -146,6 +146,59 @@ function savedCall(
 }
 
 describe('a document type with a definition', () => {
+  it('keeps host filing categories beside the definition form and reloads them when the subtype changes', async () => {
+    const loadOptions = vi.fn(async () => [
+      { id: 'LETTER', label: 'Correspondence' },
+    ]);
+    const runtime: DocumentListRuntimeState = {
+      ...createRuntime(),
+      saveCategory: {
+        label: 'WebChart category',
+        hint: 'Category in the chart.',
+        placeholder: 'Choose a category',
+        loading: 'Loading categories',
+        empty: 'No categories',
+        retry: 'Retry categories',
+        saving: 'Saving to WebChart',
+        pending: 'Not saved',
+        loadOptions,
+      },
+    };
+    renderCompose(runtime);
+    fireEvent.change(await screen.findByLabelText('Title'), {
+      target: { value: 'Acknowledged' },
+    });
+    fireEvent.change(screen.getByLabelText('Recipient'), {
+      target: { value: 'Recipient' },
+    });
+    fireEvent.change(screen.getByLabelText('Letter'), {
+      target: { value: 'Body' },
+    });
+    await waitFor(() =>
+      expect(
+        screen.getByRole('combobox', { name: /WebChart category/ }).textContent
+      ).toContain('Correspondence (LETTER)')
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Save letter' }));
+    await waitFor(() => expect(runtime.saveDocument).toHaveBeenCalledOnce());
+    expect(savedCall(runtime)[0]).toMatchObject({
+      docType: 'acknowledgement',
+      nativeDocType: 'LETTER',
+    });
+    fireEvent.click(screen.getByRole('combobox', { name: /Letter Type/ }));
+    fireEvent.click(screen.getByRole('option', { name: 'note' }));
+    await waitFor(() =>
+      expect(loadOptions).toHaveBeenLastCalledWith(
+        'note',
+        expect.any(AbortSignal)
+      )
+    );
+    expect(screen.queryByLabelText('Recipient')).toBeNull();
+    expect(
+      screen.getByRole('combobox', { name: /WebChart category/ })
+    ).toBeTruthy();
+  });
+
   it('fills the type\u2019s form instead of the bare title and subject inputs', async () => {
     renderCompose(createRuntime());
 
@@ -158,7 +211,7 @@ describe('a document type with a definition', () => {
       globalThis.document.querySelector('.document-list-compose-editor')
     ).toBeNull();
     // The type picker stays: it is what chooses the form.
-    expect(screen.getByLabelText('Letter Type')).toBeTruthy();
+    expect(screen.getByRole('combobox', { name: /Letter Type/ })).toBeTruthy();
   });
 
   it('saves the answers as front matter and the richtext field as the body', async () => {
@@ -230,9 +283,8 @@ describe('a document type with a definition', () => {
     await waitFor(() =>
       expect(screen.getByLabelText('Recipient')).toBeTruthy()
     );
-    fireEvent.change(screen.getByLabelText('Letter Type'), {
-      target: { value: 'note' },
-    });
+    fireEvent.click(screen.getByRole('combobox', { name: /Letter Type/ }));
+    fireEvent.click(screen.getByRole('option', { name: 'note' }));
 
     expect(screen.queryByLabelText('Recipient')).toBeNull();
     // @mieweb/ui's Input appends a required marker, so match the label's start.

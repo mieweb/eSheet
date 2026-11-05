@@ -163,6 +163,7 @@ export type {
   DocumentListContentStatus,
   DocumentListPendingOperation,
   DocumentListRepository,
+  DocumentListSaveCategory,
   DocumentListRepositoryContext,
   DocumentListSnapshot,
   DocumentListRuntimeState,

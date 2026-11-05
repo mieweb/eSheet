@@ -80,6 +80,217 @@ function createFileStore(overrides: Partial<FileStore> = {}): FileStore {
 }
 
 describe('authoritative native storage', () => {
+  it('caches PDF metadata and bytes until a refreshed native version changes or the field is disposed', async () => {
+    let version = 'version-1';
+    const request = vi.fn(
+      async () =>
+        new Response(new Blob(['%PDF-original'], { type: 'application/pdf' }))
+    );
+    vi.stubGlobal('fetch', request);
+    try {
+      const read = vi.fn(async () => ({
+        reference: '/api/original.pdf',
+        contentType: 'application/pdf',
+        document: { ...documentOne, nativeVersion: version },
+      }));
+      const store = createRuntime({
+        repository: createRepository({
+          ownsField: () => true,
+          loadContent: read,
+          load: async () => ({
+            documents: [{ ...documentOne, nativeVersion: version }],
+          }),
+        }),
+      });
+      await store.getState().refresh();
+      const first = await store.getState().loadContent(documentOne.id);
+      const second = await store.getState().loadContent(documentOne.id);
+      expect(second?.blob).toBe(first?.blob);
+      expect(read).toHaveBeenCalledOnce();
+      expect(request).toHaveBeenCalledOnce();
+      await store.getState().refresh();
+      expect((await store.getState().loadContent(documentOne.id))?.blob).toBe(
+        first?.blob
+      );
+      expect(read).toHaveBeenCalledOnce();
+      version = 'version-2';
+      await store.getState().refresh();
+      const changed = await store.getState().loadContent(documentOne.id);
+      expect(changed?.blob).not.toBe(first?.blob);
+      expect(read).toHaveBeenCalledTimes(2);
+      expect(request).toHaveBeenCalledTimes(2);
+      store.getState().dispose();
+      expect(
+        getDocumentListRuntimeState(store.formStore, context.fieldId)
+      ).toBeUndefined();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('invalidates cached PDF bytes after a list refresh fails authorization', async () => {
+    const request = vi.fn(
+      async () => new Response(new Blob(['%PDF-original']))
+    );
+    vi.stubGlobal('fetch', request);
+    try {
+      const read = vi
+        .fn()
+        .mockResolvedValueOnce({
+          reference: '/api/file.pdf',
+          contentType: 'application/pdf',
+          document: { ...documentOne, nativeVersion: 'v1' },
+        })
+        .mockRejectedValueOnce(new Error('Access denied'));
+      const load = vi
+        .fn()
+        .mockResolvedValueOnce({ documents: [documentOne] })
+        .mockRejectedValueOnce(new Error('Access denied'));
+      const store = createRuntime({
+        repository: createRepository({
+          ownsField: () => true,
+          loadContent: read,
+          load,
+        }),
+      });
+      await store.getState().refresh();
+      await store.getState().loadContent(documentOne.id);
+      await expect(store.getState().refresh()).rejects.toThrow('Access denied');
+      expect(store.getState().contents).toEqual({});
+      await expect(
+        store.getState().loadContent(documentOne.id)
+      ).rejects.toThrow('Access denied');
+      expect(request).toHaveBeenCalledOnce();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('invalidates cached PDF content after saving and removes it when the row disappears', async () => {
+    const read = vi.fn(async () => ({
+      blob: new Blob(['%PDF-original'], { type: 'application/pdf' }),
+      contentType: 'application/pdf',
+    }));
+    let documents = [documentOne];
+    const store = createRuntime({
+      repository: createRepository({
+        ownsField: () => true,
+        load: async () => ({ documents }),
+        loadContent: read,
+      }),
+    });
+    await store.getState().refresh();
+    const first = await store.getState().loadContent(documentOne.id);
+    expect(await store.getState().loadContent(documentOne.id)).toBe(first);
+    expect(read).toHaveBeenCalledOnce();
+
+    await store.getState().saveDocument(documentOne);
+    expect(store.getState().contents).toEqual({});
+    expect(await store.getState().loadContent(documentOne.id)).not.toBe(first);
+    expect(read).toHaveBeenCalledTimes(2);
+
+    documents = [];
+    await store.getState().refresh();
+    expect(store.getState().contents).toEqual({});
+    expect(await store.getState().loadContent(documentOne.id)).toBeUndefined();
+    expect(read).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not repopulate the cache with an in-flight read of an old version', async () => {
+    const pending = deferred<{ blob: Blob; contentType: string }>();
+    let version = 'v1';
+    const read = vi.fn(() => pending.promise);
+    const store = createRuntime({
+      repository: createRepository({
+        ownsField: () => true,
+        load: async () => ({
+          documents: [{ ...documentOne, nativeVersion: version }],
+        }),
+        loadContent: read,
+      }),
+    });
+    await store.getState().refresh();
+    const loading = store.getState().loadContent(documentOne.id);
+    const aborted = expect(loading).rejects.toMatchObject({
+      name: 'AbortError',
+    });
+    version = 'v2';
+    await store.getState().refresh();
+    pending.resolve({
+      blob: new Blob(['%PDF-old']),
+      contentType: 'application/pdf',
+    });
+    await aborted;
+    expect(store.getState().contents).toEqual({});
+  });
+
+  it('retains PDF bytes when switching between documents until the field is disposed', async () => {
+    const request = vi.fn(
+      async () => new Response(new Blob(['%PDF-original']))
+    );
+    vi.stubGlobal('fetch', request);
+    try {
+      const store = createRuntime({
+        repository: createRepository({
+          ownsField: () => true,
+          load: async () => ({ documents: [documentOne, documentTwo] }),
+          loadContent: async (_context, row) => ({
+            reference: `/api/${row.id}.pdf`,
+            contentType: 'application/pdf',
+            document: { ...row, nativeVersion: 'v1' },
+          }),
+        }),
+      });
+      await store.getState().refresh();
+      const first = await store.getState().loadContent(documentOne.id);
+      const second = await store.getState().loadContent(documentTwo.id);
+      expect(
+        Object.values(store.getState().contents).filter(
+          (entry) => entry.content?.blob
+        )
+      ).toHaveLength(2);
+      expect((await store.getState().loadContent(documentOne.id))?.blob).toBe(
+        first?.blob
+      );
+      expect((await store.getState().loadContent(documentTwo.id))?.blob).toBe(
+        second?.blob
+      );
+      expect(request).toHaveBeenCalledTimes(2);
+      store.getState().dispose();
+      expect(
+        getDocumentListRuntimeState(store.formStore, context.fieldId)
+      ).toBeUndefined();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('passes optional host category callbacks into the field runtime', async () => {
+    const category = {
+      label: 'Host category',
+      hint: 'Where to file',
+      placeholder: 'Choose',
+      loading: 'Loading',
+      empty: 'None available',
+      retry: 'Retry',
+      saving: 'Saving',
+      pending: 'Not saved',
+      loadOptions: vi.fn(async () => [{ id: 'GENERAL', label: 'General' }]),
+    };
+    const getCategory = vi.fn(() => category);
+    const store = createRuntime({
+      repository: createRepository({ saveCategory: getCategory }),
+    });
+    expect(getCategory).toHaveBeenCalledWith(context);
+    expect(store.getState().saveCategory).toBe(category);
+    const signal = new AbortController().signal;
+    await store.getState().saveCategory?.loadOptions('letter', signal);
+    expect(category.loadOptions).toHaveBeenCalledWith('letter', signal);
+    expect(
+      createRuntime({ repository: createRepository() }).getState().saveCategory
+    ).toBeUndefined();
+  });
+
   it('does not publish saved native content or accept Yjs answer hydration', async () => {
     const publish = vi.fn();
     const repository = createRepository({
@@ -545,22 +756,37 @@ describe('document list runtime store', () => {
     expect(onDocumentsChange).toHaveBeenCalledExactlyOnceWith([]);
   });
 
-  it('refetches canonical head content instead of serving stale inline answers', async () => {
+  it('caches canonical text instead of stale inline answers until its version changes', async () => {
     let text = 'Native original';
+    let version = 'v1';
     const loadContent = vi.fn(async () => ({
       text,
       contentType: 'text/markdown',
     }));
-    const repository = createRepository({ loadContent });
+    const repository = createRepository({
+      loadContent,
+      load: async () => ({
+        documents: [{ ...documentOne, nativeVersion: version }],
+      }),
+    });
     const store = createRuntime({
       repository,
-      initialDocuments: [{ ...documentOne, body: 'Stale Yjs prose' }],
+      initialDocuments: [
+        { ...documentOne, nativeVersion: version, body: 'Stale Yjs prose' },
+      ],
     });
     expect(await store.getState().loadContent(documentOne.id)).toEqual({
       text: 'Native original',
       contentType: 'text/markdown',
     });
+    expect(await store.getState().loadContent(documentOne.id)).toEqual({
+      text: 'Native original',
+      contentType: 'text/markdown',
+    });
+    expect(loadContent).toHaveBeenCalledOnce();
     text = 'Native edit';
+    version = 'v2';
+    await store.getState().refresh();
     expect(await store.getState().loadContent(documentOne.id)).toEqual({
       text: 'Native edit',
       contentType: 'text/markdown',

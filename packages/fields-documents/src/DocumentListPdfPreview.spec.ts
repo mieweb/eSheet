@@ -22,6 +22,11 @@ import {
 import type { DocumentListRuntimeState } from './document-list-runtime.js';
 import type { DocumentListDocument } from './types.js';
 
+const pageRendering = vi.hoisted(() => ({
+  paused: false,
+  finish: undefined as (() => void) | undefined,
+}));
+
 vi.mock('react-pdf', () => ({
   pdfjs: { GlobalWorkerOptions: {} },
   Document: ({
@@ -68,7 +73,10 @@ vi.mock('react-pdf', () => ({
     readonly renderTextLayer?: boolean;
   }) => {
     const onRenderSuccessRef = useRef(onRenderSuccess);
-    useEffect(() => onRenderSuccessRef.current(), []);
+    useEffect(() => {
+      pageRendering.finish = () => onRenderSuccessRef.current();
+      if (!pageRendering.paused) onRenderSuccessRef.current();
+    }, []);
     return createElement(
       'div',
       {
@@ -92,6 +100,30 @@ const document: DocumentListDocument = {
   source: 'Compose',
   file: 'letter-1.md',
 };
+
+it('keeps the unfinished PDF out of loading layout until the page renders', async () => {
+  pageRendering.paused = true;
+  try {
+    const { container } = render(
+      createElement(DocumentListPdfViewer, {
+        reference: 'blob:single-page',
+        title: 'Loading preview',
+      })
+    );
+    await screen.findByTestId('pdf-page');
+    expect(
+      container.querySelector('.document-list-pdf-preview__surface--loading')
+    ).toBeTruthy();
+    expect(screen.getByText('Rendering PDF…')).toBeTruthy();
+    await act(async () => pageRendering.finish?.());
+    expect(
+      container.querySelector('.document-list-pdf-preview__surface--loading')
+    ).toBeNull();
+    expect(screen.queryByText('Rendering PDF…')).toBeNull();
+  } finally {
+    pageRendering.paused = false;
+  }
+});
 
 function runtimeWith(content: {
   text?: string;

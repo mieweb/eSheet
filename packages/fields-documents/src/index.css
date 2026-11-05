@@ -58,6 +58,16 @@
   width: 100%;
 }
 
+.document-list-pdf-preview__surface--loading {
+  overflow: hidden;
+}
+
+.document-list-pdf-preview__surface--loading .react-pdf__Document {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+}
+
 .document-list-pdf-preview__page {
   background: var(--mieweb-card, #fff);
   border: 1px solid var(--mieweb-border, #d1d5db);
@@ -556,20 +566,6 @@
 .document-list-workflow__hint {
   color: var(--mieweb-muted-foreground, #64748b);
   font-size: 0.875rem;
-}
-
-/* Mirrors @mieweb/ui Input's h-10 / px-3 py-2 / rounded-lg resting state. */
-.document-list-workflow__select {
-  background: var(--mieweb-background, #ffffff);
-  border: 1px solid var(--mieweb-border, #e5e7eb);
-  border-radius: 0.5rem;
-  color: var(--mieweb-foreground, #1f2937);
-  font-size: 1rem;
-  height: 2.5rem;
-  /* No vertical padding: a select centres its text in the box, and density
-     rules shrink the height without knowing about our padding. */
-  padding: 0 0.75rem;
-  width: 100%;
 }
 
 .document-list-detail {

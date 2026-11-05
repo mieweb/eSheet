@@ -274,6 +274,7 @@ export async function documentPdfBlob(
 }
 
 async function pdfBlobForContent(content: DocumentListContent): Promise<Blob> {
+  if (content.blob) return content.blob;
   if (content.contentType === PDF_TYPE && content.reference) {
     const response = await fetch(content.reference);
     if (!response.ok) throw new Error('The PDF could not be loaded.');
@@ -289,10 +290,12 @@ async function pdfBlobForContent(content: DocumentListContent): Promise<Blob> {
 
 export function DocumentListPdfViewer({
   reference,
+  blob,
   title,
   onReady,
 }: {
   readonly reference: string;
+  readonly blob?: Blob;
   readonly title: string;
   readonly onReady?: () => void;
 }): React.JSX.Element {
@@ -343,7 +346,9 @@ export function DocumentListPdfViewer({
         <>
           <div
             ref={surfaceRef}
-            className="document-list-pdf-preview__surface"
+            className={`document-list-pdf-preview__surface${
+              !ready ? ' document-list-pdf-preview__surface--loading' : ''
+            }`}
             aria-label={`PDF preview of ${title}`}
           >
             {!ready ? (
@@ -353,7 +358,7 @@ export function DocumentListPdfViewer({
               </div>
             ) : null}
             <PdfDocument
-              file={reference}
+              file={blob ?? reference}
               loading={null}
               error={null}
               onLoadSuccess={({ numPages }) => {

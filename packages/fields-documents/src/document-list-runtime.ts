@@ -15,6 +15,8 @@ export interface DocumentListSnapshot {
 }
 
 export interface DocumentListContent {
+  readonly blob?: Blob;
+  readonly downloadName?: string;
   readonly document?: DocumentListDocument;
   readonly reference?: string;
   readonly text?: string;
@@ -23,7 +25,28 @@ export interface DocumentListContent {
   readonly revision?: string;
 }
 
+export interface DocumentListSaveCategory {
+  /** Show the host's single permitted category without allowing changes. */
+  readonly readOnly?: boolean;
+  readonly label: string;
+  readonly hint: string;
+  readonly placeholder: string;
+  readonly loading: string;
+  readonly empty: string;
+  readonly retry: string;
+  readonly saving: string;
+  readonly pending: string;
+  readonly loadOptions: (
+    docType: string,
+    signal: AbortSignal
+  ) => Promise<readonly { id: string; label: string }[]>;
+}
+
 export interface DocumentListRepository {
+  /** Optional host filing category, separate from the form's document subtype. */
+  saveCategory?: (
+    context: DocumentListRepositoryContext
+  ) => DocumentListSaveCategory | undefined;
   /** Native hosts own both associations and bytes; never mirror them into answers. */
   ownsField?: (context: DocumentListRepositoryContext) => boolean;
   /**
@@ -94,6 +117,7 @@ export interface DocumentListPendingOperation {
 }
 
 export interface DocumentListRuntimeState {
+  readonly saveCategory?: DocumentListSaveCategory;
   readonly documents: Readonly<Record<string, DocumentListDocument>>;
   readonly documentIds: readonly string[];
   readonly contents: Readonly<Record<string, DocumentListContentState>>;
@@ -189,6 +213,21 @@ function inlineContent(body: string): DocumentListContent {
   };
 }
 
+function sameContentVersion(
+  previous: DocumentListDocument | undefined,
+  next: DocumentListDocument
+): boolean {
+  return (
+    previous !== undefined &&
+    previous.nativeVersion === next.nativeVersion &&
+    previous.rev === next.rev &&
+    previous.docId === next.docId &&
+    previous.sha256 === next.sha256 &&
+    previous.body === next.body &&
+    previous.fileReference?.id === next.fileReference?.id
+  );
+}
+
 export function getDocumentListRuntimeState(
   formStore: FormStore,
   fieldId: string
@@ -257,13 +296,34 @@ export function createDocumentListRuntimeExtension(
     );
   };
 
+  const invalidateContent = (documentId: string): void => {
+    const matches = (key: string) =>
+      key === documentId || key.startsWith(`${documentId}:`);
+    for (const [key, request] of contentRequests) {
+      if (!matches(key)) continue;
+      request.controller.abort();
+      contentRequests.delete(key);
+    }
+    updateState((current) => ({
+      ...current,
+      contents: Object.fromEntries(
+        Object.entries(current.contents).filter(([key]) => !matches(key))
+      ),
+    }));
+  };
+
   const setSnapshot = (snapshot: DocumentListSnapshot): void => {
     const current = getState();
     if (!current) return;
     const documents = orderedDocuments(snapshot.documents);
+    const byId = documentMap(documents);
+    for (const [id, previous] of Object.entries(current.documents)) {
+      const next = byId[id];
+      if (!next || !sameContentVersion(previous, next)) invalidateContent(id);
+    }
     const nextIds = new Set(documents.map((document) => document.id));
     const contents = Object.fromEntries(
-      Object.entries(current.contents).filter(([documentId]) =>
+      Object.entries(getState()?.contents ?? {}).filter(([documentId]) =>
         nextIds.has(documentId)
       )
     );
@@ -303,6 +363,8 @@ export function createDocumentListRuntimeExtension(
     disposed: false,
     hydrated: initialDocuments.length > 0,
 
+    saveCategory: repository?.saveCategory?.(context),
+
     hydrateSnapshot: (snapshot) => {
       if (!authoritative) setSnapshot(snapshot);
     },
@@ -312,6 +374,8 @@ export function createDocumentListRuntimeExtension(
     },
 
     upsertDocument: (document) => {
+      if (!sameContentVersion(getState()?.documents[document.id], document))
+        invalidateContent(document.id);
       updateState((current) => ({
         ...current,
         documents: { ...current.documents, [document.id]: document },
@@ -388,17 +452,14 @@ export function createDocumentListRuntimeExtension(
         if (controller.signal.aborted) throw controller.signal.reason;
         if (!getState() || operationRequestIds.get(operationKey) !== requestId)
           return saved;
+        invalidateContent(document.id);
         getState()?.upsertDocument(saved);
         updateState((next) => {
           const { [document.id]: _completed, ...pendingOperations } =
             next.pendingOperations;
           void _completed;
-          // The save made the cached content stale; the next read refetches.
-          const { [document.id]: _content, ...contents } = next.contents;
-          void _content;
           return {
             ...next,
-            contents,
             pendingOperations,
             syncStatus: syncStatusFor(pendingOperations),
           };
@@ -433,6 +494,7 @@ export function createDocumentListRuntimeExtension(
       const previousDocument = current.documents[documentId];
       if (!previousDocument) return;
       const publishRemoval = (): void => {
+        invalidateContent(documentId);
         updateState((next) => {
           const { [documentId]: _removed, ...documents } = next.documents;
           const { [documentId]: _content, ...contents } = next.contents;
@@ -519,11 +581,7 @@ export function createDocumentListRuntimeExtension(
       const current = getState();
       if (!current) return Promise.resolve(undefined);
       const cached = current.contents[requestKey];
-      if (
-        cached?.status === 'loaded' &&
-        cached.content &&
-        !(canonicalContent && revision === undefined)
-      )
+      if (cached?.status === 'loaded' && cached.content)
         return Promise.resolve(cached.content);
       // An inline row carries its own content; the repository never saw it.
       const row = current.documents[documentId];
@@ -585,7 +643,33 @@ export function createDocumentListRuntimeExtension(
         });
       }
       const promise = loading
-        .then((content) => {
+        .then(async (content) => {
+          if (
+            content.contentType?.split(';')[0].trim().toLowerCase() ===
+              'application/pdf' &&
+            content.reference &&
+            !content.blob
+          ) {
+            const previous = cached?.content;
+            const sameVersion = content.document?.nativeVersion
+              ? content.document.nativeVersion ===
+                previous?.document?.nativeVersion
+              : content.revision !== undefined &&
+                content.revision === previous?.revision;
+            let blob =
+              sameVersion && previous?.reference === content.reference
+                ? previous.blob
+                : undefined;
+            if (!blob) {
+              const response = await fetch(content.reference, {
+                signal: controller.signal,
+                cache: 'no-store',
+              });
+              if (!response.ok) throw new Error('The PDF could not be loaded.');
+              blob = await response.blob();
+            }
+            content = { ...content, blob };
+          }
           if (controller.signal.aborted) throw controller.signal.reason;
           const request = contentRequests.get(requestKey);
           if (request?.requestId === requestId && getState()) {
@@ -643,6 +727,10 @@ export function createDocumentListRuntimeExtension(
         setSnapshot(snapshot);
       } catch (error) {
         if (getState() && requestId === refreshRequestId) {
+          if (canonicalContent) {
+            for (const id of getState()?.documentIds ?? [])
+              invalidateContent(id);
+          }
           updateState((next) => ({
             ...next,
             syncStatus: 'error',

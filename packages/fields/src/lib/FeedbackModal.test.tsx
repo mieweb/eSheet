@@ -125,4 +125,24 @@ describe('FeedbackModal', () => {
     expect(container.childElementCount).toBe(0);
     expect(HTMLDialogElement.prototype.showModal).not.toHaveBeenCalled();
   });
+
+  it('enables pointer events inside a non-interactive composer wrapper', () => {
+    act(() =>
+      root.render(
+        <div style={{ pointerEvents: 'none' }}>
+          <FeedbackModal
+            open
+            title="Discard draft?"
+            message="Discard this Compose note?"
+            onClose={() => {}}
+          />
+        </div>
+      )
+    );
+    expect(
+      container
+        .querySelector('dialog')
+        ?.classList.contains('ms:pointer-events-auto')
+    ).toBe(true);
+  });
 });

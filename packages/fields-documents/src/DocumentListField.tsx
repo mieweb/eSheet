@@ -542,6 +542,14 @@ export function DocumentListField({
           document={row}
           runtime={runtimeState}
           historyHref={host?.documentHref?.(row) ?? undefined}
+          onViewed={() =>
+            form.getState().appendActivity({
+              fieldId: field.definition.id,
+              question: title,
+              category: 'Viewed',
+              detail: `${row.title} (${row.id}), rev ${row.rev ?? 0}`,
+            })
+          }
           // ED.41 — the original renders its addenda beneath itself.
           related={rows.filter(
             (candidate) => candidate.linkedTo?.id === row.id

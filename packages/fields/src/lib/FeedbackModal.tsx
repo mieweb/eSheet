@@ -70,7 +70,7 @@ export function FeedbackModal({
   return (
     <dialog
       ref={dialog}
-      className="feedback-modal-overlay ms:fixed ms:inset-0 ms:m-0 ms:h-full ms:w-full ms:max-h-none ms:max-w-none ms:border-0 ms:z-50 ms:flex ms:items-center ms:justify-center ms:bg-msoverlay ms:px-4 ms:py-8"
+      className="feedback-modal-overlay ms:pointer-events-auto ms:fixed ms:inset-0 ms:m-0 ms:h-full ms:w-full ms:max-h-none ms:max-w-none ms:border-0 ms:z-50 ms:flex ms:items-center ms:justify-center ms:bg-msoverlay ms:px-4 ms:py-8"
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
