@@ -398,6 +398,54 @@ describe('the docked composer', () => {
 });
 
 describe('document list workflow panels', () => {
+  it('keeps readable previews visible when an unrelated save or deletion fails', async () => {
+    const formStore = createFormStore();
+    const loadContent = vi.fn(async () => ({
+      text: 'Readable preview',
+      contentType: 'text/plain',
+    }));
+    const runtime = createDocumentListRuntimeExtension({
+      formStore,
+      context: { formInstanceId: 'case-1', fieldId: 'write-failure-preview' },
+      repository: {
+        ownsField: () => true,
+        load: async () => ({ documents: [document] }),
+        loadContent,
+        save: async () => {
+          throw new Error('Write conflict');
+        },
+        remove: async () => {
+          throw new Error('Delete conflict');
+        },
+      },
+    });
+    function Detail() {
+      const current = useSyncExternalStore(formStore.subscribe, () =>
+        getDocumentListRuntimeState(formStore, 'write-failure-preview')
+      );
+      return current ? (
+        <DocumentListDetailRow document={document} runtime={current} />
+      ) : null;
+    }
+    await runtime?.refresh();
+    render(<Detail />);
+    expect(await screen.findByText('Readable preview')).toBeTruthy();
+    await act(async () => {
+      await expect(runtime?.saveDocument(document)).rejects.toThrow(
+        'Write conflict'
+      );
+    });
+    expect(screen.getByText('Readable preview')).toBeTruthy();
+    await act(async () => {
+      await expect(runtime?.removeDocument(document.id)).rejects.toThrow(
+        'Delete conflict'
+      );
+    });
+    expect(screen.getByText('Readable preview')).toBeTruthy();
+    expect(loadContent).toHaveBeenCalledOnce();
+    expect(screen.queryByRole('alert')).toBeNull();
+    runtime?.dispose();
+  });
   it('clears an open preview after a failed authorization refresh without refetching stale content', async () => {
     const formStore = createFormStore();
     const load = vi.fn(async () => ({ documents: [document] }));

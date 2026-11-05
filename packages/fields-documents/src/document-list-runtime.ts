@@ -127,6 +127,7 @@ export interface DocumentListRuntimeState {
   >;
   readonly syncStatus: DocumentListSyncStatus;
   readonly error?: string;
+  readonly refreshError?: string;
   readonly revision?: string;
   readonly disposed: boolean;
   readonly hydrated: boolean;
@@ -342,6 +343,7 @@ export function createDocumentListRuntimeExtension(
       error: undefined,
       hydrated: true,
       revision: snapshot.revision,
+      refreshError: undefined,
       syncStatus: syncStatusFor(state.pendingOperations),
     }));
   };
@@ -743,6 +745,7 @@ export function createDocumentListRuntimeExtension(
             ...next,
             syncStatus: 'error',
             error: errorMessage(error),
+            refreshError: errorMessage(error),
           }));
         }
         throw error;

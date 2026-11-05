@@ -1399,8 +1399,7 @@ export function DocumentListDetailRow({
   const [error, setError] = useState<string | null>(null);
   const { loadContent } = runtime;
   const contentVersion = runtime.contentVersions?.[document.id] ?? 0;
-  const refreshError =
-    runtime.syncStatus === 'error' ? runtime.error : undefined;
+  const { refreshError } = runtime;
   const viewedDocument = useRef<string | undefined>(undefined);
   const onViewedRef = useRef(onViewed);
   onViewedRef.current = onViewed;
