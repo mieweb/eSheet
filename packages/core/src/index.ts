@@ -132,7 +132,14 @@ export {
   extractResponseValue,
 } from './lib/functions/normalize-responses.js';
 
-export type { FileInput, FileReference, FileStore } from './lib/file-store.js';
+export type {
+  DocumentPicker,
+  DocumentPickerItem,
+  DocumentPickerQuery,
+  FileInput,
+  FileReference,
+  FileStore,
+} from './lib/file-store.js';
 
 export {
   parseResponseReference,

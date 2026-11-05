@@ -1,6 +1,17 @@
 import React from 'react';
-import type { FieldComponentProps, DiagramFieldDefinition } from '@esheet/core';
+import type {
+  DiagramFieldDefinition,
+  DocumentPickerItem,
+  FieldComponentProps,
+} from '@esheet/core';
 import { DrawingPad } from './DrawingPad.js';
+import { DocumentPickerDialog } from '../../lib/DocumentPickerDialog.js';
+import { useDocumentPicker } from '../../lib/DocumentPickerProvider.js';
+import {
+  DRAWABLE_IMAGE_ACCEPT,
+  IMAGE_SOURCE_ACCEPT,
+  readImageAsDataUrl,
+} from '../../lib/file-utils.js';
 
 function useIsDark(): boolean {
   const [isDark, setIsDark] = React.useState(
@@ -28,6 +39,7 @@ export const DiagramField = React.memo(function DiagramField({
   form,
   isPreview,
   isEnabled,
+  isReadOnly,
   isRequired,
   isSoftRequired,
   response,
@@ -39,12 +51,76 @@ export const DiagramField = React.memo(function DiagramField({
   const isDark = useIsDark();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const respondentFileInputRef = React.useRef<HTMLInputElement>(null);
+  const documentPicker = useDocumentPicker();
+  const [pickerOpen, setPickerOpen] = React.useState(false);
+  const [errorMsg, setErrorMsg] = React.useState('');
+  const [loadingDocument, setLoadingDocument] = React.useState(false);
+  const respondentBackground = response?.markupBackground;
 
   const handleChange = React.useCallback(
     (payload: { strokes: string; image: string }) => {
-      onResponse({ markupData: payload.strokes, markupImage: payload.image });
+      onResponse({
+        markupData: payload.strokes,
+        markupImage: payload.image,
+        markupBackground: respondentBackground,
+      });
+    },
+    [onResponse, respondentBackground]
+  );
+
+  // Replacing the image drops strokes drawn on the previous one. The pad then
+  // re-emits the composited image once the new background has loaded.
+  const applyRespondentBackground = React.useCallback(
+    async (blob: Blob) => {
+      setErrorMsg('');
+      try {
+        const dataUrl = await readImageAsDataUrl(blob);
+        onResponse({
+          markupBackground: dataUrl,
+          markupImage: dataUrl,
+          markupData: '',
+        });
+      } catch (err) {
+        setErrorMsg(
+          err instanceof Error ? err.message : 'Failed to load the image'
+        );
+      }
     },
     [onResponse]
+  );
+
+  const handleRespondentFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (file) void applyRespondentBackground(file);
+  };
+
+  const handlePickDocument = React.useCallback(
+    (item: DocumentPickerItem) => {
+      if (!documentPicker) return;
+      setPickerOpen(false);
+      setErrorMsg('');
+      setLoadingDocument(true);
+      void (async () => {
+        try {
+          const input = await documentPicker.fetch(item);
+          await applyRespondentBackground(
+            new Blob([input.content], {
+              type: input.contentType.split(';')[0].trim(),
+            })
+          );
+        } catch (err) {
+          if (err instanceof Error && err.name === 'AbortError') return;
+          setErrorMsg(
+            err instanceof Error ? err.message : 'Failed to load document'
+          );
+        } finally {
+          setLoadingDocument(false);
+        }
+      })();
+    },
+    [documentPicker, applyRespondentBackground]
   );
 
   // --- Image upload via file picker ---
@@ -116,12 +192,62 @@ export const DiagramField = React.memo(function DiagramField({
             backgroundColor: isDark ? '#404040' : '#ffffff',
           }}
           colorInputId={`${instanceId}-diagram-color-${def.id}`}
-          backgroundImage={def.imageUri}
+          backgroundImage={respondentBackground ?? def.imageUri}
           placeholder={def.padPlaceholder || 'Draw on the diagram'}
           existingData={response?.markupData}
           onChange={handleChange}
+          emitOnBackgroundLoad={Boolean(respondentBackground)}
           disabled={!isEnabled}
         />
+        {isEnabled && !isReadOnly && (
+          <div className="diagram-attach-controls ms:flex ms:flex-wrap ms:gap-2">
+            <input
+              ref={respondentFileInputRef}
+              type="file"
+              accept={DRAWABLE_IMAGE_ACCEPT}
+              onChange={handleRespondentFile}
+              aria-label="Attach image file"
+              className="ms:hidden"
+            />
+            <button
+              type="button"
+              onClick={() => respondentFileInputRef.current?.click()}
+              className="diagram-upload-zone ms:px-4 ms:py-2 ms:rounded-lg ms:border ms:border-dashed ms:border-msborder ms:bg-msbackground ms:text-mstextmuted ms:text-sm ms:font-medium ms:hover:border-msprimary ms:hover:bg-msprimary/5 ms:transition-colors ms:cursor-pointer"
+            >
+              Attach file
+            </button>
+            {documentPicker && (
+              <button
+                type="button"
+                disabled={loadingDocument}
+                onClick={() => setPickerOpen(true)}
+                className="diagram-chart-picker-button ms:px-4 ms:py-2 ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:text-sm ms:font-medium ms:hover:bg-msbackground ms:transition-colors ms:cursor-pointer ms:disabled:opacity-50 ms:disabled:cursor-not-allowed"
+              >
+                {documentPicker.label ?? 'Choose from chart'}
+              </button>
+            )}
+          </div>
+        )}
+        {loadingDocument && (
+          <div role="status" className="ms:text-sm ms:text-mstextmuted">
+            Loading document...
+          </div>
+        )}
+        {errorMsg && (
+          <div className="ms:p-3 ms:bg-msdanger/10 ms:border ms:border-msdanger ms:rounded-lg ms:text-sm ms:text-msdanger">
+            {errorMsg}
+          </div>
+        )}
+        {pickerOpen && documentPicker && (
+          <DocumentPickerDialog
+            picker={documentPicker}
+            fieldId={def.id}
+            question={def.question}
+            accept={IMAGE_SOURCE_ACCEPT}
+            onSelect={handlePickDocument}
+            onClose={() => setPickerOpen(false)}
+          />
+        )}
       </div>
     );
   }
