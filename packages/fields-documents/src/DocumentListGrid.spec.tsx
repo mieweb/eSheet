@@ -83,6 +83,52 @@ describe('DocumentListGrid host integration', () => {
     sourceKeys.length = 0;
   });
 
+  it('uses the WebChart display classification as the grid field while actions retain the MIME subtype', async () => {
+    const native = {
+      ...row,
+      docType: 'application/pdf',
+      nativeDocType: 'NOTE',
+      nativeDocTypeLabel: 'Clinical note',
+    };
+    const actionRenderer = vi.fn(() => null);
+    const formatCell = vi.fn(() => undefined);
+    render(
+      <DocumentListGrid
+        rows={[native]}
+        renderActions={actionRenderer}
+        formatCell={formatCell}
+      />
+    );
+    await waitFor(() => expect(captured.props).not.toBeNull());
+    const props = captured.props as {
+      columns: readonly { field: string; header: string }[];
+      formatCell: (
+        value: unknown,
+        data: Record<string, unknown>,
+        column: { field: string }
+      ) => ReactNode;
+    };
+    expect(
+      props.columns.find((column) => column.header === 'Document Type')?.field
+    ).toBe('documentType');
+    const projected = { ...native, documentType: 'Clinical note' };
+    expect(
+      props.formatCell('Clinical note', projected, { field: 'documentType' })
+    ).toBe('Clinical note');
+    expect(formatCell).toHaveBeenCalledWith('Clinical note', projected, {
+      field: 'docType',
+    });
+    props.formatCell(undefined, projected, { field: '_actions' });
+    expect(actionRenderer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        docType: 'application/pdf',
+        nativeDocType: 'NOTE',
+        nativeDocTypeLabel: 'Clinical note',
+      }),
+      expect.any(Object)
+    );
+  });
+
   it.each([undefined, ['date', 'title', 'file']])(
     'omits the filename column, including from legacy definitions (%j)',
     async (columns) => {
@@ -687,7 +733,9 @@ describe('DocumentListGrid host integration', () => {
       { data: DocumentListDocument[] }
     >;
 
-    expect(sources[sourceKey].data).toEqual([row]);
+    expect(sources[sourceKey].data).toEqual([
+      { ...row, documentType: row.docType },
+    ]);
 
     rerender(<DocumentListGrid rows={[]} />);
 
@@ -713,8 +761,12 @@ describe('DocumentListGrid host integration', () => {
       string,
       { data: DocumentListDocument[] }
     >;
-    expect(sources[sourceKeys[0]].data).toEqual([row]);
-    expect(sources[sourceKeys[1]].data).toEqual([secondRow]);
+    expect(sources[sourceKeys[0]].data).toEqual([
+      { ...row, documentType: row.docType },
+    ]);
+    expect(sources[sourceKeys[1]].data).toEqual([
+      { ...secondRow, documentType: secondRow.docType },
+    ]);
 
     unmount();
     expect(sources[sourceKeys[0]]).toBeUndefined();

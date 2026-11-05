@@ -14,6 +14,7 @@ export interface DocumentListDocument {
   readonly docType: string;
   readonly docId: string;
   readonly nativeDocType?: string;
+  readonly nativeDocTypeLabel?: string;
   readonly nativeVersion?: string;
   readonly source: string;
   readonly file: string;
@@ -194,6 +195,7 @@ export const readOnlyDocumentListCapabilities: DocumentListCapabilities = {
 
 export interface DocumentListInput {
   readonly nativeDocType?: unknown;
+  readonly nativeDocTypeLabel?: unknown;
   readonly nativeVersion?: unknown;
   readonly id?: unknown;
   readonly date?: unknown;
