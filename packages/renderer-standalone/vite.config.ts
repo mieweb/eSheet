@@ -54,4 +54,12 @@ export default defineConfig(() => ({
     cssCodeSplit: false,
     sourcemap: false,
   },
+  test: {
+    name: '@esheet/renderer-standalone',
+    watch: false,
+    globals: true,
+    environment: 'jsdom',
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    reporters: ['default'],
+  },
 }));
