@@ -114,11 +114,20 @@ export const TextField = React.memo(function TextField({
   const isTel = inputType === 'tel';
   const placeholder = PLACEHOLDER[inputType] || 'Type your answer';
   const dateRange = resolveDateRange(def.dateRange);
+  const inputResetKey = React.useSyncExternalStore(
+    form.subscribe,
+    () => form.getState().inputResetKeys[def.id] ?? 0,
+    () => form.getState().inputResetKeys[def.id] ?? 0
+  );
 
+  React.useEffect(
+    () => () => form.getState().setInputError(def.id, undefined),
+    [form, def.id]
+  );
   React.useEffect(() => {
-    form.getState().setInputError(def.id, undefined);
-    return () => form.getState().setInputError(def.id, undefined);
-  }, [form, def.id, inputType, isPreview, response?.answer]);
+    if (!isPreview || inputType !== 'date')
+      form.getState().setInputError(def.id, undefined);
+  }, [form, def.id, inputType, isPreview]);
 
   // When a computed value arrives and the user hasn't answered yet, seed it as
   // the response so it behaves like any other answered field (overwritable).
@@ -133,6 +142,7 @@ export const TextField = React.memo(function TextField({
       return (
         <div className="text-field-preview">
           <DateInput
+            key={inputResetKey}
             locale={regionalDateLocale()}
             id={`${instanceId}-text-answer-${def.id}`}
             name={`esheet-${inputType}-answer-${def.id}`}

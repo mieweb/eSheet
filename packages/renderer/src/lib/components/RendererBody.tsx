@@ -3,6 +3,13 @@ import type { CollabDecorations, FormStore, UIStore } from '@esheet/core';
 import { FieldGrid, PageNavigator } from '@esheet/fields';
 import { FieldNode } from './FieldNode.js';
 
+function hasPendingInputErrors(form: FormStore): boolean {
+  return form
+    .getState()
+    .getErrors()
+    .some((error) => error.rule === 'input');
+}
+
 export interface RendererBodyProps {
   form: FormStore;
   ui: UIStore;
@@ -14,7 +21,7 @@ export interface RendererBodyProps {
   bottomNavigation?: boolean;
   /** Block forward navigation when required fields on the current page are unanswered. */
   validateNavigation?: boolean;
-  /** Hands the host a way to jump to a page by id; `false` when there is no such page. */
+  /** Hands the host page routing; `false` for unknown pages or pending invalid drafts. */
   registerGoToPage?: (goToPage: (pageId: string) => boolean) => void;
   /** Page shown first, by id. Unknown or absent falls back to the first page. */
   initialPageId?: string;
@@ -31,7 +38,7 @@ export interface RendererBodyProps {
 export interface RendererPageNavigation {
   /** The active page's id, or `null` before any pages exist. */
   getCurrentPageId: () => string | null;
-  /** Show a page by id or index. Unknown ids/indexes are a silent no-op. */
+  /** Show a page by id or index. Unknown pages and pending invalid drafts do not navigate. */
   setCurrentPage: (pageIdOrIndex: string | number) => void;
 }
 
@@ -65,6 +72,11 @@ export function RendererBody({
   );
 
   const [currentPagesIdx, setCurrentPagesIdx] = React.useState(0);
+  const hasInputErrors = React.useSyncExternalStore(
+    form.subscribe,
+    () => hasPendingInputErrors(form),
+    () => hasPendingInputErrors(form)
+  );
 
   const pages = normalized.pages;
 
@@ -75,6 +87,15 @@ export function RendererBody({
   currentIdxRef.current = currentPagesIdx;
   const onPageChangeRef = React.useRef(onPageChange);
   onPageChangeRef.current = onPageChange;
+  const trySetPage = React.useCallback(
+    (index: number) => {
+      if (index !== currentIdxRef.current && hasPendingInputErrors(form))
+        return false;
+      setCurrentPagesIdx(index);
+      return true;
+    },
+    [form]
+  );
 
   // The definition loads after mount, so the seed waits for pages to exist —
   // once. Unknown id stays on the first page; no onPageChange either way.
@@ -97,10 +118,9 @@ export function RendererBody({
     registerGoToPage?.((pageId) => {
       const index = pagesRef.current.findIndex((page) => page.id === pageId);
       if (index < 0) return false;
-      setCurrentPagesIdx(index);
-      return true;
+      return trySetPage(index);
     });
-  }, [registerGoToPage]);
+  }, [registerGoToPage, trySetPage]);
 
   React.useEffect(() => {
     registerPageNavigation?.({
@@ -114,23 +134,25 @@ export function RendererBody({
         if (index < 0 || index >= pagesRef.current.length) return;
         // Already current is a no-op by construction: programmatic moves
         // never fire onPageChange, so there is no loop to guard beyond this.
-        setCurrentPagesIdx(index);
+        trySetPage(index);
       },
     });
-  }, [registerPageNavigation]);
+  }, [registerPageNavigation, trySetPage]);
 
   const isMultiPage = pages.length > 1;
   const hasPageNavigation = topNavigation || bottomNavigation;
 
   // User navigation — and only user navigation — reports the change.
-  const navigateTo = React.useCallback((index: number) => {
-    const pageList = pagesRef.current;
-    const clamped = Math.min(Math.max(index, 0), pageList.length - 1);
-    if (clamped === currentIdxRef.current) return;
-    setCurrentPagesIdx(clamped);
-    const page = pageList[clamped];
-    if (page) onPageChangeRef.current?.(page.id, clamped);
-  }, []);
+  const navigateTo = React.useCallback(
+    (index: number) => {
+      const pageList = pagesRef.current;
+      const clamped = Math.min(Math.max(index, 0), pageList.length - 1);
+      if (clamped === currentIdxRef.current || !trySetPage(clamped)) return;
+      const page = pageList[clamped];
+      if (page) onPageChangeRef.current?.(page.id, clamped);
+    },
+    [trySetPage]
+  );
   const handlePrev = React.useCallback(
     () => navigateTo(currentIdxRef.current - 1),
     [navigateTo]
@@ -207,6 +229,14 @@ export function RendererBody({
       bottomNavigation={bottomNavigation}
       validateNavigation={validateNavigation}
     >
+      {hasInputErrors && (
+        <div
+          role="alert"
+          className="renderer-input-error ms:px-4 ms:py-2 ms:text-msdanger ms:text-sm"
+        >
+          Complete or clear invalid entries before changing pages.
+        </div>
+      )}
       <FieldGrid
         className="canvas-fields renderer-body ms:px-0"
         stackedClassName="ms:space-y-2 ms:lg:space-y-3"

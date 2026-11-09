@@ -304,11 +304,24 @@ function getRawAnswer(response: FieldResponse | undefined): string {
   return typeof response.answer === 'string' ? response.answer.trim() : '';
 }
 
-/** Parse a date string in MM-DD-YYYY or ISO format. Returns null on failure. */
+/** Parse a date string in US or ISO format without accepting calendar overflow. */
 function parseWcDate(str: string): Date | null {
   const s = str.trim();
-  const m = /^(\d{1,2})-(\d{1,2})-(\d{4})$/.exec(s);
-  if (m) return new Date(+m[3], +m[1] - 1, +m[2]);
+  const us = /^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/.exec(s);
+  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (us || iso) {
+    const year = Number(us ? us[3] : iso?.[1]);
+    const month = Number(us ? us[1] : iso?.[2]) - 1;
+    const day = Number(us ? us[2] : iso?.[3]);
+    const date = new Date(0);
+    date.setFullYear(year, month, day);
+    date.setHours(0, 0, 0, 0);
+    return date.getFullYear() === year &&
+      date.getMonth() === month &&
+      date.getDate() === day
+      ? date
+      : null;
+  }
   const d = new Date(s);
   return isNaN(d.getTime()) ? null : d;
 }

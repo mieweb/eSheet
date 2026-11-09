@@ -95,7 +95,7 @@ export interface EsheetRendererProps {
   topNavigation?: boolean;
   /** Show Previous / Next controls below the active page. */
   bottomNavigation?: boolean;
-  /** Block forward page navigation while required fields on the current page are unanswered. */
+  /** Block forward page navigation for unanswered required fields. Invalid input drafts always block page changes. */
   validateNavigation?: boolean;
   /** Page shown first, by id (issue #147). Unknown or absent → the first page. */
   initialPageId?: string;
@@ -184,13 +184,14 @@ export interface EsheetRendererHandle {
   setTouchMode: (enabled: boolean) => void;
   /** Reset to auto-detection mode (clears manual override). Only works when touchMode='auto'. */
   resetTouchMode: () => void;
-  /** Show the page with this id. Returns `false` when the form has no such page. */
+  /** Show this page. Returns `false` for unknown pages or pending invalid input drafts. */
   goToPage: (pageId: string) => boolean;
   /** The active page's id, or `null` before any pages exist (issue #147). */
   getCurrentPageId: () => string | null;
   /**
    * Show a page by id or index. Unknown values are a silent no-op, and
    * programmatic moves never fire `onPageChange` (issue #147).
+   * Pending invalid input drafts block page changes.
    */
   setCurrentPage: (pageIdOrIndex: string | number) => void;
 }

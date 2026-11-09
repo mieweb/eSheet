@@ -93,6 +93,8 @@ export interface FormState {
   readonly normalized: NormalizedDefinition;
   /** Current responses keyed by field ID. */
   readonly responses: FieldResponseMap;
+  /** Per-field reset versions for clearing input drafts even when answers stay empty. */
+  readonly inputResetKeys: Readonly<Record<string, number>>;
   /** Host-supplied identity of the current user (stamps activity authorship). */
   readonly identity?: { name: string };
   /** Field IDs that have been explicitly edited by the user (not auto-calculated). */
@@ -536,6 +538,13 @@ function withoutExtension(
   return { ...extensions, [namespace]: remaining };
 }
 
+function resetInputKeys(
+  keys: Readonly<Record<string, number>>,
+  fieldIds: readonly string[]
+): Record<string, number> {
+  return Object.fromEntries(fieldIds.map((id) => [id, (keys[id] ?? 0) + 1]));
+}
+
 export function createFormStore(
   initial?: FormDefinition,
   hostAllowsJS = false,
@@ -569,6 +578,7 @@ export function createFormStore(
     normalized: initial ? normalizeDefinition(initial.pages) : EMPTY_NORMALIZED,
     responses:
       initialResponses ?? (initial ? defaultResponses(initial.pages) : {}),
+    inputResetKeys: {},
     identity: undefined,
     userEditedFields: new Set(Object.keys(initialResponses ?? {})),
     extensions: {},
@@ -579,6 +589,11 @@ export function createFormStore(
     loadDefinition: (definition, responses) =>
       (() => {
         const initial = responses ?? defaultResponses(definition.pages);
+        const normalized = normalizeDefinition(definition.pages);
+        const inputResetKeys = resetInputKeys(
+          get().inputResetKeys,
+          Object.keys(normalized.byId)
+        );
         disposeAllExtensions();
         set({
           formId: definition.id,
@@ -587,8 +602,9 @@ export function createFormStore(
           formSourceData: definition._sourceData,
           dangerouslyAllowJS:
             (definition.dangerouslyAllowJS ?? false) && _hostAllowsJS,
-          normalized: normalizeDefinition(definition.pages),
+          normalized,
           responses: initial,
+          inputResetKeys,
           userEditedFields: new Set(Object.keys(responses ?? {})),
           extensions: {},
         });
@@ -677,6 +693,10 @@ export function createFormStore(
         void _discarded;
         return {
           responses: rest,
+          inputResetKeys: {
+            ...state.inputResetKeys,
+            ...resetInputKeys(state.inputResetKeys, [fieldId]),
+          },
           extensions: withoutExtension(
             state.extensions,
             INPUT_ERROR_NAMESPACE,
@@ -687,7 +707,14 @@ export function createFormStore(
 
     resetResponses: () => {
       get().clearExtensionsForNamespace(INPUT_ERROR_NAMESPACE);
-      set({ responses: {}, userEditedFields: new Set<string>() });
+      set((state) => ({
+        responses: {},
+        userEditedFields: new Set<string>(),
+        inputResetKeys: resetInputKeys(
+          state.inputResetKeys,
+          Object.keys(state.normalized.byId)
+        ),
+      }));
     },
 
     registerExtension: (namespace, fieldId, initialState, options) => {

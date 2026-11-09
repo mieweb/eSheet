@@ -23,7 +23,10 @@ display (and date entry) through `DateInput.locale`. Date answers remain ISO
 `YYYY-MM-DD`; relative date bounds and calendar selection keep the existing
 US-order control-value contract. Incomplete or invalid date drafts block
 validation and submission until corrected or cleared; draft errors are transient
-and never exported with responses. Document-list date columns and addendum
+and never exported with responses. Page changes (including programmatic changes)
+are blocked while an input draft is invalid, even when required-field navigation
+validation is disabled. Response resets also reset visible drafts, including
+unanswered fields. Document-list date columns and addendum
 dates use the same regional formatter without changing stored rows or sort
 keys. The UI source override requires a built sibling `ui` checkout.
 For a clean, pinned setup matching CI and Cloudflare Pages, run

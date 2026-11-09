@@ -492,6 +492,18 @@ describe('createFormStore', () => {
   });
 
   describe('validation and hydration', () => {
+    it('resets input keys per field without resetting unrelated drafts', () => {
+      store = createFormStore(form([field('date'), field('other')]));
+      store.getState().clearResponse('date');
+      expect(store.getState().inputResetKeys).toEqual({ date: 1 });
+      store.getState().resetResponses();
+      expect(store.getState().inputResetKeys).toEqual({ date: 2, other: 1 });
+      store
+        .getState()
+        .loadDefinition(form([field('date'), field('other')]), {});
+      expect(store.getState().inputResetKeys).toEqual({ date: 3, other: 2 });
+    });
+
     it('validates transient input errors without exporting them', () => {
       store = createFormStore(form([field('date')]));
       store.getState().setResponse('date', { answer: '2026-11-09' });
