@@ -5,6 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
+  '@mieweb/ui': link:../ui
   axios: 1.13.6
   '@xhmikosr/decompress': 11.1.4
   shell-quote: 1.10.0
@@ -28,8 +29,8 @@ importers:
   .:
     dependencies:
       '@mieweb/ui':
-        specifier: 0.11.0-dev.25
-        version: 0.11.0-dev.25(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/wasm@0.8.12)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(remark-gfm@4.0.1)
+        specifier: link:../ui
+        version: link:../ui
       react:
         specifier: ^19.2.4
         version: 19.2.8
@@ -186,8 +187,8 @@ importers:
         specifier: ^0.8.10
         version: 0.8.10
       '@mieweb/ui':
-        specifier: 0.11.0-dev.25
-        version: 0.11.0-dev.25(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/wasm@0.8.10)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(remark-gfm@4.0.1)
+        specifier: link:../../../ui
+        version: link:../../../ui
       js-yaml:
         specifier: ^5.2.3
         version: 5.2.3
@@ -273,8 +274,8 @@ importers:
         specifier: workspace:*
         version: link:../styles
       '@mieweb/ui':
-        specifier: 0.11.0-dev.25
-        version: 0.11.0-dev.25(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/wasm@0.8.12)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(remark-gfm@4.0.1)
+        specifier: link:../../../ui
+        version: link:../../../ui
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.56.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -354,8 +355,8 @@ importers:
         specifier: workspace:*
         version: link:../fields
       '@mieweb/ui':
-        specifier: 0.8.0-dev.21
-        version: 0.8.0-dev.21(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@mieweb/datavis@1.6.0(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@types/react@19.2.18)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(redux@5.0.1)(remark-gfm@4.0.1)(typescript@6.0.3))(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(remark-gfm@4.0.1)
+        specifier: link:../../../ui
+        version: link:../../../ui
       lucide-react:
         specifier: ^1.31.0
         version: 1.31.0(react@19.2.8)
@@ -409,8 +410,8 @@ importers:
         specifier: workspace:*
         version: link:../styles
       '@mieweb/ui':
-        specifier: 0.11.0-dev.25
-        version: 0.11.0-dev.25(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/wasm@0.8.12)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(remark-gfm@4.0.1)
+        specifier: link:../../../ui
+        version: link:../../../ui
       lucide-react:
         specifier: ^1.31.0
         version: 1.31.0(react@19.2.8)
@@ -456,10 +457,10 @@ importers:
         version: link:../renderer
       '@mieweb/datavis':
         specifier: 1.6.0
-        version: 1.6.0(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@types/react@19.2.18)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(redux@5.0.1)(remark-gfm@4.0.1)(typescript@6.0.3)
+        version: 1.6.0(@types/react@19.2.18)(datavis-ace@4.1.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(redux@5.0.1)(typescript@6.0.3)
       '@mieweb/ui':
-        specifier: 0.8.0-dev.21
-        version: 0.8.0-dev.21(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@mieweb/datavis@1.6.0(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@types/react@19.2.18)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(redux@5.0.1)(remark-gfm@4.0.1)(typescript@6.0.3))(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(remark-gfm@4.0.1)
+        specifier: link:../../../ui
+        version: link:../../../ui
       '@react-pdf/renderer':
         specifier: ^4.9.0
         version: 4.9.0(react@19.2.8)
@@ -2173,233 +2174,6 @@ packages:
       react: ^19.0.0
       react-dom: ^19.0.0
 
-  '@mieweb/ui@0.11.0-dev.25':
-    resolution: {integrity: sha512-p5U5ws9Yx88ipQAqCqEtue3Gzneujr0kYoJYEx1W/Q6WYlhWbvikLEcxH24CIBoiofEW5GHTeELqrLLpY1PzGw==}
-    engines: {node: ^20.19.0 || >=22.12.0}
-    hasBin: true
-    peerDependencies:
-      '@kerebron/editor': '>=0.8.12'
-      '@kerebron/editor-kits': '>=0.8.12'
-      '@kerebron/extension-basic-editor': '>=0.8.12'
-      '@kerebron/extension-yjs': '>=0.8.12'
-      '@kerebron/wasm': '>=0.8.12'
-      '@mieweb/q': 1.0.0
-      '@xyflow/react': '>=12.0.0'
-      ag-grid-community: '>=32.0.0'
-      ag-grid-react: '>=32.0.0'
-      elkjs: '>=0.9.0'
-      js-yaml: '>=4.0.0'
-      katex: '>=0.16.0'
-      leaflet: '>=1.9.0'
-      mermaid: '>=11.0.0'
-      motion: '>=12.0.0'
-      papaparse: '>=5.0.0'
-      react: '>=18.0.0'
-      react-dom: '>=18.0.0'
-      react-globe.gl: '>=2.30.0'
-      react-markdown: '>=9.0.0'
-      rehype-highlight: '>=7.0.0'
-      rehype-katex: '>=7.0.0'
-      rehype-sanitize: '>=6.0.0'
-      remark-gfm: '>=4.0.0'
-      remark-math: '>=6.0.0'
-      three: '>=0.160.0'
-      wavesurfer.js: '>=7.0.0'
-      y-protocols: '>=1.0.6'
-      yjs: '>=13.6.0'
-    peerDependenciesMeta:
-      '@kerebron/editor':
-        optional: true
-      '@kerebron/editor-kits':
-        optional: true
-      '@kerebron/extension-basic-editor':
-        optional: true
-      '@kerebron/extension-yjs':
-        optional: true
-      '@kerebron/wasm':
-        optional: true
-      '@mieweb/q':
-        optional: true
-      '@xyflow/react':
-        optional: true
-      ag-grid-community:
-        optional: true
-      ag-grid-react:
-        optional: true
-      elkjs:
-        optional: true
-      js-yaml:
-        optional: true
-      katex:
-        optional: true
-      leaflet:
-        optional: true
-      mermaid:
-        optional: true
-      motion:
-        optional: true
-      papaparse:
-        optional: true
-      react-globe.gl:
-        optional: true
-      react-markdown:
-        optional: true
-      rehype-highlight:
-        optional: true
-      rehype-katex:
-        optional: true
-      rehype-sanitize:
-        optional: true
-      remark-gfm:
-        optional: true
-      remark-math:
-        optional: true
-      three:
-        optional: true
-      wavesurfer.js:
-        optional: true
-      y-protocols:
-        optional: true
-      yjs:
-        optional: true
-
-  '@mieweb/ui@0.6.1-dev.169':
-    resolution: {integrity: sha512-YE6vtT/6+hMB7YQROZxPUKm4FVxLTYyLAru+IY8enn9x6GsctCeOA0yjHD6RjQ8oqQDknWS2c3NEfCJ665pGQw==}
-    engines: {node: ^20.19.0 || >=22.12.0}
-    peerDependencies:
-      '@kerebron/editor': '>=0.7.9'
-      '@kerebron/editor-kits': '>=0.7.9'
-      '@kerebron/wasm': '>=0.7.9'
-      '@mieweb/datavis': '=1.5.0'
-      ag-grid-community: '>=32.0.0'
-      ag-grid-react: '>=32.0.0'
-      datavis-ace: '=4.1.0'
-      js-yaml: '>=4.0.0'
-      katex: '>=0.16.0'
-      mermaid: '>=11.0.0'
-      papaparse: '>=5.0.0'
-      react: '>=18.0.0'
-      react-dom: '>=18.0.0'
-      react-markdown: '>=9.0.0'
-      rehype-highlight: '>=7.0.0'
-      rehype-katex: '>=7.0.0'
-      rehype-sanitize: '>=6.0.0'
-      remark-gfm: '>=4.0.0'
-      remark-math: '>=6.0.0'
-      wavesurfer.js: '>=7.0.0'
-    peerDependenciesMeta:
-      '@kerebron/editor':
-        optional: true
-      '@kerebron/editor-kits':
-        optional: true
-      '@kerebron/wasm':
-        optional: true
-      '@mieweb/datavis':
-        optional: true
-      ag-grid-community:
-        optional: true
-      ag-grid-react:
-        optional: true
-      datavis-ace:
-        optional: true
-      js-yaml:
-        optional: true
-      katex:
-        optional: true
-      mermaid:
-        optional: true
-      papaparse:
-        optional: true
-      react-markdown:
-        optional: true
-      rehype-highlight:
-        optional: true
-      rehype-katex:
-        optional: true
-      rehype-sanitize:
-        optional: true
-      remark-gfm:
-        optional: true
-      remark-math:
-        optional: true
-      wavesurfer.js:
-        optional: true
-
-  '@mieweb/ui@0.8.0-dev.21':
-    resolution: {integrity: sha512-1b1P+6vlEM9xZYZYXqPInQpz0zdmgWelQ+ab+fPJC2MTwa/5f2Qrzg95vWaKrH9IwHRsMYWWOKZ4rLhaypCrvw==}
-    engines: {node: ^20.19.0 || >=22.12.0}
-    hasBin: true
-    peerDependencies:
-      '@kerebron/editor': '>=0.8.6'
-      '@kerebron/editor-kits': '>=0.8.6'
-      '@kerebron/extension-yjs': '>=0.8.6'
-      '@kerebron/wasm': '>=0.8.6'
-      '@mieweb/datavis': '=1.7.0'
-      '@mieweb/q': 1.0.0
-      ag-grid-community: '>=32.0.0'
-      ag-grid-react: '>=32.0.0'
-      datavis-ace: '=4.1.0'
-      js-yaml: '>=4.0.0'
-      katex: '>=0.16.0'
-      mermaid: '>=11.0.0'
-      papaparse: '>=5.0.0'
-      react: '>=18.0.0'
-      react-dom: '>=18.0.0'
-      react-markdown: '>=9.0.0'
-      rehype-highlight: '>=7.0.0'
-      rehype-katex: '>=7.0.0'
-      rehype-sanitize: '>=6.0.0'
-      remark-gfm: '>=4.0.0'
-      remark-math: '>=6.0.0'
-      wavesurfer.js: '>=7.0.0'
-      y-protocols: '>=1.0.6'
-      yjs: '>=13.6.0'
-    peerDependenciesMeta:
-      '@kerebron/editor':
-        optional: true
-      '@kerebron/editor-kits':
-        optional: true
-      '@kerebron/extension-yjs':
-        optional: true
-      '@kerebron/wasm':
-        optional: true
-      '@mieweb/datavis':
-        optional: true
-      '@mieweb/q':
-        optional: true
-      ag-grid-community:
-        optional: true
-      ag-grid-react:
-        optional: true
-      datavis-ace:
-        optional: true
-      js-yaml:
-        optional: true
-      katex:
-        optional: true
-      mermaid:
-        optional: true
-      papaparse:
-        optional: true
-      react-markdown:
-        optional: true
-      rehype-highlight:
-        optional: true
-      rehype-katex:
-        optional: true
-      rehype-sanitize:
-        optional: true
-      remark-gfm:
-        optional: true
-      remark-math:
-        optional: true
-      wavesurfer.js:
-        optional: true
-      y-protocols:
-        optional: true
-      yjs:
-        optional: true
-
   '@module-federation/error-codes@0.22.0':
     resolution: {integrity: sha512-xF9SjnEy7vTdx+xekjPCV5cIHOGCkdn3pIxo9vU7gEZMIw0SvAEdsy6Uh17xaCpm8V0FWvR0SZoK9Ik6jGOaug==}
 
@@ -2915,33 +2689,6 @@ packages:
 
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
-
-  '@protobufjs/aspromise@1.1.2':
-    resolution: {integrity: sha512-j+gKExEuLmKwvz3OgROXtrJ2UG2x8Ch2YZUxahh+s1F2HZ+wAceUNLkvy6zKCPVRkU++ZWQrdxsUeQXmcg4uoQ==}
-
-  '@protobufjs/base64@1.1.2':
-    resolution: {integrity: sha512-AZkcAA5vnN/v4PDqKyMR5lx7hZttPDgClv83E//FMNhR2TMcLUhfRUBHCmSl0oi9zMgDDqRUJkSxO3wm85+XLg==}
-
-  '@protobufjs/codegen@2.0.5':
-    resolution: {integrity: sha512-zgXFLzW3Ap33e6d0Wlj4MGIm6Ce8O89n/apUaGNB/jx+hw+ruWEp7EwGUshdLKVRCxZW12fp9r40E1mQrf/34g==}
-
-  '@protobufjs/eventemitter@1.1.1':
-    resolution: {integrity: sha512-vW1GmwMZNnL+gMRaovlh9yZX74kc+TTU3FObkkurpMaRtBfLP3ldjS9KQWlwZgraRE0+dheEEoAxdzcJQ8eXZg==}
-
-  '@protobufjs/fetch@1.1.1':
-    resolution: {integrity: sha512-GpptLrs57adMSuHi3VNj0mAF8dwh36LMaYF6XyJ6JMWlVsc+t42tm1HSEDmOs3A8fC9yyeisgLhsTVQokOZ0zw==}
-
-  '@protobufjs/float@1.0.2':
-    resolution: {integrity: sha512-Ddb+kVXlXst9d+R9PfTIxh1EdNkgoRe5tOX6t01f1lYWOvJnSPDBlG241QLzcyPdoNTsblLUdujGSE4RzrTZGQ==}
-
-  '@protobufjs/path@1.1.2':
-    resolution: {integrity: sha512-6JOcJ5Tm08dOHAbdR3GrvP+yUUfkjG5ePsHYczMFLq3ZmMkAD98cDgcT2iA1lJ9NVwFd4tH/iSSoe44YWkltEA==}
-
-  '@protobufjs/pool@1.1.0':
-    resolution: {integrity: sha512-0kELaGSIDBKvcgS4zkjz1PeddatrjYcmMWOlAuAPwAeccUrPHdUqo/J6LiymHHEiJT5NrF1UVwxY14f+fy4WQw==}
-
-  '@protobufjs/utf8@1.1.2':
-    resolution: {integrity: sha512-b1UQwcEZ4yCnMCD8DAL1VlbvBJE9/IX4FTIp7BG1xYpf29SLazLSrqUkj4w7Y5y7cCVP6E5tcqqcI0xemPkHug==}
 
   '@react-pdf/fns@3.1.3':
     resolution: {integrity: sha512-0I7pApDr1/RLAKbizuLy/IHTEa93LSPy/bEwYniboC3Xqnp6Od8xFJKbKEzGw2wh/5zKFFwl00g4t9RwgIMc3w==}
@@ -3717,24 +3464,6 @@ packages:
     resolution: {integrity: sha512-yYU8cogLeSh/ms2jh8Fj7jaba/EWa7Ja6GoUqYZaraEuCI5YS6ms6ObZgjjedm+jm6XZjdNRWBpPP6Z86oOxcw==}
     peerDependencies:
       vite: ^5.2.0 || ^6 || ^7 || ^8
-
-  '@tanstack/react-virtual@3.14.10':
-    resolution: {integrity: sha512-SRyoUbdFMRHuYXMijV5H4ZarQWpXkj3iANq8OFre+pybeVap8ZJjZ3Nz9bVjx4d8PfobVUQUdKyyyHYk3E+djw==}
-    peerDependencies:
-      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-
-  '@tanstack/react-virtual@3.14.22':
-    resolution: {integrity: sha512-zNiB9IF3prySTfAUrj9tPHjD/lonBYkfxrPP4v4ITUx+qwHajJR5cY/xirjvwc+KWkur10GX3TpsbKh7JkD8Lw==}
-    peerDependencies:
-      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-
-  '@tanstack/virtual-core@3.17.8':
-    resolution: {integrity: sha512-BfEvehNpOT75r5Ksc5xW6NZuXujTfb7nlSEyVu4XHG3gdxNg1KqXruWbDewXOUaUYIo4oRbSfkjIajz4MAT8tA==}
-
-  '@tanstack/virtual-core@3.19.7':
-    resolution: {integrity: sha512-gxy5SvH0mFRJ0YujtrflB/1HAu9Wn1KGvL0bjZfQkYVVMsIpQiwcf1mR06/ViN4NjllUb4HNCjqE9FGwgTvMCQ==}
 
   '@testing-library/dom@10.4.0':
     resolution: {integrity: sha512-pemlzrSESWbdAloYml3bAJMEfNh1Z7EduzqPKprCH5S341frlpYnUEW0H72dLxa6IsYr+mPno20GiSm+h9dEdQ==}
@@ -4751,9 +4480,6 @@ packages:
     resolution: {integrity: sha512-NIxF55hv4nSqQswkAeiOi1r83xy8JldOFDTWiug55KBu9Jnblncd2U6ViHmYgHf01TPZS77NJBhBMKdWj9HQMQ==}
     engines: {node: '>=8'}
 
-  class-variance-authority@0.7.1:
-    resolution: {integrity: sha512-Ka+9Trutv7G8M6WT6SeiRWz792K5qEqIGEGzXKhAE6xOWAY6pPH8U+9IY3oCMv6kqTmLsv7Xh/2w2RigkePMsg==}
-
   clean-css@5.3.3:
     resolution: {integrity: sha512-D5J+kHaVb/wKSFcyyV75uCn8fiY4sV38XJoe4CUyGQ+mOU/fMVYUdH1hJC+CJQ5uY3EnW27SbJYS4X8BiLrAFg==}
     engines: {node: '>= 10.0'}
@@ -5446,9 +5172,6 @@ packages:
   dompurify@3.4.13:
     resolution: {integrity: sha512-2vmYIoqjze2d+kakP8S/nS5shfsl587kzwEjcGlTdiksUVgFHnFCsLYDVj/JNqJVOQZGSYBTmuycv0PodwmnMQ==}
 
-  dompurify@3.4.14:
-    resolution: {integrity: sha512-dVoH9z+MY+C9IilgGCk3YfFqjLi3fChm2OiKJMzh6axrJ5qwxqWaZamgmHrpv22CN/KdbZJuGEGgfQoL00LTdg==}
-
   dompurify@3.4.17:
     resolution: {integrity: sha512-B/pSlYVHQ58kqISD/yDjuJ1yfzI34m1gF4lAod2bwSRhiN4K5Cl3H8Af7hqB2PmTL911tdEudnnXn5FnhRoz0w==}
 
@@ -5924,9 +5647,6 @@ packages:
     resolution: {integrity: sha512-b6suED+5/3rTpUBdG1gupIl8MPFCAMA0QXwmljLhvCUKcUvdE4gWky9zpuGCcXHOsz4J9wPGNWq6OKpmIzz3hQ==}
     hasBin: true
 
-  flatbuffers@1.12.0:
-    resolution: {integrity: sha512-c7CZADjRcl6j0PlvFy0ZqXQ67qSEZfrVPynmnL+2zPc+NtMvrF8Y0QceMo7QqnSPc7+uWjUIAbvCQ5WIKlMVdQ==}
-
   flatted@3.4.4:
     resolution: {integrity: sha512-5+ybhBZANEJxaH3X5evAFatUxLfEHSr7n6kYJ+1Qd0mUqr4eu9gIf6GDbWHf8RJijHrjjO8G+la14SlL2SeS1Q==}
 
@@ -6075,14 +5795,6 @@ packages:
     resolution: {integrity: sha512-Y1zNGV+pzQdh7H39l9zgB4PJqjRNqydvdYCDG4HFXM4XuvSaQQlEc91IU1yALL8gUTDomgBAfz3XJdmUS+oo0w==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
-  google-libphonenumber@3.2.46:
-    resolution: {integrity: sha512-UmrwBam+6pxzbEIW5m8T63XmSIuU08BacGlcoSFXrgSPLpPZnzc0VcO/CsmHj0MJlTvPn7x+KRMridyPXUdBRQ==}
-    engines: {node: '>=0.10'}
-
-  google-libphonenumber@3.2.47:
-    resolution: {integrity: sha512-sPKNFCUB8ZQtdEiREx7DAeMbQGeLWW3dITLbprBqH+5P10yMTwCbvKWVzjPKzUK4xvAXWBgcZdAHULb2qbjK6A==}
-    engines: {node: '>=0.10'}
-
   gopd@1.2.0:
     resolution: {integrity: sha512-ZUKRh6/kUFoAiTAtTYPZJ3hw9wNxx+BIBOijnlG9PnrJsCcSjs1wyyD6vJpaYtgnzDrKYRSqf3OO6Rfa93xsRg==}
     engines: {node: '>= 0.4'}
@@ -6103,9 +5815,6 @@ packages:
 
   graphemer@1.4.0:
     resolution: {integrity: sha512-EtKwoO6kxCL9WO5xipiHTZlSzBm7WLT627TqC/uVRd0HKmq8NXyebnNYxDoBi7wt8eTWrUrKXCOVaFq9x1kgag==}
-
-  guid-typescript@1.0.9:
-    resolution: {integrity: sha512-Y8T4vYhEfwJOTbouREvG+3XDsjr8E3kIr7uf+JZ0BYloFsttiHU0WfvANVsR7TxNUJa/WpCnw/Ino/p+DeBhBQ==}
 
   gzip-size@6.0.0:
     resolution: {integrity: sha512-ax7ZYomf6jqPTQ4+XCpUGyXKHk5WweS+e05MBO4/y3WJ5RkmPXNKvX+bx1behVILVwr6JSQvZAku021CHPXG3Q==}
@@ -6175,10 +5884,6 @@ packages:
   he@1.2.0:
     resolution: {integrity: sha512-F/1DnUGPopORZi0ni+CvrCgHQ5FyEAHRLSApuYWMmrbSwoN2Mn/7k+Gl38gJnR7yyDZk6WLXwiGod1JOWNDKGw==}
     hasBin: true
-
-  highlight.js@11.12.0:
-    resolution: {integrity: sha512-nbfWpyRMcMrPMmDwJB+dhX/eiaPKtc2RB+0QZskqJ3WjRA/FDS0e9hZrx8EC/lbEv8gXy98FcDbNa/dspAaJMg==}
-    engines: {node: '>=12.0.0'}
 
   history@4.10.1:
     resolution: {integrity: sha512-36nwAD620w12kuzPAsyINPWJqlNbij+hpK1k9XRloDtym8mxzGYl2c17LnV6IAGB2Dmg4tEa7G7DlawS0+qjew==}
@@ -7020,9 +6725,6 @@ packages:
   lodash@4.18.1:
     resolution: {integrity: sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q==}
 
-  long@5.3.2:
-    resolution: {integrity: sha512-mNAgZ1GmyNhD7AuqnTG3/VQ26o760+ZYBPKjPvugO8+nLbYfX6TVpJPseBvopbdY+qpZ/lKUnmEc1LeZYS3QAA==}
-
   longest-streak@3.1.0:
     resolution: {integrity: sha512-9Ri+o0JYgehTaVBBDoMqIl8GXtbWg711O3srftcHhZ0dqnETqLaoIK0x17fUw9rFSlK/0NlsKe0Ahhyl5pXE2g==}
 
@@ -7044,19 +6746,10 @@ packages:
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
 
-  lucide-react@0.562.0:
-    resolution: {integrity: sha512-82hOAu7y0dbVuFfmO4bYF1XEwYk/mEbM5E+b1jgci/udUBEE/R7LF5Ip0CCEmXe8AybRM8L+04eP+LGZeDvkiw==}
-    peerDependencies:
-      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
-
   lucide-react@1.31.0:
     resolution: {integrity: sha512-G8u2eEtoHUnUa9f8lbvqDhCiORMnYLdUEo06EEG9MQvHQrInKcX3Pa2TH39MM5qyzRcWETxB0+aOwAPI1g1kEg==}
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
-
-  luxon@3.7.2:
-    resolution: {integrity: sha512-vtEhXh/gNjI9Yg1u4jX/0YVPMvxzHuGgCm6tC5kZyb08yjGWGnqAjGJvcXbqQR2P3MyMEFnRbpcdFS6PBcLqew==}
-    engines: {node: '>=12'}
 
   lz-string@1.5.0:
     resolution: {integrity: sha512-h5bgJWpxJNswbU7qCrV0tIKQCaS3blPDrqKWx+QxzuzL1zGUzij9XCWLrSLsJPu5t+eWA/ycetzYAO5IOMcWAQ==}
@@ -7096,11 +6789,6 @@ packages:
 
   marked@16.4.2:
     resolution: {integrity: sha512-TI3V8YYWvkVf3KJe1dRkpnjs68JUPyEa5vjKrp1XEEJUAOaQc+Qj+L1qWbPd0SJuAdQkFU0h73sXXqwDYxsiDA==}
-    engines: {node: '>= 20'}
-    hasBin: true
-
-  marked@17.0.6:
-    resolution: {integrity: sha512-gB0gkNafnonOw0obSTEGZTT86IuhILt2Wfx0mWH/1Au83kybTayroZ/V6nS25mN7u8ASy+5fMhgB3XPNrOZdmA==}
     engines: {node: '>= 20'}
     hasBin: true
 
@@ -7614,12 +7302,6 @@ packages:
     resolution: {integrity: sha512-1FlR+gjXK7X+AsAHso35MnyN5KqGwJRi/31ft6x0M194ht7S+rWAvd7PHss9xSKMzE0asv1pyIHaJYq+BbacAQ==}
     engines: {node: '>=12'}
 
-  onnxruntime-common@1.19.0:
-    resolution: {integrity: sha512-Oo16UIJ/xLOtZDVGcL4bL8EP8MiNFztyBmR3pB14D+cl/UCpOgHHzEk0MADSmYXQ0FgyEegPXtOFcJqhq1YRsw==}
-
-  onnxruntime-web@1.19.0:
-    resolution: {integrity: sha512-EY2KjvfJ/f5nxiXDii4eD0xe5KIn+mRs55F6z2qomALyG05Qj+kqF81CKqzTa4cXowE9b9aVSqsvEVZkjOI5yA==}
-
   open@10.2.0:
     resolution: {integrity: sha512-YgBpdJHPyQ2UE5x+hlSXcnejzAvD0b22U2OuAP+8OnlJT+PjWPxtgmGqKKc+RgTM63U9gN0YzrYc71R2WT/hTA==}
     engines: {node: '>=18'}
@@ -7840,9 +7522,6 @@ packages:
   pkijs@3.4.0:
     resolution: {integrity: sha512-emEcLuomt2j03vxD54giVB4SxTjnsqkU692xZOZXHDVoYyypEm+b3jpiTcc+Cf+myooc+/Ly0z01jqeNHVgJGw==}
     engines: {node: '>=16.0.0'}
-
-  platform@1.3.6:
-    resolution: {integrity: sha512-fnWVljUchTro6RiCFvCXBbNhJc2NijN7oIQxbwsyL0buWJPG85v81ehlHI9fXrJsMNgTofEoWIQeClKpgxFLrg==}
 
   png-js@2.0.0:
     resolution: {integrity: sha512-GdzJuUMc6ZSpxFJWVxtOH1bzYHym+TOnveqUjb+VJIbZWbZzyiRGFiKhbiielfpYbgMlhHVhsJ0FTazfuRFkMA==}
@@ -8311,10 +7990,6 @@ packages:
 
   proto-list@1.2.4:
     resolution: {integrity: sha512-vtK/94akxsTMhe0/cbfpR+syPuszcuwhqVjJq26CuNDgFGj682oRBXOP5MJpv2r7JtE8MsiepGIqvvOTBwn2vA==}
-
-  protobufjs@7.6.6:
-    resolution: {integrity: sha512-dYDWdjSl5RNb7SgPxGQcRU+GtvP7s2fpkrY0r432PcOIaZ0/rBcxEZnQN67iJhFuQiVw754JDoPruPCNdGsbjg==}
-    engines: {node: '>=12.0.0'}
 
   proxy-addr@2.0.7:
     resolution: {integrity: sha512-llQsMLSUDUPT44jdrU/O37qlnifitDP+ZwrmmZcoSKyLKvtZxpyV0n2/bD/N4tBAAZ/gJEdZU7KMraoK1+XYAg==}
@@ -9113,9 +8788,6 @@ packages:
   system-architecture@1.0.0:
     resolution: {integrity: sha512-0OJWD12D7XX3KUg1DYkMaTTjSTo2k/mhIYI3HlBlceXSMcJhW/1qO735fPKS5prcyjvn57Ub151vvASYXpQrEw==}
     engines: {node: '>=18'}
-
-  tailwind-merge@2.6.1:
-    resolution: {integrity: sha512-Oo6tHdpZsGpkKG88HJ8RR1rg/RdnEkQEfMoEk2x1XRI3F1AxeU+ijRXpiVUF4UbLfcxxRGw6TbUINKYdWVsQTQ==}
 
   tailwindcss@4.3.3:
     resolution: {integrity: sha512-gOhV3P7ufE62QDGg1zVaTgCR+EtPv92k2nIhVcVKcLmxT1sUBsQGhnZj175j+MqRt4zLF7ic+sCYjfhxMxj7YQ==}
@@ -12772,12 +12444,12 @@ snapshots:
 
   '@microsoft/tsdoc@0.16.0': {}
 
-  '@mieweb/datavis@1.6.0(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@types/react@19.2.18)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(redux@5.0.1)(remark-gfm@4.0.1)(typescript@6.0.3)':
+  '@mieweb/datavis@1.6.0(@types/react@19.2.18)(datavis-ace@4.1.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(redux@5.0.1)(typescript@6.0.3)':
     dependencies:
       '@dnd-kit/core': 6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@dnd-kit/sortable': 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)
       '@dnd-kit/utilities': 3.2.2(react@19.2.8)
-      '@mieweb/ui': 0.6.1-dev.169(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@mieweb/datavis@1.6.0(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@types/react@19.2.18)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(redux@5.0.1)(remark-gfm@4.0.1)(typescript@6.0.3))(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(remark-gfm@4.0.1)
+      '@mieweb/ui': link:../ui
       datavis-ace: 4.1.0
       i18next: 26.3.6(typescript@6.0.3)
       lucide-react: 1.31.0(react@19.2.8)
@@ -12787,155 +12459,10 @@ snapshots:
       react-is: 18.3.1
       recharts: 3.10.1(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-is@18.3.1)(react@19.2.8)(redux@5.0.1)
     transitivePeerDependencies:
-      - '@kerebron/editor'
-      - '@kerebron/editor-kits'
-      - '@kerebron/wasm'
       - '@types/react'
-      - ag-grid-community
-      - ag-grid-react
-      - js-yaml
-      - katex
-      - mermaid
-      - papaparse
-      - react-markdown
       - react-native
       - redux
-      - rehype-highlight
-      - rehype-katex
-      - rehype-sanitize
-      - remark-gfm
-      - remark-math
       - typescript
-      - wavesurfer.js
-
-  '@mieweb/ui@0.11.0-dev.25(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/wasm@0.8.10)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(remark-gfm@4.0.1)':
-    dependencies:
-      '@dnd-kit/core': 6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      '@dnd-kit/sortable': 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)
-      '@dnd-kit/utilities': 3.2.2(react@19.2.8)
-      '@swc/helpers': 0.5.23
-      '@tanstack/react-virtual': 3.14.22(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      class-variance-authority: 0.7.1
-      clsx: 2.1.1
-      datavis-ace: 4.1.0
-      dompurify: 3.4.17
-      google-libphonenumber: 3.2.47
-      highlight.js: 11.12.0
-      lucide-react: 0.562.0(react@19.2.8)
-      luxon: 3.7.2
-      marked: 17.0.6
-      onnxruntime-web: 1.19.0
-      react: 19.2.8
-      react-dom: 19.2.8(react@19.2.8)
-      tailwind-merge: 2.6.1
-    optionalDependencies:
-      '@kerebron/editor': 0.8.12
-      '@kerebron/editor-kits': 0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0))
-      '@kerebron/extension-basic-editor': 0.8.12
-      '@kerebron/wasm': 0.8.10
-      ag-grid-community: 35.3.1
-      ag-grid-react: 35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      js-yaml: 5.2.3
-      katex: 0.16.47
-      mermaid: 11.16.1
-      papaparse: 5.5.4
-      remark-gfm: 4.0.1
-
-  '@mieweb/ui@0.11.0-dev.25(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/wasm@0.8.12)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(remark-gfm@4.0.1)':
-    dependencies:
-      '@dnd-kit/core': 6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      '@dnd-kit/sortable': 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)
-      '@dnd-kit/utilities': 3.2.2(react@19.2.8)
-      '@swc/helpers': 0.5.23
-      '@tanstack/react-virtual': 3.14.22(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      class-variance-authority: 0.7.1
-      clsx: 2.1.1
-      datavis-ace: 4.1.0
-      dompurify: 3.4.17
-      google-libphonenumber: 3.2.47
-      highlight.js: 11.12.0
-      lucide-react: 0.562.0(react@19.2.8)
-      luxon: 3.7.2
-      marked: 17.0.6
-      onnxruntime-web: 1.19.0
-      react: 19.2.8
-      react-dom: 19.2.8(react@19.2.8)
-      tailwind-merge: 2.6.1
-    optionalDependencies:
-      '@kerebron/editor': 0.8.12
-      '@kerebron/editor-kits': 0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0))
-      '@kerebron/extension-basic-editor': 0.8.12
-      '@kerebron/wasm': 0.8.12
-      ag-grid-community: 35.3.1
-      ag-grid-react: 35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      js-yaml: 5.2.3
-      katex: 0.16.47
-      mermaid: 11.16.1
-      papaparse: 5.5.4
-      remark-gfm: 4.0.1
-
-  '@mieweb/ui@0.6.1-dev.169(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@mieweb/datavis@1.6.0(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@types/react@19.2.18)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(redux@5.0.1)(remark-gfm@4.0.1)(typescript@6.0.3))(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(remark-gfm@4.0.1)':
-    dependencies:
-      '@swc/helpers': 0.5.23
-      '@tanstack/react-virtual': 3.14.10(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      class-variance-authority: 0.7.1
-      clsx: 2.1.1
-      dompurify: 3.4.14
-      google-libphonenumber: 3.2.46
-      highlight.js: 11.12.0
-      lucide-react: 0.562.0(react@19.2.8)
-      luxon: 3.7.2
-      marked: 17.0.6
-      onnxruntime-web: 1.19.0
-      react: 19.2.8
-      react-dom: 19.2.8(react@19.2.8)
-      tailwind-merge: 2.6.1
-    optionalDependencies:
-      '@kerebron/editor': 0.8.12
-      '@kerebron/editor-kits': 0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0))
-      '@kerebron/wasm': 0.8.12
-      '@mieweb/datavis': 1.6.0(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@types/react@19.2.18)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(redux@5.0.1)(remark-gfm@4.0.1)(typescript@6.0.3)
-      ag-grid-community: 35.3.1
-      ag-grid-react: 35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      datavis-ace: 4.1.0
-      js-yaml: 5.2.3
-      katex: 0.16.47
-      mermaid: 11.16.1
-      papaparse: 5.5.4
-      remark-gfm: 4.0.1
-
-  '@mieweb/ui@0.8.0-dev.21(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@mieweb/datavis@1.6.0(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@types/react@19.2.18)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(redux@5.0.1)(remark-gfm@4.0.1)(typescript@6.0.3))(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(remark-gfm@4.0.1)':
-    dependencies:
-      '@dnd-kit/core': 6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      '@dnd-kit/sortable': 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)
-      '@dnd-kit/utilities': 3.2.2(react@19.2.8)
-      '@swc/helpers': 0.5.23
-      '@tanstack/react-virtual': 3.14.22(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      class-variance-authority: 0.7.1
-      clsx: 2.1.1
-      dompurify: 3.4.17
-      google-libphonenumber: 3.2.47
-      highlight.js: 11.12.0
-      lucide-react: 0.562.0(react@19.2.8)
-      luxon: 3.7.2
-      marked: 17.0.6
-      onnxruntime-web: 1.19.0
-      react: 19.2.8
-      react-dom: 19.2.8(react@19.2.8)
-      tailwind-merge: 2.6.1
-    optionalDependencies:
-      '@kerebron/editor': 0.8.12
-      '@kerebron/editor-kits': 0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0))
-      '@kerebron/wasm': 0.8.12
-      '@mieweb/datavis': 1.6.0(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/wasm@0.8.12)(@types/react@19.2.18)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(redux@5.0.1)(remark-gfm@4.0.1)(typescript@6.0.3)
-      ag-grid-community: 35.3.1
-      ag-grid-react: 35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      datavis-ace: 4.1.0
-      js-yaml: 5.2.3
-      katex: 0.16.47
-      mermaid: 11.16.1
-      papaparse: 5.5.4
-      remark-gfm: 4.0.1
 
   '@module-federation/error-codes@0.22.0': {}
 
@@ -13365,26 +12892,6 @@ snapshots:
 
   '@polka/url@1.0.0-next.29': {}
 
-  '@protobufjs/aspromise@1.1.2': {}
-
-  '@protobufjs/base64@1.1.2': {}
-
-  '@protobufjs/codegen@2.0.5': {}
-
-  '@protobufjs/eventemitter@1.1.1': {}
-
-  '@protobufjs/fetch@1.1.1':
-    dependencies:
-      '@protobufjs/aspromise': 1.1.2
-
-  '@protobufjs/float@1.0.2': {}
-
-  '@protobufjs/path@1.1.2': {}
-
-  '@protobufjs/pool@1.1.0': {}
-
-  '@protobufjs/utf8@1.1.2': {}
-
   '@react-pdf/fns@3.1.3': {}
 
   '@react-pdf/font@4.1.2':
@@ -13429,7 +12936,7 @@ snapshots:
 
   '@react-pdf/render@4.7.0':
     dependencies:
-      '@babel/runtime': 7.29.7
+      '@babel/runtime': 7.29.10
       '@react-pdf/fns': 3.1.3
       '@react-pdf/primitives': 4.4.0
       '@react-pdf/textkit': 7.0.1
@@ -13978,6 +13485,7 @@ snapshots:
   '@swc/helpers@0.5.23':
     dependencies:
       tslib: 2.8.1
+    optional: true
 
   '@swc/html-darwin-arm64@1.15.47':
     optional: true
@@ -14125,22 +13633,6 @@ snapshots:
       '@tailwindcss/oxide': 4.3.3
       tailwindcss: 4.3.3
       vite: 8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.0)
-
-  '@tanstack/react-virtual@3.14.10(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
-    dependencies:
-      '@tanstack/virtual-core': 3.17.8
-      react: 19.2.8
-      react-dom: 19.2.8(react@19.2.8)
-
-  '@tanstack/react-virtual@3.14.22(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
-    dependencies:
-      '@tanstack/virtual-core': 3.19.7
-      react: 19.2.8
-      react-dom: 19.2.8(react@19.2.8)
-
-  '@tanstack/virtual-core@3.17.8': {}
-
-  '@tanstack/virtual-core@3.19.7': {}
 
   '@testing-library/dom@10.4.0':
     dependencies:
@@ -14410,6 +13902,7 @@ snapshots:
   '@types/node@26.6.5':
     dependencies:
       undici-types: 8.9.0
+    optional: true
 
   '@types/prismjs@1.26.6': {}
 
@@ -14611,7 +14104,7 @@ snapshots:
       obug: 2.1.4
       std-env: 4.2.0
       tinyrainbow: 3.1.1
-      vitest: 4.1.10(@types/node@20.19.9)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@29.1.1(@noble/hashes@1.8.0))(vite@8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.0))
+      vitest: 4.1.10(@types/node@26.6.5)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@29.1.1(@noble/hashes@1.8.0))(vite@8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0))
 
   '@vitest/expect@4.1.10':
     dependencies:
@@ -14665,7 +14158,7 @@ snapshots:
       sirv: 3.0.2
       tinyglobby: 0.2.17
       tinyrainbow: 3.1.1
-      vitest: 4.1.10(@types/node@20.19.9)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@29.1.1(@noble/hashes@1.8.0))(vite@8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.0))
+      vitest: 4.1.10(@types/node@26.6.5)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@29.1.1(@noble/hashes@1.8.0))(vite@8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0))
 
   '@vitest/utils@4.1.10':
     dependencies:
@@ -15401,10 +14894,6 @@ snapshots:
 
   ci-info@3.9.0: {}
 
-  class-variance-authority@0.7.1:
-    dependencies:
-      clsx: 2.1.1
-
   clean-css@5.3.3:
     dependencies:
       source-map: 0.6.1
@@ -16098,10 +15587,6 @@ snapshots:
   domino@2.1.8: {}
 
   dompurify@3.4.13:
-    optionalDependencies:
-      '@types/trusted-types': 2.0.7
-
-  dompurify@3.4.14:
     optionalDependencies:
       '@types/trusted-types': 2.0.7
 
@@ -16799,8 +16284,6 @@ snapshots:
 
   flat@5.0.2: {}
 
-  flatbuffers@1.12.0: {}
-
   flatted@3.4.4: {}
 
   follow-redirects@1.16.0: {}
@@ -16960,10 +16443,6 @@ snapshots:
       merge2: 1.4.1
       slash: 4.0.0
 
-  google-libphonenumber@3.2.46: {}
-
-  google-libphonenumber@3.2.47: {}
-
   gopd@1.2.0: {}
 
   got@12.6.1:
@@ -17000,8 +16479,6 @@ snapshots:
   graceful-fs@4.2.11: {}
 
   graphemer@1.4.0: {}
-
-  guid-typescript@1.0.9: {}
 
   gzip-size@6.0.0:
     dependencies:
@@ -17131,11 +16608,9 @@ snapshots:
 
   he@1.2.0: {}
 
-  highlight.js@11.12.0: {}
-
   history@4.10.1:
     dependencies:
-      '@babel/runtime': 7.29.7
+      '@babel/runtime': 7.29.10
       loose-envify: 1.4.0
       resolve-pathname: 3.0.0
       tiny-invariant: 1.3.3
@@ -17896,8 +17371,6 @@ snapshots:
 
   lodash@4.18.1: {}
 
-  long@5.3.2: {}
-
   longest-streak@3.1.0: {}
 
   loose-envify@1.4.0:
@@ -17916,15 +17389,9 @@ snapshots:
     dependencies:
       yallist: 3.1.1
 
-  lucide-react@0.562.0(react@19.2.8):
-    dependencies:
-      react: 19.2.8
-
   lucide-react@1.31.0(react@19.2.8):
     dependencies:
       react: 19.2.8
-
-  luxon@3.7.2: {}
 
   lz-string@1.5.0: {}
 
@@ -17959,8 +17426,6 @@ snapshots:
   marked@14.0.0: {}
 
   marked@16.4.2: {}
-
-  marked@17.0.6: {}
 
   math-intrinsics@1.1.0: {}
 
@@ -18600,6 +18065,17 @@ snapshots:
       html-minifier-terser: 7.2.0
       postcss: 8.5.26
 
+  minimizer-webpack-plugin@5.6.1(@swc/core@1.15.47(@swc/helpers@0.5.23))(postcss@8.5.26)(webpack@5.109.2(@swc/core@1.15.47(@swc/helpers@0.5.23))(postcss@8.5.26)):
+    dependencies:
+      '@jridgewell/trace-mapping': 0.3.31
+      jest-worker: 27.5.1
+      schema-utils: 4.3.3
+      terser: 5.50.0
+      webpack: 5.109.2(@swc/core@1.15.47(@swc/helpers@0.5.23))(postcss@8.5.26)
+    optionalDependencies:
+      '@swc/core': 1.15.47(@swc/helpers@0.5.23)
+      postcss: 8.5.26
+
   minimizer-webpack-plugin@5.6.1(@swc/core@1.15.8(@swc/helpers@0.5.18))(webpack@5.109.2(@swc/core@1.15.8(@swc/helpers@0.5.18))):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
@@ -18771,17 +18247,6 @@ snapshots:
   onetime@6.0.0:
     dependencies:
       mimic-fn: 4.0.0
-
-  onnxruntime-common@1.19.0: {}
-
-  onnxruntime-web@1.19.0:
-    dependencies:
-      flatbuffers: 1.12.0
-      guid-typescript: 1.0.9
-      long: 5.3.2
-      onnxruntime-common: 1.19.0
-      platform: 1.3.6
-      protobufjs: 7.6.6
 
   open@10.2.0:
     dependencies:
@@ -19031,8 +18496,6 @@ snapshots:
       pvtsutils: 1.3.6
       pvutils: 1.2.0
       tslib: 2.8.1
-
-  platform@1.3.6: {}
 
   png-js@2.0.0:
     dependencies:
@@ -19562,20 +19025,6 @@ snapshots:
 
   proto-list@1.2.4: {}
 
-  protobufjs@7.6.6:
-    dependencies:
-      '@protobufjs/aspromise': 1.1.2
-      '@protobufjs/base64': 1.1.2
-      '@protobufjs/codegen': 2.0.5
-      '@protobufjs/eventemitter': 1.1.1
-      '@protobufjs/fetch': 1.1.1
-      '@protobufjs/float': 1.0.2
-      '@protobufjs/path': 1.1.2
-      '@protobufjs/pool': 1.1.0
-      '@protobufjs/utf8': 1.1.2
-      '@types/node': 26.6.5
-      long: 5.3.2
-
   proxy-addr@2.0.7:
     dependencies:
       forwarded: 0.2.0
@@ -19637,7 +19086,7 @@ snapshots:
 
   react-i18next@17.0.11(i18next@26.3.6(typescript@6.0.3))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.3):
     dependencies:
-      '@babel/runtime': 7.29.7
+      '@babel/runtime': 7.29.10
       html-parse-stringify: 4.0.1
       i18next: 26.3.6(typescript@6.0.3)
       react: 19.2.8
@@ -20564,8 +20013,6 @@ snapshots:
 
   system-architecture@1.0.0: {}
 
-  tailwind-merge@2.6.1: {}
-
   tailwindcss@4.3.3: {}
 
   tapable@2.3.3: {}
@@ -20791,7 +20238,8 @@ snapshots:
 
   undici-types@6.21.0: {}
 
-  undici-types@8.9.0: {}
+  undici-types@8.9.0:
+    optional: true
 
   undici@7.29.0: {}
 
@@ -21313,7 +20761,7 @@ snapshots:
       events: 3.3.0
       graceful-fs: 4.2.11
       mime-db: 1.54.0
-      minimizer-webpack-plugin: 5.6.1(@swc/core@1.15.47(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.26))(html-minifier-terser@7.2.0)(postcss@8.5.26)(webpack@5.109.2(@swc/core@1.15.47(@swc/helpers@0.5.23))(postcss@8.5.26))
+      minimizer-webpack-plugin: 5.6.1(@swc/core@1.15.47(@swc/helpers@0.5.23))(postcss@8.5.26)(webpack@5.109.2(@swc/core@1.15.47(@swc/helpers@0.5.23))(postcss@8.5.26))
       neo-async: 2.6.2
       schema-utils: 4.3.3
       tapable: 2.3.3

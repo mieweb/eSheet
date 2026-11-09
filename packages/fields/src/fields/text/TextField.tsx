@@ -4,7 +4,7 @@ import type {
   TextFieldDefinition,
   LongtextFieldDefinition,
 } from '@esheet/core';
-import { Input, DateInput } from '@mieweb/ui';
+import { Input, DateInput, regionalDateLocale } from '@mieweb/ui';
 
 function formatPhoneNumber(value: string): string {
   if (!value) return value;
@@ -128,6 +128,7 @@ export const TextField = React.memo(function TextField({
       return (
         <div className="text-field-preview">
           <DateInput
+            locale={regionalDateLocale()}
             id={`${instanceId}-text-answer-${def.id}`}
             name={`esheet-${inputType}-answer-${def.id}`}
             label={def.question || 'Question'}
@@ -205,6 +206,7 @@ export const TextField = React.memo(function TextField({
       {inputType === 'date' || inputType === 'datetime-local' ? (
         <div className="ms:pointer-events-none ms:select-none">
           <DateInput
+            locale={regionalDateLocale()}
             id={`${instanceId}-canvas-preview-${def.id}`}
             aria-label="Answer preview"
             value=""

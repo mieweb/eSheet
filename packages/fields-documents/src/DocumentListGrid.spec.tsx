@@ -78,6 +78,28 @@ const row: DocumentListDocument = {
 const tableData: Record<string, unknown> = { ...row };
 
 describe('DocumentListGrid host integration', () => {
+  it('formats dates regionally without changing source rows or requiring actions', async () => {
+    const languages = vi
+      .spyOn(navigator, 'languages', 'get')
+      .mockReturnValue(['en-GB']);
+    try {
+      render(<DocumentListGrid rows={[row]} />);
+      await waitFor(() => expect(captured.props).not.toBeNull());
+      const props = captured.props as {
+        formatCell: (
+          value: unknown,
+          data: Record<string, unknown>,
+          column: { field: string }
+        ) => ReactNode;
+      };
+      render(<>{props.formatCell(row.date, tableData, { field: 'date' })}</>);
+      expect(screen.getByText('18/08/2026')).toBeTruthy();
+      expect(row.date).toBe('2026-08-18');
+    } finally {
+      languages.mockRestore();
+    }
+  });
+
   beforeEach(() => {
     captured.props = null;
     sourceKeys.length = 0;

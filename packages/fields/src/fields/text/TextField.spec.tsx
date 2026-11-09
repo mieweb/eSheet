@@ -35,6 +35,30 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('TextField', () => {
+  it('passes browser regional preferences without changing stored date values', () => {
+    const languages = vi
+      .spyOn(navigator, 'languages', 'get')
+      .mockReturnValue(['en-GB']);
+    try {
+      render(
+        <TextField
+          {...createProps({
+            fieldType: 'text',
+            id: 'regional-date',
+            inputType: 'date',
+          })}
+          response={{ answer: '2026-11-09' }}
+        />
+      );
+      expect(mocks.dateInput).toHaveBeenCalledWith(
+        expect.objectContaining({ locale: 'en-GB', value: '11/09/2026' }),
+        undefined
+      );
+    } finally {
+      languages.mockRestore();
+    }
+  });
+
   it('stores DateInput values as ISO dates', () => {
     const onResponse = vi.fn();
 

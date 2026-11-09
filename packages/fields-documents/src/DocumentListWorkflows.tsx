@@ -22,7 +22,13 @@ import {
   formatFileSize,
   getFileMetadata,
 } from '@esheet/fields';
-import { Button, Input, MarkdownRenderer, Select } from '@mieweb/ui';
+import {
+  Button,
+  Input,
+  MarkdownRenderer,
+  Select,
+  formatRegionalDate,
+} from '@mieweb/ui';
 import { Maximize2, Minimize2, X } from 'lucide-react';
 import type { FileInput } from '@esheet/core';
 import '@mieweb/ui/markdown.css';
@@ -1523,7 +1529,7 @@ export function DocumentListDetailRow({
         <ul className="document-list-detail__addenda" aria-label="Addenda">
           {related.map((addendum) => (
             <li key={addendum.id}>
-              Addendum — {addendum.title} ({addendum.date}
+              Addendum — {addendum.title} ({formatRegionalDate(addendum.date)}
               {addendum.author ? `, ${addendum.author.name}` : ''})
             </li>
           ))}

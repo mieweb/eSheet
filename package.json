@@ -78,6 +78,7 @@
   },
   "pnpm": {
     "overrides": {
+      "@mieweb/ui": "link:../ui",
       "axios": "1.13.6",
       "@xhmikosr/decompress": "11.1.4",
       "shell-quote": "1.10.0",

@@ -67,6 +67,7 @@ export const LongTextField = React.memo(function LongTextField({
           )}
         </div>
         <Textarea
+          richText={false}
           key={sizingKey}
           ref={textareaRef}
           id={`${instanceId}-longtext-answer-${def.id}`}
@@ -103,6 +104,7 @@ export const LongTextField = React.memo(function LongTextField({
         />
       </div>
       <Textarea
+        richText={false}
         key={sizingKey}
         ref={textareaRef}
         id={`${instanceId}-canvas-preview-${def.id}`}
