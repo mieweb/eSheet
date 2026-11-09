@@ -20,6 +20,85 @@ function getRendererHandle(ref: React.RefObject<EsheetRendererHandle | null>) {
 }
 
 describe('EsheetRenderer', () => {
+  it('blocks stale date answers while a real regional DateInput has an invalid draft', async () => {
+    const languages = vi
+      .spyOn(navigator, 'languages', 'get')
+      .mockReturnValue(['en-GB']);
+    try {
+      const ref = React.createRef<EsheetRendererHandle>();
+      const onSubmit = vi.fn();
+      let tools: RendererTools | undefined;
+      const { getByRole } = render(
+        <EsheetRenderer
+          ref={ref}
+          formDataInput={{
+            id: 'regional-date',
+            pages: [
+              {
+                id: 'main',
+                fields: [
+                  {
+                    id: 'date',
+                    fieldType: 'text',
+                    inputType: 'date',
+                    question: 'Appointment date',
+                  },
+                ],
+              },
+            ],
+          }}
+          initialResponses={{ date: { answer: '2026-11-09' } }}
+          onSubmit={onSubmit}
+          onRendererToolsReady={(value) => {
+            tools = value;
+          }}
+        />
+      );
+      await act(async () => undefined);
+      const renderer = getRendererHandle(ref);
+      const input = getByRole('textbox', {
+        name: 'Appointment date',
+      }) as HTMLInputElement;
+      expect(input.value).toBe('09/11/2026');
+
+      for (const draft of ['09/11/202', '31/02/2026']) {
+        fireEvent.change(input, { target: { value: draft } });
+        expect(renderer.getRawResponse().date.answer).toBe('2026-11-09');
+        expect(renderer.getValidResponse().response).toBeNull();
+        expect(tools?.getValidResponse().response).toBeNull();
+        expect(
+          renderer.getFormStore().getState().getFieldErrors('date')
+        ).toEqual([
+          expect.objectContaining({ rule: 'input', severity: 'hard' }),
+        ]);
+        fireEvent.click(getByRole('button', { name: 'Submit' }));
+        expect(onSubmit).not.toHaveBeenCalled();
+      }
+
+      fireEvent.change(input, { target: { value: '10/11/2026' } });
+      expect(renderer.getValidResponse()).toEqual({
+        response: { date: { answer: '2026-11-10' } },
+        errors: [],
+      });
+      fireEvent.click(getByRole('button', { name: 'Submit' }));
+      expect(onSubmit).toHaveBeenLastCalledWith({
+        date: { answer: '2026-11-10' },
+      });
+
+      fireEvent.change(input, { target: { value: '10/11/202' } });
+      expect(renderer.getValidResponse().response).toBeNull();
+      fireEvent.change(input, { target: { value: '' } });
+      expect(renderer.getValidResponse()).toEqual({
+        response: { date: { answer: '' } },
+        errors: [],
+      });
+      fireEvent.click(getByRole('button', { name: 'Submit' }));
+      expect(onSubmit).toHaveBeenLastCalledWith({ date: { answer: '' } });
+    } finally {
+      languages.mockRestore();
+    }
+  });
+
   it.each<FormResponse | undefined>([
     undefined,
     {},

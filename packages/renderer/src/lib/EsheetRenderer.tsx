@@ -4,7 +4,6 @@ import {
   createUIStore,
   normalizeResponses,
   hydrateDefinition,
-  validateForm,
   type CollabDecorations,
   type FormResponse,
   type FormStore,
@@ -308,11 +307,7 @@ const EsheetRendererInner = React.forwardRef<
 
   const handleSubmitClick = () => {
     const state = formStore.getState();
-    const errors = validateForm(
-      state.normalized,
-      state.responses,
-      state.dangerouslyAllowJS
-    );
+    const errors = state.getErrors();
     const hardErrors = errors.filter((e) => e.severity !== 'soft');
     if (hardErrors.length > 0) return; // hard errors — field-level UI handles display
     const softErrors = errors.filter((e) => e.severity === 'soft');
@@ -410,7 +405,7 @@ const EsheetRendererInner = React.forwardRef<
       getUIStore: () => uiStore,
       getValidResponse: () => {
         const state = formStore.getState();
-        const errors = validateForm(state.normalized, state.responses);
+        const errors = state.getErrors();
         return {
           response: errors.length === 0 ? state.responses : null,
           errors,
@@ -515,7 +510,15 @@ const EsheetRendererInner = React.forwardRef<
         showCancel
         onConfirm={() => {
           setSoftBypassOpen(false);
-          if (pendingResponse) onSubmit?.(pendingResponse);
+          if (
+            pendingResponse &&
+            !formStore
+              .getState()
+              .getErrors()
+              .some((e) => e.severity === 'hard')
+          ) {
+            onSubmit?.(pendingResponse);
+          }
           setPendingResponse(null);
         }}
         onClose={() => {

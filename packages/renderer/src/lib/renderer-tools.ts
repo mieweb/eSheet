@@ -2,12 +2,7 @@
 // RendererTools — narrow facade for MCP / AI tool callers only.
 // ---------------------------------------------------------------------------
 
-import {
-  validateForm,
-  type FieldResponse,
-  type FormStore,
-  type ValidationError,
-} from '@esheet/core';
+import type { FieldResponse, FormStore, ValidationError } from '@esheet/core';
 import { buildRenderTree as renderer } from '@esheet/core';
 import type { RenderFieldNode } from '@esheet/core';
 
@@ -452,7 +447,7 @@ export function createRendererTools(formStore: FormStore): RendererTools {
 
     getValidResponse: () => {
       const state = formStore.getState();
-      const errors = validateForm(state.normalized, state.responses);
+      const errors = state.getErrors();
       return {
         response:
           errors.length === 0

@@ -9,7 +9,7 @@ import {
 } from 'react';
 import type { FieldComponentProps } from '@esheet/core';
 import { FormStoreContext } from '@esheet/fields';
-import { Button, Input } from '@mieweb/ui';
+import { Button, Input, formatRegionalDate } from '@mieweb/ui';
 import {
   ArchiveRestore,
   FileDown,
@@ -256,7 +256,9 @@ export function DocumentListField({
       const names = present.map((entry) => entry.user.name).join(', ');
       return (
         <span className="document-list-row-presence">
-          {String(value ?? '')}
+          {column.field === 'date'
+            ? formatRegionalDate(String(value ?? ''))
+            : String(value ?? '')}
           <span
             className="document-list-row-presence__badges"
             role="img"

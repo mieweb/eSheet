@@ -78,6 +78,79 @@ const row: DocumentListDocument = {
 const tableData: Record<string, unknown> = { ...row };
 
 describe('DocumentListGrid host integration', () => {
+  it('keeps title-less presence badges regional without mutating document dates', async () => {
+    const languages = vi
+      .spyOn(navigator, 'languages', 'get')
+      .mockReturnValue(['en-GB']);
+    try {
+      const formStore = createFormStore();
+      const props = {
+        field: {
+          definition: {
+            id: 'notes',
+            question: 'Notes',
+            columns: ['date', 'subject'],
+            documents: [row],
+          },
+        },
+        form: formStore,
+      } as unknown as FieldComponentProps;
+      render(
+        <FormStoreContext.Provider value={formStore}>
+          <DocumentListFieldProvider
+            host={{
+              capabilities: permissiveDocumentListCapabilities,
+              draftChannel: {
+                open: vi.fn(),
+                presenceOf: (_id, listener) => {
+                  listener([{ user: { id: 'other', name: 'Other author' } }]);
+                  return () => {};
+                },
+              },
+            }}
+          >
+            <DocumentListField {...props} />
+          </DocumentListFieldProvider>
+        </FormStoreContext.Provider>
+      );
+      await waitFor(() => expect(captured.props).not.toBeNull());
+      const grid = captured.props as {
+        formatCell: (
+          value: unknown,
+          data: Record<string, unknown>,
+          column: { field: string }
+        ) => ReactNode;
+      };
+      render(<>{grid.formatCell(row.date, tableData, { field: 'date' })}</>);
+      expect(screen.getByText('18/08/2026')).toBeTruthy();
+      expect(
+        screen.getByRole('img', { name: 'Draft in progress — Other author' })
+      ).toBeTruthy();
+      expect(row.date).toBe('2026-08-18');
+    } finally {
+      languages.mockRestore();
+    }
+  });
+
+  it('preserves host-provided date cell formatting', async () => {
+    const formatCell = vi.fn(() => 'Host date');
+    render(<DocumentListGrid rows={[row]} formatCell={formatCell} />);
+    await waitFor(() => expect(captured.props).not.toBeNull());
+    const grid = captured.props as {
+      formatCell: (
+        value: unknown,
+        data: Record<string, unknown>,
+        column: { field: string }
+      ) => ReactNode;
+    };
+    expect(grid.formatCell(row.date, tableData, { field: 'date' })).toBe(
+      'Host date'
+    );
+    expect(formatCell).toHaveBeenCalledWith(row.date, tableData, {
+      field: 'date',
+    });
+  });
+
   it('formats dates regionally without changing source rows or requiring actions', async () => {
     const languages = vi
       .spyOn(navigator, 'languages', 'get')

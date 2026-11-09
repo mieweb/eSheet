@@ -5,7 +5,7 @@ import {
   render,
   screen,
 } from '@testing-library/react';
-import type { FieldComponentProps } from '@esheet/core';
+import { createFormStore, type FieldComponentProps } from '@esheet/core';
 import { TextField } from './TextField.js';
 import { LongTextField } from './LongTextField.js';
 
@@ -19,9 +19,11 @@ vi.mock('@mieweb/ui', async (importOriginal) => ({
 }));
 
 function createProps(definition: Record<string, unknown>): FieldComponentProps {
+  const form = createFormStore();
+  form.setState({ instanceId: 'test' });
   return {
     field: { definition },
-    form: { getState: () => ({ instanceId: 'test' }) },
+    form,
     isPreview: true,
     isEnabled: true,
     onResponse: vi.fn(),

@@ -115,6 +115,11 @@ export const TextField = React.memo(function TextField({
   const placeholder = PLACEHOLDER[inputType] || 'Type your answer';
   const dateRange = resolveDateRange(def.dateRange);
 
+  React.useEffect(() => {
+    form.getState().setInputError(def.id, undefined);
+    return () => form.getState().setInputError(def.id, undefined);
+  }, [form, def.id, inputType, isPreview, response?.answer]);
+
   // When a computed value arrives and the user hasn't answered yet, seed it as
   // the response so it behaves like any other answered field (overwritable).
   React.useEffect(() => {
@@ -144,6 +149,14 @@ export const TextField = React.memo(function TextField({
               onResponse({
                 answer: inputType === 'date' ? toStoredDateValue(val) : val,
               })
+            }
+            onValidityChange={(valid) =>
+              form
+                .getState()
+                .setInputError(
+                  def.id,
+                  valid ? undefined : 'Enter a complete, valid date'
+                )
             }
             inputType={inputType}
             timeFormat={def.timeFormat}

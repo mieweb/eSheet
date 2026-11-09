@@ -21,7 +21,9 @@
 Date and datetime fields use the browser's regional language preference for
 display (and date entry) through `DateInput.locale`. Date answers remain ISO
 `YYYY-MM-DD`; relative date bounds and calendar selection keep the existing
-US-order control-value contract. Document-list date columns and addendum
+US-order control-value contract. Incomplete or invalid date drafts block
+validation and submission until corrected or cleared; draft errors are transient
+and never exported with responses. Document-list date columns and addendum
 dates use the same regional formatter without changing stored rows or sort
 keys. The development UI source override requires a sibling `ui` checkout;
 build that package before building these fields.
