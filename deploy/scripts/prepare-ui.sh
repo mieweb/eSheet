@@ -28,6 +28,11 @@ fi
 git -C "$UI_DIR" submodule update --init --recursive
 (
   cd "$UI_DIR"
+  # Nested build scripts invoke pnpm directly and need Corepack's shim too.
+  SHIM_DIR="$(git rev-parse --absolute-git-dir)/corepack-bin"
+  mkdir -p "$SHIM_DIR"
+  corepack enable --install-directory "$SHIM_DIR"
+  export PATH="$SHIM_DIR:$PATH"
   corepack pnpm install --frozen-lockfile
   corepack pnpm build
 )
