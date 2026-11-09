@@ -492,6 +492,100 @@ describe('createFormStore', () => {
   });
 
   describe('validation and hydration', () => {
+    it('resets input keys per field without resetting unrelated drafts', () => {
+      store = createFormStore(form([field('date'), field('other')]));
+      store.getState().clearResponse('date');
+      expect(store.getState().inputResetKeys).toEqual({ date: 1 });
+      store.getState().resetResponses();
+      expect(store.getState().inputResetKeys).toEqual({ date: 2, other: 1 });
+      store
+        .getState()
+        .loadDefinition(form([field('date'), field('other')]), {});
+      expect(store.getState().inputResetKeys).toEqual({ date: 3, other: 2 });
+    });
+
+    it('validates transient input errors without exporting them', () => {
+      store = createFormStore(form([field('date')]));
+      store.getState().setResponse('date', { answer: '2026-11-09' });
+      const exported = store.getState().hydrateResponse();
+      store.getState().setInputError('date', 'Enter a complete, valid date');
+      const expected = [
+        {
+          fieldId: 'date',
+          rule: 'input',
+          message: 'Enter a complete, valid date',
+          severity: 'hard',
+        },
+      ];
+      expect(store.getState().getFieldErrors('date')).toEqual(expected);
+      expect(store.getState().getErrors()).toEqual(expected);
+      store.getState().setResponse('date', { answer: '2026-11-09' });
+      expect(store.getState().getErrors()).toEqual(expected);
+      expect(store.getState().hydrateResponse().items).toEqual(exported.items);
+      expect(store.getState().responses).toEqual({
+        date: { answer: '2026-11-09' },
+      });
+      store.getState().setInputError('date', undefined);
+      expect(store.getState().getErrors()).toEqual([]);
+    });
+
+    it('ignores draft errors for unknown, hidden, and disabled fields', () => {
+      store = createFormStore(
+        form([
+          field('trigger'),
+          field('hidden', 'text', { rules: [visibleRule('trigger', 'show')] }),
+          field('disabled', 'text', { rules: [enableRule('trigger', 'show')] }),
+        ])
+      );
+      for (const id of ['unknown', 'hidden', 'disabled']) {
+        store.getState().setInputError(id, 'Invalid draft');
+      }
+      expect(store.getState().getErrors()).toEqual([]);
+      expect(store.getState().getFieldErrors('unknown')).toEqual([]);
+      store.getState().setResponse('trigger', { answer: 'show' });
+      expect(
+        store
+          .getState()
+          .getErrors()
+          .map((error) => error.fieldId)
+      ).toEqual(['hidden', 'disabled']);
+    });
+
+    it.each([
+      'setResponse',
+      'clearResponse',
+      'resetResponses',
+      'loadDefinition',
+      'removeField',
+      'dispose',
+    ] as const)(
+      'clears draft errors when %s replaces or removes the input',
+      (action) => {
+        store = createFormStore(form([field('date')]));
+        store.getState().setInputError('date', 'Invalid draft');
+        switch (action) {
+          case 'setResponse':
+            store.getState().setResponse('date', { answer: '2026-11-10' });
+            break;
+          case 'clearResponse':
+            store.getState().clearResponse('date');
+            break;
+          case 'resetResponses':
+            store.getState().resetResponses();
+            break;
+          case 'loadDefinition':
+            store.getState().loadDefinition(form([field('date')]));
+            break;
+          case 'removeField':
+            store.getState().removeField('date');
+            break;
+          case 'dispose':
+            store.getState().dispose();
+        }
+        expect(store.getState().getErrors()).toEqual([]);
+      }
+    );
+
     it('skips disabled required fields in errors and hydrated output', () => {
       store = createFormStore(
         form([

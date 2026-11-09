@@ -20,6 +20,227 @@ function getRendererHandle(ref: React.RefObject<EsheetRendererHandle | null>) {
 }
 
 describe('EsheetRenderer', () => {
+  describe('regional date draft lifecycle', () => {
+    beforeEach(() => {
+      vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['en-GB']);
+    });
+
+    afterEach(() => vi.restoreAllMocks());
+
+    async function mountDateForm(
+      initialResponses: FormResponse = {},
+      twoPages = false,
+      validateNavigation = true
+    ) {
+      const ref = React.createRef<EsheetRendererHandle>();
+      const onSubmit = vi.fn();
+      let tools: RendererTools | undefined;
+      const view = render(
+        <EsheetRenderer
+          ref={ref}
+          initialResponses={initialResponses}
+          formDataInput={{
+            id: 'date-lifecycle',
+            pages: [
+              {
+                id: 'date-page',
+                title: 'Date page',
+                fields: [
+                  {
+                    id: 'date',
+                    fieldType: 'text',
+                    inputType: 'date',
+                    question: 'Appointment date',
+                  },
+                ],
+              },
+              ...(twoPages
+                ? [{ id: 'next-page', title: 'Next page', fields: [] }]
+                : []),
+            ],
+          }}
+          topNavigation
+          validateNavigation={validateNavigation}
+          onSubmit={onSubmit}
+          onRendererToolsReady={(value) => {
+            tools = value;
+          }}
+        />
+      );
+      await act(async () => undefined);
+      if (!tools) throw new Error('Expected renderer tools');
+      return {
+        ...view,
+        renderer: getRendererHandle(ref),
+        tools,
+        onSubmit,
+        input: () =>
+          view.getByRole('textbox', {
+            name: 'Appointment date',
+          }) as HTMLInputElement,
+      };
+    }
+
+    it.each(['tools', 'field', 'definition'] as const)(
+      'clears an initially unanswered draft when reset through %s',
+      async (reset) => {
+        const view = await mountDateForm();
+        fireEvent.change(view.input(), { target: { value: '09/11/202' } });
+        expect(view.renderer.getValidResponse().response).toBeNull();
+        act(() => {
+          const state = view.renderer.getFormStore().getState();
+          if (reset === 'tools') {
+            expect(view.tools.clearResponses()).toBe(true);
+          } else if (reset === 'field') {
+            state.clearResponse('date');
+          } else {
+            state.loadDefinition(state.hydrateDefinition(), {});
+          }
+        });
+        expect(view.input().value).toBe('');
+        expect(view.renderer.getValidResponse().errors).toEqual([]);
+        fireEvent.click(view.getByRole('button', { name: 'Submit' }));
+        expect(view.onSubmit).toHaveBeenCalledWith({});
+      }
+    );
+
+    it.each([true, false])(
+      'blocks page changes with an invalid date draft when required navigation validation is %s',
+      async (validateNavigation) => {
+        const view = await mountDateForm(
+          { date: { answer: '2026-11-09' } },
+          true,
+          validateNavigation
+        );
+        fireEvent.change(view.input(), { target: { value: '09/11/202' } });
+        for (const label of [/Next →/, /^Next page$/]) {
+          fireEvent.click(view.getByRole('button', { name: label }));
+          expect(view.renderer.getCurrentPageId()).toBe('date-page');
+          expect(view.input().value).toBe('09/11/202');
+        }
+        act(() => {
+          expect(view.renderer.goToPage('next-page')).toBe(false);
+          view.renderer.setCurrentPage('next-page');
+        });
+        expect(view.renderer.getCurrentPageId()).toBe('date-page');
+        expect(view.renderer.getValidResponse().response).toBeNull();
+        expect(view.tools.getValidResponse().response).toBeNull();
+        fireEvent.click(view.getByRole('button', { name: 'Submit' }));
+        expect(view.onSubmit).not.toHaveBeenCalled();
+
+        fireEvent.change(view.input(), { target: { value: '10/11/2026' } });
+        fireEvent.click(view.getByRole('button', { name: /Next →/ }));
+        expect(view.renderer.getCurrentPageId()).toBe('next-page');
+        expect(view.renderer.getValidResponse().response).toEqual({
+          date: { answer: '2026-11-10' },
+        });
+      }
+    );
+
+    it('rejects invalid initial and programmatically replaced date answers', async () => {
+      const view = await mountDateForm({ date: { answer: '2026-02-31' } });
+      for (const answer of ['2026-02-31', '2026-02-29']) {
+        act(() =>
+          view.renderer
+            .getFormStore()
+            .getState()
+            .setResponse('date', { answer })
+        );
+        expect(view.renderer.getValidResponse().response).toBeNull();
+        expect(view.tools.getValidResponse().response).toBeNull();
+        fireEvent.click(view.getByRole('button', { name: 'Submit' }));
+        expect(view.onSubmit).not.toHaveBeenCalled();
+      }
+      act(() =>
+        view.renderer
+          .getFormStore()
+          .getState()
+          .setResponse('date', { answer: '2026-02-28' })
+      );
+      expect(view.renderer.getValidResponse().errors).toEqual([]);
+      expect(view.input().value).toBe('28/02/2026');
+    });
+  });
+
+  it('blocks stale date answers while a real regional DateInput has an invalid draft', async () => {
+    const languages = vi
+      .spyOn(navigator, 'languages', 'get')
+      .mockReturnValue(['en-GB']);
+    try {
+      const ref = React.createRef<EsheetRendererHandle>();
+      const onSubmit = vi.fn();
+      let tools: RendererTools | undefined;
+      const { getByRole } = render(
+        <EsheetRenderer
+          ref={ref}
+          formDataInput={{
+            id: 'regional-date',
+            pages: [
+              {
+                id: 'main',
+                fields: [
+                  {
+                    id: 'date',
+                    fieldType: 'text',
+                    inputType: 'date',
+                    question: 'Appointment date',
+                  },
+                ],
+              },
+            ],
+          }}
+          initialResponses={{ date: { answer: '2026-11-09' } }}
+          onSubmit={onSubmit}
+          onRendererToolsReady={(value) => {
+            tools = value;
+          }}
+        />
+      );
+      await act(async () => undefined);
+      const renderer = getRendererHandle(ref);
+      const input = getByRole('textbox', {
+        name: 'Appointment date',
+      }) as HTMLInputElement;
+      expect(input.value).toBe('09/11/2026');
+
+      for (const draft of ['09/11/202', '31/02/2026']) {
+        fireEvent.change(input, { target: { value: draft } });
+        expect(renderer.getRawResponse().date.answer).toBe('2026-11-09');
+        expect(renderer.getValidResponse().response).toBeNull();
+        expect(tools?.getValidResponse().response).toBeNull();
+        expect(
+          renderer.getFormStore().getState().getFieldErrors('date')
+        ).toEqual([
+          expect.objectContaining({ rule: 'input', severity: 'hard' }),
+        ]);
+        fireEvent.click(getByRole('button', { name: 'Submit' }));
+        expect(onSubmit).not.toHaveBeenCalled();
+      }
+
+      fireEvent.change(input, { target: { value: '10/11/2026' } });
+      expect(renderer.getValidResponse()).toEqual({
+        response: { date: { answer: '2026-11-10' } },
+        errors: [],
+      });
+      fireEvent.click(getByRole('button', { name: 'Submit' }));
+      expect(onSubmit).toHaveBeenLastCalledWith({
+        date: { answer: '2026-11-10' },
+      });
+
+      fireEvent.change(input, { target: { value: '10/11/202' } });
+      expect(renderer.getValidResponse().response).toBeNull();
+      fireEvent.change(input, { target: { value: '' } });
+      expect(renderer.getValidResponse()).toEqual({
+        response: { date: { answer: '' } },
+        errors: [],
+      });
+      fireEvent.click(getByRole('button', { name: 'Submit' }));
+      expect(onSubmit).toHaveBeenLastCalledWith({ date: { answer: '' } });
+    } finally {
+      languages.mockRestore();
+    }
+  });
+
   it.each<FormResponse | undefined>([
     undefined,
     {},

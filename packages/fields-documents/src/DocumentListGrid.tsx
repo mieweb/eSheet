@@ -11,7 +11,7 @@ import {
   type MouseEvent,
   type ReactNode,
 } from 'react';
-import { Button } from '@mieweb/ui';
+import { Button, formatRegionalDate } from '@mieweb/ui';
 import { DataVisNitroContext, DataVisNitroGrid } from '@mieweb/ui/datavis';
 import { ComputedView, Source } from 'datavis-ace';
 import { LayoutList, SquarePen, Upload } from 'lucide-react';
@@ -399,39 +399,38 @@ export function DocumentListGrid({
       : displayed;
   }, [columns, renderActions]);
   const gridFormatCell = useMemo<DataVisGridProps['formatCell']>(
-    () =>
-      formatCell || renderActions
-        ? (value, row, column) => {
-            const document = normalizeDocumentRow(row);
-            if (
-              column.field === DOCUMENT_LIST_ACTIONS_COLUMN.field &&
-              document &&
-              renderActions
-            ) {
-              return renderActions(
-                document,
-                getRowCapabilities?.(document) ?? DEFAULT_ROW_CAPABILITIES
-              );
-            }
-            const formatted = formatCell?.(
-              value,
-              row,
-              column.field === 'documentType'
-                ? { ...column, field: 'docType' }
-                : column
-            );
-            if (formatted !== undefined) return formatted;
-            // datavis renders exactly what formatCell returns — undefined is a
-            // blank cell, not a fallback — so plain cells return their value.
-            const text = value == null ? '' : String(value);
-            // An ISO date must never break on its hyphens.
-            return /^\d{4}-\d{2}-\d{2}$/.test(text) ? (
-              <span className="document-list-grid__nowrap">{text}</span>
-            ) : (
-              text
-            );
-          }
-        : undefined,
+    () => (value, row, column) => {
+      const document = normalizeDocumentRow(row);
+      if (
+        column.field === DOCUMENT_LIST_ACTIONS_COLUMN.field &&
+        document &&
+        renderActions
+      ) {
+        return renderActions(
+          document,
+          getRowCapabilities?.(document) ?? DEFAULT_ROW_CAPABILITIES
+        );
+      }
+      const formatted = formatCell?.(
+        value,
+        row,
+        column.field === 'documentType'
+          ? { ...column, field: 'docType' }
+          : column
+      );
+      if (formatted !== undefined) return formatted;
+      // datavis renders exactly what formatCell returns — undefined is a
+      // blank cell, not a fallback — so plain cells return their value.
+      const text = value == null ? '' : String(value);
+      // An ISO date must never break on its hyphens.
+      return column.field === 'date' ? (
+        <span className="document-list-grid__nowrap">
+          {formatRegionalDate(text)}
+        </span>
+      ) : (
+        text
+      );
+    },
     [formatCell, getRowCapabilities, renderActions]
   );
   const gridOnRowClick = useMemo<DataVisGridProps['onRowClick']>(

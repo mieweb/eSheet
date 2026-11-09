@@ -5,7 +5,7 @@ import {
   render,
   screen,
 } from '@testing-library/react';
-import type { FieldComponentProps } from '@esheet/core';
+import { createFormStore, type FieldComponentProps } from '@esheet/core';
 import { TextField } from './TextField.js';
 import { LongTextField } from './LongTextField.js';
 
@@ -19,9 +19,11 @@ vi.mock('@mieweb/ui', async (importOriginal) => ({
 }));
 
 function createProps(definition: Record<string, unknown>): FieldComponentProps {
+  const form = createFormStore();
+  form.setState({ instanceId: 'test' });
   return {
     field: { definition },
-    form: { getState: () => ({ instanceId: 'test' }) },
+    form,
     isPreview: true,
     isEnabled: true,
     onResponse: vi.fn(),
@@ -35,6 +37,30 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('TextField', () => {
+  it('passes browser regional preferences without changing stored date values', () => {
+    const languages = vi
+      .spyOn(navigator, 'languages', 'get')
+      .mockReturnValue(['en-GB']);
+    try {
+      render(
+        <TextField
+          {...createProps({
+            fieldType: 'text',
+            id: 'regional-date',
+            inputType: 'date',
+          })}
+          response={{ answer: '2026-11-09' }}
+        />
+      );
+      expect(mocks.dateInput).toHaveBeenCalledWith(
+        expect.objectContaining({ locale: 'en-GB', value: '11/09/2026' }),
+        undefined
+      );
+    } finally {
+      languages.mockRestore();
+    }
+  });
+
   it('stores DateInput values as ISO dates', () => {
     const onResponse = vi.fn();
 

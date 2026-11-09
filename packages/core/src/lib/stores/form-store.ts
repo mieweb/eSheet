@@ -37,16 +37,12 @@ import {
   recordActivity,
   type ActivityEvent,
 } from '../functions/activity.js';
-import { resolveEffect } from '../logic/resolve.js';
+import { isFieldEffectivelyActive, resolveEffect } from '../logic/resolve.js';
 import {
   evaluateJsExpression,
   evaluateOptionVisibility,
 } from '../logic/conditions.js';
-import {
-  validateField,
-  validateForm,
-  type ValidationError,
-} from '../logic/validate.js';
+import { validateField, type ValidationError } from '../logic/validate.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -97,6 +93,8 @@ export interface FormState {
   readonly normalized: NormalizedDefinition;
   /** Current responses keyed by field ID. */
   readonly responses: FieldResponseMap;
+  /** Per-field reset versions for clearing input drafts even when answers stay empty. */
+  readonly inputResetKeys: Readonly<Record<string, number>>;
   /** Host-supplied identity of the current user (stamps activity authorship). */
   readonly identity?: { name: string };
   /** Field IDs that have been explicitly edited by the user (not auto-calculated). */
@@ -133,6 +131,8 @@ export interface FormState {
   setReadOnly: (readOnly: boolean) => void;
   /** Set (or replace) a single field's response. */
   setResponse: (fieldId: string, response: FieldResponse) => void;
+  /** Report a transient input draft error without exporting it as an answer. */
+  setInputError: (fieldId: string, message: string | undefined) => void;
   /** Append an explicit user action to the activity log, when configured. */
   appendActivity: (event: ActivityEvent) => void;
   /** Remove a single field's response. */
@@ -473,6 +473,7 @@ function getDefaultOptionValue(
  * @param initial - Optional initial form definition to load immediately.
  */
 const instanceIdCounterKey = Symbol.for('@esheet/instance-id-counter');
+const INPUT_ERROR_NAMESPACE = 'esheet:input-error';
 let nextTemporaryFormId = 1;
 
 function createInstanceId(): string {
@@ -537,6 +538,13 @@ function withoutExtension(
   return { ...extensions, [namespace]: remaining };
 }
 
+function resetInputKeys(
+  keys: Readonly<Record<string, number>>,
+  fieldIds: readonly string[]
+): Record<string, number> {
+  return Object.fromEntries(fieldIds.map((id) => [id, (keys[id] ?? 0) + 1]));
+}
+
 export function createFormStore(
   initial?: FormDefinition,
   hostAllowsJS = false,
@@ -570,6 +578,7 @@ export function createFormStore(
     normalized: initial ? normalizeDefinition(initial.pages) : EMPTY_NORMALIZED,
     responses:
       initialResponses ?? (initial ? defaultResponses(initial.pages) : {}),
+    inputResetKeys: {},
     identity: undefined,
     userEditedFields: new Set(Object.keys(initialResponses ?? {})),
     extensions: {},
@@ -580,6 +589,11 @@ export function createFormStore(
     loadDefinition: (definition, responses) =>
       (() => {
         const initial = responses ?? defaultResponses(definition.pages);
+        const normalized = normalizeDefinition(definition.pages);
+        const inputResetKeys = resetInputKeys(
+          get().inputResetKeys,
+          Object.keys(normalized.byId)
+        );
         disposeAllExtensions();
         set({
           formId: definition.id,
@@ -588,8 +602,9 @@ export function createFormStore(
           formSourceData: definition._sourceData,
           dangerouslyAllowJS:
             (definition.dangerouslyAllowJS ?? false) && _hostAllowsJS,
-          normalized: normalizeDefinition(definition.pages),
+          normalized,
           responses: initial,
+          inputResetKeys,
           userEditedFields: new Set(Object.keys(responses ?? {})),
           extensions: {},
         });
@@ -615,6 +630,14 @@ export function createFormStore(
     setResponse: (fieldId, response) =>
       set((state) => {
         const updated = { ...state.responses, [fieldId]: response };
+        const extensions =
+          state.responses[fieldId]?.answer === response.answer
+            ? state.extensions
+            : withoutExtension(
+                state.extensions,
+                INPUT_ERROR_NAMESPACE,
+                fieldId
+              );
         // Mark this field as user-edited so calculations won't overwrite it
         // (unless the field is explicitly readOnly).
         const nextEdited = new Set(state.userEditedFields);
@@ -623,6 +646,7 @@ export function createFormStore(
           return {
             responses: recordActivity(state, fieldId, updated),
             userEditedFields: nextEdited,
+            extensions,
           };
         // Apply calculations for all fields that have a calculation string
         const calcResponses = { ...updated };
@@ -644,8 +668,21 @@ export function createFormStore(
         return {
           responses: recordActivity(state, fieldId, calcResponses),
           userEditedFields: nextEdited,
+          extensions,
         };
       }),
+
+    setInputError: (fieldId, message) => {
+      if (
+        get().getExtension<string>(INPUT_ERROR_NAMESPACE, fieldId) === message
+      )
+        return;
+      if (message === undefined) {
+        get().clearExtension(INPUT_ERROR_NAMESPACE, fieldId);
+      } else {
+        get().setExtension(INPUT_ERROR_NAMESPACE, fieldId, message);
+      }
+    },
 
     appendActivity: (event) =>
       set((state) => ({ responses: appendActivityEvent(state, event) })),
@@ -654,11 +691,31 @@ export function createFormStore(
       set((state) => {
         const { [fieldId]: _discarded, ...rest } = state.responses;
         void _discarded;
-        return { responses: rest };
+        return {
+          responses: rest,
+          inputResetKeys: {
+            ...state.inputResetKeys,
+            ...resetInputKeys(state.inputResetKeys, [fieldId]),
+          },
+          extensions: withoutExtension(
+            state.extensions,
+            INPUT_ERROR_NAMESPACE,
+            fieldId
+          ),
+        };
       }),
 
-    resetResponses: () =>
-      set({ responses: {}, userEditedFields: new Set<string>() }),
+    resetResponses: () => {
+      get().clearExtensionsForNamespace(INPUT_ERROR_NAMESPACE);
+      set((state) => ({
+        responses: {},
+        userEditedFields: new Set<string>(),
+        inputResetKeys: resetInputKeys(
+          state.inputResetKeys,
+          Object.keys(state.normalized.byId)
+        ),
+      }));
+    },
 
     registerExtension: (namespace, fieldId, initialState, options) => {
       if (get().disposed) return false;
@@ -1501,12 +1558,34 @@ export function createFormStore(
 
     getFieldErrors: (fieldId) => {
       const { normalized, responses, dangerouslyAllowJS } = get();
-      return validateField(fieldId, normalized, responses, dangerouslyAllowJS);
+      const errors = validateField(
+        fieldId,
+        normalized,
+        responses,
+        dangerouslyAllowJS
+      );
+      const message = get().getExtension<string>(
+        INPUT_ERROR_NAMESPACE,
+        fieldId
+      );
+      if (
+        message &&
+        normalized.byId[fieldId] &&
+        isFieldEffectivelyActive(
+          fieldId,
+          normalized,
+          responses,
+          dangerouslyAllowJS
+        )
+      ) {
+        errors.push({ fieldId, rule: 'input', message, severity: 'hard' });
+      }
+      return errors;
     },
 
     getErrors: () => {
-      const { normalized, responses, dangerouslyAllowJS } = get();
-      return validateForm(normalized, responses, dangerouslyAllowJS);
+      const state = get();
+      return Object.keys(state.normalized.byId).flatMap(state.getFieldErrors);
     },
 
     hydrateDefinition: () => {

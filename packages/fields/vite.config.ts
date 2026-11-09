@@ -2,7 +2,12 @@
 import { defineConfig, type LibraryFormats } from 'vite';
 import react from '@vitejs/plugin-react';
 import dts from 'vite-plugin-dts';
-import { resolve } from 'path';
+import { dirname, resolve } from 'path';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+const reactDir = dirname(require.resolve('react/package.json'));
+const reactDomDir = dirname(require.resolve('react-dom/package.json'));
 
 export default defineConfig(() => ({
   root: import.meta.dirname,
@@ -39,6 +44,12 @@ export default defineConfig(() => ({
     environment: 'jsdom',
     include: ['{src,tests}/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
+    alias: [
+      { find: /^react$/, replacement: reactDir },
+      { find: /^react\/(.*)$/, replacement: `${reactDir}/$1` },
+      { find: /^react-dom$/, replacement: reactDomDir },
+      { find: /^react-dom\/(.*)$/, replacement: `${reactDomDir}/$1` },
+    ],
     coverage: {
       reportsDirectory: './test-output/vitest/coverage',
       provider: 'v8' as const,

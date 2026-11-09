@@ -4,7 +4,6 @@ import {
   createUIStore,
   normalizeResponses,
   hydrateDefinition,
-  validateForm,
   type CollabDecorations,
   type FormResponse,
   type FormStore,
@@ -96,7 +95,7 @@ export interface EsheetRendererProps {
   topNavigation?: boolean;
   /** Show Previous / Next controls below the active page. */
   bottomNavigation?: boolean;
-  /** Block forward page navigation while required fields on the current page are unanswered. */
+  /** Block forward page navigation for unanswered required fields. Invalid input drafts always block page changes. */
   validateNavigation?: boolean;
   /** Page shown first, by id (issue #147). Unknown or absent → the first page. */
   initialPageId?: string;
@@ -185,13 +184,14 @@ export interface EsheetRendererHandle {
   setTouchMode: (enabled: boolean) => void;
   /** Reset to auto-detection mode (clears manual override). Only works when touchMode='auto'. */
   resetTouchMode: () => void;
-  /** Show the page with this id. Returns `false` when the form has no such page. */
+  /** Show this page. Returns `false` for unknown pages or pending invalid input drafts. */
   goToPage: (pageId: string) => boolean;
   /** The active page's id, or `null` before any pages exist (issue #147). */
   getCurrentPageId: () => string | null;
   /**
    * Show a page by id or index. Unknown values are a silent no-op, and
    * programmatic moves never fire `onPageChange` (issue #147).
+   * Pending invalid input drafts block page changes.
    */
   setCurrentPage: (pageIdOrIndex: string | number) => void;
 }
@@ -308,11 +308,7 @@ const EsheetRendererInner = React.forwardRef<
 
   const handleSubmitClick = () => {
     const state = formStore.getState();
-    const errors = validateForm(
-      state.normalized,
-      state.responses,
-      state.dangerouslyAllowJS
-    );
+    const errors = state.getErrors();
     const hardErrors = errors.filter((e) => e.severity !== 'soft');
     if (hardErrors.length > 0) return; // hard errors — field-level UI handles display
     const softErrors = errors.filter((e) => e.severity === 'soft');
@@ -410,7 +406,7 @@ const EsheetRendererInner = React.forwardRef<
       getUIStore: () => uiStore,
       getValidResponse: () => {
         const state = formStore.getState();
-        const errors = validateForm(state.normalized, state.responses);
+        const errors = state.getErrors();
         return {
           response: errors.length === 0 ? state.responses : null,
           errors,
@@ -515,7 +511,15 @@ const EsheetRendererInner = React.forwardRef<
         showCancel
         onConfirm={() => {
           setSoftBypassOpen(false);
-          if (pendingResponse) onSubmit?.(pendingResponse);
+          if (
+            pendingResponse &&
+            !formStore
+              .getState()
+              .getErrors()
+              .some((e) => e.severity === 'hard')
+          ) {
+            onSubmit?.(pendingResponse);
+          }
           setPendingResponse(null);
         }}
         onClose={() => {

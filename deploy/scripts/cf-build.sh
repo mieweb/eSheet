@@ -9,6 +9,7 @@ set -euo pipefail
 export ESHEET_SITE_ORIGIN="${ESHEET_SITE_ORIGIN:-https://esheet.mieweb.org}"
 
 corepack enable
+bash deploy/scripts/prepare-ui.sh
 pnpm install --frozen-lockfile
 pnpm build:docs
 pnpm build:demo

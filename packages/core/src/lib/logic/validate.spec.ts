@@ -436,6 +436,24 @@ describe('validateField', () => {
   // -----------------------------------------------------------------------
 
   describe('intrinsic date input checks', () => {
+    it.each(['2026-02-31', '2026-02-29', '02-31-2026', '02/31/2026'])(
+      'rejects calendar overflow in %s without needing a mounted input',
+      (answer) => {
+        const normalized = norm([def('q1', 'text', { inputType: 'date' })]);
+        expect(validateField('q1', normalized, { q1: { answer } })).toEqual([
+          expect.objectContaining({ rule: 'dateFormat', severity: 'hard' }),
+        ]);
+      }
+    );
+
+    it.each(['2024-02-29', '02-29-2024', '02/29/2024', '0099-02-28'])(
+      'accepts the real calendar date %s',
+      (answer) => {
+        const normalized = norm([def('q1', 'text', { inputType: 'date' })]);
+        expect(validateField('q1', normalized, { q1: { answer } })).toEqual([]);
+      }
+    );
+
     it('fails hard on a malformed date answer', () => {
       const normalized = norm([def('q1', 'text', { inputType: 'date' })]);
       const errors = validateField('q1', normalized, {

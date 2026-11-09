@@ -18,6 +18,21 @@
 
 ## Shared Components
 
+Date and datetime fields use the browser's regional language preference for
+display (and date entry) through `DateInput.locale`. Date answers remain ISO
+`YYYY-MM-DD`; relative date bounds and calendar selection keep the existing
+US-order control-value contract. Incomplete or invalid date drafts block
+validation and submission until corrected or cleared; draft errors are transient
+and never exported with responses. Page changes (including programmatic changes)
+are blocked while an input draft is invalid, even when required-field navigation
+validation is disabled. Response resets also reset visible drafts, including
+unanswered fields. Document-list date columns and addendum
+dates use the same regional formatter without changing stored rows or sort
+keys. The UI source override requires a built sibling `ui` checkout.
+For a clean, pinned setup matching CI and Cloudflare Pages, run
+`bash deploy/scripts/prepare-ui.sh` from the repository root before installing
+eSheet dependencies. See [local workflow testing](../../.github/workflows/TESTING-LOCALLY.md).
+
 - `CustomRadio` — Themed radio with unselect support
 - `CustomCheckbox` — Themed checkbox
 - `CustomDropdown` — Themed select dropdown
