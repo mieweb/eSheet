@@ -24,6 +24,7 @@ jobs:
           corepack install
           pnpm --version
 
+      - run: bash deploy/scripts/prepare-ui.sh
       - run: pnpm install --frozen-lockfile
       - run: pnpm format:check
       - run: pnpm lint

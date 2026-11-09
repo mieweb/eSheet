@@ -25,8 +25,10 @@ US-order control-value contract. Incomplete or invalid date drafts block
 validation and submission until corrected or cleared; draft errors are transient
 and never exported with responses. Document-list date columns and addendum
 dates use the same regional formatter without changing stored rows or sort
-keys. The development UI source override requires a sibling `ui` checkout;
-build that package before building these fields.
+keys. The UI source override requires a built sibling `ui` checkout.
+For a clean, pinned setup matching CI and Cloudflare Pages, run
+`bash deploy/scripts/prepare-ui.sh` from the repository root before installing
+eSheet dependencies. See [local workflow testing](../../.github/workflows/TESTING-LOCALLY.md).
 
 - `CustomRadio` — Themed radio with unselect support
 - `CustomCheckbox` — Themed checkbox

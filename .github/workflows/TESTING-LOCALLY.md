@@ -19,9 +19,12 @@ Run the pull request quality gate:
 gh act pull_request -W .github/workflows/ci.yml --pull=false
 ```
 
-The workflow enables the pinned pnpm version, installs with `--frozen-lockfile`, and runs:
+The workflow enables the pinned pnpm version, prepares the linked UI dependency,
+installs with `--frozen-lockfile`, and runs:
 
 ```bash
+bash deploy/scripts/prepare-ui.sh
+pnpm install --frozen-lockfile
 pnpm format:check
 pnpm lint
 pnpm test
@@ -30,6 +33,13 @@ pnpm build
 ```
 
 The root `pnpm build` script intentionally builds publishable packages only. The root lint and typecheck scripts include workspace applications, so the docs app is covered by those checks even though its production build is owned by `pnpm build:cf`.
+
+The regional date APIs currently require unpublished UI source. The preparation
+script fetches an exact UI commit into the sibling `../ui` directory expected by
+the dependency override, initializes its submodules, and builds it. Cloudflare
+Pages runs the same script. It refuses to overwrite an existing checkout at
+another revision or with local changes; keep development UI work in a separate
+checkout when reproducing CI.
 
 ## Release Dry Run
 
