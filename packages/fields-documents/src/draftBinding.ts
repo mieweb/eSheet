@@ -26,6 +26,7 @@ export function bindDraftAnswers(
     try {
       const { responses, setResponse, clearResponse } = store.getState();
       for (const [fieldId, response] of Object.entries(answers)) {
+        if (fieldId.startsWith('meta:')) continue;
         if (!same(responses[fieldId], response)) {
           setResponse(fieldId, response as FieldResponse);
         }
@@ -52,6 +53,7 @@ export function bindDraftAnswers(
           draft.setAnswer(fieldId, response);
       }
       for (const fieldId of Object.keys(answers)) {
+        if (fieldId.startsWith('meta:')) continue;
         if (!(fieldId in state.responses)) draft.setAnswer(fieldId, undefined);
       }
     } finally {
@@ -63,7 +65,10 @@ export function bindDraftAnswers(
   // otherwise whatever the draft already holds wins — the form has just been
   // (re)loaded and the draft is the shared truth.
   const initial = draft.getAnswers();
-  if (draft.isNew && Object.keys(initial).length === 0) {
+  if (
+    draft.isNew &&
+    Object.keys(initial).every((id) => id.startsWith('meta:'))
+  ) {
     applying = true;
     try {
       for (const [fieldId, response] of Object.entries(

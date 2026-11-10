@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createFormStore } from './form-store.js';
+import { defaultResponses } from '../functions/default-responses.js';
+import { formDefinitionSchema } from '../types.js';
 import type { FormStore } from './form-store.js';
 import { getFieldForRender } from '../field-component-props.js';
 import type {
@@ -61,6 +63,185 @@ function requiredRule(targetId: string, expected: string): ConditionalRule {
 
 describe('createFormStore', () => {
   let store: FormStore;
+
+  describe('definition-owned defaults', () => {
+    const definition = form([
+      {
+        id: 'type',
+        fieldType: 'dropdown',
+        options: [
+          { id: 'original', value: 'Original', defaultOption: true },
+          { id: 'other', value: 'Other' },
+        ],
+      },
+      { id: 'note', fieldType: 'text', defaultAnswer: 'Initial text' },
+      {
+        id: 'many',
+        fieldType: 'check',
+        options: [
+          { id: 'a', value: 'A', defaultOption: true },
+          { id: 'b', value: 'B', defaultOption: true },
+        ],
+      },
+    ]);
+
+    it('initializes answers in core for a new store and a newly loaded definition', () => {
+      const expected = {
+        type: { selected: { id: 'original', value: 'Original' } },
+        note: { answer: 'Initial text' },
+        many: {
+          selected: [
+            { id: 'a', value: 'A' },
+            { id: 'b', value: 'B' },
+          ],
+        },
+      };
+      expect(defaultResponses(definition.pages)).toEqual(expected);
+      expect(createFormStore(definition).getState().responses).toEqual(
+        expected
+      );
+      const loaded = createFormStore();
+      loaded.getState().loadDefinition(definition);
+      expect(loaded.getState().responses).toEqual(expected);
+    });
+
+    it('treats supplied responses, even an empty map, as authoritative', () => {
+      expect(
+        createFormStore(definition, false, {}).getState().responses
+      ).toEqual({});
+      const loaded = createFormStore(definition);
+      loaded
+        .getState()
+        .loadDefinition(definition, { note: { answer: 'Saved text' } });
+      expect(loaded.getState().responses).toEqual({
+        note: { answer: 'Saved text' },
+      });
+      loaded.getState().loadDefinition(definition, {});
+      expect(loaded.getState().responses).toEqual({});
+    });
+
+    it.each(['create', 'load'] as const)(
+      'protects saved manual answers from calculations on %s',
+      (entryPoint) => {
+        const definition: FormDefinition = {
+          ...form([
+            {
+              id: 'calculated',
+              fieldType: 'text',
+              calculation: '"Calculated"',
+              defaultAnswer: 'Default',
+            },
+            { id: 'other', fieldType: 'text' },
+          ]),
+          dangerouslyAllowJS: true,
+        };
+        const saved = { calculated: { answer: 'Manual override' } };
+        const loaded =
+          entryPoint === 'create'
+            ? createFormStore(definition, true, saved)
+            : createFormStore(undefined, true);
+        if (entryPoint === 'load') {
+          loaded.getState().loadDefinition(definition, saved);
+        }
+        loaded.getState().setResponse('other', { answer: 'Changed' });
+        expect(loaded.getState().responses.calculated).toEqual(
+          saved.calculated
+        );
+
+        const fresh =
+          entryPoint === 'create'
+            ? createFormStore(definition, true)
+            : createFormStore(undefined, true);
+        if (entryPoint === 'load') fresh.getState().loadDefinition(definition);
+        expect(fresh.getState().userEditedFields.size).toBe(0);
+        fresh.getState().setResponse('other', { answer: 'Changed' });
+        expect(fresh.getState().responses.calculated).toEqual({
+          answer: 'Calculated',
+        });
+      }
+    );
+
+    it('does not reapply defaults after clearing or resetting responses or editing options', () => {
+      const loaded = createFormStore(definition);
+      loaded.getState().clearResponse('type');
+      loaded.getState().updateOption('type', 'original', 'Changed label');
+      expect(loaded.getState().responses.type).toBeUndefined();
+      loaded.getState().resetResponses();
+      expect(loaded.getState().responses).toEqual({});
+    });
+
+    it('keeps defaults attached to options through label/ID changes and deletion', () => {
+      const loaded = createFormStore(definition);
+      loaded.getState().updateOption('type', 'original', 'Renamed');
+      const options = loaded.getState().getField('type')?.definition;
+      if (
+        !options ||
+        !('options' in options) ||
+        !Array.isArray(options.options)
+      ) {
+        throw new Error('Expected dropdown options');
+      }
+      loaded.getState().updateField('type', {
+        options: options.options.map((option) =>
+          option.id === 'original' ? { ...option, id: 'renamed' } : option
+        ),
+      });
+      expect(
+        defaultResponses(loaded.getState().hydrateDefinition().pages).type
+      ).toEqual({
+        selected: { id: 'renamed', value: 'Renamed' },
+      });
+      loaded.getState().removeOption('type', 'renamed');
+      expect(
+        defaultResponses(loaded.getState().hydrateDefinition().pages).type
+      ).toBeUndefined();
+    });
+
+    it('switches a single-choice default atomically and permits multiple checkbox defaults', () => {
+      const loaded = createFormStore(definition);
+      loaded.getState().setOptionDefault('type', 'other', true);
+      const defaults = defaultResponses(
+        loaded.getState().hydrateDefinition().pages
+      );
+      expect(defaults.type).toEqual({
+        selected: { id: 'other', value: 'Other' },
+      });
+      expect(defaults.many?.selected).toHaveLength(2);
+      loaded.getState().setOptionDefault('type', 'other', false);
+      expect(
+        defaultResponses(loaded.getState().hydrateDefinition().pages).type
+      ).toBeUndefined();
+      expect(() =>
+        loaded.getState().setOptionDefault('type', 'missing', true)
+      ).toThrow(/Unknown option/);
+    });
+
+    it('rejects conflicting single-choice defaults and unsupported text defaults', () => {
+      const invalid = form([
+        {
+          id: 'type',
+          fieldType: 'dropdown',
+          options: [
+            { id: 'a', value: 'A', defaultOption: true },
+            { id: 'b', value: 'B', defaultOption: true },
+          ],
+        },
+      ]);
+      expect(formDefinitionSchema.safeParse(invalid).success).toBe(false);
+      expect(() => defaultResponses(invalid.pages)).toThrow(/single-choice/);
+      expect(
+        formDefinitionSchema.safeParse(
+          form([
+            {
+              id: 'type',
+              fieldType: 'dropdown',
+              defaultAnswer: 'not a selection',
+            },
+          ])
+        ).success
+      ).toBe(false);
+    });
+  });
 
   // -----------------------------------------------------------------------
   // Factory
@@ -311,6 +492,100 @@ describe('createFormStore', () => {
   });
 
   describe('validation and hydration', () => {
+    it('resets input keys per field without resetting unrelated drafts', () => {
+      store = createFormStore(form([field('date'), field('other')]));
+      store.getState().clearResponse('date');
+      expect(store.getState().inputResetKeys).toEqual({ date: 1 });
+      store.getState().resetResponses();
+      expect(store.getState().inputResetKeys).toEqual({ date: 2, other: 1 });
+      store
+        .getState()
+        .loadDefinition(form([field('date'), field('other')]), {});
+      expect(store.getState().inputResetKeys).toEqual({ date: 3, other: 2 });
+    });
+
+    it('validates transient input errors without exporting them', () => {
+      store = createFormStore(form([field('date')]));
+      store.getState().setResponse('date', { answer: '2026-11-09' });
+      const exported = store.getState().hydrateResponse();
+      store.getState().setInputError('date', 'Enter a complete, valid date');
+      const expected = [
+        {
+          fieldId: 'date',
+          rule: 'input',
+          message: 'Enter a complete, valid date',
+          severity: 'hard',
+        },
+      ];
+      expect(store.getState().getFieldErrors('date')).toEqual(expected);
+      expect(store.getState().getErrors()).toEqual(expected);
+      store.getState().setResponse('date', { answer: '2026-11-09' });
+      expect(store.getState().getErrors()).toEqual(expected);
+      expect(store.getState().hydrateResponse().items).toEqual(exported.items);
+      expect(store.getState().responses).toEqual({
+        date: { answer: '2026-11-09' },
+      });
+      store.getState().setInputError('date', undefined);
+      expect(store.getState().getErrors()).toEqual([]);
+    });
+
+    it('ignores draft errors for unknown, hidden, and disabled fields', () => {
+      store = createFormStore(
+        form([
+          field('trigger'),
+          field('hidden', 'text', { rules: [visibleRule('trigger', 'show')] }),
+          field('disabled', 'text', { rules: [enableRule('trigger', 'show')] }),
+        ])
+      );
+      for (const id of ['unknown', 'hidden', 'disabled']) {
+        store.getState().setInputError(id, 'Invalid draft');
+      }
+      expect(store.getState().getErrors()).toEqual([]);
+      expect(store.getState().getFieldErrors('unknown')).toEqual([]);
+      store.getState().setResponse('trigger', { answer: 'show' });
+      expect(
+        store
+          .getState()
+          .getErrors()
+          .map((error) => error.fieldId)
+      ).toEqual(['hidden', 'disabled']);
+    });
+
+    it.each([
+      'setResponse',
+      'clearResponse',
+      'resetResponses',
+      'loadDefinition',
+      'removeField',
+      'dispose',
+    ] as const)(
+      'clears draft errors when %s replaces or removes the input',
+      (action) => {
+        store = createFormStore(form([field('date')]));
+        store.getState().setInputError('date', 'Invalid draft');
+        switch (action) {
+          case 'setResponse':
+            store.getState().setResponse('date', { answer: '2026-11-10' });
+            break;
+          case 'clearResponse':
+            store.getState().clearResponse('date');
+            break;
+          case 'resetResponses':
+            store.getState().resetResponses();
+            break;
+          case 'loadDefinition':
+            store.getState().loadDefinition(form([field('date')]));
+            break;
+          case 'removeField':
+            store.getState().removeField('date');
+            break;
+          case 'dispose':
+            store.getState().dispose();
+        }
+        expect(store.getState().getErrors()).toEqual([]);
+      }
+    );
+
     it('skips disabled required fields in errors and hydrated output', () => {
       store = createFormStore(
         form([

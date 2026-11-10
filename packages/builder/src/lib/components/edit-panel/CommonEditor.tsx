@@ -1,11 +1,13 @@
+import { useEffect, useState } from 'react';
 import { useStore } from 'zustand';
 import type {
   FieldDefinition,
   FieldWidth,
+  LongtextFieldDefinition,
   OptionLayout,
   TextInputType,
 } from '@esheet/core';
-import { slugifyQuestion } from '@esheet/core';
+import { getFieldTypeMeta, slugifyQuestion } from '@esheet/core';
 import { useFormStore } from '@esheet/fields';
 import { useInstanceId } from '../../EsheetBuilder.js';
 import { DraftIdEditor } from './DraftIdEditor.js';
@@ -100,6 +102,24 @@ export function CommonEditor({
         </div>
       )}
 
+      {getFieldTypeMeta(def.fieldType)?.answerType === 'text' && (
+        <label className="field-default ms:block ms:space-y-1 ms:text-sm">
+          <span>Default answer</span>
+          <input
+            id={`${instanceId}-editor-default-answer-${fieldId}`}
+            type="text"
+            aria-label="Default answer"
+            value={'defaultAnswer' in def ? def.defaultAnswer ?? '' : ''}
+            onChange={(event) =>
+              onUpdate({
+                defaultAnswer: event.currentTarget.value || undefined,
+              })
+            }
+            className="ms:w-full ms:bg-mssurface ms:text-mstext ms:border ms:border-msborder ms:rounded ms:p-2"
+          />
+        </label>
+      )}
+
       {/* Input Type (text/longtext only) */}
       {showInputType && (
         <InputTypeEditor
@@ -123,6 +143,39 @@ export function CommonEditor({
             onUpdate(patch as Parameters<typeof onUpdate>[0])
           }
         />
+      )}
+
+      {def.fieldType === 'longtext' && (
+        <div className="ms:grid ms:grid-cols-2 ms:gap-3">
+          {(['rows', 'maxRows'] as const).map((property) => {
+            const longtextDef = def as LongtextFieldDefinition;
+            const isMinimum = property === 'rows';
+            const purpose = isMinimum ? 'rows' : 'maxrows';
+
+            return (
+              <div key={`${fieldId}-${property}`}>
+                <label
+                  htmlFor={`${instanceId}-editor-${purpose}-${fieldId}`}
+                  className="edit-label ms:block ms:text-sm ms:font-medium ms:text-mstext ms:mb-1"
+                >
+                  {isMinimum ? 'Minimum rows' : 'Maximum rows'}
+                </label>
+                <RowLimitEditor
+                  id={`${instanceId}-editor-${purpose}-${fieldId}`}
+                  min={isMinimum ? 1 : longtextDef.rows ?? 1}
+                  max={isMinimum ? longtextDef.maxRows : undefined}
+                  value={longtextDef[property]}
+                  placeholder={isMinimum ? '1' : undefined}
+                  onCommit={(value) => {
+                    onUpdate({
+                      [property]: value,
+                    } as Parameters<typeof onUpdate>[0]);
+                  }}
+                />
+              </div>
+            );
+          })}
+        </div>
       )}
 
       {/* Row width */}
@@ -224,5 +277,54 @@ export function CommonEditor({
         </div>
       )}
     </div>
+  );
+}
+
+function RowLimitEditor({
+  id,
+  value,
+  min,
+  max,
+  placeholder,
+  onCommit,
+}: {
+  id: string;
+  value: number | undefined;
+  min: number;
+  max: number | undefined;
+  placeholder: string | undefined;
+  onCommit: (value: number | undefined) => void;
+}) {
+  const [draft, setDraft] = useState(value?.toString() ?? '');
+
+  useEffect(() => {
+    setDraft(value?.toString() ?? '');
+  }, [value]);
+
+  return (
+    <input
+      id={id}
+      type="number"
+      min={min}
+      max={max}
+      step={1}
+      value={draft}
+      placeholder={placeholder}
+      onChange={(e) => setDraft(e.currentTarget.value)}
+      onBlur={(e) => {
+        if (!e.currentTarget.reportValidity()) {
+          setDraft(value?.toString() ?? '');
+          return;
+        }
+        onCommit(draft === '' ? undefined : e.currentTarget.valueAsNumber);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          e.currentTarget.blur();
+        }
+      }}
+      className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
+    />
   );
 }

@@ -13,6 +13,9 @@ export interface DocumentListDocument {
   readonly subject: string;
   readonly docType: string;
   readonly docId: string;
+  readonly nativeDocType?: string;
+  readonly nativeDocTypeLabel?: string;
+  readonly nativeVersion?: string;
   readonly source: string;
   readonly file: string;
   /** External bytes for the current file-backed revision. */
@@ -66,6 +69,8 @@ export interface DocumentListDocument {
    * prose for free. `file` still names it, for hosts that later export.
    */
   readonly body?: string;
+  /** Retains the inline save tier when a repository returns a bodyless reference. */
+  readonly inline?: boolean;
 }
 
 export interface DocumentListValue {
@@ -189,6 +194,9 @@ export const readOnlyDocumentListCapabilities: DocumentListCapabilities = {
 };
 
 export interface DocumentListInput {
+  readonly nativeDocType?: unknown;
+  readonly nativeDocTypeLabel?: unknown;
+  readonly nativeVersion?: unknown;
   readonly id?: unknown;
   readonly date?: unknown;
   readonly title?: unknown;
@@ -208,6 +216,7 @@ export interface DocumentListInput {
   readonly sha256?: unknown;
   readonly size?: unknown;
   readonly body?: unknown;
+  readonly inline?: unknown;
 }
 
 /** The workflows a field's toolbar offers. */
@@ -223,6 +232,8 @@ export type DocumentListWorkflowMode = 'full' | 'docked';
 
 /** What the user has typed so far — the part of a draft worth surviving. */
 export interface DocumentListComposeDraft {
+  readonly nativeVersion?: string;
+  readonly frontMatterSource?: string;
   readonly title: string;
   readonly subject: string;
   readonly docType: string;

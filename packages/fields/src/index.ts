@@ -33,6 +33,7 @@ export {
   DropdownField,
   MultiSelectDropdownField,
   AutocompleteField,
+  AUTOCOMPLETE_HISTORY_NAMESPACE,
   registerAutocompleteFieldType,
   parseAutocompleteItems,
   WIKIPEDIA_OPENSEARCH_URL,

@@ -96,14 +96,6 @@ export const DOCUMENT_LIST_COLUMNS = [
     filterable: true,
     resizable: true,
   },
-  {
-    field: 'file',
-    header: 'File',
-    sortable: true,
-    filterable: true,
-    resizable: true,
-    width: 120,
-  },
 ] as const;
 
 export const DOCUMENT_LIST_ACTIONS_COLUMN = {
@@ -115,11 +107,14 @@ export const DOCUMENT_LIST_ACTIONS_COLUMN = {
   // No fixed width: the buttons render inline and size the cell.
 } as const;
 
-export const DOCUMENT_LIST_TYPE_INFO = DOCUMENT_LIST_COLUMNS.map((column) => ({
-  field: column.field,
-  displayText: column.header,
-  type: 'string',
-}));
+export const DOCUMENT_LIST_TYPE_INFO = [
+  ...DOCUMENT_LIST_COLUMNS.map((column) => ({
+    field: column.field,
+    displayText: column.header,
+    type: 'string',
+  })),
+  { field: 'documentType', displayText: 'Document Type', type: 'string' },
+];
 
 const EMPTY_DISPLAY = '—';
 
@@ -260,6 +255,15 @@ export function normalizeDocumentRow(
     subject: displayValue(input.subject),
     docType: displayValue(input.docType),
     docId: displayValue(input.docId),
+    ...(typeof input.nativeDocType === 'string'
+      ? { nativeDocType: input.nativeDocType }
+      : {}),
+    ...(typeof input.nativeDocTypeLabel === 'string'
+      ? { nativeDocTypeLabel: input.nativeDocTypeLabel }
+      : {}),
+    ...(typeof input.nativeVersion === 'string'
+      ? { nativeVersion: input.nativeVersion }
+      : {}),
     source: displayValue(
       input.source ?? input.from ?? (author ? undefined : input.author)
     ),
@@ -279,6 +283,7 @@ export function normalizeDocumentRow(
       ? { size: input.size }
       : {}),
     ...(typeof input.body === 'string' ? { body: input.body } : {}),
+    ...(typeof input.inline === 'boolean' ? { inline: input.inline } : {}),
   };
 }
 
@@ -333,12 +338,19 @@ export function priorRevisionOf(row: DocumentListDocument): DocumentRevision {
 export function createLocalSourcePayload(
   rows: readonly DocumentListDocument[]
 ): {
-  data: DocumentListDocument[];
+  data: (DocumentListDocument & { documentType: string })[];
   typeInfo: typeof DOCUMENT_LIST_TYPE_INFO;
 } {
   return {
     // `rev` displays as a column, so absent (a pre-revision row) reads as 0.
-    data: rows.map((row) => ({ ...row, rev: row.rev ?? 0 })),
+    data: rows.map((row) => ({
+      ...row,
+      rev: row.rev ?? 0,
+      documentType:
+        row.nativeDocTypeLabel?.trim() ||
+        row.nativeDocType?.trim() ||
+        row.docType,
+    })),
     typeInfo: DOCUMENT_LIST_TYPE_INFO,
   };
 }

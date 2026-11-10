@@ -121,6 +121,89 @@ const runtime = {
 } as unknown as DocumentListRuntimeState;
 
 describe('compose panel in draft mode (ED.37)', () => {
+  it('preserves the shared original front matter when a note draft is joined', async () => {
+    const draft = fakeDraft({ isNew: false });
+    const source = "---\r\ncustom: 'retain' # comment\r\n---\r\n";
+    draft.setAnswer('meta:frontMatterSource', source);
+    draft.setAnswer('meta:nativeVersion', 'original-version');
+    const saveDocument = vi.fn(async (document) => document);
+    render(
+      <DocumentListComposePanel
+        open
+        onOpenChange={vi.fn()}
+        runtime={
+          {
+            documents: { 'doc-1': { id: 'doc-1', inline: true } },
+            saveDocument,
+          } as unknown as DocumentListRuntimeState
+        }
+        inputPrefix="joined-note"
+        documentId="doc-1"
+        documentDraft={draft}
+        draft={{
+          title: 'Title',
+          subject: 'Subject',
+          docType: 'note',
+          note: 'Edited prose',
+        }}
+      />
+    );
+    fireEvent.click(await screen.findByRole('button', { name: /^Save/ }));
+    await waitFor(() => expect(saveDocument).toHaveBeenCalledOnce());
+    expect(saveDocument).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: source,
+        nativeVersion: 'original-version',
+      }),
+      undefined
+    );
+  });
+  it('revises a bodyless inline reference through the inline save boundary', async () => {
+    const prior = {
+      id: 'doc-1',
+      title: 'Saved note',
+      subject: 'Subject',
+      docType: 'note',
+      date: '2026-11-05',
+      docId: 'native-1',
+      source: 'Native',
+      file: 'note.md',
+      inline: true,
+      rev: 0,
+    };
+    const saveDocument = vi.fn(async (document) => document);
+    render(
+      <DocumentListComposePanel
+        open
+        onOpenChange={vi.fn()}
+        runtime={
+          {
+            documents: { 'doc-1': prior },
+            saveDocument,
+          } as unknown as DocumentListRuntimeState
+        }
+        inputPrefix="inline-edit"
+        documentId="doc-1"
+        draft={{
+          title: prior.title,
+          subject: prior.subject,
+          docType: prior.docType,
+          note: 'Revised prose',
+        }}
+      />
+    );
+    fireEvent.click(await screen.findByRole('button', { name: /^Save/ }));
+    await waitFor(() => expect(saveDocument).toHaveBeenCalledOnce());
+    expect(saveDocument).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'doc-1',
+        body: 'Revised prose',
+        inline: true,
+        rev: 1,
+      }),
+      undefined
+    );
+  });
   beforeEach(() => {
     editorProps.length = 0;
     editorValues.length = 0;
@@ -290,7 +373,7 @@ describe('compose panel in draft mode (ED.37)', () => {
 
   // ED.40 — Edit on a row opens (or joins) its draft, prefilled from the last
   // saved revision, and the panel says it is revising.
-  it('the Edit action opens the draft prefilled from the head revision', async () => {
+  it('the Edit action opens a plain-note draft prefilled from the head revision', async () => {
     const row = {
       id: 'doc-1',
       date: '2026-08-14',
@@ -317,21 +400,6 @@ describe('compose panel in draft mode (ED.37)', () => {
             {
               id: 'progress-note',
               label: 'Progress note',
-              definition: {
-                id: 'progress-note-form',
-                pages: [
-                  {
-                    id: 'page-1',
-                    fields: [
-                      {
-                        id: 'summary',
-                        fieldType: 'text',
-                        question: 'Summary',
-                      },
-                    ],
-                  },
-                ],
-              },
             },
           ],
         },

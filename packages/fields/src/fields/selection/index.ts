@@ -6,6 +6,7 @@ export { MultiSelectDropdownField } from './MultiSelectDropdownField.js';
 export { OpenChoiceField } from './OpenChoiceField.js';
 export {
   AutocompleteField,
+  AUTOCOMPLETE_HISTORY_NAMESPACE,
   registerAutocompleteFieldType,
   parseAutocompleteItems,
   WIKIPEDIA_OPENSEARCH_URL,

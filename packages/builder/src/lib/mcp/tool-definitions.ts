@@ -95,7 +95,7 @@ export const BUILDER_TOOL_DEFINITIONS: readonly ToolDefinition[] = [
     function: {
       name: 'update_field',
       description:
-        'Change scalar field properties. For most fields: question, required, inputType, min, max, step, placeholder. For display fields: content (the markdown/expression string). For html fields: htmlContent. Do NOT pass rows or columns here — use add_row/add_column instead. Identify by fieldQuestion or fieldId.',
+        'Change scalar field properties. For most fields: question, required, inputType, min, max, step, placeholder. For longtext fields: rows and maxRows (positive integers; maxRows must be at least rows). For display fields: content (the markdown/expression string). For html fields: htmlContent. Do NOT pass matrix row or column arrays here — use add_row/add_column instead. Identify by fieldQuestion or fieldId.',
       parameters: {
         type: 'object',
         properties: {

@@ -32,6 +32,7 @@ export interface DocumentListDefinitionDraft {
   readonly body: string;
   /** Every answer, body included — what a column projection reads. */
   readonly responses: FormResponse;
+  readonly fieldIds: readonly string[];
 }
 
 export interface DocumentListDefinitionFormHandle {
@@ -194,6 +195,7 @@ export const DocumentListDefinitionForm = forwardRef<
           },
           body: bodyId ? responses[bodyId]?.answer ?? '' : '',
           responses,
+          fieldIds: fieldIdsInOrder(normalized),
         },
         errors: [],
       };

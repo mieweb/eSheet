@@ -100,7 +100,7 @@ export function BuilderView() {
   const fileStore = useMemo(() => createDemoFileStore(), []);
 
   useEffect(() => {
-    updateOzwellTools(FORMIE_KEY);
+    return updateOzwellTools(FORMIE_KEY);
   }, []);
 
   const onBuilderToolsReady = useBuilderMcpToolHandler({

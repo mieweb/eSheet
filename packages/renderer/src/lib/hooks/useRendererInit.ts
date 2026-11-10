@@ -98,17 +98,10 @@ export function useRendererInit(
       onValidationError?.([]);
 
       // Load validated definition
-      form.getState().loadDefinition(validated.data);
+      form.getState().loadDefinition(validated.data, initialResponses);
       // Host must explicitly opt in — suppress dangerouslyAllowJS from schema if not allowed.
       if (!allowDangerousJS) {
         form.getState().setDangerouslyAllowJS(false);
-      }
-
-      // Apply initial responses if provided
-      if (initialResponses && Object.keys(initialResponses).length > 0) {
-        for (const [fieldId, value] of Object.entries(initialResponses)) {
-          form.getState().setResponse(fieldId, value);
-        }
       }
 
       // Set preview mode

@@ -1,3 +1,4 @@
+import { fieldDefinitionSchema } from '@esheet/core';
 import type { BuilderTools } from '../builder-tools.js';
 
 type FieldType = Parameters<BuilderTools['addField']>[0];
@@ -434,6 +435,25 @@ function updateField(args: ToolArgs, tools: BuilderTools): string {
     }
   }
 
+  const definition = tools.getField(fieldId)?.definition;
+  if (
+    'columns' in updates ||
+    ('rows' in updates && definition?.fieldType !== 'longtext')
+  ) {
+    return `Cannot set rows/columns via update_field. Use add_row/add_column to add items one at a time.`;
+  }
+  if (
+    definition?.fieldType === 'longtext' &&
+    ('rows' in updates || 'maxRows' in updates)
+  ) {
+    const result = fieldDefinitionSchema.safeParse({
+      ...definition,
+      ...updates,
+    });
+    if (!result.success)
+      return `Invalid longtext row limits: ${result.error.message}`;
+  }
+
   // For options, use surgical add/remove instead of replacing the whole array.
   if (Array.isArray(updates['options'])) {
     const newOptions = updates['options'] as unknown[];
@@ -470,8 +490,6 @@ function updateField(args: ToolArgs, tools: BuilderTools): string {
   }
 
   if (Object.keys(updates).length === 0) return `Updated field ${fieldId}`;
-  if ('rows' in updates || 'columns' in updates)
-    return `Cannot set rows/columns via update_field. Use add_row/add_column to add items one at a time.`;
   const ok = tools.updateField(fieldId, updates);
   return ok ? `Updated field ${fieldId}` : `Field not found: ${fieldId}`;
 }

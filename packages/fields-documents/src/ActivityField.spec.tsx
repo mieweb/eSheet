@@ -1,6 +1,16 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import type { ReactNode } from 'react';
-import type { ActivityEntry, FieldComponentProps } from '@esheet/core';
+import {
+  createFormStore,
+  type ActivityEntry,
+  type FieldComponentProps,
+} from '@esheet/core';
 import { ActivityField, ACTIVITY_COLUMNS } from './ActivityField.js';
 
 const captured = {
@@ -159,6 +169,60 @@ describe('ActivityField', () => {
     ).toEqual({ added: 'Added', cleared: 'Cleared', updated: 'Updated' });
   });
 
+  it('keeps saved authors when the viewer changes and stamps only new edits', async () => {
+    const saved = entry('saved', '2026-01-01T10:00:00Z', {
+      author: 'Alice',
+    });
+    const unknown = entry('unknown', '2026-01-01T09:00:00Z');
+    const form = createFormStore(
+      {
+        id: 'case',
+        pages: [
+          {
+            id: 'main',
+            fields: [
+              { id: 'status', fieldType: 'text' },
+              { id: 'log', fieldType: 'activity' },
+            ],
+          },
+        ],
+      },
+      false,
+      {
+        status: { answer: 'Closed' },
+        _activity: { activity: [unknown, saved] },
+      }
+    );
+    form.getState().setIdentity({ name: 'Bob' });
+    render(<ActivityField {...createProps([])} form={form} />);
+
+    await waitFor(() => {
+      expect(publishedRows().map((row) => row.author)).toEqual(['Alice', '—']);
+    });
+
+    act(() => form.getState().setResponse('status', { answer: 'Reopened' }));
+    await waitFor(() => {
+      expect(publishedRows()[0]).toMatchObject({
+        author: 'Bob',
+        from: 'Closed',
+        to: 'Reopened',
+      });
+    });
+
+    act(() => form.getState().setIdentity({ name: 'Carol' }));
+    await waitFor(() => {
+      expect(publishedRows().map((row) => row.author)).toEqual([
+        'Bob',
+        'Alice',
+        '—',
+      ]);
+    });
+    expect(form.getState().responses._activity?.activity?.slice(0, 2)).toEqual([
+      unknown,
+      saved,
+    ]);
+  });
+
   it('uses an explicit event category when present', async () => {
     render(
       <ActivityField
@@ -176,6 +240,82 @@ describe('ActivityField', () => {
       category: 'Print / PDF opened',
       to: 'Return to work letter (letter-1)',
     });
+  });
+
+  it('groups consecutive views of the same document without changing stored events', async () => {
+    const viewed = {
+      fieldId: 'caseDocuments',
+      question: 'Documents',
+      category: 'Viewed',
+      author: 'Alice',
+      from: undefined,
+      to: 'Questionnaire (doc-1), rev 0',
+    };
+    const events = [
+      entry('first', '2026-11-05T05:54:32Z', viewed),
+      entry('second', '2026-11-05T05:54:44Z', viewed),
+      entry('third', '2026-11-05T05:54:56Z', viewed),
+      entry('fourth', '2026-11-05T05:54:57Z', viewed),
+    ];
+    const props = createProps(events);
+    render(<ActivityField {...props} />);
+    await waitFor(() => expect(captured.props).not.toBeNull());
+    expect(publishedRows()).toHaveLength(1);
+    expect(publishedRows()[0]).toMatchObject({
+      id: 'fourth',
+      at: '2026-11-05T05:54:57Z',
+      firstAt: '2026-11-05T05:54:32Z',
+      viewCount: 4,
+      category: 'Viewed',
+      author: 'Alice',
+      to: viewed.to,
+    });
+    expect(props.form.getState().responses._activity?.activity).toEqual(events);
+    const grid = captured.props as {
+      formatCell: (
+        value: unknown,
+        row: Record<string, unknown>,
+        column: { field: string }
+      ) => ReactNode;
+      renderDetailRow: (row: { data: Record<string, unknown> }) => ReactNode;
+    };
+    expect(
+      grid.formatCell('Viewed', publishedRows()[0], { field: 'category' })
+    ).toBe('Viewed (4 times)');
+    render(<>{grid.renderDetailRow({ data: publishedRows()[0] })}</>);
+    expect(screen.getByText(/Viewed 4 times, from/)).toBeTruthy();
+  });
+
+  it.each([
+    { to: 'Other document (doc-2), rev 0' },
+    { to: 'Questionnaire (doc-1), rev 1' },
+    { fieldId: 'letterLog' },
+    { author: 'Bob' },
+    { category: 'Export opened' },
+    { category: undefined },
+  ])('does not group across an intervening event: %o', async (different) => {
+    const viewed = {
+      fieldId: 'caseDocuments',
+      category: 'Viewed',
+      author: 'Alice',
+      from: undefined,
+      to: 'Questionnaire (doc-1), rev 0',
+    };
+    render(
+      <ActivityField
+        {...createProps([
+          entry('first', '2026-11-05T05:54:32Z', viewed),
+          entry('between', '2026-11-05T05:54:44Z', { ...viewed, ...different }),
+          entry('last', '2026-11-05T05:54:57Z', viewed),
+        ])}
+      />
+    );
+    await waitFor(() => expect(captured.props).not.toBeNull());
+    expect(publishedRows().map((row) => row.id)).toEqual([
+      'last',
+      'between',
+      'first',
+    ]);
   });
 
   it('expands an inline diff without edit controls', async () => {

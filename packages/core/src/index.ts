@@ -125,6 +125,7 @@ export {
 } from './lib/functions/normalize.js';
 
 export { hydrateResponse } from './lib/functions/hydrate-response.js';
+export { defaultResponses } from './lib/functions/default-responses.js';
 
 export {
   normalizeResponses,

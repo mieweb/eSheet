@@ -5,6 +5,7 @@ import {
   formDefinitionSchema,
   fieldDefinitionSchema,
   normalizeFormDefinition,
+  getFormDefinitionJSONSchema,
 } from './types.js';
 import { registerFieldType, resetFieldTypeRegistry } from './registry.js';
 import type {
@@ -99,6 +100,58 @@ describe('schema types', () => {
 
     expect(result.success).toBe(false);
   });
+
+  it('accepts an optional positive integer minimum row count for longtext', () => {
+    const field = { id: 'notes', fieldType: 'longtext' };
+
+    expect(fieldDefinitionSchema.parse(field)).not.toHaveProperty('rows');
+    expect(fieldDefinitionSchema.parse({ ...field, rows: 5 })).toEqual({
+      ...field,
+      rows: 5,
+    });
+  });
+
+  it.each([0, -1, 1.5, '4', null])(
+    'rejects an invalid longtext row count: %s',
+    (rows) => {
+      expect(
+        fieldDefinitionSchema.safeParse({
+          id: 'notes',
+          fieldType: 'longtext',
+          rows,
+        }).success
+      ).toBe(false);
+    }
+  );
+
+  it('accepts an optional maximum row count and matching row bounds', () => {
+    const field = { id: 'notes', fieldType: 'longtext' };
+
+    expect(fieldDefinitionSchema.parse(field)).not.toHaveProperty('maxRows');
+    expect(fieldDefinitionSchema.parse({ ...field, maxRows: 5 })).toEqual({
+      ...field,
+      maxRows: 5,
+    });
+    expect(
+      fieldDefinitionSchema.safeParse({ ...field, rows: 5, maxRows: 5 }).success
+    ).toBe(true);
+    expect(
+      fieldDefinitionSchema.safeParse({ ...field, rows: 6, maxRows: 5 }).success
+    ).toBe(false);
+  });
+
+  it.each([0, -1, 1.5, '4', null])(
+    'rejects an invalid longtext maximum row count: %s',
+    (maxRows) => {
+      expect(
+        fieldDefinitionSchema.safeParse({
+          id: 'notes',
+          fieldType: 'longtext',
+          maxRows,
+        }).success
+      ).toBe(false);
+    }
+  );
 
   it('should accept conditional rules on options', () => {
     const result = formDefinitionSchema.safeParse({
@@ -247,6 +300,61 @@ describe('schema types', () => {
       },
     ]);
   });
+
+  it('preserves text defaults and row limits through normalization at the root and inside sections', () => {
+    const fields: FieldDefinition[] = [
+      { id: 'text', fieldType: 'text', defaultAnswer: 'Short answer' },
+      {
+        id: 'longtext',
+        fieldType: 'longtext',
+        defaultAnswer: 'Long answer',
+        rows: 2,
+        maxRows: 8,
+      },
+    ];
+    const definition: FormDefinition = {
+      id: 'defaults',
+      pages: [
+        {
+          id: 'page',
+          fields: [...fields, { id: 'section', fieldType: 'section', fields }],
+        },
+      ],
+    };
+
+    expect(normalizeFormDefinition(definition)).toEqual(definition);
+    expect(formDefinitionSchema.safeParse(definition).success).toBe(true);
+  });
+
+  it('only exposes defaultAnswer on text fields in the generated JSON Schema', () => {
+    const seen = new Set<string>();
+    function check(value: unknown) {
+      if (!value || typeof value !== 'object') return;
+      if (
+        'properties' in value &&
+        value.properties &&
+        typeof value.properties === 'object' &&
+        'fieldType' in value.properties
+      ) {
+        const fieldType = value.properties.fieldType;
+        if (
+          fieldType &&
+          typeof fieldType === 'object' &&
+          'const' in fieldType &&
+          typeof fieldType.const === 'string'
+        ) {
+          seen.add(fieldType.const);
+          expect('defaultAnswer' in value.properties).toBe(
+            fieldType.const === 'text' || fieldType.const === 'longtext'
+          );
+        }
+      }
+      for (const child of Object.values(value)) check(child);
+    }
+
+    check(getFormDefinitionJSONSchema());
+    expect([...seen].sort()).toEqual([...FIELD_TYPES].sort());
+  });
 });
 
 describe('section icon validation', () => {
@@ -342,6 +450,34 @@ describe('custom field type validation', () => {
     });
 
     expect(result.success).toBe(true);
+  });
+
+  it('validates defaults on registered custom fields by response type', () => {
+    registerVitals();
+    const field = {
+      id: 'v1',
+      fieldType: 'vitals',
+      defaultAnswer: 'Initial vitals',
+    };
+    expect(fieldDefinitionSchema.parse(field)).toEqual(field);
+    expect(
+      fieldDefinitionSchema.safeParse({ ...field, defaultAnswer: 42 }).success
+    ).toBe(false);
+
+    registerFieldType('customChoice', {
+      label: 'Custom choice',
+      category: 'selection',
+      answerType: 'selection',
+      hasOptions: true,
+      hasMatrix: false,
+      defaultProps: {},
+    });
+    expect(
+      fieldDefinitionSchema.safeParse({
+        ...field,
+        fieldType: 'customChoice',
+      }).success
+    ).toBe(false);
   });
 
   it('should reject an unregistered field type', () => {

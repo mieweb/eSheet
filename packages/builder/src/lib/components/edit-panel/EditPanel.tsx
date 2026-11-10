@@ -221,7 +221,6 @@ function EditTabContent({
         onUpdate={onUpdate}
         onRenameId={onRenameId}
       />
-
       {/* Divider */}
       {(meta?.hasOptions || meta?.hasMatrix) && (
         <hr className="ms:border-msborder" />

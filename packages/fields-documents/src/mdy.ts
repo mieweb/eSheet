@@ -171,6 +171,34 @@ export function withMdyFrontMatter(
   };
 }
 
+/** Retain unknown form data, and retain the exact block for prose-only edits. */
+export function updateMdyForm(
+  source: string,
+  frontMatter: MdyFrontMatter,
+  body: string,
+  fieldIds: readonly string[] = Object.keys(frontMatter.response ?? {})
+): string {
+  const file = parseMdy(source);
+  const knownFields = new Set(fieldIds);
+  const unknownResponses = Object.fromEntries(
+    Object.entries(file.frontMatter?.response ?? {}).filter(
+      ([fieldId]) => !knownFields.has(fieldId)
+    )
+  );
+  const next = {
+    ...file.frontMatter,
+    ...frontMatter,
+    response: { ...unknownResponses, ...frontMatter.response },
+  };
+  const same =
+    file.frontMatter &&
+    dump(file.frontMatter, { sortKeys: true }) ===
+      dump(next, { sortKeys: true });
+  return serializeMdy(
+    withMdyBody(same ? file : withMdyFrontMatter(file, next), body)
+  );
+}
+
 /**
  * Build a document from its two layers. Composing goes through here rather
  * than `parseMdy(body)` so a body that happens to open with `---` stays prose

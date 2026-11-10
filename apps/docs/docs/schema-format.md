@@ -95,6 +95,8 @@ interface FieldDefinition {
   inputType?: TextInputType;
   /** Unit suffix displayed after the input (e.g. "kg", "cm") */
   unit?: string;
+  /** Maximum visible rows for longtext; omitted means unlimited growth */
+  maxRows?: number;
 
   // --- Choice fields ---
   /** Options for radio, check, dropdown, multiselect, multitext, rating, ranking */
@@ -103,8 +105,8 @@ interface FieldDefinition {
   optionLayout?: OptionLayout;
 
   // --- Matrix fields ---
-  /** Rows for singlematrix and multimatrix */
-  rows?: MatrixRow[];
+  /** Minimum row count for longtext, or row definitions for matrix fields */
+  rows?: number | MatrixRow[];
   /** Columns for singlematrix and multimatrix */
   columns?: MatrixColumn[];
 
@@ -131,6 +133,16 @@ interface FieldDefinition {
 ```
 
 ## Field Layout
+
+### Longtext Height
+
+Longtext fields default to single-line height and automatically grow and shrink
+with their content. Set `rows` to a positive integer to configure a taller
+minimum height, or use **Minimum rows** in the builder. Omit it to keep the
+single-line default. Set `maxRows` or **Maximum rows** to cap growth and scroll
+longer answers internally. The maximum must be a positive integer at least as
+large as `rows` (one by default); omit it for unlimited growth.
+See [longtext](/docs/field-types/longtext) for examples.
 
 ### FieldWidth
 

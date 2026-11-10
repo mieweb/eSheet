@@ -93,7 +93,7 @@ const TEST_SCHEMAS: readonly SchemaOption[] = Object.entries(schemaModules)
 
 export function RendererView() {
   useEffect(() => {
-    updateOzwellTools(FLOWIE_KEY);
+    return updateOzwellTools(FLOWIE_KEY);
   }, []);
 
   const onRendererToolsReady = useRendererMcpToolHandler({

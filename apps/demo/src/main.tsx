@@ -27,6 +27,10 @@ import { LinkedResponsesView } from './views/LinkedResponsesView';
 import { Navbar } from './components/Navbar';
 import { BrandInitializer } from './components/BrandInitializer';
 
+if (localStorage.getItem('mieweb-ui-theme') === null) {
+  localStorage.setItem('mieweb-ui-theme', 'light');
+}
+
 // Register plugin fields (imports also self-register metadata + Zod schema)
 registerFieldComponents({ richtext: RichTextEditorField });
 registerAutocompleteFieldType();

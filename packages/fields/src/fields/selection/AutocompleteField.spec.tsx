@@ -6,9 +6,11 @@ import {
   waitFor,
 } from '@testing-library/react';
 import {
+  createFormStore,
   registerOptionsProvider,
   unregisterOptionsProvider,
   type FieldComponentProps,
+  type FieldResponse,
   type OptionsProvider,
 } from '@esheet/core';
 import {
@@ -22,26 +24,19 @@ import {
 
 function renderField(
   definition: Record<string, unknown>,
-  responses: Record<string, unknown> = {},
-  response: Record<string, unknown> | undefined = undefined
+  responses: Record<string, FieldResponse> = {},
+  response: FieldResponse | undefined = undefined,
+  form = createFormStore()
 ) {
-  const onResponse = vi.fn();
+  const onResponse = vi.fn((next: FieldResponse) => {
+    props.response = next;
+    view.rerender(<AutocompleteField {...props} />);
+  });
   const setResponse = vi.fn();
-  const listeners = new Set<() => void>();
+  form.setState({ responses, setResponse });
   const props = {
     field: { definition: { fieldType: 'autocomplete', ...definition } },
-    form: {
-      getState: () => ({
-        instanceId: 't',
-        responses,
-        setResponse,
-        isReadOnly: () => false,
-      }),
-      subscribe: (callback: () => void) => {
-        listeners.add(callback);
-        return () => listeners.delete(callback);
-      },
-    },
+    form,
     ui: {},
     isSelected: false,
     isPreview: true,
@@ -54,13 +49,20 @@ function renderField(
     onUpdate: vi.fn(),
     onResponse,
   } as unknown as FieldComponentProps;
-  render(<AutocompleteField {...props} />);
+  const view = render(<AutocompleteField {...props} />);
   return {
+    form,
+    unmount: view.unmount,
+    updateResponse: (next: FieldResponse) => {
+      props.response = next;
+      view.rerender(<AutocompleteField {...props} />);
+    },
     onResponse,
     setResponse,
-    updateResponses: (next: Record<string, unknown>) => {
-      Object.assign(responses, next);
-      act(() => listeners.forEach((listener) => listener()));
+    updateResponses: (next: Record<string, FieldResponse>) => {
+      act(() =>
+        form.setState({ responses: { ...form.getState().responses, ...next } })
+      );
     },
   };
 }
@@ -296,37 +298,15 @@ describe('AutocompleteField with an optionsSource', () => {
       mode: 'complete',
       fetch: async () => [],
     });
-    const onResponse = vi.fn();
-    const props = {
-      field: {
-        definition: {
-          fieldType: 'autocomplete',
-          id: 'caseManager',
-          question: 'Case manager',
-          optionsSource: { provider: 'staff' },
-        },
+    const { onResponse } = renderField(
+      {
+        id: 'caseManager',
+        question: 'Case manager',
+        optionsSource: { provider: 'staff' },
       },
-      form: {
-        getState: () => ({
-          instanceId: 't',
-          responses: {},
-          isReadOnly: () => false,
-        }),
-        subscribe: () => () => {},
-      },
-      ui: {},
-      isSelected: false,
-      isPreview: true,
-      isEnabled: true,
-      isRequired: false,
-      isSoftRequired: false,
-      isReadOnly: false,
-      response: { answer: 'Typed Name' },
-      onRemove: vi.fn(),
-      onUpdate: vi.fn(),
-      onResponse,
-    } as unknown as FieldComponentProps;
-    render(<AutocompleteField {...props} />);
+      {},
+      { answer: 'Typed Name' }
+    );
 
     const input = screen.getByRole('combobox', { name: 'Case manager' });
     expect((input as HTMLInputElement).value).toBe('Typed Name');
@@ -450,6 +430,239 @@ describe('AutocompleteField with an optionsSource', () => {
     }
   });
 
+  it('restores a removed saved choice and its attributes after clearing or replacing it', async () => {
+    const fetch = vi.fn<OptionsProvider['fetch']>(async () => [
+      { id: 'new', value: 'New manager', attributes: { role: 'new' } },
+    ]);
+    registerOptionsProvider('staff', { mode: 'complete', fetch });
+    const original = {
+      selected: { id: 'old', value: 'Former manager' },
+      attributes: { role: 'original' },
+    };
+    const { onResponse, setResponse } = renderField(
+      {
+        id: 'manager',
+        question: 'Manager',
+        optionsSource: { provider: 'staff' },
+        fillFields: { role: 'role' },
+      },
+      {},
+      original
+    );
+    const input = screen.getByRole('combobox', { name: 'Manager' });
+    expect((input as HTMLInputElement).value).toBe('Former manager');
+    fireEvent.focus(input);
+    expect(await screen.findByText('No longer active')).not.toBeNull();
+    fireEvent.change(input, { target: { value: 'New' } });
+    fireEvent.click(screen.getByText('New manager'));
+    fireEvent.change(input, { target: { value: '' } });
+    expect(screen.getByText('Former manager')).not.toBeNull();
+    fireEvent.click(screen.getByText('Former manager'));
+    expect(onResponse).toHaveBeenLastCalledWith(original);
+    expect(setResponse).toHaveBeenLastCalledWith('role', {
+      answer: 'original',
+    });
+    expect((input as HTMLInputElement).value).toBe('Former manager');
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('offers local recovery below the query minimum and after unrelated typing', () => {
+    const fetch = vi.fn<OptionsProvider['fetch']>(async () => []);
+    registerOptionsProvider('patients', { fetch });
+    const { onResponse } = renderField(
+      {
+        id: 'patient',
+        question: 'Patient',
+        requireSelection: true,
+        optionsSource: { provider: 'patients' },
+      },
+      {},
+      { selected: { id: 'closed', value: 'Closed case' } }
+    );
+    const input = screen.getByRole('combobox', { name: 'Patient' });
+    fireEvent.change(input, { target: { value: '' } });
+    expect(screen.getByText('Previously selected')).not.toBeNull();
+    expect(fetch).not.toHaveBeenCalled();
+    fireEvent.change(input, { target: { value: 'x' } });
+    expect(screen.getByText('Closed case')).not.toBeNull();
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(onResponse).toHaveBeenLastCalledWith({
+      selected: { id: 'closed', value: 'Closed case' },
+      attributes: undefined,
+    });
+    expect(fetch).not.toHaveBeenCalled();
+    expect(screen.queryByText('No longer active')).toBeNull();
+  });
+
+  it('retains new query picks when later results no longer contain them', async () => {
+    const fetch = vi
+      .fn<OptionsProvider['fetch']>()
+      .mockResolvedValueOnce([
+        { id: 'p1', value: 'Pat Patient', attributes: { mrn: 'EE-1' } },
+      ])
+      .mockResolvedValue([]);
+    registerOptionsProvider('patients', { fetch });
+    const { onResponse } = renderField({
+      id: 'patient',
+      question: 'Patient',
+      allowFreeText: true,
+      optionsSource: { provider: 'patients' },
+    });
+    const input = screen.getByRole('combobox', { name: 'Patient' });
+    fireEvent.change(input, { target: { value: 'pat' } });
+    fireEvent.click(await screen.findByText('Pat Patient'));
+    fireEvent.change(input, { target: { value: 'unrelated' } });
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
+    expect(await screen.findByText('Previously selected')).not.toBeNull();
+    fireEvent.click(screen.getByText('Pat Patient'));
+    expect(onResponse).toHaveBeenLastCalledWith({
+      selected: { id: 'p1', value: 'Pat Patient' },
+      attributes: { mrn: 'EE-1' },
+    });
+  });
+
+  it('prefers current source labels and attributes without duplicating a saved id', async () => {
+    registerOptionsProvider('staff', {
+      mode: 'complete',
+      fetch: async () => [
+        { id: 'cm', value: 'Current name', attributes: { role: 'current' } },
+      ],
+    });
+    const { onResponse } = renderField(
+      {
+        id: 'manager',
+        question: 'Manager',
+        optionsSource: { provider: 'staff' },
+      },
+      {},
+      {
+        selected: { id: 'cm', value: 'Old name' },
+        attributes: { role: 'old' },
+      }
+    );
+    const input = screen.getByRole('combobox', { name: 'Manager' });
+    fireEvent.change(input, { target: { value: '' } });
+    expect(await screen.findByText('Current name')).not.toBeNull();
+    expect(screen.getAllByRole('option')).toHaveLength(1);
+    expect(screen.queryByText('Old name')).toBeNull();
+    expect(screen.queryByText('No longer active')).toBeNull();
+    fireEvent.click(screen.getByText('Current name'));
+    expect(onResponse).toHaveBeenLastCalledWith({
+      selected: { id: 'cm', value: 'Current name' },
+      attributes: { role: 'current' },
+    });
+  });
+
+  it('retains late-arriving saved selections and survives field remounts only in that form and field', () => {
+    const definition = {
+      id: 'manager',
+      question: 'Manager',
+      minQueryLength: 0,
+    };
+    const first = renderField(definition);
+    first.updateResponse({
+      selected: { id: 'former', value: 'Former manager' },
+    });
+    const input = screen.getByRole('combobox', { name: 'Manager' });
+    expect((input as HTMLInputElement).value).toBe('Former manager');
+    fireEvent.change(input, { target: { value: '' } });
+    first.unmount();
+
+    const remounted = renderField(definition, {}, undefined, first.form);
+    fireEvent.focus(screen.getByRole('combobox', { name: 'Manager' }));
+    expect(screen.getByText('Former manager')).not.toBeNull();
+    expect(remounted.form.getState().responses).toEqual({});
+    remounted.unmount();
+
+    const otherField = renderField(
+      { ...definition, id: 'otherManager' },
+      {},
+      undefined,
+      first.form
+    );
+    fireEvent.focus(screen.getByRole('combobox', { name: 'Manager' }));
+    expect(screen.queryByText('Former manager')).toBeNull();
+    otherField.unmount();
+
+    renderField(definition);
+    fireEvent.focus(screen.getByRole('combobox', { name: 'Manager' }));
+    expect(screen.queryByText('Former manager')).toBeNull();
+  });
+
+  it('clears local recovery when another definition is loaded', () => {
+    const { form, updateResponse } = renderField(
+      { id: 'manager', question: 'Manager', minQueryLength: 0 },
+      {},
+      { selected: { id: 'former', value: 'Former manager' } }
+    );
+    updateResponse({});
+    act(() => form.getState().loadDefinition({ id: 'other', pages: [] }));
+    const input = screen.getByRole('combobox', { name: 'Manager' });
+    fireEvent.change(input, { target: { value: '' } });
+    expect(screen.queryByText('Former manager')).toBeNull();
+    expect(form.getState().extensions).toEqual({});
+  });
+
+  it('does not call a failed complete provider an inactive source', async () => {
+    registerOptionsProvider('staff', {
+      mode: 'complete',
+      fetch: async () => {
+        throw new Error('Unavailable');
+      },
+    });
+    renderField(
+      {
+        id: 'manager',
+        question: 'Manager',
+        optionsSource: { provider: 'staff' },
+      },
+      {},
+      { selected: { id: 'former', value: 'Former manager' } }
+    );
+    expect(await screen.findByRole('status')).not.toBeNull();
+    const input = screen.getByRole('combobox', { name: 'Manager' });
+    fireEvent.change(input, { target: { value: '' } });
+    expect(screen.getByText('Previously selected')).not.toBeNull();
+    expect(screen.queryByText('No longer active')).toBeNull();
+  });
+
+  it('preserves captured URL-source attributes for local recovery', async () => {
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => [{ label: 'Old office', id: 'old', city: 'Boston' }],
+      })
+      .mockResolvedValue({ ok: true, json: async () => [] });
+    vi.stubGlobal('fetch', fetch);
+    try {
+      const { onResponse, setResponse } = renderField({
+        id: 'office',
+        question: 'Office',
+        dataSourceUrl: 'https://example.com/search?q={query}',
+        valueKey: 'id',
+        captureKeys: ['city'],
+        fillFields: { city: 'city' },
+      });
+      const input = screen.getByRole('combobox', { name: 'Office' });
+      fireEvent.change(input, { target: { value: 'old' } });
+      fireEvent.click(await screen.findByText('Old office'));
+      fireEvent.change(input, { target: { value: 'another' } });
+      await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
+      fireEvent.click(await screen.findByText('Old office'));
+      expect(onResponse).toHaveBeenLastCalledWith({
+        selected: { id: 'old', value: 'Old office' },
+        attributes: { city: 'Boston' },
+      });
+      expect(setResponse).toHaveBeenLastCalledWith('city', {
+        answer: 'Boston',
+      });
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('drops a pick and its fillFields writes when the form is read-only', async () => {
     registerOptionsProvider('patients', {
       mode: 'complete',
@@ -457,40 +670,13 @@ describe('AutocompleteField with an optionsSource', () => {
         { id: 'p1', value: 'Pat Patient', attributes: { mrn: 'EE-1' } },
       ],
     });
-    const onResponse = vi.fn();
-    const setResponse = vi.fn();
-    const props = {
-      field: {
-        definition: {
-          fieldType: 'autocomplete',
-          id: 'employee',
-          question: 'Employee',
-          optionsSource: { provider: 'patients' },
-          fillFields: { mrn: 'mrn' },
-        },
-      },
-      form: {
-        getState: () => ({
-          instanceId: 't',
-          responses: {},
-          setResponse,
-          isReadOnly: () => true,
-        }),
-        subscribe: () => () => {},
-      },
-      ui: {},
-      isSelected: false,
-      isPreview: true,
-      isEnabled: true,
-      isRequired: false,
-      isSoftRequired: false,
-      isReadOnly: true,
-      response: undefined,
-      onRemove: vi.fn(),
-      onUpdate: vi.fn(),
-      onResponse,
-    } as unknown as FieldComponentProps;
-    render(<AutocompleteField {...props} />);
+    const { onResponse, setResponse, form } = renderField({
+      id: 'employee',
+      question: 'Employee',
+      optionsSource: { provider: 'patients' },
+      fillFields: { mrn: 'mrn' },
+    });
+    act(() => form.getState().setReadOnly(true));
 
     fireEvent.focus(screen.getByRole('combobox', { name: 'Employee' }));
     fireEvent.click(await screen.findByText('Pat Patient'));

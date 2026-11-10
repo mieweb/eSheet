@@ -274,6 +274,7 @@ export async function documentPdfBlob(
 }
 
 async function pdfBlobForContent(content: DocumentListContent): Promise<Blob> {
+  if (content.blob) return content.blob;
   if (content.contentType === PDF_TYPE && content.reference) {
     const response = await fetch(content.reference);
     if (!response.ok) throw new Error('The PDF could not be loaded.');
@@ -284,6 +285,141 @@ async function pdfBlobForContent(content: DocumentListContent): Promise<Blob> {
   }
   throw new Error(
     `PDF preview does not support ${content.contentType || 'this file type'}.`
+  );
+}
+
+export function DocumentListPdfViewer({
+  reference,
+  blob,
+  title,
+  onReady,
+}: {
+  readonly reference?: string;
+  readonly blob?: Blob;
+  readonly title: string;
+  readonly onReady?: () => void;
+}): React.JSX.Element {
+  const onReadyRef = useRef(onReady);
+  onReadyRef.current = onReady;
+  const [error, setError] = useState<string>();
+  const [pageCount, setPageCount] = useState(0);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [ready, setReady] = useState(false);
+  const [pageWidth, setPageWidth] = useState(816);
+  const pageContainerRef = useRef<HTMLDivElement>(null);
+  const surfaceRef = useRef<HTMLDivElement>(null);
+
+  const changePage = (offset: number): void => {
+    setPageNumber((current) => current + offset);
+    if (surfaceRef.current) surfaceRef.current.scrollTop = 0;
+  };
+
+  useEffect(() => {
+    const element = pageContainerRef.current;
+    if (!element || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(([entry]) => {
+      const width = Math.floor(entry.contentRect.width);
+      if (width > 0) setPageWidth(width);
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [pageCount, reference]);
+
+  useEffect(() => {
+    if (ready || error) return;
+    const timeout = window.setTimeout(
+      () => setError('The PDF preview could not be rendered.'),
+      15_000
+    );
+    return () => window.clearTimeout(timeout);
+  }, [error, reference, ready]);
+
+  return (
+    <div className="document-list-pdf-preview">
+      {error ? (
+        <div className="document-list-pdf-preview__message">
+          <p className="document-list-pdf-preview__error" role="alert">
+            {error}
+          </p>
+        </div>
+      ) : (
+        <>
+          <div
+            ref={surfaceRef}
+            className={`document-list-pdf-preview__surface${
+              !ready ? ' document-list-pdf-preview__surface--loading' : ''
+            }`}
+            aria-label={`PDF preview of ${title}`}
+          >
+            {!ready ? (
+              <div className="document-list-pdf-preview__message" role="status">
+                <span className="document-list-pdf-preview__spinner" />
+                Rendering PDF…
+              </div>
+            ) : null}
+            <PdfDocument
+              file={blob ?? reference}
+              loading={null}
+              error={null}
+              onLoadSuccess={({ numPages }) => {
+                setPageCount(numPages);
+                setPageNumber(1);
+              }}
+              onLoadError={(cause) => setError(cause.message)}
+            >
+              <div
+                ref={pageContainerRef}
+                className="document-list-pdf-preview__page"
+              >
+                <PdfPage
+                  pageNumber={pageNumber}
+                  width={pageWidth}
+                  devicePixelRatio={1}
+                  renderAnnotationLayer={false}
+                  renderTextLayer
+                  loading={null}
+                  onRenderSuccess={() => {
+                    if (!ready) {
+                      setReady(true);
+                      onReadyRef.current?.();
+                    }
+                  }}
+                  onRenderError={(cause) => setError(cause.message)}
+                />
+              </div>
+            </PdfDocument>
+          </div>
+          {pageCount > 1 ? (
+            <nav
+              className="document-list-pdf-preview__navigation"
+              aria-label="PDF pages"
+            >
+              <Button
+                type="button"
+                variant="outline"
+                disabled={pageNumber === 1}
+                onClick={() => changePage(-1)}
+                aria-label="Previous PDF page"
+              >
+                <ChevronLeft size={16} aria-hidden="true" />
+              </Button>
+              <span aria-live="polite" aria-atomic="true">
+                Page {pageNumber} of {pageCount}
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={pageNumber === pageCount}
+                onClick={() => changePage(1)}
+                aria-label="Next PDF page"
+              >
+                <ChevronRight size={16} aria-hidden="true" />
+              </Button>
+            </nav>
+          ) : null}
+        </>
+      )}
+    </div>
   );
 }
 
@@ -298,16 +434,9 @@ export function DocumentListPdfPreview({
   readonly onClose: () => void;
   readonly onReady?: () => void;
 }): React.JSX.Element {
-  const onReadyRef = useRef(onReady);
-  onReadyRef.current = onReady;
   const descriptionId = useId();
   const [previewUrl, setPreviewUrl] = useState<string>();
   const [error, setError] = useState<string>();
-  const [pageCount, setPageCount] = useState(0);
-  const [pageNumber, setPageNumber] = useState(1);
-  const [ready, setReady] = useState(false);
-  const [pageWidth, setPageWidth] = useState(816);
-  const pageContainerRef = useRef<HTMLDivElement>(null);
   const pdfFilename = filenameFor(document.title);
   const loadContent = runtime.loadContent;
 
@@ -316,9 +445,6 @@ export function DocumentListPdfPreview({
     let objectUrl: string | undefined;
     setPreviewUrl(undefined);
     setError(undefined);
-    setPageCount(0);
-    setPageNumber(1);
-    setReady(false);
     void loadContent(document.id, document.rev ?? 0)
       .then(async (content) => {
         if (!content) throw new Error('Document content is unavailable.');
@@ -336,26 +462,6 @@ export function DocumentListPdfPreview({
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, [document.id, document.rev, loadContent]);
-
-  useEffect(() => {
-    const element = pageContainerRef.current;
-    if (!element || typeof ResizeObserver === 'undefined') return;
-    const observer = new ResizeObserver(([entry]) => {
-      const width = Math.floor(entry.contentRect.width);
-      if (width > 0) setPageWidth(Math.min(816, width));
-    });
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [pageCount, previewUrl]);
-
-  useEffect(() => {
-    if (!previewUrl || ready || error) return;
-    const timeout = window.setTimeout(
-      () => setError('The PDF preview could not be rendered.'),
-      15_000
-    );
-    return () => window.clearTimeout(timeout);
-  }, [error, previewUrl, ready]);
 
   const downloadPdf = (): void => {
     if (!previewUrl) return;
@@ -375,15 +481,6 @@ export function DocumentListPdfPreview({
     printWindow.addEventListener('load', () => printWindow.print(), {
       once: true,
     });
-  };
-
-  const handlePdfReady = ({
-    numPages,
-  }: {
-    readonly numPages: number;
-  }): void => {
-    setPageCount(numPages);
-    setPageNumber(1);
   };
 
   return (
@@ -411,91 +508,25 @@ export function DocumentListPdfPreview({
         <ModalClose />
       </ModalHeader>
       <ModalBody className="document-list-pdf-modal__body">
-        <div className="document-list-pdf-preview">
-          {error ? (
-            <div className="document-list-pdf-preview__message">
-              <p className="document-list-pdf-preview__error" role="alert">
-                {error}
-              </p>
-            </div>
-          ) : previewUrl ? (
-            <div
-              className="document-list-pdf-preview__surface"
-              aria-label={`PDF preview of ${document.title}`}
-            >
-              {!ready ? (
-                <div
-                  className="document-list-pdf-preview__message"
-                  role="status"
-                >
-                  <span className="document-list-pdf-preview__spinner" />
-                  Rendering PDF…
-                </div>
-              ) : null}
-              <PdfDocument
-                file={previewUrl}
-                loading={null}
-                error={null}
-                onLoadSuccess={handlePdfReady}
-                onLoadError={(cause) => setError(cause.message)}
-              >
-                <div
-                  ref={pageContainerRef}
-                  className="document-list-pdf-preview__page"
-                >
-                  <PdfPage
-                    pageNumber={pageNumber}
-                    width={pageWidth}
-                    devicePixelRatio={1}
-                    renderAnnotationLayer={false}
-                    renderTextLayer
-                    loading={null}
-                    onRenderSuccess={() => {
-                      if (!ready) {
-                        setReady(true);
-                        onReadyRef.current?.();
-                      }
-                    }}
-                    onRenderError={(cause) => setError(cause.message)}
-                  />
-                </div>
-              </PdfDocument>
-              {pageCount > 1 ? (
-                <nav
-                  className="document-list-pdf-preview__navigation"
-                  aria-label="PDF pages"
-                >
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={pageNumber === 1}
-                    onClick={() => setPageNumber((current) => current - 1)}
-                    aria-label="Previous PDF page"
-                  >
-                    <ChevronLeft size={16} aria-hidden="true" />
-                  </Button>
-                  <span>
-                    Page {pageNumber} of {pageCount}
-                  </span>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={pageNumber === pageCount}
-                    onClick={() => setPageNumber((current) => current + 1)}
-                    aria-label="Next PDF page"
-                  >
-                    <ChevronRight size={16} aria-hidden="true" />
-                  </Button>
-                </nav>
-              ) : null}
-            </div>
-          ) : (
-            <div className="document-list-pdf-preview__message" role="status">
-              <span className="document-list-pdf-preview__spinner" />
-              Preparing PDF…
-            </div>
-          )}
-        </div>
+        {error ? (
+          <div className="document-list-pdf-preview__message">
+            <p className="document-list-pdf-preview__error" role="alert">
+              {error}
+            </p>
+          </div>
+        ) : previewUrl ? (
+          <DocumentListPdfViewer
+            key={previewUrl}
+            reference={previewUrl}
+            title={document.title}
+            onReady={onReady}
+          />
+        ) : (
+          <div className="document-list-pdf-preview__message" role="status">
+            <span className="document-list-pdf-preview__spinner" />
+            Preparing PDF…
+          </div>
+        )}
       </ModalBody>
       <ModalFooter className="document-list-pdf-modal__footer">
         <span className="document-list-pdf-modal__filename">{pdfFilename}</span>

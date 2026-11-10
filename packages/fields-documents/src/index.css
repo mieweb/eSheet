@@ -58,14 +58,24 @@
   width: 100%;
 }
 
+.document-list-pdf-preview__surface--loading {
+  overflow: hidden;
+}
+
+.document-list-pdf-preview__surface--loading .react-pdf__Document {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+}
+
 .document-list-pdf-preview__page {
   background: var(--mieweb-card, #fff);
   border: 1px solid var(--mieweb-border, #d1d5db);
   box-shadow: 0 2px 8px rgb(0 0 0 / 0.16);
   margin: 0 auto 1rem;
-  max-width: 100%;
+  max-width: min(100%, 51rem);
   overflow: hidden;
-  width: 51rem;
+  width: 100%;
 }
 
 .document-list-pdf-preview__page .react-pdf__Page {
@@ -90,13 +100,12 @@
   background: var(--mieweb-card, #fff);
   border: 1px solid var(--mieweb-border, #d1d5db);
   border-radius: var(--mieweb-radius-md, 0.375rem);
-  bottom: 0.75rem;
   box-shadow: 0 2px 8px rgb(0 0 0 / 0.16);
   display: flex;
+  flex-shrink: 0;
   gap: 0.75rem;
-  margin: 0 auto;
+  margin: 0.5rem auto;
   padding: 0.375rem;
-  position: sticky;
   width: fit-content;
 }
 
@@ -188,6 +197,7 @@
 @source './**/*.{ts,tsx}';
 
 .document-list-grid {
+  container-type: inline-size;
   position: relative;
   width: 100%;
   min-width: 0;
@@ -558,20 +568,6 @@
   font-size: 0.875rem;
 }
 
-/* Mirrors @mieweb/ui Input's h-10 / px-3 py-2 / rounded-lg resting state. */
-.document-list-workflow__select {
-  background: var(--mieweb-background, #ffffff);
-  border: 1px solid var(--mieweb-border, #e5e7eb);
-  border-radius: 0.5rem;
-  color: var(--mieweb-foreground, #1f2937);
-  font-size: 1rem;
-  height: 2.5rem;
-  /* No vertical padding: a select centres its text in the box, and density
-     rules shrink the height without knowing about our padding. */
-  padding: 0 0.75rem;
-  width: 100%;
-}
-
 .document-list-detail {
   display: flex;
   flex-direction: column;
@@ -659,6 +655,25 @@
   color: var(--mieweb-muted-foreground, #64748b);
   margin-left: 0;
   padding-left: 1em;
+}
+
+.document-list-detail__pdf {
+  display: flex;
+  width: min(100%, 53rem);
+  margin-inline: auto;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--mieweb-border, #e2e8f0);
+  border-radius: 0.375rem;
+}
+
+/* Detail cells span the scrollable table, not just the visible grid. */
+.document-list-grid .document-list-detail:has(> .document-list-detail__pdf) {
+  max-width: calc(100cqw - 1.5rem - 2px);
+}
+
+.document-list-grid .document-list-detail__pdf {
+  max-width: calc(100cqw - 3rem);
 }
 
 .document-list-detail__image {

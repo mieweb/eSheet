@@ -9,6 +9,7 @@ import {
 } from './DocumentListGrid.js';
 import type { DocumentListDocument } from './types.js';
 import { permissiveDocumentListCapabilities } from './types.js';
+import { getDocumentListRuntimeState } from './document-list-runtime.js';
 
 const captured = {
   props: null as Record<string, unknown> | null,
@@ -77,10 +78,263 @@ const row: DocumentListDocument = {
 const tableData: Record<string, unknown> = { ...row };
 
 describe('DocumentListGrid host integration', () => {
+  it('keeps title-less presence badges regional without mutating document dates', async () => {
+    const languages = vi
+      .spyOn(navigator, 'languages', 'get')
+      .mockReturnValue(['en-GB']);
+    try {
+      const formStore = createFormStore();
+      const props = {
+        field: {
+          definition: {
+            id: 'notes',
+            question: 'Notes',
+            columns: ['date', 'subject'],
+            documents: [row],
+          },
+        },
+        form: formStore,
+      } as unknown as FieldComponentProps;
+      render(
+        <FormStoreContext.Provider value={formStore}>
+          <DocumentListFieldProvider
+            host={{
+              capabilities: permissiveDocumentListCapabilities,
+              draftChannel: {
+                open: vi.fn(),
+                presenceOf: (_id, listener) => {
+                  listener([{ user: { id: 'other', name: 'Other author' } }]);
+                  return () => {};
+                },
+              },
+            }}
+          >
+            <DocumentListField {...props} />
+          </DocumentListFieldProvider>
+        </FormStoreContext.Provider>
+      );
+      await waitFor(() => expect(captured.props).not.toBeNull());
+      const grid = captured.props as {
+        formatCell: (
+          value: unknown,
+          data: Record<string, unknown>,
+          column: { field: string }
+        ) => ReactNode;
+      };
+      render(<>{grid.formatCell(row.date, tableData, { field: 'date' })}</>);
+      expect(screen.getByText('18/08/2026')).toBeTruthy();
+      expect(
+        screen.getByRole('img', { name: 'Draft in progress — Other author' })
+      ).toBeTruthy();
+      expect(row.date).toBe('2026-08-18');
+    } finally {
+      languages.mockRestore();
+    }
+  });
+
+  it('preserves host-provided date cell formatting', async () => {
+    const formatCell = vi.fn(() => 'Host date');
+    render(<DocumentListGrid rows={[row]} formatCell={formatCell} />);
+    await waitFor(() => expect(captured.props).not.toBeNull());
+    const grid = captured.props as {
+      formatCell: (
+        value: unknown,
+        data: Record<string, unknown>,
+        column: { field: string }
+      ) => ReactNode;
+    };
+    expect(grid.formatCell(row.date, tableData, { field: 'date' })).toBe(
+      'Host date'
+    );
+    expect(formatCell).toHaveBeenCalledWith(row.date, tableData, {
+      field: 'date',
+    });
+  });
+
+  it('formats dates regionally without changing source rows or requiring actions', async () => {
+    const languages = vi
+      .spyOn(navigator, 'languages', 'get')
+      .mockReturnValue(['en-GB']);
+    try {
+      render(<DocumentListGrid rows={[row]} />);
+      await waitFor(() => expect(captured.props).not.toBeNull());
+      const props = captured.props as {
+        formatCell: (
+          value: unknown,
+          data: Record<string, unknown>,
+          column: { field: string }
+        ) => ReactNode;
+      };
+      render(<>{props.formatCell(row.date, tableData, { field: 'date' })}</>);
+      expect(screen.getByText('18/08/2026')).toBeTruthy();
+      expect(row.date).toBe('2026-08-18');
+    } finally {
+      languages.mockRestore();
+    }
+  });
+
   beforeEach(() => {
     captured.props = null;
     sourceKeys.length = 0;
   });
+
+  it('uses the WebChart display classification as the grid field while actions retain the MIME subtype', async () => {
+    const native = {
+      ...row,
+      docType: 'application/pdf',
+      nativeDocType: 'NOTE',
+      nativeDocTypeLabel: 'Clinical note',
+    };
+    const actionRenderer = vi.fn(() => null);
+    const formatCell = vi.fn(() => undefined);
+    render(
+      <DocumentListGrid
+        rows={[native]}
+        renderActions={actionRenderer}
+        formatCell={formatCell}
+      />
+    );
+    await waitFor(() => expect(captured.props).not.toBeNull());
+    const props = captured.props as {
+      columns: readonly { field: string; header: string }[];
+      formatCell: (
+        value: unknown,
+        data: Record<string, unknown>,
+        column: { field: string }
+      ) => ReactNode;
+    };
+    expect(
+      props.columns.find((column) => column.header === 'Document Type')?.field
+    ).toBe('documentType');
+    const projected = { ...native, documentType: 'Clinical note' };
+    expect(
+      props.formatCell('Clinical note', projected, { field: 'documentType' })
+    ).toBe('Clinical note');
+    expect(formatCell).toHaveBeenCalledWith('Clinical note', projected, {
+      field: 'docType',
+    });
+    props.formatCell(undefined, projected, { field: '_actions' });
+    expect(actionRenderer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        docType: 'application/pdf',
+        nativeDocType: 'NOTE',
+        nativeDocTypeLabel: 'Clinical note',
+      }),
+      expect.any(Object)
+    );
+  });
+
+  it.each([undefined, ['date', 'title', 'file']])(
+    'omits the filename column, including from legacy definitions (%j)',
+    async (columns) => {
+      const formStore = createFormStore();
+      const fieldProps = {
+        field: {
+          definition: {
+            id: 'caseDocuments',
+            question: 'Documents',
+            documents: [row],
+            columns,
+          },
+        },
+        form: formStore,
+      } as unknown as FieldComponentProps;
+      render(
+        <FormStoreContext.Provider value={formStore}>
+          <DocumentListField {...fieldProps} />
+        </FormStoreContext.Provider>
+      );
+      await waitFor(() => expect(captured.props).not.toBeNull());
+      const fields = (
+        captured.props as { columns: readonly { field: string }[] }
+      ).columns.map((column) => column.field);
+      expect(fields).toContain('title');
+      expect(fields).not.toContain('file');
+      if (columns) expect(fields).toEqual(['date', 'title']);
+    }
+  );
+
+  it.each(['caseNotes', 'letterLog', 'caseDocuments'])(
+    'records each successful %s detail opening, including cached reopens',
+    async (fieldId) => {
+      const formStore = createFormStore();
+      formStore.getState().loadDefinition({
+        id: 'case',
+        pages: [
+          {
+            id: 'page',
+            fields: [
+              { id: fieldId, fieldType: 'text', question: 'Document list' },
+              { id: 'log', fieldType: 'activity', question: 'Activity' },
+            ],
+          },
+        ],
+      });
+      formStore.getState().setIdentity({ name: 'Case Viewer' });
+      const repository = {
+        load: vi.fn(async () => ({ documents: [row] })),
+        loadContent: vi.fn(async () => ({ text: 'Private document prose' })),
+        save: vi.fn(
+          async (_context: unknown, document: DocumentListDocument) => document
+        ),
+        remove: vi.fn(async () => undefined),
+      };
+      const props = {
+        field: { definition: { id: fieldId, question: 'Document list' } },
+        form: formStore,
+      } as unknown as FieldComponentProps;
+      render(
+        <FormStoreContext.Provider value={formStore}>
+          <DocumentListFieldProvider
+            host={{ capabilities: permissiveDocumentListCapabilities }}
+            runtime={{ repository }}
+          >
+            <DocumentListField {...props} />
+          </DocumentListFieldProvider>
+        </FormStoreContext.Provider>
+      );
+      await waitFor(() =>
+        expect(
+          getDocumentListRuntimeState(formStore, fieldId)?.documents[row.id]
+        ).toBeTruthy()
+      );
+      expect(
+        formStore.getState().responses._activity?.activity
+      ).toBeUndefined();
+      const grid = captured.props as {
+        renderDetailRow: (tableRow: {
+          data: Record<string, unknown>;
+        }) => ReactNode;
+      };
+      const first = render(<>{grid.renderDetailRow({ data: tableData })}</>);
+      expect(await screen.findByText('Private document prose')).toBeTruthy();
+      expect(formStore.getState().responses._activity?.activity).toEqual([
+        expect.objectContaining({
+          fieldId,
+          question: 'Document list',
+          category: 'Viewed',
+          author: 'Case Viewer',
+          to: 'Letter (doc-1), rev 0',
+          at: expect.any(String),
+        }),
+      ]);
+      first.rerender(<>{grid.renderDetailRow({ data: tableData })}</>);
+      expect(formStore.getState().responses._activity?.activity).toHaveLength(
+        1
+      );
+      first.unmount();
+      const reopened = render(<>{grid.renderDetailRow({ data: tableData })}</>);
+      expect(await screen.findByText('Private document prose')).toBeTruthy();
+      expect(formStore.getState().responses._activity?.activity).toHaveLength(
+        2
+      );
+      expect(repository.loadContent).toHaveBeenCalledOnce();
+      expect(
+        JSON.stringify(formStore.getState().responses._activity)
+      ).not.toContain('Private document prose');
+      reopened.unmount();
+    }
+  );
 
   it('adds the Actions column and renders host actions for a stable row', async () => {
     const actionRenderer = vi.fn(() => <button type="button">View</button>);
@@ -574,7 +828,9 @@ describe('DocumentListGrid host integration', () => {
       { data: DocumentListDocument[] }
     >;
 
-    expect(sources[sourceKey].data).toEqual([row]);
+    expect(sources[sourceKey].data).toEqual([
+      { ...row, documentType: row.docType },
+    ]);
 
     rerender(<DocumentListGrid rows={[]} />);
 
@@ -600,8 +856,12 @@ describe('DocumentListGrid host integration', () => {
       string,
       { data: DocumentListDocument[] }
     >;
-    expect(sources[sourceKeys[0]].data).toEqual([row]);
-    expect(sources[sourceKeys[1]].data).toEqual([secondRow]);
+    expect(sources[sourceKeys[0]].data).toEqual([
+      { ...row, documentType: row.docType },
+    ]);
+    expect(sources[sourceKeys[1]].data).toEqual([
+      { ...secondRow, documentType: secondRow.docType },
+    ]);
 
     unmount();
     expect(sources[sourceKeys[0]]).toBeUndefined();
