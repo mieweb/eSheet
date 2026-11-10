@@ -266,7 +266,7 @@ export function mapEsheetTypeToFhir(
       return { type: 'attachment' };
 
     case 'diagram':
-      return { type: 'attachment' };
+      return { type: 'attachment', itemControl: 'drawing' };
 
     case 'file':
       return { type: 'attachment' };

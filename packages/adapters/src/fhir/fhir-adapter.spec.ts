@@ -789,6 +789,41 @@ describe('exportToFhir', () => {
 // ---------------------------------------------------------------------------
 
 describe('round-trip', () => {
+  it('preserves drawing controls through import, export, and reimport', () => {
+    const original: FhirQuestionnaire = {
+      resourceType: 'Questionnaire',
+      status: 'draft',
+      item: [
+        {
+          linkId: 'diagram',
+          type: 'attachment',
+          extension: [
+            {
+              url: FHIR_EXT.ITEM_CONTROL,
+              valueCodeableConcept: { coding: [{ code: 'drawing' }] },
+            },
+          ],
+        },
+      ],
+    };
+
+    const exported = exportToFhir(importFromFhir(original));
+
+    expect(exported.item?.[0].extension).toContainEqual(
+      expect.objectContaining({
+        url: FHIR_EXT.ITEM_CONTROL,
+        valueCodeableConcept: expect.objectContaining({
+          coding: expect.arrayContaining([
+            expect.objectContaining({ code: 'drawing' }),
+          ]),
+        }),
+      })
+    );
+    expect(importFromFhir(exported)).toMatchObject({
+      pages: [{ fields: [{ fieldType: 'diagram' }] }],
+    });
+  });
+
   it('preserves basic structure through import → export', () => {
     const original: FhirQuestionnaire = {
       resourceType: 'Questionnaire',
