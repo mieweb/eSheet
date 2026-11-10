@@ -3,12 +3,14 @@ import type {
   DiagramFieldDefinition,
   DocumentPickerItem,
   FieldComponentProps,
+  FileInput,
 } from '@esheet/core';
 import { DrawingPad } from './DrawingPad.js';
 import { DocumentPickerDialog } from '../../lib/DocumentPickerDialog.js';
 import { useDocumentPicker } from '../../lib/DocumentPickerProvider.js';
 import {
   DRAWABLE_IMAGE_ACCEPT,
+  fileToInput,
   IMAGE_SOURCE_ACCEPT,
   readImageAsDataUrl,
 } from '../../lib/file-utils.js';
@@ -58,6 +60,20 @@ export const DiagramField = React.memo(function DiagramField({
   const [loadingDocument, setLoadingDocument] = React.useState(false);
   const attachmentOperation = React.useRef(0);
   const respondentBackground = response?.markupBackground;
+  const respondentBackgroundTitle = response?.markupBackgroundTitle;
+  const allowImageAttachments = def.allowImageAttachments !== false;
+  const canAttach =
+    isPreview && isEnabled && !isReadOnly && allowImageAttachments;
+  const attachmentAllowed = React.useRef(canAttach);
+  attachmentAllowed.current = canAttach;
+
+  React.useEffect(() => {
+    if (canAttach) return;
+    attachmentOperation.current++;
+    setPickerOpen(false);
+    setLoadingDocument(false);
+    setErrorMsg('');
+  }, [canAttach]);
 
   React.useEffect(
     () => () => {
@@ -77,25 +93,40 @@ export const DiagramField = React.memo(function DiagramField({
         markupData: payload.strokes,
         markupImage: payload.image,
         markupBackground: cleared ? undefined : respondentBackground,
+        markupBackgroundTitle: cleared ? undefined : respondentBackgroundTitle,
       });
     },
-    [onResponse, respondentBackground]
+    [onResponse, respondentBackground, respondentBackgroundTitle]
   );
 
   // Replacing the image drops strokes drawn on the previous one. The pad then
   // re-emits the composited image once the new background has loaded.
   const applyRespondentBackground = React.useCallback(
-    async (load: () => Promise<Blob>) => {
+    async (load: () => Promise<FileInput>) => {
+      if (!attachmentAllowed.current) return;
       const operation = ++attachmentOperation.current;
       setErrorMsg('');
       setLoadingDocument(true);
       try {
-        const blob = await load();
-        if (operation !== attachmentOperation.current) return;
-        const dataUrl = await readImageAsDataUrl(blob);
-        if (operation !== attachmentOperation.current) return;
+        const input = await load();
+        if (
+          !attachmentAllowed.current ||
+          operation !== attachmentOperation.current
+        )
+          return;
+        const dataUrl = await readImageAsDataUrl(
+          new Blob([input.content], {
+            type: input.contentType.split(';')[0].trim(),
+          })
+        );
+        if (
+          !attachmentAllowed.current ||
+          operation !== attachmentOperation.current
+        )
+          return;
         onResponse({
           markupBackground: dataUrl,
+          markupBackgroundTitle: input.title,
           markupImage: dataUrl,
           markupData: JSON.stringify({
             strokes: [],
@@ -121,18 +152,17 @@ export const DiagramField = React.memo(function DiagramField({
   const handleRespondentFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
-    if (file) void applyRespondentBackground(() => Promise.resolve(file));
+    if (file)
+      void applyRespondentBackground(() => Promise.resolve(fileToInput(file)));
   };
 
   const handlePickDocument = React.useCallback(
     (item: DocumentPickerItem) => {
-      if (!documentPicker) return;
+      if (!documentPicker || !attachmentAllowed.current) return;
       setPickerOpen(false);
       void applyRespondentBackground(async () => {
         const input = await documentPicker.fetch(item);
-        return new Blob([input.content], {
-          type: input.contentType.split(';')[0].trim(),
-        });
+        return { ...input, title: input.title ?? item.title };
       });
     },
     [documentPicker, applyRespondentBackground]
@@ -216,45 +246,39 @@ export const DiagramField = React.memo(function DiagramField({
           existingData={response?.markupData}
           onChange={handleChange}
           emitOnBackgroundLoad={Boolean(respondentBackground)}
+          onAttachFile={
+            canAttach
+              ? () => respondentFileInputRef.current?.click()
+              : undefined
+          }
+          attachmentName={
+            respondentBackground
+              ? respondentBackgroundTitle || 'Attached image'
+              : undefined
+          }
           disabled={!isEnabled}
         />
-        {isEnabled && !isReadOnly && (
+        {canAttach && (
+          <input
+            id={`${instanceId}-diagram-attachment-${def.id}`}
+            ref={respondentFileInputRef}
+            type="file"
+            accept={DRAWABLE_IMAGE_ACCEPT}
+            onChange={handleRespondentFile}
+            aria-label="Attach image file"
+            className="ms:hidden"
+          />
+        )}
+        {canAttach && documentPicker && (
           <div className="diagram-attach-controls ms:flex ms:flex-wrap ms:gap-2">
-            <input
-              id={`${instanceId}-diagram-attachment-${def.id}`}
-              ref={respondentFileInputRef}
-              type="file"
-              accept={DRAWABLE_IMAGE_ACCEPT}
-              onChange={handleRespondentFile}
-              aria-label="Attach image file"
-              className="ms:hidden"
-            />
             <button
               type="button"
-              onClick={() => respondentFileInputRef.current?.click()}
-              className="diagram-upload-zone ms:px-4 ms:py-2 ms:rounded-lg ms:border ms:border-dashed ms:border-msborder ms:bg-msbackground ms:text-mstextmuted ms:text-sm ms:font-medium ms:hover:border-msprimary ms:hover:bg-msprimary/5 ms:transition-colors ms:cursor-pointer"
+              disabled={loadingDocument}
+              onClick={() => setPickerOpen(true)}
+              className="diagram-chart-picker-button ms:px-4 ms:py-2 ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:text-sm ms:font-medium ms:hover:bg-msbackground ms:transition-colors ms:cursor-pointer ms:disabled:opacity-50 ms:disabled:cursor-not-allowed"
             >
-              Attach file
+              {documentPicker.label ?? 'Choose from chart'}
             </button>
-            {respondentBackground && (
-              <button
-                type="button"
-                onClick={() => handleChange({ strokes: '', image: '' })}
-                className="ms:px-4 ms:py-2 ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:text-msdanger ms:text-sm ms:font-medium ms:hover:bg-msbackground ms:transition-colors ms:cursor-pointer"
-              >
-                Remove image
-              </button>
-            )}
-            {documentPicker && (
-              <button
-                type="button"
-                disabled={loadingDocument}
-                onClick={() => setPickerOpen(true)}
-                className="diagram-chart-picker-button ms:px-4 ms:py-2 ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:text-sm ms:font-medium ms:hover:bg-msbackground ms:transition-colors ms:cursor-pointer ms:disabled:opacity-50 ms:disabled:cursor-not-allowed"
-              >
-                {documentPicker.label ?? 'Choose from chart'}
-              </button>
-            )}
           </div>
         )}
         {loadingDocument && (
@@ -267,7 +291,7 @@ export const DiagramField = React.memo(function DiagramField({
             {errorMsg}
           </div>
         )}
-        {pickerOpen && documentPicker && (
+        {canAttach && pickerOpen && documentPicker && (
           <DocumentPickerDialog
             picker={documentPicker}
             fieldId={def.id}
@@ -324,6 +348,24 @@ export const DiagramField = React.memo(function DiagramField({
           className="ms:px-3 ms:py-2 ms:h-10 ms:w-full ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:rounded-lg ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary/30 ms:outline-none ms:transition-colors"
         />
       </div>
+
+      <label
+        htmlFor={`${instanceId}-canvas-allow-image-attachments-${def.id}`}
+        className="ms:flex ms:items-center ms:gap-2 ms:cursor-pointer"
+      >
+        <input
+          id={`${instanceId}-canvas-allow-image-attachments-${def.id}`}
+          type="checkbox"
+          checked={allowImageAttachments}
+          onChange={(e) =>
+            onUpdate({ allowImageAttachments: e.target.checked })
+          }
+          className="ms:w-4 ms:h-4"
+        />
+        <span className="ms:text-sm ms:text-mstext">
+          Allow image attachments in renderer
+        </span>
+      </label>
 
       {/* Background image */}
       <div>

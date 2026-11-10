@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useStore } from 'zustand';
 import type {
+  DiagramFieldDefinition,
   FieldDefinition,
   FieldWidth,
   LongtextFieldDefinition,
@@ -176,6 +177,29 @@ export function CommonEditor({
             );
           })}
         </div>
+      )}
+
+      {def.fieldType === 'diagram' && (
+        <label
+          htmlFor={`${instanceId}-editor-allow-image-attachments-${fieldId}`}
+          className="ms:flex ms:items-center ms:gap-2 ms:text-sm ms:text-mstext ms:cursor-pointer"
+        >
+          <input
+            id={`${instanceId}-editor-allow-image-attachments-${fieldId}`}
+            type="checkbox"
+            checked={
+              (def as DiagramFieldDefinition).allowImageAttachments !== false
+            }
+            onChange={(e) => {
+              const patch: Partial<DiagramFieldDefinition> = {
+                allowImageAttachments: e.currentTarget.checked,
+              };
+              onUpdate(patch);
+            }}
+            className="ms:h-4 ms:w-4 ms:accent-msprimary"
+          />
+          Allow image attachments in renderer
+        </label>
       )}
 
       {/* Row width */}

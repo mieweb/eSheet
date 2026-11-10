@@ -1,4 +1,10 @@
-import { act, cleanup, render } from '@testing-library/react';
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from '@testing-library/react';
 import { DrawingPad } from './DrawingPad.js';
 
 const images: HTMLImageElement[] = [];
@@ -36,6 +42,81 @@ afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+});
+
+describe('DrawingPad floating actions', () => {
+  it('shows an upload icon beside Undo, Redo, and Clear on an empty canvas', () => {
+    const onAttachFile = vi.fn();
+    render(<DrawingPad onAttachFile={onAttachFile} />);
+
+    const attach = screen.getByRole('button', { name: 'Attach file' });
+    const actions = attach.parentElement;
+    expect(attach.querySelector('svg')).not.toBeNull();
+    expect(actions?.classList.contains('drawing-pad-actions')).toBe(true);
+    for (const title of ['Undo', 'Redo', 'Clear']) {
+      expect(screen.getByTitle(title).parentElement).toBe(actions);
+    }
+    expect((screen.getByTitle('Undo') as HTMLButtonElement).disabled).toBe(
+      true
+    );
+    expect((screen.getByTitle('Redo') as HTMLButtonElement).disabled).toBe(
+      true
+    );
+
+    fireEvent.click(attach);
+    expect(onAttachFile).toHaveBeenCalledOnce();
+  });
+
+  it('hides floating actions when the pad is disabled', () => {
+    render(
+      <DrawingPad onAttachFile={vi.fn()} attachmentName="image.png" disabled />
+    );
+
+    expect(screen.queryByRole('button', { name: 'Attach file' })).toBeNull();
+    expect(screen.queryByTitle('Clear')).toBeNull();
+    expect(screen.queryByText('image.png')).toBeNull();
+  });
+
+  it('shows the filename and an X remove button in the floating action bar', () => {
+    const name = 'A very long patient diagram filename.png';
+    const onChange = vi.fn();
+    const { rerender } = render(
+      <DrawingPad
+        attachmentName={name}
+        onAttachFile={vi.fn()}
+        onChange={onChange}
+      />
+    );
+    const filename = screen.getByText(name);
+    const remove = screen.getByRole('button', { name: 'Remove image' });
+    const actions = screen.getByTitle('Undo').parentElement;
+
+    expect(filename.title).toBe(name);
+    expect(filename.classList.contains('ms:truncate')).toBe(true);
+    expect(filename.closest('.drawing-pad-actions')).toBe(actions);
+    expect(remove.closest('.drawing-pad-actions')).toBe(actions);
+    expect(remove.querySelector('svg')).not.toBeNull();
+    fireEvent.click(remove);
+    expect(onChange).toHaveBeenCalledWith({ strokes: '', image: '' });
+
+    rerender(<DrawingPad onAttachFile={vi.fn()} onChange={onChange} />);
+    expect(screen.queryByText(name)).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Remove image' })).toBeNull();
+  });
+
+  it('shows the filename without removal when attachments are not allowed', () => {
+    render(<DrawingPad attachmentName="saved.png" />);
+
+    expect(screen.getByText('saved.png')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Remove image' })).toBeNull();
+  });
+
+  it('keeps the existing empty-pad behavior when no attachment action is supplied', () => {
+    render(<DrawingPad />);
+
+    expect(screen.queryByRole('button', { name: 'Attach file' })).toBeNull();
+    expect(screen.queryByTitle('Clear')).toBeNull();
+  });
 });
 
 describe('DrawingPad background loads', () => {

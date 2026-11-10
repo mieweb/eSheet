@@ -39,6 +39,22 @@ eSheet dependencies. See [local workflow testing](../../.github/workflows/TESTIN
 - `DrawingPad` — Canvas component (used by SignatureField/DiagramField)
 - Icons: `TrashIcon`, `PlusIcon`, `ArrowUpIcon`, `ArrowDownIcon`, `UpDownArrowIcon`
 
+## Diagram image attachments
+
+Diagram fields allow respondents to attach a local image or choose an image from
+a host-supplied document picker by default. In the builder's inline editor or Edit
+panel, turn off **Allow image attachments in renderer** to set
+`allowImageAttachments: false` on the diagram definition. Both editors share the
+same setting, including for fields inside sections. This hides both attachment
+options and blocks their handlers, including pending attachment loads when the
+setting changes. Disabled and
+read-only fields also block attachments.
+
+The setting does not restrict authors uploading a background image in the builder,
+remove previously saved respondent images, or prevent drawing on the canvas.
+It is a client-side behavior setting, not a server-side authorization boundary;
+hosts must still validate submitted responses.
+
 ## Component Registry
 
 ```ts
