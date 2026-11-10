@@ -223,7 +223,7 @@ export const FileField = React.memo(function FileField({
         try {
           const input = await documentPicker.fetch(item);
           const file = new File([input.content], input.title ?? item.title, {
-            type: input.contentType,
+            type: input.contentType.split(';')[0].trim(),
           });
           if (!fileMatchesAccept(file, def.accept)) {
             setErrorMsg(`File type not accepted: ${file.name}`);

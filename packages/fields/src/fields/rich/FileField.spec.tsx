@@ -76,6 +76,34 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('FileField chart attachments', () => {
+  it('normalizes MIME parameters before validating and storing a chart file', async () => {
+    mocks.fetch.mockResolvedValue({
+      content: new Blob(['text']),
+      contentType: 'text/plain; charset=utf-8',
+      title: 'chart.txt',
+    });
+    const defaults = createProps();
+    const props: FieldComponentProps = {
+      ...defaults,
+      field: {
+        ...defaults.field,
+        definition: {
+          ...defaults.field.definition,
+          fieldType: 'file',
+          accept: 'text/plain',
+        },
+      },
+    };
+    render(<FileField {...props} />);
+
+    await pickDocument();
+
+    expect(mocks.readFile).toHaveBeenCalledOnce();
+    expect(mocks.readFile.mock.calls[0][0].type).toBe('text/plain');
+    expect(props.onResponse).toHaveBeenCalledOnce();
+    expect(screen.queryByText('File type not accepted: chart.txt')).toBeNull();
+  });
+
   it('passes the accept filter to the picker and rejects mismatched fetched files', async () => {
     mocks.fetch.mockResolvedValue({
       content: new Blob(['image']),

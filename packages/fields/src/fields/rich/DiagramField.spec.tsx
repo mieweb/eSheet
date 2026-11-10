@@ -104,8 +104,77 @@ describe('DiagramField attachments', () => {
     expect(props.onResponse).toHaveBeenCalledWith({
       markupBackground: 'data:image/png;base64,local',
       markupImage: 'data:image/png;base64,local',
-      markupData: '',
+      markupData: JSON.stringify({
+        strokes: [],
+        baseWidth: 640,
+        baseHeight: 400,
+      }),
     });
+  });
+
+  it('keeps an image-only answer populated when the same image is reattached', async () => {
+    const props = createProps();
+    render(
+      <DiagramField
+        {...props}
+        response={{
+          markupBackground: 'data:image/png;base64,local',
+          markupData: JSON.stringify({
+            strokes: [],
+            baseWidth: 640,
+            baseHeight: 400,
+          }),
+        }}
+      />
+    );
+
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText('Attach image file'), {
+        target: { files: [new File(['local'], 'local.png')] },
+      });
+    });
+
+    expect(props.onResponse).toHaveBeenCalledWith({
+      markupBackground: 'data:image/png;base64,local',
+      markupImage: 'data:image/png;base64,local',
+      markupData: JSON.stringify({
+        strokes: [],
+        baseWidth: 640,
+        baseHeight: 400,
+      }),
+    });
+  });
+
+  it('removes an image-only attachment and restores the authored background', () => {
+    const defaults = createProps();
+    const props: FieldComponentProps = {
+      ...defaults,
+      field: {
+        ...defaults.field,
+        definition: {
+          id: 'diagram',
+          fieldType: 'diagram',
+          imageUri: 'authored.png',
+        },
+      },
+    };
+    const { rerender } = render(
+      <DiagramField
+        {...props}
+        response={{ markupBackground: 'data:image/png;base64,local' }}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remove image' }));
+    expect(props.onResponse).toHaveBeenCalledWith({
+      markupData: '',
+      markupImage: '',
+      markupBackground: undefined,
+    });
+
+    rerender(<DiagramField {...props} response={{}} />);
+    expect(padProps().backgroundImage).toBe('authored.png');
+    expect(screen.queryByRole('button', { name: 'Remove image' })).toBeNull();
   });
 
   it('ignores pending image decoding after Clear', async () => {

@@ -97,7 +97,11 @@ export const DiagramField = React.memo(function DiagramField({
         onResponse({
           markupBackground: dataUrl,
           markupImage: dataUrl,
-          markupData: '',
+          markupData: JSON.stringify({
+            strokes: [],
+            baseWidth: 640,
+            baseHeight: 400,
+          }),
         });
       } catch (err) {
         if (operation !== attachmentOperation.current) return;
@@ -232,6 +236,15 @@ export const DiagramField = React.memo(function DiagramField({
             >
               Attach file
             </button>
+            {respondentBackground && (
+              <button
+                type="button"
+                onClick={() => handleChange({ strokes: '', image: '' })}
+                className="ms:px-4 ms:py-2 ms:rounded-lg ms:border ms:border-msborder ms:bg-mssurface ms:text-msdanger ms:text-sm ms:font-medium ms:hover:bg-msbackground ms:transition-colors ms:cursor-pointer"
+              >
+                Remove image
+              </button>
+            )}
             {documentPicker && (
               <button
                 type="button"

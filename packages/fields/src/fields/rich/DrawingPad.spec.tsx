@@ -39,6 +39,28 @@ afterEach(() => {
 });
 
 describe('DrawingPad background loads', () => {
+  it('repaints using the current canvas dimensions after resizing during a load', () => {
+    const onChange = vi.fn();
+    vi.spyOn(window, 'devicePixelRatio', 'get').mockReturnValue(2);
+    const { container } = render(
+      <DrawingPad
+        backgroundImage="first.png"
+        emitOnBackgroundLoad
+        onChange={onChange}
+      />
+    );
+    const canvas = container.querySelector('canvas')!;
+    canvas.width = 1600;
+    canvas.height = 800;
+    const context = canvas.getContext('2d')!;
+    vi.mocked(context.clearRect).mockClear();
+
+    act(() => images[0].onload?.call(images[0], new Event('load')));
+
+    expect(context.clearRect).toHaveBeenCalledWith(0, 0, 800, 400);
+    expect(onChange).toHaveBeenCalledOnce();
+  });
+
   it('detaches obsolete handlers and ignores queued loads after replacement', () => {
     const onChange = vi.fn();
     const { rerender } = render(

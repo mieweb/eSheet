@@ -656,9 +656,11 @@ export const DrawingPad = React.memo(function DrawingPad({
     let cancelled = false;
     img.onload = () => {
       if (cancelled) return;
+      const display = displayRef.current;
+      if (!display) return;
       bgImageRef.current = img;
       bgLoadedRef.current = true;
-      repaint(displaySize.width, displaySize.height);
+      repaint(display.width / getDPR(), display.height / getDPR());
       if (emitOnBackgroundLoad) emitChange();
     };
     img.onerror = () => {
