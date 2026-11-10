@@ -56,14 +56,27 @@ export const DiagramField = React.memo(function DiagramField({
   const [pickerOpen, setPickerOpen] = React.useState(false);
   const [errorMsg, setErrorMsg] = React.useState('');
   const [loadingDocument, setLoadingDocument] = React.useState(false);
+  const attachmentOperation = React.useRef(0);
   const respondentBackground = response?.markupBackground;
+
+  React.useEffect(
+    () => () => {
+      attachmentOperation.current++;
+    },
+    []
+  );
 
   const handleChange = React.useCallback(
     (payload: { strokes: string; image: string }) => {
+      const cleared = !payload.strokes && !payload.image;
+      if (cleared) {
+        attachmentOperation.current++;
+        setLoadingDocument(false);
+      }
       onResponse({
         markupData: payload.strokes,
         markupImage: payload.image,
-        markupBackground: respondentBackground,
+        markupBackground: cleared ? undefined : respondentBackground,
       });
     },
     [onResponse, respondentBackground]
@@ -72,19 +85,30 @@ export const DiagramField = React.memo(function DiagramField({
   // Replacing the image drops strokes drawn on the previous one. The pad then
   // re-emits the composited image once the new background has loaded.
   const applyRespondentBackground = React.useCallback(
-    async (blob: Blob) => {
+    async (load: () => Promise<Blob>) => {
+      const operation = ++attachmentOperation.current;
       setErrorMsg('');
+      setLoadingDocument(true);
       try {
+        const blob = await load();
+        if (operation !== attachmentOperation.current) return;
         const dataUrl = await readImageAsDataUrl(blob);
+        if (operation !== attachmentOperation.current) return;
         onResponse({
           markupBackground: dataUrl,
           markupImage: dataUrl,
           markupData: '',
         });
       } catch (err) {
+        if (operation !== attachmentOperation.current) return;
+        if (err instanceof Error && err.name === 'AbortError') return;
         setErrorMsg(
           err instanceof Error ? err.message : 'Failed to load the image'
         );
+      } finally {
+        if (operation === attachmentOperation.current) {
+          setLoadingDocument(false);
+        }
       }
     },
     [onResponse]
@@ -93,32 +117,19 @@ export const DiagramField = React.memo(function DiagramField({
   const handleRespondentFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
-    if (file) void applyRespondentBackground(file);
+    if (file) void applyRespondentBackground(() => Promise.resolve(file));
   };
 
   const handlePickDocument = React.useCallback(
     (item: DocumentPickerItem) => {
       if (!documentPicker) return;
       setPickerOpen(false);
-      setErrorMsg('');
-      setLoadingDocument(true);
-      void (async () => {
-        try {
-          const input = await documentPicker.fetch(item);
-          await applyRespondentBackground(
-            new Blob([input.content], {
-              type: input.contentType.split(';')[0].trim(),
-            })
-          );
-        } catch (err) {
-          if (err instanceof Error && err.name === 'AbortError') return;
-          setErrorMsg(
-            err instanceof Error ? err.message : 'Failed to load document'
-          );
-        } finally {
-          setLoadingDocument(false);
-        }
-      })();
+      void applyRespondentBackground(async () => {
+        const input = await documentPicker.fetch(item);
+        return new Blob([input.content], {
+          type: input.contentType.split(';')[0].trim(),
+        });
+      });
     },
     [documentPicker, applyRespondentBackground]
   );
@@ -193,7 +204,11 @@ export const DiagramField = React.memo(function DiagramField({
           }}
           colorInputId={`${instanceId}-diagram-color-${def.id}`}
           backgroundImage={respondentBackground ?? def.imageUri}
-          placeholder={def.padPlaceholder || 'Draw on the diagram'}
+          placeholder={
+            respondentBackground
+              ? ''
+              : def.padPlaceholder || 'Draw on the diagram'
+          }
           existingData={response?.markupData}
           onChange={handleChange}
           emitOnBackgroundLoad={Boolean(respondentBackground)}
@@ -202,6 +217,7 @@ export const DiagramField = React.memo(function DiagramField({
         {isEnabled && !isReadOnly && (
           <div className="diagram-attach-controls ms:flex ms:flex-wrap ms:gap-2">
             <input
+              id={`${instanceId}-diagram-attachment-${def.id}`}
               ref={respondentFileInputRef}
               type="file"
               accept={DRAWABLE_IMAGE_ACCEPT}

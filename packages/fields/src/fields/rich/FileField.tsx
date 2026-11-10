@@ -107,6 +107,7 @@ export const FileField = React.memo(function FileField({
   const documentPicker = useDocumentPicker();
   const [pickerOpen, setPickerOpen] = useState(false);
   const [loadingDocument, setLoadingDocument] = useState(false);
+  const attachmentPending = React.useRef(false);
   const [isDragActive, setIsDragActive] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [sizeUnit, setSizeUnit] = useState<SizeUnit>(
@@ -123,11 +124,19 @@ export const FileField = React.memo(function FileField({
 
   const handleFiles = useCallback(
     (files: FileList | null) => {
-      if (isReadOnly || !files || files.length === 0) return;
+      if (
+        !isEnabled ||
+        isReadOnly ||
+        attachmentPending.current ||
+        !files ||
+        files.length === 0
+      )
+        return;
 
       setErrorMsg('');
       const availableSlots = maxFiles - fileDataArr.length;
       const filesToProcess = Array.from(files).slice(0, availableSlots);
+      if (filesToProcess.length === 0) return;
       const maxFileSize = def.maxFileSize;
 
       // Validate file types against accept filter
@@ -165,12 +174,23 @@ export const FileField = React.memo(function FileField({
         if (validFiles.length === 0) return;
       }
 
+      attachmentPending.current = true;
+      setLoadingDocument(true);
       void (async () => {
-        const stored = fileStore
-          ? await storeFiles(fileStore, validFiles.map(fileToInput))
-          : await Promise.all(validFiles.map(readFileAsAttachment));
-        const updated = [...fileDataArr, ...stored];
-        onResponse({ fileData: maxFiles === 1 ? updated[0] : updated });
+        try {
+          const stored = fileStore
+            ? await storeFiles(fileStore, validFiles.map(fileToInput))
+            : await Promise.all(validFiles.map(readFileAsAttachment));
+          const updated = [...fileDataArr, ...stored];
+          onResponse({ fileData: maxFiles === 1 ? updated[0] : updated });
+        } catch (err) {
+          setErrorMsg(
+            err instanceof Error ? err.message : 'Failed to load file'
+          );
+        } finally {
+          attachmentPending.current = false;
+          setLoadingDocument(false);
+        }
       })();
     },
     [
@@ -181,12 +201,21 @@ export const FileField = React.memo(function FileField({
       onResponse,
       fileStore,
       isReadOnly,
+      isEnabled,
     ]
   );
 
   const handlePickDocument = useCallback(
     (item: DocumentPickerItem) => {
-      if (!documentPicker || isReadOnly) return;
+      if (
+        !documentPicker ||
+        !isEnabled ||
+        isReadOnly ||
+        attachmentPending.current ||
+        fileDataArr.length >= maxFiles
+      )
+        return;
+      attachmentPending.current = true;
       setPickerOpen(false);
       setErrorMsg('');
       setLoadingDocument(true);
@@ -196,6 +225,10 @@ export const FileField = React.memo(function FileField({
           const file = new File([input.content], input.title ?? item.title, {
             type: input.contentType,
           });
+          if (!fileMatchesAccept(file, def.accept)) {
+            setErrorMsg(`File type not accepted: ${file.name}`);
+            return;
+          }
           if (def.maxFileSize && file.size > def.maxFileSize) {
             setErrorMsg(
               `File exceeds max size of ${formatFileSize(def.maxFileSize)}: ${
@@ -215,13 +248,16 @@ export const FileField = React.memo(function FileField({
             err instanceof Error ? err.message : 'Failed to load document'
           );
         } finally {
+          attachmentPending.current = false;
           setLoadingDocument(false);
         }
       })();
     },
     [
       documentPicker,
+      isEnabled,
       isReadOnly,
+      def.accept,
       def.maxFileSize,
       fileStore,
       fileDataArr,
@@ -232,6 +268,7 @@ export const FileField = React.memo(function FileField({
 
   const handleRemoveFile = useCallback(
     (index: number) => {
+      if (!isEnabled || isReadOnly || attachmentPending.current) return;
       const updated = fileDataArr.filter((_, i) => i !== index);
       removeUnreferencedFiles(fileStore, fileDataArr, updated);
       onResponse({
@@ -243,7 +280,7 @@ export const FileField = React.memo(function FileField({
             : updated,
       });
     },
-    [fileDataArr, maxFiles, onResponse, fileStore]
+    [fileDataArr, maxFiles, onResponse, fileStore, isEnabled, isReadOnly]
   );
 
   const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {
@@ -326,8 +363,9 @@ export const FileField = React.memo(function FileField({
                 {isEnabled && !isReadOnly && (
                   <button
                     type="button"
+                    disabled={loadingDocument}
                     onClick={() => handleRemoveFile(index)}
-                    className="ms:p-2 ms:text-mstextmuted ms:hover:text-msdanger ms:transition-colors"
+                    className="ms:p-2 ms:text-mstextmuted ms:hover:text-msdanger ms:transition-colors ms:disabled:opacity-50 ms:disabled:cursor-not-allowed"
                     aria-label={`Remove ${file.title || 'file'}`}
                   >
                     <TrashIcon />
@@ -349,7 +387,7 @@ export const FileField = React.memo(function FileField({
                 ? 'ms:border-msprimary ms:bg-msprimary/5'
                 : 'ms:border-msborder ms:bg-mssurface ms:hover:border-mstextmuted'
             } ${
-              !isEnabled
+              !isEnabled || loadingDocument
                 ? 'ms:opacity-50 ms:cursor-not-allowed'
                 : 'ms:cursor-pointer'
             }`}
@@ -363,7 +401,7 @@ export const FileField = React.memo(function FileField({
                 (e.target as HTMLInputElement).value = '';
               }}
               onChange={(e) => handleFiles(e.target.files)}
-              disabled={!isEnabled || isReadOnly}
+              disabled={!isEnabled || isReadOnly || loadingDocument}
               className="ms:hidden"
             />
             <label
@@ -410,6 +448,7 @@ export const FileField = React.memo(function FileField({
             picker={documentPicker}
             fieldId={def.id}
             question={def.question}
+            accept={def.accept}
             onSelect={handlePickDocument}
             onClose={() => setPickerOpen(false)}
           />

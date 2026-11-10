@@ -653,17 +653,25 @@ export const DrawingPad = React.memo(function DrawingPad({
       return;
     }
     const img = new Image();
+    let cancelled = false;
     img.onload = () => {
+      if (cancelled) return;
       bgImageRef.current = img;
       bgLoadedRef.current = true;
       repaint(displaySize.width, displaySize.height);
       if (emitOnBackgroundLoad) emitChange();
     };
     img.onerror = () => {
+      if (cancelled) return;
       bgImageRef.current = null;
       bgLoadedRef.current = false;
     };
     img.src = backgroundImage;
+    return () => {
+      cancelled = true;
+      img.onload = null;
+      img.onerror = null;
+    };
   }, [backgroundImage]); // intentionally omit repaint from deps — fires only when source changes
 
   // ---- Existing data load -------------------------------------------------
