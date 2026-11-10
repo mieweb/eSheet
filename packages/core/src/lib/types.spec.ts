@@ -101,6 +101,37 @@ describe('schema types', () => {
     expect(result.success).toBe(false);
   });
 
+  it.each([true, false])(
+    'preserves diagram allowImageAttachments=%s through normalization and validation',
+    (allowImageAttachments) => {
+      const field = {
+        id: 'diagram',
+        fieldType: 'diagram',
+        allowImageAttachments,
+      };
+      const form = {
+        id: 'form',
+        pages: [{ id: 'page', fields: [field] }],
+      };
+
+      expect(formDefinitionSchema.parse(normalizeFormDefinition(form))).toEqual(
+        form
+      );
+    }
+  );
+
+  it('accepts diagrams without an attachment setting and rejects non-booleans', () => {
+    const field = { id: 'diagram', fieldType: 'diagram' };
+
+    expect(fieldDefinitionSchema.parse(field)).toEqual(field);
+    expect(
+      fieldDefinitionSchema.safeParse({
+        ...field,
+        allowImageAttachments: 'false',
+      }).success
+    ).toBe(false);
+  });
+
   it('accepts an optional positive integer minimum row count for longtext', () => {
     const field = { id: 'notes', fieldType: 'longtext' };
 

@@ -165,6 +165,10 @@ export function mapFhirTypeToEsheet(
       if (hasSignatureRequired(item.extension)) {
         return { fieldType: 'signature' };
       }
+      // FHIR item-control "drawing": sketch on an attached/chosen image.
+      if (itemControl === 'drawing') {
+        return { fieldType: 'diagram' };
+      }
       return { fieldType: 'file' };
 
     case 'reference':
@@ -262,7 +266,7 @@ export function mapEsheetTypeToFhir(
       return { type: 'attachment' };
 
     case 'diagram':
-      return { type: 'attachment' };
+      return { type: 'attachment', itemControl: 'drawing' };
 
     case 'file':
       return { type: 'attachment' };

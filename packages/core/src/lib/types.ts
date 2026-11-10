@@ -689,6 +689,8 @@ export interface DiagramFieldDefinition extends BaseFieldDefinition {
   fieldType: 'diagram';
   imageUri?: string; // background image
   padPlaceholder?: string;
+  /** Allow respondent image uploads and chart selection. Defaults to true. */
+  allowImageAttachments?: boolean;
 }
 
 export interface FileFieldDefinition extends BaseFieldDefinition {
@@ -869,7 +871,7 @@ const FIELD_TYPE_PROPERTIES: Record<FieldType, readonly string[]> = {
   image: ['imageUri', 'altText', 'caption'],
   html: ['htmlContent', 'iframeHeight'],
   signature: ['padPlaceholder'],
-  diagram: ['imageUri', 'padPlaceholder'],
+  diagram: ['imageUri', 'padPlaceholder', 'allowImageAttachments'],
   file: ['accept', 'maxFileSize', 'maxFiles'],
   activity: [],
   openchoice: ['options', 'maxCustomOptions', 'otherLabel', 'optionLayout'],
@@ -1158,6 +1160,7 @@ const diagramFieldSchema = z.strictObject({
   fieldType: z.literal('diagram'),
   imageUri: z.optional(z.string()),
   padPlaceholder: z.optional(z.string()),
+  allowImageAttachments: z.optional(z.boolean()),
 });
 
 const fileFieldSchema = z.strictObject({
@@ -1354,6 +1357,10 @@ export interface FieldResponse {
   markupData?: string;
   /** Base64 diagram image (diagram field). */
   markupImage?: string;
+  /** Image (data URL) the respondent attached to draw on, replacing the authored background (diagram field). */
+  markupBackground?: string;
+  /** Original filename or host document title of the respondent's diagram image. */
+  markupBackgroundTitle?: string;
   /** File/attachment(s) uploaded by user (file field). Supports single or multiple files. */
   fileData?: AttachmentAnswer | AttachmentAnswer[];
   /** Append-only response change log (reserved `_activity` key; activity field). */

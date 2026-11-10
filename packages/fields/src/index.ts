@@ -126,6 +126,14 @@ export {
   type FileStoreProviderProps,
 } from './lib/FileStoreProvider.js';
 
+// Optional host-supplied document source (e.g. EHR chart documents)
+export {
+  DocumentPickerProvider,
+  createDocumentPickerProvider,
+  useDocumentPicker,
+  type DocumentPickerProviderProps,
+} from './lib/DocumentPickerProvider.js';
+
 // Shared markdown-lite rendering
 export { renderMarkdownContent, renderMarkdownInline } from './lib/markdown.js';
 

@@ -65,6 +65,69 @@ afterEach(() => {
 });
 
 describe('EsheetBuilder', () => {
+  it('edits diagram attachments for root and section child fields in the Edit panel', () => {
+    const form = createFormStore({
+      id: 'diagram-attachments',
+      pages: [
+        {
+          id: 'page',
+          fields: [
+            { id: 'diagram', fieldType: 'diagram' },
+            { id: 'text', fieldType: 'text' },
+            {
+              id: 'section',
+              fieldType: 'section',
+              fields: [
+                {
+                  id: 'child',
+                  fieldType: 'diagram',
+                  allowImageAttachments: false,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    const ui = createUIStore();
+    ui.getState().selectField('diagram');
+    renderWithContexts(form, ui, <EditPanel />);
+    const label = 'Allow image attachments in renderer';
+    const toggle = screen.getByLabelText(label) as HTMLInputElement;
+
+    expect(toggle.checked).toBe(true);
+    expect(toggle.id).toContain('-editor-allow-image-attachments-diagram');
+    fireEvent.click(toggle);
+    expect(form.getState().getField('diagram')?.definition).toMatchObject({
+      allowImageAttachments: false,
+    });
+
+    act(() => ui.getState().selectFieldChild('section', 'child'));
+    const childToggle = screen.getByLabelText(label) as HTMLInputElement;
+    expect(childToggle.checked).toBe(false);
+    expect(childToggle.id).toContain('-editor-allow-image-attachments-child');
+    fireEvent.click(childToggle);
+    expect(form.getState().getField('child')?.definition).toMatchObject({
+      allowImageAttachments: true,
+    });
+    expect(form.getState().getField('diagram')?.definition).toMatchObject({
+      allowImageAttachments: false,
+    });
+
+    act(() => ui.getState().selectField('diagram'));
+    expect((screen.getByLabelText(label) as HTMLInputElement).checked).toBe(
+      false
+    );
+    act(() =>
+      form.getState().updateField('diagram', { allowImageAttachments: true })
+    );
+    expect((screen.getByLabelText(label) as HTMLInputElement).checked).toBe(
+      true
+    );
+    act(() => ui.getState().selectField('text'));
+    expect(screen.queryByLabelText(label)).toBeNull();
+  });
+
   it('updates longtext row limits through tools without allowing invalid limits or matrix arrays', () => {
     const form = createFormStore({
       id: 'tool-row-limits',
