@@ -201,7 +201,7 @@ export default defineConfig(({ command, mode }) => {
     // Explicit aliases are needed because Vite's commonjs resolver doesn't respect
     // custom export conditions (@esheet/source) during production builds.
     resolve: {
-      dedupe: ['prosemirror-model'],
+      dedupe: ['prosemirror-model', 'react', 'react-dom'],
       alias: [
         {
           find: 'prosemirror-model',
@@ -229,7 +229,7 @@ export default defineConfig(({ command, mode }) => {
       entries: useDist
         ? ['index.html']
         : ['index.html', '../../packages/field-health/src/index.ts'],
-      include: ['@react-pdf/renderer'],
+      include: ['@mieweb/ui', '@react-pdf/renderer'],
     },
     server: {
       port: 3001,
