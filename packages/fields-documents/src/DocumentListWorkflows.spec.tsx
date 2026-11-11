@@ -549,8 +549,10 @@ describe('document list workflow panels', () => {
       select.focus();
       fireEvent.keyDown(select, { key: 'ArrowDown' });
       expect(screen.getByRole('listbox')).toBeTruthy();
-      fireEvent.keyDown(select, { key: 'End' });
-      fireEvent.keyDown(select, { key: 'Enter' });
+      const search = screen.getByRole('textbox', { name: 'Search options' });
+      expect(globalThis.document.activeElement).toBe(search);
+      fireEvent.keyDown(search, { key: 'End' });
+      fireEvent.keyDown(search, { key: 'Enter' });
       expect(select.textContent).toContain('Referral');
       expect(screen.queryByRole('listbox')).toBeNull();
       expect(globalThis.document.activeElement).toBe(select);
@@ -564,6 +566,72 @@ describe('document list workflow panels', () => {
 
       fireEvent.keyDown(select, { key: 'Escape' });
       expect(onModeChange).toHaveBeenCalledWith('docked');
+    }
+  );
+
+  it.each([
+    ['document', 'Document Type'],
+    ['letter', 'Letter Type'],
+    ['note', 'Note Type'],
+  ])(
+    'searches configured %s type labels and codes without changing the draft',
+    (noun, label) => {
+      const runtime = createRuntime();
+      const draft = {
+        ...emptyComposeDraft('PROGRESS'),
+        note: 'Keep this draft',
+      };
+      const props = {
+        runtime,
+        onOpenChange: vi.fn(),
+        inputPrefix: `search-${noun}`,
+        noun,
+        fields: ['docType'],
+        docTypes: [
+          { id: 'PROGRESS', label: 'Progress note' },
+          { id: 'REF', label: 'Specialist correspondence' },
+        ],
+        draft,
+        onDraftChange: vi.fn(),
+      };
+      const view = render(<DocumentListComposePanel {...props} open />);
+      const select = screen.getByRole('combobox', { name: new RegExp(label) });
+      expect(select.textContent).toContain('Progress note (PROGRESS)');
+      fireEvent.click(select);
+      const search = screen.getByRole('textbox', { name: 'Search options' });
+      fireEvent.change(search, { target: { value: 'specialist' } });
+      expect(screen.getAllByRole('option')).toHaveLength(1);
+      expect(screen.getByRole('option').textContent).toContain(
+        'Specialist correspondence'
+      );
+      fireEvent.change(search, { target: { value: 'unauthorized' } });
+      expect(screen.queryByRole('option')).toBeNull();
+      fireEvent.keyDown(search, { key: 'Enter' });
+      expect(props.onDraftChange).not.toHaveBeenCalled();
+      fireEvent.change(search, { target: { value: 'ref' } });
+      fireEvent.keyDown(search, { key: 'Enter' });
+      expect(props.onDraftChange).toHaveBeenLastCalledWith({
+        ...draft,
+        docType: 'REF',
+      });
+      expect(runtime.saveDocument).not.toHaveBeenCalled();
+      view.rerender(
+        <DocumentListComposePanel
+          {...props}
+          draft={{ ...draft, docType: 'REF' }}
+          open={false}
+        />
+      );
+      view.rerender(
+        <DocumentListComposePanel
+          {...props}
+          draft={{ ...draft, docType: 'REF' }}
+          open
+        />
+      );
+      expect(
+        screen.getByRole('combobox', { name: new RegExp(label) }).textContent
+      ).toContain('Specialist correspondence (REF)');
     }
   );
 
@@ -891,6 +959,90 @@ describe('document list workflow panels', () => {
     resolveSave?.();
     await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
   });
+
+  it.each(['compose', 'upload'])(
+    'searches long authorized native type lists in %s without accepting free text',
+    async (workflow) => {
+      const loadOptions = vi.fn(async () => [
+        ...Array.from({ length: 250 }, (_, index) => ({
+          id: `TYPE_${index}`,
+          label: `Document ${index}`,
+        })),
+        { id: 'REF', label: 'Specialist correspondence' },
+      ]);
+      const runtime = {
+        ...createRuntime(),
+        saveCategory: saveCategory(loadOptions),
+      };
+      if (workflow === 'compose') {
+        render(
+          <DocumentListComposePanel
+            open
+            runtime={runtime}
+            onOpenChange={vi.fn()}
+            inputPrefix="native-search-compose"
+            fields={['docType']}
+            docTypes={[{ id: 'Note', label: 'Note' }]}
+            draft={{ ...emptyComposeDraft('Note'), note: 'Keep this draft' }}
+          />
+        );
+      } else {
+        render(
+          <DocumentListUploadPanel
+            open
+            runtime={runtime}
+            onOpenChange={vi.fn()}
+            inputPrefix="native-search-upload"
+            initialFile={
+              new File(['%PDF-1.4'], 'original.pdf', {
+                type: 'application/pdf',
+              })
+            }
+          />
+        );
+      }
+      const select = screen.getByRole('combobox', {
+        name: /WebChart category/,
+      });
+      await waitFor(() => expect(select).toHaveProperty('disabled', false));
+      const save = screen.getByRole('button', { name: 'Save document' });
+      fireEvent.click(select);
+      expect(screen.getAllByRole('option')).toHaveLength(251);
+      const search = screen.getByRole('textbox', { name: 'Search options' });
+      fireEvent.change(search, { target: { value: 'unauthorized' } });
+      expect(screen.queryByRole('option')).toBeNull();
+      fireEvent.keyDown(search, { key: 'Enter' });
+      expect(save).toHaveProperty('disabled', true);
+      expect(runtime.saveDocument).not.toHaveBeenCalled();
+      fireEvent.change(search, { target: { value: 'SPECIALIST' } });
+      expect(screen.getAllByRole('option')).toHaveLength(1);
+      fireEvent.change(search, { target: { value: 'ref' } });
+      expect(screen.getAllByRole('option')).toHaveLength(1);
+      fireEvent.keyDown(search, { key: 'Enter' });
+      expect(select.textContent).toContain('Specialist correspondence (REF)');
+      fireEvent.click(select);
+      expect(
+        screen.getByRole('textbox', { name: 'Search options' })
+      ).toHaveProperty('value', '');
+      expect(
+        screen.getByRole('option', { selected: true }).textContent
+      ).toContain('(REF)');
+      fireEvent.keyDown(
+        screen.getByRole('textbox', { name: 'Search options' }),
+        { key: 'Escape' }
+      );
+      expect(loadOptions).toHaveBeenCalledOnce();
+      fireEvent.click(save);
+      await waitFor(() => expect(runtime.saveDocument).toHaveBeenCalledOnce());
+      expect(vi.mocked(runtime.saveDocument).mock.calls[0][0]).toMatchObject({
+        nativeDocType: 'REF',
+        docType: workflow === 'compose' ? 'Note' : 'application/pdf',
+      });
+      expect(
+        vi.mocked(runtime.saveDocument).mock.calls[0][1]?.contentType
+      ).toBe(workflow === 'compose' ? 'text/x-markdown' : 'application/pdf');
+    }
+  );
 
   it('reports category lookup failures and empty results inline and allows retry', async () => {
     const loadOptions = vi

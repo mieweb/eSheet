@@ -137,6 +137,7 @@ function useSaveCategory(
             value={value}
             onValueChange={setSelected}
             placeholder={loading ? config.loading : config.placeholder}
+            searchable
             options={options.map((option) => ({
               value: option.id,
               label:
@@ -189,7 +190,7 @@ export interface DocumentListWorkflowPanelProps {
   readonly noun?: string;
   /** Column field names the list shows; the compose form asks for those. */
   readonly fields?: readonly string[];
-  /** Types the field offers; the compose form falls back to free text. */
+  /** Searchable types (label and code); absent choices retain free-text entry. */
   readonly docTypes?: readonly DocumentListDocTypeOption[];
   /** Compose inline unless the chosen `docType` says otherwise. */
   readonly defaultInline?: boolean;
@@ -1064,9 +1065,13 @@ export function DocumentListComposePanel({
                     label={docTypeLabel}
                     value={activeDraft.docType}
                     onValueChange={(docType) => updateDraft({ docType })}
+                    searchable
                     options={docTypes.map((option) => ({
                       value: option.id,
-                      label: option.label ?? option.id,
+                      label:
+                        !option.label || option.label === option.id
+                          ? option.id
+                          : `${option.label} (${option.id})`,
                     }))}
                     disabled={saving}
                     required
