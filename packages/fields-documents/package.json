@@ -1,6 +1,6 @@
 {
   "name": "@esheet/fields-documents",
-  "version": "0.0.7-2",
+  "version": "0.0.7-3",
   "repository": {
     "type": "git",
     "url": "https://github.com/mieweb/eSheet"
@@ -40,7 +40,7 @@
     "@esheet/fields": "workspace:*",
     "@esheet/renderer": "workspace:*",
     "@mieweb/datavis": "1.6.0",
-    "@mieweb/ui": "0.8.0-dev.21",
+    "@mieweb/ui": "0.11.0-dev.67",
     "@react-pdf/renderer": "^4.9.0",
     "ag-grid-community": "^35.1.0",
     "ag-grid-react": "^35.1.0",
@@ -53,7 +53,10 @@
     "pdfjs-dist": "^5.4.296",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "react-markdown": "^10.1.0",
     "react-pdf": "^10.2.0",
+    "rehype-sanitize": "^6.0.0",
+    "remark-gfm": "^4.0.1",
     "tslib": "^2.3.0"
   },
   "peerDependencies": {
