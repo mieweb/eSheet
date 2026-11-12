@@ -121,9 +121,11 @@ corepack enable
 pnpm install
 ```
 
-The workspace pins the published `@mieweb/ui@0.11.0-dev.67` package rather than a
+The workspace pins the published `@mieweb/ui@0.11.0-dev.69` package rather than a
 local UI checkout. This release includes the searchable Select focus correction
-from [mieweb/ui#748](https://github.com/mieweb/ui/pull/748), without a UI pnpm
+from [mieweb/ui#748](https://github.com/mieweb/ui/pull/748) and the empty-search
+keyboard, modal focus scope, and active-option accessibility fixes from
+[mieweb/ui#752](https://github.com/mieweb/ui/pull/752), without a UI pnpm
 patch or `link:../ui` override. The documents package keeps `@mieweb/ui` external
 so its controls share the host's UI implementation.
 

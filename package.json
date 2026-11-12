@@ -61,7 +61,7 @@
     "vitest": "4.1.10"
   },
   "dependencies": {
-    "@mieweb/ui": "0.11.0-dev.67",
+    "@mieweb/ui": "0.11.0-dev.69",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-markdown": "^10.1.0",
@@ -81,7 +81,7 @@
   },
   "pnpm": {
     "overrides": {
-      "@mieweb/ui": "0.11.0-dev.67",
+      "@mieweb/ui": "0.11.0-dev.69",
       "axios": "1.13.6",
       "@xhmikosr/decompress": "11.1.4",
       "shell-quote": "1.10.0",
