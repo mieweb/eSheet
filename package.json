@@ -61,9 +61,12 @@
     "vitest": "4.1.10"
   },
   "dependencies": {
-    "@mieweb/ui": "0.11.0-dev.25",
+    "@mieweb/ui": "0.11.0-dev.66",
     "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "react-dom": "^19.2.4",
+    "react-markdown": "^10.1.0",
+    "rehype-sanitize": "^6.0.0",
+    "remark-gfm": "^4.0.1"
   },
   "optionalDependencies": {
     "@parcel/watcher-darwin-arm64": "^2.5.6",
@@ -78,7 +81,7 @@
   },
   "pnpm": {
     "overrides": {
-      "@mieweb/ui": "link:../ui",
+      "@mieweb/ui": "0.11.0-dev.66",
       "axios": "1.13.6",
       "@xhmikosr/decompress": "11.1.4",
       "shell-quote": "1.10.0",
@@ -101,7 +104,8 @@
       "protobufjs"
     ],
     "patchedDependencies": {
-      "@kerebron/extension-menu@0.8.12": "patches/@kerebron__extension-menu@0.8.12.patch"
+      "@kerebron/extension-menu@0.8.12": "patches/@kerebron__extension-menu@0.8.12.patch",
+      "@mieweb/ui@0.11.0-dev.66": "patches/@mieweb__ui@0.11.0-dev.66.patch"
     }
   }
 }

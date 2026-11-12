@@ -121,6 +121,15 @@ corepack enable
 pnpm install
 ```
 
+The workspace pins the published `@mieweb/ui@0.11.0-dev.66` package rather than a
+local UI checkout. A temporary pnpm patch backports the searchable Select focus
+correction from [mieweb/ui#748](https://github.com/mieweb/ui/pull/748) and the
+empty-result, modal-scope, and transformed-dialog fixes from
+[mieweb/ui#752](https://github.com/mieweb/ui/pull/752), for both ESM and CommonJS.
+Remove that patch and advance the dependency and lockfile once a published UI
+release contains all of those changes. Workflow regressions must pass without a
+`link:../ui` override.
+
 ### Common tasks
 
 ```bash

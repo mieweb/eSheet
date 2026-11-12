@@ -606,7 +606,10 @@ describe('document list workflow panels', () => {
       );
       fireEvent.change(search, { target: { value: 'unauthorized' } });
       expect(screen.queryByRole('option')).toBeNull();
-      fireEvent.keyDown(search, { key: 'Enter' });
+      for (const key of ['ArrowDown', 'Home', 'ArrowUp', 'End']) {
+        fireEvent.keyDown(search, { key });
+        fireEvent.keyDown(search, { key: 'Enter' });
+      }
       expect(props.onDraftChange).not.toHaveBeenCalled();
       fireEvent.change(search, { target: { value: 'ref' } });
       fireEvent.keyDown(search, { key: 'Enter' });
@@ -1009,9 +1012,39 @@ describe('document list workflow panels', () => {
       fireEvent.click(select);
       expect(screen.getAllByRole('option')).toHaveLength(251);
       const search = screen.getByRole('textbox', { name: 'Search options' });
+      expect(screen.getByRole('dialog').contains(search)).toBe(true);
+      expect(globalThis.document.activeElement).toBe(search);
+      const offsetParent = vi
+        .spyOn(HTMLElement.prototype, 'offsetParent', 'get')
+        .mockImplementation(function (this: HTMLElement) {
+          return this.parentElement;
+        });
+      try {
+        const dialog = screen.getByRole('dialog');
+        const first = dialog.querySelector<HTMLButtonElement>('button');
+        if (!first) throw new Error('Expected a dialog focus target');
+        expect(fireEvent.keyDown(search, { key: 'Tab' })).toBe(true);
+        const lastOption = screen.getAllByRole('option')[0];
+        lastOption.focus();
+        expect(fireEvent.keyDown(lastOption, { key: 'Tab' })).toBe(false);
+        expect(globalThis.document.activeElement).toBe(first);
+        expect(fireEvent.keyDown(first, { key: 'Tab', shiftKey: true })).toBe(
+          false
+        );
+        expect(globalThis.document.activeElement).toBe(lastOption);
+        expect(
+          fireEvent.keyDown(lastOption, { key: 'Tab', shiftKey: true })
+        ).toBe(true);
+        search.focus();
+      } finally {
+        offsetParent.mockRestore();
+      }
       fireEvent.change(search, { target: { value: 'unauthorized' } });
       expect(screen.queryByRole('option')).toBeNull();
-      fireEvent.keyDown(search, { key: 'Enter' });
+      for (const key of ['ArrowDown', 'Home', 'ArrowUp', 'End']) {
+        fireEvent.keyDown(search, { key });
+        fireEvent.keyDown(search, { key: 'Enter' });
+      }
       expect(save).toHaveProperty('disabled', true);
       expect(runtime.saveDocument).not.toHaveBeenCalled();
       fireEvent.change(search, { target: { value: 'SPECIALIST' } });

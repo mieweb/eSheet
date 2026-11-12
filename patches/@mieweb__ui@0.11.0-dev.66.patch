@@ -1,0 +1,184 @@
+diff --git a/dist/chunk-4SMSH4OY.js b/dist/chunk-4SMSH4OY.js
+index 48d9d776c8471290ae93b5f98eb37b45c49eb1f3..0c9b8a0668e81b05d50f883445cbae67b7b50712 100644
+--- a/dist/chunk-4SMSH4OY.js
++++ b/dist/chunk-4SMSH4OY.js
+@@ -6,15 +6,16 @@ function useFocusTrap(enabled = true) {
+   useEffect(() => {
+     if (!enabled || !containerRef.current || isStorybookDocsMode()) return;
+     const container = containerRef.current;
+-    const focusableElements = container.querySelectorAll(
++    const getFocusableElements = () => container.querySelectorAll(
+       'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+     );
+-    if (focusableElements.length === 0) return;
+-    const firstElement = focusableElements[0];
+-    const lastElement = focusableElements[focusableElements.length - 1];
+-    firstElement.focus();
++    getFocusableElements()[0]?.focus();
+     const handleKeyDown = (event) => {
+       if (event.key !== "Tab") return;
++      const focusableElements = getFocusableElements();
++      const firstElement = focusableElements[0];
++      const lastElement = focusableElements[focusableElements.length - 1];
++      if (!firstElement || !lastElement) return;
+       if (event.shiftKey) {
+         if (document.activeElement === firstElement) {
+           event.preventDefault();
+diff --git a/dist/chunk-NNEFAUHV.cjs b/dist/chunk-NNEFAUHV.cjs
+index 2a832f3d875a09df23c2da02aa53e207034c338e..9bc8c6cba66b81531b115066edb00b3738b69946 100644
+--- a/dist/chunk-NNEFAUHV.cjs
++++ b/dist/chunk-NNEFAUHV.cjs
+@@ -8,15 +8,16 @@ function useFocusTrap(enabled = true) {
+   react.useEffect(() => {
+     if (!enabled || !containerRef.current || chunkSCV7C55E_cjs.isStorybookDocsMode()) return;
+     const container = containerRef.current;
+-    const focusableElements = container.querySelectorAll(
++    const getFocusableElements = () => container.querySelectorAll(
+       'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+     );
+-    if (focusableElements.length === 0) return;
+-    const firstElement = focusableElements[0];
+-    const lastElement = focusableElements[focusableElements.length - 1];
+-    firstElement.focus();
++    getFocusableElements()[0]?.focus();
+     const handleKeyDown = (event) => {
+       if (event.key !== "Tab") return;
++      const focusableElements = getFocusableElements();
++      const firstElement = focusableElements[0];
++      const lastElement = focusableElements[focusableElements.length - 1];
++      if (!firstElement || !lastElement) return;
+       if (event.shiftKey) {
+         if (document.activeElement === firstElement) {
+           event.preventDefault();
+diff --git a/dist/chunk-UPWIJC6I.cjs b/dist/chunk-UPWIJC6I.cjs
+index 03cc2664a7e8d9a72ebd5013155c09846d361e94..ec36f914bd7c9023012d0b99a5117fb91f1fbef9 100644
+--- a/dist/chunk-UPWIJC6I.cjs
++++ b/dist/chunk-UPWIJC6I.cjs
+@@ -293,7 +293,7 @@ function Select(props) {
+             setIsOpen(true);
+           } else {
+             setHighlightedIndex(
+-              (prev) => prev < filteredFlatOptions.length - 1 ? prev + 1 : 0
++              (prev) => filteredFlatOptions.length === 0 ? -1 : prev < filteredFlatOptions.length - 1 ? prev + 1 : 0
+             );
+           }
+           break;
+@@ -311,14 +311,15 @@ function Select(props) {
+         case " ":
+           e.preventDefault();
+           if (isOpen && highlightedIndex >= 0) {
+-            handleValueChange(filteredFlatOptions[highlightedIndex].value);
++            const option = filteredFlatOptions[highlightedIndex];
++            if (option) handleValueChange(option.value);
+           } else if (!isOpen) {
+             setIsOpen(true);
+           }
+           break;
+         case "Home":
+           e.preventDefault();
+-          setHighlightedIndex(0);
++          setHighlightedIndex(filteredFlatOptions.length > 0 ? 0 : -1);
+           break;
+         case "End":
+           e.preventDefault();
+@@ -335,10 +336,10 @@ function Select(props) {
+     ]
+   );
+   React__namespace.useEffect(() => {
+-    if (isOpen && searchable && searchInputRef.current) {
+-      searchInputRef.current.focus();
++    if (isOpen && searchable && dropdownStyle.visibility !== "hidden") {
++      searchInputRef.current?.focus({ preventScroll: true });
+     }
+-  }, [isOpen, searchable]);
++  }, [isOpen, searchable, dropdownStyle.visibility]);
+   React__namespace.useEffect(() => {
+     setHighlightedIndex(filteredFlatOptions.length > 0 ? 0 : -1);
+   }, [searchQuery, filteredFlatOptions.length]);
+@@ -472,8 +473,10 @@ function Select(props) {
+                 ref: (node) => {
+                   dropdownRef.current = node;
+                   floatingRef.current = node;
++                  node?.showPopover?.();
+                 },
+-                style: dropdownStyle,
++                popover: typeof HTMLElement !== "undefined" && "showPopover" in HTMLElement.prototype ? "manual" : void 0,
++                style: { inset: "auto", margin: 0, padding: 0, ...dropdownStyle },
+                 className: chunkS5RVSXDV_cjs.cn(
+                   "border-border bg-card rounded-lg border shadow-lg",
+                   "flex flex-col overflow-hidden",
+@@ -567,7 +570,7 @@ function Select(props) {
+                 ]
+               }
+             ),
+-            document.body
++            triggerRef.current?.closest('[role="dialog"], [role="alertdialog"], dialog') ?? document.body
+           )
+         ] }),
+         error && /* @__PURE__ */ jsxRuntime.jsx(
+diff --git a/dist/chunk-VCI2Y7ST.js b/dist/chunk-VCI2Y7ST.js
+index 109eeeb5d6dadb5c3e492c17f0644b547acc4a9e..ccd1bbae638b7babe9a903637f5d9af56f6a93fb 100644
+--- a/dist/chunk-VCI2Y7ST.js
++++ b/dist/chunk-VCI2Y7ST.js
+@@ -271,7 +271,7 @@ function Select(props) {
+             setIsOpen(true);
+           } else {
+             setHighlightedIndex(
+-              (prev) => prev < filteredFlatOptions.length - 1 ? prev + 1 : 0
++              (prev) => filteredFlatOptions.length === 0 ? -1 : prev < filteredFlatOptions.length - 1 ? prev + 1 : 0
+             );
+           }
+           break;
+@@ -289,14 +289,15 @@ function Select(props) {
+         case " ":
+           e.preventDefault();
+           if (isOpen && highlightedIndex >= 0) {
+-            handleValueChange(filteredFlatOptions[highlightedIndex].value);
++            const option = filteredFlatOptions[highlightedIndex];
++            if (option) handleValueChange(option.value);
+           } else if (!isOpen) {
+             setIsOpen(true);
+           }
+           break;
+         case "Home":
+           e.preventDefault();
+-          setHighlightedIndex(0);
++          setHighlightedIndex(filteredFlatOptions.length > 0 ? 0 : -1);
+           break;
+         case "End":
+           e.preventDefault();
+@@ -313,10 +314,10 @@ function Select(props) {
+     ]
+   );
+   React.useEffect(() => {
+-    if (isOpen && searchable && searchInputRef.current) {
+-      searchInputRef.current.focus();
++    if (isOpen && searchable && dropdownStyle.visibility !== "hidden") {
++      searchInputRef.current?.focus({ preventScroll: true });
+     }
+-  }, [isOpen, searchable]);
++  }, [isOpen, searchable, dropdownStyle.visibility]);
+   React.useEffect(() => {
+     setHighlightedIndex(filteredFlatOptions.length > 0 ? 0 : -1);
+   }, [searchQuery, filteredFlatOptions.length]);
+@@ -450,8 +451,10 @@ function Select(props) {
+                 ref: (node) => {
+                   dropdownRef.current = node;
+                   floatingRef.current = node;
++                  node?.showPopover?.();
+                 },
+-                style: dropdownStyle,
++                popover: typeof HTMLElement !== "undefined" && "showPopover" in HTMLElement.prototype ? "manual" : void 0,
++                style: { inset: "auto", margin: 0, padding: 0, ...dropdownStyle },
+                 className: cn(
+                   "border-border bg-card rounded-lg border shadow-lg",
+                   "flex flex-col overflow-hidden",
+@@ -545,7 +548,7 @@ function Select(props) {
+                 ]
+               }
+             ),
+-            document.body
++            triggerRef.current?.closest('[role="dialog"], [role="alertdialog"], dialog') ?? document.body
+           )
+         ] }),
+         error && /* @__PURE__ */ jsx(

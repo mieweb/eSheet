@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  '@mieweb/ui': link:../ui
+  '@mieweb/ui': 0.11.0-dev.66
   axios: 1.13.6
   '@xhmikosr/decompress': 11.1.4
   shell-quote: 1.10.0
@@ -23,20 +23,32 @@ patchedDependencies:
   '@kerebron/extension-menu@0.8.12':
     hash: ad7cb66c09edc0a21db0b9f3b4131f4806f4921cd8792d5cf9980f0eeb9295c9
     path: patches/@kerebron__extension-menu@0.8.12.patch
+  '@mieweb/ui@0.11.0-dev.66':
+    hash: 33312e2056386e464561624183f0e4480713f269bad7d52761a2d318bff9b862
+    path: patches/@mieweb__ui@0.11.0-dev.66.patch
 
 importers:
 
   .:
     dependencies:
       '@mieweb/ui':
-        specifier: link:../ui
-        version: link:../ui
+        specifier: 0.11.0-dev.66
+        version: 0.11.0-dev.66(patch_hash=33312e2056386e464561624183f0e4480713f269bad7d52761a2d318bff9b862)(@esheet/core@packages+core)(@esheet/fields@packages+fields)(@esheet/renderer@packages+renderer)(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/extension-menu@0.8.12(patch_hash=ad7cb66c09edc0a21db0b9f3b4131f4806f4921cd8792d5cf9980f0eeb9295c9))(@kerebron/wasm@0.8.12)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react-markdown@10.1.0(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)(rehype-sanitize@6.0.0)(remark-gfm@4.0.1)
       react:
         specifier: ^19.2.4
         version: 19.2.8
       react-dom:
         specifier: ^19.2.4
         version: 19.2.8(react@19.2.8)
+      react-markdown:
+        specifier: ^10.1.0
+        version: 10.1.0(@types/react@19.2.18)(react@19.2.8)
+      rehype-sanitize:
+        specifier: ^6.0.0
+        version: 6.0.0
+      remark-gfm:
+        specifier: ^4.0.1
+        version: 4.0.1
     devDependencies:
       '@babel/core':
         specifier: ^7.29.0
@@ -67,7 +79,7 @@ importers:
         version: 4.3.3
       '@tailwindcss/vite':
         specifier: ^4.3.3
-        version: 4.3.3(vite@8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.0))
+        version: 4.3.3(vite@8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.1))
       '@testing-library/dom':
         specifier: 10.4.0
         version: 10.4.0
@@ -88,7 +100,7 @@ importers:
         version: 1.15.9
       '@vitejs/plugin-react':
         specifier: ^6.0.5
-        version: 6.0.5(vite@8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.0))
+        version: 6.0.5(vite@8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.1))
       '@vitest/coverage-v8':
         specifier: 4.1.10
         version: 4.1.10(vitest@4.1.10)
@@ -139,13 +151,13 @@ importers:
         version: 8.67.0(eslint@8.57.1)(typescript@5.9.3)
       vite:
         specifier: ^8.2.1
-        version: 8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.0)
+        version: 8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.1)
       vite-plugin-dts:
         specifier: ^5.0.3
-        version: 5.0.3(@microsoft/api-extractor@7.58.12(@types/node@20.19.9))(@rspack/core@1.7.12(@swc/helpers@0.5.18))(rolldown@1.2.3)(typescript@5.9.3)(vite@8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.0))(webpack@5.109.2(@swc/core@1.15.8(@swc/helpers@0.5.18)))
+        version: 5.0.3(@microsoft/api-extractor@7.58.12(@types/node@20.19.9))(@rspack/core@1.7.12(@swc/helpers@0.5.18))(rolldown@1.2.3)(typescript@5.9.3)(vite@8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.1))(webpack@5.109.2(@swc/core@1.15.8(@swc/helpers@0.5.18)))
       vitest:
         specifier: 4.1.10
-        version: 4.1.10(@types/node@20.19.9)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@29.1.1(@noble/hashes@1.8.0))(vite@8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.0))
+        version: 4.1.10(@types/node@20.19.9)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@29.1.1(@noble/hashes@1.8.0))(vite@8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.1))
     optionalDependencies:
       '@parcel/watcher-darwin-arm64':
         specifier: ^2.5.6
@@ -187,8 +199,8 @@ importers:
         specifier: ^0.8.10
         version: 0.8.10
       '@mieweb/ui':
-        specifier: link:../../../ui
-        version: link:../../../ui
+        specifier: 0.11.0-dev.66
+        version: 0.11.0-dev.66(patch_hash=33312e2056386e464561624183f0e4480713f269bad7d52761a2d318bff9b862)(@esheet/builder@packages+builder)(@esheet/core@packages+core)(@esheet/fields@packages+fields)(@esheet/renderer@packages+renderer)(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/extension-menu@0.8.12(patch_hash=ad7cb66c09edc0a21db0b9f3b4131f4806f4921cd8792d5cf9980f0eeb9295c9))(@kerebron/wasm@0.8.10)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react-markdown@10.1.0(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)(rehype-sanitize@6.0.0)(remark-gfm@4.0.1)
       js-yaml:
         specifier: ^5.2.3
         version: 5.2.3
@@ -257,7 +269,7 @@ importers:
     devDependencies:
       vitest:
         specifier: 4.1.10
-        version: 4.1.10(@types/node@26.6.5)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@29.1.1(@noble/hashes@1.8.0))(vite@8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0))
+        version: 4.1.10(@types/node@26.6.5)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@29.1.1(@noble/hashes@1.8.0))(vite@8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.1))
 
   packages/builder:
     dependencies:
@@ -274,8 +286,8 @@ importers:
         specifier: workspace:*
         version: link:../styles
       '@mieweb/ui':
-        specifier: link:../../../ui
-        version: link:../../../ui
+        specifier: 0.11.0-dev.66
+        version: 0.11.0-dev.66(patch_hash=33312e2056386e464561624183f0e4480713f269bad7d52761a2d318bff9b862)(@esheet/core@packages+core)(@esheet/fields@packages+fields)(@esheet/renderer@packages+renderer)(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/extension-menu@0.8.12(patch_hash=ad7cb66c09edc0a21db0b9f3b4131f4806f4921cd8792d5cf9980f0eeb9295c9))(@kerebron/wasm@0.8.12)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react-markdown@10.1.0(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)(rehype-sanitize@6.0.0)(remark-gfm@4.0.1)
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.56.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -309,7 +321,7 @@ importers:
         version: 19.2.4(@types/react@19.2.18)
       '@vitejs/plugin-react':
         specifier: ^6.0.5
-        version: 6.0.5(vite@8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0))
+        version: 6.0.5(vite@8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.1))
       jsdom:
         specifier: ^29.1.1
         version: 29.1.1(@noble/hashes@1.8.0)
@@ -341,7 +353,7 @@ importers:
     devDependencies:
       vitest:
         specifier: 4.1.10
-        version: 4.1.10(@types/node@26.6.5)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@29.1.1(@noble/hashes@1.8.0))(vite@8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0))
+        version: 4.1.10(@types/node@26.6.5)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@29.1.1(@noble/hashes@1.8.0))(vite@8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.1))
 
   packages/field-health:
     dependencies:
@@ -355,8 +367,8 @@ importers:
         specifier: workspace:*
         version: link:../fields
       '@mieweb/ui':
-        specifier: link:../../../ui
-        version: link:../../../ui
+        specifier: 0.11.0-dev.66
+        version: 0.11.0-dev.66(patch_hash=33312e2056386e464561624183f0e4480713f269bad7d52761a2d318bff9b862)(@esheet/core@packages+core)(@esheet/fields@packages+fields)(@esheet/renderer@packages+renderer)(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/extension-menu@0.8.12(patch_hash=ad7cb66c09edc0a21db0b9f3b4131f4806f4921cd8792d5cf9980f0eeb9295c9))(@kerebron/wasm@0.8.12)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react-markdown@10.1.0(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)(rehype-sanitize@6.0.0)(remark-gfm@4.0.1)
       lucide-react:
         specifier: ^1.31.0
         version: 1.31.0(react@19.2.8)
@@ -396,10 +408,10 @@ importers:
         version: 19.2.18
       '@vitejs/plugin-react':
         specifier: ^6.0.5
-        version: 6.0.5(vite@8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0))
+        version: 6.0.5(vite@8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.1))
       vite-plugin-dts:
         specifier: ^5.0.3
-        version: 5.0.3(@microsoft/api-extractor@7.58.12(@types/node@26.6.5))(@rspack/core@1.7.12(@swc/helpers@0.5.23))(rolldown@1.2.3)(typescript@6.0.3)(vite@8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0))(webpack@5.109.2(@swc/core@1.15.8(@swc/helpers@0.5.18)))
+        version: 5.0.3(@microsoft/api-extractor@7.58.12(@types/node@26.6.5))(@rspack/core@1.7.12(@swc/helpers@0.5.23))(rolldown@1.2.3)(typescript@6.0.3)(vite@8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.1))(webpack@5.109.2(@swc/core@1.15.8(@swc/helpers@0.5.18)))
 
   packages/fields:
     dependencies:
@@ -410,8 +422,8 @@ importers:
         specifier: workspace:*
         version: link:../styles
       '@mieweb/ui':
-        specifier: link:../../../ui
-        version: link:../../../ui
+        specifier: 0.11.0-dev.66
+        version: 0.11.0-dev.66(patch_hash=33312e2056386e464561624183f0e4480713f269bad7d52761a2d318bff9b862)(@esheet/core@packages+core)(@esheet/fields@packages+fields)(@esheet/renderer@packages+renderer)(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/extension-menu@0.8.12(patch_hash=ad7cb66c09edc0a21db0b9f3b4131f4806f4921cd8792d5cf9980f0eeb9295c9))(@kerebron/wasm@0.8.12)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react-markdown@10.1.0(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)(rehype-sanitize@6.0.0)(remark-gfm@4.0.1)
       lucide-react:
         specifier: ^1.31.0
         version: 1.31.0(react@19.2.8)
@@ -436,7 +448,7 @@ importers:
         version: 19.2.4(@types/react@19.2.18)
       '@vitejs/plugin-react':
         specifier: ^6.0.5
-        version: 6.0.5(vite@8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0))
+        version: 6.0.5(vite@8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.1))
       jsdom:
         specifier: ^29.1.1
         version: 29.1.1(@noble/hashes@1.8.0)
@@ -457,10 +469,10 @@ importers:
         version: link:../renderer
       '@mieweb/datavis':
         specifier: 1.6.0
-        version: 1.6.0(@types/react@19.2.18)(datavis-ace@4.1.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(redux@5.0.1)(typescript@6.0.3)
+        version: 1.6.0(@esheet/core@packages+core)(@esheet/fields@packages+fields)(@esheet/renderer@packages+renderer)(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/extension-menu@0.8.12(patch_hash=ad7cb66c09edc0a21db0b9f3b4131f4806f4921cd8792d5cf9980f0eeb9295c9))(@kerebron/wasm@0.8.12)(@types/react@19.2.18)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react-markdown@10.1.0(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)(redux@5.0.1)(rehype-sanitize@6.0.0)(remark-gfm@4.0.1)(typescript@6.0.3)
       '@mieweb/ui':
-        specifier: link:../../../ui
-        version: link:../../../ui
+        specifier: 0.11.0-dev.66
+        version: 0.11.0-dev.66(patch_hash=33312e2056386e464561624183f0e4480713f269bad7d52761a2d318bff9b862)(@esheet/core@packages+core)(@esheet/fields@packages+fields)(@esheet/renderer@packages+renderer)(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/extension-menu@0.8.12(patch_hash=ad7cb66c09edc0a21db0b9f3b4131f4806f4921cd8792d5cf9980f0eeb9295c9))(@kerebron/wasm@0.8.12)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react-markdown@10.1.0(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)(rehype-sanitize@6.0.0)(remark-gfm@4.0.1)
       '@react-pdf/renderer':
         specifier: ^4.9.0
         version: 4.9.0(react@19.2.8)
@@ -497,9 +509,18 @@ importers:
       react-dom:
         specifier: ^19.2.4
         version: 19.2.8(react@19.2.8)
+      react-markdown:
+        specifier: ^10.1.0
+        version: 10.1.0(@types/react@19.2.18)(react@19.2.8)
       react-pdf:
         specifier: ^10.2.0
         version: 10.2.0(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      rehype-sanitize:
+        specifier: ^6.0.0
+        version: 6.0.0
+      remark-gfm:
+        specifier: ^4.0.1
+        version: 4.0.1
       tslib:
         specifier: ^2.3.0
         version: 2.8.1
@@ -571,7 +592,7 @@ importers:
         version: 4.3.3
       vite:
         specifier: ^8.2.1
-        version: 8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0)
+        version: 8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.1)
 
 packages:
 
@@ -2174,6 +2195,118 @@ packages:
       react: ^19.0.0
       react-dom: ^19.0.0
 
+  '@mieweb/templit@0.2.0':
+    resolution: {integrity: sha512-pIBFXuMiGUxhN2Dde74NL43Rttj8DEUrTutE7InI3LwmhrIof4mGimT1P2qVWwiXBF6smBFv7p5LRu7cDMsSuA==}
+    peerDependencies:
+      handlebars: ^4.7.8
+      liquidjs: ^10.21.1
+      marked: ^16.3.0
+      mustache: ^4.2.0
+    peerDependenciesMeta:
+      handlebars:
+        optional: true
+      liquidjs:
+        optional: true
+      marked:
+        optional: true
+      mustache:
+        optional: true
+
+  '@mieweb/ui@0.11.0-dev.66':
+    resolution: {integrity: sha512-5Yyn2sginJk8vgMlZ75vLnXgPvumKojKQ3EEGodCxh9/TaTqaSxjN7aNDfGs/wMRQF523EYoXsDfcTiKZUMnuQ==}
+    engines: {node: ^20.19.0 || >=22.12.0}
+    hasBin: true
+    peerDependencies:
+      '@esheet/builder': '>=0.0.6-17'
+      '@esheet/core': '>=0.0.6-17'
+      '@esheet/fields': '>=0.0.6-17'
+      '@esheet/renderer': '>=0.0.6-17'
+      '@kerebron/editor': '>=0.8.12'
+      '@kerebron/editor-kits': '>=0.8.12'
+      '@kerebron/extension-basic-editor': '>=0.8.12'
+      '@kerebron/extension-menu': '>=0.8.12'
+      '@kerebron/extension-yjs': '>=0.8.12'
+      '@kerebron/wasm': '>=0.8.12'
+      '@mieweb/q': 1.0.0
+      '@xyflow/react': '>=12.0.0'
+      ag-grid-community: '>=32.0.0'
+      ag-grid-react: '>=32.0.0'
+      elkjs: '>=0.9.0'
+      js-yaml: '>=4.0.0'
+      katex: '>=0.16.0'
+      leaflet: '>=1.9.0'
+      mermaid: '>=11.0.0'
+      motion: '>=12.0.0'
+      papaparse: '>=5.0.0'
+      react: '>=18.0.0'
+      react-dom: '>=18.0.0'
+      react-globe.gl: '>=2.30.0'
+      react-markdown: '>=9.0.0'
+      rehype-highlight: '>=7.0.0'
+      rehype-katex: '>=7.0.0'
+      rehype-sanitize: '>=6.0.0'
+      remark-gfm: '>=4.0.0'
+      remark-math: '>=6.0.0'
+      three: '>=0.160.0'
+      wavesurfer.js: '>=7.0.0'
+      y-protocols: '>=1.0.6'
+      yjs: '>=13.6.0'
+    peerDependenciesMeta:
+      '@esheet/builder':
+        optional: true
+      '@esheet/core':
+        optional: true
+      '@esheet/fields':
+        optional: true
+      '@esheet/renderer':
+        optional: true
+      '@kerebron/extension-yjs':
+        optional: true
+      '@mieweb/q':
+        optional: true
+      '@xyflow/react':
+        optional: true
+      ag-grid-community:
+        optional: true
+      ag-grid-react:
+        optional: true
+      elkjs:
+        optional: true
+      js-yaml:
+        optional: true
+      katex:
+        optional: true
+      leaflet:
+        optional: true
+      mermaid:
+        optional: true
+      motion:
+        optional: true
+      papaparse:
+        optional: true
+      react-globe.gl:
+        optional: true
+      react-markdown:
+        optional: true
+      rehype-highlight:
+        optional: true
+      rehype-katex:
+        optional: true
+      rehype-sanitize:
+        optional: true
+      remark-gfm:
+        optional: true
+      remark-math:
+        optional: true
+      three:
+        optional: true
+      wavesurfer.js:
+        optional: true
+      y-protocols:
+        optional: true
+      yjs:
+        optional: true
+
   '@module-federation/error-codes@0.22.0':
     resolution: {integrity: sha512-xF9SjnEy7vTdx+xekjPCV5cIHOGCkdn3pIxo9vU7gEZMIw0SvAEdsy6Uh17xaCpm8V0FWvR0SZoK9Ik6jGOaug==}
 
@@ -2689,6 +2822,33 @@ packages:
 
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
+
+  '@protobufjs/aspromise@1.1.2':
+    resolution: {integrity: sha512-j+gKExEuLmKwvz3OgROXtrJ2UG2x8Ch2YZUxahh+s1F2HZ+wAceUNLkvy6zKCPVRkU++ZWQrdxsUeQXmcg4uoQ==}
+
+  '@protobufjs/base64@1.1.2':
+    resolution: {integrity: sha512-AZkcAA5vnN/v4PDqKyMR5lx7hZttPDgClv83E//FMNhR2TMcLUhfRUBHCmSl0oi9zMgDDqRUJkSxO3wm85+XLg==}
+
+  '@protobufjs/codegen@2.0.5':
+    resolution: {integrity: sha512-zgXFLzW3Ap33e6d0Wlj4MGIm6Ce8O89n/apUaGNB/jx+hw+ruWEp7EwGUshdLKVRCxZW12fp9r40E1mQrf/34g==}
+
+  '@protobufjs/eventemitter@1.1.1':
+    resolution: {integrity: sha512-vW1GmwMZNnL+gMRaovlh9yZX74kc+TTU3FObkkurpMaRtBfLP3ldjS9KQWlwZgraRE0+dheEEoAxdzcJQ8eXZg==}
+
+  '@protobufjs/fetch@1.1.1':
+    resolution: {integrity: sha512-GpptLrs57adMSuHi3VNj0mAF8dwh36LMaYF6XyJ6JMWlVsc+t42tm1HSEDmOs3A8fC9yyeisgLhsTVQokOZ0zw==}
+
+  '@protobufjs/float@1.0.2':
+    resolution: {integrity: sha512-Ddb+kVXlXst9d+R9PfTIxh1EdNkgoRe5tOX6t01f1lYWOvJnSPDBlG241QLzcyPdoNTsblLUdujGSE4RzrTZGQ==}
+
+  '@protobufjs/path@1.1.2':
+    resolution: {integrity: sha512-6JOcJ5Tm08dOHAbdR3GrvP+yUUfkjG5ePsHYczMFLq3ZmMkAD98cDgcT2iA1lJ9NVwFd4tH/iSSoe44YWkltEA==}
+
+  '@protobufjs/pool@1.1.0':
+    resolution: {integrity: sha512-0kELaGSIDBKvcgS4zkjz1PeddatrjYcmMWOlAuAPwAeccUrPHdUqo/J6LiymHHEiJT5NrF1UVwxY14f+fy4WQw==}
+
+  '@protobufjs/utf8@1.1.2':
+    resolution: {integrity: sha512-b1UQwcEZ4yCnMCD8DAL1VlbvBJE9/IX4FTIp7BG1xYpf29SLazLSrqUkj4w7Y5y7cCVP6E5tcqqcI0xemPkHug==}
 
   '@react-pdf/fns@3.1.3':
     resolution: {integrity: sha512-0I7pApDr1/RLAKbizuLy/IHTEa93LSPy/bEwYniboC3Xqnp6Od8xFJKbKEzGw2wh/5zKFFwl00g4t9RwgIMc3w==}
@@ -3464,6 +3624,15 @@ packages:
     resolution: {integrity: sha512-yYU8cogLeSh/ms2jh8Fj7jaba/EWa7Ja6GoUqYZaraEuCI5YS6ms6ObZgjjedm+jm6XZjdNRWBpPP6Z86oOxcw==}
     peerDependencies:
       vite: ^5.2.0 || ^6 || ^7 || ^8
+
+  '@tanstack/react-virtual@3.14.26':
+    resolution: {integrity: sha512-HUDlfsrYH6ko5xH56L62Mcl/uzT+AGVNMHFuDNqDJMdZWc1AQa2oeVKNUvZ/RWBZQ4TYtyQerFrNvLnp39h65A==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
+  '@tanstack/virtual-core@3.19.11':
+    resolution: {integrity: sha512-/5iHb0RHBvj8Di59FDs4ESNm45jls33aZAi4zccVXZjc/6ZvwQP6nzEYeT6weXjTf9E6/vrp2JhYWRyO+ZP13A==}
 
   '@testing-library/dom@10.4.0':
     resolution: {integrity: sha512-pemlzrSESWbdAloYml3bAJMEfNh1Z7EduzqPKprCH5S341frlpYnUEW0H72dLxa6IsYr+mPno20GiSm+h9dEdQ==}
@@ -4479,6 +4648,9 @@ packages:
   ci-info@3.9.0:
     resolution: {integrity: sha512-NIxF55hv4nSqQswkAeiOi1r83xy8JldOFDTWiug55KBu9Jnblncd2U6ViHmYgHf01TPZS77NJBhBMKdWj9HQMQ==}
     engines: {node: '>=8'}
+
+  class-variance-authority@0.7.1:
+    resolution: {integrity: sha512-Ka+9Trutv7G8M6WT6SeiRWz792K5qEqIGEGzXKhAE6xOWAY6pPH8U+9IY3oCMv6kqTmLsv7Xh/2w2RigkePMsg==}
 
   clean-css@5.3.3:
     resolution: {integrity: sha512-D5J+kHaVb/wKSFcyyV75uCn8fiY4sV38XJoe4CUyGQ+mOU/fMVYUdH1hJC+CJQ5uY3EnW27SbJYS4X8BiLrAFg==}
@@ -5647,6 +5819,9 @@ packages:
     resolution: {integrity: sha512-b6suED+5/3rTpUBdG1gupIl8MPFCAMA0QXwmljLhvCUKcUvdE4gWky9zpuGCcXHOsz4J9wPGNWq6OKpmIzz3hQ==}
     hasBin: true
 
+  flatbuffers@25.9.23:
+    resolution: {integrity: sha512-MI1qs7Lo4Syw0EOzUl0xjs2lsoeqFku44KpngfIduHBYvzm8h2+7K8YMQh1JtVVVrUvhLpNwqVi4DERegUJhPQ==}
+
   flatted@3.4.4:
     resolution: {integrity: sha512-5+ybhBZANEJxaH3X5evAFatUxLfEHSr7n6kYJ+1Qd0mUqr4eu9gIf6GDbWHf8RJijHrjjO8G+la14SlL2SeS1Q==}
 
@@ -5795,6 +5970,10 @@ packages:
     resolution: {integrity: sha512-Y1zNGV+pzQdh7H39l9zgB4PJqjRNqydvdYCDG4HFXM4XuvSaQQlEc91IU1yALL8gUTDomgBAfz3XJdmUS+oo0w==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
+  google-libphonenumber@3.2.48:
+    resolution: {integrity: sha512-x8Z8baHTiMchHIcQUsCU5HNwbCVA8UOoVkOMfGxOpCtkoUG6pAAp6jtjKILHgmhNzEb6t3t8i4UxAMIkNZr3DA==}
+    engines: {node: '>=0.10'}
+
   gopd@1.2.0:
     resolution: {integrity: sha512-ZUKRh6/kUFoAiTAtTYPZJ3hw9wNxx+BIBOijnlG9PnrJsCcSjs1wyyD6vJpaYtgnzDrKYRSqf3OO6Rfa93xsRg==}
     engines: {node: '>= 0.4'}
@@ -5815,6 +5994,9 @@ packages:
 
   graphemer@1.4.0:
     resolution: {integrity: sha512-EtKwoO6kxCL9WO5xipiHTZlSzBm7WLT627TqC/uVRd0HKmq8NXyebnNYxDoBi7wt8eTWrUrKXCOVaFq9x1kgag==}
+
+  guid-typescript@1.0.9:
+    resolution: {integrity: sha512-Y8T4vYhEfwJOTbouREvG+3XDsjr8E3kIr7uf+JZ0BYloFsttiHU0WfvANVsR7TxNUJa/WpCnw/Ino/p+DeBhBQ==}
 
   gzip-size@6.0.0:
     resolution: {integrity: sha512-ax7ZYomf6jqPTQ4+XCpUGyXKHk5WweS+e05MBO4/y3WJ5RkmPXNKvX+bx1behVILVwr6JSQvZAku021CHPXG3Q==}
@@ -5866,6 +6048,9 @@ packages:
   hast-util-raw@9.1.0:
     resolution: {integrity: sha512-Y8/SBAHkZGoNkpzqqfCldijcuUKh7/su31kEBp67cFY09Wy0mTRgtsLYsiIxMJxlu0f6AA5SUTbDR8K0rxnbUw==}
 
+  hast-util-sanitize@5.0.2:
+    resolution: {integrity: sha512-3yTWghByc50aGS7JlGhk61SPenfE/p1oaFeNwkOOyrscaOkMGrcW9+Cy/QAIOBpZxP1yqDIzFMR0+Np0i0+usg==}
+
   hast-util-to-estree@3.1.3:
     resolution: {integrity: sha512-48+B/rJWAp0jamNbAAf9M7Uf//UVqAoMmgXhBdxTDJLGKY+LRnZ99qcG+Qjl5HfMpYNzS5v4EAwVEF34LeAj7w==}
 
@@ -5884,6 +6069,10 @@ packages:
   he@1.2.0:
     resolution: {integrity: sha512-F/1DnUGPopORZi0ni+CvrCgHQ5FyEAHRLSApuYWMmrbSwoN2Mn/7k+Gl38gJnR7yyDZk6WLXwiGod1JOWNDKGw==}
     hasBin: true
+
+  highlight.js@11.12.0:
+    resolution: {integrity: sha512-nbfWpyRMcMrPMmDwJB+dhX/eiaPKtc2RB+0QZskqJ3WjRA/FDS0e9hZrx8EC/lbEv8gXy98FcDbNa/dspAaJMg==}
+    engines: {node: '>=12.0.0'}
 
   history@4.10.1:
     resolution: {integrity: sha512-36nwAD620w12kuzPAsyINPWJqlNbij+hpK1k9XRloDtym8mxzGYl2c17LnV6IAGB2Dmg4tEa7G7DlawS0+qjew==}
@@ -5923,6 +6112,9 @@ packages:
   html-tags@3.3.1:
     resolution: {integrity: sha512-ztqyC3kLto0e9WbNp0aeP+M3kTt+nbaIveGmUxAtZa+8iFgKLUOD4YKM5j+f3QD89bra7UeumolZHKuOXnTmeQ==}
     engines: {node: '>=8'}
+
+  html-url-attributes@3.0.1:
+    resolution: {integrity: sha512-ol6UPyBWqsrO6EJySPz2O7ZSr856WDrEzM5zMqp+FJJLGMW35cLYmmZnl0vztAZxRUoNZJFTCohfjuIJ8I4QBQ==}
 
   html-void-elements@3.0.0:
     resolution: {integrity: sha512-bEqo66MRXsUGxWHV5IP0PUiAWwoEjba4VCzg0LjFJBpchPaTfyfCKTG6bc5F8ucKec3q5y6qOdGyYTSBEvhCrg==}
@@ -6417,6 +6609,10 @@ packages:
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
 
+  js-yaml@4.1.0:
+    resolution: {integrity: sha512-wpxZs9NoxZaJESJGIZTyDEaYpl0FKSA+FB9aJiyemKhMwkxQg63h4T1KJgUGHpTqPDNRcmmYLugrRjJlBtWvRA==}
+    hasBin: true
+
   js-yaml@4.3.1:
     resolution: {integrity: sha512-CY6crGq313MX8GkwvB7tzgp99vjQxY1++5y10/BKN/GUfHqWaOGQMNZkBvqSzsZKWk/ijwHlWzzkLulsGHhjWQ==}
     hasBin: true
@@ -6725,6 +6921,9 @@ packages:
   lodash@4.18.1:
     resolution: {integrity: sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q==}
 
+  long@5.3.2:
+    resolution: {integrity: sha512-mNAgZ1GmyNhD7AuqnTG3/VQ26o760+ZYBPKjPvugO8+nLbYfX6TVpJPseBvopbdY+qpZ/lKUnmEc1LeZYS3QAA==}
+
   longest-streak@3.1.0:
     resolution: {integrity: sha512-9Ri+o0JYgehTaVBBDoMqIl8GXtbWg711O3srftcHhZ0dqnETqLaoIK0x17fUw9rFSlK/0NlsKe0Ahhyl5pXE2g==}
 
@@ -6746,10 +6945,19 @@ packages:
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
 
+  lucide-react@0.562.0:
+    resolution: {integrity: sha512-82hOAu7y0dbVuFfmO4bYF1XEwYk/mEbM5E+b1jgci/udUBEE/R7LF5Ip0CCEmXe8AybRM8L+04eP+LGZeDvkiw==}
+    peerDependencies:
+      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
   lucide-react@1.31.0:
     resolution: {integrity: sha512-G8u2eEtoHUnUa9f8lbvqDhCiORMnYLdUEo06EEG9MQvHQrInKcX3Pa2TH39MM5qyzRcWETxB0+aOwAPI1g1kEg==}
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
+  luxon@3.7.2:
+    resolution: {integrity: sha512-vtEhXh/gNjI9Yg1u4jX/0YVPMvxzHuGgCm6tC5kZyb08yjGWGnqAjGJvcXbqQR2P3MyMEFnRbpcdFS6PBcLqew==}
+    engines: {node: '>=12'}
 
   lz-string@1.5.0:
     resolution: {integrity: sha512-h5bgJWpxJNswbU7qCrV0tIKQCaS3blPDrqKWx+QxzuzL1zGUzij9XCWLrSLsJPu5t+eWA/ycetzYAO5IOMcWAQ==}
@@ -6789,6 +6997,11 @@ packages:
 
   marked@16.4.2:
     resolution: {integrity: sha512-TI3V8YYWvkVf3KJe1dRkpnjs68JUPyEa5vjKrp1XEEJUAOaQc+Qj+L1qWbPd0SJuAdQkFU0h73sXXqwDYxsiDA==}
+    engines: {node: '>= 20'}
+    hasBin: true
+
+  marked@17.0.6:
+    resolution: {integrity: sha512-gB0gkNafnonOw0obSTEGZTT86IuhILt2Wfx0mWH/1Au83kybTayroZ/V6nS25mN7u8ASy+5fMhgB3XPNrOZdmA==}
     engines: {node: '>= 20'}
     hasBin: true
 
@@ -7302,6 +7515,12 @@ packages:
     resolution: {integrity: sha512-1FlR+gjXK7X+AsAHso35MnyN5KqGwJRi/31ft6x0M194ht7S+rWAvd7PHss9xSKMzE0asv1pyIHaJYq+BbacAQ==}
     engines: {node: '>=12'}
 
+  onnxruntime-common@1.30.0:
+    resolution: {integrity: sha512-7fdVWjAID1dVhH/G8qK3APARunV4VkBFoCQAP7qp4Wkab0mrorvmc+sqiT+mKXOzDqdjN5j+/Z9nb4gzNPWcyA==}
+
+  onnxruntime-web@1.30.0:
+    resolution: {integrity: sha512-q0y+JrrtukXSzsBWEMccVfqX25LRmosXHF+CaRJmg8pZClzcV7svNc4rKY3jL02Vb7QmRMDs1SigqR4CXAfKYQ==}
+
   open@10.2.0:
     resolution: {integrity: sha512-YgBpdJHPyQ2UE5x+hlSXcnejzAvD0b22U2OuAP+8OnlJT+PjWPxtgmGqKKc+RgTM63U9gN0YzrYc71R2WT/hTA==}
     engines: {node: '>=18'}
@@ -7522,6 +7741,9 @@ packages:
   pkijs@3.4.0:
     resolution: {integrity: sha512-emEcLuomt2j03vxD54giVB4SxTjnsqkU692xZOZXHDVoYyypEm+b3jpiTcc+Cf+myooc+/Ly0z01jqeNHVgJGw==}
     engines: {node: '>=16.0.0'}
+
+  platform@1.3.6:
+    resolution: {integrity: sha512-fnWVljUchTro6RiCFvCXBbNhJc2NijN7oIQxbwsyL0buWJPG85v81ehlHI9fXrJsMNgTofEoWIQeClKpgxFLrg==}
 
   png-js@2.0.0:
     resolution: {integrity: sha512-GdzJuUMc6ZSpxFJWVxtOH1bzYHym+TOnveqUjb+VJIbZWbZzyiRGFiKhbiielfpYbgMlhHVhsJ0FTazfuRFkMA==}
@@ -7988,8 +8210,15 @@ packages:
   prosemirror-view@1.40.0:
     resolution: {integrity: sha512-2G3svX0Cr1sJjkD/DYWSe3cfV5VPVTBOxI9XQEGWJDFEpsZb/gh4MV29ctv+OJx2RFX4BLt09i+6zaGM/ldkCw==}
 
+  prosemirror-view@1.42.3:
+    resolution: {integrity: sha512-oTN7EtH+CpwxU9NrwEYWd0UZ4JUx7l048l5A2Xppm4p/60isZYLnth9QVQmC3VRIvdrIWCxwZSd+Uz791G31/w==}
+
   proto-list@1.2.4:
     resolution: {integrity: sha512-vtK/94akxsTMhe0/cbfpR+syPuszcuwhqVjJq26CuNDgFGj682oRBXOP5MJpv2r7JtE8MsiepGIqvvOTBwn2vA==}
+
+  protobufjs@7.6.6:
+    resolution: {integrity: sha512-dYDWdjSl5RNb7SgPxGQcRU+GtvP7s2fpkrY0r432PcOIaZ0/rBcxEZnQN67iJhFuQiVw754JDoPruPCNdGsbjg==}
+    engines: {node: '>=12.0.0'}
 
   proxy-addr@2.0.7:
     resolution: {integrity: sha512-llQsMLSUDUPT44jdrU/O37qlnifitDP+ZwrmmZcoSKyLKvtZxpyV0n2/bD/N4tBAAZ/gJEdZU7KMraoK1+XYAg==}
@@ -8092,6 +8321,12 @@ packages:
     peerDependencies:
       react-loadable: '*'
       webpack: '>=4.41.1 || 5.x'
+
+  react-markdown@10.1.0:
+    resolution: {integrity: sha512-qKxVopLT/TyA6BX3Ue5NwabOsAzm0Q7kAPwq6L+wWDwisYs7R8vZ0nRXqq6rkueboxpkjvLGU9fWifiX/ZZFxQ==}
+    peerDependencies:
+      '@types/react': '>=18'
+      react: '>=18'
 
   react-pdf@10.2.0:
     resolution: {integrity: sha512-zk0DIL31oCh8cuQycM0SJKfwh4Onz0/Nwi6wTOjgtEjWGUY6eM+/vuzvOP3j70qtEULn7m1JtaeGzud1w5fY2Q==}
@@ -8235,6 +8470,9 @@ packages:
 
   rehype-recma@1.0.0:
     resolution: {integrity: sha512-lqA4rGUf1JmacCNWWZx0Wv1dHqMwxzsDWYMTowuplHF3xH0N/MmrZ/G3BDZnzAkRmxDadujCjaKM2hqYdCBOGw==}
+
+  rehype-sanitize@6.0.0:
+    resolution: {integrity: sha512-CsnhKNsyI8Tub6L4sm5ZFsme4puGfc6pYylvXo1AeqaGbjOYyzNv3qZPwvs0oMJ39eryyeOdmxwUIo94IpEhqg==}
 
   relateurl@0.2.7:
     resolution: {integrity: sha512-G08Dxvm4iDN3MLM0EsP62EDV9IuhXPR6blNz6Utcp7zyV3tr4HVNINt6MpaRWbxoOHT3Q7YN2P+jaHX8vUbgog==}
@@ -8788,6 +9026,9 @@ packages:
   system-architecture@1.0.0:
     resolution: {integrity: sha512-0OJWD12D7XX3KUg1DYkMaTTjSTo2k/mhIYI3HlBlceXSMcJhW/1qO735fPKS5prcyjvn57Ub151vvASYXpQrEw==}
     engines: {node: '>=18'}
+
+  tailwind-merge@2.6.1:
+    resolution: {integrity: sha512-Oo6tHdpZsGpkKG88HJ8RR1rg/RdnEkQEfMoEk2x1XRI3F1AxeU+ijRXpiVUF4UbLfcxxRGw6TbUINKYdWVsQTQ==}
 
   tailwindcss@4.3.3:
     resolution: {integrity: sha512-gOhV3P7ufE62QDGg1zVaTgCR+EtPv92k2nIhVcVKcLmxT1sUBsQGhnZj175j+MqRt4zLF7ic+sCYjfhxMxj7YQ==}
@@ -9523,8 +9764,8 @@ packages:
   yallist@3.1.1:
     resolution: {integrity: sha512-a4UGQaWPH59mOXUYnAG2ewncQS4i4F43Tv3JoAM+s2VDAmS9NsK8GpDMLrCHPksFT7h3K6TOoUNn2pb7RoXx4g==}
 
-  yaml@2.9.0:
-    resolution: {integrity: sha512-2AvhNX3mb8zd6Zy7INTtSpl1F15HW6Wnqj0srWlkKLcpYl/gMIMJiyuGq2KeI2YFxUPjdlB+3Lc10seMLtL4cA==}
+  yaml@2.9.1:
+    resolution: {integrity: sha512-3NxN8+78OdzbT7C/WjGsyfPAtJaN3FNDsWxv7Y7mcDsT/oOmgW8BpyQQFFBnvZE3j9Y2Sdz1ULFLezL7Eb2yFw==}
     engines: {node: '>= 14.6'}
     hasBin: true
 
@@ -12444,12 +12685,12 @@ snapshots:
 
   '@microsoft/tsdoc@0.16.0': {}
 
-  '@mieweb/datavis@1.6.0(@types/react@19.2.18)(datavis-ace@4.1.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(redux@5.0.1)(typescript@6.0.3)':
+  '@mieweb/datavis@1.6.0(@esheet/core@packages+core)(@esheet/fields@packages+fields)(@esheet/renderer@packages+renderer)(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/extension-menu@0.8.12(patch_hash=ad7cb66c09edc0a21db0b9f3b4131f4806f4921cd8792d5cf9980f0eeb9295c9))(@kerebron/wasm@0.8.12)(@types/react@19.2.18)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react-markdown@10.1.0(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)(redux@5.0.1)(rehype-sanitize@6.0.0)(remark-gfm@4.0.1)(typescript@6.0.3)':
     dependencies:
       '@dnd-kit/core': 6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@dnd-kit/sortable': 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)
       '@dnd-kit/utilities': 3.2.2(react@19.2.8)
-      '@mieweb/ui': link:../ui
+      '@mieweb/ui': 0.11.0-dev.66(patch_hash=33312e2056386e464561624183f0e4480713f269bad7d52761a2d318bff9b862)(@esheet/core@packages+core)(@esheet/fields@packages+fields)(@esheet/renderer@packages+renderer)(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/extension-menu@0.8.12(patch_hash=ad7cb66c09edc0a21db0b9f3b4131f4806f4921cd8792d5cf9980f0eeb9295c9))(@kerebron/wasm@0.8.12)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react-markdown@10.1.0(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)(rehype-sanitize@6.0.0)(remark-gfm@4.0.1)
       datavis-ace: 4.1.0
       i18next: 26.3.6(typescript@6.0.3)
       lucide-react: 1.31.0(react@19.2.8)
@@ -12459,10 +12700,148 @@ snapshots:
       react-is: 18.3.1
       recharts: 3.10.1(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-is@18.3.1)(react@19.2.8)(redux@5.0.1)
     transitivePeerDependencies:
+      - '@esheet/builder'
+      - '@esheet/core'
+      - '@esheet/fields'
+      - '@esheet/renderer'
+      - '@kerebron/editor'
+      - '@kerebron/editor-kits'
+      - '@kerebron/extension-basic-editor'
+      - '@kerebron/extension-menu'
+      - '@kerebron/extension-yjs'
+      - '@kerebron/wasm'
+      - '@mieweb/q'
       - '@types/react'
+      - '@xyflow/react'
+      - ag-grid-community
+      - ag-grid-react
+      - elkjs
+      - handlebars
+      - js-yaml
+      - katex
+      - leaflet
+      - liquidjs
+      - mermaid
+      - motion
+      - mustache
+      - papaparse
+      - react-globe.gl
+      - react-markdown
       - react-native
       - redux
+      - rehype-highlight
+      - rehype-katex
+      - rehype-sanitize
+      - remark-gfm
+      - remark-math
+      - three
       - typescript
+      - wavesurfer.js
+      - y-protocols
+      - yjs
+
+  '@mieweb/templit@0.2.0(marked@17.0.6)':
+    dependencies:
+      js-yaml: 4.1.0
+    optionalDependencies:
+      marked: 17.0.6
+
+  '@mieweb/ui@0.11.0-dev.66(patch_hash=33312e2056386e464561624183f0e4480713f269bad7d52761a2d318bff9b862)(@esheet/builder@packages+builder)(@esheet/core@packages+core)(@esheet/fields@packages+fields)(@esheet/renderer@packages+renderer)(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/extension-menu@0.8.12(patch_hash=ad7cb66c09edc0a21db0b9f3b4131f4806f4921cd8792d5cf9980f0eeb9295c9))(@kerebron/wasm@0.8.10)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react-markdown@10.1.0(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)(rehype-sanitize@6.0.0)(remark-gfm@4.0.1)':
+    dependencies:
+      '@dnd-kit/core': 6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@dnd-kit/sortable': 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)
+      '@dnd-kit/utilities': 3.2.2(react@19.2.8)
+      '@kerebron/editor': 0.8.12
+      '@kerebron/editor-kits': 0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0))
+      '@kerebron/extension-basic-editor': 0.8.12
+      '@kerebron/extension-menu': 0.8.12(patch_hash=ad7cb66c09edc0a21db0b9f3b4131f4806f4921cd8792d5cf9980f0eeb9295c9)
+      '@kerebron/wasm': 0.8.10
+      '@mieweb/templit': 0.2.0(marked@17.0.6)
+      '@swc/helpers': 0.5.23
+      '@tanstack/react-virtual': 3.14.26(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      class-variance-authority: 0.7.1
+      clsx: 2.1.1
+      datavis-ace: 4.1.0
+      dompurify: 3.4.17
+      google-libphonenumber: 3.2.48
+      highlight.js: 11.12.0
+      lucide-react: 0.562.0(react@19.2.8)
+      luxon: 3.7.2
+      marked: 17.0.6
+      onnxruntime-web: 1.30.0
+      prosemirror-model: 1.25.9
+      prosemirror-state: 1.4.3
+      prosemirror-view: 1.42.3
+      react: 19.2.8
+      react-dom: 19.2.8(react@19.2.8)
+      tailwind-merge: 2.6.1
+      yaml: 2.9.1
+    optionalDependencies:
+      '@esheet/builder': link:packages/builder
+      '@esheet/core': link:packages/core
+      '@esheet/fields': link:packages/fields
+      '@esheet/renderer': link:packages/renderer
+      ag-grid-community: 35.3.1
+      ag-grid-react: 35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      js-yaml: 5.2.3
+      katex: 0.16.47
+      mermaid: 11.16.1
+      papaparse: 5.5.4
+      react-markdown: 10.1.0(@types/react@19.2.18)(react@19.2.8)
+      rehype-sanitize: 6.0.0
+      remark-gfm: 4.0.1
+    transitivePeerDependencies:
+      - handlebars
+      - liquidjs
+      - mustache
+
+  '@mieweb/ui@0.11.0-dev.66(patch_hash=33312e2056386e464561624183f0e4480713f269bad7d52761a2d318bff9b862)(@esheet/core@packages+core)(@esheet/fields@packages+fields)(@esheet/renderer@packages+renderer)(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/extension-menu@0.8.12(patch_hash=ad7cb66c09edc0a21db0b9f3b4131f4806f4921cd8792d5cf9980f0eeb9295c9))(@kerebron/wasm@0.8.12)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react-markdown@10.1.0(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)(rehype-sanitize@6.0.0)(remark-gfm@4.0.1)':
+    dependencies:
+      '@dnd-kit/core': 6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@dnd-kit/sortable': 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)
+      '@dnd-kit/utilities': 3.2.2(react@19.2.8)
+      '@kerebron/editor': 0.8.12
+      '@kerebron/editor-kits': 0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0))
+      '@kerebron/extension-basic-editor': 0.8.12
+      '@kerebron/extension-menu': 0.8.12(patch_hash=ad7cb66c09edc0a21db0b9f3b4131f4806f4921cd8792d5cf9980f0eeb9295c9)
+      '@kerebron/wasm': 0.8.12
+      '@mieweb/templit': 0.2.0(marked@17.0.6)
+      '@swc/helpers': 0.5.23
+      '@tanstack/react-virtual': 3.14.26(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      class-variance-authority: 0.7.1
+      clsx: 2.1.1
+      datavis-ace: 4.1.0
+      dompurify: 3.4.17
+      google-libphonenumber: 3.2.48
+      highlight.js: 11.12.0
+      lucide-react: 0.562.0(react@19.2.8)
+      luxon: 3.7.2
+      marked: 17.0.6
+      onnxruntime-web: 1.30.0
+      prosemirror-model: 1.25.9
+      prosemirror-state: 1.4.3
+      prosemirror-view: 1.42.3
+      react: 19.2.8
+      react-dom: 19.2.8(react@19.2.8)
+      tailwind-merge: 2.6.1
+      yaml: 2.9.1
+    optionalDependencies:
+      '@esheet/core': link:packages/core
+      '@esheet/fields': link:packages/fields
+      '@esheet/renderer': link:packages/renderer
+      ag-grid-community: 35.3.1
+      ag-grid-react: 35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      js-yaml: 5.2.3
+      katex: 0.16.47
+      mermaid: 11.16.1
+      papaparse: 5.5.4
+      react-markdown: 10.1.0(@types/react@19.2.18)(react@19.2.8)
+      rehype-sanitize: 6.0.0
+      remark-gfm: 4.0.1
+    transitivePeerDependencies:
+      - handlebars
+      - liquidjs
+      - mustache
 
   '@module-federation/error-codes@0.22.0': {}
 
@@ -12891,6 +13270,26 @@ snapshots:
       config-chain: 1.1.13
 
   '@polka/url@1.0.0-next.29': {}
+
+  '@protobufjs/aspromise@1.1.2': {}
+
+  '@protobufjs/base64@1.1.2': {}
+
+  '@protobufjs/codegen@2.0.5': {}
+
+  '@protobufjs/eventemitter@1.1.1': {}
+
+  '@protobufjs/fetch@1.1.1':
+    dependencies:
+      '@protobufjs/aspromise': 1.1.2
+
+  '@protobufjs/float@1.0.2': {}
+
+  '@protobufjs/path@1.1.2': {}
+
+  '@protobufjs/pool@1.1.0': {}
+
+  '@protobufjs/utf8@1.1.2': {}
 
   '@react-pdf/fns@3.1.3': {}
 
@@ -13485,7 +13884,6 @@ snapshots:
   '@swc/helpers@0.5.23':
     dependencies:
       tslib: 2.8.1
-    optional: true
 
   '@swc/html-darwin-arm64@1.15.47':
     optional: true
@@ -13627,12 +14025,20 @@ snapshots:
       postcss: 8.5.26
       tailwindcss: 4.3.3
 
-  '@tailwindcss/vite@4.3.3(vite@8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.0))':
+  '@tailwindcss/vite@4.3.3(vite@8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.1))':
     dependencies:
       '@tailwindcss/node': 4.3.3
       '@tailwindcss/oxide': 4.3.3
       tailwindcss: 4.3.3
-      vite: 8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.0)
+      vite: 8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.1)
+
+  '@tanstack/react-virtual@3.14.26(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+    dependencies:
+      '@tanstack/virtual-core': 3.19.11
+      react: 19.2.8
+      react-dom: 19.2.8(react@19.2.8)
+
+  '@tanstack/virtual-core@3.19.11': {}
 
   '@testing-library/dom@10.4.0':
     dependencies:
@@ -14082,15 +14488,15 @@ snapshots:
       d3-selection: 3.0.0
       d3-transition: 3.0.1(d3-selection@3.0.0)
 
-  '@vitejs/plugin-react@6.0.5(vite@8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.0))':
+  '@vitejs/plugin-react@6.0.5(vite@8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.1))':
     dependencies:
       '@rolldown/pluginutils': 1.0.1
-      vite: 8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.0)
+      vite: 8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.1)
 
-  '@vitejs/plugin-react@6.0.5(vite@8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0))':
+  '@vitejs/plugin-react@6.0.5(vite@8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.1))':
     dependencies:
       '@rolldown/pluginutils': 1.0.1
-      vite: 8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0)
+      vite: 8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.1)
 
   '@vitest/coverage-v8@4.1.10(vitest@4.1.10)':
     dependencies:
@@ -14104,7 +14510,7 @@ snapshots:
       obug: 2.1.4
       std-env: 4.2.0
       tinyrainbow: 3.1.1
-      vitest: 4.1.10(@types/node@26.6.5)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@29.1.1(@noble/hashes@1.8.0))(vite@8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0))
+      vitest: 4.1.10(@types/node@20.19.9)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@29.1.1(@noble/hashes@1.8.0))(vite@8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.1))
 
   '@vitest/expect@4.1.10':
     dependencies:
@@ -14115,21 +14521,21 @@ snapshots:
       chai: 6.2.2
       tinyrainbow: 3.1.1
 
-  '@vitest/mocker@4.1.10(vite@8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.0))':
+  '@vitest/mocker@4.1.10(vite@8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.1))':
     dependencies:
       '@vitest/spy': 4.1.10
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
-      vite: 8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.0)
+      vite: 8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.1)
 
-  '@vitest/mocker@4.1.10(vite@8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0))':
+  '@vitest/mocker@4.1.10(vite@8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.1))':
     dependencies:
       '@vitest/spy': 4.1.10
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
-      vite: 8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0)
+      vite: 8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.1)
 
   '@vitest/pretty-format@4.1.10':
     dependencies:
@@ -14158,7 +14564,7 @@ snapshots:
       sirv: 3.0.2
       tinyglobby: 0.2.17
       tinyrainbow: 3.1.1
-      vitest: 4.1.10(@types/node@26.6.5)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@29.1.1(@noble/hashes@1.8.0))(vite@8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0))
+      vitest: 4.1.10(@types/node@20.19.9)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@29.1.1(@noble/hashes@1.8.0))(vite@8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.1))
 
   '@vitest/utils@4.1.10':
     dependencies:
@@ -14893,6 +15299,10 @@ snapshots:
   chrome-trace-event@1.0.4: {}
 
   ci-info@3.9.0: {}
+
+  class-variance-authority@0.7.1:
+    dependencies:
+      clsx: 2.1.1
 
   clean-css@5.3.3:
     dependencies:
@@ -16284,6 +16694,8 @@ snapshots:
 
   flat@5.0.2: {}
 
+  flatbuffers@25.9.23: {}
+
   flatted@3.4.4: {}
 
   follow-redirects@1.16.0: {}
@@ -16443,6 +16855,8 @@ snapshots:
       merge2: 1.4.1
       slash: 4.0.0
 
+  google-libphonenumber@3.2.48: {}
+
   gopd@1.2.0: {}
 
   got@12.6.1:
@@ -16479,6 +16893,8 @@ snapshots:
   graceful-fs@4.2.11: {}
 
   graphemer@1.4.0: {}
+
+  guid-typescript@1.0.9: {}
 
   gzip-size@6.0.0:
     dependencies:
@@ -16542,6 +16958,12 @@ snapshots:
       vfile: 6.0.3
       web-namespaces: 2.0.1
       zwitch: 2.0.4
+
+  hast-util-sanitize@5.0.2:
+    dependencies:
+      '@types/hast': 3.0.5
+      '@ungap/structured-clone': 1.3.3
+      unist-util-position: 5.0.0
 
   hast-util-to-estree@3.1.3:
     dependencies:
@@ -16608,6 +17030,8 @@ snapshots:
 
   he@1.2.0: {}
 
+  highlight.js@11.12.0: {}
+
   history@4.10.1:
     dependencies:
       '@babel/runtime': 7.29.10
@@ -16665,6 +17089,8 @@ snapshots:
   html-parse-stringify@4.0.1: {}
 
   html-tags@3.3.1: {}
+
+  html-url-attributes@3.0.1: {}
 
   html-void-elements@3.0.0: {}
 
@@ -17110,6 +17536,10 @@ snapshots:
 
   js-tokens@4.0.0: {}
 
+  js-yaml@4.1.0:
+    dependencies:
+      argparse: 2.0.1
+
   js-yaml@4.3.1:
     dependencies:
       argparse: 2.0.1
@@ -17371,6 +17801,8 @@ snapshots:
 
   lodash@4.18.1: {}
 
+  long@5.3.2: {}
+
   longest-streak@3.1.0: {}
 
   loose-envify@1.4.0:
@@ -17389,9 +17821,15 @@ snapshots:
     dependencies:
       yallist: 3.1.1
 
+  lucide-react@0.562.0(react@19.2.8):
+    dependencies:
+      react: 19.2.8
+
   lucide-react@1.31.0(react@19.2.8):
     dependencies:
       react: 19.2.8
+
+  luxon@3.7.2: {}
 
   lz-string@1.5.0: {}
 
@@ -17426,6 +17864,8 @@ snapshots:
   marked@14.0.0: {}
 
   marked@16.4.2: {}
+
+  marked@17.0.6: {}
 
   math-intrinsics@1.1.0: {}
 
@@ -18248,6 +18688,17 @@ snapshots:
     dependencies:
       mimic-fn: 4.0.0
 
+  onnxruntime-common@1.30.0: {}
+
+  onnxruntime-web@1.30.0:
+    dependencies:
+      flatbuffers: 25.9.23
+      guid-typescript: 1.0.9
+      long: 5.3.2
+      onnxruntime-common: 1.30.0
+      platform: 1.3.6
+      protobufjs: 7.6.6
+
   open@10.2.0:
     dependencies:
       default-browser: 5.5.0
@@ -18496,6 +18947,8 @@ snapshots:
       pvtsutils: 1.3.6
       pvutils: 1.2.0
       tslib: 2.8.1
+
+  platform@1.3.6: {}
 
   png-js@2.0.0:
     dependencies:
@@ -19011,7 +19464,7 @@ snapshots:
     dependencies:
       prosemirror-model: 1.25.9
       prosemirror-transform: 1.10.4
-      prosemirror-view: 1.40.0
+      prosemirror-view: 1.42.3
 
   prosemirror-transform@1.10.4:
     dependencies:
@@ -19023,7 +19476,27 @@ snapshots:
       prosemirror-state: 1.4.3
       prosemirror-transform: 1.10.4
 
+  prosemirror-view@1.42.3:
+    dependencies:
+      prosemirror-model: 1.25.9
+      prosemirror-state: 1.4.3
+      prosemirror-transform: 1.10.4
+
   proto-list@1.2.4: {}
+
+  protobufjs@7.6.6:
+    dependencies:
+      '@protobufjs/aspromise': 1.1.2
+      '@protobufjs/base64': 1.1.2
+      '@protobufjs/codegen': 2.0.5
+      '@protobufjs/eventemitter': 1.1.1
+      '@protobufjs/fetch': 1.1.1
+      '@protobufjs/float': 1.0.2
+      '@protobufjs/path': 1.1.2
+      '@protobufjs/pool': 1.1.0
+      '@protobufjs/utf8': 1.1.2
+      '@types/node': 20.19.9
+      long: 5.3.2
 
   proxy-addr@2.0.7:
     dependencies:
@@ -19110,6 +19583,24 @@ snapshots:
       '@babel/runtime': 7.29.7
       react-loadable: '@docusaurus/react-loadable@6.0.0(react@19.2.8)'
       webpack: 5.109.2(@swc/core@1.15.47(@swc/helpers@0.5.23))(postcss@8.5.26)
+
+  react-markdown@10.1.0(@types/react@19.2.18)(react@19.2.8):
+    dependencies:
+      '@types/hast': 3.0.5
+      '@types/mdast': 4.0.4
+      '@types/react': 19.2.18
+      devlop: 1.1.0
+      hast-util-to-jsx-runtime: 2.3.6
+      html-url-attributes: 3.0.1
+      mdast-util-to-hast: 13.2.1
+      react: 19.2.8
+      remark-parse: 11.0.0
+      remark-rehype: 11.1.2
+      unified: 11.0.5
+      unist-util-visit: 5.1.0
+      vfile: 6.0.3
+    transitivePeerDependencies:
+      - supports-color
 
   react-pdf@10.2.0(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
     dependencies:
@@ -19320,6 +19811,11 @@ snapshots:
       hast-util-to-estree: 3.1.3
     transitivePeerDependencies:
       - supports-color
+
+  rehype-sanitize@6.0.0:
+    dependencies:
+      '@types/hast': 3.0.5
+      hast-util-sanitize: 5.0.2
 
   relateurl@0.2.7: {}
 
@@ -20013,6 +20509,8 @@ snapshots:
 
   system-architecture@1.0.0: {}
 
+  tailwind-merge@2.6.1: {}
+
   tailwindcss@4.3.3: {}
 
   tapable@2.3.3: {}
@@ -20313,7 +20811,7 @@ snapshots:
 
   unpipe@1.0.0: {}
 
-  unplugin-dts@1.0.3(@microsoft/api-extractor@7.58.12(@types/node@20.19.9))(@rspack/core@1.7.12(@swc/helpers@0.5.18))(rolldown@1.2.3)(typescript@5.9.3)(vite@8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.0))(webpack@5.109.2(@swc/core@1.15.8(@swc/helpers@0.5.18))):
+  unplugin-dts@1.0.3(@microsoft/api-extractor@7.58.12(@types/node@20.19.9))(@rspack/core@1.7.12(@swc/helpers@0.5.18))(rolldown@1.2.3)(typescript@5.9.3)(vite@8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.1))(webpack@5.109.2(@swc/core@1.15.8(@swc/helpers@0.5.18))):
     dependencies:
       '@rollup/pluginutils': 5.4.0
       '@volar/typescript': 2.4.28
@@ -20328,12 +20826,12 @@ snapshots:
       '@microsoft/api-extractor': 7.58.12(@types/node@20.19.9)
       '@rspack/core': 1.7.12(@swc/helpers@0.5.18)
       rolldown: 1.2.3
-      vite: 8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.0)
+      vite: 8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.1)
       webpack: 5.109.2(@swc/core@1.15.8(@swc/helpers@0.5.18))
     transitivePeerDependencies:
       - supports-color
 
-  unplugin-dts@1.0.3(@microsoft/api-extractor@7.58.12(@types/node@26.6.5))(@rspack/core@1.7.12(@swc/helpers@0.5.23))(rolldown@1.2.3)(typescript@6.0.3)(vite@8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0))(webpack@5.109.2(@swc/core@1.15.8(@swc/helpers@0.5.18))):
+  unplugin-dts@1.0.3(@microsoft/api-extractor@7.58.12(@types/node@26.6.5))(@rspack/core@1.7.12(@swc/helpers@0.5.23))(rolldown@1.2.3)(typescript@6.0.3)(vite@8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.1))(webpack@5.109.2(@swc/core@1.15.8(@swc/helpers@0.5.18))):
     dependencies:
       '@rollup/pluginutils': 5.4.0
       '@volar/typescript': 2.4.28
@@ -20348,7 +20846,7 @@ snapshots:
       '@microsoft/api-extractor': 7.58.12(@types/node@26.6.5)
       '@rspack/core': 1.7.12(@swc/helpers@0.5.23)
       rolldown: 1.2.3
-      vite: 8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0)
+      vite: 8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.1)
       webpack: 5.109.2(@swc/core@1.15.8(@swc/helpers@0.5.18))
     transitivePeerDependencies:
       - supports-color
@@ -20446,12 +20944,12 @@ snapshots:
       d3-time: 3.1.0
       d3-timer: 3.0.1
 
-  vite-plugin-dts@5.0.3(@microsoft/api-extractor@7.58.12(@types/node@20.19.9))(@rspack/core@1.7.12(@swc/helpers@0.5.18))(rolldown@1.2.3)(typescript@5.9.3)(vite@8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.0))(webpack@5.109.2(@swc/core@1.15.8(@swc/helpers@0.5.18))):
+  vite-plugin-dts@5.0.3(@microsoft/api-extractor@7.58.12(@types/node@20.19.9))(@rspack/core@1.7.12(@swc/helpers@0.5.18))(rolldown@1.2.3)(typescript@5.9.3)(vite@8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.1))(webpack@5.109.2(@swc/core@1.15.8(@swc/helpers@0.5.18))):
     dependencies:
-      unplugin-dts: 1.0.3(@microsoft/api-extractor@7.58.12(@types/node@20.19.9))(@rspack/core@1.7.12(@swc/helpers@0.5.18))(rolldown@1.2.3)(typescript@5.9.3)(vite@8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.0))(webpack@5.109.2(@swc/core@1.15.8(@swc/helpers@0.5.18)))
+      unplugin-dts: 1.0.3(@microsoft/api-extractor@7.58.12(@types/node@20.19.9))(@rspack/core@1.7.12(@swc/helpers@0.5.18))(rolldown@1.2.3)(typescript@5.9.3)(vite@8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.1))(webpack@5.109.2(@swc/core@1.15.8(@swc/helpers@0.5.18)))
     optionalDependencies:
       '@microsoft/api-extractor': 7.58.12(@types/node@20.19.9)
-      vite: 8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.0)
+      vite: 8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.1)
     transitivePeerDependencies:
       - '@rspack/core'
       - '@vue/language-core'
@@ -20461,12 +20959,12 @@ snapshots:
       - typescript
       - webpack
 
-  vite-plugin-dts@5.0.3(@microsoft/api-extractor@7.58.12(@types/node@26.6.5))(@rspack/core@1.7.12(@swc/helpers@0.5.23))(rolldown@1.2.3)(typescript@6.0.3)(vite@8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0))(webpack@5.109.2(@swc/core@1.15.8(@swc/helpers@0.5.18))):
+  vite-plugin-dts@5.0.3(@microsoft/api-extractor@7.58.12(@types/node@26.6.5))(@rspack/core@1.7.12(@swc/helpers@0.5.23))(rolldown@1.2.3)(typescript@6.0.3)(vite@8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.1))(webpack@5.109.2(@swc/core@1.15.8(@swc/helpers@0.5.18))):
     dependencies:
-      unplugin-dts: 1.0.3(@microsoft/api-extractor@7.58.12(@types/node@26.6.5))(@rspack/core@1.7.12(@swc/helpers@0.5.23))(rolldown@1.2.3)(typescript@6.0.3)(vite@8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0))(webpack@5.109.2(@swc/core@1.15.8(@swc/helpers@0.5.18)))
+      unplugin-dts: 1.0.3(@microsoft/api-extractor@7.58.12(@types/node@26.6.5))(@rspack/core@1.7.12(@swc/helpers@0.5.23))(rolldown@1.2.3)(typescript@6.0.3)(vite@8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.1))(webpack@5.109.2(@swc/core@1.15.8(@swc/helpers@0.5.18)))
     optionalDependencies:
       '@microsoft/api-extractor': 7.58.12(@types/node@26.6.5)
-      vite: 8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0)
+      vite: 8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.1)
     transitivePeerDependencies:
       - '@rspack/core'
       - '@vue/language-core'
@@ -20476,7 +20974,7 @@ snapshots:
       - typescript
       - webpack
 
-  vite@8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.0):
+  vite@8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.1):
     dependencies:
       lightningcss: 1.33.0
       picomatch: 4.0.5
@@ -20488,9 +20986,9 @@ snapshots:
       fsevents: 2.3.3
       jiti: 2.4.2
       terser: 5.50.0
-      yaml: 2.9.0
+      yaml: 2.9.1
 
-  vite@8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0):
+  vite@8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.1):
     dependencies:
       lightningcss: 1.33.0
       picomatch: 4.0.5
@@ -20502,12 +21000,12 @@ snapshots:
       fsevents: 2.3.3
       jiti: 2.7.0
       terser: 5.50.0
-      yaml: 2.9.0
+      yaml: 2.9.1
 
-  vitest@4.1.10(@types/node@20.19.9)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@29.1.1(@noble/hashes@1.8.0))(vite@8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.0)):
+  vitest@4.1.10(@types/node@20.19.9)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@29.1.1(@noble/hashes@1.8.0))(vite@8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.1)):
     dependencies:
       '@vitest/expect': 4.1.10
-      '@vitest/mocker': 4.1.10(vite@8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.0))
+      '@vitest/mocker': 4.1.10(vite@8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.1))
       '@vitest/pretty-format': 4.1.10
       '@vitest/runner': 4.1.10
       '@vitest/snapshot': 4.1.10
@@ -20524,7 +21022,7 @@ snapshots:
       tinyexec: 1.3.0
       tinyglobby: 0.2.17
       tinyrainbow: 3.1.1
-      vite: 8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.0)
+      vite: 8.2.1(@types/node@20.19.9)(jiti@2.4.2)(terser@5.50.0)(yaml@2.9.1)
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 20.19.9
@@ -20534,10 +21032,10 @@ snapshots:
     transitivePeerDependencies:
       - msw
 
-  vitest@4.1.10(@types/node@26.6.5)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@29.1.1(@noble/hashes@1.8.0))(vite@8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0)):
+  vitest@4.1.10(@types/node@26.6.5)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@29.1.1(@noble/hashes@1.8.0))(vite@8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.1)):
     dependencies:
       '@vitest/expect': 4.1.10
-      '@vitest/mocker': 4.1.10(vite@8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0))
+      '@vitest/mocker': 4.1.10(vite@8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.1))
       '@vitest/pretty-format': 4.1.10
       '@vitest/runner': 4.1.10
       '@vitest/snapshot': 4.1.10
@@ -20554,7 +21052,7 @@ snapshots:
       tinyexec: 1.3.0
       tinyglobby: 0.2.17
       tinyrainbow: 3.1.1
-      vite: 8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0)
+      vite: 8.2.1(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.1)
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 26.6.5
@@ -20939,8 +21437,7 @@ snapshots:
 
   yallist@3.1.1: {}
 
-  yaml@2.9.0:
-    optional: true
+  yaml@2.9.1: {}
 
   yauzl@3.4.0:
     dependencies:
