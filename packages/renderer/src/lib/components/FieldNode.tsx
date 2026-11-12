@@ -252,8 +252,8 @@ export const FieldNode = React.memo(function FieldNode({
         className={wrapperClass}
         data-field-type={field.definition.fieldType}
         data-field-id={field.definition.id}
+        data-readonly={isReadOnly || undefined}
         aria-disabled={!isEnabled || undefined}
-        aria-readonly={isReadOnly || undefined}
       >
         {presence.length > 0 && (
           <div
