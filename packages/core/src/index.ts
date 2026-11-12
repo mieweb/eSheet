@@ -1,6 +1,8 @@
 export {
   // Constants
   FIELD_TYPES,
+  SECTION_ICON_NAMES,
+  SECTION_ICON_GROUPS,
   TEXT_INPUT_TYPES,
   CONDITION_OPERATORS,
   CONDITIONAL_EFFECTS,
@@ -8,6 +10,7 @@ export {
 
   // Zod schemas
   fieldTypeSchema,
+  sectionIconSchema,
   textInputTypeSchema,
   fieldOptionSchema,
   matrixRowSchema,
@@ -19,10 +22,15 @@ export {
   fieldValidatorSchema,
   fieldDefinitionSchema,
   formDefinitionSchema,
+  attachmentAnswerSchema,
+  activityEntrySchema,
   getFormDefinitionJSONSchema,
 
   // Types
   type FieldType,
+  type SectionIconName,
+  type SectionIconOption,
+  type SectionIconGroup,
   type FieldCategory,
   type AnswerType,
   type TextInputType,
@@ -39,6 +47,7 @@ export {
   type FieldDefinition,
   type FieldWidth,
   type OptionLayout,
+  type RelativeDateRange,
   type OptionBearingFieldDefinition,
   hasOptions,
   // Per-field-type interfaces (discriminated union members)
@@ -58,6 +67,7 @@ export {
   type MultiMatrixFieldDefinition,
   type ImageFieldDefinition,
   type FileFieldDefinition,
+  type ActivityFieldDefinition,
   type HtmlFieldDefinition,
   type SignatureFieldDefinition,
   type DiagramFieldDefinition,
@@ -71,6 +81,7 @@ export {
   type FieldTypeRegistry,
   type RankedAnswer,
   type AttachmentAnswer,
+  type ActivityEntry,
   type AnswerValue,
   type ResponseItem,
   type FormResponse as FormResponseEnvelope,
@@ -79,10 +90,22 @@ export {
 export {
   registerFieldType,
   getFieldTypeMeta,
+  getDefaultProp,
   getRegisteredFieldTypes,
   registerFieldElements,
   // NOTE: resetFieldTypeRegistry intentionally not exported - internal/test-only
 } from './lib/registry.js';
+
+export {
+  registerOptionsProvider,
+  unregisterOptionsProvider,
+  getOptionsProvider,
+  resolveOptionsParams,
+  type OptionsSource,
+  type OptionsProvider,
+  type OptionsProviderMode,
+  type ProvidedOption,
+} from './lib/options-providers.js';
 
 export {
   generateFieldId,
@@ -95,21 +118,51 @@ export {
 export {
   normalizeDefinition,
   hydrateDefinition,
+  getInheritedSectionWidth,
   type FieldNode,
   type NormalizedDefinition,
   type NormalizedPage,
 } from './lib/functions/normalize.js';
 
 export { hydrateResponse } from './lib/functions/hydrate-response.js';
+export { defaultResponses } from './lib/functions/default-responses.js';
 
 export {
   normalizeResponses,
   extractResponseValue,
 } from './lib/functions/normalize-responses.js';
 
+export type {
+  DocumentPicker,
+  DocumentPickerItem,
+  DocumentPickerQuery,
+  FileInput,
+  FileReference,
+  FileStore,
+} from './lib/file-store.js';
+
+export {
+  parseResponseReference,
+  serializeResponseReference,
+  type ResponseReference,
+  type ResponseReferenceResolution,
+  type ResponseReferenceResolver,
+  type ResponseReferenceNavigate,
+} from './lib/response-reference.js';
+
+export {
+  appendActivityEvent,
+  ACTIVITY_RESPONSE_KEY,
+  ACTIVITY_DEBOUNCE_MS,
+  mergeActivity,
+  formatActivityValue,
+  type ActivityEvent,
+} from './lib/functions/activity.js';
+
 export {
   evaluateCondition,
   evaluateRule,
+  evaluateOptionVisibility,
   isExpressionValid,
   evaluateExpression,
   evaluateJsExpression,
@@ -135,6 +188,8 @@ export {
   type FormState,
   type FormStore,
   type AddFieldOptions,
+  type FormExtensionOptions,
+  type FormExtensionState,
 } from './lib/stores/form-store.js';
 
 export {
@@ -150,6 +205,7 @@ export {
   type FieldPresence,
   type FieldProposal,
   type CollabDecorations,
+  getFieldForRender,
 } from './lib/field-component-props.js';
 
 export {

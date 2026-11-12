@@ -16,10 +16,8 @@ Display-only field. No answer payload.
 
 ## Example
 
-```json
-{
-  "id": "bmi_result",
-  "fieldType": "display",
-  "content": "Your BMI is <{weight} / (({height}/100) * ({height}/100))>"
-}
+```yaml
+id: bmi_result
+fieldType: display
+content: Your BMI is <{weight} / (({height}/100) * ({height}/100))>
 ```

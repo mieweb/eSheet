@@ -4,7 +4,13 @@ sidebar_position: 5
 
 # Schema Format
 
-eSheet uses a JSON schema format identified by the `id` field. This page documents the complete structure.
+eSheet's `FormDefinition` model is JSON-shaped and identified by the `id` field. **YAML is the canonical on-disk representation** for committed form layouts, while JSON is the wire/API representation. Both formats parse to the same model and are accepted by the builder and renderer. This page documents the complete structure.
+
+## Which format should I commit?
+
+Commit form layouts as `*.esheet.yaml`. YAML keeps diffs reviewable, supports comments, and preserves readable multi-line strings. The builder's Export action uses YAML by default.
+
+Use `*.esheet.json` when a downstream system requires JSON, or when sending a definition over an API. Existing `.esheet.json` layouts remain supported indefinitely; no migration is required.
 
 ## Form Definition
 
@@ -43,33 +49,24 @@ A form with a **single page** renders as a normal single-scroll form — no navi
 
 ### Example
 
-```json
-{
-  "id": "patient-intake-form",
-  "title": "Patient Intake Form",
-  "description": "Please fill out all required fields",
-  "pages": [
-    {
-      "id": "page_1",
-      "title": "Demographics",
-      "fields": [
-        {
-          "id": "name",
-          "fieldType": "text",
-          "question": "Full Name",
-          "required": true,
-          "inputType": "string"
-        },
-        {
-          "id": "dob",
-          "fieldType": "text",
-          "question": "Date of Birth",
-          "inputType": "date"
-        }
-      ]
-    }
-  ]
-}
+```yaml
+id: patient-intake-form
+title: Patient Intake Form
+description: Please fill out all required fields
+pages:
+  - id: page_1
+    title: Demographics
+    fields:
+      # Collect identity information before asking health questions.
+      - id: name
+        fieldType: text
+        question: Full Name
+        required: true
+        inputType: string
+      - id: dob
+        fieldType: text
+        question: Date of Birth
+        inputType: date
 ```
 
 ## Field Definition
@@ -86,6 +83,8 @@ interface FieldDefinition {
   question?: string;
   /** Whether a response is required */
   required?: boolean;
+  /** Shows the value but rejects user edits; programmatic writes still apply */
+  readOnly?: boolean;
   /** Conditional rules (see Conditional Logic) */
   rules?: ConditionalRule[];
   /** Width occupied by the field in the layout grid */
@@ -96,6 +95,8 @@ interface FieldDefinition {
   inputType?: TextInputType;
   /** Unit suffix displayed after the input (e.g. "kg", "cm") */
   unit?: string;
+  /** Maximum visible rows for longtext; omitted means unlimited growth */
+  maxRows?: number;
 
   // --- Choice fields ---
   /** Options for radio, check, dropdown, multiselect, multitext, rating, ranking */
@@ -104,8 +105,8 @@ interface FieldDefinition {
   optionLayout?: OptionLayout;
 
   // --- Matrix fields ---
-  /** Rows for singlematrix and multimatrix */
-  rows?: MatrixRow[];
+  /** Minimum row count for longtext, or row definitions for matrix fields */
+  rows?: number | MatrixRow[];
   /** Columns for singlematrix and multimatrix */
   columns?: MatrixColumn[];
 
@@ -133,15 +134,28 @@ interface FieldDefinition {
 
 ## Field Layout
 
+### Longtext Height
+
+Longtext fields default to single-line height and automatically grow and shrink
+with their content. Set `rows` to a positive integer to configure a taller
+minimum height, or use **Minimum rows** in the builder. Omit it to keep the
+single-line default. Set `maxRows` or **Maximum rows** to cap growth and scroll
+longer answers internally. The maximum must be a positive integer at least as
+large as `rows` (one by default); omit it for unlimited growth.
+See [longtext](/docs/field-types/longtext) for examples.
+
 ### FieldWidth
 
 The optional `width` property controls how much of a row a field occupies:
 
-| Value   | Description                       |
-| ------- | --------------------------------- |
-| `full`  | Uses the full row width (default) |
-| `half`  | Uses half of the row              |
-| `third` | Uses one third of the row         |
+| Value   | Description               |
+| ------- | ------------------------- |
+| `full`  | Uses the full row width   |
+| `half`  | Uses half of the row      |
+| `third` | Uses one third of the row |
+
+Text, selection, and rating fields default to `third`. Rich, matrix, and
+organization fields default to `full`.
 
 ```ts
 type FieldWidth = 'full' | 'half' | 'third';
@@ -154,8 +168,10 @@ arranged:
 
 | Value   | Description                                         |
 | ------- | --------------------------------------------------- |
-| `stack` | Displays one option per line (default)              |
+| `stack` | Displays one option per line                        |
 | `wrap`  | Displays options horizontally and wraps as required |
+
+Fields that support `optionLayout` default to `wrap`.
 
 ```ts
 type OptionLayout = 'stack' | 'wrap';
@@ -218,6 +234,8 @@ interface FieldOption {
   /** Optional numeric score for scored surveys (e.g. PHQ-9, GAD-7). When present on
    * any option, the field's answer value is the sum of scores for all selected options. */
   score?: number;
+  /** Conditional visibility rules for this option. Only the `visible` effect applies. */
+  rules?: ConditionalRule[];
 }
 ```
 
@@ -279,6 +297,8 @@ interface SelectedOption {
 ```
 
 ### Example Response
+
+Responses are wire/API payloads, so this example is shown in JSON. Form definitions above use YAML as the canonical committed format.
 
 ```json
 {

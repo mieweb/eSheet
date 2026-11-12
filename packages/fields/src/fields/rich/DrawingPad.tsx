@@ -1,5 +1,6 @@
 /// <reference lib="dom" />
 import React from 'react';
+import { UploadIcon, XIcon } from '../../icons.js';
 
 // ---------------------------------------------------------------------------
 // Types (exported so Signature / Diagram field components can re-use)
@@ -65,6 +66,7 @@ export interface DrawingPadConfig {
 
 export interface DrawingPadProps {
   config?: DrawingPadConfig;
+  colorInputId?: string;
   /** Optional background image (base64 data-URL or remote URL) drawn beneath user strokes. */
   backgroundImage?: string;
   /** Text shown centred on an empty canvas. */
@@ -75,6 +77,10 @@ export interface DrawingPadProps {
    */
   existingData?: string;
   onChange?: (payload: DrawingPadPayload) => void;
+  /** Emit `onChange` (with the composited image) whenever a new background finishes loading. */
+  emitOnBackgroundLoad?: boolean;
+  onAttachFile?: () => void;
+  attachmentName?: string;
   disabled?: boolean;
 }
 
@@ -84,10 +90,14 @@ export interface DrawingPadProps {
 
 export const DrawingPad = React.memo(function DrawingPad({
   config = {},
+  colorInputId,
   backgroundImage,
   placeholder = 'Draw here',
   existingData,
   onChange,
+  emitOnBackgroundLoad = false,
+  onAttachFile,
+  attachmentName,
   disabled = false,
 }: DrawingPadProps) {
   const {
@@ -648,16 +658,27 @@ export const DrawingPad = React.memo(function DrawingPad({
       return;
     }
     const img = new Image();
+    let cancelled = false;
     img.onload = () => {
+      if (cancelled) return;
+      const display = displayRef.current;
+      if (!display) return;
       bgImageRef.current = img;
       bgLoadedRef.current = true;
-      repaint(displaySize.width, displaySize.height);
+      repaint(display.width / getDPR(), display.height / getDPR());
+      if (emitOnBackgroundLoad) emitChange();
     };
     img.onerror = () => {
+      if (cancelled) return;
       bgImageRef.current = null;
       bgLoadedRef.current = false;
     };
     img.src = backgroundImage;
+    return () => {
+      cancelled = true;
+      img.onload = null;
+      img.onerror = null;
+    };
   }, [backgroundImage]); // intentionally omit repaint from deps — fires only when source changes
 
   // ---- Existing data load -------------------------------------------------
@@ -763,6 +784,9 @@ export const DrawingPad = React.memo(function DrawingPad({
     '#ef4444',
     '#3b82f6',
   ];
+  const hasActions = Boolean(
+    attachmentName || onAttachFile || hasStrokes || canUndo || canRedo
+  );
 
   // ---- Render -------------------------------------------------------------
 
@@ -791,15 +815,47 @@ export const DrawingPad = React.memo(function DrawingPad({
         {/* Off-screen drawing layer — never displayed directly */}
         <canvas ref={drawingRef} style={{ display: 'none' }} />
 
-        {/* Undo / redo / clear overlay */}
-        {!disabled && (hasStrokes || canUndo || canRedo) && (
-          <div className="drawing-pad-actions ms:absolute ms:top-2 ms:right-2 ms:flex ms:gap-1">
+        {/* Floating canvas actions */}
+        {!disabled && hasActions && (
+          <div className="drawing-pad-actions ms:absolute ms:top-2 ms:left-2 ms:right-2 ms:flex ms:items-center ms:justify-end ms:gap-1 ms:pointer-events-none">
+            {attachmentName && (
+              <div className="drawing-pad-attachment ms:flex ms:items-center ms:gap-1 ms:min-w-0 ms:max-w-48 ms:h-7 ms:px-2 ms:rounded ms:bg-mssurface ms:text-mstext ms:border ms:border-msborder ms:pointer-events-auto">
+                <span
+                  title={attachmentName}
+                  className="ms:min-w-0 ms:truncate ms:text-xs"
+                >
+                  {attachmentName}
+                </span>
+                {onAttachFile && (
+                  <button
+                    type="button"
+                    onClick={clear}
+                    title="Remove image"
+                    aria-label="Remove image"
+                    className="drawing-pad-remove-image ms:w-7 ms:h-7 ms:shrink-0 ms:flex ms:items-center ms:justify-center ms:rounded ms:text-msdanger ms:hover:bg-msdanger/10 ms:cursor-pointer"
+                  >
+                    <XIcon className="ms:w-3.5 ms:h-3.5" />
+                  </button>
+                )}
+              </div>
+            )}
+            {onAttachFile && (
+              <button
+                type="button"
+                onClick={onAttachFile}
+                title="Attach file"
+                aria-label="Attach file"
+                className="drawing-pad-attach ms:w-7 ms:h-7 ms:shrink-0 ms:flex ms:items-center ms:justify-center ms:rounded ms:bg-mssurface ms:text-mstext ms:border ms:border-msborder ms:hover:bg-msbackground ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:pointer-events-auto"
+              >
+                <UploadIcon className="ms:w-3.5 ms:h-3.5" />
+              </button>
+            )}
             <button
               type="button"
               onClick={undo}
               disabled={!canUndo}
               title="Undo"
-              className="drawing-pad-undo ms:w-7 ms:h-7 ms:flex ms:items-center ms:justify-center ms:rounded ms:bg-mssurface ms:text-mstext ms:border ms:border-msborder ms:hover:bg-msbackground ms:disabled:opacity-40 ms:disabled:cursor-not-allowed ms:outline-none ms:focus:outline-none ms:cursor-pointer"
+              className="drawing-pad-undo ms:w-7 ms:h-7 ms:shrink-0 ms:flex ms:items-center ms:justify-center ms:rounded ms:bg-mssurface ms:text-mstext ms:border ms:border-msborder ms:hover:bg-msbackground ms:disabled:opacity-40 ms:disabled:cursor-not-allowed ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:pointer-events-auto"
             >
               <svg
                 className="ms:w-3.5 ms:h-3.5"
@@ -820,7 +876,7 @@ export const DrawingPad = React.memo(function DrawingPad({
               onClick={redo}
               disabled={!canRedo}
               title="Redo"
-              className="drawing-pad-redo ms:w-7 ms:h-7 ms:flex ms:items-center ms:justify-center ms:rounded ms:bg-mssurface ms:text-mstext ms:border ms:border-msborder ms:hover:bg-msbackground ms:disabled:opacity-40 ms:disabled:cursor-not-allowed ms:outline-none ms:focus:outline-none ms:cursor-pointer"
+              className="drawing-pad-redo ms:w-7 ms:h-7 ms:shrink-0 ms:flex ms:items-center ms:justify-center ms:rounded ms:bg-mssurface ms:text-mstext ms:border ms:border-msborder ms:hover:bg-msbackground ms:disabled:opacity-40 ms:disabled:cursor-not-allowed ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:pointer-events-auto"
             >
               <svg
                 className="ms:w-3.5 ms:h-3.5"
@@ -840,7 +896,7 @@ export const DrawingPad = React.memo(function DrawingPad({
               type="button"
               onClick={clear}
               title="Clear"
-              className="drawing-pad-clear ms:w-7 ms:h-7 ms:flex ms:items-center ms:justify-center ms:rounded ms:bg-msdanger/10 ms:text-msdanger ms:border ms:border-msdanger/20 ms:hover:bg-msdanger/20 ms:outline-none ms:focus:outline-none ms:cursor-pointer"
+              className="drawing-pad-clear ms:w-7 ms:h-7 ms:shrink-0 ms:flex ms:items-center ms:justify-center ms:rounded ms:bg-msdanger/10 ms:text-msdanger ms:border ms:border-msdanger/20 ms:hover:bg-msdanger/20 ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:pointer-events-auto"
             >
               <svg
                 className="ms:w-3.5 ms:h-3.5"
@@ -953,6 +1009,8 @@ export const DrawingPad = React.memo(function DrawingPad({
                 }}
               >
                 <input
+                  id={colorInputId}
+                  aria-label="Custom colour"
                   type="color"
                   value={
                     COLOR_PALETTE.includes(currentColor)

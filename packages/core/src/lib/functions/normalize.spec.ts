@@ -1,4 +1,4 @@
-import { normalizeDefinition } from './normalize.js';
+import { getInheritedSectionWidth, normalizeDefinition } from './normalize.js';
 import type {
   FieldDefinition,
   SectionFieldDefinition,
@@ -24,6 +24,53 @@ describe('normalizeDefinition', () => {
     expect(Object.keys(result.byId)).toHaveLength(2);
     expect(result.byId['q1'].definition.fieldType).toBe('text');
     expect(result.byId['q2'].definition.fieldType).toBe('radio');
+  });
+
+  it('should materialize registered defaults for every field', () => {
+    const result = normalizeDefinition([
+      {
+        id: 'page-1',
+        fields: [
+          { id: 'text', fieldType: 'text' },
+          {
+            id: 'section',
+            fieldType: 'section',
+            fields: [{ id: 'child', fieldType: 'longtext' }],
+          },
+        ],
+      },
+    ]);
+
+    expect(result.byId['text'].definition.width).toBe('third');
+    expect(result.byId['section'].definition.width).toBe('none');
+    expect(
+      (result.byId['section'].definition as SectionFieldDefinition)
+        .sectionCollapse
+    ).toBe('expanded');
+    expect(result.byId['child'].definition.width).toBe('third');
+    expect(
+      (result.byId['child'].definition as { inputType?: string }).inputType
+    ).toBe('string');
+  });
+
+  it('should materialize default option layouts', () => {
+    const result = normalizeDefinition([
+      {
+        id: 'page-1',
+        fields: [
+          { id: 'radio', fieldType: 'radio' },
+          { id: 'text', fieldType: 'text' },
+        ],
+      },
+    ]);
+
+    expect(
+      (result.byId['radio'].definition as { optionLayout?: string })
+        .optionLayout
+    ).toBe('wrap');
+    expect(
+      (result.byId['text'].definition as { optionLayout?: string }).optionLayout
+    ).toBeUndefined();
   });
 
   it('should set parentId to null for top-level fields', () => {
@@ -164,6 +211,105 @@ describe('normalizeDefinition', () => {
 
     expect(result.byId['deep'].childIds).toEqual([]);
     expect(result.byId['deep'].parentId).toBe('inner');
+  });
+
+  it('should resolve the nearest defined section width for descendants', () => {
+    const result = normalizeDefinition([
+      {
+        id: 'page-1',
+        fields: [
+          {
+            id: 'outer',
+            fieldType: 'section',
+            width: 'half',
+            fields: [
+              {
+                id: 'inner',
+                fieldType: 'section',
+                fields: [{ id: 'deep', fieldType: 'text' }],
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    expect(getInheritedSectionWidth(result, 'deep')).toBe('half');
+  });
+
+  it('should prefer an inner section width over an outer section width', () => {
+    const result = normalizeDefinition([
+      {
+        id: 'page-1',
+        fields: [
+          {
+            id: 'outer',
+            fieldType: 'section',
+            width: 'half',
+            fields: [
+              {
+                id: 'inner',
+                fieldType: 'section',
+                width: 'third',
+                fields: [{ id: 'deep', fieldType: 'text' }],
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    expect(getInheritedSectionWidth(result, 'deep')).toBe('third');
+  });
+
+  it('should inherit section width when the child override is false', () => {
+    const result = normalizeDefinition([
+      {
+        id: 'page-1',
+        fields: [
+          {
+            id: 'section',
+            fieldType: 'section',
+            width: 'half',
+            fields: [
+              {
+                id: 'child',
+                fieldType: 'text',
+                width: 'third',
+                overrideSectionWidth: false,
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    expect(getInheritedSectionWidth(result, 'child')).toBe('half');
+  });
+
+  it('should not inherit section width when the child opts out', () => {
+    const result = normalizeDefinition([
+      {
+        id: 'page-1',
+        fields: [
+          {
+            id: 'section',
+            fieldType: 'section',
+            width: 'half',
+            fields: [
+              {
+                id: 'child',
+                fieldType: 'text',
+                width: 'third',
+                overrideSectionWidth: true,
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    expect(getInheritedSectionWidth(result, 'child')).toBeUndefined();
   });
 
   it('should handle section with empty fields array', () => {

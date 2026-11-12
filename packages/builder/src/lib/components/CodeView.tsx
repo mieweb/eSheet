@@ -1,6 +1,6 @@
 import React from 'react';
 import { Editor, type Monaco } from '@monaco-editor/react';
-import YAML from 'js-yaml';
+import { dump, load } from 'js-yaml';
 import {
   formatZodValidationError,
   getFormDefinitionJSONSchema,
@@ -58,11 +58,11 @@ interface FeedbackState {
 function serialize(data: unknown, format: CodeFormat): string {
   return format === 'json'
     ? JSON.stringify(data, null, 2)
-    : YAML.dump(data, { indent: 2, lineWidth: -1 });
+    : dump(data, { indent: 2, lineWidth: -1 });
 }
 
 function parse(text: string, format: CodeFormat): unknown {
-  return format === 'json' ? JSON.parse(text) : YAML.load(text);
+  return format === 'json' ? JSON.parse(text) : load(text);
 }
 
 // ---------------------------------------------------------------------------
@@ -227,7 +227,8 @@ export function CodeView({ form, ui }: CodeViewProps) {
         fs.getState().loadDefinition(
           next as Parameters<
             ReturnType<typeof fs.getState>['loadDefinition']
-          >[0]
+          >[0],
+          fs.getState().responses
         );
         uiApi.getState().setCodeEditorHasError(false);
       } catch {

@@ -14,6 +14,7 @@ import type {
   FormResponse,
   FormDefinition,
   FieldDefinition,
+  ConditionalRule,
 } from '../types.js';
 import { getFieldTypeMeta } from '../registry.js';
 import {
@@ -30,13 +31,18 @@ import {
   hydrateDefinition,
 } from '../functions/normalize.js';
 import { hydrateResponse } from '../functions/hydrate-response.js';
-import { resolveEffect } from '../logic/resolve.js';
-import { evaluateJsExpression } from '../logic/conditions.js';
+import { defaultResponses } from '../functions/default-responses.js';
 import {
-  validateField,
-  validateForm,
-  type ValidationError,
-} from '../logic/validate.js';
+  appendActivityEvent,
+  recordActivity,
+  type ActivityEvent,
+} from '../functions/activity.js';
+import { isFieldEffectivelyActive, resolveEffect } from '../logic/resolve.js';
+import {
+  evaluateJsExpression,
+  evaluateOptionVisibility,
+} from '../logic/conditions.js';
+import { validateField, type ValidationError } from '../logic/validate.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -58,6 +64,16 @@ export interface AddFieldOptions {
   patch?: Record<string, unknown>;
 }
 
+/** Lifecycle options for a core-managed custom-field extension. */
+export interface FormExtensionOptions {
+  readonly onDispose?: () => void;
+}
+
+/** Namespaced custom-field runtime state owned by the form store. */
+export type FormExtensionState = Readonly<
+  Record<string, Readonly<Record<string, unknown>>>
+>;
+
 /** The full form state — data + actions + selectors. */
 export interface FormState {
   // --- Data ---
@@ -77,12 +93,25 @@ export interface FormState {
   readonly normalized: NormalizedDefinition;
   /** Current responses keyed by field ID. */
   readonly responses: FieldResponseMap;
+  /** Per-field reset versions for clearing input drafts even when answers stay empty. */
+  readonly inputResetKeys: Readonly<Record<string, number>>;
+  /** Host-supplied identity of the current user (stamps activity authorship). */
+  readonly identity?: { name: string };
   /** Field IDs that have been explicitly edited by the user (not auto-calculated). */
   readonly userEditedFields: ReadonlySet<string>;
+  /** Core-managed custom-field runtime state; excluded from response export. */
+  readonly extensions: FormExtensionState;
+  /** Form-level freeze: when true every field reports read-only. */
+  readonly readOnly: boolean;
+  /** True after `dispose()` has been called. */
+  readonly disposed: boolean;
 
   // --- Lifecycle Actions ---
   /** Load a form definition (tree), normalizing it into the flat index. */
-  loadDefinition: (definition: FormDefinition) => void;
+  loadDefinition: (
+    definition: FormDefinition,
+    responses?: FieldResponseMap
+  ) => void;
   /** Replace the form definition and imported responses in one store update. */
   replaceDefinitionAndResponses: (
     definition: FormDefinition,
@@ -96,12 +125,52 @@ export interface FormState {
   setFormDescription: (description: string | undefined) => void;
   /** Enable or disable dangerously embedded JS for this form. */
   setDangerouslyAllowJS: (enabled: boolean) => void;
+  /** Set the host-supplied identity of the current user. */
+  setIdentity: (identity: { name: string } | undefined) => void;
+  /**
+   * Freeze or unfreeze the whole form. While frozen, `isReadOnly` is true for
+   * every field. Host-driven writes (`setResponse` etc.) still apply — the
+   * freeze is enforced where user edits enter (the renderer), so collab
+   * bindings can keep hydrating the store.
+   */
+  setReadOnly: (readOnly: boolean) => void;
   /** Set (or replace) a single field's response. */
   setResponse: (fieldId: string, response: FieldResponse) => void;
+  /** Report a transient input draft error without exporting it as an answer. */
+  setInputError: (fieldId: string, message: string | undefined) => void;
+  /** Append an explicit user action to the activity log, when configured. */
+  appendActivity: (event: ActivityEvent) => void;
   /** Remove a single field's response. */
   clearResponse: (fieldId: string) => void;
   /** Clear all responses. */
   resetResponses: () => void;
+  /** Register extension state for a namespace and field ID. */
+  registerExtension: <T>(
+    namespace: string,
+    fieldId: string,
+    initialState: T,
+    options?: FormExtensionOptions
+  ) => boolean;
+  /** Read extension state with a caller-provided type. */
+  getExtension: <T>(namespace: string, fieldId: string) => T | undefined;
+  /** Replace extension state. Creates the entry when it does not exist. */
+  setExtension: <T>(namespace: string, fieldId: string, state: T) => void;
+  /** Update extension state immutably. */
+  updateExtension: <T>(
+    namespace: string,
+    fieldId: string,
+    updater: (state: T | undefined) => T
+  ) => void;
+  /** Clear one extension and invoke its disposer. */
+  clearExtension: (namespace: string, fieldId: string) => void;
+  /** Clear extensions belonging to the supplied field IDs. */
+  clearExtensionsForFields: (fieldIds: readonly string[]) => void;
+  /** Clear every extension registered under a namespace. */
+  clearExtensionsForNamespace: (namespace: string) => void;
+  /** Clear every extension in the form store. */
+  clearExtensions: () => void;
+  /** Dispose all extension state and prevent future extension registration. */
+  dispose: () => void;
 
   // --- Builder Actions ---
   /** Add a new field. Returns the generated field ID, or `null` if the type is unknown. */
@@ -133,6 +202,17 @@ export interface FormState {
   addOption: (fieldId: string, value?: string) => string | null;
   /** Update an option's value. */
   updateOption: (fieldId: string, optionId: string, value: string) => boolean;
+  setOptionDefault: (
+    fieldId: string,
+    optionId: string,
+    selected: boolean
+  ) => boolean;
+  /** Update an option's conditional visibility rules. */
+  updateOptionRules: (
+    fieldId: string,
+    optionId: string,
+    rules: ConditionalRule[]
+  ) => boolean;
   /** Set or clear an option's numeric score. Pass `undefined` to remove. */
   setOptionScore: (
     fieldId: string,
@@ -165,6 +245,8 @@ export interface FormState {
   getField: (fieldId: string) => FieldNode | undefined;
   /** Look up a field's current response. */
   getResponse: (fieldId: string) => FieldResponse | undefined;
+  /** Return the options currently visible for a field. */
+  getVisibleOptions: (fieldId: string) => FieldOption[];
   /** Whether a field is currently visible. */
   isVisible: (fieldId: string) => boolean;
   /** Whether a field is currently enabled. */
@@ -173,7 +255,7 @@ export interface FormState {
   isRequired: (fieldId: string) => boolean;
   /** Whether a field is currently soft-required (warns but allows bypass). */
   isSoftRequired: (fieldId: string) => boolean;
-  /** Whether a field is currently read-only. Always false until readOnly is fully implemented. */
+  /** Whether a field is read-only (form frozen, or the field declares `readOnly: true`). */
   isReadOnly: (fieldId: string) => boolean;
   /** Validate a single field and return its errors. */
   getFieldErrors: (fieldId: string) => ValidationError[];
@@ -266,27 +348,44 @@ function rewriteFieldRefs(
 
   let changed = false;
 
-  const updatedRules = def.rules?.map((rule) => ({
-    ...rule,
-    conditions: rule.conditions.map((cond) => {
-      let c = cond;
-      if (c.targetId === oldId) {
-        c = { ...c, targetId: newId };
-        changed = true;
-      }
-      if (c.expression) {
-        const next =
-          c.conditionType === 'js'
-            ? replaceJs(c.expression)
-            : replaceExpr(c.expression);
-        if (next !== c.expression) {
-          c = { ...c, expression: next };
+  const rewriteRules = (rules?: readonly ConditionalRule[]) => {
+    if (!rules) return rules;
+    let rulesChanged = false;
+    const nextRules = rules.map((rule) => ({
+      ...rule,
+      conditions: rule.conditions.map((cond) => {
+        let c = cond;
+        if (c.targetId === oldId) {
+          c = { ...c, targetId: newId };
+          rulesChanged = true;
           changed = true;
         }
-      }
-      return c;
-    }),
-  }));
+        if (c.expression) {
+          const next =
+            c.conditionType === 'js'
+              ? replaceJs(c.expression)
+              : replaceExpr(c.expression);
+          if (next !== c.expression) {
+            c = { ...c, expression: next };
+            rulesChanged = true;
+            changed = true;
+          }
+        }
+        return c;
+      }),
+    }));
+    return rulesChanged ? nextRules : rules;
+  };
+
+  const updatedRules = rewriteRules(def.rules);
+  const options = (def as unknown as { options?: FieldOption[] }).options;
+  const updatedOptions = options?.map((option) => {
+    const rules = rewriteRules(option.rules);
+    return rules === option.rules ? option : { ...option, rules };
+  });
+  const optionsChanged = updatedOptions?.some(
+    (option, index) => option !== options?.[index]
+  );
 
   // Update display field content (inline `{fieldId}` expression placeholders)
   const defAny = def as unknown as Record<string, unknown>;
@@ -303,6 +402,7 @@ function rewriteFieldRefs(
   return {
     ...def,
     ...(updatedRules && { rules: updatedRules }),
+    ...(optionsChanged && { options: updatedOptions }),
     ...(updatedContent !== content && { content: updatedContent }),
     ...(updatedCalc !== calc && { calculation: updatedCalc }),
   } as FieldDefinition;
@@ -377,8 +477,18 @@ function getDefaultOptionValue(
  *
  * @param initial - Optional initial form definition to load immediately.
  */
-let nextInstanceId = 1;
+const instanceIdCounterKey = Symbol.for('@esheet/instance-id-counter');
+const INPUT_ERROR_NAMESPACE = 'esheet:input-error';
 let nextTemporaryFormId = 1;
+
+function createInstanceId(): string {
+  const globalState = globalThis as typeof globalThis &
+    Record<symbol, number | undefined>;
+  const nextInstanceId = globalState[instanceIdCounterKey] ?? 1;
+
+  globalState[instanceIdCounterKey] = nextInstanceId + 1;
+  return `ms-${nextInstanceId}`;
+}
 
 function createTemporaryFormId(): string {
   const id = `tmp-form-${nextTemporaryFormId}`;
@@ -386,52 +496,127 @@ function createTemporaryFormId(): string {
   return id;
 }
 
+function extensionKey(namespace: string, fieldId: string): string {
+  return `${namespace}\u0000${fieldId}`;
+}
+
+function hasExtension(
+  extensions: FormExtensionState,
+  namespace: string,
+  fieldId: string
+): boolean {
+  return Object.prototype.hasOwnProperty.call(
+    extensions[namespace] ?? {},
+    fieldId
+  );
+}
+
+function withoutExtensionFields(
+  extensions: FormExtensionState,
+  fieldIds: ReadonlySet<string>
+): FormExtensionState {
+  const next: Record<string, Record<string, unknown>> = {};
+  for (const [namespace, entries] of Object.entries(extensions)) {
+    const remaining = Object.fromEntries(
+      Object.entries(entries).filter(([fieldId]) => !fieldIds.has(fieldId))
+    );
+    if (Object.keys(remaining).length > 0) next[namespace] = remaining;
+  }
+  return next;
+}
+
+function withoutExtension(
+  extensions: FormExtensionState,
+  namespace: string,
+  fieldId: string
+): FormExtensionState {
+  const entries = extensions[namespace];
+  if (!entries || !hasExtension(extensions, namespace, fieldId))
+    return extensions;
+  const remaining = { ...entries };
+  delete remaining[fieldId];
+  if (Object.keys(remaining).length === 0) {
+    const next = { ...extensions };
+    delete next[namespace];
+    return next;
+  }
+  return { ...extensions, [namespace]: remaining };
+}
+
+function resetInputKeys(
+  keys: Readonly<Record<string, number>>,
+  fieldIds: readonly string[]
+): Record<string, number> {
+  return Object.fromEntries(fieldIds.map((id) => [id, (keys[id] ?? 0) + 1]));
+}
+
 export function createFormStore(
   initial?: FormDefinition,
-  hostAllowsJS = false
+  hostAllowsJS = false,
+  initialResponses?: FieldResponseMap
 ): FormStore {
   const initialFormId = initial?.id?.trim() || createTemporaryFormId();
   // Sealed at creation time — cannot be overridden by store mutations.
   const _hostAllowsJS = hostAllowsJS;
+  const extensionDisposers = new Map<string, () => void>();
+
+  const disposeExtension = (namespace: string, fieldId: string): void => {
+    const key = extensionKey(namespace, fieldId);
+    const disposer = extensionDisposers.get(key);
+    extensionDisposers.delete(key);
+    disposer?.();
+  };
+
+  const disposeAllExtensions = (): void => {
+    for (const disposer of extensionDisposers.values()) disposer();
+    extensionDisposers.clear();
+  };
 
   const store = createStore<FormState>()((set, get) => ({
     // --- Data ---
-    instanceId: `ms-${nextInstanceId++}`,
+    instanceId: createInstanceId(),
     formId: initialFormId,
     formTitle: initial?.title,
     formDescription: initial?.description,
     formSourceData: initial?._sourceData,
     dangerouslyAllowJS: (initial?.dangerouslyAllowJS ?? false) && _hostAllowsJS,
     normalized: initial ? normalizeDefinition(initial.pages) : EMPTY_NORMALIZED,
-    responses: {},
-    userEditedFields: new Set<string>(),
+    responses:
+      initialResponses ?? (initial ? defaultResponses(initial.pages) : {}),
+    inputResetKeys: {},
+    identity: undefined,
+    userEditedFields: new Set(Object.keys(initialResponses ?? {})),
+    extensions: {},
+    readOnly: false,
+    disposed: false,
 
     // --- Actions ---
-    loadDefinition: (definition) =>
-      set({
-        formId: definition.id,
-        formTitle: definition.title,
-        formDescription: definition.description,
-        formSourceData: definition._sourceData,
-        dangerouslyAllowJS:
-          (definition.dangerouslyAllowJS ?? false) && _hostAllowsJS,
-        normalized: normalizeDefinition(definition.pages),
-        responses: {},
-        userEditedFields: new Set<string>(),
-      }),
+    loadDefinition: (definition, responses) =>
+      (() => {
+        const initial = responses ?? defaultResponses(definition.pages);
+        const normalized = normalizeDefinition(definition.pages);
+        const inputResetKeys = resetInputKeys(
+          get().inputResetKeys,
+          Object.keys(normalized.byId)
+        );
+        disposeAllExtensions();
+        set({
+          formId: definition.id,
+          formTitle: definition.title,
+          formDescription: definition.description,
+          formSourceData: definition._sourceData,
+          dangerouslyAllowJS:
+            (definition.dangerouslyAllowJS ?? false) && _hostAllowsJS,
+          normalized,
+          responses: initial,
+          inputResetKeys,
+          userEditedFields: new Set(Object.keys(responses ?? {})),
+          extensions: {},
+        });
+      })(),
 
     replaceDefinitionAndResponses: (definition, responses) =>
-      set({
-        formId: definition.id,
-        formTitle: definition.title,
-        formDescription: definition.description,
-        formSourceData: definition._sourceData,
-        dangerouslyAllowJS:
-          (definition.dangerouslyAllowJS ?? false) && _hostAllowsJS,
-        normalized: normalizeDefinition(definition.pages),
-        responses,
-        userEditedFields: new Set<string>(),
-      }),
+      get().loadDefinition(definition, responses),
 
     setFormId: (id) => {
       const nextId = id.trim();
@@ -446,15 +631,31 @@ export function createFormStore(
     setDangerouslyAllowJS: (enabled) =>
       set({ dangerouslyAllowJS: enabled && _hostAllowsJS }),
 
+    setIdentity: (identity) => set({ identity }),
+
+    setReadOnly: (readOnly) => set({ readOnly }),
+
     setResponse: (fieldId, response) =>
       set((state) => {
         const updated = { ...state.responses, [fieldId]: response };
+        const extensions =
+          state.responses[fieldId]?.answer === response.answer
+            ? state.extensions
+            : withoutExtension(
+                state.extensions,
+                INPUT_ERROR_NAMESPACE,
+                fieldId
+              );
         // Mark this field as user-edited so calculations won't overwrite it
         // (unless the field is explicitly readOnly).
         const nextEdited = new Set(state.userEditedFields);
         nextEdited.add(fieldId);
         if (!state.dangerouslyAllowJS)
-          return { responses: updated, userEditedFields: nextEdited };
+          return {
+            responses: recordActivity(state, fieldId, updated),
+            userEditedFields: nextEdited,
+            extensions,
+          };
         // Apply calculations for all fields that have a calculation string
         const calcResponses = { ...updated };
         for (const [calcId, node] of Object.entries(state.normalized.byId)) {
@@ -472,18 +673,150 @@ export function createFormStore(
             calcResponses[calcId] = { answer: String(result) };
           }
         }
-        return { responses: calcResponses, userEditedFields: nextEdited };
+        return {
+          responses: recordActivity(state, fieldId, calcResponses),
+          userEditedFields: nextEdited,
+          extensions,
+        };
       }),
+
+    setInputError: (fieldId, message) => {
+      if (
+        get().getExtension<string>(INPUT_ERROR_NAMESPACE, fieldId) === message
+      )
+        return;
+      if (message === undefined) {
+        get().clearExtension(INPUT_ERROR_NAMESPACE, fieldId);
+      } else {
+        get().setExtension(INPUT_ERROR_NAMESPACE, fieldId, message);
+      }
+    },
+
+    appendActivity: (event) =>
+      set((state) => ({ responses: appendActivityEvent(state, event) })),
 
     clearResponse: (fieldId) =>
       set((state) => {
         const { [fieldId]: _discarded, ...rest } = state.responses;
         void _discarded;
-        return { responses: rest };
+        return {
+          responses: rest,
+          inputResetKeys: {
+            ...state.inputResetKeys,
+            ...resetInputKeys(state.inputResetKeys, [fieldId]),
+          },
+          extensions: withoutExtension(
+            state.extensions,
+            INPUT_ERROR_NAMESPACE,
+            fieldId
+          ),
+        };
       }),
 
-    resetResponses: () =>
-      set({ responses: {}, userEditedFields: new Set<string>() }),
+    resetResponses: () => {
+      get().clearExtensionsForNamespace(INPUT_ERROR_NAMESPACE);
+      set((state) => ({
+        responses: {},
+        userEditedFields: new Set<string>(),
+        inputResetKeys: resetInputKeys(
+          state.inputResetKeys,
+          Object.keys(state.normalized.byId)
+        ),
+      }));
+    },
+
+    registerExtension: (namespace, fieldId, initialState, options) => {
+      if (get().disposed) return false;
+      if (hasExtension(get().extensions, namespace, fieldId)) return false;
+      if (options?.onDispose) {
+        extensionDisposers.set(
+          extensionKey(namespace, fieldId),
+          options.onDispose
+        );
+      }
+      set((state) => ({
+        extensions: {
+          ...state.extensions,
+          [namespace]: {
+            ...(state.extensions[namespace] ?? {}),
+            [fieldId]: initialState,
+          },
+        },
+      }));
+      return true;
+    },
+
+    getExtension: <T>(namespace: string, fieldId: string): T | undefined =>
+      get().extensions[namespace]?.[fieldId] as T | undefined,
+
+    setExtension: (namespace, fieldId, state) => {
+      if (get().disposed) return;
+      set((current) => ({
+        extensions: {
+          ...current.extensions,
+          [namespace]: {
+            ...(current.extensions[namespace] ?? {}),
+            [fieldId]: state,
+          },
+        },
+      }));
+    },
+
+    updateExtension: <T>(
+      namespace: string,
+      fieldId: string,
+      updater: (state: T | undefined) => T
+    ) => {
+      if (get().disposed) return;
+      const current = get().extensions[namespace]?.[fieldId] as T | undefined;
+      set((state) => ({
+        extensions: {
+          ...state.extensions,
+          [namespace]: {
+            ...(state.extensions[namespace] ?? {}),
+            [fieldId]: updater(current),
+          },
+        },
+      }));
+    },
+
+    clearExtension: (namespace, fieldId) => {
+      disposeExtension(namespace, fieldId);
+      set((state) => ({
+        extensions: withoutExtension(state.extensions, namespace, fieldId),
+      }));
+    },
+
+    clearExtensionsForFields: (fieldIds) => {
+      const ids = new Set(fieldIds);
+      for (const namespace of Object.keys(get().extensions)) {
+        for (const fieldId of ids) disposeExtension(namespace, fieldId);
+      }
+      set((state) => ({
+        extensions: withoutExtensionFields(state.extensions, ids),
+      }));
+    },
+
+    clearExtensionsForNamespace: (namespace) => {
+      for (const fieldId of Object.keys(get().extensions[namespace] ?? {}))
+        disposeExtension(namespace, fieldId);
+      set((state) => {
+        if (!state.extensions[namespace]) return state;
+        const extensions = { ...state.extensions };
+        delete extensions[namespace];
+        return { extensions };
+      });
+    },
+
+    clearExtensions: () => {
+      disposeAllExtensions();
+      set({ extensions: {} });
+    },
+
+    dispose: () => {
+      disposeAllExtensions();
+      set({ extensions: {}, disposed: true });
+    },
 
     // --- Builder Actions ---
     addField: (fieldType, options) => {
@@ -604,6 +937,10 @@ export function createFormStore(
 
       const newId = patch['id'] as string | undefined;
       const isRename = newId !== undefined && newId !== fieldId;
+      const nextFieldType = patch['fieldType'] as FieldType | undefined;
+      const isTypeChange =
+        nextFieldType !== undefined &&
+        nextFieldType !== node.definition.fieldType;
 
       if (isRename) {
         if (normalized.byId[newId!]) return false;
@@ -651,6 +988,7 @@ export function createFormStore(
           }
         }
 
+        get().clearExtensionsForFields([fieldId]);
         set({ normalized: { byId, pages } });
         return true;
       }
@@ -666,6 +1004,7 @@ export function createFormStore(
           } as FieldDefinition)
       );
       if (!result) return false;
+      if (isTypeChange) get().clearExtensionsForFields([fieldId]);
       set({ normalized: result });
       return true;
     },
@@ -702,6 +1041,7 @@ export function createFormStore(
         });
       }
 
+      get().clearExtensionsForFields([...toRemove]);
       set({ normalized: { byId, pages } });
       return true;
     },
@@ -746,6 +1086,7 @@ export function createFormStore(
         if (!toRemove.has(id)) byId[id] = n;
       }
       const pages = normalized.pages.filter((p) => p.id !== pageId);
+      get().clearExtensionsForFields([...toRemove]);
       set({ normalized: { byId, pages } });
       return true;
     },
@@ -893,6 +1234,57 @@ export function createFormStore(
           if (o.value === value) return o;
           changed = true;
           return { ...o, value };
+        });
+        return changed
+          ? ({ ...def, options: next } as unknown as FieldDefinition)
+          : null;
+      });
+      if (!result) return false;
+      set({ normalized: result });
+      return true;
+    },
+
+    setOptionDefault: (fieldId, optionId, selected) => {
+      const node = get().normalized.byId[fieldId];
+      if (!node) throw new Error(`Unknown field: ${fieldId}`);
+      const meta = getFieldTypeMeta(node.definition.fieldType);
+      if (
+        meta?.answerType !== 'selection' &&
+        (meta?.answerType !== 'multiselection' ||
+          node.definition.fieldType === 'ranking')
+      ) {
+        throw new Error(`Field ${fieldId} does not support default options`);
+      }
+      const options =
+        'options' in node.definition && Array.isArray(node.definition.options)
+          ? node.definition.options
+          : [];
+      if (!options.some((option) => option.id === optionId)) {
+        throw new Error(`Unknown option ${optionId} on field ${fieldId}`);
+      }
+      return get().updateField(fieldId, {
+        options: options.map((option) => ({
+          ...option,
+          defaultOption:
+            option.id === optionId
+              ? selected
+              : selected && meta.answerType === 'selection'
+              ? false
+              : option.defaultOption,
+        })),
+      });
+    },
+
+    updateOptionRules: (fieldId, optionId, rules) => {
+      const result = patchField(get().normalized, fieldId, (def) => {
+        const opts = (def as unknown as { options?: FieldOption[] }).options;
+        if (!opts) return null;
+        let changed = false;
+        const next = opts.map((option) => {
+          if (option.id !== optionId) return option;
+          if (option.rules === rules) return option;
+          changed = true;
+          return { ...option, rules };
         });
         return changed
           ? ({ ...def, options: next } as unknown as FieldDefinition)
@@ -1092,6 +1484,22 @@ export function createFormStore(
 
     getResponse: (fieldId) => get().responses[fieldId],
 
+    getVisibleOptions: (fieldId) => {
+      const { normalized, responses, dangerouslyAllowJS } = get();
+      const node = normalized.byId[fieldId];
+      if (!node) return [];
+      const options = (node.definition as { options?: FieldOption[] }).options;
+      if (!options) return [];
+      return options.filter((option) =>
+        evaluateOptionVisibility(
+          option,
+          normalized,
+          responses,
+          dangerouslyAllowJS
+        )
+      );
+    },
+
     isVisible: (fieldId) => {
       const { normalized, responses, dangerouslyAllowJS } = get();
       const node = normalized.byId[fieldId];
@@ -1146,20 +1554,46 @@ export function createFormStore(
       );
     },
 
-    isReadOnly: (_fieldId) => {
-      // readOnly is not yet implemented — always returns false.
-      // TODO: implement readOnly properly (see INTERNAL-TICKETS/tickets/readonly-fields.md)
-      return false;
+    isReadOnly: (fieldId) => {
+      // No conditional readOnly rule effect yet — see mieweb/eSheet#219.
+      if (get().readOnly) return true;
+      const node = get().normalized.byId[fieldId];
+      return (
+        (node?.definition as { readOnly?: boolean } | undefined)?.readOnly ===
+        true
+      );
     },
 
     getFieldErrors: (fieldId) => {
       const { normalized, responses, dangerouslyAllowJS } = get();
-      return validateField(fieldId, normalized, responses, dangerouslyAllowJS);
+      const errors = validateField(
+        fieldId,
+        normalized,
+        responses,
+        dangerouslyAllowJS
+      );
+      const message = get().getExtension<string>(
+        INPUT_ERROR_NAMESPACE,
+        fieldId
+      );
+      if (
+        message &&
+        normalized.byId[fieldId] &&
+        isFieldEffectivelyActive(
+          fieldId,
+          normalized,
+          responses,
+          dangerouslyAllowJS
+        )
+      ) {
+        errors.push({ fieldId, rule: 'input', message, severity: 'hard' });
+      }
+      return errors;
     },
 
     getErrors: () => {
-      const { normalized, responses, dangerouslyAllowJS } = get();
-      return validateForm(normalized, responses, dangerouslyAllowJS);
+      const state = get();
+      return Object.keys(state.normalized.byId).flatMap(state.getFieldErrors);
     },
 
     hydrateDefinition: () => {

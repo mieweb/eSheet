@@ -1,12 +1,18 @@
 {
   "name": "@esheet/renderer-standalone",
-  "version": "0.0.4-2",
+  "version": "0.0.7-3",
   "repository": {
     "type": "git",
     "url": "https://github.com/mieweb/eSheet"
   },
   "publishConfig": {
     "access": "public"
+  },
+  "scripts": {
+    "build": "vite build",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "typecheck": "tsc --build --emitDeclarationOnly"
   },
   "type": "module",
   "main": "./dist/standalone.js",
@@ -25,15 +31,11 @@
     "dist",
     "!**/*.tsbuildinfo"
   ],
-  "nx": {
-    "tags": [
-      "scope:renderer"
-    ]
-  },
   "dependencies": {
-    "@esheet/renderer": "0.0.4-2",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "@esheet/core": "workspace:*",
+    "@esheet/renderer": "workspace:*",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
     "tslib": "^2.3.0"
   }
 }

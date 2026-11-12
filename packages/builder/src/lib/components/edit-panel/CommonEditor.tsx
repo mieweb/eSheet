@@ -1,11 +1,14 @@
+import { useEffect, useState } from 'react';
 import { useStore } from 'zustand';
 import type {
+  DiagramFieldDefinition,
   FieldDefinition,
   FieldWidth,
+  LongtextFieldDefinition,
   OptionLayout,
   TextInputType,
 } from '@esheet/core';
-import { slugifyQuestion } from '@esheet/core';
+import { getFieldTypeMeta, slugifyQuestion } from '@esheet/core';
 import { useFormStore } from '@esheet/fields';
 import { useInstanceId } from '../../EsheetBuilder.js';
 import { DraftIdEditor } from './DraftIdEditor.js';
@@ -17,6 +20,8 @@ export interface CommonEditorProps {
   onUpdate: (patch: Partial<Omit<FieldDefinition, 'fields'>>) => void;
   /** Called to rename the field ID. Returns false if the name collides. */
   onRenameId: (newId: string) => boolean;
+  /** Whether this field is being edited as a child of a section. */
+  isNestedChild?: boolean;
 }
 
 /**
@@ -30,6 +35,7 @@ export function CommonEditor({
   def,
   onUpdate,
   onRenameId,
+  isNestedChild = false,
 }: CommonEditorProps) {
   const instanceId = useInstanceId();
   const showInputType =
@@ -37,14 +43,13 @@ export function CommonEditor({
   const formStore = useFormStore();
   const dangerouslyAllowJS = useStore(formStore, (s) => s.dangerouslyAllowJS);
   const calculation = (def as { calculation?: string }).calculation ?? '';
-  const width = (def as { width?: FieldWidth }).width ?? 'full';
+  const width = (def as { width?: FieldWidth }).width;
   const showOptionLayout =
     def.fieldType === 'radio' ||
     def.fieldType === 'check' ||
     def.fieldType === 'multitext' ||
     def.fieldType === 'openchoice';
-  const optionLayout =
-    (def as { optionLayout?: OptionLayout }).optionLayout ?? 'stack';
+  const optionLayout = (def as { optionLayout?: OptionLayout }).optionLayout;
   const question = (def as { question?: string }).question ?? '';
   const suggestedId = slugifyQuestion(question);
   const showSuggestion = suggestedId !== '' && suggestedId !== def.id;
@@ -98,18 +103,103 @@ export function CommonEditor({
         </div>
       )}
 
+      {getFieldTypeMeta(def.fieldType)?.answerType === 'text' && (
+        <label className="field-default ms:block ms:space-y-1 ms:text-sm">
+          <span>Default answer</span>
+          <input
+            id={`${instanceId}-editor-default-answer-${fieldId}`}
+            type="text"
+            aria-label="Default answer"
+            value={'defaultAnswer' in def ? def.defaultAnswer ?? '' : ''}
+            onChange={(event) =>
+              onUpdate({
+                defaultAnswer: event.currentTarget.value || undefined,
+              })
+            }
+            className="ms:w-full ms:bg-mssurface ms:text-mstext ms:border ms:border-msborder ms:rounded ms:p-2"
+          />
+        </label>
+      )}
+
       {/* Input Type (text/longtext only) */}
       {showInputType && (
         <InputTypeEditor
           fieldId={fieldId}
-          inputType={
-            (def as { inputType?: TextInputType }).inputType ?? 'string'
-          }
+          inputType={(def as unknown as { inputType: TextInputType }).inputType}
           unit={(def as { unit?: string }).unit}
+          dateRange={
+            (
+              def as {
+                dateRange?: {
+                  amount: number;
+                  unit: 'days' | 'months' | 'years';
+                };
+              }
+            ).dateRange
+          }
+          timeFormat={
+            (def as { timeFormat?: '12-hour' | '24-hour' }).timeFormat
+          }
           onChange={(patch) =>
             onUpdate(patch as Parameters<typeof onUpdate>[0])
           }
         />
+      )}
+
+      {def.fieldType === 'longtext' && (
+        <div className="ms:grid ms:grid-cols-2 ms:gap-3">
+          {(['rows', 'maxRows'] as const).map((property) => {
+            const longtextDef = def as LongtextFieldDefinition;
+            const isMinimum = property === 'rows';
+            const purpose = isMinimum ? 'rows' : 'maxrows';
+
+            return (
+              <div key={`${fieldId}-${property}`}>
+                <label
+                  htmlFor={`${instanceId}-editor-${purpose}-${fieldId}`}
+                  className="edit-label ms:block ms:text-sm ms:font-medium ms:text-mstext ms:mb-1"
+                >
+                  {isMinimum ? 'Minimum rows' : 'Maximum rows'}
+                </label>
+                <RowLimitEditor
+                  id={`${instanceId}-editor-${purpose}-${fieldId}`}
+                  min={isMinimum ? 1 : longtextDef.rows ?? 1}
+                  max={isMinimum ? longtextDef.maxRows : undefined}
+                  value={longtextDef[property]}
+                  placeholder={isMinimum ? '1' : undefined}
+                  onCommit={(value) => {
+                    onUpdate({
+                      [property]: value,
+                    } as Parameters<typeof onUpdate>[0]);
+                  }}
+                />
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {def.fieldType === 'diagram' && (
+        <label
+          htmlFor={`${instanceId}-editor-allow-image-attachments-${fieldId}`}
+          className="ms:flex ms:items-center ms:gap-2 ms:text-sm ms:text-mstext ms:cursor-pointer"
+        >
+          <input
+            id={`${instanceId}-editor-allow-image-attachments-${fieldId}`}
+            type="checkbox"
+            checked={
+              (def as DiagramFieldDefinition).allowImageAttachments !== false
+            }
+            onChange={(e) => {
+              const patch: Partial<DiagramFieldDefinition> = {
+                allowImageAttachments: e.currentTarget.checked,
+              };
+              onUpdate(patch);
+            }}
+            className="ms:h-4 ms:w-4 ms:accent-msprimary"
+          />
+          Allow image attachments in renderer
+        </label>
       )}
 
       {/* Row width */}
@@ -123,20 +213,37 @@ export function CommonEditor({
         <select
           id={`${instanceId}-editor-width-${fieldId}`}
           value={width}
-          onChange={(e) =>
+          onChange={(e) => {
+            const nextWidth = e.currentTarget.value as FieldWidth;
             onUpdate({
-              width:
-                e.currentTarget.value === 'full'
-                  ? undefined
-                  : (e.currentTarget.value as FieldWidth),
-            } as Parameters<typeof onUpdate>[0])
-          }
+              width: nextWidth,
+            } as Parameters<typeof onUpdate>[0]);
+          }}
           className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
         >
           <option value="full">Full (whole row)</option>
           <option value="half">Half (2 per row)</option>
           <option value="third">Third (3 per row)</option>
         </select>
+        {isNestedChild && (
+          <label
+            htmlFor={`${instanceId}-editor-override-width-${fieldId}`}
+            className="ms:mt-2 ms:flex ms:items-center ms:gap-2 ms:text-sm ms:text-mstext ms:cursor-pointer"
+          >
+            <input
+              id={`${instanceId}-editor-override-width-${fieldId}`}
+              type="checkbox"
+              checked={def.overrideSectionWidth === true}
+              onChange={(e) =>
+                onUpdate({
+                  overrideSectionWidth: e.currentTarget.checked || undefined,
+                } as Parameters<typeof onUpdate>[0])
+              }
+              className="ms:h-4 ms:w-4 ms:accent-msprimary"
+            />
+            Override parent width
+          </label>
+        )}
       </div>
 
       {/* Options layout (radio / check / multitext only) */}
@@ -151,14 +258,12 @@ export function CommonEditor({
           <select
             id={`${instanceId}-editor-optionlayout-${fieldId}`}
             value={optionLayout}
-            onChange={(e) =>
+            onChange={(e) => {
+              const nextOptionLayout = e.currentTarget.value as OptionLayout;
               onUpdate({
-                optionLayout:
-                  e.currentTarget.value === 'stack'
-                    ? undefined
-                    : (e.currentTarget.value as OptionLayout),
-              } as Parameters<typeof onUpdate>[0])
-            }
+                optionLayout: nextOptionLayout,
+              } as Parameters<typeof onUpdate>[0]);
+            }}
             className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
           >
             <option value="stack">Stack (one per line)</option>
@@ -196,5 +301,54 @@ export function CommonEditor({
         </div>
       )}
     </div>
+  );
+}
+
+function RowLimitEditor({
+  id,
+  value,
+  min,
+  max,
+  placeholder,
+  onCommit,
+}: {
+  id: string;
+  value: number | undefined;
+  min: number;
+  max: number | undefined;
+  placeholder: string | undefined;
+  onCommit: (value: number | undefined) => void;
+}) {
+  const [draft, setDraft] = useState(value?.toString() ?? '');
+
+  useEffect(() => {
+    setDraft(value?.toString() ?? '');
+  }, [value]);
+
+  return (
+    <input
+      id={id}
+      type="number"
+      min={min}
+      max={max}
+      step={1}
+      value={draft}
+      placeholder={placeholder}
+      onChange={(e) => setDraft(e.currentTarget.value)}
+      onBlur={(e) => {
+        if (!e.currentTarget.reportValidity()) {
+          setDraft(value?.toString() ?? '');
+          return;
+        }
+        onCommit(draft === '' ? undefined : e.currentTarget.valueAsNumber);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          e.currentTarget.blur();
+        }
+      }}
+      className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
+    />
   );
 }

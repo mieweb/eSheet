@@ -1,0 +1,343 @@
+id: prior-authorization-review
+dangerouslyAllowJS: true
+title: Medical Equipment Prior Authorization Review
+description: A realistic intake and routing workflow that combines JavaScript calculations with conditional review logic.
+pages:
+  - id: request-page
+    title: Authorization request
+    fields:
+      - id: request-intro
+        fieldType: html
+        width: full
+        htmlContent: "<h2 style='margin:0 0 8px'>Medical Equipment Prior Authorization</h2><p>Capture the clinical request, calculate a review priority, and route the submission to the right team.</p>"
+        iframeHeight: 100
+      - id: section-request-details
+        fieldType: section
+        sectionIcon: clipboardList
+        sectionCollapse: expanded
+        width: none
+        title: Request details
+        fields:
+          - id: patient-name
+            fieldType: text
+            width: half
+            question: Patient or member name
+            required: true
+          - id: patient-age
+            fieldType: text
+            width: third
+            question: Patient age
+            inputType: number
+            required: true
+          - id: payer
+            fieldType: dropdown
+            width: third
+            question: Primary payer
+            required: true
+            options:
+              - id: commercial
+                value: commercial
+                text: Commercial insurance
+              - id: medicare
+                value: medicare
+                text: Medicare
+              - id: medicaid
+                value: medicaid
+                text: Medicaid
+              - id: self-pay
+                value: self-pay
+                text: Self-pay
+          - id: equipment-type
+            fieldType: dropdown
+            width: third
+            question: Requested equipment
+            required: true
+            options:
+              - id: wheelchair
+                value: wheelchair
+                text: Manual wheelchair
+              - id: oxygen
+                value: oxygen
+                text: Home oxygen
+              - id: hospital-bed
+                value: hospital-bed
+                text: Hospital bed
+              - id: walker
+                value: walker
+                text: Walker or mobility aid
+              - id: other
+                value: other
+                text: Other equipment
+          - id: other-equipment
+            fieldType: text
+            width: full
+            question: Describe the requested equipment
+            rules:
+              - effect: visible
+                logic: AND
+                conditions:
+                  - conditionType: js
+                    expression: responses['equipment-type'] === 'other'
+          - id: diagnosis
+            fieldType: dropdown
+            width: third
+            question: Primary clinical reason
+            required: true
+            options:
+              - id: post-surgical
+                value: post-surgical
+                text: Post-surgical recovery
+              - id: respiratory
+                value: respiratory
+                text: Respiratory condition
+              - id: mobility
+                value: mobility
+                text: Mobility limitation
+              - id: chronic
+                value: chronic
+                text: Chronic condition
+              - id: other-diagnosis
+                value: other-diagnosis
+                text: Other clinical reason
+          - id: urgency
+            fieldType: radio
+            width: third
+            question: How quickly is the equipment needed?
+            required: true
+            optionLayout: wrap
+            options:
+              - id: routine
+                value: routine
+                text: Routine
+              - id: expedited
+                value: expedited
+                text: Within 7 days
+              - id: urgent
+                value: urgent
+                text: Urgent
+          - id: treatment-duration
+            fieldType: slider
+            width: third
+            question: Expected treatment duration
+            options:
+              - id: duration-7
+                value: '7'
+                text: 1 week
+                score: 1
+              - id: duration-14
+                value: '14'
+                text: 2 weeks
+                score: 2
+              - id: duration-30
+                value: '30'
+                text: 1 month
+                score: 3
+              - id: duration-90
+                value: '90'
+                text: 3 months or longer
+                score: 4
+          - id: prior-treatment
+            fieldType: boolean
+            width: third
+            question: Has conservative treatment already been tried?
+            options:
+              - id: prior-treatment-yes
+                value: yes
+                text: Yes
+              - id: prior-treatment-no
+                value: no
+                text: No
+          - id: risk-factors
+            fieldType: check
+            width: full
+            question: Which risk factors apply?
+            optionLayout: wrap
+            options:
+              - id: fall-risk
+                value: fall-risk
+                text: Fall risk
+              - id: respiratory-risk
+                value: respiratory-risk
+                text: Respiratory risk
+              - id: limited-mobility
+                value: limited-mobility
+                text: Limited mobility
+              - id: recent-discharge
+                value: recent-discharge
+                text: Recent hospital discharge
+              - id: no-known-risk
+                value: no-known-risk
+                text: No known risk factors
+          - id: has-supporting-docs
+            fieldType: boolean
+            width: third
+            question: Are supporting clinical documents attached?
+            options:
+              - id: docs-yes
+                value: yes
+                text: Yes
+              - id: docs-no
+                value: no
+                text: No
+          - id: clinical-summary
+            fieldType: longtext
+            width: full
+            question: Clinical summary and medical necessity
+            required: true
+      - id: section-review-signals
+        fieldType: section
+        sectionIcon: activity
+        sectionCollapse: expanded
+        width: none
+        title: Calculated review signals
+        fields:
+          - id: review-score
+            fieldType: text
+            width: third
+            question: Calculated review score
+            inputType: number
+            calculation: "(responses['urgency'] === 'urgent' ? 5 : responses['urgency'] === 'expedited' ? 3 : 1) + (Number(responses['treatment-duration'] || 0) >= 30 ? 2 : 0) + (Array.isArray(responses['risk-factors']) && responses['risk-factors'].includes('respiratory-risk') ? 3 : 0) + (Array.isArray(responses['risk-factors']) && responses['risk-factors'].includes('fall-risk') ? 2 : 0) + (responses['prior-treatment'] === 'yes' ? 2 : 0)"
+          - id: priority-level
+            fieldType: text
+            width: third
+            question: Review priority
+            inputType: string
+            calculation: "(function() { var score = Number(responses['review-score'] || 0); return score >= 10 ? 'Urgent clinical review' : score >= 6 ? 'Expedited review' : 'Standard review'; })()"
+          - id: review-route
+            fieldType: text
+            width: third
+            question: Recommended review team
+            inputType: string
+            calculation: "(function() { var equipment = responses['equipment-type']; return equipment === 'oxygen' ? 'Respiratory therapy' : equipment === 'wheelchair' || equipment === 'walker' ? 'Mobility team' : equipment === 'hospital-bed' ? 'Home-care team' : 'Utilization review'; })()"
+          - id: documentation-status
+            fieldType: text
+            width: full
+            question: Documentation readiness
+            inputType: string
+            calculation: "(function() { var core = Boolean(responses['patient-age']) && Boolean(responses['equipment-type']) && Boolean(responses['diagnosis']) && Boolean(responses['clinical-summary']); var needsAttachment = responses['equipment-type'] === 'oxygen' || responses['equipment-type'] === 'hospital-bed'; var attached = responses['has-supporting-docs'] === 'yes'; return core && (!needsAttachment || attached) ? 'Ready for submission' : 'Needs documentation'; })()"
+      - id: section-conditional-documentation
+        fieldType: section
+        sectionIcon: filePlus
+        sectionCollapse: expanded
+        width: none
+        title: Conditional documentation
+        fields:
+          - id: urgent-rationale
+            fieldType: longtext
+            width: full
+            question: Explain why this request requires urgent handling
+            required: true
+            rules:
+              - effect: visible
+                logic: AND
+                conditions:
+                  - conditionType: field
+                    targetId: urgency
+                    operator: equals
+                    expected: urgent
+                  - conditionType: js
+                    expression: Number(responses['review-score'] || 0) >= 6
+          - id: oxygen-safety
+            fieldType: boolean
+            width: half
+            question: Has home oxygen safety training been arranged?
+            options:
+              - id: oxygen-safety-yes
+                value: yes
+                text: Yes
+              - id: oxygen-safety-no
+                value: no
+                text: No
+            rules:
+              - effect: visible
+                logic: AND
+                conditions:
+                  - conditionType: js
+                    expression: responses['equipment-type'] === 'oxygen'
+          - id: home-setup
+            fieldType: check
+            width: full
+            question: What home setup needs to be coordinated?
+            optionLayout: wrap
+            options:
+              - id: delivery
+                value: delivery
+                text: Equipment delivery
+              - id: caregiver-training
+                value: caregiver-training
+                text: Caregiver training
+              - id: home-safety
+                value: home-safety
+                text: Home safety assessment
+              - id: follow-up
+                value: follow-up
+                text: Follow-up visit
+            rules:
+              - effect: visible
+                logic: OR
+                conditions:
+                  - conditionType: js
+                    expression: responses['equipment-type'] === 'wheelchair'
+                  - conditionType: js
+                    expression: responses['equipment-type'] === 'hospital-bed'
+          - id: clinical-evidence
+            fieldType: longtext
+            width: full
+            question: Add clinical evidence for elevated-risk requests
+            rules:
+              - effect: visible
+                logic: OR
+                conditions:
+                  - conditionType: js
+                    expression: Number(responses['review-score'] || 0) >= 6
+                  - conditionType: js
+                    expression: Array.isArray(responses['risk-factors']) && responses['risk-factors'].includes('recent-discharge')
+          - id: payer-notes
+            fieldType: longtext
+            width: full
+            question: Add Medicaid-specific authorization notes
+            rules:
+              - effect: visible
+                logic: AND
+                conditions:
+                  - conditionType: field
+                    targetId: payer
+                    operator: equals
+                    expected: medicaid
+      - id: section-review-outcome
+        fieldType: section
+        sectionIcon: shieldCheck
+        sectionCollapse: expanded
+        width: none
+        title: Review outcome
+        fields:
+          - id: fast-track-note
+            fieldType: html
+            width: full
+            htmlContent: '<p><strong>Fast-track candidate:</strong> the request currently has a low calculated score and complete core documentation.</p>'
+            iframeHeight: 55
+            rules:
+              - effect: visible
+                logic: AND
+                conditions:
+                  - conditionType: js
+                    expression: Number(responses['review-score'] || 0) < 6
+                  - conditionType: js
+                    expression: responses['documentation-status'] === 'Ready for submission'
+          - id: manual-review-note
+            fieldType: html
+            width: full
+            htmlContent: '<p><strong>Manual clinical review:</strong> the calculated score or request details require a specialist review before submission.</p>'
+            iframeHeight: 55
+            rules:
+              - effect: visible
+                logic: OR
+                conditions:
+                  - conditionType: js
+                    expression: Number(responses['review-score'] || 0) >= 8
+                  - conditionType: js
+                    expression: responses['documentation-status'] === 'Needs documentation'
+          - id: final-review-notes
+            fieldType: longtext
+            width: full
+            question: Final reviewer notes

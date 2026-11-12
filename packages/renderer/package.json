@@ -1,6 +1,6 @@
 {
   "name": "@esheet/renderer",
-  "version": "0.0.4-2",
+  "version": "0.0.7-3",
   "repository": {
     "type": "git",
     "url": "https://github.com/mieweb/eSheet"
@@ -22,28 +22,29 @@
     }
   },
   "sideEffects": [
-    "**/*.css"
+    "**/*.css",
+    "./src/index.ts",
+    "./dist/index.js"
   ],
   "scripts": {
-    "build:css": "cd ../.. && npx @tailwindcss/cli -i packages/renderer/src/index.css -o packages/renderer/src/index.output.css",
-    "build:css:watch": "cd ../.. && npx @tailwindcss/cli -i packages/renderer/src/index.css -o packages/renderer/src/index.output.css --watch"
+    "build": "vite build",
+    "lint": "eslint .",
+    "pretypecheck": "pnpm --filter @esheet/fields build",
+    "test": "vitest",
+    "typecheck": "tsc --build --emitDeclarationOnly --force"
   },
   "files": [
     "dist",
     "!**/*.tsbuildinfo"
   ],
-  "nx": {
-    "tags": [
-      "scope:renderer"
-    ]
-  },
   "dependencies": {
-    "@esheet/adapters": "0.0.4-2",
-    "@esheet/core": "0.0.4-2",
-    "@esheet/fields": "0.0.4-2",
-    "@esheet/pdf": "^0.0.4-2",
-    "js-yaml": "^4.1.0",
-    "pdfjs-dist": "^6.1.200"
+    "@esheet/adapters": "workspace:*",
+    "@esheet/core": "workspace:*",
+    "@esheet/fields": "workspace:*",
+    "@esheet/pdf": "workspace:*",
+    "@esheet/styles": "workspace:*",
+    "js-yaml": "^5.2.3",
+    "pdfjs-dist": "^6.5.438"
   },
   "peerDependencies": {
     "react": ">=19.0.0"
@@ -52,9 +53,5 @@
     "react": {
       "optional": true
     }
-  },
-  "devDependencies": {
-    "@tailwindcss/cli": "^4.2.1",
-    "tailwindcss": "^4.2.1"
   }
 }

@@ -1350,7 +1350,7 @@ export function PdfView({
         </div>
 
         {authoring && (
-          <aside className="ms:hidden ms:w-72 ms:shrink-0 ms:border-l ms:border-msborder ms:bg-mssurface ms:p-4 ms:lg:block">
+          <aside className="ms:max-lg:hidden ms:w-72 ms:shrink-0 ms:border-l ms:border-msborder ms:bg-mssurface ms:p-4 ms:lg:block">
             {selectedMapping && selectedIndex !== null ? (
               <div className="ms:flex ms:flex-col ms:gap-4">
                 <div className="ms:flex ms:items-start ms:justify-between ms:gap-2">

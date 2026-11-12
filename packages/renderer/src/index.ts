@@ -1,4 +1,4 @@
-import './index.output.css';
+import '@esheet/styles';
 
 // Main renderer component
 export {
@@ -12,6 +12,13 @@ export {
   type GetResponseResult,
   type ResponseFormat,
 } from './lib/EsheetRenderer.js';
+export type { FieldProvider } from '@esheet/fields';
+export { createDocumentPickerProvider } from '@esheet/fields';
+export type {
+  DocumentPicker,
+  DocumentPickerItem,
+  DocumentPickerQuery,
+} from '@esheet/core';
 
 // Render tree builder (for computing setValue values in builder)
 export {

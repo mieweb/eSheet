@@ -69,23 +69,27 @@ function CodeMockup() {
     <div className="flex flex-col gap-3 lg:max-w-none">
       {/* Schema window */}
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-md dark:border-white/10 dark:bg-[#2a2a2d]">
-        <WindowChrome label="esheet-schema.json" />
+        <WindowChrome label="new-case.esheet.yaml" />
         <pre className="m-0 overflow-x-auto bg-transparent p-4 text-[12.5px] leading-[1.7]">
           <code className="font-mono text-slate-600 dark:text-slate-300">
-            {`{
-  "fields": [
-    {
-      "type": "text",
-      "label": "Full Name",
-      "required": true
-    },
-    {
-      "type": "radio",
-      "label": "Status",
-      "options": ["Active", "Inactive"]
-    }
-  ]
-}`}
+            {`id: new-case
+title: New Case
+pages:
+  - id: details
+    fields:
+      # Capture the details needed to route the case.
+      - id: name
+        fieldType: text
+        question: Full Name
+        required: true
+      - id: status
+        fieldType: radio
+        question: Status
+        options:
+          - id: active
+            value: Active
+          - id: inactive
+            value: Inactive`}
           </code>
         </pre>
       </div>

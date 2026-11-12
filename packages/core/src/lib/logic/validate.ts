@@ -3,11 +3,15 @@
 // ---------------------------------------------------------------------------
 
 import type {
+  FieldOption,
   FieldResponse,
   FieldResponseMap,
   FieldValidator,
+  RelativeDateRange,
+  SelectedOption,
 } from '../types.js';
 import type { NormalizedDefinition } from '../functions/normalize.js';
+import { evaluateOptionVisibility } from './conditions.js';
 import {
   isFieldEffectivelyActive,
   resolveEffect,
@@ -133,6 +137,38 @@ export function validateField(
     });
   }
 
+  const options = (definition as { options?: FieldOption[] }).options;
+  const selectedOptionIds = getSelectedOptionIds(response?.selected);
+  const answeredMultitextOptionIds = getAnsweredMultitextOptionIds(
+    response?.multitextAnswers
+  );
+  const answeredOptionIds = [
+    ...selectedOptionIds,
+    ...answeredMultitextOptionIds,
+  ];
+  if (options && answeredOptionIds.length > 0) {
+    const visibleOptionIds = new Set(
+      options
+        .filter((option) =>
+          evaluateOptionVisibility(
+            option,
+            normalized,
+            responses,
+            dangerouslyAllowJS
+          )
+        )
+        .map((option) => option.id)
+    );
+    if (answeredOptionIds.some((id) => !visibleOptionIds.has(id))) {
+      errors.push({
+        fieldId,
+        rule: 'optionVisibility',
+        message: 'One or more selected options are no longer available',
+        severity: 'hard',
+      });
+    }
+  }
+
   // --- Soft required check ---
   if (def.softRequired && isResponseEmpty(response)) {
     errors.push({
@@ -151,6 +187,19 @@ export function validateField(
     }
   }
 
+  // --- Intrinsic date input checks (format + dateRange) ---
+  if (
+    (definition.fieldType === 'text' || definition.fieldType === 'longtext') &&
+    !isResponseEmpty(response)
+  ) {
+    const err = validateDateInput(
+      definition as { inputType?: string; dateRange?: RelativeDateRange },
+      response,
+      fieldId
+    );
+    if (err) errors.push(err);
+  }
+
   return errors;
 }
 
@@ -159,7 +208,13 @@ export function validateField(
 // ---------------------------------------------------------------------------
 
 /** Field types that don't accept user input — skip validation. */
-const NON_INPUT_TYPES = new Set(['section', 'expression', 'html', 'image']);
+const NON_INPUT_TYPES = new Set([
+  'section',
+  'expression',
+  'html',
+  'image',
+  'activity',
+]);
 
 /**
  * Check whether a field response is effectively empty.
@@ -217,6 +272,29 @@ function isResponseEmpty(response: FieldResponse | undefined): boolean {
   return true;
 }
 
+function getSelectedOptionIds(selected: FieldResponse['selected']): string[] {
+  if (!selected) return [];
+  if (Array.isArray(selected)) {
+    return selected
+      .map((option) => option.id)
+      .filter((id): id is string => typeof id === 'string');
+  }
+  if ('id' in selected) {
+    const option = selected as SelectedOption;
+    return typeof option.id === 'string' ? [option.id] : [];
+  }
+  return [];
+}
+
+function getAnsweredMultitextOptionIds(
+  answers: FieldResponse['multitextAnswers']
+): string[] {
+  if (!answers) return [];
+  return Object.entries(answers)
+    .filter(([, value]) => value.trim() !== '')
+    .map(([optionId]) => optionId);
+}
+
 // ---------------------------------------------------------------------------
 // Validator runner
 // ---------------------------------------------------------------------------
@@ -226,11 +304,24 @@ function getRawAnswer(response: FieldResponse | undefined): string {
   return typeof response.answer === 'string' ? response.answer.trim() : '';
 }
 
-/** Parse a date string in MM-DD-YYYY or ISO format. Returns null on failure. */
+/** Parse a date string in US or ISO format without accepting calendar overflow. */
 function parseWcDate(str: string): Date | null {
   const s = str.trim();
-  const m = /^(\d{1,2})-(\d{1,2})-(\d{4})$/.exec(s);
-  if (m) return new Date(+m[3], +m[1] - 1, +m[2]);
+  const us = /^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/.exec(s);
+  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (us || iso) {
+    const year = Number(us ? us[3] : iso?.[1]);
+    const month = Number(us ? us[1] : iso?.[2]) - 1;
+    const day = Number(us ? us[2] : iso?.[3]);
+    const date = new Date(0);
+    date.setFullYear(year, month, day);
+    date.setHours(0, 0, 0, 0);
+    return date.getFullYear() === year &&
+      date.getMonth() === month &&
+      date.getDate() === day
+      ? date
+      : null;
+  }
   const d = new Date(s);
   return isNaN(d.getTime()) ? null : d;
 }
@@ -255,6 +346,82 @@ function parseTime(str: string): number | null {
   const m = /^(\d{1,2}):(\d{2})$/.exec(str.trim());
   if (!m) return null;
   return +m[1] * 60 + +m[2];
+}
+
+/** Mirror of the UI's date-range offset math (TextField.resolveDateRange). */
+function applyDateRangeOffset(
+  date: Date,
+  amount: number,
+  unit: 'days' | 'months' | 'years'
+): Date {
+  const result = new Date(date);
+  if (unit === 'days') {
+    result.setDate(result.getDate() + amount);
+  } else {
+    const monthOffset = unit === 'months' ? amount : amount * 12;
+    const day = result.getDate();
+    result.setDate(1);
+    result.setMonth(result.getMonth() + monthOffset);
+    const lastDay = new Date(
+      result.getFullYear(),
+      result.getMonth() + 1,
+      0
+    ).getDate();
+    result.setDate(Math.min(day, lastDay));
+  }
+  return result;
+}
+
+function formatWcDate(d: Date): string {
+  return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(
+    d.getDate()
+  ).padStart(2, '0')}/${d.getFullYear()}`;
+}
+
+/** Intrinsic format + dateRange checks for date/datetime text inputs. */
+function validateDateInput(
+  def: { inputType?: string; dateRange?: RelativeDateRange },
+  response: FieldResponse | undefined,
+  fieldId: string
+): ValidationError | null {
+  const isDate = def.inputType === 'date';
+  const isDatetime = def.inputType === 'datetime-local';
+  if (!isDate && !isDatetime) return null;
+
+  const raw = getRawAnswer(response);
+  if (!raw) return null;
+
+  const value = isDate ? parseWcDate(raw) : parseWcDatetime(raw);
+  if (!value) {
+    return {
+      fieldId,
+      rule: 'dateFormat',
+      message: isDate
+        ? 'Please enter a valid date'
+        : 'Please enter a valid date and time',
+      severity: 'hard',
+    };
+  }
+
+  if (!def.dateRange) return null;
+  const amount = Math.abs(def.dateRange.amount);
+  const today = new Date();
+  const min = dateOnly(
+    applyDateRangeOffset(today, -amount, def.dateRange.unit)
+  );
+  const max = dateOnly(applyDateRangeOffset(today, amount, def.dateRange.unit));
+  const v = dateOnly(value);
+  if (v < min || v > max) {
+    return {
+      fieldId,
+      rule: 'dateRange',
+      message: `Date must be between ${formatWcDate(min)} and ${formatWcDate(
+        max
+      )}`,
+      severity: 'hard',
+    };
+  }
+  return null;
 }
 
 function runValidator(

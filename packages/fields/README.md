@@ -18,11 +18,42 @@
 
 ## Shared Components
 
+Date and datetime fields use the browser's regional language preference for
+display (and date entry) through `DateInput.locale`. Date answers remain ISO
+`YYYY-MM-DD`; relative date bounds and calendar selection keep the existing
+US-order control-value contract. Incomplete or invalid date drafts block
+validation and submission until corrected or cleared; draft errors are transient
+and never exported with responses. Page changes (including programmatic changes)
+are blocked while an input draft is invalid, even when required-field navigation
+validation is disabled. Response resets also reset visible drafts, including
+unanswered fields. Document-list date columns and addendum
+dates use the same regional formatter without changing stored rows or sort
+keys. The UI source override requires a built sibling `ui` checkout.
+For a clean, pinned setup matching CI and Cloudflare Pages, run
+`bash deploy/scripts/prepare-ui.sh` from the repository root before installing
+eSheet dependencies. See [local workflow testing](../../.github/workflows/TESTING-LOCALLY.md).
+
 - `CustomRadio` — Themed radio with unselect support
 - `CustomCheckbox` — Themed checkbox
 - `CustomDropdown` — Themed select dropdown
 - `DrawingPad` — Canvas component (used by SignatureField/DiagramField)
 - Icons: `TrashIcon`, `PlusIcon`, `ArrowUpIcon`, `ArrowDownIcon`, `UpDownArrowIcon`
+
+## Diagram image attachments
+
+Diagram fields allow respondents to attach a local image or choose an image from
+a host-supplied document picker by default. In the builder's inline editor or Edit
+panel, turn off **Allow image attachments in renderer** to set
+`allowImageAttachments: false` on the diagram definition. Both editors share the
+same setting, including for fields inside sections. This hides both attachment
+options and blocks their handlers, including pending attachment loads when the
+setting changes. Disabled and
+read-only fields also block attachments.
+
+The setting does not restrict authors uploading a background image in the builder,
+remove previously saved respondent images, or prevent drawing on the canvas.
+It is a client-side behavior setting, not a server-side authorization boundary;
+hosts must still validate submitted responses.
 
 ## Component Registry
 
@@ -48,17 +79,32 @@ registerCustomFieldTypes({
 
 ## CSS Architecture
 
-Fields use Tailwind CSS v4 with `ms:` prefix (e.g., `ms:bg-mssurface`, `ms:text-mstext`). Colors reference CSS custom properties (`--ms-color-*`) defined by the host root:
+Fields use Tailwind CSS v4 with an `ms:` prefix (for example, `ms:bg-mssurface` and `ms:text-mstext`). `@esheet/styles` loads the shared utility set automatically and maps `@mieweb/ui` brand variables to eSheet semantic colors.
 
-- **Light mode**: Defined in the host's `@theme` block
-- **Dark mode**: Overridden when the host root has `.dark` class
+Applications must load `@mieweb/ui/styles.css` and select a brand stylesheet. The shared eSheet stylesheet uses fallback colors when brand variables are unavailable.
 
-Fields do **not** ship their own CSS resets or dark theme — they inherit from the consuming package.
+## Autocomplete recovery
+
+Autocomplete fields retain loaded selections and choices picked during the current
+form session, including their captured attributes. If a choice disappears from the
+source, it remains selectable after clearing or changing the input, even below the
+source's minimum search length. Retained choices are labeled “Previously selected”;
+a successful complete-list provider can confirm removal and labels them “No longer
+active” instead. Live source results take precedence over retained copies.
+
+Recovery is scoped to the form instance and field, survives page/tab changes, and
+uses core's runtime extensions rather than exported responses, browser storage, or
+server history. Loading another definition or disposing the form clears it. Another
+record never inherits these choices; reopening starts from its saved selection.
+Hosts can opt into a longer recovery lifetime by restoring and subscribing to
+`AUTOCOMPLETE_HISTORY_NAMESPACE` extensions (per-field arrays of retained items).
+The host must scope persistence by identity and record and handle logout cleanup;
+eSheet itself does not write browser storage.
 
 ## Building
 
-Run `nx build @esheet/fields` to build the library.
+Run `pnpm --filter @esheet/fields build` to build the library.
 
 ## Running unit tests
 
-Run `nx test @esheet/fields` to execute the unit tests via [Vitest](https://vitest.dev/).
+Run `pnpm --filter @esheet/fields test` to execute the unit tests via [Vitest](https://vitest.dev/).

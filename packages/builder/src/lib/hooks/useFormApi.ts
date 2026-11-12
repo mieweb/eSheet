@@ -8,10 +8,13 @@ import type {
   FieldType,
   FormStore,
   NormalizedDefinition,
+  ConditionalRule,
 } from '@esheet/core';
 import { useFormStore } from '@esheet/fields';
 
 export type FieldResponseMap = Record<string, FieldResponse>;
+
+const EMPTY_RESPONSES: FieldResponseMap = {};
 
 export interface FormApi {
   field: FieldNode | undefined;
@@ -50,6 +53,8 @@ export interface FormApi {
   option: {
     add: (value?: string) => string | null;
     update: (optId: string, value: string) => boolean;
+    setDefault: (optId: string, selected: boolean) => boolean;
+    updateRules: (optId: string, rules: ConditionalRule[]) => boolean;
     setScore: (optId: string, score: number | undefined) => boolean;
     remove: (optId: string) => boolean;
   };
@@ -103,7 +108,9 @@ export function useFormApi(fieldId?: string): FormApi {
 
   // --- Reactive form-level state ---
   const normalized = useStore(form, (s) => s.normalized);
-  const responses = useStore(form, (s) => s.responses);
+  const responses = useStore(form, (s) =>
+    fieldId ? EMPTY_RESPONSES : s.responses
+  );
   const instanceId = useStore(form, (s) => s.instanceId);
 
   return React.useMemo(
@@ -144,10 +151,18 @@ export function useFormApi(fieldId?: string): FormApi {
       },
 
       option: {
+        setDefault: (optId: string, selected: boolean) =>
+          fieldId
+            ? form.getState().setOptionDefault(fieldId, optId, selected)
+            : false,
         add: (value?: string) =>
           fieldId ? form.getState().addOption(fieldId, value) : null,
         update: (optId: string, value: string) =>
           fieldId ? form.getState().updateOption(fieldId, optId, value) : false,
+        updateRules: (optId: string, rules: ConditionalRule[]) =>
+          fieldId
+            ? form.getState().updateOptionRules(fieldId, optId, rules)
+            : false,
         setScore: (optId: string, score: number | undefined) =>
           fieldId
             ? form.getState().setOptionScore(fieldId, optId, score)

@@ -4,9 +4,11 @@
 
 import type {
   FieldDefinition,
+  FieldWidth,
   PageEntry,
   SectionFieldDefinition,
 } from '../types.js';
+import { getFieldTypeMeta } from '../registry.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -67,12 +69,21 @@ export function normalizeDefinition(
     for (let i = 0; i < defs.length; i++) {
       const def = defs[i];
       const { fields: children, ...rest } = def as SectionFieldDefinition;
+      const { fields: _defaultFields, ...defaultProps } =
+        getFieldTypeMeta(def.fieldType)?.defaultProps ?? {};
+      void _defaultFields;
+      const definition = { ...rest } as FieldDefinition;
+      const definitionValues = definition as unknown as Record<string, unknown>;
+      for (const [property, value] of Object.entries(defaultProps)) {
+        if (definitionValues[property] === undefined)
+          definitionValues[property] = value;
+      }
       const childIds =
         def.fieldType === 'section' && Array.isArray(children)
           ? walk(children, def.id)
           : [];
       byId[def.id] = {
-        definition: rest as FieldDefinition,
+        definition,
         parentId,
         childIds,
         index: i,
@@ -93,6 +104,35 @@ export function normalizeDefinition(
   });
 
   return { byId, pages: normalizedPages };
+}
+
+/** Resolve the nearest defined section width for a field. */
+export function getInheritedSectionWidth(
+  normalized: NormalizedDefinition,
+  fieldId: string
+): FieldWidth | undefined {
+  if (normalized.byId[fieldId]?.definition.overrideSectionWidth === true) {
+    return undefined;
+  }
+
+  let parentId = normalized.byId[fieldId]?.parentId;
+
+  while (parentId) {
+    const parent = normalized.byId[parentId];
+    if (!parent) return undefined;
+
+    if (
+      parent.definition.fieldType === 'section' &&
+      parent.definition.width !== undefined &&
+      parent.definition.width !== 'none'
+    ) {
+      return parent.definition.width;
+    }
+
+    parentId = parent.parentId;
+  }
+
+  return undefined;
 }
 
 // ---------------------------------------------------------------------------

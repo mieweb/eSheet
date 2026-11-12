@@ -1,6 +1,6 @@
 {
   "name": "@esheet/builder",
-  "version": "0.0.4-2",
+  "version": "0.0.7-3",
   "repository": {
     "type": "git",
     "url": "https://github.com/mieweb/eSheet"
@@ -22,43 +22,42 @@
     }
   },
   "sideEffects": [
-    "**/*.css"
+    "**/*.css",
+    "./src/index.ts",
+    "./dist/index.js"
   ],
   "scripts": {
-    "build:css": "cd ../.. && npx @tailwindcss/cli -i packages/builder/src/index.css -o packages/builder/src/index.output.css",
-    "build:css:watch": "cd ../.. && npx @tailwindcss/cli -i packages/builder/src/index.css -o packages/builder/src/index.output.css --watch"
+    "build": "vite build",
+    "lint": "eslint .",
+    "pretypecheck": "pnpm --filter @esheet/fields build",
+    "test": "vitest",
+    "typecheck": "tsc --build --emitDeclarationOnly --force"
   },
   "files": [
     "dist",
     "!**/*.tsbuildinfo"
   ],
-  "nx": {
-    "tags": [
-      "scope:builder"
-    ]
-  },
   "dependencies": {
-    "@esheet/adapters": "0.0.4-2",
-    "@esheet/core": "0.0.4-2",
-    "@esheet/fields": "0.0.4-2",
-    "@esheet/pdf": "0.0.4-2",
-    "@mieweb/ui": "^0.6.1",
+    "@esheet/adapters": "workspace:*",
+    "@esheet/core": "workspace:*",
+    "@esheet/fields": "workspace:*",
+    "@esheet/pdf": "workspace:*",
+    "@esheet/styles": "workspace:*",
+    "@mieweb/ui": "0.11.0-dev.25",
     "@monaco-editor/react": "^4.7.0",
-    "js-yaml": "^4.1.1",
-    "pdfjs-dist": "^6.1.200",
+    "js-yaml": "^5.2.3",
+    "pdfjs-dist": "^6.5.438",
     "react": "^19.2.4",
     "sortablejs": "^1.15.7",
     "tslib": "^2.3.0",
-    "zustand": "^5.0.11"
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
-    "@tailwindcss/cli": "^4.2.1",
     "@testing-library/react": "^16.3.2",
     "@types/js-yaml": "^4.0.9",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^5.1.4",
-    "jsdom": "^28.1.0",
-    "tailwindcss": "^4.2.1"
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.0.5",
+    "jsdom": "^29.1.1"
   }
 }

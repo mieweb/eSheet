@@ -1,6 +1,6 @@
 {
   "name": "@esheet/pdf",
-  "version": "0.0.4-2",
+  "version": "0.0.7-3",
   "description": "Generate fillable AcroForm PDFs from eSheet form definitions",
   "repository": {
     "type": "git",
@@ -26,13 +26,14 @@
     "dist",
     "!**/*.tsbuildinfo"
   ],
-  "nx": {
-    "tags": [
-      "scope:pdf"
-    ]
+  "scripts": {
+    "build": "vite build",
+    "lint": "eslint .",
+    "test": "vitest",
+    "typecheck": "tsc --build --emitDeclarationOnly"
   },
   "dependencies": {
-    "@esheet/core": "0.0.4-2",
+    "@esheet/core": "workspace:*",
     "pdf-lib": "^1.17.1",
     "tslib": "^2.3.0"
   }

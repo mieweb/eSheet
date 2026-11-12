@@ -4,8 +4,8 @@ import type {
   SelectedOption,
   RadioFieldDefinition,
 } from '@esheet/core';
-import { RadioGroup, Radio } from '@mieweb/ui';
 import { TrashIcon, PlusIcon } from '../../icons.js';
+import { CustomRadioButton } from '../../fields-controls/CustomRadioButton.js';
 
 export const RadioField = React.memo(function RadioField({
   field,
@@ -22,6 +22,10 @@ export const RadioField = React.memo(function RadioField({
   const instanceId = form.getState().instanceId;
   const options = def.options || [];
   const isWrap = def.optionLayout === 'wrap';
+  const optionContainerClass =
+    isWrap && options.length > 1
+      ? 'ms:flex ms:flex-wrap ms:gap-2'
+      : 'ms:flex ms:flex-col ms:gap-2';
   const selectedId =
     (response?.selected as SelectedOption | undefined)?.id ?? null;
 
@@ -40,49 +44,27 @@ export const RadioField = React.memo(function RadioField({
             </span>
           )}
         </div>
-        <RadioGroup
-          value={selectedId || ''}
-          onValueChange={(val) => {
-            const opt = options.find((o) => o.id === val);
-            if (opt) onResponse({ selected: { id: opt.id, value: opt.value } });
-          }}
-          disabled={!isEnabled}
-          orientation={isWrap ? 'horizontal' : 'vertical'}
-        >
-          <div
-            className={
-              isWrap ? 'ms:flex ms:flex-wrap' : 'ms:flex ms:flex-col ms:gap-1.5'
-            }
-            style={
-              isWrap ? { columnGap: '1rem', rowGap: '0.25rem' } : undefined
-            }
-          >
-            {options.map((option) => (
-              <label
-                key={option.id}
-                htmlFor={`${instanceId}-radio-answer-${def.id}-${option.id}`}
-                className={`ms:flex ms:items-center ms:gap-2 ms:rounded ms:transition-colors ms:py-1 ms:px-1 ms:select-none ${
-                  isEnabled
-                    ? 'ms:cursor-pointer ms:hover:bg-msprimary/5'
-                    : 'ms:cursor-not-allowed'
-                }`}
-              >
-                <Radio
-                  id={`${instanceId}-radio-answer-${def.id}-${option.id}`}
-                  value={option.id}
-                  onClick={() => {
-                    if (selectedId === option.id) {
-                      onResponse({ selected: undefined });
-                    }
-                  }}
-                />
-                <span className="ms:text-sm ms:text-mstext">
-                  {option.value}
-                </span>
-              </label>
-            ))}
-          </div>
-        </RadioGroup>
+        <div className={optionContainerClass}>
+          {options.map((option) => (
+            <CustomRadioButton
+              key={option.id}
+              id={`${instanceId}-radio-answer-${def.id}-${option.id}`}
+              name={`${instanceId}-radio-answer-${def.id}`}
+              value={option.id}
+              checked={selectedId === option.id}
+              onSelect={() =>
+                onResponse({
+                  selected: { id: option.id, value: option.value },
+                })
+              }
+              onUnselect={() => onResponse({ selected: undefined })}
+              disabled={!isEnabled}
+              className={isWrap ? 'ms:min-w-[8rem] ms:flex-[1_1_auto]' : ''}
+            >
+              {option.value}
+            </CustomRadioButton>
+          ))}
+        </div>
       </div>
     );
   }

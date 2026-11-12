@@ -1,0 +1,294 @@
+id: phq9
+dangerouslyAllowJS: true
+title: PHQ-9 Patient Health Questionnaire
+description: A scored nine-item depression screening example with calculated severity and follow-up guidance.
+pages:
+  - id: page-1
+    fields:
+      - id: phq-intro
+        fieldType: html
+        width: full
+        htmlContent: "<h2 style='margin:0 0 8px'>PHQ-9 Depression Screening</h2><p>Over the <strong>last 2 weeks</strong>, how often have you been bothered by any of the following problems?</p><table style='font-size:12px;border-collapse:collapse;width:100%'><tr><td style='padding:2px 8px;border:1px solid #ccc'>0</td><td style='padding:2px 8px;border:1px solid #ccc'>Not at all</td><td style='padding:2px 8px;border:1px solid #ccc'>1</td><td style='padding:2px 8px;border:1px solid #ccc'>Several days</td><td style='padding:2px 8px;border:1px solid #ccc'>2</td><td style='padding:2px 8px;border:1px solid #ccc'>More than half the days</td><td style='padding:2px 8px;border:1px solid #ccc'>3</td><td style='padding:2px 8px;border:1px solid #ccc'>Nearly every day</td></tr></table>"
+        iframeHeight: 130
+      - id: section-phq
+        fieldType: section
+        sectionIcon: brain
+        sectionCollapse: expanded
+        title: Symptom Questions
+        fields:
+          - id: phq-q1
+            fieldType: radio
+            width: full
+            optionLayout: wrap
+            question: 1. Little interest or pleasure in doing things
+            required: true
+            options:
+              - id: phq-q1-0
+                value: '0'
+                text: Not at all
+                score: 0
+              - id: phq-q1-1
+                value: '1'
+                text: Several days
+                score: 1
+              - id: phq-q1-2
+                value: '2'
+                text: More than half the days
+                score: 2
+              - id: phq-q1-3
+                value: '3'
+                text: Nearly every day
+                score: 3
+          - id: phq-q2
+            fieldType: radio
+            width: full
+            optionLayout: wrap
+            question: 2. Feeling down, depressed, or hopeless
+            required: true
+            options:
+              - id: phq-q2-0
+                value: '0'
+                text: Not at all
+                score: 0
+              - id: phq-q2-1
+                value: '1'
+                text: Several days
+                score: 1
+              - id: phq-q2-2
+                value: '2'
+                text: More than half the days
+                score: 2
+              - id: phq-q2-3
+                value: '3'
+                text: Nearly every day
+                score: 3
+          - id: phq-q3
+            fieldType: radio
+            width: full
+            optionLayout: wrap
+            question: 3. Trouble falling or staying asleep, or sleeping too much
+            required: true
+            options:
+              - id: phq-q3-0
+                value: '0'
+                text: Not at all
+                score: 0
+              - id: phq-q3-1
+                value: '1'
+                text: Several days
+                score: 1
+              - id: phq-q3-2
+                value: '2'
+                text: More than half the days
+                score: 2
+              - id: phq-q3-3
+                value: '3'
+                text: Nearly every day
+                score: 3
+          - id: phq-q4
+            fieldType: radio
+            width: full
+            optionLayout: wrap
+            question: 4. Feeling tired or having little energy
+            required: true
+            options:
+              - id: phq-q4-0
+                value: '0'
+                text: Not at all
+                score: 0
+              - id: phq-q4-1
+                value: '1'
+                text: Several days
+                score: 1
+              - id: phq-q4-2
+                value: '2'
+                text: More than half the days
+                score: 2
+              - id: phq-q4-3
+                value: '3'
+                text: Nearly every day
+                score: 3
+          - id: phq-q5
+            fieldType: radio
+            width: full
+            optionLayout: wrap
+            question: 5. Poor appetite or overeating
+            required: true
+            options:
+              - id: phq-q5-0
+                value: '0'
+                text: Not at all
+                score: 0
+              - id: phq-q5-1
+                value: '1'
+                text: Several days
+                score: 1
+              - id: phq-q5-2
+                value: '2'
+                text: More than half the days
+                score: 2
+              - id: phq-q5-3
+                value: '3'
+                text: Nearly every day
+                score: 3
+          - id: phq-q6
+            fieldType: radio
+            width: full
+            optionLayout: wrap
+            question: 6. Feeling bad about yourself — or feeling like a failure or that you have let yourself or your family down
+            required: true
+            options:
+              - id: phq-q6-0
+                value: '0'
+                text: Not at all
+                score: 0
+              - id: phq-q6-1
+                value: '1'
+                text: Several days
+                score: 1
+              - id: phq-q6-2
+                value: '2'
+                text: More than half the days
+                score: 2
+              - id: phq-q6-3
+                value: '3'
+                text: Nearly every day
+                score: 3
+          - id: phq-q7
+            fieldType: radio
+            width: full
+            optionLayout: wrap
+            question: 7. Trouble concentrating on things, such as reading the newspaper or watching television
+            required: true
+            options:
+              - id: phq-q7-0
+                value: '0'
+                text: Not at all
+                score: 0
+              - id: phq-q7-1
+                value: '1'
+                text: Several days
+                score: 1
+              - id: phq-q7-2
+                value: '2'
+                text: More than half the days
+                score: 2
+              - id: phq-q7-3
+                value: '3'
+                text: Nearly every day
+                score: 3
+          - id: phq-q8
+            fieldType: radio
+            width: full
+            optionLayout: wrap
+            question: 8. Moving or speaking so slowly that other people could have noticed — or being so fidgety or restless that you have been moving around much more than usual
+            required: true
+            options:
+              - id: phq-q8-0
+                value: '0'
+                text: Not at all
+                score: 0
+              - id: phq-q8-1
+                value: '1'
+                text: Several days
+                score: 1
+              - id: phq-q8-2
+                value: '2'
+                text: More than half the days
+                score: 2
+              - id: phq-q8-3
+                value: '3'
+                text: Nearly every day
+                score: 3
+          - id: phq-q9
+            fieldType: radio
+            width: full
+            optionLayout: wrap
+            question: 9. Thoughts that you would be better off dead, or of hurting yourself in some way
+            required: true
+            options:
+              - id: phq-q9-0
+                value: '0'
+                text: Not at all
+                score: 0
+              - id: phq-q9-1
+                value: '1'
+                text: Several days
+                score: 1
+              - id: phq-q9-2
+                value: '2'
+                text: More than half the days
+                score: 2
+              - id: phq-q9-3
+                value: '3'
+                text: Nearly every day
+                score: 3
+      - id: section-impairment
+        fieldType: section
+        sectionIcon: activity
+        sectionCollapse: expanded
+        title: Functional Impairment
+        fields:
+          - id: phq-impairment
+            fieldType: radio
+            width: full
+            optionLayout: wrap
+            question: If you checked any problem above, how difficult have these problems made it for you to do your work, take care of things at home, or get along with other people?
+            options:
+              - id: phq-imp-none
+                value: not-difficult
+                text: Not difficult at all
+              - id: phq-imp-some
+                value: somewhat
+                text: Somewhat difficult
+              - id: phq-imp-very
+                value: very
+                text: Very difficult
+              - id: phq-imp-extreme
+                value: extremely
+                text: Extremely difficult
+      - id: section-phq-score
+        fieldType: section
+        sectionIcon: clipboardCheck
+        sectionCollapse: expanded
+        title: Score Guide
+        fields:
+          - id: phq-total-score
+            fieldType: text
+            width: third
+            question: Total PHQ-9 score (0–27)
+            inputType: number
+            calculation: "Number(responses['phq-q1'] || 0) + Number(responses['phq-q2'] || 0) + Number(responses['phq-q3'] || 0) + Number(responses['phq-q4'] || 0) + Number(responses['phq-q5'] || 0) + Number(responses['phq-q6'] || 0) + Number(responses['phq-q7'] || 0) + Number(responses['phq-q8'] || 0) + Number(responses['phq-q9'] || 0)"
+          - id: phq-severity
+            fieldType: text
+            width: third
+            question: Calculated severity
+            inputType: string
+            calculation: "(function() { var score = Number(responses['phq-total-score'] || 0); return score >= 20 ? 'Severe' : score >= 15 ? 'Moderately severe' : score >= 10 ? 'Moderate' : score >= 5 ? 'Mild' : 'Minimal'; })()"
+          - id: phq-follow-up
+            fieldType: html
+            width: full
+            htmlContent: '<p><strong>Clinical follow-up:</strong> Scores of 10 or higher commonly warrant further clinical assessment. This demo calculation is informational and does not replace professional judgment.</p>'
+            iframeHeight: 55
+            rules:
+              - effect: visible
+                logic: AND
+                conditions:
+                  - conditionType: expression
+                    expression: '{phq-total-score} >= 10'
+          - id: phq-safety-note
+            fieldType: html
+            width: full
+            htmlContent: "<p><strong>Safety follow-up:</strong> A response above zero on question 9 should be reviewed promptly according to your organization's safety protocol.</p>"
+            iframeHeight: 55
+            rules:
+              - effect: visible
+                logic: AND
+                conditions:
+                  - conditionType: expression
+                    expression: '{phq-q9} > 0'
+          - id: phq-score-display
+            fieldType: html
+            width: full
+            htmlContent: "<table style='font-size:13px;border-collapse:collapse;width:100%'><thead><tr style='background:#f1f5f9'><th style='padding:6px 10px;border:1px solid #cbd5e1;text-align:left'>Total Score</th><th style='padding:6px 10px;border:1px solid #cbd5e1;text-align:left'>Depression Severity</th></tr></thead><tbody><tr><td style='padding:5px 10px;border:1px solid #e2e8f0'>0–4</td><td style='padding:5px 10px;border:1px solid #e2e8f0'>Minimal</td></tr><tr><td style='padding:5px 10px;border:1px solid #e2e8f0'>5–9</td><td style='padding:5px 10px;border:1px solid #e2e8f0'>Mild</td></tr><tr><td style='padding:5px 10px;border:1px solid #e2e8f0'>10–14</td><td style='padding:5px 10px;border:1px solid #e2e8f0'>Moderate</td></tr><tr><td style='padding:5px 10px;border:1px solid #e2e8f0'>15–19</td><td style='padding:5px 10px;border:1px solid #e2e8f0'>Moderately severe</td></tr><tr><td style='padding:5px 10px;border:1px solid #e2e8f0'>20–27</td><td style='padding:5px 10px;border:1px solid #e2e8f0'>Severe</td></tr></tbody></table><p style='font-size:12px;color:#64748b;margin-top:8px'>The total is calculated from the scored responses to questions 1–9. Your clinician will review the results.</p>"
+            iframeHeight: 230

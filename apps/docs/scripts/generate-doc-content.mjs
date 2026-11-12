@@ -2,8 +2,7 @@
  * Generates apps/docs/static/doc-content.json — a flat map of
  * { "<url-path>": "<plain-text content>" } used by the Ozwell search_docs tool.
  *
- * Run manually:  node apps/docs/scripts/generate-doc-content.mjs
- * Or via nx:     nx run app-docs:generate-doc-content
+ * Run manually: pnpm --filter esheet-docs generate-doc-content
  */
 import { readFileSync, writeFileSync, readdirSync, statSync } from 'fs';
 import { join, relative, extname, basename } from 'path';

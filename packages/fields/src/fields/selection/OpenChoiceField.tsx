@@ -5,8 +5,8 @@ import type {
   OpenChoiceFieldDefinition,
   FieldOption,
 } from '@esheet/core';
-import { RadioGroup, Radio } from '@mieweb/ui';
 import { TrashIcon, PlusIcon } from '../../icons.js';
+import { CustomRadioButton } from '../../fields-controls/CustomRadioButton.js';
 
 export const OpenChoiceField = React.memo(function OpenChoiceField({
   field,
@@ -35,6 +35,11 @@ export const OpenChoiceField = React.memo(function OpenChoiceField({
     const otherText =
       selectedId === otherOptionId && selected?.value ? selected.value : '';
     const isWrap = def.optionLayout === 'wrap';
+    const optionContainerClass =
+      isWrap && options.length + 1 > 1
+        ? 'ms:flex ms:flex-wrap ms:gap-2'
+        : 'ms:flex ms:flex-col ms:gap-2';
+    const optionClass = isWrap ? 'ms:min-w-[8rem] ms:flex-[1_1_auto]' : '';
 
     return (
       <div className="openchoice-field-preview ms:space-y-1.5">
@@ -50,101 +55,59 @@ export const OpenChoiceField = React.memo(function OpenChoiceField({
             </span>
           )}
         </div>
-        <RadioGroup
-          value={selectedId ?? ''}
-          onValueChange={(val) => {
-            if (!val) {
-              onResponse({ selected: undefined });
-              return;
-            }
-
-            if (val === otherOptionId) {
-              onResponse({ selected: { id: otherOptionId, value: '' } });
-              return;
-            }
-
-            const opt = options.find((o) => o.id === val);
-            if (opt) {
-              onResponse({ selected: { id: opt.id, value: opt.value } });
-            }
-          }}
-          disabled={!isEnabled}
-          orientation={isWrap ? 'horizontal' : 'vertical'}
-        >
-          <div
-            className={
-              isWrap ? 'ms:flex ms:flex-wrap' : 'ms:flex ms:flex-col ms:gap-1.5'
-            }
-            style={
-              isWrap ? { columnGap: '1rem', rowGap: '0.25rem' } : undefined
-            }
-          >
-            {options.map((option: FieldOption) => (
-              <label
-                key={option.id}
-                htmlFor={`${instanceId}-openchoice-answer-${def.id}-${option.id}`}
-                className={`ms:flex ms:items-center ms:gap-2 ms:rounded ms:transition-colors ms:py-1 ms:px-1 ms:select-none ${
-                  isEnabled
-                    ? 'ms:cursor-pointer ms:hover:bg-msprimary/5'
-                    : 'ms:cursor-not-allowed'
-                }`}
-              >
-                <Radio
-                  id={`${instanceId}-openchoice-answer-${def.id}-${option.id}`}
-                  value={option.id}
-                  onClick={() => {
-                    if (selectedId === option.id) {
-                      onResponse({ selected: undefined });
-                    }
-                  }}
-                />
-                <span className="ms:text-sm ms:text-mstext">
-                  {option.value}
-                </span>
-              </label>
-            ))}
-
-            <label
-              htmlFor={`${instanceId}-openchoice-answer-${def.id}-other`}
-              className={`ms:flex ms:items-center ms:gap-2 ms:rounded ms:transition-colors ms:py-1 ms:px-1 ms:select-none ${
-                isEnabled
-                  ? 'ms:cursor-pointer ms:hover:bg-msprimary/5'
-                  : 'ms:cursor-not-allowed'
-              }`}
+        <div className={optionContainerClass}>
+          {options.map((option: FieldOption) => (
+            <CustomRadioButton
+              key={option.id}
+              id={`${instanceId}-openchoice-answer-${def.id}-${option.id}`}
+              name={`${instanceId}-openchoice-answer-${def.id}`}
+              value={option.id}
+              checked={selectedId === option.id}
+              onSelect={() =>
+                onResponse({
+                  selected: { id: option.id, value: option.value },
+                })
+              }
+              onUnselect={() => onResponse({ selected: undefined })}
+              disabled={!isEnabled}
+              className={optionClass}
             >
-              <Radio
-                id={`${instanceId}-openchoice-answer-${def.id}-other`}
-                value={otherOptionId}
-                onClick={() => {
-                  if (isOtherSelected) {
-                    onResponse({ selected: undefined });
-                  }
-                }}
-              />
-              <span className="ms:text-sm ms:text-mstext">{otherLabel}</span>
-            </label>
-          </div>
-        </RadioGroup>
+              {option.value}
+            </CustomRadioButton>
+          ))}
 
-        <div className="ms:mt-2">
-          <input
-            id={`${instanceId}-openchoice-other-${def.id}`}
-            aria-label={otherLabel}
-            type="text"
-            value={otherText}
-            onChange={(e) => {
-              onResponse({
-                selected: { id: otherOptionId, value: e.target.value },
-              });
-            }}
-            disabled={!isOtherSelected}
-            className={`ms:w-full ms:px-3 ms:py-2 ms:h-9 ms:rounded-lg ms:transition-all ${
-              isOtherSelected
-                ? 'ms:border ms:border-msborder ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary/30 ms:outline-none ms:bg-mssurface ms:text-mstext ms:cursor-text'
-                : 'ms:border ms:border-dashed ms:border-msborder ms:bg-mssurface ms:text-mstextmuted ms:opacity-40 ms:cursor-not-allowed'
-            }`}
-          />
+          <CustomRadioButton
+            id={`${instanceId}-openchoice-answer-${def.id}-other`}
+            name={`${instanceId}-openchoice-answer-${def.id}`}
+            value={otherOptionId}
+            checked={isOtherSelected}
+            onSelect={() =>
+              onResponse({ selected: { id: otherOptionId, value: '' } })
+            }
+            onUnselect={() => onResponse({ selected: undefined })}
+            disabled={!isEnabled}
+            className={optionClass}
+          >
+            {otherLabel}
+          </CustomRadioButton>
         </div>
+
+        {isOtherSelected && (
+          <div className="ms:mt-2">
+            <input
+              id={`${instanceId}-openchoice-other-${def.id}`}
+              aria-label={otherLabel}
+              type="text"
+              value={otherText}
+              onChange={(e) => {
+                onResponse({
+                  selected: { id: otherOptionId, value: e.target.value },
+                });
+              }}
+              className="ms:w-full ms:min-h-[38px] ms:px-3 ms:py-2 ms:text-sm ms:rounded-lg ms:border ms:border-msborder ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary/30 ms:outline-none ms:bg-mssurface ms:text-mstext ms:cursor-text"
+            />
+          </div>
+        )}
       </div>
     );
   }

@@ -1,12 +1,17 @@
 import React from 'react';
 import {
+  SECTION_ICON_GROUPS,
   getFieldTypeMeta,
   type FieldDefinition,
+  type FieldWidth,
   type FieldOption,
   type MatrixColumn,
   type MatrixRow,
   type EditTab,
+  type SectionFieldDefinition,
+  type SectionIconName,
 } from '@esheet/core';
+import { getFieldPropertyEditor } from '@esheet/fields';
 import { useInstanceId } from '../../EsheetBuilder.js';
 import { EditIcon, LogicIcon } from '../../icons.js';
 import { DraftIdEditor } from './DraftIdEditor.js';
@@ -49,6 +54,7 @@ export function EditPanel(_props: EditPanelProps) {
     }
     return node;
   }, [normalized, selectedFieldId, selectedFieldChildId]);
+  const { field_: logicField_ } = useFormApi(logicField?.definition.id);
 
   const activeField = selectedFieldId
     ? normalized.byId[selectedFieldId]
@@ -84,6 +90,11 @@ export function EditPanel(_props: EditPanelProps) {
     patch: Partial<Omit<import('@esheet/core').FieldDefinition, 'fields'>>
   ) => {
     selectedField_.update(patch);
+  };
+  const handleLogicUpdate = (
+    patch: Partial<Omit<import('@esheet/core').FieldDefinition, 'fields'>>
+  ) => {
+    logicField_.update(patch);
   };
 
   const handleRenameId = (newId: string): boolean => {
@@ -157,7 +168,7 @@ export function EditPanel(_props: EditPanelProps) {
                   | 'soft'
                   | undefined,
               }}
-              onUpdateDef={handleUpdate}
+              onUpdateDef={handleLogicUpdate}
             />
           </div>
         ) : null}
@@ -188,6 +199,7 @@ function EditTabContent({
   onRenameId,
 }: EditTabContentProps) {
   const isSection = def.fieldType === 'section';
+  const instanceId = useInstanceId();
 
   if (isSection) {
     return (
@@ -209,7 +221,6 @@ function EditTabContent({
         onUpdate={onUpdate}
         onRenameId={onRenameId}
       />
-
       {/* Divider */}
       {(meta?.hasOptions || meta?.hasMatrix) && (
         <hr className="ms:border-msborder" />
@@ -232,7 +243,41 @@ function EditTabContent({
           columns={(def as { columns?: MatrixColumn[] }).columns ?? []}
         />
       )}
+
+      <FieldSpecificEditor
+        fieldId={fieldId}
+        instanceId={instanceId}
+        def={def}
+        onUpdate={onUpdate}
+      />
     </div>
+  );
+}
+
+function FieldSpecificEditor({
+  fieldId,
+  instanceId,
+  def,
+  onUpdate,
+}: {
+  fieldId: string;
+  instanceId: string;
+  def: Omit<FieldDefinition, 'fields'>;
+  onUpdate: (patch: Partial<Omit<FieldDefinition, 'fields'>>) => void;
+}): React.JSX.Element | null {
+  const PropertyEditor = getFieldPropertyEditor(def.fieldType);
+  if (!PropertyEditor) return null;
+
+  return (
+    <>
+      <hr className="ms:border-msborder" />
+      <PropertyEditor
+        fieldId={fieldId}
+        instanceId={instanceId}
+        def={def}
+        onUpdate={onUpdate}
+      />
+    </>
   );
 }
 
@@ -249,6 +294,67 @@ interface SectionEditContentProps {
   onRenameId: (newId: string) => boolean;
 }
 
+interface SectionWidthEditorProps {
+  fieldId: string;
+  width?: FieldWidth;
+  onUpdate: (patch: Partial<Omit<FieldDefinition, 'fields'>>) => void;
+  showOverride?: boolean;
+  overrideSectionWidth?: boolean;
+}
+
+function SectionWidthEditor({
+  fieldId,
+  width,
+  onUpdate,
+  showOverride = false,
+  overrideSectionWidth = false,
+}: SectionWidthEditorProps) {
+  const instanceId = useInstanceId();
+
+  return (
+    <div>
+      <label
+        htmlFor={`${instanceId}-editor-child-width-${fieldId}`}
+        className="edit-label ms:block ms:text-sm ms:font-medium ms:text-mstext ms:mb-1"
+      >
+        Child row width
+      </label>
+      <select
+        id={`${instanceId}-editor-child-width-${fieldId}`}
+        value={width ?? 'none'}
+        onChange={(e) =>
+          onUpdate({ width: e.currentTarget.value as FieldWidth })
+        }
+        className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
+      >
+        <option value="none">None</option>
+        <option value="full">Full (whole row)</option>
+        <option value="half">Half (2 per row)</option>
+        <option value="third">Third (3 per row)</option>
+      </select>
+      {showOverride && (
+        <label
+          htmlFor={`${instanceId}-editor-override-width-${fieldId}`}
+          className="ms:mt-2 ms:flex ms:items-center ms:gap-2 ms:text-sm ms:text-mstext ms:cursor-pointer"
+        >
+          <input
+            id={`${instanceId}-editor-override-width-${fieldId}`}
+            type="checkbox"
+            checked={overrideSectionWidth}
+            onChange={(e) =>
+              onUpdate({
+                overrideSectionWidth: e.currentTarget.checked || undefined,
+              })
+            }
+            className="ms:h-4 ms:w-4 ms:accent-msprimary"
+          />
+          Override parent width
+        </label>
+      )}
+    </div>
+  );
+}
+
 function SectionEditContent({
   fieldId,
   def,
@@ -256,6 +362,9 @@ function SectionEditContent({
   onRenameId,
 }: SectionEditContentProps) {
   const instanceId = useInstanceId();
+  const sectionCollapse = (
+    def as { sectionCollapse?: SectionFieldDefinition['sectionCollapse'] }
+  ).sectionCollapse;
   const {
     selectedFieldId,
     selectedFieldChildId,
@@ -384,9 +493,7 @@ function SectionEditContent({
         </label>
         <select
           id={`${instanceId}-editor-collapse-${fieldId}`}
-          value={
-            (def as { sectionCollapse?: string }).sectionCollapse ?? 'expanded'
-          }
+          value={sectionCollapse}
           onChange={(e) => {
             const value = e.currentTarget.value;
             onUpdate({
@@ -400,6 +507,44 @@ function SectionEditContent({
           <option value="disabled">Not collapsible (always expanded)</option>
         </select>
       </div>
+
+      {/* Section icon */}
+      <div>
+        <label
+          htmlFor={`${instanceId}-editor-icon-${fieldId}`}
+          className="edit-label ms:block ms:text-sm ms:font-medium ms:text-mstext ms:mb-1"
+        >
+          Section icon
+        </label>
+        <select
+          id={`${instanceId}-editor-icon-${fieldId}`}
+          value={(def as { sectionIcon?: SectionIconName }).sectionIcon ?? ''}
+          onChange={(e) => {
+            const value = e.currentTarget.value as SectionIconName | '';
+            onUpdate({
+              sectionIcon: value || undefined,
+            } as Parameters<typeof onUpdate>[0]);
+          }}
+          className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
+        >
+          <option value="">No icon</option>
+          {SECTION_ICON_GROUPS.map((group) => (
+            <optgroup key={group.label} label={group.label}>
+              {group.icons.map((icon) => (
+                <option key={icon.name} value={icon.name}>
+                  {icon.label}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
+      </div>
+
+      <SectionWidthEditor
+        fieldId={fieldId}
+        width={def.width}
+        onUpdate={onUpdate}
+      />
 
       <div className="ms:space-y-2">
         <div className="ms:flex ms:items-center ms:justify-between ms:gap-2">
@@ -492,6 +637,15 @@ function SectionEditContent({
                   className="ms:w-full ms:min-w-0 ms:px-3 ms:py-2 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:placeholder:text-mstextmuted ms:focus:outline-none ms:focus:ring-1 ms:focus:ring-msprimary ms:focus:border-msprimary ms:transition-colors"
                 />
               </div>
+              <SectionWidthEditor
+                fieldId={activeChildDef.id}
+                width={activeChildDef.width}
+                onUpdate={handleUpdateChild}
+                showOverride
+                overrideSectionWidth={
+                  activeChildDef.overrideSectionWidth === true
+                }
+              />
             </div>
           ) : (
             <CommonEditor
@@ -499,6 +653,7 @@ function SectionEditContent({
               def={activeChildDef}
               onUpdate={handleUpdateChild}
               onRenameId={handleRenameChildId}
+              isNestedChild
             />
           )}
 
@@ -526,6 +681,13 @@ function SectionEditContent({
               }
             />
           )}
+
+          <FieldSpecificEditor
+            fieldId={activeChildDef.id}
+            instanceId={instanceId}
+            def={activeChildDef}
+            onUpdate={handleUpdateChild}
+          />
         </div>
       )}
     </div>

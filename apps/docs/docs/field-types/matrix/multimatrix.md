@@ -15,25 +15,25 @@ Matrix with multiple selected columns per row.
 
 ## Answer Format
 
-```json
-{
-  "selected": {
-    "rowId": [{ "id": "columnId", "value": "Column Label" }]
-  }
-}
+```yaml
+selected:
+  rowId:
+    - id: columnId
+      value: Column Label
 ```
 
 ## Example
 
-```json
-{
-  "id": "symptoms_time",
-  "fieldType": "multimatrix",
-  "question": "When do you experience symptoms?",
-  "rows": [{ "id": "r_head", "value": "Headache" }],
-  "columns": [
-    { "id": "c_morn", "value": "Morning" },
-    { "id": "c_night", "value": "Night" }
-  ]
-}
+```yaml
+id: symptoms_time
+fieldType: multimatrix
+question: When do you experience symptoms?
+rows:
+  - id: r_head
+    value: Headache
+columns:
+  - id: c_morn
+    value: Morning
+  - id: c_night
+    value: Night
 ```

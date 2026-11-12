@@ -1,5 +1,6 @@
 import {
   registerFieldType,
+  getDefaultProp,
   getFieldTypeMeta,
   getRegisteredFieldTypes,
   resetFieldTypeRegistry,
@@ -12,8 +13,8 @@ describe('field type registry', () => {
     resetFieldTypeRegistry();
   });
 
-  it('should have all 22 built-in types registered by default', () => {
-    expect(getRegisteredFieldTypes()).toHaveLength(22);
+  it('should have all 23 built-in types registered by default', () => {
+    expect(getRegisteredFieldTypes()).toHaveLength(23);
     for (const ft of FIELD_TYPES) {
       expect(getFieldTypeMeta(ft)).toBeDefined();
     }
@@ -35,7 +36,7 @@ describe('field type registry', () => {
 
     expect(getFieldTypeMeta('vitals')).toBeDefined();
     expect(getFieldTypeMeta('vitals')!.label).toBe('Vitals Field');
-    expect(getRegisteredFieldTypes()).toHaveLength(23);
+    expect(getRegisteredFieldTypes()).toHaveLength(24);
   });
 
   it('should allow overriding a built-in field type', () => {
@@ -49,7 +50,7 @@ describe('field type registry', () => {
     });
 
     expect(getFieldTypeMeta('text')!.label).toBe('Custom Text');
-    expect(getRegisteredFieldTypes()).toHaveLength(22);
+    expect(getRegisteredFieldTypes()).toHaveLength(23);
   });
 
   it('should reset to defaults', () => {
@@ -61,10 +62,10 @@ describe('field type registry', () => {
       hasMatrix: false,
       defaultProps: {},
     });
-    expect(getRegisteredFieldTypes()).toHaveLength(23);
+    expect(getRegisteredFieldTypes()).toHaveLength(24);
 
     resetFieldTypeRegistry();
-    expect(getRegisteredFieldTypes()).toHaveLength(22);
+    expect(getRegisteredFieldTypes()).toHaveLength(23);
     expect(getFieldTypeMeta('custom')).toBeUndefined();
   });
 
@@ -98,6 +99,61 @@ describe('field type registry', () => {
     // Non-option fields should not have defaultOptionCount
     const text = getFieldTypeMeta('text')!;
     expect(text.defaultOptionCount).toBeUndefined();
+  });
+
+  it('should define the default layout for built-in field types', () => {
+    const thirdWidthTypes = [
+      'text',
+      'longtext',
+      'multitext',
+      'radio',
+      'check',
+      'boolean',
+      'dropdown',
+      'multiselectdropdown',
+      'openchoice',
+      'rating',
+      'ranking',
+      'slider',
+    ];
+    for (const fieldType of thirdWidthTypes) {
+      expect(getFieldTypeMeta(fieldType)?.defaultProps.width).toBe('third');
+    }
+
+    for (const fieldType of ['multitext', 'radio', 'check', 'openchoice']) {
+      expect(getFieldTypeMeta(fieldType)?.defaultProps.optionLayout).toBe(
+        'wrap'
+      );
+    }
+
+    for (const fieldType of [
+      'singlematrix',
+      'multimatrix',
+      'image',
+      'html',
+      'signature',
+      'diagram',
+      'file',
+      'display',
+      'pages',
+    ]) {
+      expect(getFieldTypeMeta(fieldType)?.defaultProps.width).toBe('full');
+    }
+
+    expect(getFieldTypeMeta('section')?.defaultProps.width).toBe('none');
+  });
+
+  it('should resolve option layout defaults from field metadata', () => {
+    expect(getDefaultProp('radio', 'optionLayout')).toBe('wrap');
+    expect(getDefaultProp('check', 'optionLayout')).toBe('wrap');
+    expect(getDefaultProp('signature', 'optionLayout')).toBeUndefined();
+    expect(getDefaultProp('unknown', 'optionLayout')).toBeUndefined();
+  });
+
+  it('should resolve any default property from field metadata', () => {
+    expect(getDefaultProp('text', 'inputType')).toBe('string');
+    expect(getDefaultProp('text', 'width')).toBe('third');
+    expect(getDefaultProp('signature', 'width')).toBe('full');
   });
 
   it('should batch-register element classes via registerFieldElements', () => {

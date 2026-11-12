@@ -1,6 +1,4 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore — generated CSS asset, no type declarations needed
-import './index.output.css';
+import '@esheet/styles';
 
 // Re-export UIStore from core for backward compat
 export {
@@ -25,6 +23,7 @@ export {
   type BuilderTools,
   type FieldSummary,
 } from './lib/EsheetBuilder.js';
+export type { FieldProvider } from '@esheet/fields';
 
 export {
   FieldWrapper,

@@ -2,47 +2,19 @@
 import { defineConfig, type LibraryFormats } from 'vite';
 import react from '@vitejs/plugin-react';
 import dts from 'vite-plugin-dts';
-import { resolve } from 'path';
-import { readFileSync, writeFileSync, existsSync, unlinkSync } from 'fs';
+import { dirname, resolve } from 'path';
+import { createRequire } from 'node:module';
 
-// ---------------------------------------------------------------------------
-// Inline-CSS plugin (production build only)
-// ---------------------------------------------------------------------------
-function inlineCssFields(): import('vite').Plugin {
-  return {
-    name: 'inline-css-fields',
-    apply: 'build',
-    closeBundle() {
-      const dir = resolve(import.meta.dirname, 'dist');
-      const cssPath = resolve(dir, 'index.css');
-      const jsPath = resolve(dir, 'index.js');
-      if (!existsSync(cssPath) || !existsSync(jsPath)) return;
-      const cssContent = readFileSync(cssPath, 'utf-8');
-      const jsContent = readFileSync(jsPath, 'utf-8');
-      const iife =
-        `(function(){` +
-        `if(typeof document==='undefined')return;` +
-        `if(window.__ESHEET_FIELDS_CSS_INJECTED)return;` +
-        `if(!document.querySelector('#esheet-fields-styles')){` +
-        `var s=document.createElement('style');` +
-        `s.id='esheet-fields-styles';` +
-        `s.textContent=${JSON.stringify(cssContent)};` +
-        `document.head.appendChild(s);}` +
-        `window.__ESHEET_FIELDS_CSS_INJECTED=true;` +
-        `})();\n`;
-      writeFileSync(jsPath, iife + jsContent);
-      unlinkSync(cssPath);
-    },
-  };
-}
+const require = createRequire(import.meta.url);
+const reactDir = dirname(require.resolve('react/package.json'));
+const reactDomDir = dirname(require.resolve('react-dom/package.json'));
 
 export default defineConfig(() => ({
   root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/packages/fields',
   plugins: [
     react(),
-    dts({ tsconfigPath: './tsconfig.lib.json', rollupTypes: true }),
-    inlineCssFields(),
+    dts({ tsconfigPath: './tsconfig.lib.json', bundleTypes: true }),
   ],
   build: {
     lib: {
@@ -51,12 +23,13 @@ export default defineConfig(() => ({
       fileName: 'index',
       formats: ['es'] as LibraryFormats[],
     },
-    rollupOptions: {
+    rolldownOptions: {
       external: [
         'react',
         'react-dom',
         'react/jsx-runtime',
         '@esheet/core',
+        '@esheet/styles',
         'tslib',
       ],
     },
@@ -71,6 +44,12 @@ export default defineConfig(() => ({
     environment: 'jsdom',
     include: ['{src,tests}/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
+    alias: [
+      { find: /^react$/, replacement: reactDir },
+      { find: /^react\/(.*)$/, replacement: `${reactDir}/$1` },
+      { find: /^react-dom$/, replacement: reactDomDir },
+      { find: /^react-dom\/(.*)$/, replacement: `${reactDomDir}/$1` },
+    ],
     coverage: {
       reportsDirectory: './test-output/vitest/coverage',
       provider: 'v8' as const,

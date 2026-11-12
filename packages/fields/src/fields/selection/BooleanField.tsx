@@ -18,13 +18,14 @@ export const BooleanField = React.memo(function BooleanField({
 }: FieldComponentProps) {
   const def = field.definition as BooleanFieldDefinition;
   const instanceId = form.getState().instanceId;
-  const options =
+  const configuredOptions =
     def.options && def.options.length === 2
       ? def.options
       : [
           { id: 'yes', value: 'Yes' },
           { id: 'no', value: 'No' },
         ];
+  const options = isPreview && def.options ? def.options : configuredOptions;
   const selectedId =
     (response?.selected as SelectedOption | undefined)?.id ?? null;
 
@@ -53,7 +54,7 @@ export const BooleanField = React.memo(function BooleanField({
                 id={`${instanceId}-boolean-answer-${def.id}-${option.id}`}
                 type="button"
                 disabled={!isEnabled}
-                className={`ms:flex-1 ms:px-3 ms:py-2 ms:rounded-lg ms:text-sm ms:font-medium ms:transition-colors ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:disabled:opacity-50 ms:disabled:cursor-not-allowed ${
+                className={`ms:flex ms:min-h-[38px] ms:flex-1 ms:items-center ms:justify-start ms:px-3 ms:py-2 ms:rounded-lg ms:text-sm ms:font-medium ms:transition-colors ms:outline-none ms:focus:outline-none ms:cursor-pointer ms:disabled:opacity-50 ms:disabled:cursor-not-allowed ${
                   isSelected
                     ? 'ms:bg-msprimary ms:text-mstextsecondary ms:border ms:border-msprimary ms:shadow-sm'
                     : 'ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:hover:bg-msprimary/15 ms:hover:border-msprimary/50'

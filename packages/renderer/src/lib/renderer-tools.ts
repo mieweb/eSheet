@@ -2,12 +2,7 @@
 // RendererTools — narrow facade for MCP / AI tool callers only.
 // ---------------------------------------------------------------------------
 
-import {
-  validateForm,
-  type FieldResponse,
-  type FormStore,
-  type ValidationError,
-} from '@esheet/core';
+import type { FieldResponse, FormStore, ValidationError } from '@esheet/core';
 import { buildRenderTree as renderer } from '@esheet/core';
 import type { RenderFieldNode } from '@esheet/core';
 
@@ -57,8 +52,8 @@ export interface RendererTools {
   };
   /** Set a response value for one visible field. Returns true on success, false if field not found/visible, or an error string if the value format is invalid. */
   fillField: (fieldId: string, value: unknown) => boolean | string;
-  /** Clear all responses. */
-  clearResponses: () => void;
+  /** Clear all responses. Returns true on success or an error string. */
+  clearResponses: () => boolean | string;
   /** Full render tree with visibility/enabled/required per field. */
   getFormTree: () => RenderFieldNode[];
   /** Find a field ID by exact ID or partial question match. */
@@ -74,7 +69,7 @@ const NON_INPUT = new Set(['section', 'html', 'display', 'image', 'diagram']);
 function flattenVisible(nodes: RenderFieldNode[]): RenderFieldNode[] {
   const result: RenderFieldNode[] = [];
   for (const node of nodes) {
-    if (!node.visible) continue;
+    if (!node.visible || !node.enabled) continue;
     if (node.children.length > 0) {
       result.push(...flattenVisible(node.children));
     } else if (!NON_INPUT.has(node.definition.fieldType as string)) {
@@ -102,12 +97,13 @@ export function createRendererTools(formStore: FormStore): RendererTools {
   }
 
   function getCurrentRenderTree(): RenderFieldNode[] {
-    const { formId, responses } = formStore.getState();
+    const { formId, responses, dangerouslyAllowJS } = formStore.getState();
     const definition = formStore.getState().hydrateDefinition();
     if (!definition) return [];
     return renderer(
       { ...definition, id: formId } as Parameters<typeof renderer>[0],
-      responses as Parameters<typeof renderer>[1]
+      responses as Parameters<typeof renderer>[1],
+      { allowDangerousJS: dangerouslyAllowJS }
     );
   }
 
@@ -129,7 +125,8 @@ export function createRendererTools(formStore: FormStore): RendererTools {
       rows?: { id: string; value: string }[];
       columns?: { id: string; value: string }[];
     },
-    required?: boolean
+    required?: boolean,
+    filterVisibleOptions = false
   ): RendererFieldSummary {
     const response = formStore.getState().responses[id];
     const hasValue =
@@ -155,8 +152,11 @@ export function createRendererTools(formStore: FormStore): RendererTools {
     if (def.inputType) summary.inputType = def.inputType;
     if (def.inputType && INPUT_TYPE_FORMAT[def.inputType])
       summary.valueFormat = INPUT_TYPE_FORMAT[def.inputType];
-    if (def.options && def.options.length > 0)
-      summary.options = def.options.map((o) => o.value);
+    const options = filterVisibleOptions
+      ? formStore.getState().getVisibleOptions(id)
+      : def.options;
+    if (options && options.length > 0)
+      summary.options = options.map((o) => o.value);
     if (def.rows && def.rows.length > 0)
       summary.rows = def.rows.map((r) => r.value);
     if (def.columns && def.columns.length > 0)
@@ -303,8 +303,8 @@ export function createRendererTools(formStore: FormStore): RendererTools {
         def.fieldType
       )
     ) {
-      const opts = def.options ?? [];
-      const match = opts.find(
+      const options = formStore.getState().getVisibleOptions(fieldId);
+      const match = options.find(
         (o) =>
           o.value.toLowerCase() === String(value).toLowerCase() ||
           o.id === value
@@ -312,7 +312,9 @@ export function createRendererTools(formStore: FormStore): RendererTools {
       // For slider/rating, also try matching by numeric index or option value as number
       const numVal = Number(value);
       const numMatch =
-        !match && !isNaN(numVal) ? opts[numVal - 1] ?? opts[numVal] : undefined;
+        !match && !isNaN(numVal)
+          ? options[numVal - 1] ?? options[numVal]
+          : undefined;
       const resolved = match ?? numMatch;
       response = resolved
         ? { selected: { id: resolved.id, value: resolved.value } }
@@ -321,9 +323,9 @@ export function createRendererTools(formStore: FormStore): RendererTools {
       def.fieldType === 'check' ||
       def.fieldType === 'multiselectdropdown'
     ) {
-      const opts = def.options ?? [];
+      const options = formStore.getState().getVisibleOptions(fieldId);
       const vals = Array.isArray(value) ? (value as unknown[]) : [value];
-      const matches = opts.filter((o) =>
+      const matches = options.filter((o) =>
         vals.some(
           (v) => o.value.toLowerCase() === String(v).toLowerCase() || o.id === v
         )
@@ -333,11 +335,11 @@ export function createRendererTools(formStore: FormStore): RendererTools {
       };
     } else if (def.fieldType === 'ranking') {
       // ranking: { selected: SelectedOption[] } in the user-specified order
-      const opts = def.options ?? [];
+      const options = formStore.getState().getVisibleOptions(fieldId);
       const vals = Array.isArray(value) ? (value as unknown[]) : [value];
       const ordered = vals
         .map((v) =>
-          opts.find(
+          options.find(
             (o) =>
               o.value.toLowerCase() === String(v).toLowerCase() || o.id === v
           )
@@ -345,18 +347,21 @@ export function createRendererTools(formStore: FormStore): RendererTools {
         .filter((o): o is { id: string; value: string } => o != null);
       // append any options not mentioned by the user at the end
       const mentioned = new Set(ordered.map((o) => o.id));
-      const remaining = opts.filter((o) => !mentioned.has(o.id));
+      const remaining = options.filter((o) => !mentioned.has(o.id));
       response = { selected: [...ordered, ...remaining] };
     } else if (def.fieldType === 'multitext') {
       // multitext: { multitextAnswers: Record<optionId, string> }
-      const opts = def.options ?? [];
-      const vals = Array.isArray(value)
-        ? (value as unknown[])
-        : typeof value === 'object' && value !== null
-        ? Object.values(value as Record<string, unknown>)
-        : [value];
+      const options = formStore.getState().getVisibleOptions(fieldId);
+      let vals: unknown[];
+      if (Array.isArray(value)) {
+        vals = value;
+      } else if (value !== null && typeof value === 'object') {
+        vals = Object.values(value as Record<string, unknown>);
+      } else {
+        vals = [value];
+      }
       const multitextAnswers: Record<string, string> = {};
-      opts.forEach((opt, i) => {
+      options.forEach((opt, i) => {
         if (vals[i] != null) multitextAnswers[opt.id] = String(vals[i]);
       });
       response = { multitextAnswers };
@@ -364,8 +369,11 @@ export function createRendererTools(formStore: FormStore): RendererTools {
       if (value == null) {
         response = { answer: undefined };
       } else {
-        const normalized = normalizeTextValue(String(value), def.inputType);
-        if (normalized === null) {
+        const normalizedValue = normalizeTextValue(
+          String(value),
+          def.inputType
+        );
+        if (normalizedValue === null) {
           const fmt: Record<string, string> = {
             date: 'YYYY-MM-DD',
             'datetime-local': 'YYYY-MM-DDTHH:mm',
@@ -374,16 +382,10 @@ export function createRendererTools(formStore: FormStore): RendererTools {
           };
           const expected = fmt[def.inputType ?? ''];
           return expected
-            ? `Error: invalid value for inputType "${
-                def.inputType
-              }" — expected format ${expected} (e.g. ${new Date()
-                .toISOString()
-                .slice(0, expected.length)
-                .replace('T', 'T')
-                .replace(/[^\dT:-]/g, '0')})`
+            ? `Error: invalid value for inputType "${def.inputType}" — expected format ${expected}`
             : `Error: invalid value for field`;
         }
-        response = { answer: normalized };
+        response = { answer: normalizedValue };
       }
     }
     formStore.getState().setResponse(fieldId, response);
@@ -407,7 +409,8 @@ export function createRendererTools(formStore: FormStore): RendererTools {
         toFieldSummary(
           node.id,
           node.definition as unknown as FieldDef,
-          node.required
+          node.required,
+          true
         )
       );
       return { formId, fieldCount: fields.length, fields };
@@ -445,7 +448,7 @@ export function createRendererTools(formStore: FormStore): RendererTools {
 
     getValidResponse: () => {
       const state = formStore.getState();
-      const errors = validateForm(state.normalized, state.responses);
+      const errors = state.getErrors();
       return {
         response:
           errors.length === 0
@@ -455,10 +458,21 @@ export function createRendererTools(formStore: FormStore): RendererTools {
       };
     },
 
-    fillField: (fieldId, value) =>
-      applyFieldValue(fieldId, value, true) as boolean | string,
+    fillField: (fieldId, value) => {
+      const state = formStore.getState();
+      if (state.readOnly) return 'Error: form is read-only';
+      const resolved = resolveFieldId(fieldId);
+      if (resolved && state.isReadOnly(resolved))
+        return 'Error: field is read-only';
+      return applyFieldValue(fieldId, value, true) as boolean | string;
+    },
 
-    clearResponses: () => formStore.getState().resetResponses(),
+    clearResponses: () => {
+      const state = formStore.getState();
+      if (state.readOnly) return 'Error: form is read-only';
+      state.resetResponses();
+      return true;
+    },
 
     getFormTree: () => getCurrentRenderTree(),
 

@@ -5,14 +5,7 @@
     "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo",
     "jsx": "react-jsx",
     "lib": ["dom"],
-    "types": [
-      "node",
-      "react",
-      "react-dom",
-      "@nx/react/typings/cssmodule.d.ts",
-      "@nx/react/typings/image.d.ts",
-      "vite/client"
-    ],
+    "types": ["node", "react", "react-dom", "vite/client"],
     "rootDir": "src",
     "module": "esnext",
     "moduleResolution": "bundler",
@@ -21,6 +14,9 @@
       "@esheet/builder": ["../../packages/builder/src/index.ts"],
       "@esheet/renderer": ["../../packages/renderer/src/index.ts"],
       "@esheet/core": ["../../packages/core/src/index.ts"],
+      "@esheet/fields-documents": [
+        "../../packages/fields-documents/src/index.ts"
+      ],
       "@esheet/fields": ["../../packages/fields/src/index.ts"],
       "@esheet/adapters": ["../../packages/adapters/src/index.ts"]
     }
@@ -50,6 +46,12 @@
     },
     {
       "path": "../../packages/field-kerebron/tsconfig.lib.json"
+    },
+    {
+      "path": "../../packages/field-health/tsconfig.lib.json"
+    },
+    {
+      "path": "../../packages/fields-documents/tsconfig.lib.json"
     },
     {
       "path": "../../packages/core/tsconfig.lib.json"

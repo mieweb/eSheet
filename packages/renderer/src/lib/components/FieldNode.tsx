@@ -6,7 +6,9 @@ import type {
   FormStore,
   UIStore,
 } from '@esheet/core';
+import { getFieldForRender, getInheritedSectionWidth } from '@esheet/core';
 import { FieldGrid, FieldGridItem, getFieldComponent } from '@esheet/fields';
+import { READ_ONLY_INERT_FIELD_TYPES } from '../register-defaults.js';
 
 export interface FieldNodeProps {
   id: string;
@@ -48,6 +50,13 @@ export const FieldNode = React.memo(function FieldNode({
     (cb) => form.subscribe(cb),
     () => form.getState().responses,
     () => form.getState().responses
+  );
+
+  // The form-level freeze must re-render fields when it flips.
+  const formReadOnly = React.useSyncExternalStore(
+    (cb) => form.subscribe(cb),
+    () => form.getState().readOnly,
+    () => form.getState().readOnly
   );
 
   // Get visible children for sections and pages
@@ -107,7 +116,7 @@ export const FieldNode = React.memo(function FieldNode({
     return (
       <FieldGrid
         className={containerClass}
-        stackedClassName="ms:space-y-2"
+        stackedClassName="ms:space-y-2 ms:lg:space-y-3"
         data-depth={depth}
       >
         {visibleChildIds.map((childId) => (
@@ -186,13 +195,16 @@ export const FieldNode = React.memo(function FieldNode({
   const isEnabled = form.getState().isEnabled(field.definition.id);
   const isRequired = form.getState().isRequired(field.definition.id);
   const isSoftRequired = form.getState().isSoftRequired(field.definition.id);
-  const isReadOnly = form.getState().isReadOnly(field.definition.id);
+  const isReadOnly =
+    formReadOnly || form.getState().isReadOnly(field.definition.id);
   const response = form.getState().getResponse(field.definition.id);
 
   if (!isVisible) return null;
 
+  const renderField = getFieldForRender(field, form, true);
+
   const props: FieldComponentProps = {
-    field,
+    field: renderField,
     form,
     ui,
     isSelected: false,
@@ -204,8 +216,11 @@ export const FieldNode = React.memo(function FieldNode({
     response,
     onRemove: () => undefined, // No-op in renderer
     onUpdate: () => undefined, // No-op in renderer
-    onResponse: (value) =>
-      form.getState().setResponse(field.definition.id, value),
+    onResponse: (value) => {
+      // Frozen forms drop user edits at the door — built-in fields need no readOnly wiring.
+      if (form.getState().isReadOnly(field.definition.id)) return;
+      form.getState().setResponse(field.definition.id, value);
+    },
   };
 
   const parentNode = field.parentId
@@ -213,8 +228,15 @@ export const FieldNode = React.memo(function FieldNode({
     : null;
   const isChildOfSection = parentNode?.definition.fieldType === 'section';
 
-  const wrapperClass = `field-wrapper${isChildOfSection ? ' ms:py-1' : ''}${
-    !isEnabled ? ' ms:opacity-50 ms:pointer-events-none' : ''
+  // Positioned so the absolutely placed presence dots land on the field.
+  // Read-only is not disabled: no dimming, and only built-in answer inputs go
+  // inert — custom fields keep their read affordances and gate writes themselves.
+  const isInertReadOnly =
+    isReadOnly && READ_ONLY_INERT_FIELD_TYPES.has(field.definition.fieldType);
+  const wrapperClass = `field-wrapper ms:relative${
+    isChildOfSection ? ' ms:py-1' : ''
+  }${!isEnabled ? ' ms:opacity-50 ms:pointer-events-none' : ''}${
+    isEnabled && isInertReadOnly ? ' ms:pointer-events-none' : ''
   }`;
 
   const fieldLabel = field.definition.question || field.definition.id;
@@ -223,6 +245,7 @@ export const FieldNode = React.memo(function FieldNode({
     <FieldGridItem
       fieldType={field.definition.fieldType}
       width={field.definition.width}
+      inheritedWidth={getInheritedSectionWidth(normalized, field.definition.id)}
     >
       <div
         ref={wrapperRef}
@@ -230,6 +253,7 @@ export const FieldNode = React.memo(function FieldNode({
         data-field-type={field.definition.fieldType}
         data-field-id={field.definition.id}
         aria-disabled={!isEnabled || undefined}
+        aria-readonly={isReadOnly || undefined}
       >
         {presence.length > 0 && (
           <div
@@ -237,12 +261,18 @@ export const FieldNode = React.memo(function FieldNode({
             role="img"
             aria-label={presence.map((peer) => peer.name).join(', ')}
           >
-            {presence.map((peer) => (
+            {presence.map((peer, index) => (
+              // Two windows of one person share a name, so the name is no key.
               <span
-                key={peer.name}
+                key={`${peer.name}-${index}`}
                 title={peer.name}
-                className="ms:inline-block ms:w-2.5 ms:h-2.5 ms:rounded-full ms:border ms:border-mssurface"
-                style={{ backgroundColor: peer.color }}
+                className="ms:inline-block ms:rounded-full ms:border ms:border-mssurface"
+                // Sized inline: a host may load only the fields stylesheet.
+                style={{
+                  backgroundColor: peer.color,
+                  width: '0.625rem',
+                  height: '0.625rem',
+                }}
               />
             ))}
           </div>

@@ -1,6 +1,11 @@
 import type { TextInputType } from '@esheet/core';
 import { useInstanceId } from '../../EsheetBuilder.js';
 
+type RelativeDateRange = {
+  amount: number;
+  unit: 'days' | 'months' | 'years';
+};
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -33,7 +38,14 @@ export interface InputTypeEditorProps {
   fieldId: string;
   inputType: TextInputType;
   unit?: string;
-  onChange: (patch: { inputType?: TextInputType; unit?: string }) => void;
+  dateRange?: RelativeDateRange;
+  timeFormat?: '12-hour' | '24-hour';
+  onChange: (patch: {
+    inputType?: TextInputType;
+    unit?: string;
+    dateRange?: RelativeDateRange;
+    timeFormat?: '12-hour' | '24-hour';
+  }) => void;
 }
 
 /**
@@ -44,10 +56,14 @@ export function InputTypeEditor({
   fieldId,
   inputType,
   unit,
+  dateRange,
+  timeFormat,
   onChange,
 }: InputTypeEditorProps) {
   const instanceId = useInstanceId();
   const showUnit = inputType === 'number';
+  const showDateRange = inputType === 'date' || inputType === 'datetime-local';
+  const showTimeFormat = inputType === 'datetime-local';
 
   return (
     <div className="input-type-editor ms:space-y-2">
@@ -105,6 +121,100 @@ export function InputTypeEditor({
           </select>
         </div>
       )}
+
+      {showDateRange && (
+        <div className="ms:space-y-2">
+          <RelativeDateRangeEditor
+            fieldId={fieldId}
+            instanceId={instanceId}
+            value={dateRange}
+            onChange={(value) => onChange({ dateRange: value })}
+          />
+        </div>
+      )}
+
+      {showTimeFormat && (
+        <div>
+          <label
+            htmlFor={`${instanceId}-editor-timeformat-${fieldId}`}
+            className="edit-label ms:block ms:text-xs ms:font-medium ms:text-mstextmuted ms:mb-1"
+          >
+            Time format
+          </label>
+          <select
+            id={`${instanceId}-editor-timeformat-${fieldId}`}
+            value={timeFormat ?? '24-hour'}
+            onChange={(e) =>
+              onChange({
+                timeFormat: e.currentTarget.value as '12-hour' | '24-hour',
+              })
+            }
+            className="ms:w-full ms:min-w-0 ms:px-2 ms:py-1 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-2 ms:focus:ring-msprimary ms:focus:border-msprimary"
+          >
+            <option value="24-hour">24-hour</option>
+            <option value="12-hour">12-hour</option>
+          </select>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RelativeDateRangeEditor({
+  fieldId,
+  instanceId,
+  value,
+  onChange,
+}: {
+  fieldId: string;
+  instanceId: string;
+  value?: RelativeDateRange;
+  onChange: (value: RelativeDateRange) => void;
+}) {
+  const amountId = `${instanceId}-editor-daterange-amount-${fieldId}`;
+  const unitId = `${instanceId}-editor-daterange-unit-${fieldId}`;
+  const offset = value ?? { amount: 0, unit: 'years' as const };
+
+  return (
+    <div>
+      <label
+        htmlFor={amountId}
+        className="edit-label ms:block ms:text-xs ms:font-medium ms:text-mstextmuted ms:mb-1"
+      >
+        Date range around today
+      </label>
+      <div className="ms:grid ms:grid-cols-2 ms:gap-2">
+        <input
+          id={amountId}
+          aria-label="Date range amount"
+          type="number"
+          min="0"
+          value={offset.amount}
+          onChange={(e) =>
+            onChange({
+              ...offset,
+              amount: Math.max(0, Number(e.currentTarget.value) || 0),
+            })
+          }
+          className="ms:min-w-0 ms:px-2 ms:py-1 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-2 ms:focus:ring-msprimary ms:focus:border-msprimary"
+        />
+        <select
+          id={unitId}
+          aria-label="Date range unit"
+          value={offset.unit}
+          onChange={(e) =>
+            onChange({
+              ...offset,
+              unit: e.currentTarget.value as RelativeDateRange['unit'],
+            })
+          }
+          className="ms:min-w-0 ms:px-2 ms:py-1 ms:text-sm ms:bg-mssurface ms:border ms:border-msborder ms:rounded ms:text-mstext ms:focus:outline-none ms:focus:ring-2 ms:focus:ring-msprimary ms:focus:border-msprimary"
+        >
+          <option value="days">Days</option>
+          <option value="months">Months</option>
+          <option value="years">Years</option>
+        </select>
+      </div>
     </div>
   );
 }

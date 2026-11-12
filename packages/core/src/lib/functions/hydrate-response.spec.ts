@@ -107,6 +107,24 @@ describe('hydrateResponse', () => {
     expect(result.items[0].answer).toEqual(selected);
   });
 
+  it('includes captured attributes alongside the answer', () => {
+    const fields = [mkField({ id: 'f1', fieldType: 'radio' })];
+    const selected = { id: 'opt_1', value: 'Toledo' };
+    const attributes = { city: 'Toledo', zip: '43604' };
+    const result = hydrate(fields, { f1: { selected, attributes } });
+    expect(result.items[0].attributes).toEqual(attributes);
+  });
+
+  it('omits attributes when empty or unanswered', () => {
+    const fields = [mkField({ id: 'f1', fieldType: 'radio' })];
+    const withEmpty = hydrate(fields, {
+      f1: { selected: { id: 'a', value: 'A' }, attributes: {} },
+    });
+    expect(withEmpty.items[0].attributes).toBeUndefined();
+    const unanswered = hydrate(fields, { f1: { attributes: { x: 'y' } } });
+    expect(unanswered.items[0].attributes).toBeUndefined();
+  });
+
   it('extracts selected array for multiselection fields', () => {
     const fields = [mkField({ id: 'f1', fieldType: 'check' })];
     const selected = [

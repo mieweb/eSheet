@@ -6,6 +6,10 @@ sidebar_position: 20
 
 Quick reference of all public exports from each eSheet package.
 
+## Form definition serialization
+
+`FormDefinition` is the same parsed model regardless of serialization. Use **YAML as the canonical on-disk format** for committed layouts (`*.esheet.yaml`); it is the builder's default export and is easier to review and annotate. Use **JSON for wire/API payloads** and other machine-to-machine interchange (`*.esheet.json`). The builder and renderer accept both formats, including existing `.esheet.json` layouts.
+
 ## @esheet/core
 
 ### Types
@@ -210,12 +214,12 @@ All 19 field components: `TextField`, `LongTextField`, `MultiTextField`, `RadioF
 
 ### Components
 
-| Export          | Description                         |
-| --------------- | ----------------------------------- |
-| `EsheetBuilder` | Main builder component              |
-| `BuilderHeader` | Mode switcher header (advanced)     |
-| `CodeView`      | JSON/YAML editor (advanced)         |
-| `FieldWrapper`  | Selection chrome wrapper (advanced) |
+| Export          | Description                            |
+| --------------- | -------------------------------------- |
+| `EsheetBuilder` | Main builder component                 |
+| `BuilderHeader` | Mode switcher header (advanced)        |
+| `CodeView`      | YAML-first JSON/YAML editor (advanced) |
+| `FieldWrapper`  | Selection chrome wrapper (advanced)    |
 
 ### Hooks & Context
 
@@ -299,17 +303,17 @@ All 19 field components: `TextField`, `LongTextField`, `MultiTextField`, `RadioF
 
 ### EsheetRendererProps
 
-| Prop                   | Type                             | Default    | Description                                                             |
-| ---------------------- | -------------------------------- | ---------- | ----------------------------------------------------------------------- |
-| `formDataInput`        | `unknown`                        | _required_ | Form definition (object, JSON string, YAML string, FHIR, MCP, SurveyJS) |
-| `className`            | `string`                         | `''`       | Additional CSS class for the root container                             |
-| `initialResponses`     | `FormResponse`                   | --         | Pre-fill response data                                                  |
-| `allowDangerousJS`     | `boolean`                        | `false`    | Opt-in to allow JS calculations and `conditionType: 'js'`               |
-| `strict`               | `boolean`                        | `false`    | Disable auto-detection, require a valid FormDefinition                  |
-| `onReady`              | `() => void`                     | --         | Called when the renderer is initialized                                 |
-| `onRendererToolsReady` | `(tools: RendererTools) => void` | --         | Called with MCP tool handler when ready                                 |
-| `touchMode`            | `boolean \| 'auto'`              | --         | Touch mode: `true`, `false`, `'auto'`, or omit for CSS-only             |
-| `onTouchModeChange`    | `(enabled: boolean) => void`     | --         | Callback when touch mode changes                                        |
+| Prop                   | Type                             | Default    | Description                                                                                              |
+| ---------------------- | -------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------- |
+| `formDataInput`        | `unknown`                        | _required_ | Form definition (object, YAML/JSON string, FHIR, MCP, SurveyJS); YAML is canonical for committed layouts |
+| `className`            | `string`                         | `''`       | Additional CSS class for the root container                                                              |
+| `initialResponses`     | `FormResponse`                   | --         | Pre-fill response data                                                                                   |
+| `allowDangerousJS`     | `boolean`                        | `false`    | Opt-in to allow JS calculations and `conditionType: 'js'`                                                |
+| `strict`               | `boolean`                        | `false`    | Disable auto-detection, require a valid FormDefinition                                                   |
+| `onReady`              | `() => void`                     | --         | Called when the renderer is initialized                                                                  |
+| `onRendererToolsReady` | `(tools: RendererTools) => void` | --         | Called with MCP tool handler when ready                                                                  |
+| `touchMode`            | `boolean \| 'auto'`              | --         | Touch mode: `true`, `false`, `'auto'`, or omit for CSS-only                                              |
+| `onTouchModeChange`    | `(enabled: boolean) => void`     | --         | Callback when touch mode changes                                                                         |
 
 ---
 

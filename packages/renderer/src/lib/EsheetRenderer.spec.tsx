@@ -1,7 +1,11 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { render, act, cleanup } from '@testing-library/react';
+import { render, act, cleanup, waitFor } from '@testing-library/react';
+import { fireEvent } from '@testing-library/react';
 import { EsheetRenderer, type EsheetRendererHandle } from './EsheetRenderer.js';
+import type { RendererTools } from './renderer-tools.js';
+import { executeToolCall } from './mcp/tool-executor.js';
+import type { FormResponse } from '@esheet/core';
 
 const mockImportPdf = vi.hoisted(() => vi.fn());
 const mockGetDocument = vi.hoisted(() => vi.fn());
@@ -35,6 +39,436 @@ function getRendererHandle(ref: React.RefObject<EsheetRendererHandle | null>) {
 }
 
 describe('EsheetRenderer', () => {
+  describe('PDF representation', () => {
+    const pdfSource = new Uint8Array([37, 80, 68, 70]);
+    const mappings = [
+      {
+        esheetFieldId: 'name',
+        pdfFieldName: 'Name',
+        kind: 'text',
+        page: 0,
+        rect: [72, 500, 220, 28],
+      },
+    ];
+
+    beforeEach(() => {
+      mockImportPdf.mockReset();
+      mockImportPdf.mockResolvedValue({
+        definition: {
+          id: 'pdf-form',
+          pages: [
+            {
+              id: 'pdf-page',
+              fields: [{ id: 'name', fieldType: 'text', question: 'Name' }],
+            },
+          ],
+        },
+        responses: { name: { answer: 'Imported name' } },
+        mappings,
+        sourcePdf: pdfSource,
+        warnings: [],
+        pageCount: 1,
+      });
+      mockGetDocument.mockReturnValue({
+        destroy: vi.fn(),
+        promise: Promise.resolve({
+          numPages: 1,
+          getPage: async () => ({
+            getViewport: () => ({
+              width: 612,
+              height: 792,
+              convertToViewportPoint: (x: number, y: number) => [x, y],
+            }),
+            render: () => ({ cancel: vi.fn(), promise: Promise.resolve() }),
+          }),
+        }),
+      });
+    });
+
+    it('imports, fills, submits, and exports responses in the retained PDF', async () => {
+      const ref = React.createRef<EsheetRendererHandle>();
+      const onReady = vi.fn();
+      const onSubmit = vi.fn();
+      const view = render(
+        <EsheetRenderer
+          ref={ref}
+          representation="pdf"
+          pdfSource={pdfSource}
+          initialResponses={{ name: { answer: 'Saved name' } }}
+          onReady={onReady}
+          onSubmit={onSubmit}
+        />
+      );
+      const input = await view.findByRole('textbox', {
+        name: 'PDF text field name',
+      });
+      expect((input as HTMLInputElement).value).toBe('Saved name');
+      expect(onReady).toHaveBeenCalledOnce();
+      fireEvent.change(input, { target: { value: 'Ada Lovelace' } });
+      fireEvent.click(view.getByRole('button', { name: 'Submit' }));
+      expect(onSubmit).toHaveBeenCalledWith({
+        name: { answer: 'Ada Lovelace' },
+      });
+
+      const pdf = await import('@esheet/pdf');
+      await expect(getRendererHandle(ref).exportPdf()).resolves.toEqual(
+        new Uint8Array([1])
+      );
+      expect(pdf.applyPdfFieldLayout).toHaveBeenCalledWith(
+        pdfSource,
+        mappings,
+        expect.objectContaining({
+          responses: { name: { answer: 'Ada Lovelace' } },
+        })
+      );
+    });
+
+    it('preserves host read-only state while allowing programmatic updates', async () => {
+      const ref = React.createRef<EsheetRendererHandle>();
+      const view = render(
+        <EsheetRenderer
+          ref={ref}
+          representation="pdf"
+          pdfSource={pdfSource}
+          readOnly
+        />
+      );
+      const input = (await view.findByRole('textbox', {
+        name: 'PDF text field name',
+      })) as HTMLInputElement;
+      expect(input.disabled).toBe(true);
+      fireEvent.change(input, { target: { value: 'Blocked edit' } });
+      expect(getRendererHandle(ref).getRawResponse()).toEqual({
+        name: { answer: 'Imported name' },
+      });
+      act(() =>
+        getRendererHandle(ref)
+          .getFormStore()
+          .getState()
+          .setResponse('name', { answer: 'Host update' })
+      );
+      expect(input.value).toBe('Host update');
+    });
+
+    it('updates PDF controls when field rules or read-only settings change', async () => {
+      const ref = React.createRef<EsheetRendererHandle>();
+      const view = render(
+        <EsheetRenderer ref={ref} representation="pdf" pdfSource={pdfSource} />
+      );
+      const input = (await view.findByRole('textbox', {
+        name: 'PDF text field name',
+      })) as HTMLInputElement;
+      const store = getRendererHandle(ref).getFormStore();
+      act(() => store.getState().updateField('name', { readOnly: true }));
+      expect(input.disabled).toBe(true);
+      act(() => store.getState().updateField('name', { readOnly: false }));
+      expect(input.disabled).toBe(false);
+      act(() =>
+        store.getState().updateField('name', {
+          rules: [
+            {
+              effect: 'enable',
+              logic: 'AND',
+              conditions: [
+                { targetId: 'name', operator: 'equals', expected: 'Enabled' },
+              ],
+            },
+          ],
+        })
+      );
+      expect(input.disabled).toBe(true);
+      act(() =>
+        store.getState().updateField('name', {
+          rules: [
+            {
+              effect: 'visible',
+              logic: 'AND',
+              conditions: [
+                { targetId: 'name', operator: 'equals', expected: 'Visible' },
+              ],
+            },
+          ],
+        })
+      );
+      expect(
+        view.queryByRole('textbox', { name: 'PDF text field name' })
+      ).toBeNull();
+    });
+
+    it('surfaces PDF import failures', async () => {
+      mockImportPdf.mockRejectedValue(new Error('Invalid PDF document'));
+      const onReady = vi.fn();
+      const view = render(
+        <EsheetRenderer
+          representation="pdf"
+          pdfSource={pdfSource}
+          onReady={onReady}
+        />
+      );
+      expect((await view.findByRole('alert')).textContent).toBe(
+        'Invalid PDF document'
+      );
+      expect(onReady).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('regional date draft lifecycle', () => {
+    beforeEach(() => {
+      vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['en-GB']);
+    });
+
+    afterEach(() => vi.restoreAllMocks());
+
+    async function mountDateForm(
+      initialResponses: FormResponse = {},
+      twoPages = false,
+      validateNavigation = true
+    ) {
+      const ref = React.createRef<EsheetRendererHandle>();
+      const onSubmit = vi.fn();
+      let tools: RendererTools | undefined;
+      const view = render(
+        <EsheetRenderer
+          ref={ref}
+          initialResponses={initialResponses}
+          formDataInput={{
+            id: 'date-lifecycle',
+            pages: [
+              {
+                id: 'date-page',
+                title: 'Date page',
+                fields: [
+                  {
+                    id: 'date',
+                    fieldType: 'text',
+                    inputType: 'date',
+                    question: 'Appointment date',
+                  },
+                ],
+              },
+              ...(twoPages
+                ? [{ id: 'next-page', title: 'Next page', fields: [] }]
+                : []),
+            ],
+          }}
+          topNavigation
+          validateNavigation={validateNavigation}
+          onSubmit={onSubmit}
+          onRendererToolsReady={(value) => {
+            tools = value;
+          }}
+        />
+      );
+      await act(async () => undefined);
+      if (!tools) throw new Error('Expected renderer tools');
+      return {
+        ...view,
+        renderer: getRendererHandle(ref),
+        tools,
+        onSubmit,
+        input: () =>
+          view.getByRole('textbox', {
+            name: 'Appointment date',
+          }) as HTMLInputElement,
+      };
+    }
+
+    it.each(['tools', 'field', 'definition'] as const)(
+      'clears an initially unanswered draft when reset through %s',
+      async (reset) => {
+        const view = await mountDateForm();
+        fireEvent.change(view.input(), { target: { value: '09/11/202' } });
+        expect(view.renderer.getValidResponse().response).toBeNull();
+        act(() => {
+          const state = view.renderer.getFormStore().getState();
+          if (reset === 'tools') {
+            expect(view.tools.clearResponses()).toBe(true);
+          } else if (reset === 'field') {
+            state.clearResponse('date');
+          } else {
+            state.loadDefinition(state.hydrateDefinition(), {});
+          }
+        });
+        expect(view.input().value).toBe('');
+        expect(view.renderer.getValidResponse().errors).toEqual([]);
+        fireEvent.click(view.getByRole('button', { name: 'Submit' }));
+        expect(view.onSubmit).toHaveBeenCalledWith({});
+      }
+    );
+
+    it.each([true, false])(
+      'blocks page changes with an invalid date draft when required navigation validation is %s',
+      async (validateNavigation) => {
+        const view = await mountDateForm(
+          { date: { answer: '2026-11-09' } },
+          true,
+          validateNavigation
+        );
+        fireEvent.change(view.input(), { target: { value: '09/11/202' } });
+        for (const label of [/Next →/, /^Next page$/]) {
+          fireEvent.click(view.getByRole('button', { name: label }));
+          expect(view.renderer.getCurrentPageId()).toBe('date-page');
+          expect(view.input().value).toBe('09/11/202');
+        }
+        act(() => {
+          expect(view.renderer.goToPage('next-page')).toBe(false);
+          view.renderer.setCurrentPage('next-page');
+        });
+        expect(view.renderer.getCurrentPageId()).toBe('date-page');
+        expect(view.renderer.getValidResponse().response).toBeNull();
+        expect(view.tools.getValidResponse().response).toBeNull();
+        fireEvent.click(view.getByRole('button', { name: 'Submit' }));
+        expect(view.onSubmit).not.toHaveBeenCalled();
+
+        fireEvent.change(view.input(), { target: { value: '10/11/2026' } });
+        fireEvent.click(view.getByRole('button', { name: /Next →/ }));
+        expect(view.renderer.getCurrentPageId()).toBe('next-page');
+        expect(view.renderer.getValidResponse().response).toEqual({
+          date: { answer: '2026-11-10' },
+        });
+      }
+    );
+
+    it('rejects invalid initial and programmatically replaced date answers', async () => {
+      const view = await mountDateForm({ date: { answer: '2026-02-31' } });
+      for (const answer of ['2026-02-31', '2026-02-29']) {
+        act(() =>
+          view.renderer
+            .getFormStore()
+            .getState()
+            .setResponse('date', { answer })
+        );
+        expect(view.renderer.getValidResponse().response).toBeNull();
+        expect(view.tools.getValidResponse().response).toBeNull();
+        fireEvent.click(view.getByRole('button', { name: 'Submit' }));
+        expect(view.onSubmit).not.toHaveBeenCalled();
+      }
+      act(() =>
+        view.renderer
+          .getFormStore()
+          .getState()
+          .setResponse('date', { answer: '2026-02-28' })
+      );
+      expect(view.renderer.getValidResponse().errors).toEqual([]);
+      expect(view.input().value).toBe('28/02/2026');
+    });
+  });
+
+  it('blocks stale date answers while a real regional DateInput has an invalid draft', async () => {
+    const languages = vi
+      .spyOn(navigator, 'languages', 'get')
+      .mockReturnValue(['en-GB']);
+    try {
+      const ref = React.createRef<EsheetRendererHandle>();
+      const onSubmit = vi.fn();
+      let tools: RendererTools | undefined;
+      const { getByRole } = render(
+        <EsheetRenderer
+          ref={ref}
+          formDataInput={{
+            id: 'regional-date',
+            pages: [
+              {
+                id: 'main',
+                fields: [
+                  {
+                    id: 'date',
+                    fieldType: 'text',
+                    inputType: 'date',
+                    question: 'Appointment date',
+                  },
+                ],
+              },
+            ],
+          }}
+          initialResponses={{ date: { answer: '2026-11-09' } }}
+          onSubmit={onSubmit}
+          onRendererToolsReady={(value) => {
+            tools = value;
+          }}
+        />
+      );
+      await act(async () => undefined);
+      const renderer = getRendererHandle(ref);
+      const input = getByRole('textbox', {
+        name: 'Appointment date',
+      }) as HTMLInputElement;
+      expect(input.value).toBe('09/11/2026');
+
+      for (const draft of ['09/11/202', '31/02/2026']) {
+        fireEvent.change(input, { target: { value: draft } });
+        expect(renderer.getRawResponse().date.answer).toBe('2026-11-09');
+        expect(renderer.getValidResponse().response).toBeNull();
+        expect(tools?.getValidResponse().response).toBeNull();
+        expect(
+          renderer.getFormStore().getState().getFieldErrors('date')
+        ).toEqual([
+          expect.objectContaining({ rule: 'input', severity: 'hard' }),
+        ]);
+        fireEvent.click(getByRole('button', { name: 'Submit' }));
+        expect(onSubmit).not.toHaveBeenCalled();
+      }
+
+      fireEvent.change(input, { target: { value: '10/11/2026' } });
+      expect(renderer.getValidResponse()).toEqual({
+        response: { date: { answer: '2026-11-10' } },
+        errors: [],
+      });
+      fireEvent.click(getByRole('button', { name: 'Submit' }));
+      expect(onSubmit).toHaveBeenLastCalledWith({
+        date: { answer: '2026-11-10' },
+      });
+
+      fireEvent.change(input, { target: { value: '10/11/202' } });
+      expect(renderer.getValidResponse().response).toBeNull();
+      fireEvent.change(input, { target: { value: '' } });
+      expect(renderer.getValidResponse()).toEqual({
+        response: { date: { answer: '' } },
+        errors: [],
+      });
+      fireEvent.click(getByRole('button', { name: 'Submit' }));
+      expect(onSubmit).toHaveBeenLastCalledWith({ date: { answer: '' } });
+    } finally {
+      languages.mockRestore();
+    }
+  });
+
+  it.each<FormResponse | undefined>([
+    undefined,
+    {},
+    { q1: { answer: 'Saved' } },
+  ])(
+    'initializes defaults only when responses were not supplied: %j',
+    async (initialResponses) => {
+      const ref = React.createRef<EsheetRendererHandle>();
+      await act(async () => {
+        render(
+          <EsheetRenderer
+            ref={ref}
+            initialResponses={initialResponses}
+            formDataInput={{
+              id: 'defaults',
+              pages: [
+                {
+                  id: 'main',
+                  fields: [
+                    { id: 'q1', fieldType: 'text', defaultAnswer: 'Default' },
+                  ],
+                },
+              ],
+            }}
+          />
+        );
+      });
+      const store = getRendererHandle(ref).getFormStore();
+      expect(store.getState().responses).toEqual(
+        initialResponses ?? { q1: { answer: 'Default' } }
+      );
+      act(() => store.getState().clearResponse('q1'));
+      expect(store.getState().responses.q1).toBeUndefined();
+    }
+  );
+
   it('uses builder row widths to lay fields out on a six-column grid', async () => {
     const { container } = render(
       <EsheetRenderer
@@ -70,6 +504,34 @@ describe('EsheetRenderer', () => {
     ).toBe('span 2');
   });
 
+  it('uses a section row width for all of its children', () => {
+    const { container } = render(
+      <EsheetRenderer
+        formDataInput={{
+          id: 'section-width-form',
+          pages: [
+            {
+              id: 'page-1',
+              fields: [
+                {
+                  id: 'section',
+                  fieldType: 'section',
+                  width: 'half',
+                  fields: [{ id: 'child', fieldType: 'text', width: 'third' }],
+                },
+              ],
+            },
+          ],
+        }}
+      />
+    );
+
+    expect(
+      container.querySelector<HTMLElement>('[data-field-id="child"]')?.style
+        .gridColumn
+    ).toBe('span 3');
+  });
+
   it('mounts and exposes ref handle', async () => {
     const ref = React.createRef<EsheetRendererHandle>();
     await act(async () => {
@@ -96,6 +558,228 @@ describe('EsheetRenderer', () => {
     expect(typeof renderer.getValidResponse).toBe('function');
     expect(typeof renderer.getFormStore).toBe('function');
     expect(typeof renderer.getUIStore).toBe('function');
+  });
+
+  it('rejects renderer tool mutations while the form is read-only', async () => {
+    const ref = React.createRef<EsheetRendererHandle>();
+    let tools: RendererTools | undefined;
+    render(
+      <EsheetRenderer
+        ref={ref}
+        formDataInput={{
+          id: 'tool-form',
+          pages: [
+            {
+              id: 'page-1',
+              fields: [{ id: 'q1', fieldType: 'text', question: 'Name?' }],
+            },
+          ],
+        }}
+        initialResponses={{ q1: { answer: 'original' } }}
+        onRendererToolsReady={(rendererTools) => {
+          tools = rendererTools;
+        }}
+      />
+    );
+    await act(async () => undefined);
+
+    expect(tools).toBeDefined();
+    if (!tools) throw new Error('Expected renderer tools to be available');
+    const rendererTools = tools;
+    const store = getRendererHandle(ref).getFormStore();
+    act(() => store.getState().setReadOnly(true));
+
+    expect(
+      executeToolCall(
+        'fill_field',
+        { fieldId: 'q1', value: 'blocked' },
+        rendererTools
+      )
+    ).toBe('Error: form is read-only');
+    expect(
+      executeToolCall(
+        'bulk_fill',
+        { fields: [{ fieldId: 'q1', value: 'also blocked' }] },
+        rendererTools
+      )
+    ).toMatchObject({
+      results: [{ field: 'q1', status: 'Error: form is read-only' }],
+    });
+    expect(executeToolCall('clear_responses', {}, rendererTools)).toBe(
+      'Error: form is read-only'
+    );
+    expect(store.getState().responses.q1).toEqual({ answer: 'original' });
+
+    act(() => store.getState().setReadOnly(false));
+    let result: ReturnType<typeof executeToolCall> = '';
+    act(() => {
+      result = executeToolCall(
+        'fill_field',
+        { fieldId: 'q1', value: 'updated' },
+        rendererTools
+      );
+    });
+    expect(result).toMatchObject({ result: 'Field "q1" updated' });
+    act(() => {
+      result = executeToolCall('clear_responses', {}, rendererTools);
+    });
+    expect(result).toBe('Responses cleared');
+    expect(store.getState().responses).toEqual({});
+  });
+
+  it('readOnly freezes user edits but not host store writes', async () => {
+    const ref = React.createRef<EsheetRendererHandle>();
+    const form = {
+      id: 'frozen-form',
+      title: 'Frozen',
+      pages: [
+        {
+          id: 'page-1',
+          fields: [{ id: 'q1', fieldType: 'text', question: 'Name?' }],
+        },
+      ],
+    };
+    const { container, rerender } = render(
+      <EsheetRenderer ref={ref} formDataInput={form} readOnly />
+    );
+    await act(async () => undefined);
+
+    const store = getRendererHandle(ref).getFormStore();
+    const wrapper = container.querySelector('[data-field-id="q1"]')!;
+    expect(store.getState().isReadOnly('q1')).toBe(true);
+    expect(wrapper.getAttribute('aria-readonly')).toBe('true');
+    expect(wrapper.className).toContain('ms:pointer-events-none');
+    expect(container.querySelector('.renderer-readonly-banner')).not.toBeNull();
+
+    // Typing goes nowhere while frozen...
+    const input = wrapper.querySelector('input')!;
+    fireEvent.change(input, { target: { value: 'typed while frozen' } });
+    expect(store.getState().responses['q1']).toBeUndefined();
+
+    // ...but host writes (collab bindings) still land.
+    act(() => store.getState().setResponse('q1', { answer: 'from the doc' }));
+    expect(store.getState().responses['q1']).toEqual({
+      answer: 'from the doc',
+    });
+
+    // Reopening (readOnly off) restores editing.
+    rerender(
+      <EsheetRenderer ref={ref} formDataInput={form} readOnly={false} />
+    );
+    await act(async () => undefined);
+    expect(container.querySelector('.renderer-readonly-banner')).toBeNull();
+    fireEvent.change(container.querySelector('[data-field-id="q1"] input')!, {
+      target: { value: 'edited after reopen' },
+    });
+    expect(store.getState().responses['q1']).toMatchObject({
+      answer: 'edited after reopen',
+    });
+
+    act(() => store.getState().setReadOnly(true));
+    expect(container.querySelector('.renderer-readonly-banner')).not.toBeNull();
+    expect(
+      container
+        .querySelector('[data-field-id="q1"]')
+        ?.getAttribute('aria-readonly')
+    ).toBe('true');
+
+    act(() => store.getState().setReadOnly(false));
+    expect(container.querySelector('.renderer-readonly-banner')).toBeNull();
+  });
+
+  it('readOnly removes file deletion controls until editing resumes', async () => {
+    const form = {
+      id: 'frozen-file-form',
+      pages: [
+        {
+          id: 'page-1',
+          fields: [
+            {
+              id: 'attachment',
+              fieldType: 'file',
+              question: 'Attachment',
+              maxFiles: 2,
+            },
+          ],
+        },
+      ],
+    };
+    const initialResponses = {
+      attachment: {
+        fileData: {
+          title: 'report.pdf',
+          contentType: 'application/pdf',
+          size: 1024,
+        },
+      },
+    };
+    const { container, rerender } = render(
+      <EsheetRenderer
+        formDataInput={form}
+        initialResponses={initialResponses}
+        readOnly
+      />
+    );
+    await act(async () => undefined);
+
+    const wrapper = container.querySelector('[data-field-id="attachment"]');
+    expect(wrapper?.getAttribute('aria-readonly')).toBe('true');
+    expect(wrapper?.textContent).toContain('report.pdf');
+    expect(
+      wrapper?.querySelector('button[aria-label="Remove report.pdf"]')
+    ).toBeNull();
+    expect(wrapper?.querySelector('input[type="file"]')).toBeNull();
+
+    rerender(
+      <EsheetRenderer
+        formDataInput={form}
+        initialResponses={initialResponses}
+        readOnly={false}
+      />
+    );
+    await act(async () => undefined);
+
+    expect(
+      container.querySelector(
+        '[data-field-id="attachment"] button[aria-label="Remove report.pdf"]'
+      )
+    ).not.toBeNull();
+    expect(
+      container.querySelector('[data-field-id="attachment"] input[type="file"]')
+    ).not.toBeNull();
+  });
+
+  it('loads a YAML string definition', async () => {
+    const ref = React.createRef<EsheetRendererHandle>();
+    await act(async () => {
+      render(
+        <EsheetRenderer
+          ref={ref}
+          formDataInput={`
+id: yaml-form
+title: YAML Form
+pages:
+  - id: page-1
+    fields:
+      - id: q1
+        fieldType: text
+        question: Name?
+        width: full
+`}
+        />
+      );
+    });
+
+    const definition = getRendererHandle(ref)
+      .getFormStore()
+      .getState()
+      .hydrateDefinition();
+
+    expect(definition).toMatchObject({
+      id: 'yaml-form',
+      title: 'YAML Form',
+      pages: [{ id: 'page-1', fields: [{ id: 'q1' }] }],
+    });
   });
 
   it('getRawResponse() returns initialResponses after mount', async () => {
@@ -304,6 +988,286 @@ describe('EsheetRenderer', () => {
 
     expect(result.errors).toEqual([]);
     expect(result.response).toEqual({ trigger: { answer: 'disabled' } });
+  });
+
+  it('renders independently configured top and bottom navigation', async () => {
+    const formDataInput = {
+      id: 'navigation-visibility',
+      pages: [
+        { id: 'page-1', title: 'Case', fields: [] },
+        { id: 'page-2', title: 'Absence & Restrictions', fields: [] },
+      ],
+    };
+
+    const { container, rerender } = render(
+      <EsheetRenderer
+        formDataInput={formDataInput}
+        topNavigation
+        bottomNavigation={false}
+      />
+    );
+
+    expect(container.querySelector('.pages-nav-top')).not.toBeNull();
+    expect(container.querySelector('.pages-nav-footer')).toBeNull();
+
+    rerender(
+      <EsheetRenderer
+        formDataInput={formDataInput}
+        topNavigation={false}
+        bottomNavigation={false}
+      />
+    );
+
+    expect(container.querySelector('.pages-nav-top')).toBeNull();
+    expect(container.querySelector('.pages-nav-footer')).toBeNull();
+  });
+
+  // Issue #147 — the active page is host-addressable.
+  describe('page routing (initialPageId / onPageChange / handle)', () => {
+    const routedForm = {
+      id: 'page-routing',
+      pages: [
+        {
+          id: 'case',
+          title: 'Case',
+          fields: [{ id: 'first-field', fieldType: 'text', question: 'One' }],
+        },
+        {
+          id: 'assessment',
+          title: 'Assessment',
+          fields: [{ id: 'second-field', fieldType: 'text', question: 'Two' }],
+        },
+        {
+          id: 'documents',
+          title: 'Documents',
+          fields: [{ id: 'third-field', fieldType: 'text', question: 'Three' }],
+        },
+      ],
+    };
+
+    it('seeds the initial page from initialPageId without firing onPageChange', async () => {
+      const onPageChange = vi.fn();
+      const { container } = render(
+        <EsheetRenderer
+          formDataInput={routedForm}
+          topNavigation
+          initialPageId="documents"
+          onPageChange={onPageChange}
+        />
+      );
+
+      await waitFor(() =>
+        expect(
+          container.querySelector('[data-field-id="third-field"]')
+        ).not.toBeNull()
+      );
+      expect(onPageChange).not.toHaveBeenCalled();
+    });
+
+    it('falls back to the first page for an unknown initialPageId', async () => {
+      const { container } = render(
+        <EsheetRenderer
+          formDataInput={routedForm}
+          topNavigation
+          initialPageId="bogus"
+        />
+      );
+
+      await waitFor(() =>
+        expect(
+          container.querySelector('[data-field-id="first-field"]')
+        ).not.toBeNull()
+      );
+    });
+
+    it('reports user tab clicks through onPageChange', async () => {
+      const onPageChange = vi.fn();
+      const { container } = render(
+        <EsheetRenderer
+          formDataInput={routedForm}
+          topNavigation
+          validateNavigation={false}
+          onPageChange={onPageChange}
+        />
+      );
+      await waitFor(() =>
+        expect(container.querySelector('.pages-nav-top')).not.toBeNull()
+      );
+
+      const assessmentTab = Array.from(
+        container.querySelectorAll('.pages-nav-top button')
+      ).find((button) => button.textContent === 'Assessment');
+      await act(async () => {
+        fireEvent.click(assessmentTab as HTMLButtonElement);
+      });
+
+      expect(onPageChange).toHaveBeenCalledTimes(1);
+      expect(onPageChange).toHaveBeenCalledWith('assessment', 1);
+    });
+
+    it('exposes getCurrentPageId and setCurrentPage on the handle', async () => {
+      const onPageChange = vi.fn();
+      const ref = React.createRef<EsheetRendererHandle>();
+      const { container } = render(
+        <EsheetRenderer
+          formDataInput={routedForm}
+          topNavigation
+          onPageChange={onPageChange}
+          ref={ref}
+        />
+      );
+      await waitFor(() =>
+        expect(getRendererHandle(ref).getCurrentPageId()).toBe('case')
+      );
+
+      await act(async () => {
+        getRendererHandle(ref).setCurrentPage('documents');
+      });
+      expect(getRendererHandle(ref).getCurrentPageId()).toBe('documents');
+      expect(
+        container.querySelector('[data-field-id="third-field"]')
+      ).not.toBeNull();
+
+      // Programmatic moves and unknown targets are silent.
+      await act(async () => {
+        getRendererHandle(ref).setCurrentPage('bogus');
+        getRendererHandle(ref).setCurrentPage(99);
+      });
+      expect(getRendererHandle(ref).getCurrentPageId()).toBe('documents');
+      expect(onPageChange).not.toHaveBeenCalled();
+    });
+  });
+
+  it('uses page titles and shares navigation validation across both controls', async () => {
+    const formDataInput = {
+      id: 'navigation-validation',
+      pages: [
+        {
+          id: 'page-1',
+          title: 'Case',
+          fields: [
+            {
+              id: 'required-field',
+              fieldType: 'text',
+              question: 'Required field',
+              required: true,
+            },
+          ],
+        },
+        {
+          id: 'page-2',
+          title: 'Absence & Restrictions',
+          fields: [
+            { id: 'second-field', fieldType: 'text', question: 'Second' },
+          ],
+        },
+        { id: 'page-3', fields: [] },
+      ],
+    };
+
+    const { container, rerender } = render(
+      <EsheetRenderer
+        formDataInput={formDataInput}
+        topNavigation
+        bottomNavigation
+        validateNavigation
+      />
+    );
+
+    const topNavigationButton = container.querySelector(
+      '.pages-nav-top button:nth-child(2)'
+    );
+    expect(topNavigationButton?.textContent).toBe('Absence & Restrictions');
+
+    await act(async () => {
+      fireEvent.click(topNavigationButton as HTMLButtonElement);
+    });
+
+    expect(
+      container.querySelector('[data-field-id="required-field"]')
+    ).not.toBeNull();
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain(
+      '1 required field'
+    );
+
+    const bottomNextButton = Array.from(
+      container.querySelectorAll('.pages-nav-footer button')
+    ).find((button) => button.textContent?.includes('Next'));
+
+    await act(async () => {
+      fireEvent.click(bottomNextButton as HTMLButtonElement);
+    });
+
+    expect(
+      container.querySelector('[data-field-id="required-field"]')
+    ).not.toBeNull();
+
+    rerender(
+      <EsheetRenderer
+        formDataInput={formDataInput}
+        topNavigation
+        bottomNavigation
+        validateNavigation={false}
+      />
+    );
+
+    const nextButtonWithoutValidation = Array.from(
+      container.querySelectorAll('.pages-nav-footer button')
+    ).find((button) => button.textContent?.includes('Next'));
+
+    await act(async () => {
+      fireEvent.click(nextButtonWithoutValidation as HTMLButtonElement);
+    });
+
+    expect(
+      container.querySelector('[data-field-id="second-field"]')
+    ).not.toBeNull();
+
+    await act(async () => {
+      fireEvent.click(
+        container.querySelector(
+          '.pages-nav-top button:first-child'
+        ) as HTMLButtonElement
+      );
+    });
+
+    expect(
+      container.querySelector('[data-field-id="required-field"]')
+    ).not.toBeNull();
+  });
+
+  it('keeps submit validation independent from navigation validation', async () => {
+    const onSubmit = vi.fn();
+    const { container } = render(
+      <EsheetRenderer
+        formDataInput={{
+          id: 'submit-validation',
+          pages: [
+            {
+              id: 'page-1',
+              fields: [
+                {
+                  id: 'required-field',
+                  fieldType: 'text',
+                  question: 'Required field',
+                  required: true,
+                },
+              ],
+            },
+          ],
+        }}
+        validateNavigation={false}
+        onSubmit={onSubmit}
+      />
+    );
+
+    await act(async () => {
+      fireEvent.click(
+        container.querySelector('.renderer-submit button') as HTMLButtonElement
+      );
+    });
+
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 });
 

@@ -53,7 +53,7 @@ function SurveyPage() {
 
 | Prop                   | Type                             | Default    | Description                                                                                                                                                                                |
 | ---------------------- | -------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `formDataInput`        | `FormDefinition \| string`       | _required_ | Form definition — accepts eSheet `FormDefinition`, FHIR R4 Questionnaire, SurveyJS schema, MCP elicitation envelope, or any as a JSON/YAML string. Auto-detected and converted internally. |
+| `formDataInput`        | `FormDefinition \| string`       | _required_ | Form definition — accepts eSheet `FormDefinition`, FHIR R4 Questionnaire, SurveyJS schema, MCP elicitation envelope, or any as a YAML/JSON string. Auto-detected and converted internally. |
 | `className`            | `string`                         | `''`       | Additional CSS class for the root container                                                                                                                                                |
 | `initialResponses`     | `FormResponse`                   | --         | Pre-fill the form with existing response data                                                                                                                                              |
 | `allowDangerousJS`     | `boolean`                        | `false`    | Allow JS calculations and `conditionType: 'js'` — see [Dangerous JS](../advanced/dangerous-js)                                                                                             |
@@ -63,6 +63,9 @@ function SurveyPage() {
 | `onTouchModeChange`    | `(enabled: boolean) => void`     | --         | Callback when touch mode changes                                                                                                                                                           |
 | `onRendererToolsReady` | `(tools: RendererTools) => void` | --         | Called with MCP tool handler when ready                                                                                                                                                    |
 | `collab`               | `CollabDecorations`              | --         | Host-supplied presence and proposal decorations — see [Collaboration](../advanced/collaboration.md)                                                                                        |
+| `topNavigation`        | `boolean`                        | `false`    | Show page-title tabs above the active page when the form has multiple pages                                                                                                                |
+| `bottomNavigation`     | `boolean`                        | `true`     | Show Previous / page count / Next controls below the active page                                                                                                                           |
+| `validateNavigation`   | `boolean`                        | `true`     | Block forward page navigation when required fields on the current page are unanswered. Does not change submit validation                                                                   |
 | `ref`                  | `Ref<EsheetRendererHandle>`      | --         | Imperative handle for accessing responses and stores                                                                                                                                       |
 
 ## Ref API (`EsheetRendererHandle`)
@@ -80,6 +83,21 @@ function SurveyPage() {
 
 ## Features
 
+## Page Navigation
+
+For multi-page forms, page navigation is configurable per renderer instance. The top and bottom controls are independent, so either or both can be enabled:
+
+```tsx
+<EsheetRenderer
+  formDataInput={formDefinition}
+  topNavigation
+  bottomNavigation={false}
+  validateNavigation
+/>
+```
+
+`validateNavigation` applies only when moving forward between pages from either navigation surface. Backward navigation remains available. Submit validation is separate and continues to run when `onSubmit` is used, regardless of the navigation setting.
+
 ## Touch Mode
 
 The renderer supports touch-friendly sizing for mobile devices. See [Touch Mode](./touch-mode) for details.
@@ -94,17 +112,21 @@ The renderer evaluates conditional rules in real-time as users answer questions:
 
 ## Input Formats
 
-The `formData` prop accepts three formats:
+The `formData` prop accepts three formats. For committed layouts, prefer a YAML string or file:
 
 ```tsx
-// 1. JavaScript object
-<EsheetRenderer formDataInput={formDefinitionObject} />
+// 1. YAML string (canonical for committed layouts)
+const yamlString = `
+id: my-form
+pages: []
+`;
+<EsheetRenderer formDataInput={yamlString} />
 
-// 2. JSON string
+// 2. JSON string (wire/API interchange)
 <EsheetRenderer formDataInput='{"id":"my-form","fields":[...]}' />
 
-// 3. YAML string
-<EsheetRenderer formDataInput={yamlString} />
+// 3. JavaScript object
+<EsheetRenderer formDataInput={formDefinitionObject} />
 ```
 
 The renderer auto-detects the format and parses accordingly.

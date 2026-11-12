@@ -1,18 +1,24 @@
-// Side-effect: inject compiled CSS (Tailwind utilities + touch-mode styles)
-import './index.output.css';
+import '@esheet/styles';
 
 // Controls
 export { CustomRadio } from './controls/CustomRadio.js';
 export { CustomCheckbox } from './controls/CustomCheckbox.js';
-export { CustomDropdown } from './controls/CustomDropdown.js';
+export { CustomDropdown } from './fields-controls/CustomDropdown.js';
+export { CustomRadioButton } from './fields-controls/CustomRadioButton.js';
+export { CustomCheckboxButton } from './fields-controls/CustomCheckboxButton.js';
 
 // Icons (shared with builder)
 export {
   TrashIcon,
   PlusIcon,
+  MinusIcon,
+  PencilIcon,
   ArrowUpIcon,
   ArrowDownIcon,
   UpDownArrowIcon,
+  FolderIcon,
+  InfoIcon,
+  ClipboardIcon,
 } from './icons.js';
 
 // Field components
@@ -26,6 +32,11 @@ export {
   BooleanField,
   DropdownField,
   MultiSelectDropdownField,
+  AutocompleteField,
+  AUTOCOMPLETE_HISTORY_NAMESPACE,
+  registerAutocompleteFieldType,
+  parseAutocompleteItems,
+  WIKIPEDIA_OPENSEARCH_URL,
   RatingField,
   RankingField,
   SliderField,
@@ -42,6 +53,7 @@ export {
   FileField,
 } from './fields/index.js';
 export type {
+  AutocompleteFieldDefinition,
   DrawingData,
   DrawingPadConfig,
   DrawingPadPayload,
@@ -74,9 +86,11 @@ export {
 // Field component registry
 export {
   getFieldComponent,
+  getFieldPropertyEditor,
   getRegisteredComponentKeys,
   registerFieldComponents,
   registerCustomFieldTypes,
+  type FieldPropertyEditorProps,
   // NOTE: resetComponentRegistry intentionally not exported - internal/test-only
 } from './lib/component-registry.js';
 
@@ -94,3 +108,51 @@ export {
   useFieldGridLayout,
 } from './lib/FieldGrid.js';
 export type { FieldGridItemProps, FieldGridProps } from './lib/FieldGrid.js';
+
+// Optional field extension providers
+export {
+  FieldProviderStack,
+  type FieldProvider,
+  type FieldProviderStackProps,
+} from './lib/FieldProviders.js';
+
+// Optional host-supplied attachment byte storage
+export {
+  FileStoreProvider,
+  createFileStoreProvider,
+  useFileStore,
+  storeFiles,
+  removeUnreferencedFiles,
+  type FileStoreProviderProps,
+} from './lib/FileStoreProvider.js';
+
+// Optional host-supplied document source (e.g. EHR chart documents)
+export {
+  DocumentPickerProvider,
+  createDocumentPickerProvider,
+  useDocumentPicker,
+  type DocumentPickerProviderProps,
+} from './lib/DocumentPickerProvider.js';
+
+// Shared markdown-lite rendering
+export { renderMarkdownContent, renderMarkdownInline } from './lib/markdown.js';
+
+export {
+  ResponseReferenceLink,
+  ResponseReferenceField,
+  ResponseReferenceProvider,
+  createResponseReferenceProvider,
+  registerResponseReferenceFieldType,
+  type ResponseReferenceLinkProps,
+  type ResponseReferenceProviderProps,
+} from './lib/ResponseReference.js';
+
+// Shared file/attachment helpers
+export {
+  fileToInput,
+  formatFileSize,
+  fileMatchesAccept,
+  getFileMetadata,
+  readFileAsAttachment,
+  type FileMetadata,
+} from './lib/file-utils.js';

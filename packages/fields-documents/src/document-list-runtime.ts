@@ -1,0 +1,782 @@
+import type { FileInput, FileStore, FormStore } from '@esheet/core';
+import { DOCUMENT_LIST_MARKDOWN_TYPE, priorRevisionOf } from './data.js';
+import type { DocumentListDocument, DocumentRevision } from './types.js';
+
+export const DOCUMENT_LIST_EXTENSION_NAMESPACE = '@esheet/fields-documents';
+
+export interface DocumentListRepositoryContext {
+  readonly formInstanceId: string;
+  readonly fieldId: string;
+}
+
+export interface DocumentListSnapshot {
+  readonly documents: readonly DocumentListDocument[];
+  readonly revision?: string;
+}
+
+export interface DocumentListContent {
+  readonly blob?: Blob;
+  readonly downloadName?: string;
+  readonly document?: DocumentListDocument;
+  readonly reference?: string;
+  readonly text?: string;
+  readonly contentType?: string;
+  readonly size?: number;
+  readonly revision?: string;
+}
+
+export interface DocumentListSaveCategory {
+  /** Show the host's single permitted category without allowing changes. */
+  readonly readOnly?: boolean;
+  readonly label: string;
+  readonly hint: string;
+  readonly placeholder: string;
+  readonly loading: string;
+  readonly empty: string;
+  readonly retry: string;
+  readonly saving: string;
+  readonly pending: string;
+  readonly loadOptions: (
+    docType: string,
+    signal: AbortSignal
+  ) => Promise<readonly { id: string; label: string }[]>;
+}
+
+export interface DocumentListRepository {
+  /** Optional host filing category, separate from the form's document subtype. */
+  saveCategory?: (
+    context: DocumentListRepositoryContext
+  ) => DocumentListSaveCategory | undefined;
+  /** Native hosts own both associations and bytes; never mirror them into answers. */
+  ownsField?: (context: DocumentListRepositoryContext) => boolean;
+  /**
+   * Persist inline bodies through save before publishing the returned row.
+   * Native document hosts can return a reference instead of sharing the body.
+   * Omitted keeps inline content in the form answer without a repository write.
+   */
+  persistInline?: boolean;
+  seed?: (
+    context: DocumentListRepositoryContext,
+    snapshot: DocumentListSnapshot
+  ) => void;
+  load: (
+    context: DocumentListRepositoryContext,
+    signal: AbortSignal
+  ) => Promise<DocumentListSnapshot>;
+  /** Read canonical native content instead of a potentially stale row body. */
+  loadContent?: (
+    context: DocumentListRepositoryContext,
+    document: DocumentListDocument,
+    signal: AbortSignal,
+    revision?: number
+  ) => Promise<DocumentListContent>;
+  save: (
+    context: DocumentListRepositoryContext,
+    document: DocumentListDocument,
+    signal: AbortSignal,
+    content?: FileInput
+  ) => Promise<DocumentListDocument>;
+  remove: (
+    context: DocumentListRepositoryContext,
+    document: DocumentListDocument,
+    signal: AbortSignal
+  ) => Promise<void>;
+  /**
+   * Revisions of one document, oldest first, where the backend keeps them
+   * (prior SHAs, an archive table). Absent means the row is the only source.
+   */
+  listRevisions?: (
+    context: DocumentListRepositoryContext,
+    document: DocumentListDocument,
+    signal: AbortSignal
+  ) => Promise<readonly DocumentRevision[]>;
+  subscribe?: (
+    context: DocumentListRepositoryContext,
+    onSnapshot: (snapshot: DocumentListSnapshot) => void
+  ) => () => void;
+}
+
+export type DocumentListSyncStatus =
+  | 'idle'
+  | 'loading'
+  | 'saving'
+  | 'deleting'
+  | 'error';
+
+export type DocumentListContentStatus = 'idle' | 'loading' | 'loaded' | 'error';
+
+export interface DocumentListContentState {
+  readonly status: DocumentListContentStatus;
+  readonly content?: DocumentListContent;
+  readonly error?: string;
+}
+
+export interface DocumentListPendingOperation {
+  readonly type: 'save' | 'delete';
+  readonly documentId: string;
+}
+
+export interface DocumentListRuntimeState {
+  readonly saveCategory?: DocumentListSaveCategory;
+  readonly documents: Readonly<Record<string, DocumentListDocument>>;
+  readonly documentIds: readonly string[];
+  readonly contents: Readonly<Record<string, DocumentListContentState>>;
+  readonly contentVersions?: Readonly<Record<string, number>>;
+  readonly pendingOperations: Readonly<
+    Record<string, DocumentListPendingOperation>
+  >;
+  readonly syncStatus: DocumentListSyncStatus;
+  readonly error?: string;
+  readonly refreshError?: string;
+  readonly revision?: string;
+  readonly disposed: boolean;
+  readonly hydrated: boolean;
+
+  hydrateSnapshot: (snapshot: DocumentListSnapshot) => void;
+  applyRemoteSnapshot: (snapshot: DocumentListSnapshot) => void;
+  upsertDocument: (document: DocumentListDocument) => void;
+  saveDocument: (
+    document: DocumentListDocument,
+    content?: FileInput
+  ) => Promise<DocumentListDocument>;
+  removeDocument: (documentId: string) => Promise<void>;
+  loadContent: (
+    documentId: string,
+    revision?: number,
+    options?: { readonly refresh?: boolean }
+  ) => Promise<DocumentListContent | undefined>;
+  /** ED.43 — the document's history, newest first, head included. */
+  listRevisions: (documentId: string) => Promise<readonly DocumentRevision[]>;
+  refresh: () => Promise<void>;
+  start: () => void;
+  dispose: () => void;
+}
+
+export interface CreateDocumentListRuntimeExtensionOptions {
+  readonly formStore: FormStore;
+  readonly context: DocumentListRepositoryContext;
+  readonly repository?: DocumentListRepository;
+  readonly fileStore?: FileStore;
+  readonly initialDocuments?: readonly DocumentListDocument[];
+  /**
+   * Called whenever the row list changes, so the field can publish it as its
+   * answer. Rows are the field's to own; the repository only ever sees bytes.
+   */
+  readonly onDocumentsChange?: (
+    documents: readonly DocumentListDocument[]
+  ) => void;
+}
+
+interface ContentRequest {
+  readonly requestId: number;
+  readonly controller: AbortController;
+  readonly promise: Promise<DocumentListContent>;
+}
+
+function documentMap(
+  documents: readonly DocumentListDocument[]
+): Readonly<Record<string, DocumentListDocument>> {
+  return Object.fromEntries(
+    documents.map((document) => [document.id, document])
+  );
+}
+
+function orderedDocuments(
+  documents: readonly DocumentListDocument[]
+): DocumentListDocument[] {
+  const seen = new Set<string>();
+  return documents.filter((document) => {
+    if (seen.has(document.id)) return false;
+    seen.add(document.id);
+    return true;
+  });
+}
+
+function syncStatusFor(
+  pendingOperations: Readonly<Record<string, DocumentListPendingOperation>>
+): DocumentListSyncStatus {
+  const operations = Object.values(pendingOperations);
+  if (operations.some((operation) => operation.type === 'delete'))
+    return 'deleting';
+  if (operations.some((operation) => operation.type === 'save'))
+    return 'saving';
+  return 'idle';
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+/** The content of a row that carries its own body, with no repository call. */
+function inlineContent(body: string): DocumentListContent {
+  return {
+    text: body,
+    contentType: DOCUMENT_LIST_MARKDOWN_TYPE,
+    size: body.length,
+  };
+}
+
+function sameContentVersion(
+  previous: DocumentListDocument | undefined,
+  next: DocumentListDocument
+): boolean {
+  return (
+    previous !== undefined &&
+    previous.nativeVersion === next.nativeVersion &&
+    previous.rev === next.rev &&
+    previous.docId === next.docId &&
+    previous.sha256 === next.sha256 &&
+    previous.body === next.body &&
+    previous.fileReference?.id === next.fileReference?.id
+  );
+}
+
+export function getDocumentListRuntimeState(
+  formStore: FormStore,
+  fieldId: string
+): DocumentListRuntimeState | undefined {
+  return formStore
+    .getState()
+    .getExtension<DocumentListRuntimeState>(
+      DOCUMENT_LIST_EXTENSION_NAMESPACE,
+      fieldId
+    );
+}
+
+export function createDocumentListRuntimeExtension(
+  options: CreateDocumentListRuntimeExtensionOptions
+): DocumentListRuntimeState | undefined {
+  const { formStore, context, repository, fileStore, onDocumentsChange } =
+    options;
+  const existing = getDocumentListRuntimeState(formStore, context.fieldId);
+  if (existing) return existing;
+
+  let nextOperationRequestId = 0;
+  let nextContentRequestId = 0;
+  let refreshRequestId = 0;
+  let refreshController: AbortController | undefined;
+  let unsubscribe: (() => void) | undefined;
+  let resourcesDisposed = false;
+  const operationControllers = new Map<string, AbortController>();
+  const operationRequestIds = new Map<string, number>();
+  const contentRequests = new Map<string, ContentRequest>();
+  const authoritative = repository?.ownsField?.(context) === true;
+  const canonicalContent =
+    repository?.ownsField && !authoritative
+      ? undefined
+      : repository?.loadContent;
+  const initialDocuments = orderedDocuments(
+    authoritative ? [] : options.initialDocuments ?? []
+  );
+
+  const getState = (): DocumentListRuntimeState | undefined =>
+    getDocumentListRuntimeState(formStore, context.fieldId);
+
+  const updateState = (
+    updater: (state: DocumentListRuntimeState) => DocumentListRuntimeState
+  ): void => {
+    const current = getState();
+    if (!current || current.disposed) return;
+    formStore
+      .getState()
+      .updateExtension<DocumentListRuntimeState>(
+        DOCUMENT_LIST_EXTENSION_NAMESPACE,
+        context.fieldId,
+        (state) => (state ? updater(state) : current)
+      );
+  };
+
+  /** Publishes the row list to the field. Never called for inbound snapshots. */
+  const notifyDocuments = (): void => {
+    if (!onDocumentsChange || authoritative) return;
+    const current = getState();
+    if (!current) return;
+    onDocumentsChange(
+      current.documentIds.flatMap((documentId) => {
+        const document = current.documents[documentId];
+        return document ? [document] : [];
+      })
+    );
+  };
+
+  const invalidateContent = (documentId: string): void => {
+    const matches = (key: string) =>
+      key === documentId || key.startsWith(`${documentId}:`);
+    for (const [key, request] of contentRequests) {
+      if (!matches(key)) continue;
+      request.controller.abort();
+      contentRequests.delete(key);
+    }
+    updateState((current) => ({
+      ...current,
+      contentVersions: {
+        ...current.contentVersions,
+        [documentId]: (current.contentVersions?.[documentId] ?? 0) + 1,
+      },
+      contents: Object.fromEntries(
+        Object.entries(current.contents).filter(([key]) => !matches(key))
+      ),
+    }));
+  };
+
+  const setSnapshot = (snapshot: DocumentListSnapshot): void => {
+    const current = getState();
+    if (!current) return;
+    const documents = orderedDocuments(snapshot.documents);
+    const byId = documentMap(documents);
+    for (const [id, previous] of Object.entries(current.documents)) {
+      const next = byId[id];
+      if (!next || !sameContentVersion(previous, next)) invalidateContent(id);
+    }
+    const nextIds = new Set(documents.map((document) => document.id));
+    const contents = Object.fromEntries(
+      Object.entries(getState()?.contents ?? {}).filter(([documentId]) =>
+        nextIds.has(documentId)
+      )
+    );
+
+    updateState((state) => ({
+      ...state,
+      documents: documentMap(documents),
+      documentIds: documents.map((document) => document.id),
+      contents,
+      error: undefined,
+      hydrated: true,
+      revision: snapshot.revision,
+      refreshError: undefined,
+      syncStatus: syncStatusFor(state.pendingOperations),
+    }));
+  };
+
+  const disposeResources = (): void => {
+    if (resourcesDisposed) return;
+    resourcesDisposed = true;
+    refreshController?.abort();
+    refreshController = undefined;
+    for (const controller of operationControllers.values()) controller.abort();
+    for (const request of contentRequests.values()) request.controller.abort();
+    operationControllers.clear();
+    operationRequestIds.clear();
+    contentRequests.clear();
+    unsubscribe?.();
+    unsubscribe = undefined;
+  };
+
+  const state: DocumentListRuntimeState = {
+    documents: documentMap(initialDocuments),
+    documentIds: initialDocuments.map((document) => document.id),
+    contents: {},
+    pendingOperations: {},
+    syncStatus: 'idle',
+    disposed: false,
+    hydrated: initialDocuments.length > 0,
+
+    saveCategory: repository?.saveCategory?.(context),
+
+    hydrateSnapshot: (snapshot) => {
+      if (!authoritative) setSnapshot(snapshot);
+    },
+
+    applyRemoteSnapshot: (snapshot) => {
+      if (!authoritative) setSnapshot(snapshot);
+    },
+
+    upsertDocument: (document) => {
+      if (!sameContentVersion(getState()?.documents[document.id], document))
+        invalidateContent(document.id);
+      updateState((current) => ({
+        ...current,
+        documents: { ...current.documents, [document.id]: document },
+        documentIds: current.documentIds.includes(document.id)
+          ? current.documentIds
+          : [...current.documentIds, document.id],
+        error: undefined,
+      }));
+      notifyDocuments();
+    },
+
+    listRevisions: async (documentId) => {
+      const row = getState()?.documents[documentId];
+      if (!row) return [];
+      // The backend keeps priors when it can; the row keeps them inline.
+      const priors = repository?.listRevisions
+        ? await repository.listRevisions(
+            context,
+            row,
+            new AbortController().signal
+          )
+        : row.history ?? [];
+      return [...priors, priorRevisionOf(row)].reverse();
+    },
+
+    saveDocument: async (document, content) => {
+      const current = getState();
+      if (!current || current.disposed) return document;
+      const persistInline =
+        !content && document.body != null && repository?.persistInline === true;
+      // An inline row's content and metadata are already in the answer.
+      if (!content && document.body != null && !persistInline) {
+        current.upsertDocument(document);
+        return document;
+      }
+      if (!content && !repository) {
+        current.upsertDocument(document);
+        return document;
+      }
+      const contentStore = fileStore;
+
+      const operationKey = `save:${document.id}`;
+      operationControllers.get(operationKey)?.abort();
+      const controller = new AbortController();
+      operationControllers.set(operationKey, controller);
+      const requestId = ++nextOperationRequestId;
+      operationRequestIds.set(operationKey, requestId);
+      updateState((next) => ({
+        ...next,
+        pendingOperations: {
+          ...next.pendingOperations,
+          [document.id]: { type: 'save', documentId: document.id },
+        },
+        syncStatus: 'saving',
+        error: undefined,
+      }));
+
+      try {
+        let stored = document;
+        if (content && !authoritative) {
+          if (!contentStore)
+            throw new Error('FileStore is required for file-backed documents.');
+          stored = {
+            ...document,
+            fileReference: await contentStore.store(content),
+          };
+        }
+        if (controller.signal.aborted) throw controller.signal.reason;
+        const saved = repository
+          ? authoritative && content
+            ? await repository.save(context, stored, controller.signal, content)
+            : await repository.save(context, stored, controller.signal)
+          : stored;
+        if (controller.signal.aborted) throw controller.signal.reason;
+        if (!getState() || operationRequestIds.get(operationKey) !== requestId)
+          return saved;
+        invalidateContent(document.id);
+        const canonical = persistInline ? { ...saved, inline: true } : saved;
+        getState()?.upsertDocument(canonical);
+        updateState((next) => {
+          const { [document.id]: _completed, ...pendingOperations } =
+            next.pendingOperations;
+          void _completed;
+          return {
+            ...next,
+            pendingOperations,
+            syncStatus: syncStatusFor(pendingOperations),
+          };
+        });
+        return canonical;
+      } catch (error) {
+        if (getState() && operationRequestIds.get(operationKey) === requestId) {
+          updateState((next) => {
+            const { [document.id]: _failed, ...pendingOperations } =
+              next.pendingOperations;
+            void _failed;
+            return {
+              ...next,
+              pendingOperations,
+              syncStatus: 'error',
+              error: errorMessage(error),
+            };
+          });
+        }
+        throw error;
+      } finally {
+        if (operationControllers.get(operationKey) === controller)
+          operationControllers.delete(operationKey);
+        if (operationRequestIds.get(operationKey) === requestId)
+          operationRequestIds.delete(operationKey);
+      }
+    },
+
+    removeDocument: async (documentId) => {
+      const current = getState();
+      if (!current || current.disposed) return;
+      const previousDocument = current.documents[documentId];
+      if (!previousDocument) return;
+      const publishRemoval = (): void => {
+        invalidateContent(documentId);
+        updateState((next) => {
+          const { [documentId]: _removed, ...documents } = next.documents;
+          const { [documentId]: _content, ...contents } = next.contents;
+          void _removed;
+          void _content;
+          return {
+            ...next,
+            documents,
+            documentIds: next.documentIds.filter((id) => id !== documentId),
+            contents,
+            error: undefined,
+          };
+        });
+        notifyDocuments();
+      };
+      if (
+        !repository ||
+        (previousDocument.body != null && !repository.persistInline)
+      ) {
+        publishRemoval();
+        return;
+      }
+
+      const operationKey = `delete:${documentId}`;
+      operationControllers.get(operationKey)?.abort();
+      const controller = new AbortController();
+      operationControllers.set(operationKey, controller);
+      const requestId = ++nextOperationRequestId;
+      operationRequestIds.set(operationKey, requestId);
+      updateState((next) => ({
+        ...next,
+        pendingOperations: {
+          ...next.pendingOperations,
+          [documentId]: { type: 'delete', documentId },
+        },
+        syncStatus: 'deleting',
+        error: undefined,
+      }));
+
+      try {
+        await repository.remove(context, previousDocument, controller.signal);
+        if (controller.signal.aborted) throw controller.signal.reason;
+        if (!getState() || operationRequestIds.get(operationKey) !== requestId)
+          return;
+        publishRemoval();
+        updateState((next) => {
+          const { [documentId]: _completed, ...pendingOperations } =
+            next.pendingOperations;
+          void _completed;
+          return {
+            ...next,
+            pendingOperations,
+            syncStatus: syncStatusFor(pendingOperations),
+          };
+        });
+      } catch (error) {
+        if (getState() && operationRequestIds.get(operationKey) === requestId) {
+          updateState((next) => {
+            const { [documentId]: _failed, ...pendingOperations } =
+              next.pendingOperations;
+            void _failed;
+            return {
+              ...next,
+              pendingOperations,
+              syncStatus: 'error',
+              error: errorMessage(error),
+            };
+          });
+        }
+        throw error;
+      } finally {
+        if (operationControllers.get(operationKey) === controller)
+          operationControllers.delete(operationKey);
+        if (operationRequestIds.get(operationKey) === requestId)
+          operationRequestIds.delete(operationKey);
+      }
+    },
+
+    loadContent: async (documentId, revision, options) => {
+      if (options?.refresh) invalidateContent(documentId);
+      const requestKey =
+        revision === undefined ? documentId : `${documentId}:${revision}`;
+      const existing = contentRequests.get(requestKey);
+      if (existing) return existing.promise;
+      const current = getState();
+      if (!current) return Promise.resolve(undefined);
+      const cached = current.contents[requestKey];
+      if (cached?.status === 'loaded' && cached.content)
+        return Promise.resolve(cached.content);
+      // An inline row carries its own content; the repository never saw it.
+      const row = current.documents[documentId];
+      const inline =
+        revision === undefined || revision === (row?.rev ?? 0)
+          ? row?.body
+          : row?.history?.find((entry) => entry.rev === revision)?.body;
+      if (inline != null && !canonicalContent)
+        return Promise.resolve(inlineContent(inline));
+      if (current.disposed || (!fileStore && !canonicalContent))
+        return Promise.resolve(undefined);
+      if (!row) return Promise.resolve(undefined);
+      const fileReference = canonicalContent
+        ? undefined
+        : revision === undefined || revision === (row.rev ?? 0)
+        ? row.fileReference
+        : (
+            row.history ??
+            (repository?.listRevisions
+              ? await repository.listRevisions(
+                  context,
+                  row,
+                  new AbortController().signal
+                )
+              : [])
+          ).find((entry) => entry.rev === revision)?.fileReference;
+      if (!fileReference && !canonicalContent)
+        return Promise.resolve(undefined);
+
+      const controller = new AbortController();
+      const requestId = ++nextContentRequestId;
+      updateState((next) => ({
+        ...next,
+        contents: {
+          ...next.contents,
+          [requestKey]: { status: 'loading' },
+        },
+        error: undefined,
+      }));
+
+      let loading: Promise<DocumentListContent>;
+      if (canonicalContent) {
+        loading = canonicalContent(context, row, controller.signal, revision);
+      } else {
+        if (!fileStore || !fileReference)
+          throw new Error('A FileStore and file reference are required.');
+        loading = fileStore.load(fileReference).then(async (file) => {
+          let text: string | undefined;
+          let reference: string | undefined;
+          if (typeof file.content === 'string') text = file.content;
+          else if (file.contentType.startsWith('text/'))
+            text = await file.content.text();
+          else reference = URL.createObjectURL(file.content);
+          return {
+            ...(text !== undefined ? { text } : { reference }),
+            contentType: file.contentType,
+            size: file.size,
+          };
+        });
+      }
+      const promise = loading
+        .then(async (content) => {
+          if (
+            content.contentType?.split(';')[0].trim().toLowerCase() ===
+              'application/pdf' &&
+            content.reference &&
+            !content.blob
+          ) {
+            const previous = cached?.content;
+            const sameVersion = content.document?.nativeVersion
+              ? content.document.nativeVersion ===
+                previous?.document?.nativeVersion
+              : content.revision !== undefined &&
+                content.revision === previous?.revision;
+            let blob =
+              sameVersion && previous?.reference === content.reference
+                ? previous.blob
+                : undefined;
+            if (!blob) {
+              const response = await fetch(content.reference, {
+                signal: controller.signal,
+                cache: 'no-store',
+              });
+              if (!response.ok) throw new Error('The PDF could not be loaded.');
+              blob = await response.blob();
+            }
+            content = { ...content, blob };
+          }
+          if (controller.signal.aborted) throw controller.signal.reason;
+          const request = contentRequests.get(requestKey);
+          if (request?.requestId === requestId && getState()) {
+            updateState((next) => ({
+              ...next,
+              contents: {
+                ...next.contents,
+                [requestKey]: { status: 'loaded', content },
+              },
+            }));
+          }
+          return content;
+        })
+        .catch((error: unknown) => {
+          const request = contentRequests.get(requestKey);
+          if (request?.requestId === requestId && getState()) {
+            updateState((next) => ({
+              ...next,
+              contents: {
+                ...next.contents,
+                [requestKey]: {
+                  status: 'error',
+                  error: errorMessage(error),
+                },
+              },
+            }));
+          }
+          throw error;
+        })
+        .finally(() => {
+          const request = contentRequests.get(requestKey);
+          if (request?.requestId === requestId)
+            contentRequests.delete(requestKey);
+        });
+
+      contentRequests.set(requestKey, { requestId, controller, promise });
+      return promise;
+    },
+
+    refresh: async () => {
+      const current = getState();
+      if (!current || current.disposed || !repository) return;
+      refreshController?.abort();
+      const controller = new AbortController();
+      refreshController = controller;
+      const requestId = ++refreshRequestId;
+      updateState((next) => ({
+        ...next,
+        syncStatus: 'loading',
+        error: undefined,
+      }));
+      try {
+        const snapshot = await repository.load(context, controller.signal);
+        if (!getState() || requestId !== refreshRequestId) return;
+        setSnapshot(snapshot);
+      } catch (error) {
+        if (getState() && requestId === refreshRequestId) {
+          if (canonicalContent) {
+            for (const id of getState()?.documentIds ?? [])
+              invalidateContent(id);
+          }
+          updateState((next) => ({
+            ...next,
+            syncStatus: 'error',
+            error: errorMessage(error),
+            refreshError: errorMessage(error),
+          }));
+        }
+        throw error;
+      } finally {
+        if (refreshController === controller) refreshController = undefined;
+      }
+    },
+
+    start: () => {
+      if (resourcesDisposed || unsubscribe || !repository?.subscribe) return;
+      unsubscribe = repository.subscribe(context, (snapshot) => {
+        if (getState()) setSnapshot(snapshot);
+      });
+    },
+
+    dispose: () => {
+      if (!getState()) return;
+      formStore
+        .getState()
+        .clearExtension(DOCUMENT_LIST_EXTENSION_NAMESPACE, context.fieldId);
+    },
+  };
+
+  repository?.seed?.(context, { documents: initialDocuments });
+  const registered = formStore
+    .getState()
+    .registerExtension(
+      DOCUMENT_LIST_EXTENSION_NAMESPACE,
+      context.fieldId,
+      state,
+      { onDispose: disposeResources }
+    );
+  return registered ? state : getState();
+}

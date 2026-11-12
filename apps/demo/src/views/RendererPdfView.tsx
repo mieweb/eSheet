@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { EsheetRenderer, type EsheetRendererHandle } from '@esheet/renderer';
 import { Button, Card, CardContent } from '@mieweb/ui';
 import { FileText } from 'lucide-react';
@@ -11,13 +11,19 @@ function bytesToBlob(bytes: Uint8Array): Blob {
 }
 
 export function RendererPdfView() {
+  const instanceId = useId();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [pdfSource, setPdfSource] = useState<File | null>(null);
   const [rendererKey, setRendererKey] = useState(0);
   const [renderer, setRenderer] = useState<EsheetRendererHandle | null>(null);
+  const [pdfReady, setPdfReady] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.currentTarget.files?.[0];
     if (!file) return;
+    setPdfReady(false);
+    setExportError(null);
     setPdfSource(file);
     setRendererKey((key) => key + 1);
     event.currentTarget.value = '';
@@ -39,7 +45,8 @@ export function RendererPdfView() {
             </div>
             <div className="ml-auto flex items-center gap-2">
               <input
-                id="renderer-pdf-file-input"
+                ref={fileInputRef}
+                id={`${instanceId}-renderer-pdf-file-input`}
                 aria-label="Choose PDF"
                 accept="application/pdf,.pdf"
                 type="file"
@@ -49,9 +56,7 @@ export function RendererPdfView() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() =>
-                  document.getElementById('renderer-pdf-file-input')?.click()
-                }
+                onClick={() => fileInputRef.current?.click()}
               >
                 <FileText size={14} />
                 <span className="ml-1">Open PDF</span>
@@ -59,16 +64,26 @@ export function RendererPdfView() {
               <Button
                 variant="primary"
                 size="sm"
-                disabled={!renderer}
+                disabled={!renderer || !pdfReady}
                 onClick={() => {
-                  void renderer?.exportPdf().then((bytes) => {
-                    const url = URL.createObjectURL(bytesToBlob(bytes));
-                    const anchor = document.createElement('a');
-                    anchor.href = url;
-                    anchor.download = 'completed-esheet-form.pdf';
-                    anchor.click();
-                    window.setTimeout(() => URL.revokeObjectURL(url), 0);
-                  });
+                  setExportError(null);
+                  void renderer
+                    ?.exportPdf()
+                    .then((bytes) => {
+                      const url = URL.createObjectURL(bytesToBlob(bytes));
+                      const anchor = document.createElement('a');
+                      anchor.href = url;
+                      anchor.download = 'completed-esheet-form.pdf';
+                      anchor.click();
+                      window.setTimeout(() => URL.revokeObjectURL(url), 0);
+                    })
+                    .catch((reason: unknown) => {
+                      setExportError(
+                        reason instanceof Error
+                          ? reason.message
+                          : 'The PDF could not be exported.'
+                      );
+                    });
                 }}
               >
                 Download PDF
@@ -76,6 +91,7 @@ export function RendererPdfView() {
             </div>
           </div>
         </header>
+        {exportError && <div role="alert">{exportError}</div>}
         <div className="min-h-0 flex-1">
           {pdfSource ? (
             <EsheetRenderer
@@ -83,7 +99,7 @@ export function RendererPdfView() {
               representation="pdf"
               pdfSource={pdfSource}
               fitToContainer
-              onReady={() => setRenderer(null)}
+              onReady={() => setPdfReady(true)}
               ref={setRenderer}
             />
           ) : (
@@ -107,11 +123,7 @@ export function RendererPdfView() {
                   </div>
                   <Button
                     variant="primary"
-                    onClick={() =>
-                      document
-                        .getElementById('renderer-pdf-file-input')
-                        ?.click()
-                    }
+                    onClick={() => fileInputRef.current?.click()}
                   >
                     <FileText size={16} />
                     <span className="ml-1">Open PDF</span>

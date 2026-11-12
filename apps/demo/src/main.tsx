@@ -1,58 +1,82 @@
 import './styles.css';
 import './ozwell-setup.js';
-import { registerFieldComponents } from '@esheet/fields';
 import {
-  RichTextEditorField,
+  registerFieldComponents,
+  registerAutocompleteFieldType,
+  registerResponseReferenceFieldType,
+} from '@esheet/fields';
+import {
   configureRichTextField,
+  RichTextEditorField,
 } from '@esheet/field-kerebron';
+import { registerHealthFieldTypes } from '@esheet/field-health';
+import {
+  registerActivityFieldType,
+  registerDocumentListFieldType,
+} from '@esheet/fields-documents';
 import { createAssetLoad } from '@kerebron/wasm/web';
 import { StrictMode } from 'react';
 import * as ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { ToastContainer, ToastProvider, useToast } from '@mieweb/ui';
 import { LandingPage } from './views/LandingPage';
 import { BuilderView } from './views/BuilderView';
 import { RendererView } from './views/RendererView';
 import { RendererPdfView } from './views/RendererPdfView';
 import { CollabPlaygroundView } from './views/CollabPlaygroundView';
+import { LinkedResponsesView } from './views/LinkedResponsesView';
 import { Navbar } from './components/Navbar';
 import { BrandInitializer } from './components/BrandInitializer';
 
+if (localStorage.getItem('mieweb-ui-theme') === null) {
+  localStorage.setItem('mieweb-ui-theme', 'light');
+}
+
 // Register plugin fields (imports also self-register metadata + Zod schema)
 registerFieldComponents({ richtext: RichTextEditorField });
-
-// The Vite plugin serves and emits these assets from the installed package.
-configureRichTextField({
-  assetLoad: createAssetLoad(
-    `${import.meta.env.BASE_URL}kerebron-wasm`.replace(/\/\//g, '/')
-  ),
+registerAutocompleteFieldType();
+registerResponseReferenceFieldType();
+registerHealthFieldTypes({
+  indexUrl: `${import.meta.env.BASE_URL}codify`.replace(/\/$/, ''),
 });
+registerActivityFieldType();
+registerDocumentListFieldType();
 
-if (import.meta.env.DEV) {
-  await import('../../../packages/builder/src/index.output.css');
-  await import('../../../packages/renderer/src/index.output.css');
-}
+const kerebronAssetLoad = createAssetLoad(
+  `${import.meta.env.BASE_URL}kerebron-wasm`.replace(/\/\//g, '/')
+);
+configureRichTextField({ assetLoad: kerebronAssetLoad });
 
 function App() {
   return (
-    <BrowserRouter basename={import.meta.env.BASE_URL}>
-      <BrandInitializer />
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <>
-              <Navbar />
-              <LandingPage />
-            </>
-          }
-        />
-        <Route path="/builder" element={<BuilderView />} />
-        <Route path="/renderer" element={<RendererView />} />
-        <Route path="/renderer-pdf" element={<RendererPdfView />} />
-        <Route path="/collab-live" element={<CollabPlaygroundView />} />
-      </Routes>
-    </BrowserRouter>
+    <ToastProvider>
+      <DemoToastContainer />
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
+        <BrandInitializer />
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <>
+                <Navbar />
+                <LandingPage />
+              </>
+            }
+          />
+          <Route path="/builder" element={<BuilderView />} />
+          <Route path="/renderer" element={<RendererView />} />
+          <Route path="/renderer-pdf" element={<RendererPdfView />} />
+          <Route path="/collab-live" element={<CollabPlaygroundView />} />
+          <Route path="/linked-responses" element={<LinkedResponsesView />} />
+        </Routes>
+      </BrowserRouter>
+    </ToastProvider>
   );
+}
+
+function DemoToastContainer() {
+  const { toasts, dismiss } = useToast();
+  return <ToastContainer toasts={toasts} onDismiss={dismiss} />;
 }
 
 const root = ReactDOM.createRoot(

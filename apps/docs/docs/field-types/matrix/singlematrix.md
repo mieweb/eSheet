@@ -15,25 +15,25 @@ Matrix with one selected column per row.
 
 ## Answer Format
 
-```json
-{
-  "selected": {
-    "rowId": { "id": "columnId", "value": "Column Label" }
-  }
-}
+```yaml
+selected:
+  rowId:
+    id: columnId
+    value: Column Label
 ```
 
 ## Example
 
-```json
-{
-  "id": "symptom_severity",
-  "fieldType": "singlematrix",
-  "question": "Rate symptom severity",
-  "rows": [{ "id": "r_head", "value": "Headache" }],
-  "columns": [
-    { "id": "c_none", "value": "None" },
-    { "id": "c_mild", "value": "Mild" }
-  ]
-}
+```yaml
+id: symptom_severity
+fieldType: singlematrix
+question: Rate symptom severity
+rows:
+  - id: r_head
+    value: Headache
+columns:
+  - id: c_none
+    value: None
+  - id: c_mild
+    value: Mild
 ```

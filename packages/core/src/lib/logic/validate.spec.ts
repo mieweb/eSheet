@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { validateField, validateForm } from './validate.js';
 import type { FieldDefinition, ConditionalRule } from '../types.js';
 import { normalizeDefinition } from '../functions/normalize.js';
@@ -48,6 +48,108 @@ function enableRule(targetId: string, expected: string): ConditionalRule {
 // ---------------------------------------------------------------------------
 
 describe('validateField', () => {
+  describe('option visibility', () => {
+    it('reports a selected option that is no longer visible', () => {
+      const trigger = def('country', 'text');
+      const field = def('location', 'radio', {
+        options: [
+          {
+            id: 'houston-hq',
+            value: 'Houston HQ',
+            rules: [visibleRule('country', 'us')],
+          },
+        ],
+      });
+      const normalized = norm([trigger, field]);
+      const errors = validateField('location', normalized, {
+        country: { answer: 'ca' },
+        location: {
+          selected: { id: 'houston-hq', value: 'Houston HQ' },
+        },
+      });
+
+      expect(errors).toContainEqual({
+        fieldId: 'location',
+        rule: 'optionVisibility',
+        message: 'One or more selected options are no longer available',
+        severity: 'hard',
+      });
+    });
+
+    it('accepts a selected option that remains visible', () => {
+      const trigger = def('country', 'text');
+      const field = def('location', 'radio', {
+        options: [
+          {
+            id: 'houston-hq',
+            value: 'Houston HQ',
+            rules: [visibleRule('country', 'us')],
+          },
+        ],
+      });
+      const normalized = norm([trigger, field]);
+
+      expect(
+        validateField('location', normalized, {
+          country: { answer: 'us' },
+          location: {
+            selected: { id: 'houston-hq', value: 'Houston HQ' },
+          },
+        })
+      ).toEqual([]);
+    });
+
+    it('reports a non-empty hidden multitext answer', () => {
+      const trigger = def('country', 'text');
+      const field = def('contacts', 'multitext', {
+        options: [
+          {
+            id: 'us-contact',
+            value: 'United States contact',
+            rules: [visibleRule('country', 'us')],
+          },
+        ],
+      });
+      const normalized = norm([trigger, field]);
+      const errors = validateField('contacts', normalized, {
+        country: { answer: 'ca' },
+        contacts: {
+          multitextAnswers: { 'us-contact': 'Alice' },
+        },
+      });
+
+      expect(errors).toContainEqual({
+        fieldId: 'contacts',
+        rule: 'optionVisibility',
+        message: 'One or more selected options are no longer available',
+        severity: 'hard',
+      });
+    });
+
+    it('allows an empty hidden multitext answer', () => {
+      const trigger = def('country', 'text');
+      const field = def('contacts', 'multitext', {
+        options: [
+          {
+            id: 'us-contact',
+            value: 'United States contact',
+            rules: [visibleRule('country', 'us')],
+          },
+        ],
+      });
+      const normalized = norm([trigger, field]);
+
+      expect(
+        validateField('contacts', normalized, {
+          country: { answer: 'ca' },
+          contacts: {
+            multitextAnswers: { 'us-contact': '' },
+          },
+        })
+      ).toEqual([]);
+    });
+  });
+
   // -----------------------------------------------------------------------
   // Required — basic
   // -----------------------------------------------------------------------
@@ -326,6 +428,96 @@ describe('validateField', () => {
         trigger: { answer: 'no' },
       });
       expect(errors).toEqual([]);
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // Intrinsic date input checks
+  // -----------------------------------------------------------------------
+
+  describe('intrinsic date input checks', () => {
+    it.each(['2026-02-31', '2026-02-29', '02-31-2026', '02/31/2026'])(
+      'rejects calendar overflow in %s without needing a mounted input',
+      (answer) => {
+        const normalized = norm([def('q1', 'text', { inputType: 'date' })]);
+        expect(validateField('q1', normalized, { q1: { answer } })).toEqual([
+          expect.objectContaining({ rule: 'dateFormat', severity: 'hard' }),
+        ]);
+      }
+    );
+
+    it.each(['2024-02-29', '02-29-2024', '02/29/2024', '0099-02-28'])(
+      'accepts the real calendar date %s',
+      (answer) => {
+        const normalized = norm([def('q1', 'text', { inputType: 'date' })]);
+        expect(validateField('q1', normalized, { q1: { answer } })).toEqual([]);
+      }
+    );
+
+    it('fails hard on a malformed date answer', () => {
+      const normalized = norm([def('q1', 'text', { inputType: 'date' })]);
+      const errors = validateField('q1', normalized, {
+        q1: { answer: '3123-23-12' },
+      });
+      expect(errors).toEqual([
+        expect.objectContaining({ rule: 'dateFormat', severity: 'hard' }),
+      ]);
+    });
+
+    it('fails hard on a date outside the configured dateRange', () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date(2026, 6, 28));
+      const normalized = norm([
+        def('q1', 'text', {
+          inputType: 'date',
+          dateRange: { amount: 2, unit: 'years' },
+        }),
+      ]);
+      const errors = validateField('q1', normalized, {
+        q1: { answer: '2030-01-01' },
+      });
+      expect(errors).toEqual([
+        expect.objectContaining({ rule: 'dateRange', severity: 'hard' }),
+      ]);
+      vi.useRealTimers();
+    });
+
+    it('passes for a date within the configured dateRange', () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date(2026, 6, 28));
+      const normalized = norm([
+        def('q1', 'text', {
+          inputType: 'date',
+          dateRange: { amount: 2, unit: 'years' },
+        }),
+      ]);
+      const errors = validateField('q1', normalized, {
+        q1: { answer: '2027-01-15' },
+      });
+      expect(errors).toEqual([]);
+      vi.useRealTimers();
+    });
+
+    it('skips the check when the response is empty', () => {
+      const normalized = norm([
+        def('q1', 'text', {
+          inputType: 'date',
+          dateRange: { amount: 1, unit: 'months' },
+        }),
+      ]);
+      expect(validateField('q1', normalized, {})).toEqual([]);
+    });
+
+    it('fails hard on a malformed datetime-local answer', () => {
+      const normalized = norm([
+        def('q1', 'text', { inputType: 'datetime-local' }),
+      ]);
+      const errors = validateField('q1', normalized, {
+        q1: { answer: 'not-a-datetime' },
+      });
+      expect(errors).toEqual([
+        expect.objectContaining({ rule: 'dateFormat', severity: 'hard' }),
+      ]);
     });
   });
 

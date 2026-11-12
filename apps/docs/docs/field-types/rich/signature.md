@@ -12,21 +12,17 @@ Signature capture pad.
 
 ## Answer Format
 
-```json
-{
-  "signatureData": "serialized-strokes",
-  "signatureImage": "base64-png"
-}
+```yaml
+signatureData: serialized-strokes
+signatureImage: base64-png
 ```
 
 ## Example
 
-```json
-{
-  "id": "patient_sig",
-  "fieldType": "signature",
-  "question": "Patient Signature",
-  "padPlaceholder": "Sign here",
-  "required": true
-}
+```yaml
+id: patient_sig
+fieldType: signature
+question: Patient Signature
+padPlaceholder: Sign here
+required: true
 ```

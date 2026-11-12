@@ -3,50 +3,13 @@ import { defineConfig, type LibraryFormats } from 'vite';
 import react from '@vitejs/plugin-react';
 import dts from 'vite-plugin-dts';
 import { resolve } from 'path';
-import { readFileSync, writeFileSync, existsSync, unlinkSync } from 'fs';
-
-// ---------------------------------------------------------------------------
-// Inline-CSS plugin (production build only)
-// ---------------------------------------------------------------------------
-// After Vite writes dist/, reads the emitted CSS, prepends a self-injecting
-// IIFE to index.js, then removes the standalone CSS file so consumers never
-// need to import CSS separately.
-// ---------------------------------------------------------------------------
-function inlineCssBuilder(): import('vite').Plugin {
-  return {
-    name: 'inline-css-builder',
-    apply: 'build',
-    closeBundle() {
-      const dir = resolve(import.meta.dirname, 'dist');
-      const cssPath = resolve(dir, 'index.css');
-      const jsPath = resolve(dir, 'index.js');
-      if (!existsSync(cssPath) || !existsSync(jsPath)) return;
-      const cssContent = readFileSync(cssPath, 'utf-8');
-      const jsContent = readFileSync(jsPath, 'utf-8');
-      const iife =
-        `(function(){` +
-        `if(typeof document==='undefined')return;` +
-        `if(window.__ESHEET_BUILDER_CSS_INJECTED)return;` +
-        `if(!document.querySelector('#esheet-builder-styles')){` +
-        `var s=document.createElement('style');` +
-        `s.id='esheet-builder-styles';` +
-        `s.textContent=${JSON.stringify(cssContent)};` +
-        `document.head.appendChild(s);}` +
-        `window.__ESHEET_BUILDER_CSS_INJECTED=true;` +
-        `})();\n`;
-      writeFileSync(jsPath, iife + jsContent);
-      unlinkSync(cssPath);
-    },
-  };
-}
 
 export default defineConfig(() => ({
   root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/packages/builder',
   plugins: [
     react(),
-    dts({ tsconfigPath: './tsconfig.lib.json', rollupTypes: true }),
-    inlineCssBuilder(),
+    dts({ tsconfigPath: './tsconfig.lib.json', bundleTypes: true }),
   ],
   build: {
     assetsInlineLimit: 0,
@@ -56,13 +19,19 @@ export default defineConfig(() => ({
       fileName: 'index',
       formats: ['es'] as LibraryFormats[],
     },
-    rollupOptions: {
+    rolldownOptions: {
       external: [
         'react',
         'react-dom',
         'react/jsx-runtime',
         '@esheet/core',
         '@esheet/pdf',
+        '@esheet/styles',
+        // Must stay external for the same reason as the renderer: the field
+        // component registry lives in @esheet/fields, and host-registered
+        // custom field types only reach the builder when host and builder
+        // share one module instance.
+        '@esheet/fields',
         'zustand',
         'tslib',
       ],

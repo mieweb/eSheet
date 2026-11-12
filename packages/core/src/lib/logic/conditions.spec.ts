@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   evaluateCondition,
+  evaluateOptionVisibility,
   evaluateRule,
   evaluateExpression,
 } from './conditions.js';
@@ -48,6 +49,11 @@ function ratingDef(id: string, options?: FieldOption[]): Def {
 
 function numericTextDef(id: string): Def {
   return { id, fieldType: 'text', inputType: 'number', question: 'Q' };
+}
+
+// A field type outside the built-in union, e.g. `autocomplete`.
+function customDef(id: string, fieldType: string): Def {
+  return { id, fieldType, question: 'Q' } as unknown as Def;
 }
 
 function cond(
@@ -116,6 +122,27 @@ describe('evaluateCondition', () => {
       expect(evaluateCondition(cond('f', 'equals', 'opt_1'), def, resp)).toBe(
         true
       );
+    });
+
+    it('equals — custom single-select field type compares selected id', () => {
+      const def = customDef('f', 'autocomplete');
+      const resp: FieldResponse = {
+        selected: { id: 'au', value: 'Australia' },
+      };
+      expect(evaluateCondition(cond('f', 'equals', 'au'), def, resp)).toBe(
+        true
+      );
+      expect(evaluateCondition(cond('f', 'equals', 'gb'), def, resp)).toBe(
+        false
+      );
+    });
+
+    it('equals — custom field type falls back to free-text answer', () => {
+      const def = customDef('f', 'autocomplete');
+      const resp: FieldResponse = { answer: 'typed name' };
+      expect(
+        evaluateCondition(cond('f', 'equals', 'typed name'), def, resp)
+      ).toBe(true);
     });
 
     it('equals — array actual returns false', () => {
@@ -730,6 +757,56 @@ describe('evaluateRule', () => {
 
       expect(evaluateRule(rule, exprNormalized, {})).toBe(false);
     });
+  });
+});
+
+describe('evaluateOptionVisibility', () => {
+  const normalized = norm({
+    country: node(
+      radioDef('country', [
+        { id: 'us', value: 'United States' },
+        { id: 'ca', value: 'Canada' },
+      ])
+    ),
+  });
+
+  it('evaluates option rules against the controlling field response', () => {
+    const option: FieldOption = {
+      id: 'houston-hq',
+      value: 'Houston HQ',
+      rules: [
+        {
+          effect: 'visible',
+          logic: 'AND',
+          conditions: [cond('country', 'equals', 'us')],
+        },
+      ],
+    };
+
+    expect(
+      evaluateOptionVisibility(option, normalized, {
+        country: {
+          selected: { id: 'us', value: 'United States' },
+        },
+      })
+    ).toBe(true);
+    expect(
+      evaluateOptionVisibility(option, normalized, {
+        country: {
+          selected: { id: 'ca', value: 'Canada' },
+        },
+      })
+    ).toBe(false);
+  });
+
+  it('keeps options without visible rules visible', () => {
+    expect(
+      evaluateOptionVisibility(
+        { id: 'always-visible', value: 'Always visible' },
+        normalized,
+        {}
+      )
+    ).toBe(true);
   });
 });
 

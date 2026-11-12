@@ -12,22 +12,25 @@ Multi-select dropdown field.
 
 ## Answer Format
 
-```json
-{ "selected": [{ "id": "optionId", "value": "Option Label" }] }
+```yaml
+selected:
+  - id: optionId
+    value: Option Label
 ```
 
 ## Example
 
-```json
-{
-  "id": "medications",
-  "fieldType": "multiselectdropdown",
-  "question": "Current Medications",
-  "options": [
-    { "id": "m1", "value": "Aspirin" },
-    { "id": "m2", "value": "Ibuprofen" },
-    { "id": "m3", "value": "Metformin" },
-    { "id": "m4", "value": "Lisinopril" }
-  ]
-}
+```yaml
+id: medications
+fieldType: multiselectdropdown
+question: Current Medications
+options:
+  - id: m1
+    value: Aspirin
+  - id: m2
+    value: Ibuprofen
+  - id: m3
+    value: Metformin
+  - id: m4
+    value: Lisinopril
 ```

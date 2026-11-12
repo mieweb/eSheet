@@ -18,20 +18,18 @@ If your app imports core types such as `FormDefinition` directly, also add `@esh
 
 ```ts
 import { mountStandaloneRenderer } from '@esheet/renderer-standalone';
-import type { FormDefinition } from '@esheet/core';
 
-const demoForm: FormDefinition = {
-  id: 'standalone-demo',
-  title: 'Standalone Renderer Demo',
-  fields: [
-    {
-      id: 'name',
-      fieldType: 'text',
-      question: 'What is your name?',
-      required: true,
-    },
-  ],
-};
+const demoForm = `
+id: standalone-demo
+title: Standalone Renderer Demo
+pages:
+  - id: page-1
+    fields:
+      - id: name
+        fieldType: text
+        question: What is your name?
+        required: true
+`;
 
 const mountElement = document.getElementById('renderer-mount');
 

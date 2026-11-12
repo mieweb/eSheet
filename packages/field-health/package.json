@@ -1,0 +1,51 @@
+{
+  "name": "@esheet/field-health",
+  "version": "0.0.7-3",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mieweb/eSheet"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "vite build",
+    "lint": "eslint .",
+    "test": "vitest",
+    "typecheck": "tsc --build --emitDeclarationOnly"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "@esheet/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "files": [
+    "dist",
+    "!**/*.tsbuildinfo"
+  ],
+  "dependencies": {
+    "@esheet/catalog": "workspace:*",
+    "@esheet/core": "workspace:*",
+    "@esheet/fields": "workspace:*",
+    "@mieweb/ui": "0.8.0-dev.21",
+    "lucide-react": "^1.31.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "tslib": "^2.3.0"
+  },
+  "peerDependencies": {
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  }
+}

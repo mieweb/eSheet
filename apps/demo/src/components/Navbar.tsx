@@ -2,22 +2,37 @@ import { useEffect, useCallback } from 'react';
 import { useState } from 'react';
 import {
   Button,
-  Modal,
-  ModalHeader,
-  ModalTitle,
-  ModalBody,
-  ModalFooter,
-  ModalClose,
+  Dropdown,
+  DropdownContent,
+  DropdownLabel,
+  DropdownSeparator,
+  PillSelect,
   Select,
 } from '@mieweb/ui';
 import { Menu, Settings, X } from 'lucide-react';
-import { useTheme } from '../hooks/useTheme';
-import { useBrand } from '../hooks/useBrand';
+import { useTheme, type Theme } from '../hooks/useTheme';
+import { useBrand, type BrandId } from '../hooks/useBrand';
+
+interface LocoLanguage {
+  code: string;
+  name: string;
+}
+
+declare global {
+  interface Window {
+    Loco?: {
+      languages(): Promise<LocoLanguage[]>;
+      apply(code: string): Promise<unknown>;
+      restore(): void;
+    };
+  }
+}
 
 const isDev = import.meta.env.DEV;
 const landingUrl = isDev ? 'http://localhost:3000/' : '/';
 const docsUrl = isDev ? 'http://localhost:3000/docs/intro' : '/docs/intro';
 const demoUrl = isDev ? 'http://localhost:3001/' : '/demo/';
+const originalLanguage = 'original';
 
 export function Navbar() {
   const { theme, setTheme } = useTheme();
@@ -25,6 +40,11 @@ export function Navbar() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [languages, setLanguages] = useState<LocoLanguage[] | null>(null);
+  const [language, setLanguage] = useState(
+    () => localStorage.getItem('loco-lang') ?? originalLanguage
+  );
+  const [languageLoading, setLanguageLoading] = useState(false);
 
   const openMobileMenu = useCallback(() => {
     setIsClosing(false);
@@ -39,6 +59,14 @@ export function Navbar() {
     }, 200);
   }, []);
 
+  const handleSettingsOpenChange = useCallback((open: boolean) => {
+    if (!open && document.querySelector('[role="listbox"]')) {
+      return;
+    }
+
+    setSettingsOpen(open);
+  }, []);
+
   // Lock body scroll while sidebar is open
   useEffect(() => {
     document.body.style.overflow = mobileMenuOpen ? 'hidden' : '';
@@ -48,8 +76,22 @@ export function Navbar() {
   }, [mobileMenuOpen]);
 
   useEffect(() => {
-    if (theme === 'system') setTheme('light');
-  }, [theme, setTheme]);
+    if (!settingsOpen || languages !== null) return;
+
+    let active = true;
+    setLanguageLoading(true);
+    void (window.Loco?.languages() ?? Promise.resolve([]))
+      .then((options) => {
+        if (active) setLanguages(options);
+      })
+      .finally(() => {
+        if (active) setLanguageLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [settingsOpen, languages]);
 
   const logoLink = (
     <a
@@ -69,7 +111,7 @@ export function Navbar() {
     <>
       {/* ── Main navbar bar ── */}
       <nav className="demo-navbar bg-card border-b border-border sticky top-0 z-50">
-        <div className="flex items-center gap-3 px-6 h-14">
+        <div className="flex flex-wrap items-center gap-3 px-3 py-2 min-h-14 sm:flex-nowrap sm:px-6 sm:py-0">
           {/* Hamburger — mobile only, left side (matches Docusaurus) */}
           <button
             onClick={() => openMobileMenu()}
@@ -98,18 +140,76 @@ export function Navbar() {
             </a>
           </div>
 
-          <div className="ml-auto flex items-center gap-1">
-            {/* Settings — desktop only */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSettingsOpen(true)}
-              aria-label="Settings"
-              className="hidden sm:inline-flex"
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            <Dropdown
+              open={settingsOpen}
+              onOpenChange={handleSettingsOpenChange}
+              placement="bottom-end"
+              width={360}
+              trigger={
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  leftIcon={<Settings size={16} />}
+                  aria-label="Settings"
+                >
+                  <span className="hidden sm:inline ml-1">Settings</span>
+                </Button>
+              }
             >
-              <Settings size={16} />
-              <span className="ml-1">Settings</span>
-            </Button>
+              <DropdownLabel>Appearance</DropdownLabel>
+              <DropdownContent>
+                <PillSelect
+                  label="Theme"
+                  value={theme}
+                  onValueChange={(value) => setTheme(value as Theme)}
+                  options={[
+                    { value: 'light', label: 'Light' },
+                    { value: 'dark', label: 'Dark' },
+                    { value: 'system', label: 'System' },
+                  ]}
+                />
+              </DropdownContent>
+              <DropdownSeparator />
+              <DropdownLabel>Brand</DropdownLabel>
+              <DropdownContent>
+                <PillSelect
+                  value={brand}
+                  onValueChange={(value) => setBrand(value as BrandId)}
+                  options={brands.map(({ value, label }) => ({
+                    value,
+                    label,
+                  }))}
+                />
+              </DropdownContent>
+              <DropdownSeparator />
+              <DropdownLabel>Language</DropdownLabel>
+              <DropdownContent>
+                <Select
+                  aria-label="Language"
+                  value={language}
+                  disabled={languageLoading}
+                  onValueChange={(value) => {
+                    if (value === originalLanguage) {
+                      window.Loco?.restore();
+                      setLanguage(value);
+                      return;
+                    }
+
+                    void window.Loco?.apply(value).then(() => {
+                      setLanguage(value);
+                    });
+                  }}
+                  options={[
+                    { value: originalLanguage, label: 'English (Original)' },
+                    ...(languages ?? []).map(({ code, name }) => ({
+                      value: code,
+                      label: name,
+                    })),
+                  ]}
+                />
+              </DropdownContent>
+            </Dropdown>
           </div>
         </div>
       </nav>
@@ -163,53 +263,9 @@ export function Navbar() {
             >
               Demo
             </a>
-            <button
-              className="px-4 py-3 text-sm text-foreground border-b border-border hover:bg-muted text-left flex items-center gap-2 transition-colors w-full"
-              onClick={() => {
-                closeMobileMenu();
-                setSettingsOpen(true);
-              }}
-            >
-              <Settings size={16} className="shrink-0" />
-              Settings
-            </button>
           </nav>
         </div>
       )}
-
-      {/* ── Settings modal ── */}
-      <Modal open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <ModalHeader>
-          <ModalTitle>Settings</ModalTitle>
-          <ModalClose />
-        </ModalHeader>
-        <ModalBody className="flex flex-col gap-4">
-          <Select
-            label="Theme"
-            value={theme}
-            onValueChange={(val) => setTheme(val as 'light' | 'dark')}
-            options={[
-              { value: 'light', label: 'Light' },
-              { value: 'dark', label: 'Dark' },
-            ]}
-          />
-          <Select
-            label="Brand"
-            value={brand}
-            onValueChange={(val) => setBrand(val as typeof brand)}
-            options={brands.map((b) => ({ value: b.value, label: b.label }))}
-          />
-        </ModalBody>
-        <ModalFooter>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setSettingsOpen(false)}
-          >
-            Close
-          </Button>
-        </ModalFooter>
-      </Modal>
     </>
   );
 }

@@ -94,11 +94,8 @@ function buildFontLink(fontFamily: string): string {
  *   - Applies base typography so content inherits the brand font / colors
  *   - Allows override by styles inside the HTML content itself
  *
- * The iframe uses `sandbox="allow-scripts"` (no `allow-same-origin`), giving
- * it an opaque null origin so it cannot read the parent page's DOM, cookies,
- * or localStorage.  A small inline script posts the content height back via
- * postMessage so the parent can auto-size the iframe without needing
- * `allow-same-origin`.
+ * The outer `<iframe sandbox="">` attribute already blocks script execution,
+ * plug-ins, form submission, and navigation.
  */
 function buildIframeDoc(html: string): string {
   if (!html) return '';
@@ -137,25 +134,7 @@ function buildIframeDoc(html: string): string {
     * { scrollbar-width: thin; scrollbar-color: var(--mieweb-border) transparent; }
   </style>
 </head>
-<body>${html}<script>
-  (function () {
-    function report() {
-      window.parent.postMessage(
-        { type: 'esheet-iframe-height', height: document.body.scrollHeight },
-        '*'
-      );
-    }
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', report);
-    } else {
-      report();
-    }
-    window.addEventListener('load', report);
-    if (typeof ResizeObserver !== 'undefined') {
-      new ResizeObserver(report).observe(document.body);
-    }
-  })();
-<\/script></body>
+<body>${html}</body>
 </html>`;
 }
 
@@ -171,22 +150,13 @@ export const HtmlField = React.memo(function HtmlField({
   const frameHeight = clamp(def.iframeHeight ?? 300, 50, 800);
   const [localHeight, setLocalHeight] = React.useState(frameHeight);
   const [autoHeight, setAutoHeight] = React.useState<number | null>(null);
-  const previewFrameRef = React.useRef<HTMLIFrameElement>(null);
 
-  React.useEffect(() => {
-    const handleMessage = (e: MessageEvent) => {
-      if (
-        previewFrameRef.current &&
-        e.source === previewFrameRef.current.contentWindow &&
-        e.data?.type === 'esheet-iframe-height' &&
-        typeof e.data.height === 'number'
-      ) {
-        setAutoHeight(e.data.height + 32);
-      }
-    };
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, []);
+  const handleIframeLoad = (e: React.SyntheticEvent<HTMLIFrameElement>) => {
+    const doc = e.currentTarget.contentDocument;
+    if (doc?.body) {
+      setAutoHeight(doc.body.scrollHeight + 32); // +32 for body padding
+    }
+  };
 
   // Force re-render when dark mode toggles (data-theme on <html> or class on root)
   const [, forceUpdate] = React.useReducer((x: number) => x + 1, 0);
@@ -224,10 +194,10 @@ export const HtmlField = React.memo(function HtmlField({
     return (
       <div className="html-field-preview">
         <iframe
-          ref={previewFrameRef}
           srcDoc={iframeDoc}
-          sandbox="allow-scripts"
+          sandbox="allow-same-origin"
           title="HTML content"
+          onLoad={handleIframeLoad}
           style={{
             width: '100%',
             height: `${autoHeight ?? frameHeight}px`,
@@ -265,14 +235,14 @@ export const HtmlField = React.memo(function HtmlField({
       {/* Preview height control */}
       <div>
         <label
-          htmlFor={`${instanceId}-canvas-iframe-height-range-${def.id}`}
+          htmlFor={`${instanceId}-canvas-iframe-height-${def.id}`}
           className="ms:block ms:text-sm ms:font-medium ms:text-mstextmuted ms:mb-1"
         >
           Preview Height (px)
         </label>
         <div className="ms:flex ms:items-center ms:gap-2">
           <input
-            id={`${instanceId}-canvas-iframe-height-range-${def.id}`}
+            id={`${instanceId}-canvas-iframe-height-slider-${def.id}`}
             type="range"
             min={50}
             max={800}
@@ -311,7 +281,7 @@ export const HtmlField = React.memo(function HtmlField({
         <div className="ms:rounded-lg ms:border ms:border-msborder ms:overflow-hidden">
           <iframe
             srcDoc={iframeDoc}
-            sandbox="allow-scripts"
+            sandbox="allow-same-origin"
             title="HTML preview"
             style={{
               width: '100%',

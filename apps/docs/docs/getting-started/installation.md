@@ -31,6 +31,8 @@ Choose the scenario that matches your app:
 
 React runtime dependencies are required for React-component usage (`@esheet/renderer`, `@esheet/builder`, `@esheet/fields`):
 
+This is a `package.json` dependency snippet, not an eSheet form definition.
+
 ```json
 {
   "dependencies": {

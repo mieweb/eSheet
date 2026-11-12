@@ -1,5 +1,5 @@
 import React from 'react';
-import type { FieldWidth } from '@esheet/core';
+import { getFieldTypeMeta, type FieldWidth } from '@esheet/core';
 
 const GRID_STYLE: React.CSSProperties = {
   display: 'grid',
@@ -76,24 +76,31 @@ export interface FieldGridItemProps {
   children: React.ReactElement<{ style?: React.CSSProperties }>;
   fieldType: string;
   width?: FieldWidth;
+  inheritedWidth?: FieldWidth;
 }
 
 export function FieldGridItem({
   children,
   fieldType,
   width,
+  inheritedWidth,
 }: FieldGridItemProps) {
   const useGridLayout = useFieldGridLayout();
   if (!useGridLayout) return children;
 
+  if (fieldType === 'section' || fieldType === 'pages') {
+    return React.cloneElement(children, {
+      style: { ...children.props.style, gridColumn: 'span 6' },
+    });
+  }
+
+  const defaultWidth = getFieldTypeMeta(fieldType)?.defaultProps.width as
+    | FieldWidth
+    | undefined;
+  const effectiveWidth = inheritedWidth ?? width ?? defaultWidth ?? 'full';
+
   const columnSpan =
-    fieldType === 'section' || fieldType === 'pages'
-      ? 6
-      : width === 'half'
-      ? 3
-      : width === 'third'
-      ? 2
-      : 6;
+    effectiveWidth === 'half' ? 3 : effectiveWidth === 'third' ? 2 : 6;
 
   return React.cloneElement(children, {
     style: { ...children.props.style, gridColumn: `span ${columnSpan}` },

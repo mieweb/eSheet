@@ -12,21 +12,23 @@ Numeric scale field rendered as selectable options.
 
 ## Answer Format
 
-```json
-{ "selected": { "id": "optionId", "value": "1" } }
+```yaml
+selected:
+  id: optionId
+  value: '1'
 ```
 
 ## Example
 
-```json
-{
-  "id": "pain_level",
-  "fieldType": "rating",
-  "question": "Pain Level (1-10)",
-  "options": [
-    { "id": "r1", "value": "1" },
-    { "id": "r2", "value": "2" },
-    { "id": "r3", "value": "3" }
-  ]
-}
+```yaml
+id: pain_level
+fieldType: rating
+question: Pain Level (1-10)
+options:
+  - id: r1
+    value: '1'
+  - id: r2
+    value: '2'
+  - id: r3
+    value: '3'
 ```

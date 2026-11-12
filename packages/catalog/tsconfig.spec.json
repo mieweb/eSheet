@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/vitest",
+    "lib": ["es2022", "DOM"],
+    "types": ["node", "vitest/globals"]
+  },
+  "include": [
+    "src/**/*.test.ts",
+    "src/**/*.test-fixture.ts",
+    "vitest.config.ts",
+    "vite.worker.config.ts"
+  ],
+  "references": [{ "path": "./tsconfig.lib.json" }]
+}

@@ -62,10 +62,17 @@ export function LandingPage() {
             to="/renderer-pdf"
           />
           <DemoCard
-            title="Collaboration"
-            desc="Explore simulated presence, proposals, conflicts, and review actions."
-            to="/collab-live"
+            title="Linked Responses"
+            desc="Edit two independent responses and follow their links in either direction."
+            to="/linked-responses"
           />
+          <div>
+            <DemoCard
+              title="Collaboration"
+              desc="Explore simulated presence, proposals, conflicts, and review actions."
+              to="/collab-live"
+            />
+          </div>
         </div>
       </div>
     </div>

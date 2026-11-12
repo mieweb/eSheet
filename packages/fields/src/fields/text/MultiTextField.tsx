@@ -1,6 +1,7 @@
 import React from 'react';
 import type {
   FieldComponentProps,
+  FieldOption,
   MultitextFieldDefinition,
 } from '@esheet/core';
 import { Input } from '@mieweb/ui';
@@ -19,7 +20,7 @@ export const MultiTextField = React.memo(function MultiTextField({
 }: FieldComponentProps) {
   const def = field.definition as MultitextFieldDefinition;
   const instanceId = form.getState().instanceId;
-  const options = def.options || [];
+  const options: readonly FieldOption[] = def.options || [];
   const isWrap = def.optionLayout === 'wrap';
   const multitextAnswers = response?.multitextAnswers || {};
 

@@ -89,7 +89,7 @@ export function applyBump(current, bump) {
         const pre = current.split('-')[1];
         return `${maj}.${min}.${pat}-${Number(pre) + 1}`;
       }
-      return `${maj}.${min}.${pat + 1}-0`;
+      return `${maj}.${min}.${pat}-1`;
     default:
       throw new Error(`Unknown bump level: ${bump}`);
   }

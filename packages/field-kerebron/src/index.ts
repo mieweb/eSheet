@@ -24,9 +24,19 @@ registerFieldType('richtext', {
   answerType: 'text',
   hasOptions: false,
   hasMatrix: false,
-  defaultProps: {},
+  defaultProps: { width: 'full' },
   placeholder: { question: 'Enter your question...' },
 });
 
 export { RichTextEditorField } from './RichTextEditorField.js';
 export type { RichTextFieldDefinition } from './RichTextEditorField.js';
+export {
+  KerebronEditor,
+  KerebronEditor as KerebronMarkdownEditor,
+} from './KerebronEditor.js';
+export type {
+  KerebronEditorHandle,
+  KerebronEditorHandle as KerebronMarkdownEditorHandle,
+  KerebronEditorProps,
+  KerebronEditorProps as KerebronMarkdownEditorProps,
+} from './KerebronEditor.js';

@@ -8,9 +8,9 @@ Drag-and-drop questionnaire builder for eSheet. Provides a full editing UI for c
 - ✅ 19 built-in field types via `@esheet/fields`
 - ✅ Section nesting with drag-into-section support
 - ✅ Field editors (question text, options, matrix rows/columns, conditional logic)
-- ✅ Code view with Monaco editor (JSON/YAML toggle)
+- ✅ Code view with Monaco editor (YAML default, JSON toggle)
 - ✅ Live preview mode
-- ✅ Import/Export (JSON + YAML)
+- ✅ Import/Export (YAML default, JSON option)
 - ✅ Custom field type registration
 - ✅ Dark mode support
 - ✅ Mobile responsive (bottom drawer for panels)
@@ -19,7 +19,7 @@ Drag-and-drop questionnaire builder for eSheet. Provides a full editing UI for c
 ## Installation
 
 ```bash
-npm install @esheet/builder @esheet/fields @esheet/core
+npm install @esheet/builder @esheet/fields @esheet/core js-yaml
 ```
 
 ## Usage
@@ -42,18 +42,27 @@ function App() {
 ### With Initial Schema
 
 ```tsx
+import { load } from 'js-yaml';
 import { EsheetBuilder } from '@esheet/builder';
+import type { FormDefinition } from '@esheet/core';
 
-const initialForm: FormDefinition = {
-  id: 'patient-intake',
-  title: 'Patient Intake',
-  fields: [
-    { id: 'name', fieldType: 'text', question: 'Full Name', required: true },
-    { id: 'dob', fieldType: 'date', question: 'Date of Birth' },
-  ],
-};
+const initialForm = load(`
+id: patient-intake
+title: Patient Intake
+pages:
+  - id: patient-information
+    fields:
+      - id: name
+        fieldType: text
+        question: Full Name
+        required: true
+      - id: dob
+        fieldType: text
+        question: Date of Birth
+        inputType: date
+`) as FormDefinition;
 
-<EsheetBuilder initialDefinition={initialForm} onChange={handleChange} />;
+<EsheetBuilder definition={initialForm} onChange={handleChange} />;
 ```
 
 ### Dark Mode
@@ -108,12 +117,12 @@ registerCustomFieldTypes({
 
 ## CSS Architecture
 
-The builder uses Tailwind CSS v4 with `ms:` prefix. CSS is compiled via `@tailwindcss/cli` and embedded into the JS bundle at build time — consumers never need to import a stylesheet. A scoped reset on `.ms-builder-root` prevents style leakage in either direction.
+The builder uses Tailwind CSS v4 with an `ms:` prefix. `@esheet/styles` compiles the shared builder, renderer, and fields utility set and loads it automatically, so consumers do not need to import an eSheet stylesheet. Applications using `@mieweb/ui` components must still load `@mieweb/ui/styles.css` and select a brand stylesheet.
 
 ## Building
 
-Run `nx build @esheet/builder` to build the library.
+Run `pnpm --filter @esheet/builder build` to build the library.
 
 ## Running unit tests
 
-Run `nx test @esheet/builder` to execute the unit tests via [Vitest](https://vitest.dev/).
+Run `pnpm --filter @esheet/builder test` to execute the unit tests via [Vitest](https://vitest.dev/).

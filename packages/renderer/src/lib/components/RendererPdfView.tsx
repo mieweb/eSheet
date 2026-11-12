@@ -53,12 +53,14 @@ function PdfFieldControl({
   mapping,
   field,
   response,
+  disabled,
   onResponseChange,
 }: {
   instanceId: string;
   mapping: PdfFieldMapping;
   field: FieldDefinition | undefined;
   response: FieldResponse | undefined;
+  disabled: boolean;
   onResponseChange: (response: FieldResponse) => void;
 }) {
   const options = fieldOptions(field);
@@ -75,6 +77,7 @@ function PdfFieldControl({
         id={inputId}
         aria-label={`PDF checkbox ${mapping.esheetFieldId}`}
         checked={checked}
+        disabled={disabled}
         type="checkbox"
         onChange={(event) =>
           onResponseChange({
@@ -102,6 +105,7 @@ function PdfFieldControl({
           option?.value ?? mapping.esheetFieldId
         }`}
         checked={checked}
+        disabled={disabled}
         name={`${instanceId}-pdf-radio-${mapping.esheetFieldId}`}
         type="radio"
         onChange={() =>
@@ -124,6 +128,7 @@ function PdfFieldControl({
         id={inputId}
         aria-label={`PDF dropdown ${mapping.esheetFieldId}`}
         value={selected}
+        disabled={disabled}
         onChange={(event) => {
           const option = options.find(
             (candidate) => candidate.id === event.currentTarget.value
@@ -147,6 +152,7 @@ function PdfFieldControl({
       id={inputId}
       aria-label={`PDF text field ${mapping.esheetFieldId}`}
       value={response?.answer ?? ''}
+      disabled={disabled}
       type="text"
       onChange={(event) =>
         onResponseChange({ answer: event.currentTarget.value })
@@ -171,10 +177,10 @@ function PdfPage({
 }) {
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const [pageState, setPageState] = React.useState<PageState | null>(null);
-  const responses = React.useSyncExternalStore(
+  const state = React.useSyncExternalStore(
     (callback) => form.subscribe(callback),
-    () => form.getState().responses,
-    () => form.getState().responses
+    () => form.getState(),
+    () => form.getState()
   );
 
   React.useEffect(() => {
@@ -231,6 +237,7 @@ function PdfPage({
           }}
         >
           {mappings.map((mapping) => {
+            if (!state.isVisible(mapping.esheetFieldId)) return null;
             const box = viewportRect(viewport, mapping.rect);
             const field = form
               .getState()
@@ -254,10 +261,21 @@ function PdfPage({
                   instanceId={instanceId}
                   mapping={mapping}
                   field={field}
-                  response={responses[mapping.esheetFieldId]}
-                  onResponseChange={(response) =>
-                    form.getState().setResponse(mapping.esheetFieldId, response)
+                  response={state.responses[mapping.esheetFieldId]}
+                  disabled={
+                    state.isReadOnly(mapping.esheetFieldId) ||
+                    !state.isEnabled(mapping.esheetFieldId)
                   }
+                  onResponseChange={(response) => {
+                    const current = form.getState();
+                    if (
+                      current.isReadOnly(mapping.esheetFieldId) ||
+                      !current.isEnabled(mapping.esheetFieldId)
+                    ) {
+                      return;
+                    }
+                    current.setResponse(mapping.esheetFieldId, response);
+                  }}
                 />
               </div>
             );

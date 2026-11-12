@@ -39,40 +39,41 @@ The builder needs a container with explicit height. It fills its parent using `h
 
 Pre-populate the builder with an existing form:
 
+The builder receives a parsed `FormDefinition`, so parse the canonical YAML source before passing it to the component. Install `js-yaml` in the host application with `npm install js-yaml`.
+
 ```tsx
+import { load } from 'js-yaml';
 import { EsheetBuilder } from '@esheet/builder';
 import type { FormDefinition } from '@esheet/core';
 
-const initialForm: FormDefinition = {
-  id: 'patient-intake',
-  title: 'Patient Intake',
-  description: 'Basic patient information form',
-  fields: [
-    {
-      id: 'name',
-      fieldType: 'text',
-      question: 'Full Name',
-      required: true,
-      inputType: 'string',
-    },
-    {
-      id: 'email',
-      fieldType: 'text',
-      question: 'Email Address',
-      inputType: 'email',
-    },
-    {
-      id: 'reason',
-      fieldType: 'radio',
-      question: 'Reason for Visit',
-      options: [
-        { id: 'opt1', value: 'Check-up' },
-        { id: 'opt2', value: 'Follow-up' },
-        { id: 'opt3', value: 'New concern' },
-      ],
-    },
-  ],
-};
+// In a real app, load this from patient-intake.esheet.yaml.
+const initialForm = load(`
+id: patient-intake
+title: Patient Intake
+description: Basic patient information form
+pages:
+  - id: patient-information
+    fields:
+      - id: name
+        fieldType: text
+        question: Full Name
+        required: true
+        inputType: string
+      - id: email
+        fieldType: text
+        question: Email Address
+        inputType: email
+      - id: reason
+        fieldType: radio
+        question: Reason for Visit
+        options:
+          - id: opt1
+            value: Check-up
+          - id: opt2
+            value: Follow-up
+          - id: opt3
+            value: New concern
+`) as FormDefinition;
 
 function App() {
   return (
@@ -105,12 +106,12 @@ function App() {
 The builder has three modes accessible via the header tabs:
 
 1. **Build** -- Visual drag-and-drop editor (default)
-2. **Code** -- JSON/YAML editor with syntax highlighting (Monaco)
+2. **Code** -- YAML-first JSON/YAML editor with syntax highlighting (Monaco)
 3. **Preview** -- Read-only form preview (same rendering as the Renderer)
 
 ## What's Next
 
 - [Canvas & Drag-and-Drop](../builder/canvas) -- Learn about the visual editor
 - [Field Editing](../builder/editing) -- Customize field properties and logic
-- [Code View](../builder/code-view) -- Edit form definitions as JSON/YAML
+- [Code View](../builder/code-view) -- Edit form definitions as YAML (or JSON)
 - [Exporting](../builder/exporting) -- Get the form definition for saving

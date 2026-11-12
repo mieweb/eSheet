@@ -12,21 +12,23 @@ Range slider selection field.
 
 ## Answer Format
 
-```json
-{ "selected": { "id": "optionId", "value": "50" } }
+```yaml
+selected:
+  id: optionId
+  value: '50'
 ```
 
 ## Example
 
-```json
-{
-  "id": "satisfaction",
-  "fieldType": "slider",
-  "question": "Overall Satisfaction",
-  "options": [
-    { "id": "s0", "value": "0" },
-    { "id": "s50", "value": "50" },
-    { "id": "s100", "value": "100" }
-  ]
-}
+```yaml
+id: satisfaction
+fieldType: slider
+question: Overall Satisfaction
+options:
+  - id: s0
+    value: '0'
+  - id: s50
+    value: '50'
+  - id: s100
+    value: '100'
 ```

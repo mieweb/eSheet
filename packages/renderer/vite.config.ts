@@ -3,47 +3,11 @@ import { defineConfig, type LibraryFormats } from 'vite';
 import react from '@vitejs/plugin-react';
 import dts from 'vite-plugin-dts';
 import { resolve } from 'path';
-import { readFileSync, writeFileSync, existsSync, unlinkSync } from 'fs';
-
-// ---------------------------------------------------------------------------
-// Inline-CSS plugin (production build only)
-// ---------------------------------------------------------------------------
-function inlineCssRenderer(): import('vite').Plugin {
-  return {
-    name: 'inline-css-renderer',
-    apply: 'build',
-    closeBundle() {
-      const dir = resolve(import.meta.dirname, 'dist');
-      const cssPath = resolve(dir, 'index.css');
-      const jsPath = resolve(dir, 'index.js');
-      if (!existsSync(cssPath) || !existsSync(jsPath)) return;
-      const cssContent = readFileSync(cssPath, 'utf-8');
-      const jsContent = readFileSync(jsPath, 'utf-8');
-      const iife =
-        `(function(){` +
-        `if(typeof document==='undefined')return;` +
-        `if(window.__ESHEET_RENDERER_CSS_INJECTED)return;` +
-        `if(!document.querySelector('#esheet-renderer-styles')){` +
-        `var s=document.createElement('style');` +
-        `s.id='esheet-renderer-styles';` +
-        `s.textContent=${JSON.stringify(cssContent)};` +
-        `document.head.appendChild(s);}` +
-        `window.__ESHEET_RENDERER_CSS_INJECTED=true;` +
-        `})();\n`;
-      writeFileSync(jsPath, iife + jsContent);
-      unlinkSync(cssPath);
-    },
-  };
-}
 
 export default defineConfig(() => ({
   root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/packages/renderer',
-  plugins: [
-    react(),
-    dts({ tsconfigPath: './tsconfig.lib.json' }),
-    inlineCssRenderer(),
-  ],
+  plugins: [react(), dts({ tsconfigPath: './tsconfig.lib.json' })],
   build: {
     lib: {
       entry: resolve(import.meta.dirname, 'src/index.ts'),
@@ -51,12 +15,18 @@ export default defineConfig(() => ({
       fileName: 'index',
       formats: ['es'] as LibraryFormats[],
     },
-    rollupOptions: {
+    rolldownOptions: {
       external: [
         'react',
         'react-dom',
         'react/jsx-runtime',
         '@esheet/core',
+        '@esheet/pdf',
+        '@esheet/styles',
+        // Must stay external: the field component registry lives in
+        // @esheet/fields, and registerCustomFieldTypes() only reaches the
+        // renderer when host and renderer share one module instance.
+        '@esheet/fields',
         'tslib',
       ],
     },

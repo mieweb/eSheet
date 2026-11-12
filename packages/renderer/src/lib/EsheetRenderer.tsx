@@ -4,7 +4,6 @@ import {
   createUIStore,
   normalizeResponses,
   hydrateDefinition,
-  validateForm,
   type CollabDecorations,
   type FormResponse,
   type FormStore,
@@ -20,22 +19,28 @@ import {
 import { createRendererTools, type RendererTools } from './renderer-tools.js';
 import {
   FormStoreContext,
+  FieldProviderStack,
   UIContext,
   ZodIssuesPanel,
   FeedbackModal,
   useTouchMode,
+  type FieldProvider,
 } from '@esheet/fields';
 import { ensureDefaultFieldComponentsRegistered } from './register-defaults.js';
 import { useRendererInit } from './hooks/useRendererInit.js';
-import { RendererBody } from './components/RendererBody.js';
 import { RendererPdfView } from './components/RendererPdfView.js';
 import type { PdfFieldMapping, PdfImportWarning, PdfSource } from '@esheet/pdf';
+import {
+  RendererBody,
+  type RendererPageNavigation,
+} from './components/RendererBody.js';
 
 export type RendererRepresentation = 'esheet' | 'pdf';
 
 interface EsheetRendererCommonProps {
   /** Form definition — accepts FormDefinition, SurveyJS schema, MCP elicitation envelope,
-   *  or any of the above as a JSON/YAML string. Auto-detected and converted internally.
+   *  or any of the above as a YAML/JSON string. Auto-detected and converted internally.
+   *  YAML is canonical for committed layouts; JSON is intended for wire/API payloads.
    *  Set `strict` to disable auto-conversion and require a valid FormDefinition directly. */
   /** Additional CSS classes for root container */
   className?: string;
@@ -67,7 +72,7 @@ interface EsheetRendererCommonProps {
   /**
    * Enable touch-optimized mode with larger touch targets.
    * - `true`: Always enable touch mode
-   * - `false`: Never enable touch mode (CSS media query still applies)
+   * - `false`: Never enable touch mode (also disables the CSS media query)
    * - `'auto'`: Enable based on viewport width (<980px) via JavaScript
    * - `undefined`: Rely on CSS media query only (default)
    */
@@ -89,6 +94,33 @@ interface EsheetRendererCommonProps {
    * already controls sizing. Defaults to `true`.
    */
   fitToContainer?: boolean;
+  /** Show page tabs above the active page when rendering multiple pages. */
+  topNavigation?: boolean;
+  /** Show Previous / Next controls below the active page. */
+  bottomNavigation?: boolean;
+  /** Block forward page navigation for unanswered required fields. Invalid input drafts always block page changes. */
+  validateNavigation?: boolean;
+  /** Page shown first, by id (issue #147). Unknown or absent → the first page. */
+  initialPageId?: string;
+  /**
+   * Fires when the user changes pages (tab click, prev/next) — never on the
+   * initial seed and never for programmatic `setCurrentPage`/`goToPage`, so a
+   * host syncing the URL cannot loop (issue #147).
+   */
+  onPageChange?: (pageId: string, pageIndex: number) => void;
+  /** Optional wrappers supplied by field add-ons. */
+  fieldProviders?: readonly FieldProvider[];
+  /**
+   * Freeze the whole form: every field renders read-only and user edits are
+   * dropped. Host-driven store writes (e.g. collab bindings calling
+   * `setResponse`) still apply. Defaults to `false`.
+   */
+  readOnly?: boolean;
+  /**
+   * Identity of the current user. When provided, activity entries are stamped
+   * with `identity.name`. Absent → entries save unstamped.
+   */
+  identity?: { name: string };
 }
 
 export interface EsheetRendererEsheetProps extends EsheetRendererCommonProps {
@@ -179,6 +211,16 @@ export interface EsheetRendererHandle {
   setTouchMode: (enabled: boolean) => void;
   /** Reset to auto-detection mode (clears manual override). Only works when touchMode='auto'. */
   resetTouchMode: () => void;
+  /** Show this page. Returns `false` for unknown pages or pending invalid input drafts. */
+  goToPage: (pageId: string) => boolean;
+  /** The active page's id, or `null` before any pages exist (issue #147). */
+  getCurrentPageId: () => string | null;
+  /**
+   * Show a page by id or index. Unknown values are a silent no-op, and
+   * programmatic moves never fire `onPageChange` (issue #147).
+   * Pending invalid input drafts block page changes.
+   */
+  setCurrentPage: (pageIdOrIndex: string | number) => void;
 }
 
 /**
@@ -223,12 +265,14 @@ export const EsheetRenderer = React.forwardRef<
   return (
     <FormStoreContext.Provider value={formStore}>
       <UIContext.Provider value={uiStore}>
-        <EsheetRendererInner
-          {...props}
-          formStore={formStore}
-          uiStore={uiStore}
-          ref={ref}
-        />
+        <FieldProviderStack providers={props.fieldProviders}>
+          <EsheetRendererInner
+            {...props}
+            formStore={formStore}
+            uiStore={uiStore}
+            ref={ref}
+          />
+        </FieldProviderStack>
       </UIContext.Provider>
     </FormStoreContext.Provider>
   );
@@ -264,6 +308,13 @@ const EsheetRendererInner = React.forwardRef<
     allowDangerousJS = false,
     collab,
     fitToContainer = true,
+    topNavigation = false,
+    bottomNavigation = true,
+    validateNavigation = true,
+    initialPageId,
+    onPageChange,
+    readOnly = false,
+    identity,
   } = props;
   const representation = props.representation ?? 'esheet';
   const formData =
@@ -283,14 +334,25 @@ const EsheetRendererInner = React.forwardRef<
   );
   const onReadyRef = React.useRef(onReady);
   onReadyRef.current = onReady;
+  const formReadOnly = React.useSyncExternalStore(
+    (callback) => formStore.subscribe(callback),
+    () => formStore.getState().readOnly,
+    () => formStore.getState().readOnly
+  );
+
+  // Keep the host-supplied identity in the form store for activity authorship.
+  React.useEffect(() => {
+    formStore.getState().setIdentity(identity);
+  }, [formStore, identity]);
+
+  // The form-level freeze lives in the store so fields see it via isReadOnly.
+  React.useEffect(() => {
+    formStore.getState().setReadOnly(readOnly);
+  }, [formStore, readOnly]);
 
   const handleSubmitClick = () => {
     const state = formStore.getState();
-    const errors = validateForm(
-      state.normalized,
-      state.responses,
-      state.dangerouslyAllowJS
-    );
+    const errors = state.getErrors();
     const hardErrors = errors.filter((e) => e.severity !== 'soft');
     if (hardErrors.length > 0) return; // hard errors — field-level UI handles display
     const softErrors = errors.filter((e) => e.severity === 'soft');
@@ -397,6 +459,21 @@ const EsheetRendererInner = React.forwardRef<
   }, [formStore, pdfSession]);
 
   // Expose ref API
+  const goToPageRef = React.useRef<((pageId: string) => boolean) | null>(null);
+  const registerGoToPage = React.useCallback(
+    (goToPage: (pageId: string) => boolean) => {
+      goToPageRef.current = goToPage;
+    },
+    []
+  );
+  const pageNavigationRef = React.useRef<RendererPageNavigation | null>(null);
+  const registerPageNavigation = React.useCallback(
+    (api: RendererPageNavigation) => {
+      pageNavigationRef.current = api;
+    },
+    []
+  );
+
   React.useImperativeHandle(
     ref,
     () => ({
@@ -448,7 +525,7 @@ const EsheetRendererInner = React.forwardRef<
       getUIStore: () => uiStore,
       getValidResponse: () => {
         const state = formStore.getState();
-        const errors = validateForm(state.normalized, state.responses);
+        const errors = state.getErrors();
         return {
           response: errors.length === 0 ? state.responses : null,
           errors,
@@ -457,6 +534,11 @@ const EsheetRendererInner = React.forwardRef<
       isTouchModeEnabled: () => isTouchEnabled,
       setTouchMode: setTouchModeInternal,
       resetTouchMode: resetTouchModeInternal,
+      goToPage: (pageId: string) => goToPageRef.current?.(pageId) ?? false,
+      getCurrentPageId: () =>
+        pageNavigationRef.current?.getCurrentPageId() ?? null,
+      setCurrentPage: (pageIdOrIndex: string | number) =>
+        pageNavigationRef.current?.setCurrentPage(pageIdOrIndex),
     }),
     [
       formStore,
@@ -474,8 +556,10 @@ const EsheetRendererInner = React.forwardRef<
     touchMode === true ||
     ((touchMode === 'auto' || touchMode === undefined) && isTouchEnabled);
 
-  // Apply disabled class when user explicitly disabled touch mode (prevents CSS media query)
-  const applyDisabledClass = isManualOverride && !isTouchEnabled;
+  // Apply disabled class when touch mode is explicitly off — via prop or
+  // manual toggle — so touch-mode.css's own media query stands down too.
+  const applyDisabledClass =
+    touchMode === false || (isManualOverride && !isTouchEnabled);
 
   const rootClasses = [
     'esheet-renderer-root',
@@ -492,6 +576,28 @@ const EsheetRendererInner = React.forwardRef<
   return (
     <div className={rootClasses}>
       <ZodIssuesPanel issues={validationErrors} />
+      {formReadOnly && (
+        <div
+          role="status"
+          className="renderer-readonly-banner ms:mb-4 ms:flex ms:items-center ms:gap-2 ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackgroundsecondary ms:px-4 ms:py-2.5 ms:text-sm ms:text-mstextmuted"
+        >
+          <svg
+            aria-hidden="true"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+          This form is read-only. Responses cannot be changed.
+        </div>
+      )}
       {representation === 'pdf' ? (
         pdfImportError ? (
           <div role="alert">{pdfImportError}</div>
@@ -505,7 +611,18 @@ const EsheetRendererInner = React.forwardRef<
           <div role="status">Loading PDF...</div>
         )
       ) : (
-        <RendererBody form={formStore} ui={uiStore} collab={collab} />
+        <RendererBody
+          form={formStore}
+          ui={uiStore}
+          collab={collab}
+          topNavigation={topNavigation}
+          bottomNavigation={bottomNavigation}
+          validateNavigation={validateNavigation}
+          registerGoToPage={registerGoToPage}
+          initialPageId={initialPageId}
+          onPageChange={onPageChange}
+          registerPageNavigation={registerPageNavigation}
+        />
       )}
       {onSubmit && (
         <div className="renderer-submit ms:mt-6 ms:flex ms:justify-end">
@@ -528,7 +645,15 @@ const EsheetRendererInner = React.forwardRef<
         showCancel
         onConfirm={() => {
           setSoftBypassOpen(false);
-          if (pendingResponse) onSubmit?.(pendingResponse);
+          if (
+            pendingResponse &&
+            !formStore
+              .getState()
+              .getErrors()
+              .some((e) => e.severity === 'hard')
+          ) {
+            onSubmit?.(pendingResponse);
+          }
           setPendingResponse(null);
         }}
         onClose={() => {

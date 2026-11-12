@@ -46,6 +46,8 @@ export const DropdownField = React.memo(function DropdownField({
           )}
         </div>
         <Select
+          id={`${instanceId}-dropdown-answer-${def.id}`}
+          aria-label={def.question || 'Question'}
           options={selectOptions}
           value={selectedId || ''}
           onValueChange={(val) => {

@@ -1,11 +1,14 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { load } from 'js-yaml';
 import {
   EsheetRenderer,
   type EsheetRendererHandle,
   useRendererMcpToolHandler,
-  type FormDefinition,
   type ResponseFormat,
 } from '@esheet/renderer';
+import { createDocumentListFieldProvider } from '@esheet/fields-documents';
+import { permissiveDocumentListCapabilities } from '@esheet/fields-documents';
+import { createFileStoreProvider } from '@esheet/fields';
 import { Navbar } from '../components/Navbar';
 import {
   Alert,
@@ -17,15 +20,27 @@ import {
   CardHeader,
   CardTitle,
   DialogOverlay,
+  Modal,
+  ModalBody,
+  ModalClose,
+  ModalFooter,
+  ModalHeader,
+  ModalTitle,
   Select,
+  Switch,
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
   Textarea,
 } from '@mieweb/ui';
-import { ClipboardList, Smartphone } from 'lucide-react';
+import { ClipboardList, SlidersHorizontal } from 'lucide-react';
 import { updateOzwellTools, FLOWIE_KEY } from '../ozwell-setup.js';
+import {
+  DEMO_DOCUMENT_AUTHOR,
+  createDemoDocumentListRepository,
+  createDemoFileStore,
+} from '../document-list-demo-repository.js';
 
 interface SubmitResult {
   readonly kind: 'success' | 'error';
@@ -44,40 +59,41 @@ interface SchemaOption {
 
 function toSchemaLabel(fileName: string): string {
   return fileName
-    .replace(/\.json$/i, '')
+    .replace(/\.(?:json|ya?ml)$/i, '')
     .split('-')
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ');
 }
 
-const schemaModules = import.meta.glob('../schemas/*.json', {
+const schemaModules = import.meta.glob('../schemas/*.yaml', {
   eager: true,
-}) as Record<string, { default?: FormDefinition } | FormDefinition>;
+  query: '?raw',
+  import: 'default',
+}) as Record<string, string>;
+
+function getSchemaTitle(rawSchema: string): string | undefined {
+  const parsed = load(rawSchema);
+  if (typeof parsed !== 'object' || parsed === null) return undefined;
+  const title = (parsed as Record<string, unknown>).title;
+  return typeof title === 'string' && title.trim() ? title.trim() : undefined;
+}
 
 const TEST_SCHEMAS: readonly SchemaOption[] = Object.entries(schemaModules)
-  .filter(([path]) => !path.endsWith('.context.json'))
-  .map(([path, mod]) => {
+  .map(([path, rawSchema]) => {
     const fileName = path.split('/').pop() ?? path;
-    const data =
-      typeof mod === 'object' && mod !== null && 'default' in mod
-        ? mod.default
-        : (mod as FormDefinition);
-
-    if (!data) return null;
 
     return {
-      label: data.title?.trim() || toSchemaLabel(fileName),
+      label: getSchemaTitle(rawSchema) || toSchemaLabel(fileName),
       value: fileName,
-      data: data as unknown,
+      data: rawSchema,
     };
   })
-  .filter((schema): schema is SchemaOption => schema !== null)
   .sort((a, b) => a.label.localeCompare(b.label));
 
 export function RendererView() {
   useEffect(() => {
-    updateOzwellTools(FLOWIE_KEY);
+    return updateOzwellTools(FLOWIE_KEY);
   }, []);
 
   const onRendererToolsReady = useRendererMcpToolHandler({
@@ -92,12 +108,22 @@ export function RendererView() {
   const rendererRef = useRef<EsheetRendererHandle>(null);
 
   const [touchMode, setTouchMode] = useState(false);
+  const [readOnly, setReadOnly] = useState(false);
+  const [navigationOpen, setNavigationOpen] = useState(false);
+  const [topNavigation, setTopNavigation] = useState(false);
+  const [bottomNavigation, setBottomNavigation] = useState(true);
+  const [validateNavigation, setValidateNavigation] = useState(true);
   const [activeTab, setActiveTab] = useState<'form' | 'definition'>('form');
   const [responseFormat, setResponseFormat] =
     useState<ResponseFormat>('native');
   const [pasteOpen, setPasteOpen] = useState(false);
   const [pasteText, setPasteText] = useState('');
   const [pasteError, setPasteError] = useState<string | null>(null);
+  const documentRepository = useMemo(
+    () => createDemoDocumentListRepository(),
+    []
+  );
+  const fileStore = useMemo(() => createDemoFileStore(), []);
 
   const resetFormKey = useCallback(() => {
     setFormKey((prev) => prev + 1);
@@ -119,7 +145,7 @@ export function RendererView() {
     const reader = new FileReader();
     reader.onload = (ev) => {
       try {
-        const data = JSON.parse(ev.target?.result as string);
+        const data = load(ev.target?.result as string);
         setRawInput(data);
         setSubmitResult(null);
         setActiveTab('form');
@@ -128,7 +154,7 @@ export function RendererView() {
         setSubmitResult({
           kind: 'error',
           title: 'Import failed',
-          message: 'Failed to parse JSON.',
+          message: 'Failed to parse YAML or JSON.',
           detail: err instanceof Error ? err.message : String(err),
         });
       }
@@ -182,7 +208,7 @@ export function RendererView() {
 
   const handlePasteApply = () => {
     try {
-      const data = JSON.parse(pasteText);
+      const data = load(pasteText);
       setRawInput(data);
       setSubmitResult(null);
       setActiveTab('form');
@@ -196,6 +222,15 @@ export function RendererView() {
   };
 
   const hasForm = rawInput != null;
+  const documentListProvider = createDocumentListFieldProvider(
+    // A demo protects nothing; a real host resolves its own capabilities.
+    {
+      capabilities: permissiveDocumentListCapabilities,
+      author: DEMO_DOCUMENT_AUTHOR,
+    },
+    { repository: documentRepository, fileStore }
+  );
+  const fileStoreProvider = createFileStoreProvider(fileStore);
 
   return (
     <>
@@ -204,7 +239,7 @@ export function RendererView() {
       <input
         id="renderer-file-import"
         type="file"
-        accept=".json"
+        accept=".json,.yaml,.yml,application/json,application/yaml,text/yaml"
         onChange={handleFileImport}
         className="hidden"
       />
@@ -215,8 +250,8 @@ export function RendererView() {
       >
         <div className="sticky top-14 z-30 bg-card border-b border-border">
           <div className="max-w-4xl mx-auto px-3 py-1.5 flex flex-col sm:flex-row sm:items-center sm:h-11 gap-1.5 sm:gap-2">
-            {/* Left: tab triggers + touch mode */}
-            <div className="flex items-center gap-2">
+            {/* Left: view tabs and renderer options */}
+            <div className="flex min-w-0 items-center gap-2">
               <TabsList>
                 <TabsTrigger value="form" disabled={!hasForm}>
                   Form
@@ -226,14 +261,15 @@ export function RendererView() {
                 </TabsTrigger>
               </TabsList>
               <Button
-                variant={touchMode ? 'primary' : 'outline'}
+                variant="outline"
                 size="sm"
-                disabled={!hasForm}
-                onClick={() => rendererRef.current?.setTouchMode(!touchMode)}
-                title={touchMode ? 'Disable touch mode' : 'Enable touch mode'}
+                className="shrink-0"
+                onClick={() => setNavigationOpen(true)}
+                aria-haspopup="dialog"
+                title="Configure renderer options"
               >
-                <Smartphone size={14} />
-                <span className="hidden sm:inline ml-1">Touch</span>
+                <SlidersHorizontal size={14} />
+                <span className="ml-1">Options</span>
               </Button>
             </div>
             {/* Right: format select + import + submit */}
@@ -260,7 +296,7 @@ export function RendererView() {
                   setPasteOpen(true);
                 }}
               >
-                Paste JSON
+                Paste YAML/JSON
               </Button>
               <Button
                 variant="outline"
@@ -270,7 +306,7 @@ export function RendererView() {
                   document.getElementById('renderer-file-import')?.click()
                 }
               >
-                Import JSON
+                Import YAML/JSON
               </Button>
               <Button
                 onClick={handleSubmit}
@@ -327,8 +363,8 @@ export function RendererView() {
                   No Form Loaded
                 </h2>
                 <p className="text-muted-foreground mb-6">
-                  Select an example from the dropdown, or import your own JSON
-                  definition.
+                  Select an example from the dropdown, or import your own YAML
+                  or JSON definition.
                 </p>
                 <div className="flex flex-wrap justify-center gap-2">
                   {TEST_SCHEMAS.slice(0, 3).map((s) => (
@@ -356,7 +392,12 @@ export function RendererView() {
                       allowDangerousJS={true}
                       touchMode="auto"
                       onTouchModeChange={setTouchMode}
+                      readOnly={readOnly}
+                      topNavigation={topNavigation}
+                      bottomNavigation={bottomNavigation}
+                      validateNavigation={validateNavigation}
                       onRendererToolsReady={onRendererToolsReady}
+                      fieldProviders={[fileStoreProvider, documentListProvider]}
                       onReady={() => {
                         const def = rendererRef.current
                           ?.getFormStore()
@@ -392,16 +433,88 @@ export function RendererView() {
         </div>
       </Tabs>
 
+      <Modal open={navigationOpen} onOpenChange={setNavigationOpen}>
+        <ModalHeader>
+          <ModalTitle>Renderer options</ModalTitle>
+          <ModalClose />
+        </ModalHeader>
+        <ModalBody className="flex flex-col gap-4">
+          <p className="text-sm text-muted-foreground">
+            Configure how the renderer displays and behaves.
+          </p>
+          <div className="divide-y divide-border rounded-lg border border-border">
+            <div className="p-4">
+              <Switch
+                id="renderer-touch-mode"
+                label="Touch mode"
+                description="Larger, mobile-friendly controls."
+                checked={touchMode}
+                onCheckedChange={(checked) =>
+                  rendererRef.current?.setTouchMode(checked)
+                }
+              />
+            </div>
+            <div className="p-4">
+              <Switch
+                id="renderer-read-only"
+                label="Read-only"
+                description="Freeze the form so responses cannot be edited."
+                checked={readOnly}
+                onCheckedChange={setReadOnly}
+              />
+            </div>
+            <div className="p-4">
+              <Switch
+                id="renderer-top-navigation"
+                label="Top navigation"
+                description="Show page titles above the form."
+                checked={topNavigation}
+                onCheckedChange={setTopNavigation}
+              />
+            </div>
+            <div className="p-4">
+              <Switch
+                id="renderer-bottom-navigation"
+                label="Bottom navigation"
+                description="Show Previous and Next controls below the form."
+                checked={bottomNavigation}
+                onCheckedChange={setBottomNavigation}
+              />
+            </div>
+            <div className="p-4">
+              <Switch
+                id="renderer-navigation-validation"
+                label="Require page validation"
+                description="Validate required fields before moving forward."
+                checked={validateNavigation}
+                onCheckedChange={setValidateNavigation}
+              />
+            </div>
+          </div>
+        </ModalBody>
+        <ModalFooter>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setNavigationOpen(false)}
+          >
+            Done
+          </Button>
+        </ModalFooter>
+      </Modal>
+
       <DialogOverlay isOpen={pasteOpen} onClose={() => setPasteOpen(false)}>
         <div className="flex flex-col gap-3 p-1">
-          <h2 className="text-base font-semibold">Paste JSON Definition</h2>
+          <h2 className="text-base font-semibold">
+            Paste YAML/JSON Definition
+          </h2>
           <Textarea
             value={pasteText}
             onChange={(e) => {
               setPasteText(e.target.value);
               setPasteError(null);
             }}
-            placeholder="Paste your eSheet / FHIR / SurveyJS JSON here…"
+            placeholder="Paste your eSheet YAML/JSON, FHIR, or SurveyJS definition here…"
             rows={14}
             className="font-mono text-xs"
             autoFocus

@@ -1,0 +1,15 @@
+id: linked-review
+title: Request review
+pages:
+  - id: review
+    fields:
+      - id: reviewer
+        fieldType: text
+        question: Reviewer name
+      - id: review_notes
+        fieldType: longtext
+        question: Review notes
+      - id: linked_overview
+        fieldType: responseReference
+        question: Request overview
+        width: full

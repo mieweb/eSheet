@@ -1,5 +1,6 @@
 import { z } from 'zod/mini';
 import { getFieldTypeMeta } from './registry.js';
+import type { FileReference } from './file-store.js';
 
 // ---------------------------------------------------------------------------
 // Field Types
@@ -25,6 +26,7 @@ export const FIELD_TYPES = [
   'signature',
   'diagram',
   'file',
+  'activity',
   'openchoice',
   'display',
   'section',
@@ -33,6 +35,239 @@ export const FIELD_TYPES = [
 
 export const fieldTypeSchema = z.enum(FIELD_TYPES);
 export type FieldType = z.infer<typeof fieldTypeSchema>;
+
+export const SECTION_ICON_NAMES = [
+  'user',
+  'users',
+  'userPlus',
+  'userMinus',
+  'userCheck',
+  'circleUser',
+  'logIn',
+  'logOut',
+  'file',
+  'fileText',
+  'folder',
+  'folderOpen',
+  'image',
+  'camera',
+  'paperclip',
+  'calendar',
+  'calendarClock',
+  'timer',
+  'history',
+  'grid',
+  'list',
+  'table',
+  'columns',
+  'maximize',
+  'minimize',
+  'eye',
+  'eyeOff',
+  'search',
+  'shield',
+  'shieldCheck',
+  'shieldPlus',
+  'lock',
+  'unlock',
+  'key',
+  'hospital',
+  'ambulance',
+  'stethoscope',
+  'briefcaseMedical',
+  'heartPulse',
+  'activity',
+  'pill',
+  'tablets',
+  'syringe',
+  'testTube',
+  'testTubes',
+  'flaskConical',
+  'microscope',
+  'dna',
+  'brain',
+  'bone',
+  'bandage',
+  'thermometer',
+  'droplet',
+  'droplets',
+  'bed',
+  'bedDouble',
+  'baby',
+  'accessibility',
+  'ear',
+  'glasses',
+  'scan',
+  'scanEye',
+  'radiation',
+  'biohazard',
+  'weight',
+  'ruler',
+  'clipboard',
+  'clipboardPlus',
+  'clipboardCheck',
+  'fileHeart',
+  'filePlus',
+  'fileCheck',
+  'heart',
+  'star',
+  'bookmark',
+  'flag',
+  'tag',
+  'hash',
+  'atSign',
+  'link',
+  'clipboardList',
+  'mapPin',
+  'globe',
+  'building',
+  'briefcase',
+  'creditCard',
+  'dollarSign',
+  'zap',
+  'sparkles',
+  'info',
+] as const;
+export const sectionIconSchema = z.enum(SECTION_ICON_NAMES);
+export type SectionIconName = z.infer<typeof sectionIconSchema>;
+
+export interface SectionIconOption {
+  readonly name: SectionIconName;
+  readonly label: string;
+}
+
+export interface SectionIconGroup {
+  readonly label: string;
+  readonly icons: readonly SectionIconOption[];
+}
+
+export const SECTION_ICON_GROUPS = [
+  {
+    label: 'User & Account',
+    icons: [
+      { name: 'user', label: 'User' },
+      { name: 'users', label: 'Users' },
+      { name: 'userPlus', label: 'User plus' },
+      { name: 'userMinus', label: 'User minus' },
+      { name: 'userCheck', label: 'User check' },
+      { name: 'circleUser', label: 'User circle' },
+      { name: 'logIn', label: 'Log in' },
+      { name: 'logOut', label: 'Log out' },
+    ],
+  },
+  {
+    label: 'Media & Files',
+    icons: [
+      { name: 'file', label: 'File' },
+      { name: 'fileText', label: 'Text file' },
+      { name: 'folder', label: 'Folder' },
+      { name: 'folderOpen', label: 'Open folder' },
+      { name: 'image', label: 'Image' },
+      { name: 'camera', label: 'Camera' },
+      { name: 'paperclip', label: 'Paperclip' },
+    ],
+  },
+  {
+    label: 'Time & Calendar',
+    icons: [
+      { name: 'calendar', label: 'Calendar' },
+      { name: 'calendarClock', label: 'Calendar clock' },
+      { name: 'timer', label: 'Timer' },
+      { name: 'history', label: 'History' },
+    ],
+  },
+  {
+    label: 'Layout & View',
+    icons: [
+      { name: 'grid', label: 'Grid' },
+      { name: 'list', label: 'List' },
+      { name: 'table', label: 'Table' },
+      { name: 'columns', label: 'Columns' },
+      { name: 'maximize', label: 'Maximize' },
+      { name: 'minimize', label: 'Minimize' },
+      { name: 'eye', label: 'Eye' },
+      { name: 'eyeOff', label: 'Eye off' },
+      { name: 'search', label: 'Search' },
+    ],
+  },
+  {
+    label: 'Security',
+    icons: [
+      { name: 'shield', label: 'Shield' },
+      { name: 'shieldCheck', label: 'Shield check' },
+      { name: 'shieldPlus', label: 'Shield plus' },
+      { name: 'lock', label: 'Lock' },
+      { name: 'unlock', label: 'Unlock' },
+      { name: 'key', label: 'Key' },
+    ],
+  },
+  {
+    label: 'Healthcare & Medical',
+    icons: [
+      { name: 'hospital', label: 'Hospital' },
+      { name: 'ambulance', label: 'Ambulance' },
+      { name: 'stethoscope', label: 'Stethoscope' },
+      { name: 'briefcaseMedical', label: 'Medical briefcase' },
+      { name: 'heartPulse', label: 'Heart pulse' },
+      { name: 'activity', label: 'Activity' },
+      { name: 'pill', label: 'Pill' },
+      { name: 'tablets', label: 'Tablets' },
+      { name: 'syringe', label: 'Syringe' },
+      { name: 'testTube', label: 'Test tube' },
+      { name: 'testTubes', label: 'Test tubes' },
+      { name: 'flaskConical', label: 'Flask' },
+      { name: 'microscope', label: 'Microscope' },
+      { name: 'dna', label: 'DNA' },
+      { name: 'brain', label: 'Brain' },
+      { name: 'bone', label: 'Bone' },
+      { name: 'bandage', label: 'Bandage' },
+      { name: 'thermometer', label: 'Thermometer' },
+      { name: 'droplet', label: 'Droplet' },
+      { name: 'droplets', label: 'Droplets' },
+      { name: 'bed', label: 'Bed' },
+      { name: 'bedDouble', label: 'Double bed' },
+      { name: 'baby', label: 'Baby' },
+      { name: 'accessibility', label: 'Accessibility' },
+      { name: 'ear', label: 'Ear' },
+      { name: 'glasses', label: 'Glasses' },
+      { name: 'scan', label: 'Scan' },
+      { name: 'scanEye', label: 'Eye scan' },
+      { name: 'radiation', label: 'Radiation' },
+      { name: 'biohazard', label: 'Biohazard' },
+      { name: 'weight', label: 'Weight' },
+      { name: 'ruler', label: 'Ruler' },
+      { name: 'clipboard', label: 'Clipboard' },
+      { name: 'clipboardPlus', label: 'Clipboard plus' },
+      { name: 'clipboardCheck', label: 'Clipboard check' },
+      { name: 'fileHeart', label: 'Heart file' },
+      { name: 'filePlus', label: 'File plus' },
+      { name: 'fileCheck', label: 'File check' },
+    ],
+  },
+  {
+    label: 'Misc',
+    icons: [
+      { name: 'heart', label: 'Heart' },
+      { name: 'star', label: 'Star' },
+      { name: 'bookmark', label: 'Bookmark' },
+      { name: 'flag', label: 'Flag' },
+      { name: 'tag', label: 'Tag' },
+      { name: 'hash', label: 'Hash' },
+      { name: 'atSign', label: 'At sign' },
+      { name: 'link', label: 'Link' },
+      { name: 'clipboardList', label: 'Clipboard list' },
+      { name: 'mapPin', label: 'Map pin' },
+      { name: 'globe', label: 'Globe' },
+      { name: 'building', label: 'Building' },
+      { name: 'briefcase', label: 'Briefcase' },
+      { name: 'creditCard', label: 'Credit card' },
+      { name: 'dollarSign', label: 'Dollar sign' },
+      { name: 'zap', label: 'Zap' },
+      { name: 'sparkles', label: 'Sparkles' },
+      { name: 'info', label: 'Info' },
+    ],
+  },
+] as const satisfies readonly SectionIconGroup[];
 
 /** Category groupings for field types. */
 export type FieldCategory =
@@ -99,6 +334,11 @@ export const fieldOptionSchema = z.object({
   score: z.optional(z.number()),
   /** Adapter or feature metadata associated with this option. */
   _sourceData: z.optional(z.unknown()),
+  /** Select this option when initializing a new response. */
+  defaultOption: z.optional(z.boolean()),
+  rules: z.optional(
+    z.array(z.lazy((): z.ZodMiniType<ConditionalRule> => conditionalRuleSchema))
+  ),
 });
 export type FieldOption = z.infer<typeof fieldOptionSchema>;
 
@@ -149,7 +389,6 @@ export const CONDITIONAL_EFFECTS = [
   'required',
   'visible',
   'enable',
-  // 'readOnly', // TODO: implement readOnly properly (see INTERNAL-TICKETS/tickets/readonly-fields.md)
   'setValue',
 ] as const;
 export const conditionalEffectSchema = z.enum(CONDITIONAL_EFFECTS);
@@ -251,6 +490,7 @@ export type FieldValidator = z.infer<typeof fieldValidatorSchema>;
 
 /**
  * Layout width a field occupies in a row-based preview/render grid.
+ * - `none`  - does not override child widths when used on a section.
  * - `full`  - spans the whole row (default).
  * - `half`  - two per row.
  * - `third` - three per row.
@@ -258,7 +498,7 @@ export type FieldValidator = z.infer<typeof fieldValidatorSchema>;
  * **FHIR extension:** serialised as `valueCode` on the item's `extension` array.
  * Definition: https://esheet.os.mieweb.org/docs/adapters/fhir/extensions#field-width
  */
-export type FieldWidth = 'full' | 'half' | 'third';
+export type FieldWidth = 'none' | 'full' | 'half' | 'third';
 
 /**
  * How a choice field arranges its options.
@@ -270,6 +510,12 @@ export type FieldWidth = 'full' | 'half' | 'third';
  * Definition: https://esheet.os.mieweb.org/docs/adapters/fhir/extensions#option-layout
  */
 export type OptionLayout = 'stack' | 'wrap';
+
+/** A symmetric date range resolved relative to the day the form is rendered. */
+export interface RelativeDateRange {
+  amount: number;
+  unit: 'days' | 'months' | 'years';
+}
 
 // ---------------------------------------------------------------------------
 // Base Interfaces
@@ -283,6 +529,8 @@ interface BaseFieldDefinition {
   id: string;
   /** The question / label shown to the user. */
   question?: string;
+  /** Initial text answer, used only for a new response. */
+  defaultAnswer?: string;
   /**
    * Required state for this field.
    * - `true`    - hard required (blocks submission).
@@ -290,11 +538,17 @@ interface BaseFieldDefinition {
    * - `false` / omitted - not required.
    */
   required?: boolean | 'soft';
-  // readOnly?: boolean; // TODO: implement readOnly properly (see INTERNAL-TICKETS/tickets/readonly-fields.md)
-  /** Layout width in a row grid (`full` | `half` | `third`). Defaults to `full`. */
+  /** Layout width in a row grid. Defaults by field category. */
   width?: FieldWidth;
+  /** When true, the field does not inherit its containing section's width. */
+  overrideSectionWidth?: boolean;
   /** Validation rules applied to the field's response. */
   validators?: FieldValidator[];
+  /**
+   * When true, the field displays its value but rejects user edits.
+   * Programmatic writes (host store, `fillFields`, calculations) still apply.
+   */
+  readOnly?: boolean;
   /** Conditional rules that control visibility, enabled state, or required state. */
   rules?: ConditionalRule[];
   /** JS expression that auto-computes this field's value. Requires dangerouslyAllowJS on form. */
@@ -313,18 +567,24 @@ export interface TextFieldDefinition extends BaseFieldDefinition {
   fieldType: 'text';
   inputType?: TextInputType;
   unit?: string;
+  dateRange?: RelativeDateRange;
+  timeFormat?: '12-hour' | '24-hour';
 }
 
 export interface LongtextFieldDefinition extends BaseFieldDefinition {
   fieldType: 'longtext';
+  rows?: number;
+  maxRows?: number;
   inputType?: TextInputType;
   unit?: string;
+  dateRange?: RelativeDateRange;
+  timeFormat?: '12-hour' | '24-hour';
 }
 
 export interface MultitextFieldDefinition extends BaseFieldDefinition {
   fieldType: 'multitext';
   options?: FieldOption[];
-  /** How inputs are arranged (`stack` | `wrap`). Defaults to `stack`. */
+  /** How inputs are arranged (`stack` | `wrap`). Defaults to `wrap`. */
   optionLayout?: OptionLayout;
 }
 
@@ -335,14 +595,14 @@ export interface MultitextFieldDefinition extends BaseFieldDefinition {
 export interface RadioFieldDefinition extends BaseFieldDefinition {
   fieldType: 'radio';
   options?: FieldOption[];
-  /** How options are arranged (`stack` | `wrap`). Defaults to `stack`. */
+  /** How options are arranged (`stack` | `wrap`). Defaults to `wrap`. */
   optionLayout?: OptionLayout;
 }
 
 export interface CheckFieldDefinition extends BaseFieldDefinition {
   fieldType: 'check';
   options?: FieldOption[];
-  /** How options are arranged (`stack` | `wrap`). Defaults to `stack`. */
+  /** How options are arranged (`stack` | `wrap`). Defaults to `wrap`. */
   optionLayout?: OptionLayout;
 }
 
@@ -431,6 +691,8 @@ export interface DiagramFieldDefinition extends BaseFieldDefinition {
   fieldType: 'diagram';
   imageUri?: string; // background image
   padPlaceholder?: string;
+  /** Allow respondent image uploads and chart selection. Defaults to true. */
+  allowImageAttachments?: boolean;
 }
 
 export interface FileFieldDefinition extends BaseFieldDefinition {
@@ -443,6 +705,15 @@ export interface FileFieldDefinition extends BaseFieldDefinition {
   maxFiles?: number;
 }
 
+/**
+ * Read-only, append-only log of response changes over time. Rendered by the
+ * `activity` field; entries live under the reserved `_activity` response key
+ * and are GUID-keyed so concurrent logs union-merge deterministically.
+ */
+export interface ActivityFieldDefinition extends BaseFieldDefinition {
+  fieldType: 'activity';
+}
+
 export interface OpenChoiceFieldDefinition extends BaseFieldDefinition {
   fieldType: 'openchoice';
   /** Predefined selectable options. */
@@ -451,7 +722,7 @@ export interface OpenChoiceFieldDefinition extends BaseFieldDefinition {
   maxCustomOptions?: number;
   /** Label for the "Other, please specify" option (optional). */
   otherLabel?: string;
-  /** Controls whether options flow horizontally (wrap) or stack vertically (default). */
+  /** Controls whether options flow horizontally (wrap) or stack vertically. Defaults to `wrap`. */
   optionLayout?: OptionLayout;
 }
 
@@ -460,12 +731,15 @@ export interface DisplayFieldDefinition {
   fieldType: 'display';
   /** Display fields have no question text. */
   question?: never;
+  defaultAnswer?: never;
   /** Markdown-like content with inline expression placeholders. */
   content?: string;
   /** Display fields are never required. */
   required?: never;
-  /** Layout width in a row grid (`full` | `half` | `third`). Defaults to `full`. */
+  /** Layout width in a row grid (`full` | `half` | `third`). Defaults by field category. */
   width?: FieldWidth;
+  /** When true, the field does not inherit its containing section's width. */
+  overrideSectionWidth?: boolean;
   /** Conditional rules controlling visibility. */
   rules?: ConditionalRule[];
   /** @deprecated Display fields do not accept answers; calculation has no effect. */
@@ -481,6 +755,7 @@ export interface DisplayFieldDefinition {
 export interface SectionFieldDefinition extends BaseFieldDefinition {
   fieldType: 'section';
   title?: string;
+  sectionIcon?: SectionIconName;
   /**
    * Collapse behaviour of the section in preview.
    * - `'collapsed'` — collapsible, starts collapsed.
@@ -525,6 +800,7 @@ export type FieldDefinition =
   // Rich
   | ImageFieldDefinition
   | FileFieldDefinition
+  | ActivityFieldDefinition
   | HtmlFieldDefinition
   | SignatureFieldDefinition
   | DiagramFieldDefinition
@@ -569,8 +845,16 @@ export function hasOptions(
 /** Properties allowed for each field type (beyond base properties). */
 const FIELD_TYPE_PROPERTIES: Record<FieldType, readonly string[]> = {
   // Text category
-  text: ['inputType', 'unit'],
-  longtext: ['inputType', 'unit'],
+  text: ['inputType', 'unit', 'dateRange', 'timeFormat', 'defaultAnswer'],
+  longtext: [
+    'inputType',
+    'unit',
+    'dateRange',
+    'timeFormat',
+    'defaultAnswer',
+    'rows',
+    'maxRows',
+  ],
   multitext: ['options', 'optionLayout'],
   // Selection category
   radio: ['options', 'optionLayout'],
@@ -583,18 +867,19 @@ const FIELD_TYPE_PROPERTIES: Record<FieldType, readonly string[]> = {
   ranking: ['options'],
   slider: ['options'],
   // Matrix category
-  singlematrix: ['rows', 'columns'],
-  multimatrix: ['rows', 'columns'],
+  singlematrix: ['rows', 'columns', 'scored', 'scoreStart'],
+  multimatrix: ['rows', 'columns', 'scored', 'scoreStart'],
   // Rich category
   image: ['imageUri', 'altText', 'caption'],
   html: ['htmlContent', 'iframeHeight'],
   signature: ['padPlaceholder'],
-  diagram: ['imageUri', 'padPlaceholder'],
+  diagram: ['imageUri', 'padPlaceholder', 'allowImageAttachments'],
   file: ['accept', 'maxFileSize', 'maxFiles'],
-  openchoice: ['options', 'maxCustomOptions', 'otherLabel'],
+  activity: [],
+  openchoice: ['options', 'maxCustomOptions', 'otherLabel', 'optionLayout'],
   display: ['content'],
   // Organization category
-  section: ['title', 'fields', 'sectionCollapse'],
+  section: ['title', 'fields', 'sectionIcon', 'sectionCollapse'],
   pages: ['title', 'fields', 'autoAdvance'],
 };
 
@@ -604,9 +889,10 @@ const BASE_PROPERTIES = [
   'fieldType',
   'question',
   'required',
-  // 'readOnly', // TODO: implement readOnly properly
   'width',
+  'overrideSectionWidth',
   'validators',
+  'readOnly',
   'calculation',
   'rules',
   '_sourceData',
@@ -721,9 +1007,10 @@ const baseFieldProps = {
   id: z.string(),
   question: z.optional(z.string()),
   required: z.optional(z.union([z.boolean(), z.literal('soft')])),
-  // readOnly: z.optional(z.boolean()), // TODO: implement readOnly properly
-  width: z.optional(z.enum(['full', 'half', 'third'])),
+  width: z.optional(z.enum(['none', 'full', 'half', 'third'])),
+  overrideSectionWidth: z.optional(z.boolean()),
   validators: z.optional(z.array(fieldValidatorSchema)),
+  readOnly: z.optional(z.boolean()),
   rules: z.optional(z.array(conditionalRuleSchema)),
   /** JS expression that auto-computes this field's value (requires dangerouslyAllowJS on form). */
   calculation: z.optional(z.string()),
@@ -731,20 +1018,44 @@ const baseFieldProps = {
   _conversionWarnings: z.optional(z.array(z.unknown())),
 };
 
+const relativeDateRangeSchema = z.object({
+  amount: z.number(),
+  unit: z.enum(['days', 'months', 'years']),
+});
+
 // Text category schemas
 const textFieldSchema = z.strictObject({
   ...baseFieldProps,
   fieldType: z.literal('text'),
+  defaultAnswer: z.optional(z.string()),
   inputType: z.optional(textInputTypeSchema),
   unit: z.optional(z.string()),
+  dateRange: z.optional(relativeDateRangeSchema),
+  timeFormat: z.optional(z.enum(['12-hour', '24-hour'])),
 });
 
-const longtextFieldSchema = z.strictObject({
-  ...baseFieldProps,
-  fieldType: z.literal('longtext'),
-  inputType: z.optional(textInputTypeSchema),
-  unit: z.optional(z.string()),
-});
+const longtextFieldSchema = z
+  .strictObject({
+    ...baseFieldProps,
+    fieldType: z.literal('longtext'),
+    defaultAnswer: z.optional(z.string()),
+    rows: z.optional(z.int().check(z.gte(1))),
+    maxRows: z.optional(z.int().check(z.gte(1))),
+    inputType: z.optional(textInputTypeSchema),
+    unit: z.optional(z.string()),
+    dateRange: z.optional(relativeDateRangeSchema),
+    timeFormat: z.optional(z.enum(['12-hour', '24-hour'])),
+  })
+  .check(
+    z.refine(
+      (field) =>
+        field.maxRows === undefined || field.maxRows >= (field.rows ?? 1),
+      {
+        message: 'Maximum rows must be at least minimum rows',
+        path: ['maxRows'],
+      }
+    )
+  );
 
 const multitextFieldSchema = z.strictObject({
   ...baseFieldProps,
@@ -811,6 +1122,8 @@ const singleMatrixFieldSchema = z.strictObject({
   fieldType: z.literal('singlematrix'),
   rows: z.optional(z.array(matrixRowSchema)),
   columns: z.optional(z.array(matrixColumnSchema)),
+  scored: z.optional(z.boolean()),
+  scoreStart: z.optional(z.number()),
 });
 
 const multiMatrixFieldSchema = z.strictObject({
@@ -818,6 +1131,8 @@ const multiMatrixFieldSchema = z.strictObject({
   fieldType: z.literal('multimatrix'),
   rows: z.optional(z.array(matrixRowSchema)),
   columns: z.optional(z.array(matrixColumnSchema)),
+  scored: z.optional(z.boolean()),
+  scoreStart: z.optional(z.number()),
 });
 
 // Rich category schemas
@@ -847,6 +1162,7 @@ const diagramFieldSchema = z.strictObject({
   fieldType: z.literal('diagram'),
   imageUri: z.optional(z.string()),
   padPlaceholder: z.optional(z.string()),
+  allowImageAttachments: z.optional(z.boolean()),
 });
 
 const fileFieldSchema = z.strictObject({
@@ -857,17 +1173,24 @@ const fileFieldSchema = z.strictObject({
   maxFiles: z.optional(z.number()),
 });
 
+const activityFieldSchema = z.strictObject({
+  ...baseFieldProps,
+  fieldType: z.literal('activity'),
+});
+
 const openChoiceFieldSchema = z.strictObject({
   ...baseFieldProps,
   fieldType: z.literal('openchoice'),
   options: z.optional(z.array(fieldOptionSchema)),
   maxCustomOptions: z.optional(z.number()),
   otherLabel: z.optional(z.string()),
+  optionLayout: z.optional(z.enum(['stack', 'wrap'])),
 });
 
 const displayBaseFieldProps = {
   id: z.string(),
-  width: z.optional(z.enum(['full', 'half', 'third'])),
+  width: z.optional(z.enum(['none', 'full', 'half', 'third'])),
+  overrideSectionWidth: z.optional(z.boolean()),
   rules: z.optional(z.array(conditionalRuleSchema)),
   _sourceData: z.optional(z.unknown()),
   _conversionWarnings: z.optional(z.array(z.unknown())),
@@ -885,6 +1208,20 @@ const sectionFieldSchema = z.strictObject({
   ...baseFieldProps,
   fieldType: z.literal('section'),
   title: z.optional(z.string()),
+  sectionIcon: z.optional(sectionIconSchema),
+  sectionCollapse: z.optional(z.enum(['collapsed', 'expanded', 'disabled'])),
+  fields: z.optional(
+    z.lazy(
+      (): z.ZodMiniType<FieldDefinition[]> => z.array(fieldDefinitionSchema)
+    )
+  ),
+});
+
+const pagesFieldSchema = z.strictObject({
+  ...baseFieldProps,
+  fieldType: z.literal('pages'),
+  title: z.optional(z.string()),
+  autoAdvance: z.optional(z.boolean()),
   fields: z.optional(
     z.lazy(
       (): z.ZodMiniType<FieldDefinition[]> => z.array(fieldDefinitionSchema)
@@ -914,6 +1251,7 @@ const builtInFieldDefinitionSchema = z.discriminatedUnion('fieldType', [
   // Rich
   imageFieldSchema,
   fileFieldSchema,
+  activityFieldSchema,
   htmlFieldSchema,
   signatureFieldSchema,
   diagramFieldSchema,
@@ -921,6 +1259,7 @@ const builtInFieldDefinitionSchema = z.discriminatedUnion('fieldType', [
   displayFieldSchema,
   // Organization
   sectionFieldSchema,
+  pagesFieldSchema,
 ]);
 
 /**
@@ -931,6 +1270,7 @@ const builtInFieldDefinitionSchema = z.discriminatedUnion('fieldType', [
  */
 const customFieldDefinitionSchema = z.looseObject({
   ...baseFieldProps,
+  defaultAnswer: z.optional(z.string()),
   fieldType: z
     .string()
     .check(
@@ -949,10 +1289,29 @@ const customFieldDefinitionSchema = z.looseObject({
  * the built-in `FieldDefinition` union (custom definitions are accessed via
  * `field.definition as { ... }` in their components).
  */
-export const fieldDefinitionSchema = z.union([
-  builtInFieldDefinitionSchema,
-  customFieldDefinitionSchema,
-]) as unknown as z.ZodMiniType<FieldDefinition>;
+export const fieldDefinitionSchema = z
+  .union([builtInFieldDefinitionSchema, customFieldDefinitionSchema])
+  .check(
+    z.refine((field) => {
+      const meta = getFieldTypeMeta(field.fieldType);
+      if (
+        'defaultAnswer' in field &&
+        field.defaultAnswer !== undefined &&
+        meta?.answerType !== 'text'
+      )
+        return false;
+      const options =
+        'options' in field && Array.isArray(field.options) ? field.options : [];
+      const defaults = options.filter(
+        (option) => option?.defaultOption === true
+      );
+      if (!defaults.length) return true;
+      return (
+        (meta?.answerType === 'selection' && defaults.length === 1) ||
+        (meta?.answerType === 'multiselection' && field.fieldType !== 'ranking')
+      );
+    }, 'Defaults must match the field response type; single-choice fields allow one default option')
+  ) as unknown as z.ZodMiniType<FieldDefinition>;
 
 // ---------------------------------------------------------------------------
 // Field Response Values (answers only)
@@ -1000,8 +1359,20 @@ export interface FieldResponse {
   markupData?: string;
   /** Base64 diagram image (diagram field). */
   markupImage?: string;
+  /** Image (data URL) the respondent attached to draw on, replacing the authored background (diagram field). */
+  markupBackground?: string;
+  /** Original filename or host document title of the respondent's diagram image. */
+  markupBackgroundTitle?: string;
   /** File/attachment(s) uploaded by user (file field). Supports single or multiple files. */
   fileData?: AttachmentAnswer | AttachmentAnswer[];
+  /** Append-only response change log (reserved `_activity` key; activity field). */
+  activity?: ActivityEntry[];
+  /**
+   * Extra attributes captured from the selected item (autocomplete field).
+   * Keyed by the source object's property name, e.g. an address pick may
+   * capture `{ city, state, zip }` alongside `selected`.
+   */
+  attributes?: Record<string, string>;
   /** Set to true when the response was filled programmatically by an AI agent. */
   _ai?: boolean;
 }
@@ -1188,10 +1559,45 @@ export type AttachmentAnswer = {
   contentType: string;
   dataUrl?: string;
   url?: string;
+  fileReference?: FileReference;
   title?: string;
   /** File size in bytes (optional). */
   size?: number;
 };
+
+/** Zod schema for AttachmentAnswer. */
+export const attachmentAnswerSchema = z.object({
+  contentType: z.string(),
+  dataUrl: z.optional(z.string()),
+  url: z.optional(z.string()),
+  fileReference: z.optional(z.looseObject({ id: z.string() })),
+  title: z.optional(z.string()),
+  size: z.optional(z.number()),
+});
+
+/**
+ * One entry in the append-only response change log (activity page type).
+ * GUID-keyed so concurrent logs union-merge deterministically.
+ */
+export const activityEntrySchema = z.object({
+  /** GUID (crypto.randomUUID()). */
+  id: z.string(),
+  /** ISO 8601 timestamp of the change. */
+  at: z.string(),
+  /** From renderer identity, when present. */
+  author: z.optional(z.string()),
+  /** Which response changed. */
+  fieldId: z.string(),
+  /** Field label at time of change. */
+  question: z.optional(z.string()),
+  /** Explicit event category; response changes derive one when absent. */
+  category: z.optional(z.string()),
+  /** Display form of the previous value. */
+  from: z.optional(z.string()),
+  /** Display form of the new value. */
+  to: z.optional(z.string()),
+});
+export type ActivityEntry = z.infer<typeof activityEntrySchema>;
 
 /** All possible answer value shapes in a submission payload. */
 export type AnswerValue =
@@ -1211,6 +1617,8 @@ export interface ResponseItem {
   id: string;
   text?: string;
   answer?: AnswerValue;
+  /** Extra attributes captured from the selected item (see FieldResponse.attributes). */
+  attributes?: Record<string, string>;
 }
 
 export const RESPONSE_STATUSES = [

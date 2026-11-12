@@ -17,7 +17,7 @@ export default defineConfig(() => ({
       fileName: 'index',
       formats: ['es'] as LibraryFormats[],
     },
-    rollupOptions: {
+    rolldownOptions: {
       external: ['@esheet/core', 'pdf-lib', 'tslib'],
     },
     sourcemap: false,

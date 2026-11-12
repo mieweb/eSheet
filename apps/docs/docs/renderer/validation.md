@@ -80,6 +80,8 @@ interface ValidationError {
 
 Example:
 
+Validation errors are response data, not form-definition YAML:
+
 ```json
 [
   { "fieldId": "name", "message": "This field is required" },

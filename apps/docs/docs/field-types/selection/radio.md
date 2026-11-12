@@ -12,21 +12,23 @@ Single-select radio field.
 
 ## Answer Format
 
-```json
-{ "selected": { "id": "optionId", "value": "Option Label" } }
+```yaml
+selected:
+  id: optionId
+  value: Option Label
 ```
 
 ## Example
 
-```json
-{
-  "id": "gender",
-  "fieldType": "radio",
-  "question": "Gender",
-  "options": [
-    { "id": "m", "value": "Male" },
-    { "id": "f", "value": "Female" },
-    { "id": "o", "value": "Other" }
-  ]
-}
+```yaml
+id: gender
+fieldType: radio
+question: Gender
+options:
+  - id: m
+    value: Male
+  - id: f
+    value: Female
+  - id: o
+    value: Other
 ```

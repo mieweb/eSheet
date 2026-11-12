@@ -18,12 +18,10 @@ Display-only field. No answer payload.
 
 ## Example
 
-```json
-{
-  "id": "anatomy_ref",
-  "fieldType": "image",
-  "imageUri": "https://example.com/anatomy-diagram.png",
-  "altText": "Human anatomy diagram",
-  "caption": "Reference image"
-}
+```yaml
+id: anatomy_ref
+fieldType: image
+imageUri: https://example.com/anatomy-diagram.png
+altText: Human anatomy diagram
+caption: Reference image
 ```

@@ -20,11 +20,12 @@ Controls the column width a questionnaire item occupies in a row-based layout gr
 
 | `valueCode` | Description                             |
 | ----------- | --------------------------------------- |
-| `full`      | Spans the full row width (default)      |
+| `full`      | Spans the full row width                |
 | `half`      | Takes up half the row (2 per row)       |
 | `third`     | Takes up a third of the row (3 per row) |
 
-When absent the field renders at `full` width.
+When absent, text, selection, and rating fields render at `third` width.
+Rich, matrix, and organization fields render at `full` width.
 
 ### Example
 
@@ -58,10 +59,10 @@ Controls how the answer options of a choice item are rendered. Corresponds to th
 
 | `valueCode` | Description                                         |
 | ----------- | --------------------------------------------------- |
-| `stack`     | One option per line, stacked vertically (default)   |
+| `stack`     | One option per line, stacked vertically             |
 | `wrap`      | Options flow horizontally and wrap to the next line |
 
-When absent the options render in `stack` layout.
+When absent, fields that support this property render options in `wrap` layout.
 
 ### Example
 
@@ -94,31 +95,34 @@ When absent the options render in `stack` layout.
 
 Both extensions are written automatically by `exportToFhir` when the field definition includes `width` or `optionLayout`, and are read back by `importFromFhir` to restore those properties.
 
+This example parses a YAML form definition before passing it to the adapter. Add `js-yaml` to the host application's dependencies when using this pattern.
+
 ```typescript
 import { exportToFhir, FHIR_EXT } from '@esheet/adapters';
+import { load } from 'js-yaml';
+import type { FormDefinition } from '@esheet/core';
 
-const form = {
-  id: 'contact-form',
-  fields: [
-    {
-      id: 'first-name',
-      fieldType: 'text',
-      question: 'First Name',
-      width: 'half',
-    },
-    {
-      id: 'preferred-contact',
-      fieldType: 'radio',
-      question: 'Preferred contact method',
-      optionLayout: 'wrap',
-      options: [
-        { id: 'phone', value: 'Phone' },
-        { id: 'email', value: 'Email' },
-        { id: 'sms', value: 'SMS' },
-      ],
-    },
-  ],
-};
+const form = load(`
+id: contact-form
+pages:
+  - id: contact-information
+    fields:
+      - id: first-name
+        fieldType: text
+        question: First Name
+        width: half
+      - id: preferred-contact
+        fieldType: radio
+        question: Preferred contact method
+        optionLayout: wrap
+        options:
+          - id: phone
+            value: Phone
+          - id: email
+            value: Email
+          - id: sms
+            value: SMS
+`) as FormDefinition;
 
 const questionnaire = exportToFhir(form);
 // Each item's extension array will include FHIR_EXT.FIELD_WIDTH / FHIR_EXT.OPTION_LAYOUT

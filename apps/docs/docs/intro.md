@@ -38,7 +38,7 @@ Visual form builder for creating and editing forms. Perfect for admin/creator in
 - Field toolbox for quick field insertion
 - Property inspector for field configuration
 - Conditional logic rule builder
-- JSON/YAML code view for direct editing
+- YAML-first JSON/YAML code view for direct editing
 
 ### 📋 @esheet/renderer
 
@@ -97,7 +97,7 @@ Choose your starting point based on your needs:
 ✅ **Conditional logic** — show/hide fields, enable/disable, make required based on other field values or custom expressions  
 ✅ **Expression system** — reference field values with `{fieldId}` syntax, compute expressions with `<{a} + {b}>`  
 ✅ **Drag-and-drop** — reorder fields, nest into sections, rank options  
-✅ **Three editor modes** — visual build, JSON/YAML code editing, live preview  
+✅ **Three editor modes** — visual build, YAML-first JSON/YAML code editing, live preview
 ✅ **Type-safe** — full TypeScript support with Zod validation  
 ✅ **Extensible** — register custom field types with your own React components  
 ✅ **Responsive** — mobile-friendly layouts with bottom-sheet editing on small screens  

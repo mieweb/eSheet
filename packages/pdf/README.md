@@ -15,8 +15,34 @@ const blob = new Blob([result.bytes], { type: 'application/pdf' });
 
 `generatePdf` returns the PDF bytes, page count, conversion warnings, and a
 deterministic mapping between eSheet field IDs and PDF field names. The mapping
-is intended to support future import and round-trip filling of external PDF
-templates.
+supports import and round-trip filling of external PDF templates.
+
+## Import and round-trip
+
+`importPdf(source)` accepts PDF bytes and returns an eSheet definition,
+responses, field mappings, warnings, page count, and the retained source PDF.
+Use `applyPdfFieldLayout` to write mapped responses and layout edits back to
+that source document.
+
+The builder offers PDF representations in both Build and Preview, with
+`loadPdf(source)` and `exportPdf()` on its ref handle. The renderer accepts
+`representation="pdf"` and `pdfSource`, and exposes `exportPdf()` on its ref.
+PDF controls respect the renderer's read-only state and field visibility and
+enabled rules.
+
+## Workspace development
+
+This package uses the same pnpm scripts as the other libraries:
+
+```sh
+pnpm --filter @esheet/pdf build
+pnpm --filter @esheet/pdf test
+pnpm --filter @esheet/pdf lint
+pnpm --filter @esheet/pdf typecheck
+```
+
+Internal dependencies use `workspace:*`; root workspace checks include this
+package automatically. No Nx configuration is required.
 
 ## Initial field support
 

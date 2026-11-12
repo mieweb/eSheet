@@ -4,7 +4,7 @@ import type {
   TextFieldDefinition,
   LongtextFieldDefinition,
 } from '@esheet/core';
-import { Input, DateInput } from '@mieweb/ui';
+import { Input, DateInput, regionalDateLocale } from '@mieweb/ui';
 
 function formatPhoneNumber(value: string): string {
   if (!value) return value;
@@ -26,6 +26,62 @@ function formatPhoneNumber(value: string): string {
   if (digits.length <= 10)
     return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
   return value;
+}
+
+function toDateInputValue(value: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  return match ? `${match[2]}/${match[3]}/${match[1]}` : value;
+}
+
+function toStoredDateValue(value: string): string {
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
+  return match ? `${match[3]}-${match[1]}-${match[2]}` : value;
+}
+
+function formatDateInputValue(date: Date): string {
+  return `${String(date.getMonth() + 1).padStart(2, '0')}/${String(
+    date.getDate()
+  ).padStart(2, '0')}/${date.getFullYear()}`;
+}
+
+function applyDateRangeOffset(
+  date: Date,
+  amount: number,
+  unit: 'days' | 'months' | 'years'
+): Date {
+  const result = new Date(date);
+  if (unit === 'days') {
+    result.setDate(result.getDate() + amount);
+  } else {
+    const monthOffset = unit === 'months' ? amount : amount * 12;
+    const day = result.getDate();
+    result.setDate(1);
+    result.setMonth(result.getMonth() + monthOffset);
+    const lastDay = new Date(
+      result.getFullYear(),
+      result.getMonth() + 1,
+      0
+    ).getDate();
+    result.setDate(Math.min(day, lastDay));
+  }
+
+  return result;
+}
+
+function resolveDateRange(
+  range: { amount: number; unit: 'days' | 'months' | 'years' } | undefined
+): { minDate?: string; maxDate?: string } {
+  if (!range) return {};
+  const today = new Date();
+  const amount = Math.abs(range.amount);
+  return {
+    minDate: formatDateInputValue(
+      applyDateRangeOffset(today, -amount, range.unit)
+    ),
+    maxDate: formatDateInputValue(
+      applyDateRangeOffset(today, amount, range.unit)
+    ),
+  };
 }
 
 const PLACEHOLDER: Record<string, string> = {
@@ -53,10 +109,25 @@ export const TextField = React.memo(function TextField({
 }: FieldComponentProps) {
   const def = field.definition as TextFieldDefinition | LongtextFieldDefinition;
   const instanceId = form.getState().instanceId;
-  const inputType = def.inputType || 'string';
+  const inputType = def.inputType as NonNullable<typeof def.inputType>;
   const unit = def.unit || '';
   const isTel = inputType === 'tel';
   const placeholder = PLACEHOLDER[inputType] || 'Type your answer';
+  const dateRange = resolveDateRange(def.dateRange);
+  const inputResetKey = React.useSyncExternalStore(
+    form.subscribe,
+    () => form.getState().inputResetKeys[def.id] ?? 0,
+    () => form.getState().inputResetKeys[def.id] ?? 0
+  );
+
+  React.useEffect(
+    () => () => form.getState().setInputError(def.id, undefined),
+    [form, def.id]
+  );
+  React.useEffect(() => {
+    if (!isPreview || inputType !== 'date')
+      form.getState().setInputError(def.id, undefined);
+  }, [form, def.id, inputType, isPreview]);
 
   // When a computed value arrives and the user hasn't answered yet, seed it as
   // the response so it behaves like any other answered field (overwritable).
@@ -67,17 +138,41 @@ export const TextField = React.memo(function TextField({
   }, [computedValue]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (isPreview) {
-    if (inputType === 'date') {
+    if (inputType === 'date' || inputType === 'datetime-local') {
       return (
         <div className="text-field-preview">
           <DateInput
+            key={inputResetKey}
+            locale={regionalDateLocale()}
             id={`${instanceId}-text-answer-${def.id}`}
+            name={`esheet-${inputType}-answer-${def.id}`}
             label={def.question || 'Question'}
             required={isRequired || isSoftRequired}
             disabled={!isEnabled}
             aria-required={isRequired || undefined}
-            value={response?.answer || ''}
-            onChange={(val) => onResponse({ answer: val })}
+            value={
+              inputType === 'date'
+                ? toDateInputValue(response?.answer || '')
+                : response?.answer || ''
+            }
+            onChange={(val) =>
+              onResponse({
+                answer: inputType === 'date' ? toStoredDateValue(val) : val,
+              })
+            }
+            onValidityChange={(valid) =>
+              form
+                .getState()
+                .setInputError(
+                  def.id,
+                  valid ? undefined : 'Enter a complete, valid date'
+                )
+            }
+            inputType={inputType}
+            timeFormat={def.timeFormat}
+            minDate={dateRange.minDate}
+            maxDate={dateRange.maxDate}
+            validateOnBlur
             showCalendar
           />
         </div>
@@ -94,7 +189,7 @@ export const TextField = React.memo(function TextField({
           disabled={!isEnabled}
           aria-required={isRequired || undefined}
           value={response?.answer || ''}
-          onChange={(e) => {
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             const val = isTel
               ? formatPhoneNumber(e.target.value)
               : e.target.value;
@@ -131,12 +226,14 @@ export const TextField = React.memo(function TextField({
           className="ms:px-3 ms:py-2 ms:h-10 ms:w-full ms:border ms:border-msborder ms:bg-mssurface ms:text-mstext ms:rounded-lg ms:focus:border-msprimary ms:focus:ring-1 ms:focus:ring-msprimary/30 ms:outline-none ms:transition-colors"
         />
       </div>
-      {inputType === 'date' ? (
+      {inputType === 'date' || inputType === 'datetime-local' ? (
         <div className="ms:pointer-events-none ms:select-none">
           <DateInput
+            locale={regionalDateLocale()}
             id={`${instanceId}-canvas-preview-${def.id}`}
             aria-label="Answer preview"
             value=""
+            inputType={inputType}
             disabled
             showCalendar
           />

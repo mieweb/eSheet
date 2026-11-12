@@ -1,6 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createFormStore } from './form-store.js';
+import { defaultResponses } from '../functions/default-responses.js';
+import { formDefinitionSchema } from '../types.js';
 import type { FormStore } from './form-store.js';
+import { getFieldForRender } from '../field-component-props.js';
 import type {
   FormDefinition,
   FieldDefinition,
@@ -11,6 +14,8 @@ import type {
   SingleMatrixFieldDefinition,
   TextFieldDefinition,
 } from '../types.js';
+
+const instanceIdCounterKey = Symbol.for('@esheet/instance-id-counter');
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -59,11 +64,211 @@ function requiredRule(targetId: string, expected: string): ConditionalRule {
 describe('createFormStore', () => {
   let store: FormStore;
 
+  describe('definition-owned defaults', () => {
+    const definition = form([
+      {
+        id: 'type',
+        fieldType: 'dropdown',
+        options: [
+          { id: 'original', value: 'Original', defaultOption: true },
+          { id: 'other', value: 'Other' },
+        ],
+      },
+      { id: 'note', fieldType: 'text', defaultAnswer: 'Initial text' },
+      {
+        id: 'many',
+        fieldType: 'check',
+        options: [
+          { id: 'a', value: 'A', defaultOption: true },
+          { id: 'b', value: 'B', defaultOption: true },
+        ],
+      },
+    ]);
+
+    it('initializes answers in core for a new store and a newly loaded definition', () => {
+      const expected = {
+        type: { selected: { id: 'original', value: 'Original' } },
+        note: { answer: 'Initial text' },
+        many: {
+          selected: [
+            { id: 'a', value: 'A' },
+            { id: 'b', value: 'B' },
+          ],
+        },
+      };
+      expect(defaultResponses(definition.pages)).toEqual(expected);
+      expect(createFormStore(definition).getState().responses).toEqual(
+        expected
+      );
+      const loaded = createFormStore();
+      loaded.getState().loadDefinition(definition);
+      expect(loaded.getState().responses).toEqual(expected);
+    });
+
+    it('treats supplied responses, even an empty map, as authoritative', () => {
+      expect(
+        createFormStore(definition, false, {}).getState().responses
+      ).toEqual({});
+      const loaded = createFormStore(definition);
+      loaded
+        .getState()
+        .loadDefinition(definition, { note: { answer: 'Saved text' } });
+      expect(loaded.getState().responses).toEqual({
+        note: { answer: 'Saved text' },
+      });
+      loaded.getState().loadDefinition(definition, {});
+      expect(loaded.getState().responses).toEqual({});
+    });
+
+    it.each(['create', 'load'] as const)(
+      'protects saved manual answers from calculations on %s',
+      (entryPoint) => {
+        const definition: FormDefinition = {
+          ...form([
+            {
+              id: 'calculated',
+              fieldType: 'text',
+              calculation: '"Calculated"',
+              defaultAnswer: 'Default',
+            },
+            { id: 'other', fieldType: 'text' },
+          ]),
+          dangerouslyAllowJS: true,
+        };
+        const saved = { calculated: { answer: 'Manual override' } };
+        const loaded =
+          entryPoint === 'create'
+            ? createFormStore(definition, true, saved)
+            : createFormStore(undefined, true);
+        if (entryPoint === 'load') {
+          loaded.getState().loadDefinition(definition, saved);
+        }
+        loaded.getState().setResponse('other', { answer: 'Changed' });
+        expect(loaded.getState().responses.calculated).toEqual(
+          saved.calculated
+        );
+
+        const fresh =
+          entryPoint === 'create'
+            ? createFormStore(definition, true)
+            : createFormStore(undefined, true);
+        if (entryPoint === 'load') fresh.getState().loadDefinition(definition);
+        expect(fresh.getState().userEditedFields.size).toBe(0);
+        fresh.getState().setResponse('other', { answer: 'Changed' });
+        expect(fresh.getState().responses.calculated).toEqual({
+          answer: 'Calculated',
+        });
+      }
+    );
+
+    it('does not reapply defaults after clearing or resetting responses or editing options', () => {
+      const loaded = createFormStore(definition);
+      loaded.getState().clearResponse('type');
+      loaded.getState().updateOption('type', 'original', 'Changed label');
+      expect(loaded.getState().responses.type).toBeUndefined();
+      loaded.getState().resetResponses();
+      expect(loaded.getState().responses).toEqual({});
+    });
+
+    it('keeps defaults attached to options through label/ID changes and deletion', () => {
+      const loaded = createFormStore(definition);
+      loaded.getState().updateOption('type', 'original', 'Renamed');
+      const options = loaded.getState().getField('type')?.definition;
+      if (
+        !options ||
+        !('options' in options) ||
+        !Array.isArray(options.options)
+      ) {
+        throw new Error('Expected dropdown options');
+      }
+      loaded.getState().updateField('type', {
+        options: options.options.map((option) =>
+          option.id === 'original' ? { ...option, id: 'renamed' } : option
+        ),
+      });
+      expect(
+        defaultResponses(loaded.getState().hydrateDefinition().pages).type
+      ).toEqual({
+        selected: { id: 'renamed', value: 'Renamed' },
+      });
+      loaded.getState().removeOption('type', 'renamed');
+      expect(
+        defaultResponses(loaded.getState().hydrateDefinition().pages).type
+      ).toBeUndefined();
+    });
+
+    it('switches a single-choice default atomically and permits multiple checkbox defaults', () => {
+      const loaded = createFormStore(definition);
+      loaded.getState().setOptionDefault('type', 'other', true);
+      const defaults = defaultResponses(
+        loaded.getState().hydrateDefinition().pages
+      );
+      expect(defaults.type).toEqual({
+        selected: { id: 'other', value: 'Other' },
+      });
+      expect(defaults.many?.selected).toHaveLength(2);
+      loaded.getState().setOptionDefault('type', 'other', false);
+      expect(
+        defaultResponses(loaded.getState().hydrateDefinition().pages).type
+      ).toBeUndefined();
+      expect(() =>
+        loaded.getState().setOptionDefault('type', 'missing', true)
+      ).toThrow(/Unknown option/);
+    });
+
+    it('rejects conflicting single-choice defaults and unsupported text defaults', () => {
+      const invalid = form([
+        {
+          id: 'type',
+          fieldType: 'dropdown',
+          options: [
+            { id: 'a', value: 'A', defaultOption: true },
+            { id: 'b', value: 'B', defaultOption: true },
+          ],
+        },
+      ]);
+      expect(formDefinitionSchema.safeParse(invalid).success).toBe(false);
+      expect(() => defaultResponses(invalid.pages)).toThrow(/single-choice/);
+      expect(
+        formDefinitionSchema.safeParse(
+          form([
+            {
+              id: 'type',
+              fieldType: 'dropdown',
+              defaultAnswer: 'not a selection',
+            },
+          ])
+        ).success
+      ).toBe(false);
+    });
+  });
+
   // -----------------------------------------------------------------------
   // Factory
   // -----------------------------------------------------------------------
 
   describe('factory', () => {
+    it('uses a page-global instance ID counter across module evaluations', async () => {
+      const globalState = globalThis as typeof globalThis &
+        Record<symbol, number | undefined>;
+      const previousCounter = globalState[instanceIdCounterKey];
+
+      try {
+        globalState[instanceIdCounterKey] = 1000;
+        expect(createFormStore().getState().instanceId).toBe('ms-1000');
+
+        vi.resetModules();
+        const { createFormStore: createStoreFromSecondBundle } = await import(
+          './form-store.js'
+        );
+        expect(createStoreFromSecondBundle().getState().instanceId).toBe(
+          'ms-1001'
+        );
+      } finally {
+        globalState[instanceIdCounterKey] = previousCounter;
+      }
+    });
+
     it('creates store with no initial definition', () => {
       store = createFormStore();
       const s = store.getState();
@@ -106,6 +311,7 @@ describe('createFormStore', () => {
 
       it('replaces definition and imported responses atomically', () => {
         store.getState().setResponse('q1', { answer: 'old response' });
+        store.getState().setInputError('q1', 'Incomplete input');
         const updates: Array<{
           ids: readonly string[];
           responses: Record<string, unknown>;
@@ -130,7 +336,12 @@ describe('createFormStore', () => {
             responses: { imported: { answer: 'Ada Lovelace' } },
           },
         ]);
-        expect(store.getState().userEditedFields).toEqual(new Set());
+        expect(store.getState().userEditedFields).toEqual(
+          new Set(['imported'])
+        );
+        expect(store.getState().extensions).toEqual({});
+        expect(store.getState().getErrors()).toEqual([]);
+        expect(store.getState().inputResetKeys.imported).toBeGreaterThan(0);
       });
     });
 
@@ -175,9 +386,241 @@ describe('createFormStore', () => {
         expect(store.getState().responses).toEqual({});
       });
     });
+
+    describe('extensions', () => {
+      it('registers, reads, and updates typed namespaced state', () => {
+        const initial = { rows: ['doc-1'], loading: false };
+        expect(
+          store.getState().registerExtension('documents', 'q1', initial)
+        ).toBe(true);
+        expect(
+          store.getState().registerExtension('documents', 'q1', initial)
+        ).toBe(false);
+
+        store
+          .getState()
+          .updateExtension<typeof initial>('documents', 'q1', (state) => ({
+            ...state!,
+            loading: true,
+          }));
+
+        expect(
+          store.getState().getExtension<typeof initial>('documents', 'q1')
+        ).toEqual({ rows: ['doc-1'], loading: true });
+        expect(store.getState().getExtension('other', 'q1')).toBeUndefined();
+      });
+
+      it('isolates extensions between form store instances', () => {
+        const secondStore = createFormStore(form([field('q1')]));
+        store.getState().registerExtension('documents', 'q1', { value: 1 });
+        secondStore
+          .getState()
+          .registerExtension('documents', 'q1', { value: 2 });
+
+        expect(
+          store.getState().getExtension<{ value: number }>('documents', 'q1')
+        ).toEqual({ value: 1 });
+        expect(
+          secondStore
+            .getState()
+            .getExtension<{ value: number }>('documents', 'q1')
+        ).toEqual({ value: 2 });
+      });
+
+      it('disposes extensions on definition reload', () => {
+        const onDispose = vi.fn();
+        store
+          .getState()
+          .registerExtension('documents', 'q1', { value: 1 }, { onDispose });
+
+        store.getState().loadDefinition(form([field('q2')]));
+
+        expect(onDispose).toHaveBeenCalledOnce();
+        expect(store.getState().extensions).toEqual({});
+      });
+
+      it('disposes extensions for removed fields and descendants', () => {
+        store = createFormStore(
+          form([
+            field('s1', 'section', {
+              fields: [field('c1')],
+            } as Partial<FieldDefinition>),
+            field('q2'),
+          ])
+        );
+        const sectionDispose = vi.fn();
+        const childDispose = vi.fn();
+        store
+          .getState()
+          .registerExtension(
+            'documents',
+            's1',
+            {},
+            { onDispose: sectionDispose }
+          );
+        store
+          .getState()
+          .registerExtension(
+            'documents',
+            'c1',
+            {},
+            { onDispose: childDispose }
+          );
+        store.getState().registerExtension('documents', 'q2', { value: 2 });
+
+        expect(store.getState().removeField('s1')).toBe(true);
+
+        expect(sectionDispose).toHaveBeenCalledOnce();
+        expect(childDispose).toHaveBeenCalledOnce();
+        expect(store.getState().getExtension('documents', 'q2')).toEqual({
+          value: 2,
+        });
+      });
+
+      it('disposes an extension when its field is renamed', () => {
+        const onDispose = vi.fn();
+        store
+          .getState()
+          .registerExtension('documents', 'q1', {}, { onDispose });
+
+        expect(store.getState().updateField('q1', { id: 'q1-renamed' })).toBe(
+          true
+        );
+
+        expect(onDispose).toHaveBeenCalledOnce();
+        expect(
+          store.getState().getExtension('documents', 'q1')
+        ).toBeUndefined();
+      });
+
+      it('disposes an extension when a field changes type', () => {
+        const onDispose = vi.fn();
+        store
+          .getState()
+          .registerExtension('documents', 'q1', {}, { onDispose });
+
+        expect(store.getState().updateField('q1', { fieldType: 'radio' })).toBe(
+          true
+        );
+
+        expect(onDispose).toHaveBeenCalledOnce();
+        expect(
+          store.getState().getExtension('documents', 'q1')
+        ).toBeUndefined();
+      });
+
+      it('clears and disposes entries, then rejects registration after dispose', () => {
+        const onDispose = vi.fn();
+        store
+          .getState()
+          .registerExtension('documents', 'q1', {}, { onDispose });
+        store.getState().dispose();
+
+        expect(onDispose).toHaveBeenCalledOnce();
+        expect(store.getState().disposed).toBe(true);
+        expect(store.getState().extensions).toEqual({});
+        expect(store.getState().registerExtension('documents', 'q1', {})).toBe(
+          false
+        );
+      });
+    });
   });
 
   describe('validation and hydration', () => {
+    it('resets input keys per field without resetting unrelated drafts', () => {
+      store = createFormStore(form([field('date'), field('other')]));
+      store.getState().clearResponse('date');
+      expect(store.getState().inputResetKeys).toEqual({ date: 1 });
+      store.getState().resetResponses();
+      expect(store.getState().inputResetKeys).toEqual({ date: 2, other: 1 });
+      store
+        .getState()
+        .loadDefinition(form([field('date'), field('other')]), {});
+      expect(store.getState().inputResetKeys).toEqual({ date: 3, other: 2 });
+    });
+
+    it('validates transient input errors without exporting them', () => {
+      store = createFormStore(form([field('date')]));
+      store.getState().setResponse('date', { answer: '2026-11-09' });
+      const exported = store.getState().hydrateResponse();
+      store.getState().setInputError('date', 'Enter a complete, valid date');
+      const expected = [
+        {
+          fieldId: 'date',
+          rule: 'input',
+          message: 'Enter a complete, valid date',
+          severity: 'hard',
+        },
+      ];
+      expect(store.getState().getFieldErrors('date')).toEqual(expected);
+      expect(store.getState().getErrors()).toEqual(expected);
+      store.getState().setResponse('date', { answer: '2026-11-09' });
+      expect(store.getState().getErrors()).toEqual(expected);
+      expect(store.getState().hydrateResponse().items).toEqual(exported.items);
+      expect(store.getState().responses).toEqual({
+        date: { answer: '2026-11-09' },
+      });
+      store.getState().setInputError('date', undefined);
+      expect(store.getState().getErrors()).toEqual([]);
+    });
+
+    it('ignores draft errors for unknown, hidden, and disabled fields', () => {
+      store = createFormStore(
+        form([
+          field('trigger'),
+          field('hidden', 'text', { rules: [visibleRule('trigger', 'show')] }),
+          field('disabled', 'text', { rules: [enableRule('trigger', 'show')] }),
+        ])
+      );
+      for (const id of ['unknown', 'hidden', 'disabled']) {
+        store.getState().setInputError(id, 'Invalid draft');
+      }
+      expect(store.getState().getErrors()).toEqual([]);
+      expect(store.getState().getFieldErrors('unknown')).toEqual([]);
+      store.getState().setResponse('trigger', { answer: 'show' });
+      expect(
+        store
+          .getState()
+          .getErrors()
+          .map((error) => error.fieldId)
+      ).toEqual(['hidden', 'disabled']);
+    });
+
+    it.each([
+      'setResponse',
+      'clearResponse',
+      'resetResponses',
+      'loadDefinition',
+      'removeField',
+      'dispose',
+    ] as const)(
+      'clears draft errors when %s replaces or removes the input',
+      (action) => {
+        store = createFormStore(form([field('date')]));
+        store.getState().setInputError('date', 'Invalid draft');
+        switch (action) {
+          case 'setResponse':
+            store.getState().setResponse('date', { answer: '2026-11-10' });
+            break;
+          case 'clearResponse':
+            store.getState().clearResponse('date');
+            break;
+          case 'resetResponses':
+            store.getState().resetResponses();
+            break;
+          case 'loadDefinition':
+            store.getState().loadDefinition(form([field('date')]));
+            break;
+          case 'removeField':
+            store.getState().removeField('date');
+            break;
+          case 'dispose':
+            store.getState().dispose();
+        }
+        expect(store.getState().getErrors()).toEqual([]);
+      }
+    );
+
     it('skips disabled required fields in errors and hydrated output', () => {
       store = createFormStore(
         form([
@@ -214,6 +657,23 @@ describe('createFormStore', () => {
         expect(s.normalized.pages[0].fieldIds).toContain(id);
         expect(s.normalized.byId[id!].definition.fieldType).toBe('text');
         expect(s.normalized.byId[id!].parentId).toBeNull();
+      });
+
+      it('applies the field layout defaults', () => {
+        store = createFormStore(form([]));
+        const radioId = store.getState().addField('radio');
+        const matrixId = store.getState().addField('singlematrix');
+        const signatureId = store.getState().addField('signature');
+
+        expect(
+          store.getState().normalized.byId[radioId!].definition
+        ).toMatchObject({ width: 'third', optionLayout: 'wrap' });
+        expect(
+          store.getState().normalized.byId[matrixId!].definition
+        ).toMatchObject({ width: 'full' });
+        expect(
+          store.getState().normalized.byId[signatureId!].definition
+        ).toMatchObject({ width: 'full' });
       });
 
       it('inserts at specific root index', () => {
@@ -440,6 +900,31 @@ describe('createFormStore', () => {
         expect(rule.conditions[0].targetId).toBe('q1-new');
       });
 
+      it('updates option rule condition.targetId on rename', () => {
+        store = createFormStore(
+          form([
+            field('q1', 'radio', {
+              options: [{ id: 'yes', value: 'Yes' }],
+            }),
+            field('q2', 'radio', {
+              options: [
+                {
+                  id: 'dependent',
+                  value: 'Dependent',
+                  rules: [visibleRule('q1', 'yes')],
+                },
+              ],
+            }),
+          ])
+        );
+        store.getState().updateField('q1', { id: 'q1-new' });
+        const option = (
+          store.getState().normalized.byId['q2']
+            .definition as RadioFieldDefinition
+        ).options![0];
+        expect(option.rules![0].conditions[0].targetId).toBe('q1-new');
+      });
+
       it('updates {fieldId} references in condition.expression on rename', () => {
         store = createFormStore(
           form([
@@ -663,6 +1148,115 @@ describe('createFormStore', () => {
         expect(opts![0].value).toBe('New');
       });
 
+      it('updates option rules and filters visible options', () => {
+        store = createFormStore(
+          form([
+            field('country', 'radio', {
+              options: [
+                { id: 'us', value: 'United States' },
+                { id: 'ca', value: 'Canada' },
+              ],
+            }),
+            field('location', 'radio', {
+              options: [
+                { id: 'houston', value: 'Houston', rules: [] },
+                { id: 'toronto', value: 'Toronto' },
+              ],
+            }),
+          ])
+        );
+        const rules = [visibleRule('country', 'us')];
+        expect(
+          store.getState().updateOptionRules('location', 'houston', rules)
+        ).toBe(true);
+        store.getState().setResponse('country', {
+          selected: { id: 'us', value: 'United States' },
+        });
+        expect(
+          store
+            .getState()
+            .getVisibleOptions('location')
+            .map((o) => o.id)
+        ).toEqual(['houston', 'toronto']);
+
+        store
+          .getState()
+          .setResponse('country', { selected: { id: 'ca', value: 'Canada' } });
+        expect(
+          store
+            .getState()
+            .getVisibleOptions('location')
+            .map((o) => o.id)
+        ).toEqual(['toronto']);
+      });
+
+      it('projects visible options only for preview rendering', () => {
+        store = createFormStore(
+          form([
+            field('country', 'radio', {
+              options: [
+                { id: 'us', value: 'United States' },
+                { id: 'ca', value: 'Canada' },
+              ],
+            }),
+            field('location', 'radio', {
+              options: [
+                {
+                  id: 'houston',
+                  value: 'Houston',
+                  rules: [visibleRule('country', 'us')],
+                },
+                { id: 'toronto', value: 'Toronto' },
+              ],
+            }),
+          ])
+        );
+        store.getState().setResponse('country', {
+          selected: { id: 'ca', value: 'Canada' },
+        });
+
+        const fieldNode = store.getState().getField('location');
+        expect(fieldNode).toBeDefined();
+        if (!fieldNode) return;
+
+        const projected = getFieldForRender(fieldNode, store, true)
+          .definition as RadioFieldDefinition;
+        expect(projected.options?.map((option) => option.id)).toEqual([
+          'toronto',
+        ]);
+        expect(getFieldForRender(fieldNode, store, false)).toBe(fieldNode);
+      });
+
+      it('projects visible multitext inputs only for preview rendering', () => {
+        store = createFormStore(
+          form([
+            field('country', 'text'),
+            field('contacts', 'multitext', {
+              options: [
+                {
+                  id: 'us-contact',
+                  value: 'United States contact',
+                  rules: [visibleRule('country', 'us')],
+                },
+                { id: 'general-contact', value: 'General contact' },
+              ],
+            }),
+          ])
+        );
+        store.getState().setResponse('country', { answer: 'ca' });
+
+        const fieldNode = store.getState().getField('contacts');
+        expect(fieldNode).toBeDefined();
+        if (!fieldNode) return;
+
+        const projected = getFieldForRender(fieldNode, store, true);
+        expect(
+          (projected.definition as { options?: { id: string }[] }).options?.map(
+            (option) => option.id
+          )
+        ).toEqual(['general-contact']);
+      });
+
       it('removeOption deletes an option', () => {
         store = createFormStore(form([field('q1', 'text')]));
         const id = store.getState().addOption('q1', 'X');
@@ -764,6 +1358,7 @@ describe('createFormStore', () => {
             required: true,
             rules: [requiredRule('trigger', 'yes')],
           }),
+          field('q4', 'text', { readOnly: true }),
         ])
       );
     });
@@ -835,6 +1430,28 @@ describe('createFormStore', () => {
       it('returns true for static required field', () => {
         // q1 has required: true
         expect(store.getState().isRequired('q1')).toBe(true);
+      });
+    });
+
+    describe('isReadOnly', () => {
+      it('returns true for a field with readOnly: true', () => {
+        expect(store.getState().isReadOnly('q4')).toBe(true);
+      });
+
+      it('returns false for a normal field', () => {
+        expect(store.getState().isReadOnly('q1')).toBe(false);
+      });
+
+      it('returns true for all fields while the form is frozen', () => {
+        store.getState().setReadOnly(true);
+        expect(store.getState().isReadOnly('q1')).toBe(true);
+      });
+
+      it('still accepts programmatic writes to a readOnly field', () => {
+        store.getState().setResponse('q4', { answer: 'machine-filled' });
+        expect(store.getState().getResponse('q4')).toEqual({
+          answer: 'machine-filled',
+        });
       });
     });
 

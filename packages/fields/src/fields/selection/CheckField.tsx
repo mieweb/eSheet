@@ -4,8 +4,8 @@ import type {
   SelectedOption,
   CheckFieldDefinition,
 } from '@esheet/core';
-import { Checkbox } from '@mieweb/ui';
 import { TrashIcon, PlusIcon } from '../../icons.js';
+import { CustomCheckboxButton } from '../../fields-controls/CustomCheckboxButton.js';
 
 export const CheckField = React.memo(function CheckField({
   field,
@@ -22,6 +22,10 @@ export const CheckField = React.memo(function CheckField({
   const instanceId = form.getState().instanceId;
   const options = def.options || [];
   const isWrap = def.optionLayout === 'wrap';
+  const optionContainerClass =
+    isWrap && options.length > 1
+      ? 'ms:flex ms:flex-wrap ms:gap-2'
+      : 'ms:flex ms:flex-col ms:gap-2';
   const selectedArr =
     (response?.selected as SelectedOption[] | undefined) ?? [];
   const selectedIds = selectedArr.map((s) => s.id);
@@ -49,28 +53,20 @@ export const CheckField = React.memo(function CheckField({
             </span>
           )}
         </div>
-        <div
-          className={isWrap ? 'ms:flex ms:flex-wrap' : 'ms:space-y-1'}
-          style={isWrap ? { columnGap: '1rem', rowGap: '0.25rem' } : undefined}
-        >
+        <div className={optionContainerClass}>
           {options.map((option) => (
-            <label
+            <CustomCheckboxButton
               key={option.id}
-              htmlFor={`${instanceId}-check-answer-${def.id}-${option.id}`}
-              className={`ms:flex ms:items-center ms:gap-2 ms:rounded ms:transition-colors ms:py-1 ms:px-1 ms:select-none ${
-                isEnabled
-                  ? 'ms:cursor-pointer ms:hover:bg-msprimary/5'
-                  : 'ms:cursor-not-allowed'
-              }`}
+              id={`${instanceId}-check-answer-${def.id}-${option.id}`}
+              name={`${instanceId}-check-answer-${def.id}`}
+              value={option.id}
+              checked={selectedIds.includes(option.id)}
+              onChange={() => toggleOption(option.id, option.value)}
+              disabled={!isEnabled}
+              className={isWrap ? 'ms:min-w-[8rem] ms:flex-[1_1_auto]' : ''}
             >
-              <Checkbox
-                id={`${instanceId}-check-answer-${def.id}-${option.id}`}
-                checked={selectedIds.includes(option.id)}
-                onChange={() => toggleOption(option.id, option.value)}
-                disabled={!isEnabled}
-              />
-              <span className="ms:text-sm ms:text-mstext">{option.value}</span>
-            </label>
+              {option.value}
+            </CustomCheckboxButton>
           ))}
         </div>
       </div>

@@ -1,0 +1,631 @@
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import type { ReactNode } from 'react';
+import { createFormStore, type FieldComponentProps } from '@esheet/core';
+import { FormStoreContext } from '@esheet/fields';
+import { DocumentListField } from './DocumentListField.js';
+import {
+  DocumentListFieldProvider,
+  useDocumentListFieldHost,
+  useDocumentListFieldRuntime,
+} from './DocumentListGrid.js';
+import type { DocumentListDocument } from './types.js';
+import { permissiveDocumentListCapabilities } from './types.js';
+import type { DocumentDraft } from './draftChannel.js';
+import { createDocumentListRuntimeExtension } from './document-list-runtime.js';
+
+const gridProbe: { row?: DocumentListDocument } = vi.hoisted(() => ({}));
+
+vi.mock('./DocumentListPdfPreview.js', () => ({
+  DocumentListPdfPreview: () => null,
+}));
+
+vi.mock('@esheet/fields', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@esheet/fields')>();
+  return {
+    ...actual,
+    FeedbackModal: ({
+      open,
+      title,
+      confirmLabel,
+      onConfirm,
+    }: {
+      open: boolean;
+      title: string;
+      confirmLabel: string;
+      onConfirm: () => void;
+    }) =>
+      open ? (
+        <div role="dialog" aria-label={title}>
+          <button type="button" onClick={onConfirm}>
+            {confirmLabel}
+          </button>
+        </div>
+      ) : null,
+  };
+});
+
+vi.mock('@mieweb/ui/datavis', () => ({
+  DataVisNitroContext: {
+    Provider: ({ children }: { children: ReactNode }) => children,
+  },
+  DataVisNitroGrid: ({
+    titleActions,
+    formatCell,
+  }: {
+    titleActions?: ReactNode;
+    formatCell?: (
+      value: unknown,
+      row: DocumentListDocument,
+      column: { field: string }
+    ) => ReactNode;
+  }) => (
+    <>
+      {titleActions}
+      {gridProbe.row &&
+        formatCell?.(null, gridProbe.row, { field: '_actions' })}
+    </>
+  ),
+}));
+
+vi.mock('datavis-ace', () => {
+  class Source {
+    cache: Record<string, unknown> = {};
+    constructor(public readonly options: unknown) {}
+  }
+  class ComputedView {
+    constructor(public readonly source: Source) {}
+    clearCache(): void {}
+    getData(): void {}
+  }
+  return { ComputedView, Source };
+});
+
+vi.mock('@esheet/field-kerebron', async () => {
+  const React = await import('react');
+  return {
+    configureRichTextField: vi.fn(),
+    KerebronEditor: React.forwardRef(
+      (props: Record<string, unknown>, ref: React.ForwardedRef<unknown>) => {
+        const value = props.value as string;
+        React.useImperativeHandle(ref, () => ({
+          focus: vi.fn(),
+          getContent: async () => value,
+        }));
+        return (
+          <div className={props.className as string}>
+            <textarea
+              aria-label={props.ariaLabel as string}
+              disabled={props.disabled as boolean}
+              value={value}
+              onChange={(event) =>
+                (props.onChange as (nextValue: string) => void)(
+                  event.target.value
+                )
+              }
+            />
+          </div>
+        );
+      }
+    ),
+  };
+});
+
+function HostProbe(): React.JSX.Element {
+  const host = useDocumentListFieldHost();
+  return <output>{host?.detailRowsExpanded ? 'expanded' : 'collapsed'}</output>;
+}
+
+const document: DocumentListDocument = {
+  id: 'doc-1',
+  date: '2026-08-18',
+  title: 'Letter',
+  subject: 'Subject',
+  docType: 'Letter',
+  docId: '42',
+  source: 'WebChart',
+  file: '42.pdf',
+};
+
+const runtimeStores: unknown[] = [];
+
+function RuntimeProbe({ fieldId }: { fieldId: string }): React.JSX.Element {
+  const store = useDocumentListFieldRuntime(fieldId, [document]);
+  if (store) runtimeStores.push(store);
+  return <output>{store?.documentIds.join(',') ?? 'missing'}</output>;
+}
+
+describe('DocumentListFieldProvider', () => {
+  it('keeps reference-only inline saves inline through the full canonical Edit flow without a FileStore', async () => {
+    const formStore = createFormStore();
+    const canonical = { ...document, nativeVersion: 'v1', rev: 0 };
+    const save = vi.fn(async () => canonical);
+    const repository = {
+      persistInline: true,
+      load: async () => ({ documents: [canonical] }),
+      loadContent: vi.fn(async () => ({
+        text: 'Saved prose',
+        document: canonical,
+      })),
+      save,
+      remove: vi.fn(),
+    };
+    const runtime = createDocumentListRuntimeExtension({
+      formStore,
+      context: {
+        formInstanceId: formStore.getState().instanceId,
+        fieldId: 'documents',
+      },
+      repository,
+    });
+    const saved = await runtime?.saveDocument({
+      ...document,
+      body: 'Saved prose',
+    });
+    expect(saved).toMatchObject({ inline: true });
+    expect(saved?.body).toBeUndefined();
+    if (!saved) throw new Error('Expected canonical inline save');
+    gridProbe.row = saved;
+    render(
+      <FormStoreContext.Provider value={formStore}>
+        <DocumentListFieldProvider
+          host={{
+            author: { id: 'wc-8', name: 'Author' },
+            capabilities: permissiveDocumentListCapabilities,
+          }}
+          runtime={{ repository }}
+        >
+          <DocumentListField
+            {...({
+              field: { definition: { id: 'documents' } },
+              form: formStore,
+              response: { answer: JSON.stringify({ documents: [saved] }) },
+            } as unknown as FieldComponentProps)}
+          />
+        </DocumentListFieldProvider>
+      </FormStoreContext.Provider>
+    );
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit Letter' }));
+    fireEvent.change(await screen.findByDisplayValue('Saved prose'), {
+      target: { value: 'Revised prose' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save document' }));
+    await waitFor(() => expect(save).toHaveBeenCalledTimes(2));
+    expect(save).toHaveBeenLastCalledWith(
+      expect.anything(),
+      expect.objectContaining({ body: 'Revised prose', inline: true, rev: 1 }),
+      expect.any(AbortSignal)
+    );
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+  it('loads canonical edit content even when the shared row has a stale inline body', async () => {
+    const formStore = createFormStore();
+    const row = { ...document, body: 'Stale shared prose' };
+    gridProbe.row = row;
+    const loadContent = vi.fn(async () => ({
+      text: 'Canonical native prose',
+      document: {
+        ...row,
+        nativeVersion: 'fresh-version',
+        rev: 3,
+        body: 'Canonical native prose',
+      },
+    }));
+    const save = vi.fn(async (_context, saved) => saved);
+    render(
+      <FormStoreContext.Provider value={formStore}>
+        <DocumentListFieldProvider
+          host={{
+            author: { id: 'wc-8', name: 'Author' },
+            capabilities: permissiveDocumentListCapabilities,
+          }}
+          runtime={{
+            repository: {
+              load: async () => ({ documents: [row] }),
+              loadContent,
+              persistInline: true,
+              save,
+              remove: vi.fn(),
+            },
+          }}
+        >
+          <DocumentListField
+            {...({
+              field: { definition: { id: 'documents' } },
+              form: formStore,
+              response: { answer: JSON.stringify({ documents: [row] }) },
+            } as unknown as FieldComponentProps)}
+          />
+        </DocumentListFieldProvider>
+      </FormStoreContext.Provider>
+    );
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit Letter' }));
+    expect(
+      await screen.findByDisplayValue('Canonical native prose')
+    ).toBeTruthy();
+    expect(loadContent).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByRole('button', { name: 'Save document' }));
+    await waitFor(() => expect(save).toHaveBeenCalledOnce());
+    expect(save).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        rev: 4,
+        nativeVersion: 'fresh-version',
+        history: [
+          expect.objectContaining({ rev: 3, body: 'Canonical native prose' }),
+        ],
+      }),
+      expect.any(AbortSignal)
+    );
+  });
+
+  it.each(['edit', 'append'])(
+    'opens a text-serialized definition for %s without requiring front matter',
+    async (action) => {
+      const formStore = createFormStore();
+      const row = { ...document, body: 'Body without metadata' };
+      gridProbe.row = row;
+      render(
+        <FormStoreContext.Provider value={formStore}>
+          <DocumentListFieldProvider
+            host={{
+              author: { id: 'wc-8', name: 'Author' },
+              capabilities: permissiveDocumentListCapabilities,
+            }}
+          >
+            <DocumentListField
+              {...({
+                field: {
+                  definition: {
+                    id: 'documents',
+                    docTypes: [
+                      {
+                        id: row.docType,
+                        serialization: 'text',
+                        definition: { id: 'letter', pages: [] },
+                      },
+                    ],
+                  },
+                },
+                form: formStore,
+                response: { answer: JSON.stringify({ documents: [row] }) },
+              } as unknown as FieldComponentProps)}
+            />
+          </DocumentListFieldProvider>
+        </FormStoreContext.Provider>
+      );
+      fireEvent.click(
+        await screen.findByRole('button', {
+          name: action === 'edit' ? 'Edit Letter' : 'Append to Letter',
+        })
+      );
+      expect(
+        await screen.findByText(
+          action === 'edit'
+            ? 'Revise document (rev 0)'
+            : 'Append to document (rev 0)'
+        )
+      ).toBeTruthy();
+      expect(screen.queryByRole('alert')).toBeNull();
+    }
+  );
+
+  beforeEach(() => {
+    runtimeStores.length = 0;
+    gridProbe.row = undefined;
+  });
+
+  it.each(['forbidden', 'unavailable', 'missing-metadata', 'invalid-metadata'])(
+    'refuses to open a destructive empty or downgraded draft after %s',
+    async (failure) => {
+      const formStore = createFormStore();
+      const row = { ...document, docType: 'Letter', file: 'letter.md' };
+      gridProbe.row = row;
+      const typed = failure.includes('metadata');
+      const onResponse = vi.fn();
+      const discard = vi.fn(async () => {});
+      const close = vi.fn();
+      const draft = { isNew: true, discard, close } as unknown as DocumentDraft;
+      const open = vi.fn(async () => draft);
+      const fieldProps = {
+        field: {
+          definition: {
+            id: 'documents',
+            question: 'Documents',
+            ...(typed
+              ? {
+                  docTypes: [
+                    {
+                      id: 'Letter',
+                      label: 'Letter',
+                      definition: { id: 'letter', pages: [] },
+                    },
+                  ],
+                }
+              : {}),
+          },
+        },
+        form: formStore,
+        response: { answer: JSON.stringify({ documents: [row] }) },
+        onResponse,
+      } as unknown as FieldComponentProps;
+      render(
+        <FormStoreContext.Provider value={formStore}>
+          <DocumentListFieldProvider
+            host={{
+              author: { id: 'wc-8', name: 'Synthetic author' },
+              capabilities: permissiveDocumentListCapabilities,
+              draftChannel: { open, presenceOf: () => () => {} },
+            }}
+            runtime={{
+              repository: {
+                load: async () => ({ documents: [row] }),
+                loadContent: async () => {
+                  if (failure === 'forbidden')
+                    throw new Error('Read forbidden');
+                  if (failure === 'unavailable') return {};
+                  return {
+                    text:
+                      failure === 'missing-metadata'
+                        ? 'Native prose without form metadata'
+                        : '---\nresponse: [broken\n---\nPreserved prose',
+                  };
+                },
+                save: vi.fn(),
+                remove: vi.fn(),
+              },
+            }}
+          >
+            <DocumentListField {...fieldProps} />
+          </DocumentListFieldProvider>
+        </FormStoreContext.Provider>
+      );
+      fireEvent.click(
+        await screen.findByRole('button', { name: 'Edit Letter' })
+      );
+      const alert = await screen.findByRole('alert');
+      expect(alert.textContent).toMatch(
+        failure === 'forbidden'
+          ? /Read forbidden/
+          : failure === 'unavailable'
+          ? /content is unavailable/
+          : /metadata is missing or invalid/
+      );
+      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(onResponse).not.toHaveBeenCalled();
+      await waitFor(() => expect(discard).toHaveBeenCalledOnce());
+      expect(close).toHaveBeenCalledOnce();
+      fireEvent.click(screen.getByRole('button', { name: 'Edit Letter' }));
+      await waitFor(() => expect(discard).toHaveBeenCalledTimes(2));
+      expect(close).toHaveBeenCalledTimes(2);
+      expect(screen.queryByRole('dialog')).toBeNull();
+    }
+  );
+
+  it('makes host controls available without changing the field value', () => {
+    render(
+      <DocumentListFieldProvider host={{ detailRowsExpanded: true }}>
+        <HostProbe />
+      </DocumentListFieldProvider>
+    );
+
+    expect(screen.getByText('expanded')).toBeTruthy();
+  });
+
+  it('returns no host when the field is not wrapped', () => {
+    render(<HostProbe />);
+
+    expect(screen.getByText('collapsed')).toBeTruthy();
+  });
+
+  it('registers one extension per field in the core form store', () => {
+    const formStore = createFormStore();
+    const { unmount } = render(
+      <FormStoreContext.Provider value={formStore}>
+        <DocumentListFieldProvider host={{}}>
+          <RuntimeProbe fieldId="documents" />
+          <RuntimeProbe fieldId="documents" />
+        </DocumentListFieldProvider>
+      </FormStoreContext.Provider>
+    );
+
+    expect(screen.getAllByText('doc-1')).toHaveLength(2);
+    expect(runtimeStores[0]).toBe(runtimeStores[1]);
+    expect(
+      formStore.getState().getExtension('documents', 'documents')
+    ).toBeUndefined();
+    expect(
+      formStore.getState().getExtension('@esheet/fields-documents', 'documents')
+    ).toBe(runtimeStores[0]);
+    unmount();
+  });
+
+  it('isolates extension state between core form stores', () => {
+    const firstFormStore = createFormStore();
+    const secondFormStore = createFormStore();
+    render(
+      <>
+        <FormStoreContext.Provider value={firstFormStore}>
+          <DocumentListFieldProvider host={{}}>
+            <RuntimeProbe fieldId="documents" />
+          </DocumentListFieldProvider>
+        </FormStoreContext.Provider>
+        <FormStoreContext.Provider value={secondFormStore}>
+          <DocumentListFieldProvider host={{}}>
+            <RuntimeProbe fieldId="documents" />
+          </DocumentListFieldProvider>
+        </FormStoreContext.Provider>
+      </>
+    );
+
+    expect(screen.getAllByText('doc-1')).toHaveLength(2);
+    expect(
+      firstFormStore
+        .getState()
+        .getExtension('@esheet/fields-documents', 'documents')
+    ).toBeTruthy();
+    expect(
+      secondFormStore
+        .getState()
+        .getExtension('@esheet/fields-documents', 'documents')
+    ).toBeTruthy();
+  });
+
+  // The reason the composer session is hoisted at all: eSheet's pages
+  // navigator unmounts the page the draft was started from.
+  it('keeps a docked draft when the field that opened it unmounts', async () => {
+    const formStore = createFormStore();
+    const field = {
+      definition: { id: 'documents', question: 'Documents' },
+    } as unknown as FieldComponentProps['field'];
+    const fieldProps = {
+      field,
+      form: formStore,
+      response: undefined,
+    } as unknown as FieldComponentProps;
+    const tree = (visible: boolean): React.JSX.Element => (
+      <FormStoreContext.Provider value={formStore}>
+        <DocumentListFieldProvider
+          host={{ capabilities: permissiveDocumentListCapabilities }}
+        >
+          {visible ? <DocumentListField {...fieldProps} /> : null}
+        </DocumentListFieldProvider>
+      </FormStoreContext.Provider>
+    );
+
+    const { rerender } = render(tree(true));
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Compose document' })
+    );
+    // The runtime marks the title required, so the label reads "Title *".
+    fireEvent.change(await screen.findByLabelText(/^Title/), {
+      target: { value: 'Visit note' },
+    });
+    expect(globalThis.document.body.contains(screen.getByRole('dialog'))).toBe(
+      true
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Collapse to dock' }));
+
+    rerender(tree(false));
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('button', { name: 'Compose document' })
+      ).toBeNull()
+    );
+    expect(screen.getByRole('dialog')).toBeTruthy();
+    expect(screen.getByText('Visit note')).toBeTruthy();
+    expect((screen.getByLabelText(/^Title/) as HTMLInputElement).value).toBe(
+      'Visit note'
+    );
+  });
+
+  it('reports composer dirty state until the draft is discarded', async () => {
+    const formStore = createFormStore();
+    const onComposeDirtyChange = vi.fn();
+    const fieldProps = {
+      field: {
+        definition: { id: 'documents', question: 'Documents' },
+      },
+      form: formStore,
+      response: undefined,
+    } as unknown as FieldComponentProps;
+    render(
+      <FormStoreContext.Provider value={formStore}>
+        <DocumentListFieldProvider
+          host={{
+            capabilities: permissiveDocumentListCapabilities,
+            onComposeDirtyChange,
+          }}
+        >
+          <DocumentListField {...fieldProps} />
+        </DocumentListFieldProvider>
+      </FormStoreContext.Provider>
+    );
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Compose document' })
+    );
+    fireEvent.change(await screen.findByLabelText(/^Title/), {
+      target: { value: 'Visit note' },
+    });
+    await waitFor(() =>
+      expect(onComposeDirtyChange).toHaveBeenLastCalledWith(true)
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Discard draft' }));
+
+    await waitFor(() =>
+      expect(onComposeDirtyChange).toHaveBeenLastCalledWith(false)
+    );
+  });
+});
+
+describe('capabilities (the host says who may do what)', () => {
+  const mountField = (
+    host: Parameters<typeof DocumentListFieldProvider>[0]['host'],
+    definition: Record<string, unknown> = {
+      id: 'documents',
+      question: 'Documents',
+    }
+  ): void => {
+    const formStore = createFormStore();
+    const fieldProps = {
+      field: { definition },
+      form: formStore,
+      response: undefined,
+    } as unknown as FieldComponentProps;
+    render(
+      <FormStoreContext.Provider value={formStore}>
+        <DocumentListFieldProvider host={host}>
+          <DocumentListField {...fieldProps} />
+        </DocumentListFieldProvider>
+      </FormStoreContext.Provider>
+    );
+  };
+
+  it('a host that says nothing is read-only: no compose, no upload', async () => {
+    mountField({});
+    expect(await screen.findByLabelText('Documents')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Compose/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Upload/ })).toBeNull();
+  });
+
+  it('compose appears only when some offered type is creatable', async () => {
+    mountField(
+      {
+        capabilities: {
+          ...permissiveDocumentListCapabilities,
+          create: (docType: string) => docType === 'phone-call',
+        },
+      },
+      {
+        id: 'documents',
+        question: 'Documents',
+        docTypes: [{ id: 'progress-note' }, { id: 'phone-call' }],
+      }
+    );
+    expect(
+      await screen.findByRole('button', { name: 'Compose document' })
+    ).toBeTruthy();
+  });
+
+  it('compose disappears when no offered type is creatable', async () => {
+    mountField(
+      {
+        capabilities: {
+          ...permissiveDocumentListCapabilities,
+          create: () => false,
+        },
+      },
+      {
+        id: 'documents',
+        question: 'Documents',
+        docTypes: [{ id: 'progress-note' }],
+      }
+    );
+    expect(await screen.findByLabelText('Documents')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Compose/ })).toBeNull();
+  });
+});

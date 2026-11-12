@@ -4,6 +4,9 @@
   "files": [],
   "references": [
     {
+      "path": "./packages/catalog"
+    },
+    {
       "path": "./packages/core"
     },
     {
@@ -32,6 +35,12 @@
     },
     {
       "path": "./packages/pdf"
+    },
+    {
+      "path": "./packages/field-health"
+    },
+    {
+      "path": "./packages/fields-documents"
     }
   ]
 }

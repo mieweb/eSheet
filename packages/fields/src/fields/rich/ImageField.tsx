@@ -153,6 +153,8 @@ export const ImageField = React.memo(function ImageField({
 
       {/* Image upload area */}
       <input
+        id={`${instanceId}-canvas-image-upload-${def.id}`}
+        aria-label="Upload image"
         ref={fileInputRef}
         type="file"
         accept="image/*"

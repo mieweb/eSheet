@@ -1,5 +1,5 @@
 import React from 'react';
-import YAML from 'js-yaml';
+import { load } from 'js-yaml';
 import {
   formatZodValidationError,
   formDefinitionSchema,
@@ -22,7 +22,7 @@ import {
  * Initialize renderer with form definition.
  *
  * Auto-detects and converts the following input formats:
- * - eSheet FormDefinition (object or JSON/YAML string)
+ * - eSheet FormDefinition (object or YAML/JSON string; YAML is canonical for committed layouts)
  * - FHIR R4 Questionnaire resource
  * - MCP elicitation/create envelope
  * - SurveyJS schema (has top-level `pages` or `elements` array)
@@ -51,7 +51,7 @@ export function useRendererInit(
         const trimmed = formData.trim();
         // Detect format: YAML if starts with non-brace, JSON otherwise
         const isYaml = !trimmed.startsWith('{') && !trimmed.startsWith('[');
-        parsed = isYaml ? YAML.load(trimmed) : JSON.parse(trimmed);
+        parsed = isYaml ? load(trimmed) : JSON.parse(trimmed);
       } else {
         parsed = formData;
       }
@@ -100,17 +100,10 @@ export function useRendererInit(
       onValidationError?.([]);
 
       // Load validated definition
-      form.getState().loadDefinition(validated.data);
+      form.getState().loadDefinition(validated.data, initialResponses);
       // Host must explicitly opt in — suppress dangerouslyAllowJS from schema if not allowed.
       if (!allowDangerousJS) {
         form.getState().setDangerouslyAllowJS(false);
-      }
-
-      // Apply initial responses if provided
-      if (initialResponses && Object.keys(initialResponses).length > 0) {
-        for (const [fieldId, value] of Object.entries(initialResponses)) {
-          form.getState().setResponse(fieldId, value);
-        }
       }
 
       // Set preview mode

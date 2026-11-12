@@ -19,19 +19,14 @@ eSheet supports three condition modes for driving field visibility, enabled stat
 
 All three modes are evaluated inside a `ConditionalRule`:
 
-```json
-{
-  "effect": "visible",
-  "logic": "AND",
-  "conditions": [
-    {
-      "conditionType": "field",
-      "targetId": "pain-level",
-      "operator": "greaterThan",
-      "expected": "3"
-    }
-  ]
-}
+```yaml
+effect: visible
+logic: AND
+conditions:
+  - conditionType: field
+    targetId: pain-level
+    operator: greaterThan
+    expected: '3'
 ```
 
 ---
@@ -40,13 +35,11 @@ All three modes are evaluated inside a `ConditionalRule`:
 
 Reference another field's response directly. Does not require dangerous JS.
 
-```json
-{
-  "conditionType": "field",
-  "targetId": "has-allergies",
-  "operator": "equals",
-  "expected": "Yes"
-}
+```yaml
+conditionType: field
+targetId: has-allergies
+operator: equals
+expected: 'Yes'
 ```
 
 **Available operators:**
@@ -66,14 +59,12 @@ Reference another field's response directly. Does not require dangerous JS.
 
 **Property accessor** — use `.length` or `.count` on array responses:
 
-```json
-{
-  "conditionType": "field",
-  "targetId": "symptoms",
-  "operator": "greaterThan",
-  "expected": "2",
-  "propertyAccessor": "count"
-}
+```yaml
+conditionType: field
+targetId: symptoms
+operator: greaterThan
+expected: '2'
+propertyAccessor: count
 ```
 
 ---
@@ -88,18 +79,14 @@ Use eSheet's safe expression evaluator. Does not require dangerous JS.
 - Does **not** use `new Function` — evaluation is sandboxed by design
 - Works even when dangerous JS is disabled
 
-```json
-{
-  "conditionType": "expression",
-  "expression": "{temperature} >= 38 && {symptoms}.count > 1"
-}
+```yaml
+conditionType: expression
+expression: '{temperature} >= 38 && {symptoms}.count > 1'
 ```
 
-```json
-{
-  "conditionType": "expression",
-  "expression": "{total-score} >= 8 || {override-flag} == 'Yes'"
-}
+```yaml
+conditionType: expression
+expression: "{total-score} >= 8 || {override-flag} == 'Yes'"
 ```
 
 For most business rules, expression conditions are sufficient. Use JS conditions only when the logic requires function calls, date manipulation, or external data.
@@ -112,23 +99,15 @@ Arbitrary JavaScript for complex conditional logic. Requires `dangerouslyAllowJS
 
 ### Schema
 
-```json
-{
-  "id": "followup-section",
-  "fieldType": "section",
-  "rules": [
-    {
-      "effect": "visible",
-      "logic": "AND",
-      "conditions": [
-        {
-          "conditionType": "js",
-          "expression": "responses['has-symptoms'] === 'Yes' && new Date() > new Date(responses['onset-date'])"
-        }
-      ]
-    }
-  ]
-}
+```yaml
+id: followup-section
+fieldType: section
+rules:
+  - effect: visible
+    logic: AND
+    conditions:
+      - conditionType: js
+        expression: responses['has-symptoms'] === 'Yes' && new Date() > new Date(responses['onset-date'])
 ```
 
 The expression must evaluate to a **truthy value** for the condition to pass. If `dangerouslyAllowJS` is disabled, `conditionType: 'js'` always evaluates as `false`.
@@ -164,75 +143,60 @@ new Function('responses', 'return ' + expression)(data);
 
 Replaces legacy moment.js date range conditionals (`moment(date).isBetween(...)`):
 
-```json
-{
-  "conditionType": "js",
-  "expression": "(() => { const tested = new Date(responses['ppd-date-tested']); if (!tested || isNaN(tested)) return false; const now = new Date(); const diffDays = (now - tested) / (1000 * 60 * 60 * 24); return diffDays >= 2 && diffDays <= 8; })()"
-}
+```yaml
+conditionType: js
+expression: (() => { const tested = new Date(responses['ppd-date-tested']); if (!tested || isNaN(tested)) return false; const now = new Date(); const diffDays = (now - tested) / (1000 * 60 * 60 * 24); return diffDays >= 2 && diffDays <= 8; })()
 ```
 
 ### Today relative date comparisons
 
 Replaces legacy `todayIsAfter()`, `todayIsBefore()`, `todayIsBetween()`, `todayIsDate()`:
 
-```json
-{ "conditionType": "js", "expression": "new Date() > new Date('2019-06-24')" }
+```yaml
+conditionType: js
+expression: new Date() > new Date('2019-06-24')
 ```
 
-```json
-{ "conditionType": "js", "expression": "new Date() < new Date('2007-02-13')" }
+```yaml
+conditionType: js
+expression: new Date() < new Date('2007-02-13')
 ```
 
-```json
-{
-  "conditionType": "js",
-  "expression": "new Date() >= new Date('2019-12-15') && new Date() <= new Date('2020-03-25')"
-}
+```yaml
+conditionType: js
+expression: new Date() >= new Date('2019-12-15') && new Date() <= new Date('2020-03-25')
 ```
 
 ### Multi-OR: show if yes was answered to any of several fields
 
 Replaces legacy multi-`observationDisplay` OR chains:
 
-```json
-{
-  "effect": "visible",
-  "logic": "OR",
-  "conditions": [
-    {
-      "conditionType": "js",
-      "expression": "responses['fatigue-field'] === 'Yes'"
-    },
-    {
-      "conditionType": "js",
-      "expression": "responses['sleep-problems-field'] === 'Yes'"
-    },
-    {
-      "conditionType": "js",
-      "expression": "responses['sleeping-aids-field'] === 'Yes'"
-    }
-  ]
-}
+```yaml
+effect: visible
+logic: OR
+conditions:
+  - conditionType: js
+    expression: responses['fatigue-field'] === 'Yes'
+  - conditionType: js
+    expression: responses['sleep-problems-field'] === 'Yes'
+  - conditionType: js
+    expression: responses['sleeping-aids-field'] === 'Yes'
 ```
 
 Or equivalently with a single JS condition:
 
-```json
-{
-  "conditionType": "js",
-  "expression": "['fatigue-field', 'sleep-problems-field', 'sleeping-aids-field'].some(id => responses[id] === 'Yes')"
-}
+```yaml
+conditionType: js
+expression: "['fatigue-field', 'sleep-problems-field', 'sleeping-aids-field'].some(id => responses[id] === 'Yes')"
 ```
 
 ### Show if any observation is answered (not empty, not zero)
 
 Replaces legacy `observationValueByName('name') && observationValueByName('name') !== 0`:
 
-```json
-{
-  "conditionType": "js",
-  "expression": "responses['pain-scale'] !== '' && responses['pain-scale'] !== 0"
-}
+```yaml
+conditionType: js
+expression: responses['pain-scale'] !== '' && responses['pain-scale'] !== 0
 ```
 
 ---
