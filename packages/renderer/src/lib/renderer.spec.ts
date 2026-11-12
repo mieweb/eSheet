@@ -112,6 +112,45 @@ describe('renderer', () => {
     }
   );
 
+  it.each([
+    [false, false, true],
+    [false, true, true],
+    [true, false, true],
+    [true, true, true],
+    [true, true, false],
+  ])(
+    'honors JS enable rules with host=%s, schema=%s, condition=%s',
+    (hostAllowsJS, schemaAllowsJS, conditionResult) => {
+      const definition = baseDefinition();
+      definition.dangerouslyAllowJS = schemaAllowsJS;
+      const section = definition.pages[0].fields![1] as SectionFieldDefinition;
+      section.fields![0].rules = [
+        {
+          effect: 'enable',
+          logic: 'AND',
+          conditions: [
+            { conditionType: 'js', expression: String(conditionResult) },
+          ],
+        },
+      ];
+      const store = createFormStore(definition, hostAllowsJS);
+      const tools = createRendererTools(store);
+      const enabled = hostAllowsJS && schemaAllowsJS && conditionResult;
+      const fieldIds = tools.getForm().fields.map((field) => field.id);
+      expect(fieldIds.includes('child-a')).toBe(enabled);
+      expect(
+        tools.getFormTree().find((node) => node.id === 'section-main')
+          ?.children[0].enabled
+      ).toBe(enabled);
+      expect(tools.fillField('child-a', 'Allowed')).toBe(enabled);
+      if (enabled) {
+        expect(tools.getResponses()['child-a']).toEqual({ answer: 'Allowed' });
+      } else {
+        expect(tools.getResponses()).not.toHaveProperty('child-a');
+      }
+    }
+  );
+
   it('hides section children by default when rules resolve invisible', () => {
     const definition = baseDefinition();
     (

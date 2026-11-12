@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { act, waitFor } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import {
   createOzwellBridge,
   mountStandaloneRenderer,
@@ -31,6 +32,27 @@ function dispatchToolCall(
 }
 
 describe('Ozwell bridge', () => {
+  it('disposes the bridge when root creation fails', () => {
+    expect(() =>
+      mountStandaloneRenderer(null as unknown as Element, {
+        formDataInput,
+        ozwell: true,
+      })
+    ).toThrow(/container/i);
+    const bridge = createOzwellBridge();
+    const respond = vi.fn();
+    try {
+      document.dispatchEvent(
+        new CustomEvent('ozwell-tool-call', {
+          detail: { name: 'get_form', arguments: {}, respond },
+        })
+      );
+      expect(respond).toHaveBeenCalledOnce();
+    } finally {
+      bridge.dispose();
+    }
+  });
+
   it('initializes tools before a synchronous tool call from onReady', async () => {
     let initialFill: Promise<unknown> | undefined;
     const onRendererToolsReady = vi.fn();

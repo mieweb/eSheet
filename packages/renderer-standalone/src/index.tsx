@@ -63,7 +63,13 @@ export function mountStandaloneRenderer(
   const ozwellBridge = ozwell
     ? createOzwellBridge(ozwell === true ? {} : ozwell)
     : null;
-  const root: Root = createRoot(container);
+  let root: Root;
+  try {
+    root = createRoot(container);
+  } catch (error) {
+    ozwellBridge?.dispose();
+    throw error;
+  }
   const rendererRef = React.createRef<EsheetRendererHandle>();
   const fieldProviders = documentPicker
     ? [

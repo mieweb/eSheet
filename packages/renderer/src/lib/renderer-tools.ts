@@ -97,12 +97,13 @@ export function createRendererTools(formStore: FormStore): RendererTools {
   }
 
   function getCurrentRenderTree(): RenderFieldNode[] {
-    const { formId, responses } = formStore.getState();
+    const { formId, responses, dangerouslyAllowJS } = formStore.getState();
     const definition = formStore.getState().hydrateDefinition();
     if (!definition) return [];
     return renderer(
       { ...definition, id: formId } as Parameters<typeof renderer>[0],
-      responses as Parameters<typeof renderer>[1]
+      responses as Parameters<typeof renderer>[1],
+      { allowDangerousJS: dangerouslyAllowJS }
     );
   }
 
