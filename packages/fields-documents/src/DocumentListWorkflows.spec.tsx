@@ -604,8 +604,15 @@ describe('document list workflow panels', () => {
       expect(screen.getByRole('option').textContent).toContain(
         'Specialist correspondence'
       );
+      expect(search.getAttribute('aria-controls')).toBe(
+        screen.getByRole('listbox').id
+      );
+      expect(search.getAttribute('aria-activedescendant')).toBe(
+        screen.getByRole('option').id
+      );
       fireEvent.change(search, { target: { value: 'unauthorized' } });
       expect(screen.queryByRole('option')).toBeNull();
+      expect(search.hasAttribute('aria-activedescendant')).toBe(false);
       for (const key of ['ArrowDown', 'Home', 'ArrowUp', 'End']) {
         fireEvent.keyDown(search, { key });
         fireEvent.keyDown(search, { key: 'Enter' });
@@ -1049,6 +1056,12 @@ describe('document list workflow panels', () => {
       expect(runtime.saveDocument).not.toHaveBeenCalled();
       fireEvent.change(search, { target: { value: 'SPECIALIST' } });
       expect(screen.getAllByRole('option')).toHaveLength(1);
+      expect(search.getAttribute('aria-controls')).toBe(
+        screen.getByRole('listbox').id
+      );
+      expect(search.getAttribute('aria-activedescendant')).toBe(
+        screen.getByRole('option').id
+      );
       fireEvent.change(search, { target: { value: 'ref' } });
       expect(screen.getAllByRole('option')).toHaveLength(1);
       fireEvent.keyDown(search, { key: 'Enter' });
