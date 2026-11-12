@@ -3,7 +3,8 @@ import {
   type FormResponse,
   type SectionFieldDefinition,
 } from '@esheet/core';
-import { buildRenderTree as renderer } from '@esheet/core';
+import { buildRenderTree as renderer, createFormStore } from '@esheet/core';
+import { createRendererTools } from './renderer-tools.js';
 
 describe('renderer', () => {
   function baseDefinition(): FormDefinition {
@@ -64,6 +65,52 @@ describe('renderer', () => {
       'nested-child',
     ]);
   });
+
+  it.each(['child-a', 'section-main'])(
+    'excludes fields disabled by %s from tool discovery and writes until enabled',
+    (gatedId) => {
+      const definition = baseDefinition();
+      const section = definition.pages[0].fields![1] as SectionFieldDefinition;
+      const gated = gatedId === 'section-main' ? section : section.fields![0];
+      gated.rules = [
+        {
+          effect: 'enable',
+          logic: 'AND',
+          conditions: [
+            {
+              conditionType: 'field',
+              targetId: 'toggle',
+              operator: 'equals',
+              expected: 'yes',
+            },
+          ],
+        },
+      ];
+      const store = createFormStore(definition);
+      const tools = createRendererTools(store);
+      const targetIds =
+        gatedId === 'section-main' ? ['child-a', 'nested-child'] : ['child-a'];
+      expect(tools.fillField('toggle', 'no')).toBe(true);
+      for (const fieldId of targetIds) {
+        expect(tools.getForm().fields.map((field) => field.id)).not.toContain(
+          fieldId
+        );
+        expect(tools.getFormRaw().fields.map((field) => field.id)).toContain(
+          fieldId
+        );
+        expect(tools.fillField(fieldId, 'Blocked')).toBe(false);
+        expect(tools.getResponses()).not.toHaveProperty(fieldId);
+      }
+      expect(tools.fillField('toggle', 'yes')).toBe(true);
+      for (const fieldId of targetIds) {
+        expect(tools.getForm().fields.map((field) => field.id)).toContain(
+          fieldId
+        );
+        expect(tools.fillField(fieldId, 'Allowed')).toBe(true);
+        expect(tools.getResponses()[fieldId]).toEqual({ answer: 'Allowed' });
+      }
+    }
+  );
 
   it('hides section children by default when rules resolve invisible', () => {
     const definition = baseDefinition();

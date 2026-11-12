@@ -69,7 +69,7 @@ const NON_INPUT = new Set(['section', 'html', 'display', 'image', 'diagram']);
 function flattenVisible(nodes: RenderFieldNode[]): RenderFieldNode[] {
   const result: RenderFieldNode[] = [];
   for (const node of nodes) {
-    if (!node.visible) continue;
+    if (!node.visible || !node.enabled) continue;
     if (node.children.length > 0) {
       result.push(...flattenVisible(node.children));
     } else if (!NON_INPUT.has(node.definition.fieldType as string)) {

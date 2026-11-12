@@ -8,7 +8,7 @@ import {
 export interface OzwellBridgeOptions {
   /** DOM event dispatched by the Ozwell loader for page tool calls. */
   eventName?: string;
-  /** Event target the loader dispatches on. Defaults to `document`. */
+  /** Event target the loader dispatches on. Defaults to `document`. Each target/event name allows only one bridge. */
   target?: EventTarget;
 }
 
@@ -19,6 +19,8 @@ export interface OzwellBridge {
   dispose: () => void;
 }
 
+const activeBridges = new WeakMap<EventTarget, Set<string>>();
+
 /**
  * Non-React equivalent of `useRendererMcpToolHandler`: routes Ozwell
  * `ozwell-tool-call` events to the renderer's MCP tool executor.
@@ -28,7 +30,14 @@ export function createOzwellBridge(
 ): OzwellBridge {
   const eventName = options.eventName ?? 'ozwell-tool-call';
   const target: EventTarget = options.target ?? document;
+  const activeEvents = activeBridges.get(target) ?? new Set<string>();
+  if (activeEvents.has(eventName)) {
+    throw new Error(
+      'An Ozwell bridge already exists for this target and event name. Use a separate target or event name for each renderer.'
+    );
+  }
   let tools: RendererTools | null = null;
+  let disposed = false;
 
   function onToolCall(e: Event) {
     const detail = (e as CustomEvent).detail as {
@@ -37,6 +46,8 @@ export function createOzwellBridge(
       respond: (result: unknown) => void;
     };
     const name = detail.name.replace(/^postMessage[:_]/, '');
+    if (!RENDERER_TOOL_DEFINITIONS.some((tool) => tool.function.name === name))
+      return;
     if (!tools) {
       detail.respond({ success: false, message: 'Renderer not ready' });
       return;
@@ -58,14 +69,19 @@ export function createOzwellBridge(
   }
 
   target.addEventListener(eventName, onToolCall);
+  activeEvents.add(eventName);
+  activeBridges.set(target, activeEvents);
 
   return {
     onRendererToolsReady: (t) => {
       tools = t;
     },
     dispose: () => {
+      if (disposed) return;
+      disposed = true;
       tools = null;
       target.removeEventListener(eventName, onToolCall);
+      activeEvents.delete(eventName);
     },
   };
 }

@@ -60,6 +60,9 @@ export function mountStandaloneRenderer(
   container: Parameters<typeof createRoot>[0],
   { documentPicker, ozwell, ...props }: EsheetStandaloneRendererProps
 ): EsheetRendererStandaloneHandle {
+  const ozwellBridge = ozwell
+    ? createOzwellBridge(ozwell === true ? {} : ozwell)
+    : null;
   const root: Root = createRoot(container);
   const rendererRef = React.createRef<EsheetRendererHandle>();
   const fieldProviders = documentPicker
@@ -69,19 +72,30 @@ export function mountStandaloneRenderer(
       ]
     : props.fieldProviders;
 
-  const ozwellBridge = ozwell
-    ? createOzwellBridge(ozwell === true ? {} : ozwell)
-    : null;
+  let toolsReady = false;
+  let pendingReady = false;
+  const onReady = ozwellBridge
+    ? () => {
+        if (toolsReady) props.onReady?.();
+        else pendingReady = true;
+      }
+    : props.onReady;
   const onRendererToolsReady = ozwellBridge
     ? (tools: Parameters<OzwellBridge['onRendererToolsReady']>[0]) => {
         ozwellBridge.onRendererToolsReady(tools);
+        toolsReady = true;
         props.onRendererToolsReady?.(tools);
+        if (pendingReady) {
+          pendingReady = false;
+          props.onReady?.();
+        }
       }
     : props.onRendererToolsReady;
 
   root.render(
     React.createElement(EsheetRenderer, {
       ...props,
+      onReady,
       onRendererToolsReady,
       fieldProviders,
       ref: rendererRef,
