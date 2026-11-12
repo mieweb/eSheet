@@ -77,6 +77,7 @@ export default defineConfig(() => ({
         '@esheet/fields',
         '@esheet/renderer',
         '@mieweb/datavis',
+        '@mieweb/ui',
         '@mieweb/ui/datavis',
         'ag-grid-community',
         'ag-grid-react',

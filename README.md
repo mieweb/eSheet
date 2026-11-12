@@ -123,15 +123,9 @@ pnpm install
 
 The workspace pins the published `@mieweb/ui@0.11.0-dev.67` package rather than a
 local UI checkout. This release includes the searchable Select focus correction
-from [mieweb/ui#748](https://github.com/mieweb/ui/pull/748). A temporary pnpm patch
-backports the empty-result, modal-scope, dark-theme, active-option accessibility,
-and transformed-dialog fixes from
-[mieweb/ui#752](https://github.com/mieweb/ui/pull/752), for both ESM and CommonJS.
-Remove that patch and advance the dependency and lockfile once a published UI
-release contains all of those changes. Workflow regressions must pass without a
-`link:../ui` override. The documents package bundles the patched UI controls, so
-published-package consumers receive the fixes without needing a pnpm patch in
-their own app.
+from [mieweb/ui#748](https://github.com/mieweb/ui/pull/748), without a UI pnpm
+patch or `link:../ui` override. The documents package keeps `@mieweb/ui` external
+so its controls share the host's UI implementation.
 
 ### Common tasks
 
