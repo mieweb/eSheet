@@ -69,7 +69,7 @@ const NON_INPUT = new Set(['section', 'html', 'display', 'image', 'diagram']);
 function flattenVisible(nodes: RenderFieldNode[]): RenderFieldNode[] {
   const result: RenderFieldNode[] = [];
   for (const node of nodes) {
-    if (!node.visible) continue;
+    if (!node.visible || !node.enabled) continue;
     if (node.children.length > 0) {
       result.push(...flattenVisible(node.children));
     } else if (!NON_INPUT.has(node.definition.fieldType as string)) {
@@ -97,12 +97,13 @@ export function createRendererTools(formStore: FormStore): RendererTools {
   }
 
   function getCurrentRenderTree(): RenderFieldNode[] {
-    const { formId, responses } = formStore.getState();
+    const { formId, responses, dangerouslyAllowJS } = formStore.getState();
     const definition = formStore.getState().hydrateDefinition();
     if (!definition) return [];
     return renderer(
       { ...definition, id: formId } as Parameters<typeof renderer>[0],
-      responses as Parameters<typeof renderer>[1]
+      responses as Parameters<typeof renderer>[1],
+      { allowDangerousJS: dangerouslyAllowJS }
     );
   }
 
