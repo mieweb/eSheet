@@ -40,7 +40,7 @@
     "@esheet/fields": "workspace:*",
     "@esheet/renderer": "workspace:*",
     "@mieweb/datavis": "1.6.0",
-    "@mieweb/ui": "0.11.0-dev.66",
+    "@mieweb/ui": "0.11.0-dev.67",
     "@react-pdf/renderer": "^4.9.0",
     "ag-grid-community": "^35.1.0",
     "ag-grid-react": "^35.1.0",
