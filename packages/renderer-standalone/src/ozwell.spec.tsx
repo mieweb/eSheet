@@ -33,7 +33,9 @@ describe('Ozwell bridge', () => {
         ozwell: true,
       });
     });
-    await waitFor(() => expect(container.querySelector('input')).not.toBeNull());
+    await waitFor(() =>
+      expect(container.querySelector('input')).not.toBeNull()
+    );
 
     await act(async () => {
       await dispatchToolCall('fill_field', { fieldId: 'q1', value: 'Jane' });
