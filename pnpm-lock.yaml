@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  '@mieweb/ui': 0.11.0-dev.67
+  '@mieweb/ui': 0.11.0-dev.69
   axios: 1.13.6
   '@xhmikosr/decompress': 11.1.4
   shell-quote: 1.10.0
@@ -29,8 +29,8 @@ importers:
   .:
     dependencies:
       '@mieweb/ui':
-        specifier: 0.11.0-dev.67
-        version: 0.11.0-dev.67(@esheet/core@packages+core)(@esheet/fields@packages+fields)(@esheet/renderer@packages+renderer)(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/extension-menu@0.8.12(patch_hash=ad7cb66c09edc0a21db0b9f3b4131f4806f4921cd8792d5cf9980f0eeb9295c9))(@kerebron/wasm@0.8.12)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react-markdown@10.1.0(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)(rehype-sanitize@6.0.0)(remark-gfm@4.0.1)
+        specifier: 0.11.0-dev.69
+        version: 0.11.0-dev.69(@esheet/core@packages+core)(@esheet/fields@packages+fields)(@esheet/renderer@packages+renderer)(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/extension-menu@0.8.12(patch_hash=ad7cb66c09edc0a21db0b9f3b4131f4806f4921cd8792d5cf9980f0eeb9295c9))(@kerebron/wasm@0.8.12)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react-markdown@10.1.0(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)(rehype-sanitize@6.0.0)(remark-gfm@4.0.1)
       react:
         specifier: ^19.2.4
         version: 19.2.8
@@ -196,8 +196,8 @@ importers:
         specifier: ^0.8.10
         version: 0.8.10
       '@mieweb/ui':
-        specifier: 0.11.0-dev.67
-        version: 0.11.0-dev.67(@esheet/builder@packages+builder)(@esheet/core@packages+core)(@esheet/fields@packages+fields)(@esheet/renderer@packages+renderer)(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/extension-menu@0.8.12(patch_hash=ad7cb66c09edc0a21db0b9f3b4131f4806f4921cd8792d5cf9980f0eeb9295c9))(@kerebron/wasm@0.8.10)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react-markdown@10.1.0(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)(rehype-sanitize@6.0.0)(remark-gfm@4.0.1)
+        specifier: 0.11.0-dev.69
+        version: 0.11.0-dev.69(@esheet/builder@packages+builder)(@esheet/core@packages+core)(@esheet/fields@packages+fields)(@esheet/renderer@packages+renderer)(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/extension-menu@0.8.12(patch_hash=ad7cb66c09edc0a21db0b9f3b4131f4806f4921cd8792d5cf9980f0eeb9295c9))(@kerebron/wasm@0.8.10)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react-markdown@10.1.0(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)(rehype-sanitize@6.0.0)(remark-gfm@4.0.1)
       js-yaml:
         specifier: ^5.2.3
         version: 5.2.3
@@ -283,8 +283,8 @@ importers:
         specifier: workspace:*
         version: link:../styles
       '@mieweb/ui':
-        specifier: 0.11.0-dev.67
-        version: 0.11.0-dev.67(@esheet/core@packages+core)(@esheet/fields@packages+fields)(@esheet/renderer@packages+renderer)(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/extension-menu@0.8.12(patch_hash=ad7cb66c09edc0a21db0b9f3b4131f4806f4921cd8792d5cf9980f0eeb9295c9))(@kerebron/wasm@0.8.12)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react-markdown@10.1.0(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)(rehype-sanitize@6.0.0)(remark-gfm@4.0.1)
+        specifier: 0.11.0-dev.69
+        version: 0.11.0-dev.69(@esheet/core@packages+core)(@esheet/fields@packages+fields)(@esheet/renderer@packages+renderer)(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/extension-menu@0.8.12(patch_hash=ad7cb66c09edc0a21db0b9f3b4131f4806f4921cd8792d5cf9980f0eeb9295c9))(@kerebron/wasm@0.8.12)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react-markdown@10.1.0(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)(rehype-sanitize@6.0.0)(remark-gfm@4.0.1)
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.56.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -364,8 +364,8 @@ importers:
         specifier: workspace:*
         version: link:../fields
       '@mieweb/ui':
-        specifier: 0.11.0-dev.67
-        version: 0.11.0-dev.67(@esheet/core@packages+core)(@esheet/fields@packages+fields)(@esheet/renderer@packages+renderer)(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/extension-menu@0.8.12(patch_hash=ad7cb66c09edc0a21db0b9f3b4131f4806f4921cd8792d5cf9980f0eeb9295c9))(@kerebron/wasm@0.8.12)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react-markdown@10.1.0(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)(rehype-sanitize@6.0.0)(remark-gfm@4.0.1)
+        specifier: 0.11.0-dev.69
+        version: 0.11.0-dev.69(@esheet/core@packages+core)(@esheet/fields@packages+fields)(@esheet/renderer@packages+renderer)(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/extension-menu@0.8.12(patch_hash=ad7cb66c09edc0a21db0b9f3b4131f4806f4921cd8792d5cf9980f0eeb9295c9))(@kerebron/wasm@0.8.12)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react-markdown@10.1.0(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)(rehype-sanitize@6.0.0)(remark-gfm@4.0.1)
       lucide-react:
         specifier: ^1.31.0
         version: 1.31.0(react@19.2.8)
@@ -419,8 +419,8 @@ importers:
         specifier: workspace:*
         version: link:../styles
       '@mieweb/ui':
-        specifier: 0.11.0-dev.67
-        version: 0.11.0-dev.67(@esheet/core@packages+core)(@esheet/fields@packages+fields)(@esheet/renderer@packages+renderer)(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/extension-menu@0.8.12(patch_hash=ad7cb66c09edc0a21db0b9f3b4131f4806f4921cd8792d5cf9980f0eeb9295c9))(@kerebron/wasm@0.8.12)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react-markdown@10.1.0(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)(rehype-sanitize@6.0.0)(remark-gfm@4.0.1)
+        specifier: 0.11.0-dev.69
+        version: 0.11.0-dev.69(@esheet/core@packages+core)(@esheet/fields@packages+fields)(@esheet/renderer@packages+renderer)(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/extension-menu@0.8.12(patch_hash=ad7cb66c09edc0a21db0b9f3b4131f4806f4921cd8792d5cf9980f0eeb9295c9))(@kerebron/wasm@0.8.12)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react-markdown@10.1.0(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)(rehype-sanitize@6.0.0)(remark-gfm@4.0.1)
       lucide-react:
         specifier: ^1.31.0
         version: 1.31.0(react@19.2.8)
@@ -468,8 +468,8 @@ importers:
         specifier: 1.6.0
         version: 1.6.0(@esheet/core@packages+core)(@esheet/fields@packages+fields)(@esheet/renderer@packages+renderer)(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/extension-menu@0.8.12(patch_hash=ad7cb66c09edc0a21db0b9f3b4131f4806f4921cd8792d5cf9980f0eeb9295c9))(@kerebron/wasm@0.8.12)(@types/react@19.2.18)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(datavis-ace@4.1.0)(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react-markdown@10.1.0(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)(redux@5.0.1)(rehype-sanitize@6.0.0)(remark-gfm@4.0.1)(typescript@6.0.3)
       '@mieweb/ui':
-        specifier: 0.11.0-dev.67
-        version: 0.11.0-dev.67(@esheet/core@packages+core)(@esheet/fields@packages+fields)(@esheet/renderer@packages+renderer)(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/extension-menu@0.8.12(patch_hash=ad7cb66c09edc0a21db0b9f3b4131f4806f4921cd8792d5cf9980f0eeb9295c9))(@kerebron/wasm@0.8.12)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react-markdown@10.1.0(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)(rehype-sanitize@6.0.0)(remark-gfm@4.0.1)
+        specifier: 0.11.0-dev.69
+        version: 0.11.0-dev.69(@esheet/core@packages+core)(@esheet/fields@packages+fields)(@esheet/renderer@packages+renderer)(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/extension-menu@0.8.12(patch_hash=ad7cb66c09edc0a21db0b9f3b4131f4806f4921cd8792d5cf9980f0eeb9295c9))(@kerebron/wasm@0.8.12)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react-markdown@10.1.0(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)(rehype-sanitize@6.0.0)(remark-gfm@4.0.1)
       '@react-pdf/renderer':
         specifier: ^4.9.0
         version: 4.9.0(react@19.2.8)
@@ -2209,8 +2209,8 @@ packages:
       mustache:
         optional: true
 
-  '@mieweb/ui@0.11.0-dev.67':
-    resolution: {integrity: sha512-SYSOCyYl7OhsyfMATuqn6jXYSAGb4e5cNaV/X/sJTvHa4e5l7oiRF7IAuq3Tk654dXLMeGDVYqqfUdLZz1Y5wg==}
+  '@mieweb/ui@0.11.0-dev.69':
+    resolution: {integrity: sha512-xuv4ww/rzR7eV+AbW5MYQunAcb4KHMj9RPjoOFD3qx+dfkEyiTJOmKQR4lS46T/ynQCuiJj3MOf1xtbYq7uVEQ==}
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
     peerDependencies:
@@ -12687,7 +12687,7 @@ snapshots:
       '@dnd-kit/core': 6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@dnd-kit/sortable': 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)
       '@dnd-kit/utilities': 3.2.2(react@19.2.8)
-      '@mieweb/ui': 0.11.0-dev.67(@esheet/core@packages+core)(@esheet/fields@packages+fields)(@esheet/renderer@packages+renderer)(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/extension-menu@0.8.12(patch_hash=ad7cb66c09edc0a21db0b9f3b4131f4806f4921cd8792d5cf9980f0eeb9295c9))(@kerebron/wasm@0.8.12)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react-markdown@10.1.0(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)(rehype-sanitize@6.0.0)(remark-gfm@4.0.1)
+      '@mieweb/ui': 0.11.0-dev.69(@esheet/core@packages+core)(@esheet/fields@packages+fields)(@esheet/renderer@packages+renderer)(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/extension-menu@0.8.12(patch_hash=ad7cb66c09edc0a21db0b9f3b4131f4806f4921cd8792d5cf9980f0eeb9295c9))(@kerebron/wasm@0.8.12)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react-markdown@10.1.0(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)(rehype-sanitize@6.0.0)(remark-gfm@4.0.1)
       datavis-ace: 4.1.0
       i18next: 26.3.6(typescript@6.0.3)
       lucide-react: 1.31.0(react@19.2.8)
@@ -12743,7 +12743,7 @@ snapshots:
     optionalDependencies:
       marked: 17.0.6
 
-  '@mieweb/ui@0.11.0-dev.67(@esheet/builder@packages+builder)(@esheet/core@packages+core)(@esheet/fields@packages+fields)(@esheet/renderer@packages+renderer)(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/extension-menu@0.8.12(patch_hash=ad7cb66c09edc0a21db0b9f3b4131f4806f4921cd8792d5cf9980f0eeb9295c9))(@kerebron/wasm@0.8.10)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react-markdown@10.1.0(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)(rehype-sanitize@6.0.0)(remark-gfm@4.0.1)':
+  '@mieweb/ui@0.11.0-dev.69(@esheet/builder@packages+builder)(@esheet/core@packages+core)(@esheet/fields@packages+fields)(@esheet/renderer@packages+renderer)(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/extension-menu@0.8.12(patch_hash=ad7cb66c09edc0a21db0b9f3b4131f4806f4921cd8792d5cf9980f0eeb9295c9))(@kerebron/wasm@0.8.10)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react-markdown@10.1.0(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)(rehype-sanitize@6.0.0)(remark-gfm@4.0.1)':
     dependencies:
       '@dnd-kit/core': 6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@dnd-kit/sortable': 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)
@@ -12792,7 +12792,7 @@ snapshots:
       - liquidjs
       - mustache
 
-  '@mieweb/ui@0.11.0-dev.67(@esheet/core@packages+core)(@esheet/fields@packages+fields)(@esheet/renderer@packages+renderer)(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/extension-menu@0.8.12(patch_hash=ad7cb66c09edc0a21db0b9f3b4131f4806f4921cd8792d5cf9980f0eeb9295c9))(@kerebron/wasm@0.8.12)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react-markdown@10.1.0(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)(rehype-sanitize@6.0.0)(remark-gfm@4.0.1)':
+  '@mieweb/ui@0.11.0-dev.69(@esheet/core@packages+core)(@esheet/fields@packages+fields)(@esheet/renderer@packages+renderer)(@kerebron/editor-kits@0.8.12(svelte@5.56.10(@typescript-eslint/types@8.67.0)))(@kerebron/editor@0.8.12)(@kerebron/extension-basic-editor@0.8.12)(@kerebron/extension-menu@0.8.12(patch_hash=ad7cb66c09edc0a21db0b9f3b4131f4806f4921cd8792d5cf9980f0eeb9295c9))(@kerebron/wasm@0.8.12)(ag-grid-community@35.3.1)(ag-grid-react@35.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(js-yaml@5.2.3)(katex@0.16.47)(mermaid@11.16.1)(papaparse@5.5.4)(react-dom@19.2.8(react@19.2.8))(react-markdown@10.1.0(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)(rehype-sanitize@6.0.0)(remark-gfm@4.0.1)':
     dependencies:
       '@dnd-kit/core': 6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@dnd-kit/sortable': 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)

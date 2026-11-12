@@ -1010,13 +1010,24 @@ describe('document list workflow panels', () => {
       expect(screen.getAllByRole('option')).toHaveLength(251);
       const search = screen.getByRole('textbox', { name: 'Search options' });
       expect(globalThis.document.activeElement).toBe(search);
+      expect(search.getAttribute('aria-controls')).toBe(
+        screen.getByRole('listbox').id
+      );
       fireEvent.change(search, { target: { value: 'unauthorized' } });
       expect(screen.queryByRole('option')).toBeNull();
-      fireEvent.keyDown(search, { key: 'Enter' });
+      for (const key of ['ArrowDown', 'ArrowUp', 'Home', 'End']) {
+        fireEvent.keyDown(search, { key });
+        fireEvent.keyDown(search, { key: 'Enter' });
+        expect(search.getAttribute('aria-activedescendant')).toBeNull();
+        expect(screen.queryByRole('option')).toBeNull();
+      }
       expect(save).toHaveProperty('disabled', true);
       expect(runtime.saveDocument).not.toHaveBeenCalled();
       fireEvent.change(search, { target: { value: 'SPECIALIST' } });
       expect(screen.getAllByRole('option')).toHaveLength(1);
+      expect(search.getAttribute('aria-activedescendant')).toBe(
+        screen.getByRole('option').id
+      );
       fireEvent.change(search, { target: { value: 'ref' } });
       expect(screen.getAllByRole('option')).toHaveLength(1);
       fireEvent.keyDown(search, { key: 'Enter' });
