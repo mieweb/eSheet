@@ -308,6 +308,41 @@ describe('createFormStore', () => {
         store.getState().loadDefinition(form([field('q1')]));
         expect(store.getState().responses).toEqual({});
       });
+
+      it('replaces definition and imported responses atomically', () => {
+        store.getState().setResponse('q1', { answer: 'old response' });
+        store.getState().setInputError('q1', 'Incomplete input');
+        const updates: Array<{
+          ids: readonly string[];
+          responses: Record<string, unknown>;
+        }> = [];
+        const unsubscribe = store.subscribe((state) => {
+          updates.push({
+            ids: state.normalized.pages[0]?.fieldIds ?? [],
+            responses: state.responses,
+          });
+        });
+
+        store
+          .getState()
+          .replaceDefinitionAndResponses(form([field('imported')]), {
+            imported: { answer: 'Ada Lovelace' },
+          });
+        unsubscribe();
+
+        expect(updates).toEqual([
+          {
+            ids: ['imported'],
+            responses: { imported: { answer: 'Ada Lovelace' } },
+          },
+        ]);
+        expect(store.getState().userEditedFields).toEqual(
+          new Set(['imported'])
+        );
+        expect(store.getState().extensions).toEqual({});
+        expect(store.getState().getErrors()).toEqual([]);
+        expect(store.getState().inputResetKeys.imported).toBeGreaterThan(0);
+      });
     });
 
     describe('setResponse', () => {
@@ -674,6 +709,33 @@ describe('createFormStore', () => {
               .definition as TextFieldDefinition
           ).question
         ).toBe('Hello');
+      });
+
+      it('creates a real field with PDF placement metadata', () => {
+        store = createFormStore(form([]));
+        const id = store.getState().addField('text', {
+          patch: {
+            _sourceData: {
+              esheet: {
+                pdf: {
+                  placement: { page: 0, rect: [72, 620, 220, 28] },
+                },
+              },
+            },
+          },
+        });
+        const hydrated = store.getState().hydrateDefinition();
+
+        expect(id).toBeTruthy();
+        expect(hydrated.pages[0].fields?.[0]).toMatchObject({
+          id,
+          fieldType: 'text',
+          _sourceData: {
+            esheet: {
+              pdf: { placement: { page: 0, rect: [72, 620, 220, 28] } },
+            },
+          },
+        });
       });
 
       it('returns null for unknown field type', () => {

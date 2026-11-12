@@ -168,6 +168,13 @@ export default defineConfig(({ command, mode }) => {
           ),
         },
         {
+          find: '@esheet/pdf',
+          replacement: resolve(
+            import.meta.dirname,
+            '../../packages/pdf/src/index.ts'
+          ),
+        },
+        {
           find: '@esheet/field-kerebron',
           replacement: resolve(
             import.meta.dirname,

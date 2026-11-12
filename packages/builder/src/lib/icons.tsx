@@ -359,6 +359,27 @@ export const CodeIcon = React.memo(
   eq
 );
 
+export const PdfIcon = React.memo(
+  ({ className = '' }: { className?: string }) => (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M6 2.75h7l5 5V21.25H6z" />
+      <path d="M13 2.75v5h5" />
+      <path d="M8.5 16.5v-5h1.25a1.5 1.5 0 0 1 0 3H8.5" />
+      <path d="M13 11.5v5h1a2 2 0 0 0 0-4h-1" />
+    </svg>
+  )
+);
+PdfIcon.displayName = 'PdfIcon';
+
 // ---------------------------------------------------------------------------
 // Misc / shared
 // ---------------------------------------------------------------------------

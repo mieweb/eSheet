@@ -12,6 +12,7 @@ export default defineConfig(() => ({
     dts({ tsconfigPath: './tsconfig.lib.json', bundleTypes: true }),
   ],
   build: {
+    assetsInlineLimit: 0,
     lib: {
       entry: resolve(import.meta.dirname, 'src/index.ts'),
       name: 'EsheetBuilder',
@@ -24,6 +25,7 @@ export default defineConfig(() => ({
         'react-dom',
         'react/jsx-runtime',
         '@esheet/core',
+        '@esheet/pdf',
         '@esheet/styles',
         // Must stay external for the same reason as the renderer: the field
         // component registry lives in @esheet/fields, and host-registered

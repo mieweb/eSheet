@@ -22,6 +22,7 @@ import { ToastContainer, ToastProvider, useToast } from '@mieweb/ui';
 import { LandingPage } from './views/LandingPage';
 import { BuilderView } from './views/BuilderView';
 import { RendererView } from './views/RendererView';
+import { RendererPdfView } from './views/RendererPdfView';
 import { CollabPlaygroundView } from './views/CollabPlaygroundView';
 import { LinkedResponsesView } from './views/LinkedResponsesView';
 import { Navbar } from './components/Navbar';
@@ -64,6 +65,7 @@ function App() {
           />
           <Route path="/builder" element={<BuilderView />} />
           <Route path="/renderer" element={<RendererView />} />
+          <Route path="/renderer-pdf" element={<RendererPdfView />} />
           <Route path="/collab-live" element={<CollabPlaygroundView />} />
           <Route path="/linked-responses" element={<LinkedResponsesView />} />
         </Routes>

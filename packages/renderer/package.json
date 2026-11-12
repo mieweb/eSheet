@@ -41,8 +41,10 @@
     "@esheet/adapters": "workspace:*",
     "@esheet/core": "workspace:*",
     "@esheet/fields": "workspace:*",
+    "@esheet/pdf": "workspace:*",
     "@esheet/styles": "workspace:*",
-    "js-yaml": "^5.2.3"
+    "js-yaml": "^5.2.3",
+    "pdfjs-dist": "^6.5.438"
   },
   "peerDependencies": {
     "react": ">=19.0.0"
@@ -51,6 +53,5 @@
     "react": {
       "optional": true
     }
-  },
-  "devDependencies": {}
+  }
 }

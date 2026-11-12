@@ -28,17 +28,20 @@ import {
 } from '@esheet/fields';
 import { ensureDefaultFieldComponentsRegistered } from './register-defaults.js';
 import { useRendererInit } from './hooks/useRendererInit.js';
+import { RendererPdfView } from './components/RendererPdfView.js';
+import type { PdfFieldMapping, PdfImportWarning, PdfSource } from '@esheet/pdf';
 import {
   RendererBody,
   type RendererPageNavigation,
 } from './components/RendererBody.js';
 
-export interface EsheetRendererProps {
+export type RendererRepresentation = 'esheet' | 'pdf';
+
+interface EsheetRendererCommonProps {
   /** Form definition — accepts FormDefinition, SurveyJS schema, MCP elicitation envelope,
    *  or any of the above as a YAML/JSON string. Auto-detected and converted internally.
    *  YAML is canonical for committed layouts; JSON is intended for wire/API payloads.
    *  Set `strict` to disable auto-conversion and require a valid FormDefinition directly. */
-  formDataInput: unknown;
   /** Additional CSS classes for root container */
   className?: string;
   /** Initial form responses (pre-fill data) */
@@ -120,6 +123,28 @@ export interface EsheetRendererProps {
   identity?: { name: string };
 }
 
+export interface EsheetRendererEsheetProps extends EsheetRendererCommonProps {
+  /** Form definition to render as an eSheet questionnaire. */
+  representation?: 'esheet';
+  /** Form definition — accepts FormDefinition, SurveyJS schema, MCP elicitation envelope,
+   *  or any of the above as a JSON/YAML string. Auto-detected and converted internally.
+   *  Set `strict` to disable auto-conversion and require a valid FormDefinition directly. */
+  formDataInput: unknown;
+  pdfSource?: never;
+}
+
+export interface EsheetRendererPdfProps extends EsheetRendererCommonProps {
+  /** Renders an imported PDF page canvas and editable mapped answer controls. */
+  representation: 'pdf';
+  /** PDF bytes to import into the renderer's eSheet response store. */
+  pdfSource: PdfSource;
+  formDataInput?: never;
+}
+
+export type EsheetRendererProps =
+  | EsheetRendererEsheetProps
+  | EsheetRendererPdfProps;
+
 // ---------------------------------------------------------------------------
 // Response Format Options
 // ---------------------------------------------------------------------------
@@ -143,6 +168,8 @@ export type GetResponseResult<T extends ResponseFormat = 'native'> =
   T extends 'fhir' ? FhirQuestionnaireResponse : FormResponse;
 
 export interface EsheetRendererHandle {
+  /** Returns the current PDF with mapped response values when PDF rendering is active. */
+  exportPdf: () => Promise<Uint8Array>;
   /** Get current form responses */
   getRawResponse: () => FormResponse;
   /**
@@ -251,18 +278,23 @@ export const EsheetRenderer = React.forwardRef<
   );
 });
 
-interface EsheetRendererInnerProps
-  extends Omit<EsheetRendererProps, 'onRendererToolsReady'> {
+type EsheetRendererInnerProps = EsheetRendererProps & {
   formStore: FormStore;
   uiStore: UIStore;
+};
+
+interface RendererPdfSession {
+  sourcePdf: Uint8Array;
+  mappings: PdfFieldMapping[];
+  sourceFieldNames: string[];
+  warnings: PdfImportWarning[];
 }
 
 const EsheetRendererInner = React.forwardRef<
   EsheetRendererHandle,
   EsheetRendererInnerProps
->(function EsheetRendererInner(
-  {
-    formDataInput: formData,
+>(function EsheetRendererInner(props, ref) {
+  const {
     className = '',
     initialResponses,
     strict = false,
@@ -283,13 +315,25 @@ const EsheetRendererInner = React.forwardRef<
     onPageChange,
     readOnly = false,
     identity,
-  },
-  ref
-) {
+  } = props;
+  const representation = props.representation ?? 'esheet';
+  const formData =
+    representation === 'esheet'
+      ? props.formDataInput
+      : { id: 'pdf-loading', pages: [] };
+  const pdfSource = representation === 'pdf' ? props.pdfSource : undefined;
   const [validationErrors, setValidationErrors] = React.useState<string[]>([]);
   const [softBypassOpen, setSoftBypassOpen] = React.useState(false);
   const [pendingResponse, setPendingResponse] =
     React.useState<FormResponse | null>(null);
+  const [pdfSession, setPdfSession] = React.useState<RendererPdfSession | null>(
+    null
+  );
+  const [pdfImportError, setPdfImportError] = React.useState<string | null>(
+    null
+  );
+  const onReadyRef = React.useRef(onReady);
+  onReadyRef.current = onReady;
   const formReadOnly = React.useSyncExternalStore(
     (callback) => formStore.subscribe(callback),
     () => formStore.getState().readOnly,
@@ -336,9 +380,83 @@ const EsheetRendererInner = React.forwardRef<
     initialResponses,
     setValidationErrors,
     strict,
-    onReady,
-    allowDangerousJS
+    representation === 'esheet' ? onReady : undefined,
+    allowDangerousJS,
+    representation === 'esheet'
   );
+
+  React.useEffect(() => {
+    if (representation !== 'pdf' || !pdfSource) {
+      setPdfSession(null);
+      setPdfImportError(null);
+      return;
+    }
+    let cancelled = false;
+    setPdfSession(null);
+    setPdfImportError(null);
+
+    void import('@esheet/pdf')
+      .then(({ importPdf }) => importPdf(pdfSource))
+      .then((result) => {
+        if (cancelled) return;
+        formStore
+          .getState()
+          .replaceDefinitionAndResponses(result.definition, result.responses);
+        uiStore.getState().setMode('preview');
+        for (const [fieldId, response] of Object.entries(
+          initialResponses ?? {}
+        )) {
+          formStore.getState().setResponse(fieldId, response);
+        }
+        setPdfSession({
+          sourcePdf: result.sourcePdf,
+          mappings: result.mappings,
+          sourceFieldNames: Array.from(
+            new Set(result.mappings.map((mapping) => mapping.pdfFieldName))
+          ),
+          warnings: result.warnings,
+        });
+        onReadyRef.current?.();
+      })
+      .catch((reason: unknown) => {
+        if (cancelled) return;
+        setPdfImportError(
+          reason instanceof Error
+            ? reason.message
+            : 'The PDF could not be imported.'
+        );
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [formStore, initialResponses, pdfSource, representation]);
+
+  const exportPdf = React.useCallback(async (): Promise<Uint8Array> => {
+    const pdf = await import('@esheet/pdf');
+    const definition = formStore.getState().hydrateDefinition();
+    const responses = formStore.getState().responses;
+    if (pdfSession) {
+      const sourceFieldNames = new Set(pdfSession.sourceFieldNames);
+      return pdf.applyPdfFieldLayout(
+        pdfSession.sourcePdf,
+        pdfSession.mappings,
+        {
+          addedFields: pdfSession.mappings.filter(
+            (mapping) => !sourceFieldNames.has(mapping.pdfFieldName)
+          ),
+          definition,
+          responses,
+        }
+      );
+    }
+    const generated = await pdf.generatePdf(definition, { responses });
+    return pdf.applyPdfFieldLayout(
+      generated.bytes,
+      pdf.applyPdfPlacementOverrides(definition, generated.mappings),
+      { responses }
+    );
+  }, [formStore, pdfSession]);
 
   // Expose ref API
   const goToPageRef = React.useRef<((pageId: string) => boolean) | null>(null);
@@ -359,6 +477,7 @@ const EsheetRendererInner = React.forwardRef<
   React.useImperativeHandle(
     ref,
     () => ({
+      exportPdf,
       getRawResponse: () => formStore.getState().responses,
       getResponse: <T extends ResponseFormat = 'native'>(
         options?: GetResponseOptions & { format?: T }
@@ -424,6 +543,7 @@ const EsheetRendererInner = React.forwardRef<
     [
       formStore,
       uiStore,
+      exportPdf,
       isTouchEnabled,
       setTouchModeInternal,
       resetTouchModeInternal,
@@ -478,18 +598,32 @@ const EsheetRendererInner = React.forwardRef<
           This form is read-only. Responses cannot be changed.
         </div>
       )}
-      <RendererBody
-        form={formStore}
-        ui={uiStore}
-        collab={collab}
-        topNavigation={topNavigation}
-        bottomNavigation={bottomNavigation}
-        validateNavigation={validateNavigation}
-        registerGoToPage={registerGoToPage}
-        initialPageId={initialPageId}
-        onPageChange={onPageChange}
-        registerPageNavigation={registerPageNavigation}
-      />
+      {representation === 'pdf' ? (
+        pdfImportError ? (
+          <div role="alert">{pdfImportError}</div>
+        ) : pdfSession ? (
+          <RendererPdfView
+            sourcePdf={pdfSession.sourcePdf}
+            mappings={pdfSession.mappings}
+            form={formStore}
+          />
+        ) : (
+          <div role="status">Loading PDF...</div>
+        )
+      ) : (
+        <RendererBody
+          form={formStore}
+          ui={uiStore}
+          collab={collab}
+          topNavigation={topNavigation}
+          bottomNavigation={bottomNavigation}
+          validateNavigation={validateNavigation}
+          registerGoToPage={registerGoToPage}
+          initialPageId={initialPageId}
+          onPageChange={onPageChange}
+          registerPageNavigation={registerPageNavigation}
+        />
+      )}
       {onSubmit && (
         <div className="renderer-submit ms:mt-6 ms:flex ms:justify-end">
           <button

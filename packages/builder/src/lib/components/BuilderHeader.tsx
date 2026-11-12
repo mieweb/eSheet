@@ -39,6 +39,10 @@ import { useFormApi } from '../hooks/useFormApi.js';
 export interface BuilderHeaderProps {
   /** When false (default), hides the JS toggle and prevents enabling dangerous JS. */
   allowDangerousJS?: boolean;
+  /** Active Build or Preview representation. */
+  representation?: 'esheet' | 'pdf';
+  /** Change the active Build or Preview representation. */
+  onRepresentationChange?: (representation: 'esheet' | 'pdf') => void;
 }
 
 interface FeedbackState {
@@ -224,6 +228,8 @@ function formatDryRunDetails(result: DryRunResult): string {
  */
 export function BuilderHeader({
   allowDangerousJS = false,
+  representation = 'esheet',
+  onRepresentationChange,
 }: BuilderHeaderProps) {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [exportIdModalOpen, setExportIdModalOpen] = React.useState(false);
@@ -848,6 +854,29 @@ export function BuilderHeader({
               </button>
             ))}
           </div>
+          {(mode === 'build' || mode === 'preview') && (
+            <div
+              aria-label={`${
+                mode === 'build' ? 'Build' : 'Preview'
+              } representation`}
+              className="ms:flex ms:gap-1 ms:rounded-lg ms:border ms:border-msborder ms:bg-msbackground ms:p-1"
+            >
+              {(['esheet', 'pdf'] as const).map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => onRepresentationChange?.(value)}
+                  className={`ms:px-3 ms:py-2 ms:rounded-md ms:text-xs ms:font-medium ms:transition-colors ms:border-0 ms:outline-none ms:focus:outline-none ${
+                    representation === value
+                      ? 'ms:bg-msprimary ms:text-mstextsecondary ms:shadow-sm'
+                      : 'ms:bg-transparent ms:text-mstextmuted ms:hover:text-mstext ms:hover:bg-mssurface'
+                  }`}
+                >
+                  {value === 'esheet' ? 'eSheet' : 'PDF'}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Right — Import / Export */}
           <div className="header-actions ms:flex ms:gap-1 ms:items-center">

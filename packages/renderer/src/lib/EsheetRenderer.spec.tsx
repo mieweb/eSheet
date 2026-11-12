@@ -7,6 +7,25 @@ import type { RendererTools } from './renderer-tools.js';
 import { executeToolCall } from './mcp/tool-executor.js';
 import type { FormResponse } from '@esheet/core';
 
+const mockImportPdf = vi.hoisted(() => vi.fn());
+const mockGetDocument = vi.hoisted(() => vi.fn());
+
+vi.mock('@esheet/pdf', () => ({
+  applyPdfFieldLayout: vi.fn().mockResolvedValue(new Uint8Array([1])),
+  applyPdfPlacementOverrides: vi.fn((_, mappings) => mappings),
+  generatePdf: vi.fn(),
+  importPdf: mockImportPdf,
+}));
+
+vi.mock('pdfjs-dist', () => ({
+  GlobalWorkerOptions: {},
+  getDocument: mockGetDocument,
+}));
+
+vi.mock('pdfjs-dist/build/pdf.worker.min.mjs?url', () => ({
+  default: 'pdf-worker.js',
+}));
+
 afterEach(cleanup);
 
 function getRendererHandle(ref: React.RefObject<EsheetRendererHandle | null>) {
@@ -20,6 +39,179 @@ function getRendererHandle(ref: React.RefObject<EsheetRendererHandle | null>) {
 }
 
 describe('EsheetRenderer', () => {
+  describe('PDF representation', () => {
+    const pdfSource = new Uint8Array([37, 80, 68, 70]);
+    const mappings = [
+      {
+        esheetFieldId: 'name',
+        pdfFieldName: 'Name',
+        kind: 'text',
+        page: 0,
+        rect: [72, 500, 220, 28],
+      },
+    ];
+
+    beforeEach(() => {
+      mockImportPdf.mockReset();
+      mockImportPdf.mockResolvedValue({
+        definition: {
+          id: 'pdf-form',
+          pages: [
+            {
+              id: 'pdf-page',
+              fields: [{ id: 'name', fieldType: 'text', question: 'Name' }],
+            },
+          ],
+        },
+        responses: { name: { answer: 'Imported name' } },
+        mappings,
+        sourcePdf: pdfSource,
+        warnings: [],
+        pageCount: 1,
+      });
+      mockGetDocument.mockReturnValue({
+        destroy: vi.fn(),
+        promise: Promise.resolve({
+          numPages: 1,
+          getPage: async () => ({
+            getViewport: () => ({
+              width: 612,
+              height: 792,
+              convertToViewportPoint: (x: number, y: number) => [x, y],
+            }),
+            render: () => ({ cancel: vi.fn(), promise: Promise.resolve() }),
+          }),
+        }),
+      });
+    });
+
+    it('imports, fills, submits, and exports responses in the retained PDF', async () => {
+      const ref = React.createRef<EsheetRendererHandle>();
+      const onReady = vi.fn();
+      const onSubmit = vi.fn();
+      const view = render(
+        <EsheetRenderer
+          ref={ref}
+          representation="pdf"
+          pdfSource={pdfSource}
+          initialResponses={{ name: { answer: 'Saved name' } }}
+          onReady={onReady}
+          onSubmit={onSubmit}
+        />
+      );
+      const input = await view.findByRole('textbox', {
+        name: 'PDF text field name',
+      });
+      expect((input as HTMLInputElement).value).toBe('Saved name');
+      expect(onReady).toHaveBeenCalledOnce();
+      fireEvent.change(input, { target: { value: 'Ada Lovelace' } });
+      fireEvent.click(view.getByRole('button', { name: 'Submit' }));
+      expect(onSubmit).toHaveBeenCalledWith({
+        name: { answer: 'Ada Lovelace' },
+      });
+
+      const pdf = await import('@esheet/pdf');
+      await expect(getRendererHandle(ref).exportPdf()).resolves.toEqual(
+        new Uint8Array([1])
+      );
+      expect(pdf.applyPdfFieldLayout).toHaveBeenCalledWith(
+        pdfSource,
+        mappings,
+        expect.objectContaining({
+          responses: { name: { answer: 'Ada Lovelace' } },
+        })
+      );
+    });
+
+    it('preserves host read-only state while allowing programmatic updates', async () => {
+      const ref = React.createRef<EsheetRendererHandle>();
+      const view = render(
+        <EsheetRenderer
+          ref={ref}
+          representation="pdf"
+          pdfSource={pdfSource}
+          readOnly
+        />
+      );
+      const input = (await view.findByRole('textbox', {
+        name: 'PDF text field name',
+      })) as HTMLInputElement;
+      expect(input.disabled).toBe(true);
+      fireEvent.change(input, { target: { value: 'Blocked edit' } });
+      expect(getRendererHandle(ref).getRawResponse()).toEqual({
+        name: { answer: 'Imported name' },
+      });
+      act(() =>
+        getRendererHandle(ref)
+          .getFormStore()
+          .getState()
+          .setResponse('name', { answer: 'Host update' })
+      );
+      expect(input.value).toBe('Host update');
+    });
+
+    it('updates PDF controls when field rules or read-only settings change', async () => {
+      const ref = React.createRef<EsheetRendererHandle>();
+      const view = render(
+        <EsheetRenderer ref={ref} representation="pdf" pdfSource={pdfSource} />
+      );
+      const input = (await view.findByRole('textbox', {
+        name: 'PDF text field name',
+      })) as HTMLInputElement;
+      const store = getRendererHandle(ref).getFormStore();
+      act(() => store.getState().updateField('name', { readOnly: true }));
+      expect(input.disabled).toBe(true);
+      act(() => store.getState().updateField('name', { readOnly: false }));
+      expect(input.disabled).toBe(false);
+      act(() =>
+        store.getState().updateField('name', {
+          rules: [
+            {
+              effect: 'enable',
+              logic: 'AND',
+              conditions: [
+                { targetId: 'name', operator: 'equals', expected: 'Enabled' },
+              ],
+            },
+          ],
+        })
+      );
+      expect(input.disabled).toBe(true);
+      act(() =>
+        store.getState().updateField('name', {
+          rules: [
+            {
+              effect: 'visible',
+              logic: 'AND',
+              conditions: [
+                { targetId: 'name', operator: 'equals', expected: 'Visible' },
+              ],
+            },
+          ],
+        })
+      );
+      expect(
+        view.queryByRole('textbox', { name: 'PDF text field name' })
+      ).toBeNull();
+    });
+
+    it('surfaces PDF import failures', async () => {
+      mockImportPdf.mockRejectedValue(new Error('Invalid PDF document'));
+      const onReady = vi.fn();
+      const view = render(
+        <EsheetRenderer
+          representation="pdf"
+          pdfSource={pdfSource}
+          onReady={onReady}
+        />
+      );
+      expect((await view.findByRole('alert')).textContent).toBe(
+        'Invalid PDF document'
+      );
+      expect(onReady).not.toHaveBeenCalled();
+    });
+  });
+
   describe('regional date draft lifecycle', () => {
     beforeEach(() => {
       vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['en-GB']);
