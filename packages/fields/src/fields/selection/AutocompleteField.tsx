@@ -104,9 +104,13 @@ export function responseTokenValue(
   return response?.answer || undefined;
 }
 
-/** Case-insensitive substring match used to filter a `complete` set locally. */
+/** All query terms must match the label of an eligible option. */
 export function matchesQuery(item: SelectedOption, query: string): boolean {
-  return item.value.toLowerCase().includes(query.trim().toLowerCase());
+  const label = item.value.toLowerCase();
+  return query
+    .toLowerCase()
+    .split(/[\s,]+/)
+    .every((term) => label.includes(term));
 }
 
 /**

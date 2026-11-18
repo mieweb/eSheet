@@ -19,7 +19,7 @@ import {
   ModalHeader,
   ModalTitle,
 } from '@mieweb/ui';
-import { ChevronLeft, ChevronRight, Download, Printer } from 'lucide-react';
+import { Download, Printer } from 'lucide-react';
 import { Document as PdfDocument, Page as PdfPage, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/TextLayer.css';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?worker&url';
@@ -303,16 +303,9 @@ export function DocumentListPdfViewer({
   onReadyRef.current = onReady;
   const [error, setError] = useState<string>();
   const [pageCount, setPageCount] = useState(0);
-  const [pageNumber, setPageNumber] = useState(1);
   const [ready, setReady] = useState(false);
   const [pageWidth, setPageWidth] = useState(816);
   const pageContainerRef = useRef<HTMLDivElement>(null);
-  const surfaceRef = useRef<HTMLDivElement>(null);
-
-  const changePage = (offset: number): void => {
-    setPageNumber((current) => current + offset);
-    if (surfaceRef.current) surfaceRef.current.scrollTop = 0;
-  };
 
   useEffect(() => {
     const element = pageContainerRef.current;
@@ -345,10 +338,11 @@ export function DocumentListPdfViewer({
       ) : (
         <>
           <div
-            ref={surfaceRef}
             className={`document-list-pdf-preview__surface${
               !ready ? ' document-list-pdf-preview__surface--loading' : ''
             }`}
+            role="region"
+            tabIndex={ready ? 0 : undefined}
             aria-label={`PDF preview of ${title}`}
           >
             {!ready ? (
@@ -361,62 +355,40 @@ export function DocumentListPdfViewer({
               file={blob ?? reference}
               loading={null}
               error={null}
-              onLoadSuccess={({ numPages }) => {
-                setPageCount(numPages);
-                setPageNumber(1);
-              }}
+              onLoadSuccess={({ numPages }) => setPageCount(numPages)}
               onLoadError={(cause) => setError(cause.message)}
             >
               <div
                 ref={pageContainerRef}
-                className="document-list-pdf-preview__page"
+                className="document-list-pdf-preview__pages"
               >
-                <PdfPage
-                  pageNumber={pageNumber}
-                  width={pageWidth}
-                  devicePixelRatio={1}
-                  renderAnnotationLayer={false}
-                  renderTextLayer
-                  loading={null}
-                  onRenderSuccess={() => {
-                    if (!ready) {
-                      setReady(true);
-                      onReadyRef.current?.();
-                    }
-                  }}
-                  onRenderError={(cause) => setError(cause.message)}
-                />
+                {Array.from({ length: pageCount }, (_, index) => (
+                  <div
+                    className="document-list-pdf-preview__page"
+                    key={index + 1}
+                  >
+                    <PdfPage
+                      pageNumber={index + 1}
+                      width={pageWidth}
+                      devicePixelRatio={1}
+                      renderAnnotationLayer={false}
+                      renderTextLayer
+                      loading={null}
+                      onRenderSuccess={
+                        index === 0 && !ready
+                          ? () => {
+                              setReady(true);
+                              onReadyRef.current?.();
+                            }
+                          : undefined
+                      }
+                      onRenderError={(cause) => setError(cause.message)}
+                    />
+                  </div>
+                ))}
               </div>
             </PdfDocument>
           </div>
-          {pageCount > 1 ? (
-            <nav
-              className="document-list-pdf-preview__navigation"
-              aria-label="PDF pages"
-            >
-              <Button
-                type="button"
-                variant="outline"
-                disabled={pageNumber === 1}
-                onClick={() => changePage(-1)}
-                aria-label="Previous PDF page"
-              >
-                <ChevronLeft size={16} aria-hidden="true" />
-              </Button>
-              <span aria-live="polite" aria-atomic="true">
-                Page {pageNumber} of {pageCount}
-              </span>
-              <Button
-                type="button"
-                variant="outline"
-                disabled={pageNumber === pageCount}
-                onClick={() => changePage(1)}
-                aria-label="Next PDF page"
-              >
-                <ChevronRight size={16} aria-hidden="true" />
-              </Button>
-            </nav>
-          ) : null}
         </>
       )}
     </div>

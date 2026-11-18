@@ -264,6 +264,12 @@ export function normalizeDocumentRow(
     ...(typeof input.nativeVersion === 'string'
       ? { nativeVersion: input.nativeVersion }
       : {}),
+    ...(typeof input.noteEditable === 'boolean'
+      ? { noteEditable: input.noteEditable }
+      : {}),
+    ...(typeof input.submittedAt === 'string'
+      ? { submittedAt: input.submittedAt }
+      : {}),
     source: displayValue(
       input.source ?? input.from ?? (author ? undefined : input.author)
     ),

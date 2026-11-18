@@ -538,10 +538,13 @@ describe('compose panel in draft mode (ED.37)', () => {
       body: 'original prose',
     };
 
-    async function submitAppend(shape: 'revision' | 'linked') {
+    async function submitAppend(shape: 'revision' | 'linked' | 'locked-note') {
       const saveDocument = vi.fn(async (document: unknown) => document);
       const appendRuntime = {
-        documents: { 'doc-1': prior },
+        documents: {
+          'doc-1':
+            shape === 'locked-note' ? { ...prior, noteEditable: false } : prior,
+        },
         saveDocument,
       } as unknown as DocumentListRuntimeState;
       const draft = fakeDraft({ isNew: false });
@@ -566,6 +569,9 @@ describe('compose panel in draft mode (ED.37)', () => {
         fireEvent.click(
           screen.getByRole('radio', { name: /A linked document/ })
         );
+      }
+      if (shape === 'locked-note') {
+        expect(screen.queryByRole('group', { name: 'Append as' })).toBeNull();
       }
       fireEvent.change(screen.getByLabelText(/^Title/), {
         target: { value: 'Addendum title' },
@@ -607,6 +613,15 @@ describe('compose panel in draft mode (ED.37)', () => {
       });
       expect(saved.rev).toBeUndefined();
       expect(saved.history).toBeUndefined();
+    });
+
+    it('saves a locked note addendum as a separate document', async () => {
+      const saved = await submitAppend('locked-note');
+      expect(saved.id).not.toBe('doc-1');
+      expect(saved).toMatchObject({
+        action: 'create',
+        linkedTo: { id: 'doc-1', linkType: 'addendum' },
+      });
     });
   });
 

@@ -579,7 +579,7 @@ export function DocumentListComposePanel({
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   // ED.41 — the author picks the addendum's shape; both are legitimate.
-  const [appendShape, setAppendShape] = useState<'revision' | 'linked'>(
+  const [selectedAppendShape, setAppendShape] = useState<'revision' | 'linked'>(
     'revision'
   );
   const editorRef = useRef<DocumentListComposeEditorHandle>(null);
@@ -589,6 +589,10 @@ export function DocumentListComposePanel({
   const baseDocument = useRef(
     revisionBase ?? (documentId ? runtime.documents[documentId] : undefined)
   );
+  const linkedAddendumOnly =
+    (revisionBase ?? (documentId ? runtime.documents[documentId] : undefined))
+      ?.noteEditable !== undefined;
+  const appendShape = linkedAddendumOnly ? 'linked' : selectedAppendShape;
   useEffect(() => {
     if (!open) return;
     baseDocument.current =
@@ -1007,7 +1011,7 @@ export function DocumentListComposePanel({
           noValidate
         >
           <div className="document-list-workflow-panel__body document-list-workflow-panel__body--compose">
-            {appendMode && (
+            {appendMode && !linkedAddendumOnly && (
               <fieldset className="document-list-workflow__append-shape">
                 <legend>Append as</legend>
                 <label>
@@ -1534,7 +1538,14 @@ export function DocumentListDetailRow({
         <ul className="document-list-detail__addenda" aria-label="Addenda">
           {related.map((addendum) => (
             <li key={addendum.id}>
-              Addendum — {addendum.title} ({formatRegionalDate(addendum.date)}
+              Addendum — {addendum.title} (
+              {addendum.submittedAt ? (
+                <time dateTime={addendum.submittedAt}>
+                  {new Date(addendum.submittedAt).toLocaleString()}
+                </time>
+              ) : (
+                formatRegionalDate(addendum.date)
+              )}
               {addendum.author ? `, ${addendum.author.name}` : ''})
             </li>
           ))}

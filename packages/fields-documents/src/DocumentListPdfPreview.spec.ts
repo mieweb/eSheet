@@ -69,13 +69,15 @@ vi.mock('react-pdf', () => ({
     readonly pageNumber: number;
     readonly width: number;
     readonly height?: number;
-    readonly onRenderSuccess: () => void;
+    readonly onRenderSuccess?: () => void;
     readonly renderTextLayer?: boolean;
   }) => {
     const onRenderSuccessRef = useRef(onRenderSuccess);
     useEffect(() => {
-      pageRendering.finish = () => onRenderSuccessRef.current();
-      if (!pageRendering.paused) onRenderSuccessRef.current();
+      if (onRenderSuccessRef.current) {
+        pageRendering.finish = () => onRenderSuccessRef.current?.();
+      }
+      if (!pageRendering.paused) onRenderSuccessRef.current?.();
     }, []);
     return createElement(
       'div',
@@ -160,7 +162,7 @@ function observedPdfPage(observe: ReturnType<typeof vi.fn>): boolean {
   return observe.mock.calls.some(
     ([element]) =>
       element instanceof HTMLElement &&
-      element.classList.contains('document-list-pdf-preview__page')
+      element.classList.contains('document-list-pdf-preview__pages')
   );
 }
 
@@ -169,7 +171,7 @@ describe('DocumentListPdfViewer', () => {
     const observe = stubResizeObserver();
     render(
       createElement(DocumentListPdfViewer, {
-        reference: 'blob:uploaded-pdf',
+        reference: 'blob:single-page',
         title: 'Uploaded PDF',
       })
     );
@@ -177,7 +179,7 @@ describe('DocumentListPdfViewer', () => {
     const observation = observe.mock.calls.find(
       ([element]) =>
         element instanceof HTMLElement &&
-        element.classList.contains('document-list-pdf-preview__page')
+        element.classList.contains('document-list-pdf-preview__pages')
     );
     if (!observation)
       throw new Error('PDF page was not observed for resizing.');
@@ -203,7 +205,7 @@ describe('DocumentListPdfViewer', () => {
     }
   });
 
-  it('renders inline with the shared PDF.js pages and navigation, not a native embed', async () => {
+  it('renders all PDF.js pages in order in one keyboard-focusable region', async () => {
     const onReady = vi.fn();
     const view = render(
       createElement(DocumentListPdfViewer, {
@@ -213,26 +215,24 @@ describe('DocumentListPdfViewer', () => {
       })
     );
 
-    await screen.findByTestId('pdf-page');
+    const pages = await screen.findAllByTestId('pdf-page');
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(view.container.querySelector('iframe, embed, object')).toBeNull();
-    expect(screen.getByTestId('pdf-page').dataset.renderTextLayer).toBe('true');
     expect(onReady).toHaveBeenCalledOnce();
-    const previous = screen.getByRole('button', { name: 'Previous PDF page' });
-    const next = screen.getByRole('button', { name: 'Next PDF page' });
-    const surface = screen.getByLabelText('PDF preview of Uploaded PDF');
+    const surface = screen.getByRole('region', {
+      name: 'PDF preview of Uploaded PDF',
+    });
+    expect(surface.tabIndex).toBe(0);
+    expect(pages.map((page) => page.textContent)).toEqual(['Page 1', 'Page 2']);
     expect(
-      surface.contains(screen.getByRole('navigation', { name: 'PDF pages' }))
-    ).toBe(false);
-    expect(previous.hasAttribute('disabled')).toBe(true);
-    surface.scrollTop = 200;
-    fireEvent.click(next);
-    expect(surface.scrollTop).toBe(0);
-    expect(screen.getByText('Page 2 of 2')).toBeTruthy();
-    expect(screen.getByTestId('pdf-page').textContent).toBe('Page 2');
-    expect(next.hasAttribute('disabled')).toBe(true);
-    fireEvent.click(previous);
-    expect(screen.getByText('Page 1 of 2')).toBeTruthy();
+      pages.every(
+        (page) =>
+          surface.contains(page) && page.dataset.renderTextLayer === 'true'
+      )
+    ).toBe(true);
+    expect(
+      screen.queryByRole('button', { name: /previous|next pdf page/i })
+    ).toBeNull();
   });
 
   it('does not show page controls for a single-page PDF', async () => {
@@ -242,7 +242,7 @@ describe('DocumentListPdfViewer', () => {
         title: 'Single page',
       })
     );
-    await screen.findByTestId('pdf-page');
+    expect((await screen.findByTestId('pdf-page')).textContent).toBe('Page 1');
     expect(screen.queryByRole('navigation', { name: 'PDF pages' })).toBeNull();
   });
 
@@ -367,11 +367,9 @@ describe('documentPdfBlob', () => {
     expect(globalThis.document.querySelector('iframe')).toBeNull();
     expect(globalThis.document.querySelector('embed')).toBeNull();
     expect(globalThis.document.querySelector('object')).toBeNull();
-    expect(screen.getByTestId('pdf-page').textContent).toBe('Page 1');
-    expect(screen.getByTestId('pdf-page').dataset.renderTextLayer).toBe('true');
-
-    fireEvent.click(screen.getByRole('button', { name: 'Next PDF page' }));
-    expect(screen.getByTestId('pdf-page').textContent).toBe('Page 2');
+    expect(
+      screen.getAllByTestId('pdf-page').map((page) => page.textContent)
+    ).toEqual(['Page 1', 'Page 2']);
 
     fireEvent.click(
       screen.getByRole('button', { name: `Print ${document.title}` })
@@ -413,7 +411,7 @@ describe('documentPdfBlob', () => {
       })
     );
 
-    await screen.findByTestId('pdf-page');
+    await screen.findAllByTestId('pdf-page');
     expect(loadContent).toHaveBeenCalledOnce();
     expect(loadContent).toHaveBeenLastCalledWith(document.id, 0);
     view.rerender(

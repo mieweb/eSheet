@@ -608,10 +608,12 @@ export function DocumentListField({
     ((row: DocumentListDocument) => ({
       canView: capabilities.view(row),
       canCompose: mayCreate,
-      canEdit: capabilities.edit(row),
-      canAppend: capabilities.append(row),
+      canEdit: row.noteEditable !== false && capabilities.edit(row),
+      canAppend:
+        !(row.noteEditable !== undefined && row.linkedTo) &&
+        capabilities.append(row),
       canRequestSignature: false,
-      canDelete: capabilities.remove(row),
+      canDelete: row.noteEditable !== false && capabilities.remove(row),
       canDownloadPdf: canPrint && capabilities.view(row),
     }));
   const canManageRows = Boolean(!isReadOnly && runtimeState && host?.author);

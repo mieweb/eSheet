@@ -16,6 +16,9 @@ export interface DocumentListDocument {
   readonly nativeDocType?: string;
   readonly nativeDocTypeLabel?: string;
   readonly nativeVersion?: string;
+  /** Present when the host enforces submitting-session edits for notes. */
+  readonly noteEditable?: boolean;
+  readonly submittedAt?: string;
   readonly source: string;
   readonly file: string;
   /** External bytes for the current file-backed revision. */
@@ -197,6 +200,8 @@ export interface DocumentListInput {
   readonly nativeDocType?: unknown;
   readonly nativeDocTypeLabel?: unknown;
   readonly nativeVersion?: unknown;
+  readonly noteEditable?: unknown;
+  readonly submittedAt?: unknown;
   readonly id?: unknown;
   readonly date?: unknown;
   readonly title?: unknown;
