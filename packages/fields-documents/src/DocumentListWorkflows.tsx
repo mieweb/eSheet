@@ -216,7 +216,7 @@ export interface DocumentListWorkflowPanelProps {
   /** The row `documentDraft` revises; a draft without one composes new. */
   readonly documentId?: string;
   readonly revisionBase?: DocumentListDocument;
-  /** This panel appends (ED.41): the author picks one of the two shapes. */
+  /** Append uses a local draft: it can save a revision or a new linked row. */
   readonly appendMode?: boolean;
   /** Definition-tier prefill parsed from the last saved revision (ED.40). */
   readonly definitionPrefill?: DefinitionPrefill;

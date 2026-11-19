@@ -399,12 +399,15 @@ export function DocumentListField({
     let documentDraft: DocumentDraft | undefined;
     let displayed = false;
     try {
-      documentDraft = draftChannel
-        ? await draftChannel.open(row.id, {
-            openedBy,
-            baseRev: row.rev ?? 0,
-          })
-        : undefined;
+      // Append can save a different document, so it must not join an
+      // existing revision proposal for the parent.
+      documentDraft =
+        !options?.append && draftChannel
+          ? await draftChannel.open(row.id, {
+              openedBy,
+              baseRev: row.rev ?? 0,
+            })
+          : undefined;
       const content = await runtimeState.loadContent(row.id, undefined, {
         refresh: true,
       });

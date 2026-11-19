@@ -621,8 +621,6 @@ describe('compose panel in draft mode (ED.37)', () => {
         },
         saveDocument,
       } as unknown as DocumentListRuntimeState;
-      const draft = fakeDraft({ isNew: false });
-
       render(
         <DocumentListComposePanel
           open
@@ -630,7 +628,6 @@ describe('compose panel in draft mode (ED.37)', () => {
           runtime={appendRuntime}
           inputPrefix="form-1-documents"
           author={{ id: 'u-casey', name: 'Casey Manager' }}
-          documentDraft={draft}
           documentId="doc-1"
           revisionBase={shape === 'locked-note' ? prior : undefined}
           appendMode
@@ -697,6 +694,78 @@ describe('compose panel in draft mode (ED.37)', () => {
         action: 'create',
         linkedTo: { id: 'doc-1', linkType: 'addendum' },
       });
+    });
+
+    it('saves a linked addendum without joining or discarding the parent draft', async () => {
+      const parentDraft = fakeDraft({ isNew: false });
+      parentDraft.setAnswer('meta:subject', 'Another author’s unsaved subject');
+      const discard = vi.spyOn(parentDraft, 'discard');
+      const open = vi.fn(async () => parentDraft);
+      const save = vi.fn(async (_context, document) => document);
+      const repository = {
+        ownsField: () => true,
+        load: vi.fn(async () => ({ documents: [prior] })),
+        loadContent: vi.fn(async () => ({
+          text: prior.body,
+          document: { ...prior, noteEditable: false },
+        })),
+        save,
+        remove: vi.fn(async () => undefined),
+      };
+      const formStore = createFormStore();
+      const fieldProps = {
+        field: { definition: { id: 'documents', question: 'Documents' } },
+        form: formStore,
+      } as FieldComponentProps;
+
+      render(
+        <FormStoreContext.Provider value={formStore}>
+          <DocumentListFieldProvider
+            host={{
+              capabilities: permissiveDocumentListCapabilities,
+              author: { id: 'u-casey', name: 'Casey Manager' },
+              draftChannel: { open, presenceOf: vi.fn(() => () => {}) },
+            }}
+            runtime={{ repository }}
+          >
+            <DocumentListField {...fieldProps} />
+          </DocumentListFieldProvider>
+        </FormStoreContext.Provider>
+      );
+      await waitFor(() => expect(repository.load).toHaveBeenCalled());
+      const gridProps = captured.props as {
+        formatCell: (
+          value: unknown,
+          data: Record<string, unknown>,
+          column: { field: string }
+        ) => ReactNode;
+      };
+      const actions = render(
+        <>
+          {gridProps.formatCell(undefined, { ...prior }, { field: '_actions' })}
+        </>
+      );
+      fireEvent.click(
+        actions.getByRole('button', { name: 'Append to Original note' })
+      );
+
+      expect(
+        await screen.findByText('Append to document (rev 1)')
+      ).toBeTruthy();
+      expect(screen.queryByRole('group', { name: 'Append as' })).toBeNull();
+      fireEvent.click(screen.getByRole('button', { name: /^Save/ }));
+      await waitFor(() => expect(save).toHaveBeenCalledOnce());
+      expect(save.mock.calls[0][1]).toMatchObject({
+        action: 'create',
+        linkedTo: { id: prior.id, linkType: 'addendum' },
+        subject: prior.subject,
+      });
+      expect(save.mock.calls[0][1].id).not.toBe(prior.id);
+      expect(open).not.toHaveBeenCalled();
+      expect(discard).not.toHaveBeenCalled();
+      expect(parentDraft.getAnswers()['meta:subject']).toBe(
+        'Another author’s unsaved subject'
+      );
     });
   });
 
