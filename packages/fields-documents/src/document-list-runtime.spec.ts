@@ -377,6 +377,54 @@ function createRuntime(
 }
 
 describe('document list runtime store', () => {
+  it.each(['edit', 'append'] as const)(
+    'preserves the first %s when a second composer saves from the same head',
+    async (firstAction) => {
+      const original = { ...documentOne, rev: 1, body: 'Original' };
+      const store = createRuntime({ initialDocuments: [original] });
+      const editor = store.getState();
+      const appender = store.getState();
+      const saved = { ...original, rev: 2, body: 'First', action: firstAction };
+      await editor.saveDocument(saved);
+
+      await expect(
+        appender.saveDocument({
+          ...original,
+          rev: 2,
+          body: 'Second',
+          action: firstAction === 'edit' ? 'append' : 'edit',
+        })
+      ).rejects.toThrow('Reload before saving');
+      expect(store.getState().documents[original.id]).toEqual(saved);
+    }
+  );
+
+  it('does not replace an in-flight revision with a second revision', async () => {
+    const original = { ...documentOne, rev: 1, body: 'Original' };
+    const first = deferred<DocumentListDocument>();
+    const repository = createRepository({
+      persistInline: true,
+      save: vi.fn(() => first.promise),
+    });
+    const store = createRuntime({ initialDocuments: [original], repository });
+    const runtime = store.getState();
+    const edit = {
+      ...original,
+      action: 'edit',
+      rev: 2,
+      body: 'First',
+    } as const;
+    const saving = runtime.saveDocument(edit);
+
+    await expect(
+      runtime.saveDocument({ ...edit, action: 'append', body: 'Second' })
+    ).rejects.toThrow('Another save is in progress');
+    first.resolve(edit);
+    await expect(saving).resolves.toMatchObject(edit);
+    expect(repository.save).toHaveBeenCalledOnce();
+    expect(store.getState().documents[original.id]).toMatchObject(edit);
+  });
+
   it('rejects a revision when the latest snapshot locks a note after the composer opens', async () => {
     const note = { ...documentOne, body: 'Original', noteEditable: true };
     const store = createRuntime({ initialDocuments: [note] });

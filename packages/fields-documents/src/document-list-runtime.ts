@@ -142,6 +142,7 @@ export interface DocumentListRuntimeState {
   hydrateSnapshot: (snapshot: DocumentListSnapshot) => void;
   applyRemoteSnapshot: (snapshot: DocumentListSnapshot) => void;
   upsertDocument: (document: DocumentListDocument) => void;
+  /** Existing revisions must advance the current head; stale writes reject. */
   saveDocument: (
     document: DocumentListDocument,
     content?: FileInput
@@ -424,12 +425,33 @@ export function createDocumentListRuntimeExtension(
         document.action === 'edit' ||
         document.action === 'blank' ||
         document.action === 'append';
+      const operationKey = `save:${document.id}`;
+      const staleRevision =
+        'This document changed while you were editing. Reload before saving.';
       const checkNote = (row: DocumentListDocument | undefined): void => {
         if (row?.noteEditable === false) throw new Error(NOTE_REVISION_LOCKED);
         if (document.action === 'append' && row?.noteEditable !== undefined)
           throw new Error('Addenda for this note must be separate documents.');
       };
-      if (prior && isRevision) checkNote(prior);
+      const checkRevision = (row: DocumentListDocument | undefined): void => {
+        if (!row || row.removed) throw new Error(staleRevision);
+        checkNote(row);
+        if (document.rev === undefined || (row.rev ?? 0) >= document.rev)
+          throw new Error(staleRevision);
+      };
+      const checkNextRevision = (
+        row: DocumentListDocument | undefined,
+        canonicalRev?: number
+      ): void => {
+        checkRevision(row);
+        const head = Math.max(row?.rev ?? 0, canonicalRev ?? 0);
+        if (document.rev !== head + 1) throw new Error(staleRevision);
+      };
+      if (isRevision) {
+        checkRevision(prior);
+        if (operationControllers.has(operationKey))
+          throw new Error('Another save is in progress for this document.');
+      }
       const persistInline =
         !content && document.body != null && repository?.persistInline === true;
       const localSave =
@@ -437,12 +459,12 @@ export function createDocumentListRuntimeExtension(
       const recheckCanonical =
         prior && isRevision ? canonicalContent : undefined;
       if (localSave && !recheckCanonical) {
+        if (isRevision) checkNextRevision(prior);
         current.upsertDocument(document);
         return document;
       }
       const contentStore = fileStore;
 
-      const operationKey = `save:${document.id}`;
       operationControllers.get(operationKey)?.abort();
       const controller = new AbortController();
       operationControllers.set(operationKey, controller);
@@ -459,6 +481,7 @@ export function createDocumentListRuntimeExtension(
       }));
 
       try {
+        let canonicalRev: number | undefined;
         if (recheckCanonical && prior) {
           const canonical = await recheckCanonical(
             context,
@@ -466,9 +489,11 @@ export function createDocumentListRuntimeExtension(
             controller.signal
           );
           if (controller.signal.aborted) throw controller.signal.reason;
-          checkNote(canonical.document);
-          checkNote(getState()?.documents[document.id]);
+          if (canonical.document) checkRevision(canonical.document);
+          canonicalRev = canonical.document?.rev;
         }
+        if (isRevision)
+          checkNextRevision(getState()?.documents[document.id], canonicalRev);
         let stored = document;
         if (content && !authoritative) {
           if (!contentStore)
@@ -477,9 +502,10 @@ export function createDocumentListRuntimeExtension(
             ...document,
             fileReference: await contentStore.store(content),
           };
+          if (isRevision)
+            checkNextRevision(getState()?.documents[document.id], canonicalRev);
         }
         if (controller.signal.aborted) throw controller.signal.reason;
-        if (prior && isRevision) checkNote(getState()?.documents[document.id]);
         const saved =
           repository && !localSave
             ? authoritative && content
