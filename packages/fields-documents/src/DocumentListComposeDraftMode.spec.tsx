@@ -1,11 +1,20 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { createFormStore, type FieldComponentProps } from '@esheet/core';
 import { FormStoreContext } from '@esheet/fields';
 import { DocumentListComposePanel } from './DocumentListWorkflows.js';
 import { DocumentListField } from './DocumentListField.js';
 import { DocumentListFieldProvider } from './DocumentListGrid.js';
-import { permissiveDocumentListCapabilities } from './types.js';
+import {
+  permissiveDocumentListCapabilities,
+  type DocumentListDocument,
+} from './types.js';
 import type { DocumentDraft } from './draftChannel.js';
 import type { DocumentListRuntimeState } from './document-list-runtime.js';
 
@@ -452,7 +461,7 @@ describe('compose panel in draft mode (ED.37)', () => {
     );
   });
 
-  it('keeps row actions available without a collaboration channel', async () => {
+  it('restricts host grants for notes without a collaboration channel', async () => {
     const row = {
       id: 'doc-1',
       date: '2026-08-14',
@@ -484,6 +493,15 @@ describe('compose panel in draft mode (ED.37)', () => {
           host={{
             capabilities: permissiveDocumentListCapabilities,
             author: { id: 'u-casey', name: 'Casey Manager' },
+            getRowCapabilities: () => ({
+              canView: true,
+              canCompose: true,
+              canEdit: true,
+              canAppend: true,
+              canRequestSignature: false,
+              canDelete: true,
+              canDownloadPdf: false,
+            }),
           }}
         >
           <DocumentListField {...fieldProps} />
@@ -512,6 +530,39 @@ describe('compose panel in draft mode (ED.37)', () => {
       actions.getByRole('button', { name: 'Remove Existing note' })
     ).toBeTruthy();
 
+    const renderNoteActions = (note: Record<string, unknown>) =>
+      within(
+        render(
+          <>{gridProps.formatCell(undefined, note, { field: '_actions' })}</>
+        ).container
+      );
+    const locked = renderNoteActions({
+      ...row,
+      title: 'Locked note',
+      noteEditable: false,
+    });
+    expect(
+      locked.queryByRole('button', { name: 'Edit Locked note' })
+    ).toBeNull();
+    expect(
+      locked.queryByRole('button', { name: 'Remove Locked note' })
+    ).toBeNull();
+    expect(
+      locked.getByRole('button', { name: 'Append to Locked note' })
+    ).toBeTruthy();
+    const addendum = renderNoteActions({
+      ...row,
+      title: 'Linked note',
+      noteEditable: true,
+      linkedTo: { id: 'doc-0', linkType: 'addendum' },
+    });
+    expect(
+      addendum.queryByRole('button', { name: 'Append to Linked note' })
+    ).toBeNull();
+    expect(
+      addendum.getByRole('button', { name: 'Edit Linked note' })
+    ).toBeTruthy();
+
     fireEvent.click(
       actions.getByRole('button', { name: 'Edit Existing note' })
     );
@@ -523,7 +574,7 @@ describe('compose panel in draft mode (ED.37)', () => {
 
   // ED.41 — one Append action, two shapes, the author picks.
   describe('append', () => {
-    const prior = {
+    const prior: DocumentListDocument = {
       id: 'doc-1',
       date: '2026-08-14',
       title: 'Original note',
@@ -558,6 +609,7 @@ describe('compose panel in draft mode (ED.37)', () => {
           author={{ id: 'u-casey', name: 'Casey Manager' }}
           documentDraft={draft}
           documentId="doc-1"
+          revisionBase={shape === 'locked-note' ? prior : undefined}
           appendMode
         />
       );
@@ -615,7 +667,7 @@ describe('compose panel in draft mode (ED.37)', () => {
       expect(saved.history).toBeUndefined();
     });
 
-    it('saves a locked note addendum as a separate document', async () => {
+    it('saves a linked addendum when the revision base omits the note lock', async () => {
       const saved = await submitAppend('locked-note');
       expect(saved.id).not.toBe('doc-1');
       expect(saved).toMatchObject({

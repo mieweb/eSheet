@@ -305,6 +305,9 @@ export function DocumentListPdfViewer({
   const [pageCount, setPageCount] = useState(0);
   const [ready, setReady] = useState(false);
   const [pageWidth, setPageWidth] = useState(816);
+  const [nearbyPages, setNearbyPages] = useState(() => new Set([1]));
+  const [pageRatios, setPageRatios] = useState<Record<number, number>>({});
+  const surfaceRef = useRef<HTMLDivElement>(null);
   const pageContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -317,6 +320,35 @@ export function DocumentListPdfViewer({
     observer.observe(element);
     return () => observer.disconnect();
   }, [pageCount, reference]);
+
+  // Keep the first page mounted until the loading surface is revealed.
+  useEffect(() => {
+    const root = surfaceRef.current;
+    const pages = pageContainerRef.current;
+    if (
+      !ready ||
+      !root ||
+      !pages ||
+      typeof IntersectionObserver === 'undefined'
+    )
+      return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        setNearbyPages((current) => {
+          const next = new Set(current);
+          for (const { target, isIntersecting } of entries) {
+            const pageNumber = Number(target.getAttribute('data-page-number'));
+            if (isIntersecting) next.add(pageNumber);
+            else next.delete(pageNumber);
+          }
+          return next;
+        });
+      },
+      { root, rootMargin: '400px 0px' }
+    );
+    Array.from(pages.children).forEach((page) => observer.observe(page));
+    return () => observer.disconnect();
+  }, [pageCount, ready, reference, blob]);
 
   useEffect(() => {
     if (ready || error) return;
@@ -338,6 +370,7 @@ export function DocumentListPdfViewer({
       ) : (
         <>
           <div
+            ref={surfaceRef}
             className={`document-list-pdf-preview__surface${
               !ready ? ' document-list-pdf-preview__surface--loading' : ''
             }`}
@@ -362,30 +395,51 @@ export function DocumentListPdfViewer({
                 ref={pageContainerRef}
                 className="document-list-pdf-preview__pages"
               >
-                {Array.from({ length: pageCount }, (_, index) => (
-                  <div
-                    className="document-list-pdf-preview__page"
-                    key={index + 1}
-                  >
-                    <PdfPage
-                      pageNumber={index + 1}
-                      width={pageWidth}
-                      devicePixelRatio={1}
-                      renderAnnotationLayer={false}
-                      renderTextLayer
-                      loading={null}
-                      onRenderSuccess={
-                        index === 0 && !ready
-                          ? () => {
-                              setReady(true);
-                              onReadyRef.current?.();
-                            }
-                          : undefined
-                      }
-                      onRenderError={(cause) => setError(cause.message)}
-                    />
-                  </div>
-                ))}
+                {Array.from({ length: pageCount }, (_, index) => {
+                  const pageNumber = index + 1;
+                  return (
+                    <div
+                      className="document-list-pdf-preview__page"
+                      data-page-number={pageNumber}
+                      key={pageNumber}
+                      style={{
+                        aspectRatio: pageRatios[pageNumber] ?? '8.5 / 11',
+                      }}
+                    >
+                      {(nearbyPages.has(pageNumber) ||
+                        typeof IntersectionObserver === 'undefined') && (
+                        <PdfPage
+                          pageNumber={pageNumber}
+                          width={pageWidth}
+                          devicePixelRatio={1}
+                          renderAnnotationLayer={false}
+                          renderTextLayer
+                          loading={null}
+                          onLoadSuccess={(page) => {
+                            const { width, height } = page.getViewport({
+                              scale: 1,
+                            });
+                            const ratio = width / height;
+                            setPageRatios((current) =>
+                              current[pageNumber] === ratio
+                                ? current
+                                : { ...current, [pageNumber]: ratio }
+                            );
+                          }}
+                          onRenderSuccess={
+                            index === 0 && !ready
+                              ? () => {
+                                  setReady(true);
+                                  onReadyRef.current?.();
+                                }
+                              : undefined
+                          }
+                          onRenderError={(cause) => setError(cause.message)}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </PdfDocument>
           </div>

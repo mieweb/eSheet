@@ -590,8 +590,10 @@ export function DocumentListComposePanel({
     revisionBase ?? (documentId ? runtime.documents[documentId] : undefined)
   );
   const linkedAddendumOnly =
-    (revisionBase ?? (documentId ? runtime.documents[documentId] : undefined))
-      ?.noteEditable !== undefined;
+    (revisionBase?.noteEditable ??
+      (documentId
+        ? runtime.documents[documentId]?.noteEditable
+        : undefined)) !== undefined;
   const appendShape = linkedAddendumOnly ? 'linked' : selectedAppendShape;
   useEffect(() => {
     if (!open) return;

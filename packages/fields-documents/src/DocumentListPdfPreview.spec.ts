@@ -49,7 +49,8 @@ vi.mock('react-pdf', () => ({
         return;
       }
       onLoadSuccessRef.current({
-        numPages: file === 'blob:single-page' ? 1 : 2,
+        numPages:
+          file === 'blob:single-page' ? 1 : file === 'blob:long-pdf' ? 40 : 2,
       });
       setLoaded(true);
     }, [file]);
@@ -63,17 +64,25 @@ vi.mock('react-pdf', () => ({
     pageNumber,
     width,
     height,
+    onLoadSuccess,
     onRenderSuccess,
     renderTextLayer,
   }: {
     readonly pageNumber: number;
     readonly width: number;
     readonly height?: number;
+    readonly onLoadSuccess?: (page: {
+      getViewport: () => { width: number; height: number };
+    }) => void;
     readonly onRenderSuccess?: () => void;
     readonly renderTextLayer?: boolean;
   }) => {
     const onRenderSuccessRef = useRef(onRenderSuccess);
+    const onLoadSuccessRef = useRef(onLoadSuccess);
     useEffect(() => {
+      onLoadSuccessRef.current?.({
+        getViewport: () => ({ width: 800, height: 400 }),
+      });
       if (onRenderSuccessRef.current) {
         pageRendering.finish = () => onRenderSuccessRef.current?.();
       }
@@ -244,6 +253,63 @@ describe('DocumentListPdfViewer', () => {
     );
     expect((await screen.findByTestId('pdf-page')).textContent).toBe('Page 1');
     expect(screen.queryByRole('navigation', { name: 'PDF pages' })).toBeNull();
+  });
+
+  it('mounts pages near the scroll viewport and releases those that leave it', async () => {
+    type Visibility = Pick<
+      IntersectionObserverEntry,
+      'target' | 'isIntersecting'
+    >;
+    const observe = vi.fn<(target: Element) => void>();
+    const disconnect = vi.fn();
+    const createObserver =
+      vi.fn<
+        (
+          callback: (entries: Visibility[]) => void,
+          options: IntersectionObserverInit
+        ) => void
+      >();
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        constructor(
+          callback: (entries: Visibility[]) => void,
+          options: IntersectionObserverInit
+        ) {
+          createObserver(callback, options);
+        }
+        observe = observe;
+        disconnect = disconnect;
+      }
+    );
+    const view = render(
+      createElement(DocumentListPdfViewer, {
+        reference: 'blob:long-pdf',
+        title: 'Long PDF',
+      })
+    );
+    await screen.findByText('Page 1');
+    expect(screen.getAllByTestId('pdf-page')).toHaveLength(1);
+    expect(observe).toHaveBeenCalledTimes(40);
+    const [notify, options] = createObserver.mock.calls[0];
+    expect(options.root).toBe(screen.getByRole('region'));
+    const first = observe.mock.calls[0][0] as HTMLElement;
+    const last = observe.mock.calls[39][0];
+    const firstRatio = first.style.aspectRatio;
+    expect(firstRatio).toBe('2 / 1');
+    await act(async () => {
+      notify([
+        { target: first, isIntersecting: false },
+        { target: last, isIntersecting: true },
+      ]);
+    });
+    expect(
+      screen.getAllByTestId('pdf-page').map((page) => page.textContent)
+    ).toEqual(['Page 40']);
+    expect(first.isConnected).toBe(true);
+    expect(first.style.aspectRatio).toBe(firstRatio);
+    view.unmount();
+    expect(disconnect).toHaveBeenCalledOnce();
   });
 
   it('reports PDF.js loading errors explicitly', async () => {

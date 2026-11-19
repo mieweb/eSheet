@@ -603,19 +603,25 @@ export function DocumentListField({
   // The capability object answers per-row questions unless the host renders
   // its own actions. Printing requires both definition and host opt-in.
   // While the form is read-only the host's wider grants don't apply.
-  const getRowCapabilities =
-    (!isReadOnly && host?.getRowCapabilities) ||
-    ((row: DocumentListDocument) => ({
+  // Note restrictions narrow both host and default grants.
+  const getRowCapabilities = (row: DocumentListDocument) => {
+    const grants = (!isReadOnly && host?.getRowCapabilities?.(row)) || {
       canView: capabilities.view(row),
       canCompose: mayCreate,
-      canEdit: row.noteEditable !== false && capabilities.edit(row),
-      canAppend:
-        !(row.noteEditable !== undefined && row.linkedTo) &&
-        capabilities.append(row),
+      canEdit: capabilities.edit(row),
+      canAppend: capabilities.append(row),
       canRequestSignature: false,
-      canDelete: row.noteEditable !== false && capabilities.remove(row),
+      canDelete: capabilities.remove(row),
       canDownloadPdf: canPrint && capabilities.view(row),
-    }));
+    };
+    return {
+      ...grants,
+      canEdit: grants.canEdit && row.noteEditable !== false,
+      canAppend:
+        grants.canAppend && !(row.noteEditable !== undefined && row.linkedTo),
+      canDelete: grants.canDelete && row.noteEditable !== false,
+    };
+  };
   const canManageRows = Boolean(!isReadOnly && runtimeState && host?.author);
   const defaultRenderActions =
     canManageRows || canPrint
