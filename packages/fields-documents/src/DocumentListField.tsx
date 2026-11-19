@@ -42,6 +42,7 @@ import {
 } from './data.js';
 import {
   getDocumentListRuntimeState,
+  NOTE_REVISION_LOCKED,
   type DocumentListRuntimeState,
 } from './document-list-runtime.js';
 import { DocumentListDetailRow } from './DocumentListWorkflows.js';
@@ -393,7 +394,7 @@ export function DocumentListField({
     options?: { append?: boolean }
   ): Promise<void> => {
     const openedBy = host?.author;
-    if (!openedBy || !runtimeState) return;
+    if (!openedBy || !runtimeState || !formStore) return;
     setEditError(undefined);
     let documentDraft: DocumentDraft | undefined;
     let displayed = false;
@@ -404,6 +405,25 @@ export function DocumentListField({
             baseRev: row.rev ?? 0,
           })
         : undefined;
+      const content = await runtimeState.loadContent(row.id, undefined, {
+        refresh: true,
+      });
+      const currentRow = getDocumentListRuntimeState(
+        formStore,
+        field.definition.id
+      )?.documents[row.id];
+      if (
+        !options?.append &&
+        (content?.document?.noteEditable === false ||
+          currentRow?.noteEditable === false)
+      ) {
+        setEditError(NOTE_REVISION_LOCKED);
+        return;
+      }
+      const noteEditable =
+        content?.document?.noteEditable ??
+        currentRow?.noteEditable ??
+        row.noteEditable;
       const display = (value: string): string => (value === '—' ? '' : value);
       const composeDraft = {
         title: display(row.title),
@@ -415,9 +435,6 @@ export function DocumentListField({
       };
       let definitionPrefill: DefinitionPrefill | undefined;
       if (!documentDraft || documentDraft.isNew) {
-        const content = await runtimeState.loadContent(row.id, undefined, {
-          refresh: true,
-        });
         if (content?.text === undefined) {
           setEditError(
             'Document content is unavailable. Reload before editing.'
@@ -472,6 +489,12 @@ export function DocumentListField({
         documentDraft?.setAnswer('meta:nativeVersion', row.nativeVersion);
         documentDraft?.setAnswer('meta:revisionBase', row);
       }
+      const revisionBase =
+        documentDraft && !documentDraft.isNew
+          ? normalizeDocumentRow(
+              documentDraft.getAnswers()['meta:revisionBase']
+            ) ?? row
+          : row;
       session.open({
         kind: 'compose',
         fieldId: field.definition.id,
@@ -479,12 +502,7 @@ export function DocumentListField({
         config: composerConfig,
         documentDraft,
         documentId: row.id,
-        revisionBase:
-          documentDraft && !documentDraft.isNew
-            ? normalizeDocumentRow(
-                documentDraft.getAnswers()['meta:revisionBase']
-              ) ?? row
-            : row,
+        revisionBase: { ...revisionBase, noteEditable },
         append: options?.append,
         draft: composeDraft,
         definitionPrefill,

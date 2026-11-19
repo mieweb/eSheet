@@ -377,6 +377,46 @@ function createRuntime(
 }
 
 describe('document list runtime store', () => {
+  it('rejects a revision when the latest snapshot locks a note after the composer opens', async () => {
+    const note = { ...documentOne, body: 'Original', noteEditable: true };
+    const store = createRuntime({ initialDocuments: [note] });
+    const openedRuntime = store.getState();
+    openedRuntime.applyRemoteSnapshot({
+      documents: [{ ...note, noteEditable: false }],
+    });
+
+    await expect(
+      openedRuntime.saveDocument({ ...note, action: 'blank', body: '' })
+    ).rejects.toThrow('This note can no longer be edited');
+    expect(store.getState().documents[note.id].body).toBe('Original');
+  });
+
+  it('rechecks canonical note locks before writing a revision but allows a separate addendum', async () => {
+    const note = { ...documentOne, noteEditable: true };
+    const repository = createRepository({
+      loadContent: vi.fn(async () => ({
+        text: 'Original',
+        document: { ...note, noteEditable: false },
+      })),
+    });
+    const store = createRuntime({ initialDocuments: [note], repository });
+    const runtime = store.getState();
+
+    await expect(
+      runtime.saveDocument({ ...note, action: 'edit', rev: 1 })
+    ).rejects.toThrow('This note can no longer be edited');
+    expect(repository.save).not.toHaveBeenCalled();
+
+    const addendum: DocumentListDocument = {
+      ...documentTwo,
+      action: 'create',
+      linkedTo: { id: note.id, linkType: 'addendum' },
+    };
+    await expect(runtime.saveDocument(addendum)).resolves.toEqual(addendum);
+    expect(repository.save).toHaveBeenCalledOnce();
+    expect(repository.loadContent).toHaveBeenCalledOnce();
+  });
+
   it('keeps document state isolated between store instances', () => {
     const first = createRuntime({
       initialDocuments: [documentOne],

@@ -63,7 +63,11 @@ export interface DocumentListRepository {
     context: DocumentListRepositoryContext,
     signal: AbortSignal
   ) => Promise<DocumentListSnapshot>;
-  /** Read canonical native content instead of a potentially stale row body. */
+  /**
+   * Read canonical native content instead of a potentially stale row body.
+   * When the host manages note editability, include the current flag on the
+   * head document: the runtime rechecks it before writing a revision.
+   */
   loadContent?: (
     context: DocumentListRepositoryContext,
     document: DocumentListDocument,
@@ -115,6 +119,9 @@ export interface DocumentListPendingOperation {
   readonly type: 'save' | 'delete';
   readonly documentId: string;
 }
+
+export const NOTE_REVISION_LOCKED =
+  'This note can no longer be edited. Add a linked addendum instead.';
 
 export interface DocumentListRuntimeState {
   readonly saveCategory?: DocumentListSaveCategory;
@@ -412,14 +419,24 @@ export function createDocumentListRuntimeExtension(
     saveDocument: async (document, content) => {
       const current = getState();
       if (!current || current.disposed) return document;
+      const prior = current.documents[document.id];
+      const isRevision =
+        document.action === 'edit' ||
+        document.action === 'blank' ||
+        document.action === 'append';
+      const checkNote = (row: DocumentListDocument | undefined): void => {
+        if (row?.noteEditable === false) throw new Error(NOTE_REVISION_LOCKED);
+        if (document.action === 'append' && row?.noteEditable !== undefined)
+          throw new Error('Addenda for this note must be separate documents.');
+      };
+      if (prior && isRevision) checkNote(prior);
       const persistInline =
         !content && document.body != null && repository?.persistInline === true;
-      // An inline row's content and metadata are already in the answer.
-      if (!content && document.body != null && !persistInline) {
-        current.upsertDocument(document);
-        return document;
-      }
-      if (!content && !repository) {
+      const localSave =
+        !content && ((document.body != null && !persistInline) || !repository);
+      const recheckCanonical =
+        prior && isRevision ? canonicalContent : undefined;
+      if (localSave && !recheckCanonical) {
         current.upsertDocument(document);
         return document;
       }
@@ -442,6 +459,16 @@ export function createDocumentListRuntimeExtension(
       }));
 
       try {
+        if (recheckCanonical && prior) {
+          const canonical = await recheckCanonical(
+            context,
+            prior,
+            controller.signal
+          );
+          if (controller.signal.aborted) throw controller.signal.reason;
+          checkNote(canonical.document);
+          checkNote(getState()?.documents[document.id]);
+        }
         let stored = document;
         if (content && !authoritative) {
           if (!contentStore)
@@ -452,11 +479,18 @@ export function createDocumentListRuntimeExtension(
           };
         }
         if (controller.signal.aborted) throw controller.signal.reason;
-        const saved = repository
-          ? authoritative && content
-            ? await repository.save(context, stored, controller.signal, content)
-            : await repository.save(context, stored, controller.signal)
-          : stored;
+        if (prior && isRevision) checkNote(getState()?.documents[document.id]);
+        const saved =
+          repository && !localSave
+            ? authoritative && content
+              ? await repository.save(
+                  context,
+                  stored,
+                  controller.signal,
+                  content
+                )
+              : await repository.save(context, stored, controller.signal)
+            : stored;
         if (controller.signal.aborted) throw controller.signal.reason;
         if (!getState() || operationRequestIds.get(operationKey) !== requestId)
           return saved;
