@@ -701,6 +701,8 @@ describe('matchesQuery', () => {
     const item = { id: '1', value: 'Casey Manager' };
     expect(matchesQuery(item, 'MANAG')).toBe(true);
     expect(matchesQuery(item, ' casey ')).toBe(true);
+    expect(matchesQuery(item, 'manager,  casey')).toBe(true);
+    expect(matchesQuery(item, 'manager ada')).toBe(false);
     expect(matchesQuery(item, 'ada')).toBe(false);
   });
 });

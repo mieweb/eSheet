@@ -1,11 +1,20 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { createFormStore, type FieldComponentProps } from '@esheet/core';
 import { FormStoreContext } from '@esheet/fields';
 import { DocumentListComposePanel } from './DocumentListWorkflows.js';
 import { DocumentListField } from './DocumentListField.js';
 import { DocumentListFieldProvider } from './DocumentListGrid.js';
-import { permissiveDocumentListCapabilities } from './types.js';
+import {
+  permissiveDocumentListCapabilities,
+  type DocumentListDocument,
+} from './types.js';
 import type { DocumentDraft } from './draftChannel.js';
 import type { DocumentListRuntimeState } from './document-list-runtime.js';
 
@@ -373,86 +382,109 @@ describe('compose panel in draft mode (ED.37)', () => {
 
   // ED.40 — Edit on a row opens (or joins) its draft, prefilled from the last
   // saved revision, and the panel says it is revising.
-  it('the Edit action opens a plain-note draft prefilled from the head revision', async () => {
-    const row = {
-      id: 'doc-1',
-      date: '2026-08-14',
-      title: 'Existing note',
-      subject: 'Original subject',
-      docType: 'progress-note',
-      docId: 'doc-1',
-      source: 'Compose',
-      file: 'doc-1.md',
-      rev: 0,
-      body: 'original prose',
-    };
-    const draft = fakeDraft({ isNew: true });
-    const open = vi.fn(async () => draft);
-    const draftChannel = { open, presenceOf: vi.fn(() => () => {}) };
-    const formStore = createFormStore();
-    const fieldProps = {
-      field: {
-        definition: {
-          id: 'documents',
-          question: 'Documents',
-          documents: [row],
-          docTypes: [
-            {
-              id: 'progress-note',
-              label: 'Progress note',
-            },
-          ],
+  it.each([true, false])(
+    'checks canonical note editability (%s) before opening the editor',
+    async (noteEditable) => {
+      const row = {
+        id: 'doc-1',
+        date: '2026-08-14',
+        title: 'Existing note',
+        subject: 'Original subject',
+        docType: 'progress-note',
+        docId: 'doc-1',
+        source: 'Compose',
+        file: 'doc-1.md',
+        rev: 0,
+        body: 'original prose',
+      };
+      const repository = {
+        load: vi.fn(async () => ({ documents: [row] })),
+        loadContent: vi.fn(async () => ({
+          text: row.body,
+          document: { ...row, noteEditable },
+        })),
+        save: vi.fn(async (_context, document) => document),
+        remove: vi.fn(async () => undefined),
+      };
+      const draft = fakeDraft({ isNew: true });
+      const open = vi.fn(async () => draft);
+      const draftChannel = { open, presenceOf: vi.fn(() => () => {}) };
+      const formStore = createFormStore();
+      const fieldProps = {
+        field: {
+          definition: {
+            id: 'documents',
+            question: 'Documents',
+            documents: [row],
+            docTypes: [
+              {
+                id: 'progress-note',
+                label: 'Progress note',
+              },
+            ],
+          },
         },
-      },
-      form: formStore,
-      response: undefined,
-    } as unknown as FieldComponentProps;
+        form: formStore,
+        response: undefined,
+      } as unknown as FieldComponentProps;
 
-    render(
-      <FormStoreContext.Provider value={formStore}>
-        <DocumentListFieldProvider
-          host={{
-            capabilities: permissiveDocumentListCapabilities,
-            author: { id: 'u-casey', name: 'Casey Manager' },
-            draftChannel,
-          }}
-        >
-          <DocumentListField {...fieldProps} />
-        </DocumentListFieldProvider>
-      </FormStoreContext.Provider>
-    );
+      render(
+        <FormStoreContext.Provider value={formStore}>
+          <DocumentListFieldProvider
+            runtime={{ repository }}
+            host={{
+              capabilities: permissiveDocumentListCapabilities,
+              author: { id: 'u-casey', name: 'Casey Manager' },
+              draftChannel,
+            }}
+          >
+            <DocumentListField {...fieldProps} />
+          </DocumentListFieldProvider>
+        </FormStoreContext.Provider>
+      );
 
-    await waitFor(() => expect(captured.props).not.toBeNull());
-    const gridProps = captured.props as {
-      formatCell: (
-        value: unknown,
-        data: Record<string, unknown>,
-        column: { field: string }
-      ) => ReactNode;
-    };
-    const actions = render(
-      <>{gridProps.formatCell(undefined, { ...row }, { field: '_actions' })}</>
-    );
-    fireEvent.click(
-      actions.getByRole('button', { name: 'Edit Existing note' })
-    );
+      await waitFor(() => expect(captured.props).not.toBeNull());
+      const gridProps = captured.props as {
+        formatCell: (
+          value: unknown,
+          data: Record<string, unknown>,
+          column: { field: string }
+        ) => ReactNode;
+      };
+      const actions = render(
+        <>
+          {gridProps.formatCell(undefined, { ...row }, { field: '_actions' })}
+        </>
+      );
+      fireEvent.click(
+        actions.getByRole('button', { name: 'Edit Existing note' })
+      );
 
-    await waitFor(() =>
-      expect(open).toHaveBeenCalledWith('doc-1', {
-        openedBy: { id: 'u-casey', name: 'Casey Manager' },
-        baseRev: 0,
-      })
-    );
-    // The panel opened on the row's draft, saying which act this is.
-    expect(await screen.findByText('Revise document (rev 0)')).toBeTruthy();
-    // The opener seeds the prefill: the head revision's body.
-    await waitFor(() => expect(editorValues).toContain('original prose'));
-    expect((screen.getByLabelText(/^Title/) as HTMLInputElement).value).toBe(
-      'Existing note'
-    );
-  });
+      if (!noteEditable) {
+        expect((await screen.findByRole('alert')).textContent).toMatch(
+          /can no longer be edited/
+        );
+        expect(screen.queryByText('Revise document (rev 0)')).toBeNull();
+        return;
+      }
 
-  it('keeps row actions available without a collaboration channel', async () => {
+      await waitFor(() =>
+        expect(open).toHaveBeenCalledWith('doc-1', {
+          openedBy: { id: 'u-casey', name: 'Casey Manager' },
+          baseRev: 0,
+        })
+      );
+      // The panel opened on the row's draft, saying which act this is.
+      expect(await screen.findByText('Revise document (rev 0)')).toBeTruthy();
+      // The opener seeds the prefill: the head revision's body.
+      await waitFor(() => expect(editorValues).toContain('original prose'));
+      expect((screen.getByLabelText(/^Title/) as HTMLInputElement).value).toBe(
+        'Existing note'
+      );
+    }
+  );
+
+  it('restricts host grants for notes without a collaboration channel', async () => {
     const row = {
       id: 'doc-1',
       date: '2026-08-14',
@@ -484,6 +516,15 @@ describe('compose panel in draft mode (ED.37)', () => {
           host={{
             capabilities: permissiveDocumentListCapabilities,
             author: { id: 'u-casey', name: 'Casey Manager' },
+            getRowCapabilities: () => ({
+              canView: true,
+              canCompose: true,
+              canEdit: true,
+              canAppend: true,
+              canRequestSignature: false,
+              canDelete: true,
+              canDownloadPdf: false,
+            }),
           }}
         >
           <DocumentListField {...fieldProps} />
@@ -512,6 +553,39 @@ describe('compose panel in draft mode (ED.37)', () => {
       actions.getByRole('button', { name: 'Remove Existing note' })
     ).toBeTruthy();
 
+    const renderNoteActions = (note: Record<string, unknown>) =>
+      within(
+        render(
+          <>{gridProps.formatCell(undefined, note, { field: '_actions' })}</>
+        ).container
+      );
+    const locked = renderNoteActions({
+      ...row,
+      title: 'Locked note',
+      noteEditable: false,
+    });
+    expect(
+      locked.queryByRole('button', { name: 'Edit Locked note' })
+    ).toBeNull();
+    expect(
+      locked.queryByRole('button', { name: 'Remove Locked note' })
+    ).toBeNull();
+    expect(
+      locked.getByRole('button', { name: 'Append to Locked note' })
+    ).toBeTruthy();
+    const addendum = renderNoteActions({
+      ...row,
+      title: 'Linked note',
+      noteEditable: true,
+      linkedTo: { id: 'doc-0', linkType: 'addendum' },
+    });
+    expect(
+      addendum.queryByRole('button', { name: 'Append to Linked note' })
+    ).toBeNull();
+    expect(
+      addendum.getByRole('button', { name: 'Edit Linked note' })
+    ).toBeTruthy();
+
     fireEvent.click(
       actions.getByRole('button', { name: 'Edit Existing note' })
     );
@@ -523,7 +597,7 @@ describe('compose panel in draft mode (ED.37)', () => {
 
   // ED.41 — one Append action, two shapes, the author picks.
   describe('append', () => {
-    const prior = {
+    const prior: DocumentListDocument = {
       id: 'doc-1',
       date: '2026-08-14',
       title: 'Original note',
@@ -538,14 +612,15 @@ describe('compose panel in draft mode (ED.37)', () => {
       body: 'original prose',
     };
 
-    async function submitAppend(shape: 'revision' | 'linked') {
+    async function submitAppend(shape: 'revision' | 'linked' | 'locked-note') {
       const saveDocument = vi.fn(async (document: unknown) => document);
       const appendRuntime = {
-        documents: { 'doc-1': prior },
+        documents: {
+          'doc-1':
+            shape === 'locked-note' ? { ...prior, noteEditable: false } : prior,
+        },
         saveDocument,
       } as unknown as DocumentListRuntimeState;
-      const draft = fakeDraft({ isNew: false });
-
       render(
         <DocumentListComposePanel
           open
@@ -553,8 +628,8 @@ describe('compose panel in draft mode (ED.37)', () => {
           runtime={appendRuntime}
           inputPrefix="form-1-documents"
           author={{ id: 'u-casey', name: 'Casey Manager' }}
-          documentDraft={draft}
           documentId="doc-1"
+          revisionBase={shape === 'locked-note' ? prior : undefined}
           appendMode
         />
       );
@@ -566,6 +641,9 @@ describe('compose panel in draft mode (ED.37)', () => {
         fireEvent.click(
           screen.getByRole('radio', { name: /A linked document/ })
         );
+      }
+      if (shape === 'locked-note') {
+        expect(screen.queryByRole('group', { name: 'Append as' })).toBeNull();
       }
       fireEvent.change(screen.getByLabelText(/^Title/), {
         target: { value: 'Addendum title' },
@@ -607,6 +685,87 @@ describe('compose panel in draft mode (ED.37)', () => {
       });
       expect(saved.rev).toBeUndefined();
       expect(saved.history).toBeUndefined();
+    });
+
+    it('saves a linked addendum when the revision base omits the note lock', async () => {
+      const saved = await submitAppend('locked-note');
+      expect(saved.id).not.toBe('doc-1');
+      expect(saved).toMatchObject({
+        action: 'create',
+        linkedTo: { id: 'doc-1', linkType: 'addendum' },
+      });
+    });
+
+    it('saves a linked addendum without joining or discarding the parent draft', async () => {
+      const parentDraft = fakeDraft({ isNew: false });
+      parentDraft.setAnswer('meta:subject', 'Another author’s unsaved subject');
+      const discard = vi.spyOn(parentDraft, 'discard');
+      const open = vi.fn(async () => parentDraft);
+      const save = vi.fn(async (_context, document) => document);
+      const repository = {
+        ownsField: () => true,
+        load: vi.fn(async () => ({ documents: [prior] })),
+        loadContent: vi.fn(async () => ({
+          text: prior.body,
+          document: { ...prior, noteEditable: false },
+        })),
+        save,
+        remove: vi.fn(async () => undefined),
+      };
+      const formStore = createFormStore();
+      const fieldProps = {
+        field: { definition: { id: 'documents', question: 'Documents' } },
+        form: formStore,
+      } as FieldComponentProps;
+
+      render(
+        <FormStoreContext.Provider value={formStore}>
+          <DocumentListFieldProvider
+            host={{
+              capabilities: permissiveDocumentListCapabilities,
+              author: { id: 'u-casey', name: 'Casey Manager' },
+              draftChannel: { open, presenceOf: vi.fn(() => () => {}) },
+            }}
+            runtime={{ repository }}
+          >
+            <DocumentListField {...fieldProps} />
+          </DocumentListFieldProvider>
+        </FormStoreContext.Provider>
+      );
+      await waitFor(() => expect(repository.load).toHaveBeenCalled());
+      const gridProps = captured.props as {
+        formatCell: (
+          value: unknown,
+          data: Record<string, unknown>,
+          column: { field: string }
+        ) => ReactNode;
+      };
+      const actions = render(
+        <>
+          {gridProps.formatCell(undefined, { ...prior }, { field: '_actions' })}
+        </>
+      );
+      fireEvent.click(
+        actions.getByRole('button', { name: 'Append to Original note' })
+      );
+
+      expect(
+        await screen.findByText('Append to document (rev 1)')
+      ).toBeTruthy();
+      expect(screen.queryByRole('group', { name: 'Append as' })).toBeNull();
+      fireEvent.click(screen.getByRole('button', { name: /^Save/ }));
+      await waitFor(() => expect(save).toHaveBeenCalledOnce());
+      expect(save.mock.calls[0][1]).toMatchObject({
+        action: 'create',
+        linkedTo: { id: prior.id, linkType: 'addendum' },
+        subject: prior.subject,
+      });
+      expect(save.mock.calls[0][1].id).not.toBe(prior.id);
+      expect(open).not.toHaveBeenCalled();
+      expect(discard).not.toHaveBeenCalled();
+      expect(parentDraft.getAnswers()['meta:subject']).toBe(
+        'Another author’s unsaved subject'
+      );
     });
   });
 

@@ -720,6 +720,9 @@ function searchShard(
   const { scoreBuf, maskBuf, aliasBuf, fuzzyBuf } = s;
   const N = s.docCount;
   const fullMask = (1 << qTokens.length) - 1;
+  // Truncating a broad prefix before intersecting can discard the only
+  // expansion that matches the other terms.
+  const scanAllPrefixes = opts?.catalog || qTokens.length > 1;
   let touchedCount = 0;
   let firstLo = 0;
   let firstHi = 0;
@@ -752,13 +755,13 @@ function searchShard(
       if (expansions.length === 0) return bail();
     } else if (lo >= hi) {
       return bail();
-    } else if (!opts?.catalog && hi - lo > MAX_EXPANSIONS && s.tokenPrior) {
+    } else if (!scanAllPrefixes && hi - lo > MAX_EXPANSIONS && s.tokenPrior) {
       expansions = topPriorTokens(s, lo, hi, MAX_EXPANSIONS);
     }
 
     const count = expansions
       ? expansions.length
-      : opts?.catalog
+      : scanAllPrefixes
       ? hi - lo
       : Math.min(hi - lo, MAX_EXPANSIONS);
     for (let e = 0; e < count; e++) {

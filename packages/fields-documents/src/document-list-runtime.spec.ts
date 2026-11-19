@@ -377,6 +377,94 @@ function createRuntime(
 }
 
 describe('document list runtime store', () => {
+  it.each(['edit', 'append'] as const)(
+    'preserves the first %s when a second composer saves from the same head',
+    async (firstAction) => {
+      const original = { ...documentOne, rev: 1, body: 'Original' };
+      const store = createRuntime({ initialDocuments: [original] });
+      const editor = store.getState();
+      const appender = store.getState();
+      const saved = { ...original, rev: 2, body: 'First', action: firstAction };
+      await editor.saveDocument(saved);
+
+      await expect(
+        appender.saveDocument({
+          ...original,
+          rev: 2,
+          body: 'Second',
+          action: firstAction === 'edit' ? 'append' : 'edit',
+        })
+      ).rejects.toThrow('Reload before saving');
+      expect(store.getState().documents[original.id]).toEqual(saved);
+    }
+  );
+
+  it('does not replace an in-flight revision with a second revision', async () => {
+    const original = { ...documentOne, rev: 1, body: 'Original' };
+    const first = deferred<DocumentListDocument>();
+    const repository = createRepository({
+      persistInline: true,
+      save: vi.fn(() => first.promise),
+    });
+    const store = createRuntime({ initialDocuments: [original], repository });
+    const runtime = store.getState();
+    const edit = {
+      ...original,
+      action: 'edit',
+      rev: 2,
+      body: 'First',
+    } as const;
+    const saving = runtime.saveDocument(edit);
+
+    await expect(
+      runtime.saveDocument({ ...edit, action: 'append', body: 'Second' })
+    ).rejects.toThrow('Another save is in progress');
+    first.resolve(edit);
+    await expect(saving).resolves.toMatchObject(edit);
+    expect(repository.save).toHaveBeenCalledOnce();
+    expect(store.getState().documents[original.id]).toMatchObject(edit);
+  });
+
+  it('rejects a revision when the latest snapshot locks a note after the composer opens', async () => {
+    const note = { ...documentOne, body: 'Original', noteEditable: true };
+    const store = createRuntime({ initialDocuments: [note] });
+    const openedRuntime = store.getState();
+    openedRuntime.applyRemoteSnapshot({
+      documents: [{ ...note, noteEditable: false }],
+    });
+
+    await expect(
+      openedRuntime.saveDocument({ ...note, action: 'blank', body: '' })
+    ).rejects.toThrow('This note can no longer be edited');
+    expect(store.getState().documents[note.id].body).toBe('Original');
+  });
+
+  it('rechecks canonical note locks before writing a revision but allows a separate addendum', async () => {
+    const note = { ...documentOne, noteEditable: true };
+    const repository = createRepository({
+      loadContent: vi.fn(async () => ({
+        text: 'Original',
+        document: { ...note, noteEditable: false },
+      })),
+    });
+    const store = createRuntime({ initialDocuments: [note], repository });
+    const runtime = store.getState();
+
+    await expect(
+      runtime.saveDocument({ ...note, action: 'edit', rev: 1 })
+    ).rejects.toThrow('This note can no longer be edited');
+    expect(repository.save).not.toHaveBeenCalled();
+
+    const addendum: DocumentListDocument = {
+      ...documentTwo,
+      action: 'create',
+      linkedTo: { id: note.id, linkType: 'addendum' },
+    };
+    await expect(runtime.saveDocument(addendum)).resolves.toEqual(addendum);
+    expect(repository.save).toHaveBeenCalledOnce();
+    expect(repository.loadContent).toHaveBeenCalledOnce();
+  });
+
   it('keeps document state isolated between store instances', () => {
     const first = createRuntime({
       initialDocuments: [documentOne],

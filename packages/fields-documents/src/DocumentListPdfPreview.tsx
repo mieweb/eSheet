@@ -19,7 +19,7 @@ import {
   ModalHeader,
   ModalTitle,
 } from '@mieweb/ui';
-import { ChevronLeft, ChevronRight, Download, Printer } from 'lucide-react';
+import { Download, Printer } from 'lucide-react';
 import { Document as PdfDocument, Page as PdfPage, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/TextLayer.css';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?worker&url';
@@ -303,16 +303,12 @@ export function DocumentListPdfViewer({
   onReadyRef.current = onReady;
   const [error, setError] = useState<string>();
   const [pageCount, setPageCount] = useState(0);
-  const [pageNumber, setPageNumber] = useState(1);
   const [ready, setReady] = useState(false);
   const [pageWidth, setPageWidth] = useState(816);
-  const pageContainerRef = useRef<HTMLDivElement>(null);
+  const [nearbyPages, setNearbyPages] = useState(() => new Set([1]));
+  const [pageRatios, setPageRatios] = useState<Record<number, number>>({});
   const surfaceRef = useRef<HTMLDivElement>(null);
-
-  const changePage = (offset: number): void => {
-    setPageNumber((current) => current + offset);
-    if (surfaceRef.current) surfaceRef.current.scrollTop = 0;
-  };
+  const pageContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const element = pageContainerRef.current;
@@ -324,6 +320,35 @@ export function DocumentListPdfViewer({
     observer.observe(element);
     return () => observer.disconnect();
   }, [pageCount, reference]);
+
+  // Keep the first page mounted until the loading surface is revealed.
+  useEffect(() => {
+    const root = surfaceRef.current;
+    const pages = pageContainerRef.current;
+    if (
+      !ready ||
+      !root ||
+      !pages ||
+      typeof IntersectionObserver === 'undefined'
+    )
+      return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        setNearbyPages((current) => {
+          const next = new Set(current);
+          for (const { target, isIntersecting } of entries) {
+            const pageNumber = Number(target.getAttribute('data-page-number'));
+            if (isIntersecting) next.add(pageNumber);
+            else next.delete(pageNumber);
+          }
+          return next;
+        });
+      },
+      { root, rootMargin: '400px 0px' }
+    );
+    Array.from(pages.children).forEach((page) => observer.observe(page));
+    return () => observer.disconnect();
+  }, [pageCount, ready, reference, blob]);
 
   useEffect(() => {
     if (ready || error) return;
@@ -349,6 +374,8 @@ export function DocumentListPdfViewer({
             className={`document-list-pdf-preview__surface${
               !ready ? ' document-list-pdf-preview__surface--loading' : ''
             }`}
+            role="region"
+            tabIndex={ready ? 0 : undefined}
             aria-label={`PDF preview of ${title}`}
           >
             {!ready ? (
@@ -361,62 +388,61 @@ export function DocumentListPdfViewer({
               file={blob ?? reference}
               loading={null}
               error={null}
-              onLoadSuccess={({ numPages }) => {
-                setPageCount(numPages);
-                setPageNumber(1);
-              }}
+              onLoadSuccess={({ numPages }) => setPageCount(numPages)}
               onLoadError={(cause) => setError(cause.message)}
             >
               <div
                 ref={pageContainerRef}
-                className="document-list-pdf-preview__page"
+                className="document-list-pdf-preview__pages"
               >
-                <PdfPage
-                  pageNumber={pageNumber}
-                  width={pageWidth}
-                  devicePixelRatio={1}
-                  renderAnnotationLayer={false}
-                  renderTextLayer
-                  loading={null}
-                  onRenderSuccess={() => {
-                    if (!ready) {
-                      setReady(true);
-                      onReadyRef.current?.();
-                    }
-                  }}
-                  onRenderError={(cause) => setError(cause.message)}
-                />
+                {Array.from({ length: pageCount }, (_, index) => {
+                  const pageNumber = index + 1;
+                  return (
+                    <div
+                      className="document-list-pdf-preview__page"
+                      data-page-number={pageNumber}
+                      key={pageNumber}
+                      style={{
+                        aspectRatio: pageRatios[pageNumber] ?? '8.5 / 11',
+                      }}
+                    >
+                      {(nearbyPages.has(pageNumber) ||
+                        typeof IntersectionObserver === 'undefined') && (
+                        <PdfPage
+                          pageNumber={pageNumber}
+                          width={pageWidth}
+                          devicePixelRatio={1}
+                          renderAnnotationLayer={false}
+                          renderTextLayer
+                          loading={null}
+                          onLoadSuccess={(page) => {
+                            const { width, height } = page.getViewport({
+                              scale: 1,
+                            });
+                            const ratio = width / height;
+                            setPageRatios((current) =>
+                              current[pageNumber] === ratio
+                                ? current
+                                : { ...current, [pageNumber]: ratio }
+                            );
+                          }}
+                          onRenderSuccess={
+                            index === 0 && !ready
+                              ? () => {
+                                  setReady(true);
+                                  onReadyRef.current?.();
+                                }
+                              : undefined
+                          }
+                          onRenderError={(cause) => setError(cause.message)}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </PdfDocument>
           </div>
-          {pageCount > 1 ? (
-            <nav
-              className="document-list-pdf-preview__navigation"
-              aria-label="PDF pages"
-            >
-              <Button
-                type="button"
-                variant="outline"
-                disabled={pageNumber === 1}
-                onClick={() => changePage(-1)}
-                aria-label="Previous PDF page"
-              >
-                <ChevronLeft size={16} aria-hidden="true" />
-              </Button>
-              <span aria-live="polite" aria-atomic="true">
-                Page {pageNumber} of {pageCount}
-              </span>
-              <Button
-                type="button"
-                variant="outline"
-                disabled={pageNumber === pageCount}
-                onClick={() => changePage(1)}
-                aria-label="Next PDF page"
-              >
-                <ChevronRight size={16} aria-hidden="true" />
-              </Button>
-            </nav>
-          ) : null}
         </>
       )}
     </div>

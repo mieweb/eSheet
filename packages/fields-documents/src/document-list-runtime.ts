@@ -63,7 +63,11 @@ export interface DocumentListRepository {
     context: DocumentListRepositoryContext,
     signal: AbortSignal
   ) => Promise<DocumentListSnapshot>;
-  /** Read canonical native content instead of a potentially stale row body. */
+  /**
+   * Read canonical native content instead of a potentially stale row body.
+   * When the host manages note editability, include the current flag on the
+   * head document: the runtime rechecks it before writing a revision.
+   */
   loadContent?: (
     context: DocumentListRepositoryContext,
     document: DocumentListDocument,
@@ -116,6 +120,9 @@ export interface DocumentListPendingOperation {
   readonly documentId: string;
 }
 
+export const NOTE_REVISION_LOCKED =
+  'This note can no longer be edited. Add a linked addendum instead.';
+
 export interface DocumentListRuntimeState {
   readonly saveCategory?: DocumentListSaveCategory;
   readonly documents: Readonly<Record<string, DocumentListDocument>>;
@@ -135,6 +142,7 @@ export interface DocumentListRuntimeState {
   hydrateSnapshot: (snapshot: DocumentListSnapshot) => void;
   applyRemoteSnapshot: (snapshot: DocumentListSnapshot) => void;
   upsertDocument: (document: DocumentListDocument) => void;
+  /** Existing revisions must advance the current head; stale writes reject. */
   saveDocument: (
     document: DocumentListDocument,
     content?: FileInput
@@ -412,20 +420,51 @@ export function createDocumentListRuntimeExtension(
     saveDocument: async (document, content) => {
       const current = getState();
       if (!current || current.disposed) return document;
+      const prior = current.documents[document.id];
+      const isRevision =
+        document.action === 'edit' ||
+        document.action === 'blank' ||
+        document.action === 'append';
+      const operationKey = `save:${document.id}`;
+      const staleRevision =
+        'This document changed while you were editing. Reload before saving.';
+      const checkNote = (row: DocumentListDocument | undefined): void => {
+        if (row?.noteEditable === false) throw new Error(NOTE_REVISION_LOCKED);
+        if (document.action === 'append' && row?.noteEditable !== undefined)
+          throw new Error('Addenda for this note must be separate documents.');
+      };
+      const checkRevision = (row: DocumentListDocument | undefined): void => {
+        if (!row || row.removed) throw new Error(staleRevision);
+        checkNote(row);
+        if (document.rev === undefined || (row.rev ?? 0) >= document.rev)
+          throw new Error(staleRevision);
+      };
+      const checkNextRevision = (
+        row: DocumentListDocument | undefined,
+        canonicalRev?: number
+      ): void => {
+        checkRevision(row);
+        const head = Math.max(row?.rev ?? 0, canonicalRev ?? 0);
+        if (document.rev !== head + 1) throw new Error(staleRevision);
+      };
+      if (isRevision) {
+        checkRevision(prior);
+        if (operationControllers.has(operationKey))
+          throw new Error('Another save is in progress for this document.');
+      }
       const persistInline =
         !content && document.body != null && repository?.persistInline === true;
-      // An inline row's content and metadata are already in the answer.
-      if (!content && document.body != null && !persistInline) {
-        current.upsertDocument(document);
-        return document;
-      }
-      if (!content && !repository) {
+      const localSave =
+        !content && ((document.body != null && !persistInline) || !repository);
+      const recheckCanonical =
+        prior && isRevision ? canonicalContent : undefined;
+      if (localSave && !recheckCanonical) {
+        if (isRevision) checkNextRevision(prior);
         current.upsertDocument(document);
         return document;
       }
       const contentStore = fileStore;
 
-      const operationKey = `save:${document.id}`;
       operationControllers.get(operationKey)?.abort();
       const controller = new AbortController();
       operationControllers.set(operationKey, controller);
@@ -442,6 +481,19 @@ export function createDocumentListRuntimeExtension(
       }));
 
       try {
+        let canonicalRev: number | undefined;
+        if (recheckCanonical && prior) {
+          const canonical = await recheckCanonical(
+            context,
+            prior,
+            controller.signal
+          );
+          if (controller.signal.aborted) throw controller.signal.reason;
+          if (canonical.document) checkRevision(canonical.document);
+          canonicalRev = canonical.document?.rev;
+        }
+        if (isRevision)
+          checkNextRevision(getState()?.documents[document.id], canonicalRev);
         let stored = document;
         if (content && !authoritative) {
           if (!contentStore)
@@ -450,13 +502,21 @@ export function createDocumentListRuntimeExtension(
             ...document,
             fileReference: await contentStore.store(content),
           };
+          if (isRevision)
+            checkNextRevision(getState()?.documents[document.id], canonicalRev);
         }
         if (controller.signal.aborted) throw controller.signal.reason;
-        const saved = repository
-          ? authoritative && content
-            ? await repository.save(context, stored, controller.signal, content)
-            : await repository.save(context, stored, controller.signal)
-          : stored;
+        const saved =
+          repository && !localSave
+            ? authoritative && content
+              ? await repository.save(
+                  context,
+                  stored,
+                  controller.signal,
+                  content
+                )
+              : await repository.save(context, stored, controller.signal)
+            : stored;
         if (controller.signal.aborted) throw controller.signal.reason;
         if (!getState() || operationRequestIds.get(operationKey) !== requestId)
           return saved;

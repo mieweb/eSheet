@@ -42,6 +42,7 @@ import {
 } from './data.js';
 import {
   getDocumentListRuntimeState,
+  NOTE_REVISION_LOCKED,
   type DocumentListRuntimeState,
 } from './document-list-runtime.js';
 import { DocumentListDetailRow } from './DocumentListWorkflows.js';
@@ -393,17 +394,39 @@ export function DocumentListField({
     options?: { append?: boolean }
   ): Promise<void> => {
     const openedBy = host?.author;
-    if (!openedBy || !runtimeState) return;
+    if (!openedBy || !runtimeState || !formStore) return;
     setEditError(undefined);
     let documentDraft: DocumentDraft | undefined;
     let displayed = false;
     try {
-      documentDraft = draftChannel
-        ? await draftChannel.open(row.id, {
-            openedBy,
-            baseRev: row.rev ?? 0,
-          })
-        : undefined;
+      // Append can save a different document, so it must not join an
+      // existing revision proposal for the parent.
+      documentDraft =
+        !options?.append && draftChannel
+          ? await draftChannel.open(row.id, {
+              openedBy,
+              baseRev: row.rev ?? 0,
+            })
+          : undefined;
+      const content = await runtimeState.loadContent(row.id, undefined, {
+        refresh: true,
+      });
+      const currentRow = getDocumentListRuntimeState(
+        formStore,
+        field.definition.id
+      )?.documents[row.id];
+      if (
+        !options?.append &&
+        (content?.document?.noteEditable === false ||
+          currentRow?.noteEditable === false)
+      ) {
+        setEditError(NOTE_REVISION_LOCKED);
+        return;
+      }
+      const noteEditable =
+        content?.document?.noteEditable ??
+        currentRow?.noteEditable ??
+        row.noteEditable;
       const display = (value: string): string => (value === '—' ? '' : value);
       const composeDraft = {
         title: display(row.title),
@@ -415,9 +438,6 @@ export function DocumentListField({
       };
       let definitionPrefill: DefinitionPrefill | undefined;
       if (!documentDraft || documentDraft.isNew) {
-        const content = await runtimeState.loadContent(row.id, undefined, {
-          refresh: true,
-        });
         if (content?.text === undefined) {
           setEditError(
             'Document content is unavailable. Reload before editing.'
@@ -472,6 +492,12 @@ export function DocumentListField({
         documentDraft?.setAnswer('meta:nativeVersion', row.nativeVersion);
         documentDraft?.setAnswer('meta:revisionBase', row);
       }
+      const revisionBase =
+        documentDraft && !documentDraft.isNew
+          ? normalizeDocumentRow(
+              documentDraft.getAnswers()['meta:revisionBase']
+            ) ?? row
+          : row;
       session.open({
         kind: 'compose',
         fieldId: field.definition.id,
@@ -479,12 +505,7 @@ export function DocumentListField({
         config: composerConfig,
         documentDraft,
         documentId: row.id,
-        revisionBase:
-          documentDraft && !documentDraft.isNew
-            ? normalizeDocumentRow(
-                documentDraft.getAnswers()['meta:revisionBase']
-              ) ?? row
-            : row,
+        revisionBase: { ...revisionBase, noteEditable },
         append: options?.append,
         draft: composeDraft,
         definitionPrefill,
@@ -603,9 +624,9 @@ export function DocumentListField({
   // The capability object answers per-row questions unless the host renders
   // its own actions. Printing requires both definition and host opt-in.
   // While the form is read-only the host's wider grants don't apply.
-  const getRowCapabilities =
-    (!isReadOnly && host?.getRowCapabilities) ||
-    ((row: DocumentListDocument) => ({
+  // Note restrictions narrow both host and default grants.
+  const getRowCapabilities = (row: DocumentListDocument) => {
+    const grants = (!isReadOnly && host?.getRowCapabilities?.(row)) || {
       canView: capabilities.view(row),
       canCompose: mayCreate,
       canEdit: capabilities.edit(row),
@@ -613,7 +634,15 @@ export function DocumentListField({
       canRequestSignature: false,
       canDelete: capabilities.remove(row),
       canDownloadPdf: canPrint && capabilities.view(row),
-    }));
+    };
+    return {
+      ...grants,
+      canEdit: grants.canEdit && row.noteEditable !== false,
+      canAppend:
+        grants.canAppend && !(row.noteEditable !== undefined && row.linkedTo),
+      canDelete: grants.canDelete && row.noteEditable !== false,
+    };
+  };
   const canManageRows = Boolean(!isReadOnly && runtimeState && host?.author);
   const defaultRenderActions =
     canManageRows || canPrint
