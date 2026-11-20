@@ -9,7 +9,12 @@ import {
 } from 'react';
 import type { FieldComponentProps } from '@esheet/core';
 import { FormStoreContext } from '@esheet/fields';
-import { Button, Input, formatRegionalDate } from '@mieweb/ui';
+import {
+  Button,
+  Input,
+  formatRegionalDate,
+  regionalDateLocale,
+} from '@mieweb/ui';
 import {
   ArchiveRestore,
   FileDown,
@@ -214,6 +219,28 @@ export function DocumentListField({
         }),
     [rows, showRemoved, submissionMetadata]
   );
+  const { gridRows, addendaByOriginal } = useMemo(() => {
+    const addendaByOriginal = new Map<string, DocumentListDocument[]>();
+    if (!submissionMetadata || host?.renderDetailRow) {
+      return { gridRows: visibleRows, addendaByOriginal };
+    }
+    const originalIds = new Set(
+      visibleRows
+        .filter((row) => row.linkedTo?.linkType !== 'addendum')
+        .map((row) => row.id)
+    );
+    const gridRows = visibleRows.filter((row) => {
+      const link = row.linkedTo;
+      // An addendum with no visible original must still be readable.
+      if (link?.linkType !== 'addendum' || !originalIds.has(link.id))
+        return true;
+      const addenda = addendaByOriginal.get(link.id);
+      if (addenda) addenda.push(row);
+      else addendaByOriginal.set(link.id, [row]);
+      return false;
+    });
+    return { gridRows, addendaByOriginal };
+  }, [visibleRows, submissionMetadata, host?.renderDetailRow]);
 
   // ED.38 — who is drafting each row, said on the row itself. One presence
   // subscription per visible row; the channel keeps them body-free. Keyed by
@@ -607,32 +634,6 @@ export function DocumentListField({
         },
       }
     : undefined;
-  const detailRenderer = host?.renderDetailRow
-    ? host.renderDetailRow
-    : runtimeState
-    ? (row: DocumentListDocument) => (
-        <DocumentListDetailRow
-          document={row}
-          runtime={runtimeState}
-          historyHref={host?.documentHref?.(row) ?? undefined}
-          onViewed={() =>
-            form.getState().appendActivity({
-              fieldId: field.definition.id,
-              question: title,
-              category: 'Viewed',
-              detail: `${row.title} (${row.id}), rev ${row.rev ?? 0}`,
-            })
-          }
-          // ED.41 — the original renders its addenda beneath itself.
-          related={
-            submissionMetadata
-              ? undefined
-              : rows.filter((candidate) => candidate.linkedTo?.id === row.id)
-          }
-        />
-      )
-    : undefined;
-
   const canPrint =
     offersAction(definition, 'downloadPdf') && runtimeState !== null;
 
@@ -751,6 +752,68 @@ export function DocumentListField({
       : undefined
     : host?.renderActions ?? defaultRenderActions;
 
+  const recordView = (row: DocumentListDocument) =>
+    form.getState().appendActivity({
+      fieldId: field.definition.id,
+      question: title,
+      category: 'Viewed',
+      detail: `${row.title} (${row.id}), rev ${row.rev ?? 0}`,
+    });
+  const detailRenderer =
+    host?.renderDetailRow ??
+    (runtimeState
+      ? (row: DocumentListDocument) => (
+          <DocumentListDetailRow
+            document={row}
+            runtime={runtimeState}
+            historyHref={host?.documentHref?.(row) ?? undefined}
+            onViewed={() => recordView(row)}
+            related={
+              submissionMetadata
+                ? addendaByOriginal.get(row.id)
+                : rows.filter((candidate) => candidate.linkedTo?.id === row.id)
+            }
+            renderRelated={
+              submissionMetadata
+                ? (addendum) => {
+                    const submittedAt = Date.parse(addendum.submittedAt ?? '');
+                    return (
+                      <>
+                        <div className="document-list-detail__addendum-meta">
+                          {Number.isFinite(submittedAt) ? (
+                            <time dateTime={addendum.submittedAt}>
+                              {new Date(submittedAt).toLocaleString(
+                                regionalDateLocale()
+                              )}
+                            </time>
+                          ) : (
+                            '—'
+                          )}
+                          {' · '}
+                          {addendum.recordedAuthor?.name || '—'}
+                          {addendum.removed && ' · Removed'}
+                          {renderActions?.(
+                            addendum,
+                            getRowCapabilities(addendum)
+                          )}
+                        </div>
+                        <DocumentListDetailRow
+                          document={addendum}
+                          runtime={runtimeState}
+                          historyHref={
+                            host?.documentHref?.(addendum) ?? undefined
+                          }
+                          onViewed={() => recordView(addendum)}
+                        />
+                      </>
+                    );
+                  }
+                : undefined
+            }
+          />
+        )
+      : undefined);
+
   const titleActions = (
     <>
       {host?.titleActions}
@@ -777,12 +840,11 @@ export function DocumentListField({
       {...dropHandlers}
     >
       <DocumentListGrid
-        rows={visibleRows}
+        rows={gridRows}
         title={title}
         noun={noun}
         columns={submissionMetadata ? submissionColumns : columns}
         submissionMetadata={submissionMetadata}
-        documentHref={host?.documentHref}
         titleActions={titleActions}
         renderActions={renderActions}
         getRowCapabilities={getRowCapabilities}

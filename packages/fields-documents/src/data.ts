@@ -108,7 +108,6 @@ export const SUBMISSION_COLUMNS = [
     filterable: true,
     resizable: true,
   },
-  { field: 'addendum', header: 'Addendum', filterable: true, resizable: true },
 ] as const;
 
 export const DOCUMENT_LIST_ACTIONS_COLUMN = {
@@ -365,17 +364,15 @@ export function priorRevisionOf(row: DocumentListDocument): DocumentRevision {
   };
 }
 
-/** Pass an addenda map (even when empty) to include submission metadata. */
 export function createLocalSourcePayload(
   rows: readonly DocumentListDocument[],
-  addendaByOriginal?: ReadonlyMap<string, readonly DocumentListDocument[]>
+  submissionMetadata = false
 ): {
   data: (DocumentListDocument & {
     documentType: string;
     submissionDate?: string;
     submissionTime?: string;
     submissionAuthor?: string;
-    addendum?: string;
   })[];
   typeInfo: typeof DOCUMENT_LIST_TYPE_INFO;
 } {
@@ -388,25 +385,14 @@ export function createLocalSourcePayload(
         row.nativeDocTypeLabel?.trim() ||
         row.nativeDocType?.trim() ||
         row.docType,
-      ...(addendaByOriginal && {
+      ...(submissionMetadata && {
         submissionDate: row.submittedAt ?? '',
         submissionTime: row.submittedAt ?? '',
         submissionAuthor: displayValue(row.recordedAuthor?.name),
-        addendum: addendumLabel(
-          row,
-          addendaByOriginal.get(row.id)?.length ?? 0
-        ),
       }),
     })),
-    typeInfo: addendaByOriginal
+    typeInfo: submissionMetadata
       ? SUBMISSION_TYPE_INFO
       : DOCUMENT_LIST_TYPE_INFO,
   };
-}
-
-function addendumLabel(row: DocumentListDocument, count: number): string {
-  if (row.linkedTo?.linkType === 'addendum') return 'Addendum';
-  if (count > 0) return count === 1 ? '1 addendum' : `${count} addenda`;
-  // The host's native rows carry a complete relationship even without a link.
-  return row.nativeVersion ? 'No' : EMPTY_DISPLAY;
 }

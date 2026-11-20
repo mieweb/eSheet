@@ -1385,6 +1385,7 @@ export interface DocumentListDetailRowProps {
   readonly runtime: DocumentListRuntimeState;
   /** Rows linked to this one (addenda), rendered beneath the content. */
   readonly related?: readonly DocumentListDocument[];
+  readonly renderRelated?: (document: DocumentListDocument) => ReactNode;
   /** The host's full-page document view (revision history lives there). */
   readonly historyHref?: string;
   readonly onViewed?: () => void;
@@ -1410,6 +1411,7 @@ export function DocumentListDetailRow({
   document,
   runtime,
   related,
+  renderRelated,
   historyHref,
   onViewed,
 }: DocumentListDetailRowProps): React.JSX.Element {
@@ -1536,7 +1538,17 @@ export function DocumentListDetailRow({
           No preview for this document.
         </p>
       )}
-      {related && related.length > 0 && (
+      {related && related.length > 0 && renderRelated && (
+        <div className="document-list-detail__addenda-group">
+          <h4>Addenda</h4>
+          <ul aria-label="Addenda">
+            {related.map((addendum) => (
+              <li key={addendum.id}>{renderRelated(addendum)}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {related && related.length > 0 && !renderRelated && (
         <ul className="document-list-detail__addenda" aria-label="Addenda">
           {related.map((addendum) => (
             <li key={addendum.id}>

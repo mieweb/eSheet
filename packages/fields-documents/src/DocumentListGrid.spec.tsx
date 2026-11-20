@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { createFormStore, type FieldComponentProps } from '@esheet/core';
 import { FormStoreContext } from '@esheet/fields';
 import { DocumentListField } from './DocumentListField.js';
@@ -22,7 +22,22 @@ vi.mock('@mieweb/ui/datavis', () => ({
   },
   DataVisNitroGrid: (props: Record<string, unknown>) => {
     captured.props = props;
-    return (props.titleActions as ReactNode) ?? null;
+    // Like PlainTable, the rendered columns are set when the table mounts.
+    const [columns] = useState(props.columns as readonly { header: string }[]);
+    return (
+      <>
+        {props.titleActions as ReactNode}
+        <table>
+          <thead>
+            <tr>
+              {columns.map(({ header }) => (
+                <th key={header}>{header}</th>
+              ))}
+            </tr>
+          </thead>
+        </table>
+      </>
+    );
   },
 }));
 
@@ -78,7 +93,7 @@ const row: DocumentListDocument = {
 const tableData: Record<string, unknown> = { ...row };
 
 describe('DocumentListGrid host integration', () => {
-  it('replaces Case Notes list columns and the addenda preview bullet without hiding addendum rows', async () => {
+  it('groups readable addenda under their original and preserves orphaned rows', async () => {
     const submittedAt = '2026-08-19T00:05:06.000Z';
     const original = {
       ...row,
@@ -92,6 +107,14 @@ describe('DocumentListGrid host integration', () => {
       id: 'addendum-1',
       nativeVersion: 'addendum-version',
       linkedTo: { id: original.id, linkType: 'addendum' as const },
+      submittedAt: '2026-08-20T01:00:00Z',
+      recordedAuthor: { id: 'first', name: 'First addendum author' },
+    };
+    const another = {
+      ...addendum,
+      id: 'addendum-2',
+      submittedAt: '2026-08-21T01:00:00Z',
+      recordedAuthor: { id: 'second', name: 'Second addendum author' },
     };
     const removed = {
       ...addendum,
@@ -99,6 +122,12 @@ describe('DocumentListGrid host integration', () => {
       removed: { reason: 'Removed' },
     };
     const hidden = { ...addendum, id: 'hidden' };
+    const orphan = {
+      ...addendum,
+      id: 'orphan',
+      submittedAt: undefined,
+      linkedTo: { id: hidden.id, linkType: 'addendum' as const },
+    };
     const nativeWithoutAddenda = {
       ...original,
       id: 'without-addenda',
@@ -106,6 +135,30 @@ describe('DocumentListGrid host integration', () => {
     };
     const legacy = { ...row, id: 'legacy' };
     const invalid = { ...row, id: 'invalid', submittedAt: 'not a timestamp' };
+    const repository = {
+      load: async () => ({
+        documents: [
+          addendum,
+          another,
+          removed,
+          hidden,
+          orphan,
+          legacy,
+          invalid,
+          nativeWithoutAddenda,
+          original,
+        ],
+      }),
+      loadContent: async (
+        _context: unknown,
+        document: DocumentListDocument
+      ) => ({
+        text: `Body of ${document.id}`,
+      }),
+      save: async (_context: unknown, document: DocumentListDocument) =>
+        document,
+      remove: async () => undefined,
+    };
     const formStore = createFormStore();
     const props = {
       field: {
@@ -113,15 +166,6 @@ describe('DocumentListGrid host integration', () => {
           id: 'caseNotes',
           question: 'Case notes',
           columns: ['date', 'docType', 'source', 'rev'],
-          documents: [
-            addendum,
-            removed,
-            hidden,
-            legacy,
-            invalid,
-            nativeWithoutAddenda,
-            original,
-          ],
         },
       },
       form: formStore,
@@ -129,6 +173,7 @@ describe('DocumentListGrid host integration', () => {
     render(
       <FormStoreContext.Provider value={formStore}>
         <DocumentListFieldProvider
+          runtime={{ repository }}
           host={{
             capabilities: {
               ...permissiveDocumentListCapabilities,
@@ -150,21 +195,18 @@ describe('DocumentListGrid host integration', () => {
       expect(getRows()?.map((doc) => doc.id)).toEqual([
         original.id,
         nativeWithoutAddenda.id,
-        addendum.id,
+        orphan.id,
         legacy.id,
         invalid.id,
       ])
     );
-    const [main, none, linked, unverified] = getRows();
+    const [main, , , unverified] = getRows();
     expect(main).toMatchObject({
       submissionDate: submittedAt,
       submissionTime: submittedAt,
       submissionAuthor: 'Original author',
-      addendum: '1 addendum',
     });
-    expect(none.addendum).toBe('No');
-    expect(linked.addendum).toBe('Addendum');
-    expect(unverified).toMatchObject({ submissionAuthor: '—', addendum: '—' });
+    expect(unverified.submissionAuthor).toBe('—');
     const grid = captured.props as {
       columns: readonly { header: string }[];
       formatCell: (
@@ -178,10 +220,9 @@ describe('DocumentListGrid host integration', () => {
       grid.columns
         .map(({ header }) => header)
         .filter((header) => header !== 'Actions')
-    ).toEqual(['Date', 'Time', 'Author', 'Addendum', 'Rev']);
+    ).toEqual(['Date', 'Time', 'Author', 'Rev']);
     const detail = render(
       <>
-        {grid.formatCell(main.addendum, main, { field: 'addendum' })}
         {grid.formatCell(main.submissionDate, main, {
           field: 'submissionDate',
         })}
@@ -195,20 +236,30 @@ describe('DocumentListGrid host integration', () => {
       </>
     );
     expect(
-      screen.getByRole('link', { name: '1 addendum' }).getAttribute('href')
-    ).toBe('#/document/addendum-1');
-    expect(
       screen
-        .getByRole('link', { name: 'Revision history' })
-        .getAttribute('href')
-    ).toBe('#/document/doc-1');
-    expect(screen.queryByRole('list', { name: 'Addenda' })).toBeNull();
+        .getAllByRole('link', { name: 'Revision history' })
+        .map((node) => node.getAttribute('href'))
+    ).toEqual([
+      '#/document/addendum-2',
+      '#/document/addendum-1',
+      '#/document/doc-1',
+    ]);
+    const addenda = screen.getByRole('list', { name: 'Addenda' });
+    await screen.findByText('Body of addendum-1');
+    expect(addenda.textContent).toContain('Body of addendum-2');
+    expect(addenda.textContent).toContain('First addendum author');
+    expect(addenda.textContent).toContain('Second addendum author');
     expect(
       Array.from(
         detail.container.querySelectorAll('time'),
         (node) => node.dateTime
       )
-    ).toEqual([submittedAt, submittedAt]);
+    ).toEqual([
+      submittedAt,
+      submittedAt,
+      another.submittedAt,
+      addendum.submittedAt,
+    ]);
   });
 
   it('keeps title-less presence badges regional without mutating document dates', async () => {
@@ -541,6 +592,35 @@ describe('DocumentListGrid host integration', () => {
       '_actions'
     );
     expect(actionRenderer).not.toHaveBeenCalled();
+  });
+
+  it('shows Actions without reopening the tab when edit access resolves', async () => {
+    const formStore = createFormStore();
+    const props = {
+      field: { definition: { id: 'caseNotes', documents: [row] } },
+      form: formStore,
+    } as unknown as FieldComponentProps;
+    const host = {
+      capabilities: permissiveDocumentListCapabilities,
+      author: { id: 'author', name: 'Author' },
+      showSubmissionMetadata: () => true,
+    };
+    const tab = (isReadOnly: boolean) => (
+      <FormStoreContext.Provider value={formStore}>
+        <DocumentListFieldProvider host={host}>
+          <DocumentListField {...props} isReadOnly={isReadOnly} />
+        </DocumentListFieldProvider>
+      </FormStoreContext.Provider>
+    );
+    const { rerender } = render(tab(true));
+    await screen.findByRole('columnheader', { name: 'Author' });
+    expect(screen.queryByRole('columnheader', { name: 'Actions' })).toBeNull();
+
+    rerender(tab(false));
+    await screen.findByRole('columnheader', { name: 'Actions' });
+
+    rerender(tab(true));
+    expect(screen.queryByRole('columnheader', { name: 'Actions' })).toBeNull();
   });
 
   it('maps DataVis row events and detail rows to document summaries', async () => {
