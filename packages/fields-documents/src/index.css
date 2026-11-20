@@ -910,7 +910,7 @@ body.condensed .document-list-grid .wcdv-th-detail svg {
   width: var(--document-list-outer-author-width);
 }
 
-.document-list-addenda-preview :is(.wcdv-th, .wcdv-td):nth-child(5) {
+.document-list-addenda-preview__spacer {
   display: var(--document-list-addenda-trailing-display, none);
 }
 

@@ -41,8 +41,10 @@ import {
   useDocumentListFieldHost,
   useDocumentListFieldRuntime,
   type DocumentListColumn,
+  type DocumentListFieldHost,
 } from './DocumentListGrid.js';
 import {
+  DOCUMENT_LIST_ACTIONS_COLUMN,
   DOCUMENT_LIST_COLUMNS,
   SUBMISSION_COLUMNS,
   documentListValueFromRows,
@@ -280,24 +282,38 @@ function DocumentListNotePreview({
   );
 }
 
-const ADDENDA_COLUMNS: TableRendererProps['columns'] = [
-  ...SUBMISSION_COLUMNS.map((column) => ({
-    ...column,
+const ADDENDA_COLUMNS = SUBMISSION_COLUMNS.map((column) => ({
+  ...column,
+  sortable: false,
+  filterable: false,
+  resizable: false,
+}));
+const ADDENDA_COLUMNS_WITH_SPACER: TableRendererProps['columns'] = [
+  ...ADDENDA_COLUMNS,
+  {
+    field: '_spacer',
+    header: '',
     sortable: false,
-    filterable: false,
-    resizable: false,
-  })),
-  { field: '_spacer', header: '', sortable: false },
+    className: 'document-list-addenda-preview__spacer',
+  },
+];
+const ADDENDA_COLUMNS_WITH_ACTIONS = [
+  ...ADDENDA_COLUMNS,
+  DOCUMENT_LIST_ACTIONS_COLUMN,
 ];
 
 function DocumentListAddendaPreview({
   addenda,
   runtime,
   onViewed,
+  documentHref,
+  renderDocumentActions,
 }: {
   readonly addenda: readonly DocumentListDocument[];
   readonly runtime: DocumentListRuntimeState;
   readonly onViewed: (row: DocumentListDocument) => void;
+  readonly documentHref?: DocumentListFieldHost['documentHref'];
+  readonly renderDocumentActions?: (row: DocumentListDocument) => ReactNode;
 }): React.JSX.Element {
   const documentsById = useMemo(
     () => new Map(addenda.map((document) => [document.id, document])),
@@ -332,8 +348,13 @@ function DocumentListAddendaPreview({
         Addenda
       </h3>
       <TableRenderer
+        key={renderDocumentActions ? 'with-actions' : 'without-actions'}
         viewData={viewData}
-        columns={ADDENDA_COLUMNS}
+        columns={
+          renderDocumentActions
+            ? ADDENDA_COLUMNS_WITH_ACTIONS
+            : ADDENDA_COLUMNS_WITH_SPACER
+        }
         features={{
           columnResize: false,
           columnReorder: false,
@@ -346,12 +367,29 @@ function DocumentListAddendaPreview({
         showRowCount={false}
         detailRowsExpanded
         onRowClick={(_, event) => {
+          if (
+            event.target instanceof Element &&
+            event.target.closest('.document-list-addenda-preview__actions')
+          ) {
+            return;
+          }
           event.currentTarget
             .querySelector<HTMLButtonElement>('.wcdv-td-detail-toggle button')
             ?.click();
         }}
-        formatCell={(value, _, column) => {
+        formatCell={(value, { _rowId }, column) => {
           if (column.field === '_spacer') return null;
+          if (column.field === DOCUMENT_LIST_ACTIONS_COLUMN.field) {
+            const addendum =
+              typeof _rowId === 'string'
+                ? documentsById.get(_rowId)
+                : undefined;
+            return addendum ? (
+              <span className="document-list-addenda-preview__actions">
+                {renderDocumentActions?.(addendum)}
+              </span>
+            ) : null;
+          }
           if (column.field === 'submissionAuthor') return String(value);
           const timestamp = typeof value === 'string' ? value : '';
           const label = formatSubmissionTimestamp(
@@ -368,6 +406,7 @@ function DocumentListAddendaPreview({
               <DocumentListDetailRow
                 document={addendum}
                 runtime={runtime}
+                historyHref={documentHref?.(addendum) ?? undefined}
                 onViewed={() => onViewed(addendum)}
               />
             </DocumentListBranchBody>
@@ -1003,6 +1042,10 @@ export function DocumentListField({
       ? defaultRenderActions
       : undefined
     : host?.renderActions ?? defaultRenderActions;
+  const renderAddendumActions =
+    renderActions &&
+    ((addendum: DocumentListDocument) =>
+      renderActions(addendum, getRowCapabilities(addendum)));
 
   const sharedGridProps = {
     columns: submissionMetadata ? submissionColumns : columns,
@@ -1048,6 +1091,8 @@ export function DocumentListField({
                               addenda={addenda}
                               runtime={runtimeState}
                               onViewed={recordView}
+                              documentHref={host?.documentHref}
+                              renderDocumentActions={renderAddendumActions}
                             />
                           )
                         }

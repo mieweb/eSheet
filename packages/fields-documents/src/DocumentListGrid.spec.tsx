@@ -100,6 +100,16 @@ const row: DocumentListDocument = {
 const tableData: Record<string, unknown> = { ...row };
 
 describe('DocumentListGrid host integration', () => {
+  beforeEach(() => {
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe() {}
+        disconnect() {}
+      }
+    );
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
@@ -138,13 +148,6 @@ describe('DocumentListGrid host integration', () => {
   });
 
   it('groups readable addenda under their original and preserves orphaned rows', async () => {
-    vi.stubGlobal(
-      'ResizeObserver',
-      class {
-        observe() {}
-        disconnect() {}
-      }
-    );
     const getBounds = Element.prototype.getBoundingClientRect;
     vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(
       function (this: Element) {
@@ -173,6 +176,7 @@ describe('DocumentListGrid host integration', () => {
     const addendum = {
       ...row,
       id: 'addendum-1',
+      title: 'First addendum',
       nativeVersion: 'addendum-version',
       linkedTo: { id: original.id, linkType: 'addendum' as const },
       submittedAt: '2026-08-20T01:00:00Z',
@@ -182,12 +186,15 @@ describe('DocumentListGrid host integration', () => {
     const another = {
       ...addendum,
       id: 'addendum-2',
+      title: 'Second addendum',
+      noteEditable: false,
       submittedAt: '2026-08-21T01:00:00Z',
       recordedAuthor: { id: 'second', name: 'Second addendum author' },
     };
     const removed = {
       ...addendum,
       id: 'removed',
+      title: 'Removed addendum',
       removed: { reason: 'Removed' },
     };
     const hidden = { ...addendum, id: 'hidden' };
@@ -204,6 +211,9 @@ describe('DocumentListGrid host integration', () => {
     };
     const legacy = { ...row, id: 'legacy' };
     const invalid = { ...row, id: 'invalid', submittedAt: 'not a timestamp' };
+    const save = vi.fn(
+      async (_context: unknown, document: DocumentListDocument) => document
+    );
     const repository = {
       load: async () => ({
         documents: [
@@ -224,8 +234,7 @@ describe('DocumentListGrid host integration', () => {
       ) => ({
         text: `Body of ${document.id}`,
       }),
-      save: async (_context: unknown, document: DocumentListDocument) =>
-        document,
+      save,
       remove: async () => undefined,
     };
     const formStore = createFormStore();
@@ -235,6 +244,7 @@ describe('DocumentListGrid host integration', () => {
           id: 'caseNotes',
           question: 'Case notes',
           columns: ['date', 'docType', 'source', 'rev'],
+          actions: ['downloadPdf'],
         },
       },
       form: formStore,
@@ -369,7 +379,27 @@ describe('DocumentListGrid host integration', () => {
     ).toBeNull();
     expect(addenda.getByText('Date')).toBeTruthy();
     expect(
-      addenda.queryByRole('link', { name: /Revision history/ })
+      addenda
+        .getAllByRole('link', { name: /Revision history/ })
+        .map((link) => link.getAttribute('href'))
+    ).toEqual(['#/document/addendum-2', '#/document/addendum-1']);
+    expect(
+      addenda.getByRole('button', { name: 'Edit First addendum' })
+    ).toBeTruthy();
+    expect(
+      addenda.getByRole('button', { name: 'Remove First addendum' })
+    ).toBeTruthy();
+    expect(
+      addenda.queryByRole('button', { name: 'Edit Second addendum' })
+    ).toBeNull();
+    expect(
+      addenda.queryByRole('button', { name: 'Remove Second addendum' })
+    ).toBeNull();
+    expect(
+      addenda.getByRole('button', { name: 'Export Second addendum' })
+    ).toBeTruthy();
+    expect(
+      addenda.queryByRole('button', { name: 'Restore Removed addendum' })
     ).toBeNull();
     const [toggleAll, newer, older] = addenda.getAllByRole('button', {
       expanded: true,
@@ -414,6 +444,99 @@ describe('DocumentListGrid host integration', () => {
       addendum.submittedAt,
       addendum.submittedAt,
     ]);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show removed (1)' }));
+    const updatedGrid = captured.props as GridProps;
+    detail.rerender(<>{updatedGrid.renderDetailRow({ data: main })}</>);
+    const removedAddenda = within(
+      detail.getByRole('region', { name: 'Addenda' })
+    );
+    const restore = await removedAddenda.findByRole('button', {
+      name: 'Restore Removed addendum',
+    });
+    const removedRow = restore.closest('tr');
+    if (!removedRow)
+      throw new Error('Restore button is not in an addendum row');
+    const removedToggle = within(removedRow).getByRole('button', {
+      expanded: true,
+    });
+    fireEvent.click(restore);
+    expect(removedToggle.getAttribute('aria-expanded')).toBe('true');
+    await waitFor(() =>
+      expect(save).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ id: removed.id, action: 'restore' }),
+        expect.any(AbortSignal)
+      )
+    );
+  });
+
+  it('uses host actions for grouped addenda only while writable', async () => {
+    const formStore = createFormStore();
+    const addendum: DocumentListDocument = {
+      ...row,
+      id: 'addendum-1',
+      title: 'Addendum',
+      linkedTo: { id: row.id, linkType: 'addendum' },
+    };
+    const props = {
+      field: {
+        definition: { id: 'caseNotes', documents: [row, addendum] },
+      },
+      form: formStore,
+    } as unknown as FieldComponentProps;
+    const runtime = {
+      repository: {
+        load: async () => ({ documents: [row, addendum] }),
+        loadContent: async () => ({ text: 'Addendum body' }),
+        save: async (_context: unknown, document: DocumentListDocument) =>
+          document,
+        remove: async () => undefined,
+      },
+    };
+    const host = {
+      showSubmissionMetadata: () => true,
+      capabilities: {
+        ...permissiveDocumentListCapabilities,
+        edit: () => false,
+      },
+      renderActions: (
+        document: DocumentListDocument,
+        { canEdit }: { canEdit: boolean }
+      ) => (
+        <button type="button" disabled={!canEdit}>
+          Review {document.title}
+        </button>
+      ),
+    };
+    const renderField = (isReadOnly: boolean) => (
+      <FormStoreContext.Provider value={formStore}>
+        <DocumentListFieldProvider host={host} runtime={runtime}>
+          <DocumentListField {...props} isReadOnly={isReadOnly} />
+        </DocumentListFieldProvider>
+      </FormStoreContext.Provider>
+    );
+    const renderOriginalDetail = () => {
+      const { renderDetailRow } = captured.props as {
+        renderDetailRow: (row: { data: Record<string, unknown> }) => ReactNode;
+      };
+      return renderDetailRow({ data: tableData });
+    };
+    const field = render(renderField(false));
+    const detail = render(<>{renderOriginalDetail()}</>);
+    const action = await detail.findByRole('button', {
+      name: 'Review Addendum',
+    });
+    expect(action.hasAttribute('disabled')).toBe(true);
+
+    field.rerender(renderField(true));
+    detail.rerender(<>{renderOriginalDetail()}</>);
+    expect(detail.getByRole('region', { name: 'Addenda' })).toBeTruthy();
+    expect(detail.queryByRole('columnheader', { name: 'Actions' })).toBeNull();
+    expect(
+      detail.queryByRole('button', { name: 'Review Addendum' })
+    ).toBeNull();
+    expect(await detail.findByText('Addendum body')).toBeTruthy();
   });
 
   it('keeps title-less presence badges regional without mutating document dates', async () => {
