@@ -105,6 +105,38 @@ describe('DocumentListGrid host integration', () => {
     vi.unstubAllGlobals();
   });
 
+  it('keeps linked addenda in the main grid without a form store', async () => {
+    const addendum: DocumentListDocument = {
+      ...row,
+      id: 'addendum-1',
+      linkedTo: { id: row.id, linkType: 'addendum' },
+    };
+    const props = {
+      field: {
+        definition: {
+          id: 'caseNotes',
+          question: 'Case notes',
+          documents: [row, addendum],
+        },
+      },
+    } as unknown as FieldComponentProps;
+
+    render(
+      <DocumentListFieldProvider host={{ showSubmissionMetadata: () => true }}>
+        <DocumentListField {...props} />
+      </DocumentListFieldProvider>
+    );
+
+    await waitFor(() => {
+      const sourceKey = sourceKeys.at(-1);
+      if (!sourceKey) throw new Error('Document grid source was not published');
+      const source = (
+        window as unknown as Record<string, { data: { id: string }[] }>
+      )[sourceKey];
+      expect(source?.data.map(({ id }) => id)).toEqual([row.id, addendum.id]);
+    });
+  });
+
   it('groups readable addenda under their original and preserves orphaned rows', async () => {
     vi.stubGlobal(
       'ResizeObserver',

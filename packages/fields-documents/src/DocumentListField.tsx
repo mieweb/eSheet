@@ -469,9 +469,11 @@ export function DocumentListField({
         }),
     [rows, showRemoved, submissionMetadata]
   );
+  const groupAddenda =
+    submissionMetadata && runtimeState !== null && !host?.renderDetailRow;
   const { gridRows, addendaByOriginal } = useMemo(() => {
     const addendaByOriginal = new Map<string, DocumentListDocument[]>();
-    if (!submissionMetadata || host?.renderDetailRow) {
+    if (!groupAddenda) {
       return { gridRows: visibleRows, addendaByOriginal };
     }
     const originalIds = new Set(
@@ -490,7 +492,7 @@ export function DocumentListField({
       return false;
     });
     return { gridRows, addendaByOriginal };
-  }, [visibleRows, submissionMetadata, host?.renderDetailRow]);
+  }, [visibleRows, groupAddenda]);
 
   // ED.38 — who is drafting each row, said on the row itself. One presence
   // subscription per visible row; the channel keeps them body-free. Keyed by
