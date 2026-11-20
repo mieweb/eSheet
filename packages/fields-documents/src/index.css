@@ -191,6 +191,12 @@
   min-width: 0;
 }
 
+/* Keep the expand-all chevron at row size without enlarging sort/filter icons. */
+body.condensed .document-list-grid .wcdv-th-detail svg {
+  width: 1rem !important;
+  height: 1rem !important;
+}
+
 .document-list-grid__title-actions {
   display: flex;
   align-items: center;
@@ -566,6 +572,63 @@
   padding: 0.25rem 0.5rem;
 }
 
+/* DataVis renders the preview in a sibling <tr>; join it to the open row. */
+.document-list-field--branch-details {
+  --document-list-toggle-width: 2.25rem;
+  --document-list-branch-indent: calc(var(--document-list-toggle-width) / 2);
+  --document-list-preview-inset: var(--document-list-branch-indent);
+  --document-list-row-stripe: color-mix(
+    in oklab,
+    var(--mieweb-muted, #f1f5f9) 50%,
+    transparent
+  );
+}
+
+.document-list-field--branch-details
+  > .document-list-grid
+  .wcdv-tr:not(.document-list-addenda-preview *) {
+  background-color: transparent;
+  box-shadow: none;
+}
+
+.document-list-field--branch-details
+  > .document-list-grid
+  .wcdv-tr:has(+ .wcdv-detail-tr) {
+  border-bottom-width: 0;
+}
+
+.document-list-field--branch-details
+  > .document-list-grid
+  .wcdv-tr[class~='bg-muted/50'],
+.document-list-field--branch-details
+  > .document-list-grid
+  .wcdv-tr[class~='bg-muted/50']
+  + .wcdv-detail-tr {
+  background-color: var(--document-list-row-stripe);
+}
+
+.document-list-field--branch-details
+  .wcdv-td-detail-toggle
+  button:focus-visible {
+  outline: 2px solid var(--mieweb-ring, #2563eb);
+  outline-offset: -2px;
+}
+
+.document-list-field--branch-details > .document-list-grid .wcdv-detail-td {
+  background: transparent;
+  padding: 0;
+  border-block-start: 0;
+}
+
+.document-list-field--branch-details
+  > .document-list-grid
+  .wcdv-detail-td
+  > .document-list-detail {
+  margin-inline-start: var(--document-list-branch-indent);
+  padding: 0 0 0.375rem;
+  padding-inline-start: var(--document-list-preview-inset);
+}
+
 /* A footnote, not a call to action. */
 .document-list-detail__history-link {
   font-size: 0.75rem;
@@ -652,8 +715,16 @@
   margin-inline: auto;
   min-width: 0;
   overflow: hidden;
-  border: 1px solid var(--mieweb-border, #e2e8f0);
-  border-radius: 0.375rem;
+}
+
+.document-list-detail__pdf .document-list-pdf-preview__pages {
+  max-width: 100%;
+}
+
+.document-list-detail__pdf .document-list-pdf-preview__page {
+  border: 0;
+  box-shadow: none;
+  margin-block-end: 0;
 }
 
 /* Detail cells span the scrollable table, not just the visible grid. */
@@ -665,17 +736,23 @@
   max-width: calc(100cqw - 3rem);
 }
 
+.document-list-note-preview__body > .document-list-detail__pdf {
+  margin-inline: 0;
+  max-width: max(
+    0px,
+    calc(
+      100cqw - var(--document-list-branch-indent) -
+        var(--document-list-preview-inset) - 1rem - 2px
+    )
+  );
+}
+
 .document-list-detail__image {
   max-width: 100%;
   max-height: 20rem;
   object-fit: contain;
   object-position: left top;
-  /* A framed mat keeps a screenshot from passing as live UI. */
-  border: 1px solid var(--mieweb-border, #e2e8f0);
-  border-radius: 0.375rem;
-  background: var(--mieweb-muted, #f1f5f9);
-  padding: 0.5rem;
-  box-sizing: border-box;
+  display: block;
 }
 
 /* ED.38 — who is drafting a row, said on the row (names in the tooltip). */
@@ -732,10 +809,176 @@
   color: var(--mieweb-muted-foreground, #64748b);
 }
 
-.document-list-detail__addenda-group {
-  margin-block-start: 0.75rem;
-  padding-inline-start: 1rem;
-  border-inline-start: 2px solid var(--mieweb-border, #e5e7eb);
+.document-list-note-preview__body,
+.document-list-addenda-preview__content {
+  --document-list-branch-padding: 0.375rem;
+  position: relative;
+  padding-block: var(--document-list-branch-padding);
+  font-size: 0.9375rem;
+  line-height: 1.7;
+}
+
+.document-list-note-preview__body {
+  border: 1px solid var(--mieweb-border, #e5e7eb);
+  border-block-start: 0;
+  border-inline-start: 0;
+  padding-inline: 0.5rem;
+}
+
+.document-list-note-preview__body::before,
+.document-list-addenda-preview__content::before {
+  content: '';
+  position: absolute;
+  box-sizing: border-box;
+  inset-block-start: 0;
+  /* Center the 1px horizontal stroke on the first line box. */
+  block-size: calc(var(--document-list-branch-padding) + 0.5lh + 0.5px);
+  inset-inline-start: var(
+    --document-list-elbow-start,
+    var(--document-list-elbow-fallback)
+  );
+  border-inline-start: 1px solid var(--mieweb-border, #e5e7eb);
+  border-block-end: 1px solid var(--mieweb-border, #e5e7eb);
+  pointer-events: none;
+}
+
+.document-list-note-preview__body::before {
+  --document-list-elbow-fallback: calc(-1 * var(--document-list-preview-inset));
+  inset-inline-end: calc(100% + 0.25rem);
+}
+
+.document-list-note-preview__body:has(+ .document-list-addenda-preview) {
+  border-block-end: 0;
+}
+
+.document-list-note-preview__body:has(
+    > :is(.document-list-detail__pdf, .document-list-detail__image)
+  ) {
+  border: 0;
+  margin-inline-start: 0.5rem;
+  padding: 0;
+}
+
+.document-list-note-preview__body:has(
+    > :is(.document-list-detail__pdf, .document-list-detail__image)
+  )::before {
+  content: none;
+}
+
+.document-list-addenda-preview {
+  --document-list-addenda-cell-padding: 0.5rem;
+  contain: inline-size;
+  border: 1px solid var(--mieweb-border, #e5e7eb);
+}
+
+.document-list-addenda-preview__heading {
+  margin: 0;
+  padding: 0.25rem var(--document-list-addenda-cell-padding);
+  border-block-end: 1px solid var(--mieweb-border, #e5e7eb);
+  background-color: var(--mieweb-muted, #f1f5f9);
+  color: var(--mieweb-foreground, #171717);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+:is(.dark, [data-theme='dark']) .document-list-addenda-preview__heading {
+  background-color: var(--mieweb-card, #262626);
+  color: var(--mieweb-foreground, #fafafa);
+}
+
+.document-list-addenda-preview table[role='grid'] {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.document-list-addenda-preview .wcdv-th-detail {
+  width: var(--document-list-toggle-width);
+}
+
+.document-list-addenda-preview .wcdv-th:nth-child(2) {
+  width: calc(
+    var(--document-list-outer-date-width) - var(--document-list-toggle-width) -
+      1px
+  );
+}
+
+.document-list-addenda-preview .wcdv-th:nth-child(3) {
+  width: var(--document-list-outer-time-width);
+}
+
+.document-list-addenda-preview .wcdv-th:nth-child(4) {
+  width: var(--document-list-outer-author-width);
+}
+
+.document-list-addenda-preview :is(.wcdv-th, .wcdv-td):nth-child(5) {
+  display: var(--document-list-addenda-trailing-display, none);
+}
+
+.document-list-addenda-preview .wcdv-detail-td {
+  padding: 0;
+  background: transparent;
+}
+
+.document-list-addenda-preview .wcdv-tr:nth-child(even of .wcdv-tr),
+.document-list-addenda-preview
+  .wcdv-tr:nth-child(even of .wcdv-tr)
+  + .wcdv-detail-tr {
+  background-color: var(--document-list-row-stripe);
+}
+
+:is(.dark, [data-theme='dark']) .document-list-addenda-preview .wcdv-th {
+  color: var(--mieweb-foreground, #fafafa);
+}
+
+:is(.dark, [data-theme='dark'])
+  .document-list-addenda-preview
+  :is(.wcdv-th, .wcdv-td):not(:last-child) {
+  border-inline-end-color: color-mix(
+    in srgb,
+    var(--mieweb-border, #404040),
+    var(--mieweb-foreground, #fafafa) 36%
+  );
+}
+
+.document-list-addenda-preview__content {
+  padding-inline: calc(
+      var(--document-list-toggle-width) + 1px +
+        var(--document-list-addenda-cell-padding)
+    )
+    var(--document-list-addenda-cell-padding);
+}
+
+.document-list-addenda-preview__content::before {
+  --document-list-elbow-fallback: var(--document-list-branch-indent);
+  inset-inline-end: calc(100% - var(--document-list-toggle-width) + 0.25rem);
+}
+
+.document-list-addenda-preview__content > .document-list-detail {
+  padding: 0;
+}
+
+body.condensed
+  :is(
+    .document-list-note-preview__body,
+    .document-list-addenda-preview__content
+  ) {
+  --document-list-branch-padding: 0.25rem;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+}
+
+.document-list-note-preview .md-prose,
+body.condensed .document-list-note-preview .document-list-detail__empty {
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.document-list-note-preview .md-prose > :first-child {
+  margin-block-start: 0;
+}
+
+.document-list-note-preview .md-prose > :last-child {
+  margin-block-end: 0;
 }
 
 /* ED.43 — the revision list: who, when, what kind of save. */

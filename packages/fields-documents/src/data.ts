@@ -28,6 +28,24 @@ export function today(at?: string): string {
   return (at ?? new Date().toISOString()).slice(0, 10);
 }
 
+export function formatSubmissionTimestamp(
+  value: string,
+  locale: string | string[] | undefined,
+  part: 'date' | 'time'
+): string | undefined {
+  const instant = new Date(value);
+  if (!Number.isFinite(instant.getTime())) return undefined;
+  const dateOptions = {
+    calendar: 'gregory',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  } as const;
+  return part === 'date'
+    ? instant.toLocaleDateString(locale, dateOptions)
+    : instant.toLocaleTimeString(locale);
+}
+
 /**
  * The serialization a doc type's saves use: its explicit choice, else what it
  * carries — a definition has answers for front matter, a plain type does not.
@@ -99,11 +117,23 @@ export const DOCUMENT_LIST_COLUMNS = [
 ] as const;
 
 export const SUBMISSION_COLUMNS = [
-  { field: 'submissionDate', header: 'Date', sortable: true, resizable: true },
-  { field: 'submissionTime', header: 'Time', resizable: true },
+  {
+    field: 'submissionDate',
+    header: 'Date',
+    className: 'document-list-grid__submission-date',
+    sortable: true,
+    resizable: true,
+  },
+  {
+    field: 'submissionTime',
+    header: 'Time',
+    className: 'document-list-grid__submission-time',
+    resizable: true,
+  },
   {
     field: 'submissionAuthor',
     header: 'Author',
+    className: 'document-list-grid__submission-author',
     sortable: true,
     filterable: true,
     resizable: true,

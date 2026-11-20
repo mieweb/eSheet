@@ -2,6 +2,8 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -10,7 +12,13 @@ import {
 } from 'react';
 import type { FieldComponentProps } from '@esheet/core';
 import { FormStoreContext } from '@esheet/fields';
-import { Button, Input, formatRegionalDate } from '@mieweb/ui';
+import { TableRenderer, type TableRendererProps } from '@mieweb/datavis';
+import {
+  Button,
+  Input,
+  formatRegionalDate,
+  regionalDateLocale,
+} from '@mieweb/ui';
 import {
   ArchiveRestore,
   FileDown,
@@ -38,6 +46,7 @@ import {
   DOCUMENT_LIST_COLUMNS,
   SUBMISSION_COLUMNS,
   documentListValueFromRows,
+  formatSubmissionTimestamp,
   normalizeDocumentRows,
   normalizeDocumentRow,
   parseDocumentListAnswer,
@@ -126,6 +135,249 @@ function canCreateAny(
   return definition.docTypes.some((docType) => capabilities.create(docType.id));
 }
 
+function DocumentListBranchBody({
+  className,
+  children,
+}: {
+  readonly className: string;
+  readonly children: ReactNode;
+}): React.JSX.Element {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const body = ref.current;
+    const row = body?.closest('.wcdv-detail-tr')?.previousElementSibling;
+    const toggle = row?.querySelector('.wcdv-td-detail-toggle');
+    const chevron = toggle?.querySelector('button svg');
+    if (!body || !toggle || !chevron) return;
+
+    const align = () => {
+      const bounds = body.getBoundingClientRect();
+      const icon = chevron.getBoundingClientRect();
+      if (!icon.width) return;
+      const center = icon.left + icon.width / 2;
+      const offset =
+        getComputedStyle(body).direction === 'rtl'
+          ? bounds.right - center
+          : center - bounds.left;
+      body.style.setProperty(
+        '--document-list-elbow-start',
+        `${offset - 0.5}px`
+      );
+    };
+
+    align();
+    window.addEventListener('resize', align);
+    const resize =
+      typeof ResizeObserver === 'undefined'
+        ? undefined
+        : new ResizeObserver(align);
+    resize?.observe(body);
+    resize?.observe(toggle);
+    resize?.observe(chevron);
+    return () => {
+      window.removeEventListener('resize', align);
+      resize?.disconnect();
+    };
+  }, []);
+
+  return (
+    <div className={className} ref={ref}>
+      {children}
+    </div>
+  );
+}
+
+function DocumentListNotePreview({
+  children,
+  addenda,
+}: {
+  readonly children: ReactNode;
+  readonly addenda?: ReactNode;
+}): React.JSX.Element {
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const detail = panelRef.current?.parentElement;
+    const cell = detail?.closest('.wcdv-detail-td');
+    const row = cell?.parentElement?.previousElementSibling;
+    if (!detail || !cell || !row) return;
+
+    const align = () => {
+      const toggle = row.querySelector('.wcdv-td-detail-toggle');
+      const firstColumn = toggle?.nextElementSibling;
+      if (!firstColumn) return;
+
+      const style = getComputedStyle(detail);
+      const rtl = style.direction === 'rtl';
+      const detailBounds = detail.getBoundingClientRect();
+      const columnBounds = firstColumn.getBoundingClientRect();
+      const offset = rtl
+        ? detailBounds.right - columnBounds.right
+        : columnBounds.left - detailBounds.left;
+      detail.style.setProperty(
+        '--document-list-preview-inset',
+        `${Math.max(0, offset)}px`
+      );
+
+      const time = firstColumn.nextElementSibling;
+      const author = time?.nextElementSibling;
+      const widths =
+        firstColumn.classList.contains('document-list-grid__submission-date') &&
+        time?.classList.contains('document-list-grid__submission-time') &&
+        author?.classList.contains('document-list-grid__submission-author')
+          ? [
+              columnBounds.width,
+              time.getBoundingClientRect().width,
+              author.getBoundingClientRect().width,
+            ]
+          : undefined;
+      const canAlign = widths?.every((width) => width > 0);
+      ['date', 'time', 'author'].forEach((column, index) => {
+        const property = `--document-list-outer-${column}-width`;
+        if (canAlign && widths) {
+          detail.style.setProperty(property, `${widths[index]}px`);
+        } else {
+          detail.style.removeProperty(property);
+        }
+      });
+      if (canAlign && author?.nextElementSibling) {
+        detail.style.setProperty(
+          '--document-list-addenda-trailing-display',
+          'table-cell'
+        );
+      } else {
+        detail.style.removeProperty('--document-list-addenda-trailing-display');
+      }
+    };
+
+    const resize =
+      typeof ResizeObserver === 'undefined'
+        ? undefined
+        : new ResizeObserver(align);
+    const observeColumns = () => {
+      resize?.disconnect();
+      resize?.observe(cell);
+      for (const column of Array.from(row.children)) resize?.observe(column);
+      align();
+    };
+    observeColumns();
+    const mutations = new MutationObserver(observeColumns);
+    mutations.observe(row, { childList: true });
+    return () => {
+      mutations.disconnect();
+      resize?.disconnect();
+    };
+  }, []);
+
+  return (
+    <div className="document-list-note-preview" ref={panelRef}>
+      <DocumentListBranchBody className="document-list-note-preview__body">
+        {children}
+      </DocumentListBranchBody>
+      {addenda}
+    </div>
+  );
+}
+
+const ADDENDA_COLUMNS: TableRendererProps['columns'] = [
+  ...SUBMISSION_COLUMNS.map((column) => ({
+    ...column,
+    sortable: false,
+    filterable: false,
+    resizable: false,
+  })),
+  { field: '_spacer', header: '', sortable: false },
+];
+
+function DocumentListAddendaPreview({
+  addenda,
+  runtime,
+  onViewed,
+}: {
+  readonly addenda: readonly DocumentListDocument[];
+  readonly runtime: DocumentListRuntimeState;
+  readonly onViewed: (row: DocumentListDocument) => void;
+}): React.JSX.Element {
+  const documentsById = useMemo(
+    () => new Map(addenda.map((document) => [document.id, document])),
+    [addenda]
+  );
+  const viewData = useMemo(
+    () => ({
+      isPlain: true,
+      isGroup: false,
+      isPivot: false,
+      data: addenda.map((document) => ({
+        _rowId: document.id,
+        submissionDate: document.submittedAt,
+        submissionTime: document.submittedAt,
+        submissionAuthor: `${document.recordedAuthor?.name || '—'}${
+          document.removed ? ' · Removed' : ''
+        }`,
+      })),
+    }),
+    [addenda]
+  );
+  const locale = regionalDateLocale();
+  const headingId = useId();
+  return (
+    <section
+      className="document-list-addenda-preview"
+      aria-labelledby={headingId}
+      onClick={(event) => event.stopPropagation()}
+      onKeyDown={(event) => event.stopPropagation()}
+    >
+      <h3 id={headingId} className="document-list-addenda-preview__heading">
+        Addenda
+      </h3>
+      <TableRenderer
+        viewData={viewData}
+        columns={ADDENDA_COLUMNS}
+        features={{
+          columnResize: false,
+          columnReorder: false,
+          headerContextMenu: false,
+          keyboardNav: false,
+          rowSelection: false,
+          stickyHeaders: false,
+        }}
+        sorts={null}
+        showRowCount={false}
+        detailRowsExpanded
+        onRowClick={(_, event) => {
+          event.currentTarget
+            .querySelector<HTMLButtonElement>('.wcdv-td-detail-toggle button')
+            ?.click();
+        }}
+        formatCell={(value, _, column) => {
+          if (column.field === '_spacer') return null;
+          if (column.field === 'submissionAuthor') return String(value);
+          const timestamp = typeof value === 'string' ? value : '';
+          const label = formatSubmissionTimestamp(
+            timestamp,
+            locale,
+            column.field === 'submissionDate' ? 'date' : 'time'
+          );
+          return label ? <time dateTime={timestamp}>{label}</time> : '—';
+        }}
+        renderDetailRow={({ rowId }) => {
+          const addendum = rowId ? documentsById.get(rowId) : undefined;
+          return addendum ? (
+            <DocumentListBranchBody className="document-list-addenda-preview__content">
+              <DocumentListDetailRow
+                document={addendum}
+                runtime={runtime}
+                onViewed={() => onViewed(addendum)}
+              />
+            </DocumentListBranchBody>
+          ) : null;
+        }}
+      />
+    </section>
+  );
+}
+
 export function DocumentListField({
   field,
   form,
@@ -188,6 +440,8 @@ export function DocumentListField({
   const [showRemoved, setShowRemoved] = useState(false);
   const submissionMetadata =
     host?.showSubmissionMetadata?.(field.definition.id) === true;
+  const alignDetailPreview =
+    submissionMetadata || host?.alignDetailPreview?.(field.definition.id);
   const [removing, setRemoving] = useState<DocumentListDocument | null>(null);
   const [renaming, setRenaming] = useState<DocumentListDocument | null>(null);
   const [exporting, setExporting] = useState<DocumentListDocument | null>(null);
@@ -764,53 +1018,44 @@ export function DocumentListField({
       category: 'Viewed',
       detail: `${row.title} (${row.id}), rev ${row.rev ?? 0}`,
     });
-  const renderPreview = (
-    row: DocumentListDocument,
-    runtime: DocumentListRuntimeState,
-    relatedContent?: ReactNode
-  ) => (
-    <DocumentListDetailRow
-      document={row}
-      runtime={runtime}
-      historyHref={host?.documentHref?.(row) ?? undefined}
-      onViewed={() => recordView(row)}
-      related={
-        submissionMetadata
-          ? undefined
-          : rows.filter((candidate) => candidate.linkedTo?.id === row.id)
-      }
-      relatedContent={relatedContent}
-    />
-  );
   const detailRenderer =
     host?.renderDetailRow ??
     (runtimeState
       ? (row: DocumentListDocument) => {
           const addenda = addendaByOriginal.get(row.id);
-          return renderPreview(
-            row,
-            runtimeState,
-            addenda && (
-              <section
-                className="document-list-detail__addenda-group"
-                aria-label="Addenda"
-                onKeyDown={(event) => event.stopPropagation()}
-              >
-                <DocumentListGrid
-                  {...sharedGridProps}
-                  rows={addenda}
-                  title="Addenda"
-                  noun="addendum"
-                  detailRowsExpanded
-                  renderDetailRow={(addendum) => (
-                    <>
-                      {addendum.removed && <p>Removed</p>}
-                      {renderPreview(addendum, runtimeState)}
-                    </>
-                  )}
-                />
-              </section>
-            )
+          return (
+            <DocumentListDetailRow
+              document={row}
+              runtime={runtimeState}
+              historyHref={host?.documentHref?.(row) ?? undefined}
+              onViewed={() => recordView(row)}
+              related={
+                submissionMetadata
+                  ? undefined
+                  : rows.filter(
+                      (candidate) => candidate.linkedTo?.id === row.id
+                    )
+              }
+              renderContent={
+                alignDetailPreview
+                  ? (content) => (
+                      <DocumentListNotePreview
+                        addenda={
+                          addenda && (
+                            <DocumentListAddendaPreview
+                              addenda={addenda}
+                              runtime={runtimeState}
+                              onViewed={recordView}
+                            />
+                          )
+                        }
+                      >
+                        {content}
+                      </DocumentListNotePreview>
+                    )
+                  : undefined
+              }
+            />
           );
         }
       : undefined);
@@ -836,6 +1081,10 @@ export function DocumentListField({
     <section
       className={`document-list-field${
         dropActive ? ' document-list-field--drop-active' : ''
+      }${
+        alignDetailPreview && !host?.renderDetailRow
+          ? ' document-list-field--branch-details'
+          : ''
       }`}
       aria-label={title}
       {...dropHandlers}

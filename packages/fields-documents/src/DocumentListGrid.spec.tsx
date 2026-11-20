@@ -73,6 +73,7 @@ vi.mock('datavis-ace', () => {
 });
 
 vi.mock('./DocumentListPdfPreview.js', () => ({
+  DocumentListPdfViewer: () => <div role="region" aria-label="PDF viewer" />,
   DocumentListPdfPreview: ({
     document,
   }: {
@@ -99,10 +100,39 @@ const row: DocumentListDocument = {
 const tableData: Record<string, unknown> = { ...row };
 
 describe('DocumentListGrid host integration', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
   it('groups readable addenda under their original and preserves orphaned rows', async () => {
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe() {}
+        disconnect() {}
+      }
+    );
+    const getBounds = Element.prototype.getBoundingClientRect;
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(
+      function (this: Element) {
+        if (this.matches('.wcdv-td-detail-toggle button svg')) {
+          return new DOMRect(this.closest('section') ? 66 : 19, 0, 16, 16);
+        }
+        if (
+          this.matches(
+            '.document-list-note-preview__body, .document-list-addenda-preview__content'
+          )
+        ) {
+          return new DOMRect(48, 0, 1000, 24);
+        }
+        return getBounds.call(this);
+      }
+    );
     const submittedAt = '2026-08-19T00:05:06.000Z';
     const original = {
       ...row,
+      rev: 2,
       nativeVersion: 'original-version',
       submittedAt,
       recordedAuthor: { id: 'original-author', name: 'Original author' },
@@ -115,6 +145,7 @@ describe('DocumentListGrid host integration', () => {
       linkedTo: { id: original.id, linkType: 'addendum' as const },
       submittedAt: '2026-08-20T01:00:00Z',
       recordedAuthor: { id: 'first', name: 'First addendum author' },
+      author: { id: 'editor', name: 'Latest editor' },
     };
     const another = {
       ...addendum,
@@ -215,7 +246,7 @@ describe('DocumentListGrid host integration', () => {
     });
     expect(unverified.submissionAuthor).toBe('—');
     type GridProps = {
-      columns: readonly { header: string }[];
+      columns: readonly { header: string; className?: string }[];
       formatCell: (
         value: unknown,
         data: Record<string, unknown>,
@@ -237,60 +268,115 @@ describe('DocumentListGrid host integration', () => {
         {grid.formatCell(unverified.submissionDate, unverified, {
           field: 'submissionDate',
         })}
-        {grid.renderDetailRow({ data: main })}
+        <table>
+          <tbody>
+            <tr>
+              <td className="wcdv-td-detail-toggle">
+                <button type="button" aria-label="Toggle note">
+                  <svg aria-hidden="true" />
+                </button>
+              </td>
+              {grid.columns.map(({ header, className }, index) => (
+                <td
+                  key={header}
+                  className={className}
+                  ref={(cell) => {
+                    if (cell) {
+                      cell.getBoundingClientRect = () =>
+                        new DOMRect(0, 0, [320, 260, 440, 60, 100][index], 24);
+                    }
+                  }}
+                />
+              ))}
+            </tr>
+            <tr className="wcdv-detail-tr">
+              <td className="wcdv-detail-td" colSpan={6}>
+                {grid.renderDetailRow({ data: main })}
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </>
     );
-    const addenda = within(screen.getByRole('region', { name: 'Addenda' }));
-    await addenda.findByRole('columnheader', { name: 'Date' });
+    const panel = detail.getByRole('region', { name: 'Addenda' });
+    const preview = panel.closest<HTMLElement>('.document-list-detail')!;
     expect(
-      addenda.getAllByRole('columnheader').map((cell) => cell.textContent)
-    ).toEqual(headers);
-    const nestedGrid = captured.props as GridProps;
-    const nestedRows = getRows();
-    expect(nestedRows.map(({ id }) => id)).toEqual([another.id, addendum.id]);
-    const previews = render(
-      <>
-        {nestedRows.map((data) => (
-          <div key={String(data.id)}>
-            {nestedGrid.formatCell(data.submissionDate, data, {
-              field: 'submissionDate',
-            })}
-            {nestedGrid.formatCell(data.submissionTime, data, {
-              field: 'submissionTime',
-            })}
-            {nestedGrid.formatCell(data.submissionAuthor, data, {
-              field: 'submissionAuthor',
-            })}
-            {nestedGrid.renderDetailRow({ data })}
-          </div>
-        ))}
-      </>
+      preview.style.getPropertyValue('--document-list-outer-date-width')
+    ).toBe('320px');
+    expect(
+      preview.style.getPropertyValue('--document-list-outer-time-width')
+    ).toBe('260px');
+    expect(
+      preview.style.getPropertyValue('--document-list-outer-author-width')
+    ).toBe('440px');
+    const addenda = within(panel);
+    const body = await detail.findByText('Body of doc-1');
+    const contentRow = body.parentElement;
+    expect(contentRow?.nextElementSibling).toBe(panel);
+    const addendumBody = await addenda.findByText('Body of addendum-1');
+    expect(
+      contentRow?.style.getPropertyValue('--document-list-elbow-start')
+    ).toBe('-21.5px');
+    expect(
+      addendumBody
+        .closest<HTMLElement>('.document-list-addenda-preview__content')
+        ?.style.getPropertyValue('--document-list-elbow-start')
+    ).toBe('25.5px');
+    expect(addenda.getByText('Body of addendum-2')).toBeTruthy();
+    expect(addenda.queryByText('Body of removed')).toBeNull();
+    expect(addenda.queryByText('Latest editor')).toBeNull();
+    expect(addenda.getByRole('grid')).toBeTruthy();
+    const heading = addenda.getByRole('heading', { name: 'Addenda' });
+    expect(heading.compareDocumentPosition(addenda.getByRole('grid'))).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING
     );
-    await screen.findByText('Body of addendum-1');
-    expect(previews.container.textContent).toContain('Body of addendum-2');
-    expect(previews.container.textContent).toContain('First addendum author');
-    expect(previews.container.textContent).toContain('Second addendum author');
     expect(
-      screen
-        .getAllByRole('link', { name: 'Revision history' })
-        .map((node) => node.getAttribute('href'))
-    ).toEqual([
-      '#/document/doc-1',
-      '#/document/addendum-2',
-      '#/document/addendum-1',
-    ]);
+      addenda.queryByRole('button', {
+        name: /grid actions|toggle all document details/i,
+      })
+    ).toBeNull();
+    expect(addenda.getByText('Date')).toBeTruthy();
+    expect(
+      addenda.queryByRole('link', { name: /Revision history/ })
+    ).toBeNull();
+    const [toggleAll, newer, older] = addenda.getAllByRole('button', {
+      expanded: true,
+    });
+    expect(newer.closest('tr')?.textContent).toContain(
+      'Second addendum author'
+    );
+    expect(older.closest('tr')?.textContent).toContain('First addendum author');
+    expect(toggleAll.getAttribute('aria-expanded')).toBe('true');
+
+    fireEvent.click(addenda.getByText('Second addendum author'));
+    expect(newer.getAttribute('aria-expanded')).toBe('false');
+    expect(older.getAttribute('aria-expanded')).toBe('true');
+    expect(addenda.queryByText('Body of addendum-2')).toBeNull();
+    expect(toggleAll.getAttribute('aria-expanded')).toBe('false');
+
+    fireEvent.click(toggleAll);
+    expect(newer.getAttribute('aria-expanded')).toBe('true');
+    expect(older.getAttribute('aria-expanded')).toBe('true');
+    fireEvent.click(toggleAll);
+    expect(newer.getAttribute('aria-expanded')).toBe('false');
+    expect(older.getAttribute('aria-expanded')).toBe('false');
+    expect(addenda.queryByText(/Body of addendum-/)).toBeNull();
+    expect(body.closest('[hidden]')).toBeNull();
+    const history = detail.getByRole('link', {
+      name: 'Revision history (rev 2)',
+    });
+    expect(history.getAttribute('href')).toBe('#/document/doc-1');
+    expect(panel.compareDocumentPosition(history)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING
+    );
     expect(
       Array.from(
         detail.container.querySelectorAll('time'),
         (node) => node.dateTime
       )
-    ).toEqual([submittedAt, submittedAt]);
-    expect(
-      Array.from(
-        previews.container.querySelectorAll('time'),
-        (node) => node.dateTime
-      )
     ).toEqual([
+      submittedAt,
+      submittedAt,
       another.submittedAt,
       another.submittedAt,
       addendum.submittedAt,
@@ -493,7 +579,15 @@ describe('DocumentListGrid host integration', () => {
       formStore.getState().setIdentity({ name: 'Case Viewer' });
       const repository = {
         load: vi.fn(async () => ({ documents: [row] })),
-        loadContent: vi.fn(async () => ({ text: 'Private document prose' })),
+        loadContent: vi.fn(async () => ({
+          text: 'Private document prose',
+          ...(fieldId === 'caseDocuments'
+            ? {
+                contentType: 'application/pdf',
+                blob: new Blob([], { type: 'application/pdf' }),
+              }
+            : {}),
+        })),
         save: vi.fn(
           async (_context: unknown, document: DocumentListDocument) => document
         ),
@@ -506,7 +600,11 @@ describe('DocumentListGrid host integration', () => {
       render(
         <FormStoreContext.Provider value={formStore}>
           <DocumentListFieldProvider
-            host={{ capabilities: permissiveDocumentListCapabilities }}
+            host={{
+              capabilities: permissiveDocumentListCapabilities,
+              alignDetailPreview: (id) =>
+                id === 'letterLog' || id === 'caseDocuments',
+            }}
             runtime={{ repository }}
           >
             <DocumentListField {...props} />
@@ -527,7 +625,20 @@ describe('DocumentListGrid host integration', () => {
         }) => ReactNode;
       };
       const first = render(<>{grid.renderDetailRow({ data: tableData })}</>);
-      expect(await screen.findByText('Private document prose')).toBeTruthy();
+      const prose = await first.findByText('Private document prose');
+      const alignedBody = prose.closest('.document-list-note-preview__body');
+      if (fieldId === 'caseNotes') {
+        expect(alignedBody).toBeNull();
+      } else {
+        expect(alignedBody).not.toBeNull();
+        expect(first.queryByRole('region', { name: 'Addenda' })).toBeNull();
+      }
+      if (fieldId === 'caseDocuments') {
+        const viewer = await first.findByRole('region', { name: 'PDF viewer' });
+        expect(viewer.closest('.document-list-note-preview__body')).toBe(
+          alignedBody
+        );
+      }
       expect(formStore.getState().responses._activity?.activity).toEqual([
         expect.objectContaining({
           fieldId,

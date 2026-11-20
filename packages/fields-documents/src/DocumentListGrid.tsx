@@ -21,6 +21,7 @@ import {
   DOCUMENT_LIST_ACTIONS_COLUMN,
   DOCUMENT_LIST_COLUMNS,
   DOCUMENT_LIST_DEFAULT_NOUN,
+  formatSubmissionTimestamp,
   normalizeDocumentRow,
   SUBMISSION_COLUMNS,
 } from './data.js';
@@ -177,6 +178,8 @@ export type DocumentListFieldHost = Pick<
     document: DocumentListDocument
   ) => string | null | undefined;
   readonly showSubmissionMetadata?: (fieldId: string) => boolean;
+  /** Align built-in detail previews to the first data column without changing columns or addenda. */
+  readonly alignDetailPreview?: (fieldId: string) => boolean;
 };
 
 const DocumentListFieldHostContext =
@@ -437,20 +440,17 @@ export function DocumentListGrid({
         column.field === 'submissionDate' ||
         column.field === 'submissionTime'
       ) {
-        const instant = new Date(text);
-        if (!Number.isFinite(instant.getTime())) return '—';
-        const locale = regionalDateLocale();
-        return (
+        const label = formatSubmissionTimestamp(
+          text,
+          regionalDateLocale(),
+          column.field === 'submissionDate' ? 'date' : 'time'
+        );
+        return label ? (
           <time dateTime={text} className="document-list-grid__nowrap">
-            {column.field === 'submissionDate'
-              ? instant.toLocaleDateString(locale, {
-                  calendar: 'gregory',
-                  year: 'numeric',
-                  month: '2-digit',
-                  day: '2-digit',
-                })
-              : instant.toLocaleTimeString(locale)}
+            {label}
           </time>
+        ) : (
+          '—'
         );
       }
       // An ISO date must never break on its hyphens.
