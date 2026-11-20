@@ -447,7 +447,7 @@ describe('EsheetRenderer', () => {
         },
       ],
     };
-    const { container, rerender } = render(
+    const { container, getByRole, rerender } = render(
       <EsheetRenderer ref={ref} formDataInput={form} readOnly />
     );
     await act(async () => undefined);
@@ -460,10 +460,25 @@ describe('EsheetRenderer', () => {
     expect(wrapper.getAttribute('data-readonly')).toBe('true');
     expect(wrapper.hasAttribute('aria-readonly')).toBe(false);
     expect(wrapper.className).toContain('ms:pointer-events-none');
-    expect(container.querySelector('.renderer-readonly-banner')).not.toBeNull();
+    expect(
+      container.querySelector('.renderer-readonly-banner')?.textContent
+    ).toBe('This form is read-only. Responses cannot be changed.');
+
+    rerender(
+      <EsheetRenderer
+        ref={ref}
+        formDataInput={form}
+        readOnly
+        readOnlyMessage="This form has already been submitted."
+      />
+    );
+    expect(
+      container.querySelector('.renderer-readonly-banner')?.textContent
+    ).toBe('This form has already been submitted.');
+    expect(store.getState().isReadOnly('q1')).toBe(true);
 
     // Typing goes nowhere while frozen...
-    const input = wrapper.querySelector('input')!;
+    const input = getByRole('textbox');
     fireEvent.change(input, { target: { value: 'typed while frozen' } });
     expect(store.getState().responses['q1']).toBeUndefined();
 

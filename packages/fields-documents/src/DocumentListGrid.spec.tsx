@@ -99,8 +99,13 @@ describe('DocumentListGrid host integration', () => {
       removed: { reason: 'Removed' },
     };
     const hidden = { ...addendum, id: 'hidden' };
-    const nativeWithoutAddenda = { ...original, id: 'without-addenda' };
+    const nativeWithoutAddenda = {
+      ...original,
+      id: 'without-addenda',
+      submittedAt: '2026-08-19T01:00:00+02:00',
+    };
     const legacy = { ...row, id: 'legacy' };
+    const invalid = { ...row, id: 'invalid', submittedAt: 'not a timestamp' };
     const formStore = createFormStore();
     const props = {
       field: {
@@ -109,12 +114,13 @@ describe('DocumentListGrid host integration', () => {
           question: 'Case notes',
           columns: ['date', 'docType', 'source', 'rev'],
           documents: [
-            original,
             addendum,
             removed,
             hidden,
-            nativeWithoutAddenda,
             legacy,
+            invalid,
+            nativeWithoutAddenda,
+            original,
           ],
         },
       },
@@ -146,6 +152,7 @@ describe('DocumentListGrid host integration', () => {
         nativeWithoutAddenda.id,
         addendum.id,
         legacy.id,
+        invalid.id,
       ])
     );
     const [main, none, linked, unverified] = getRows();

@@ -200,11 +200,14 @@ export function DocumentListField({
     () =>
       rows
         .filter((row) => showRemoved || !row.removed)
-        // Newest on top: date is the shared display column; undated rows
-        // sink, ties keep answer order (stable sort).
+        // Newest on top; missing dates sink and ties keep answer order.
         .sort((a, b) => {
-          if (submissionMetadata)
-            return (b.submittedAt ?? '').localeCompare(a.submittedAt ?? '');
+          if (submissionMetadata) {
+            const aTime = Date.parse(a.submittedAt ?? '');
+            const bTime = Date.parse(b.submittedAt ?? '');
+            if (Number.isNaN(aTime)) return Number.isNaN(bTime) ? 0 : 1;
+            return Number.isNaN(bTime) ? -1 : bTime - aTime;
+          }
           const aDate = a.date === '—' ? '' : a.date;
           const bDate = b.date === '—' ? '' : b.date;
           return bDate.localeCompare(aDate);

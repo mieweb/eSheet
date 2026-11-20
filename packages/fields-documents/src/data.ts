@@ -365,11 +365,18 @@ export function priorRevisionOf(row: DocumentListDocument): DocumentRevision {
   };
 }
 
+/** Pass an addenda map (even when empty) to include submission metadata. */
 export function createLocalSourcePayload(
   rows: readonly DocumentListDocument[],
   addendaByOriginal?: ReadonlyMap<string, readonly DocumentListDocument[]>
 ): {
-  data: (DocumentListDocument & { documentType: string })[];
+  data: (DocumentListDocument & {
+    documentType: string;
+    submissionDate?: string;
+    submissionTime?: string;
+    submissionAuthor?: string;
+    addendum?: string;
+  })[];
   typeInfo: typeof DOCUMENT_LIST_TYPE_INFO;
 } {
   return {
