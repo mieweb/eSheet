@@ -35,6 +35,7 @@ import {
 } from './DocumentListGrid.js';
 import {
   DOCUMENT_LIST_COLUMNS,
+  SUBMISSION_COLUMNS,
   documentListValueFromRows,
   normalizeDocumentRows,
   normalizeDocumentRow,
@@ -60,6 +61,10 @@ import {
 
 const subscribeToNothing = (): (() => void) => () => {};
 const getEmptyRuntimeState = (): DocumentListRuntimeState | null => null;
+const submissionColumns = [
+  ...SUBMISSION_COLUMNS,
+  ...DOCUMENT_LIST_COLUMNS.filter(({ field }) => field === 'rev'),
+];
 
 /** A field offers every workflow unless its definition names a subset. */
 function offers(
@@ -180,6 +185,8 @@ export function DocumentListField({
   );
   // ED.42 — tombstoned rows leave the grid but never the answer.
   const [showRemoved, setShowRemoved] = useState(false);
+  const submissionMetadata =
+    host?.showSubmissionMetadata?.(field.definition.id) === true;
   const [removing, setRemoving] = useState<DocumentListDocument | null>(null);
   const [renaming, setRenaming] = useState<DocumentListDocument | null>(null);
   const [exporting, setExporting] = useState<DocumentListDocument | null>(null);
@@ -196,11 +203,13 @@ export function DocumentListField({
         // Newest on top: date is the shared display column; undated rows
         // sink, ties keep answer order (stable sort).
         .sort((a, b) => {
+          if (submissionMetadata)
+            return (b.submittedAt ?? '').localeCompare(a.submittedAt ?? '');
           const aDate = a.date === '—' ? '' : a.date;
           const bDate = b.date === '—' ? '' : b.date;
           return bDate.localeCompare(aDate);
         }),
-    [rows, showRemoved]
+    [rows, showRemoved, submissionMetadata]
   );
 
   // ED.38 — who is drafting each row, said on the row itself. One presence
@@ -244,10 +253,11 @@ export function DocumentListField({
     // Badges ride the title cell; a field whose columns drop `title`
     // (title-less notes) badges its first column instead.
     const configured = definition.columns;
-    const presenceField =
-      !configured || configured.includes('title')
-        ? 'title'
-        : configured[0] ?? 'title';
+    const presenceField = submissionMetadata
+      ? 'submissionAuthor'
+      : !configured || configured.includes('title')
+      ? 'title'
+      : configured[0] ?? 'title';
     const format: NonNullable<
       Parameters<typeof DocumentListGrid>[0]['formatCell']
     > = (value, row, column) => {
@@ -278,7 +288,7 @@ export function DocumentListField({
       );
     };
     return format;
-  }, [draftChannel, definition.columns, presenceByRow]);
+  }, [draftChannel, definition.columns, presenceByRow, submissionMetadata]);
   const sharedSession = useComposerSession();
   // Standalone fields (no provider) keep a session of their own, so the panel
   // behaves the same either way — it just cannot outlive this field.
@@ -611,9 +621,11 @@ export function DocumentListField({
             })
           }
           // ED.41 — the original renders its addenda beneath itself.
-          related={rows.filter(
-            (candidate) => candidate.linkedTo?.id === row.id
-          )}
+          related={
+            submissionMetadata
+              ? undefined
+              : rows.filter((candidate) => candidate.linkedTo?.id === row.id)
+          }
         />
       )
     : undefined;
@@ -765,7 +777,9 @@ export function DocumentListField({
         rows={visibleRows}
         title={title}
         noun={noun}
-        columns={columns}
+        columns={submissionMetadata ? submissionColumns : columns}
+        submissionMetadata={submissionMetadata}
+        documentHref={host?.documentHref}
         titleActions={titleActions}
         renderActions={renderActions}
         getRowCapabilities={getRowCapabilities}
