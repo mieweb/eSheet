@@ -6,15 +6,11 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
+  type ReactNode,
 } from 'react';
 import type { FieldComponentProps } from '@esheet/core';
 import { FormStoreContext } from '@esheet/fields';
-import {
-  Button,
-  Input,
-  formatRegionalDate,
-  regionalDateLocale,
-} from '@mieweb/ui';
+import { Button, Input, formatRegionalDate } from '@mieweb/ui';
 import {
   ArchiveRestore,
   FileDown,
@@ -752,6 +748,15 @@ export function DocumentListField({
       : undefined
     : host?.renderActions ?? defaultRenderActions;
 
+  const sharedGridProps = {
+    columns: submissionMetadata ? submissionColumns : columns,
+    submissionMetadata,
+    renderActions,
+    getRowCapabilities,
+    formatCell: presenceFormatCell,
+    onRowClick: host?.onRowClick,
+    onRowDoubleClick: host?.onRowDoubleClick,
+  };
   const recordView = (row: DocumentListDocument) =>
     form.getState().appendActivity({
       fieldId: field.definition.id,
@@ -759,59 +764,55 @@ export function DocumentListField({
       category: 'Viewed',
       detail: `${row.title} (${row.id}), rev ${row.rev ?? 0}`,
     });
+  const renderPreview = (
+    row: DocumentListDocument,
+    runtime: DocumentListRuntimeState,
+    relatedContent?: ReactNode
+  ) => (
+    <DocumentListDetailRow
+      document={row}
+      runtime={runtime}
+      historyHref={host?.documentHref?.(row) ?? undefined}
+      onViewed={() => recordView(row)}
+      related={
+        submissionMetadata
+          ? undefined
+          : rows.filter((candidate) => candidate.linkedTo?.id === row.id)
+      }
+      relatedContent={relatedContent}
+    />
+  );
   const detailRenderer =
     host?.renderDetailRow ??
     (runtimeState
-      ? (row: DocumentListDocument) => (
-          <DocumentListDetailRow
-            document={row}
-            runtime={runtimeState}
-            historyHref={host?.documentHref?.(row) ?? undefined}
-            onViewed={() => recordView(row)}
-            related={
-              submissionMetadata
-                ? addendaByOriginal.get(row.id)
-                : rows.filter((candidate) => candidate.linkedTo?.id === row.id)
-            }
-            renderRelated={
-              submissionMetadata
-                ? (addendum) => {
-                    const submittedAt = Date.parse(addendum.submittedAt ?? '');
-                    return (
-                      <>
-                        <div className="document-list-detail__addendum-meta">
-                          {Number.isFinite(submittedAt) ? (
-                            <time dateTime={addendum.submittedAt}>
-                              {new Date(submittedAt).toLocaleString(
-                                regionalDateLocale()
-                              )}
-                            </time>
-                          ) : (
-                            '—'
-                          )}
-                          {' · '}
-                          {addendum.recordedAuthor?.name || '—'}
-                          {addendum.removed && ' · Removed'}
-                          {renderActions?.(
-                            addendum,
-                            getRowCapabilities(addendum)
-                          )}
-                        </div>
-                        <DocumentListDetailRow
-                          document={addendum}
-                          runtime={runtimeState}
-                          historyHref={
-                            host?.documentHref?.(addendum) ?? undefined
-                          }
-                          onViewed={() => recordView(addendum)}
-                        />
-                      </>
-                    );
-                  }
-                : undefined
-            }
-          />
-        )
+      ? (row: DocumentListDocument) => {
+          const addenda = addendaByOriginal.get(row.id);
+          return renderPreview(
+            row,
+            runtimeState,
+            addenda && (
+              <section
+                className="document-list-detail__addenda-group"
+                aria-label="Addenda"
+                onKeyDown={(event) => event.stopPropagation()}
+              >
+                <DocumentListGrid
+                  {...sharedGridProps}
+                  rows={addenda}
+                  title="Addenda"
+                  noun="addendum"
+                  detailRowsExpanded
+                  renderDetailRow={(addendum) => (
+                    <>
+                      {addendum.removed && <p>Removed</p>}
+                      {renderPreview(addendum, runtimeState)}
+                    </>
+                  )}
+                />
+              </section>
+            )
+          );
+        }
       : undefined);
 
   const titleActions = (
@@ -840,17 +841,11 @@ export function DocumentListField({
       {...dropHandlers}
     >
       <DocumentListGrid
+        {...sharedGridProps}
         rows={gridRows}
         title={title}
         noun={noun}
-        columns={submissionMetadata ? submissionColumns : columns}
-        submissionMetadata={submissionMetadata}
         titleActions={titleActions}
-        renderActions={renderActions}
-        getRowCapabilities={getRowCapabilities}
-        formatCell={presenceFormatCell}
-        onRowClick={host?.onRowClick}
-        onRowDoubleClick={host?.onRowDoubleClick}
         renderDetailRow={detailRenderer}
         detailRowsExpanded={gridDetailRowsExpanded}
         onToggleDetails={handleToggleDetails}

@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import { useState, type ReactNode } from 'react';
 import { createFormStore, type FieldComponentProps } from '@esheet/core';
 import { FormStoreContext } from '@esheet/fields';
@@ -175,6 +181,7 @@ describe('DocumentListGrid host integration', () => {
         <DocumentListFieldProvider
           runtime={{ repository }}
           host={{
+            author: { id: 'editor', name: 'Latest editor' },
             capabilities: {
               ...permissiveDocumentListCapabilities,
               view: (doc) => doc.id !== hidden.id,
@@ -207,7 +214,7 @@ describe('DocumentListGrid host integration', () => {
       submissionAuthor: 'Original author',
     });
     expect(unverified.submissionAuthor).toBe('—');
-    const grid = captured.props as {
+    type GridProps = {
       columns: readonly { header: string }[];
       formatCell: (
         value: unknown,
@@ -216,11 +223,9 @@ describe('DocumentListGrid host integration', () => {
       ) => ReactNode;
       renderDetailRow: (row: { data: Record<string, unknown> }) => ReactNode;
     };
-    expect(
-      grid.columns
-        .map(({ header }) => header)
-        .filter((header) => header !== 'Actions')
-    ).toEqual(['Date', 'Time', 'Author', 'Rev']);
+    const grid = captured.props as GridProps;
+    const headers = grid.columns.map(({ header }) => header);
+    expect(headers).toEqual(['Date', 'Time', 'Author', 'Rev', 'Actions']);
     const detail = render(
       <>
         {grid.formatCell(main.submissionDate, main, {
@@ -235,29 +240,60 @@ describe('DocumentListGrid host integration', () => {
         {grid.renderDetailRow({ data: main })}
       </>
     );
+    const addenda = within(screen.getByRole('region', { name: 'Addenda' }));
+    await addenda.findByRole('columnheader', { name: 'Date' });
+    expect(
+      addenda.getAllByRole('columnheader').map((cell) => cell.textContent)
+    ).toEqual(headers);
+    const nestedGrid = captured.props as GridProps;
+    const nestedRows = getRows();
+    expect(nestedRows.map(({ id }) => id)).toEqual([another.id, addendum.id]);
+    const previews = render(
+      <>
+        {nestedRows.map((data) => (
+          <div key={String(data.id)}>
+            {nestedGrid.formatCell(data.submissionDate, data, {
+              field: 'submissionDate',
+            })}
+            {nestedGrid.formatCell(data.submissionTime, data, {
+              field: 'submissionTime',
+            })}
+            {nestedGrid.formatCell(data.submissionAuthor, data, {
+              field: 'submissionAuthor',
+            })}
+            {nestedGrid.renderDetailRow({ data })}
+          </div>
+        ))}
+      </>
+    );
+    await screen.findByText('Body of addendum-1');
+    expect(previews.container.textContent).toContain('Body of addendum-2');
+    expect(previews.container.textContent).toContain('First addendum author');
+    expect(previews.container.textContent).toContain('Second addendum author');
     expect(
       screen
         .getAllByRole('link', { name: 'Revision history' })
         .map((node) => node.getAttribute('href'))
     ).toEqual([
+      '#/document/doc-1',
       '#/document/addendum-2',
       '#/document/addendum-1',
-      '#/document/doc-1',
     ]);
-    const addenda = screen.getByRole('list', { name: 'Addenda' });
-    await screen.findByText('Body of addendum-1');
-    expect(addenda.textContent).toContain('Body of addendum-2');
-    expect(addenda.textContent).toContain('First addendum author');
-    expect(addenda.textContent).toContain('Second addendum author');
     expect(
       Array.from(
         detail.container.querySelectorAll('time'),
         (node) => node.dateTime
       )
+    ).toEqual([submittedAt, submittedAt]);
+    expect(
+      Array.from(
+        previews.container.querySelectorAll('time'),
+        (node) => node.dateTime
+      )
     ).toEqual([
-      submittedAt,
-      submittedAt,
       another.submittedAt,
+      another.submittedAt,
+      addendum.submittedAt,
       addendum.submittedAt,
     ]);
   });

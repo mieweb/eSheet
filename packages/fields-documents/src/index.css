@@ -738,16 +738,6 @@
   border-inline-start: 2px solid var(--mieweb-border, #e5e7eb);
 }
 
-.document-list-detail__addenda-group > ul {
-  padding: 0;
-  list-style: none;
-}
-
-.document-list-detail__addendum-meta {
-  margin-block-start: 0.75rem;
-  color: var(--mieweb-muted-foreground, #64748b);
-}
-
 /* ED.43 — the revision list: who, when, what kind of save. */
 .document-list-detail__history {
   margin-top: 0.75rem;
