@@ -174,6 +174,29 @@ describe('document list data', () => {
     ]);
   });
 
+  it('exposes submission metadata on the payload row only when enabled', () => {
+    const submittedAt = '2026-08-19T00:05:06.000Z';
+    const rows = normalizeDocumentRows([
+      {
+        id: 'doc-1',
+        nativeVersion: 'original-version',
+        submittedAt,
+        recordedAuthor: { id: 'author', name: 'Original author' },
+      },
+    ]);
+    const [regular] = createLocalSourcePayload(rows).data;
+    expect(regular.submissionDate).toBeUndefined();
+    expect(regular.submissionTime).toBeUndefined();
+    expect(regular.submissionAuthor).toBeUndefined();
+    expect(regular.addendum).toBeUndefined();
+
+    const [submission] = createLocalSourcePayload(rows, new Map()).data;
+    expect(submission.submissionDate).toBe(submittedAt);
+    expect(submission.submissionTime).toBe(submittedAt);
+    expect(submission.submissionAuthor).toBe('Original author');
+    expect(submission.addendum).toBe('No');
+  });
+
   it('projects WebChart classification for display and sorting without replacing the MIME subtype', () => {
     const rows = normalizeDocumentRows([
       {

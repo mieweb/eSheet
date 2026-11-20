@@ -113,6 +113,8 @@ export interface EsheetRendererProps {
    * `setResponse`) still apply. Defaults to `false`.
    */
   readOnly?: boolean;
+  /** Optional explanation to show while the form is read-only. */
+  readOnlyMessage?: string;
   /**
    * Identity of the current user. When provided, activity entries are stamped
    * with `identity.name`. Absent → entries save unstamped.
@@ -282,6 +284,7 @@ const EsheetRendererInner = React.forwardRef<
     initialPageId,
     onPageChange,
     readOnly = false,
+    readOnlyMessage = 'This form is read-only. Responses cannot be changed.',
     identity,
   },
   ref
@@ -475,7 +478,7 @@ const EsheetRendererInner = React.forwardRef<
             <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
             <path d="M7 11V7a5 5 0 0 1 10 0v4" />
           </svg>
-          This form is read-only. Responses cannot be changed.
+          {readOnlyMessage}
         </div>
       )}
       <RendererBody

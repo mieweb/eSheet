@@ -98,6 +98,19 @@ export const DOCUMENT_LIST_COLUMNS = [
   },
 ] as const;
 
+export const SUBMISSION_COLUMNS = [
+  { field: 'submissionDate', header: 'Date', sortable: true, resizable: true },
+  { field: 'submissionTime', header: 'Time', resizable: true },
+  {
+    field: 'submissionAuthor',
+    header: 'Author',
+    sortable: true,
+    filterable: true,
+    resizable: true,
+  },
+  { field: 'addendum', header: 'Addendum', filterable: true, resizable: true },
+] as const;
+
 export const DOCUMENT_LIST_ACTIONS_COLUMN = {
   field: '_actions',
   header: 'Actions',
@@ -114,6 +127,15 @@ export const DOCUMENT_LIST_TYPE_INFO = [
     type: 'string',
   })),
   { field: 'documentType', displayText: 'Document Type', type: 'string' },
+];
+
+const SUBMISSION_TYPE_INFO = [
+  ...DOCUMENT_LIST_TYPE_INFO,
+  ...SUBMISSION_COLUMNS.map((column) => ({
+    field: column.field,
+    displayText: column.header,
+    type: 'string',
+  })),
 ];
 
 const EMPTY_DISPLAY = '—';
@@ -242,6 +264,7 @@ export function normalizeDocumentRow(
   if (!input || !id) return null;
 
   const author = authorValue(input.author);
+  const recordedAuthor = authorValue(input.recordedAuthor);
   const rev = revValue(input.rev);
   const action = isRevisionAction(input.action) ? input.action : null;
   const linkedTo = linkValue(input.linkedTo);
@@ -270,6 +293,7 @@ export function normalizeDocumentRow(
     ...(typeof input.submittedAt === 'string'
       ? { submittedAt: input.submittedAt }
       : {}),
+    ...(recordedAuthor ? { recordedAuthor } : {}),
     source: displayValue(
       input.source ?? input.from ?? (author ? undefined : input.author)
     ),
@@ -341,10 +365,18 @@ export function priorRevisionOf(row: DocumentListDocument): DocumentRevision {
   };
 }
 
+/** Pass an addenda map (even when empty) to include submission metadata. */
 export function createLocalSourcePayload(
-  rows: readonly DocumentListDocument[]
+  rows: readonly DocumentListDocument[],
+  addendaByOriginal?: ReadonlyMap<string, readonly DocumentListDocument[]>
 ): {
-  data: (DocumentListDocument & { documentType: string })[];
+  data: (DocumentListDocument & {
+    documentType: string;
+    submissionDate?: string;
+    submissionTime?: string;
+    submissionAuthor?: string;
+    addendum?: string;
+  })[];
   typeInfo: typeof DOCUMENT_LIST_TYPE_INFO;
 } {
   return {
@@ -356,7 +388,25 @@ export function createLocalSourcePayload(
         row.nativeDocTypeLabel?.trim() ||
         row.nativeDocType?.trim() ||
         row.docType,
+      ...(addendaByOriginal && {
+        submissionDate: row.submittedAt ?? '',
+        submissionTime: row.submittedAt ?? '',
+        submissionAuthor: displayValue(row.recordedAuthor?.name),
+        addendum: addendumLabel(
+          row,
+          addendaByOriginal.get(row.id)?.length ?? 0
+        ),
+      }),
     })),
-    typeInfo: DOCUMENT_LIST_TYPE_INFO,
+    typeInfo: addendaByOriginal
+      ? SUBMISSION_TYPE_INFO
+      : DOCUMENT_LIST_TYPE_INFO,
   };
+}
+
+function addendumLabel(row: DocumentListDocument, count: number): string {
+  if (row.linkedTo?.linkType === 'addendum') return 'Addendum';
+  if (count > 0) return count === 1 ? '1 addendum' : `${count} addenda`;
+  // The host's native rows carry a complete relationship even without a link.
+  return row.nativeVersion ? 'No' : EMPTY_DISPLAY;
 }

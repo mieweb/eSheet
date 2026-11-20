@@ -11,7 +11,7 @@ import {
   type MouseEvent,
   type ReactNode,
 } from 'react';
-import { Button, formatRegionalDate } from '@mieweb/ui';
+import { Button, formatRegionalDate, regionalDateLocale } from '@mieweb/ui';
 import { DataVisNitroContext, DataVisNitroGrid } from '@mieweb/ui/datavis';
 import { ComputedView, Source } from 'datavis-ace';
 import { LayoutList, SquarePen, Upload } from 'lucide-react';
@@ -22,6 +22,7 @@ import {
   DOCUMENT_LIST_COLUMNS,
   DOCUMENT_LIST_DEFAULT_NOUN,
   normalizeDocumentRow,
+  SUBMISSION_COLUMNS,
 } from './data.js';
 import type { FieldProvider } from '@esheet/fields';
 import { FormStoreContext } from '@esheet/fields';
@@ -49,6 +50,7 @@ const OptionalDataVisNitroGrid =
 
 export type DocumentListColumn =
   | (typeof DOCUMENT_LIST_COLUMNS)[number]
+  | (typeof SUBMISSION_COLUMNS)[number]
   | typeof DOCUMENT_LIST_ACTIONS_COLUMN;
 
 export interface DocumentListRowCapabilities {
@@ -105,6 +107,8 @@ export interface DocumentListGridProps extends DocumentListToolbarProps {
     row: DocumentListDocument
   ) => DocumentListRowCapabilities;
   formatCell?: DataVisGridProps['formatCell'];
+  submissionMetadata?: boolean;
+  documentHref?: DocumentListFieldHost['documentHref'];
   onRowClick?: (row: DocumentListDocument, event: MouseEvent) => void;
   onRowDoubleClick?: (row: DocumentListDocument, event: MouseEvent) => void;
   renderDetailRow?: (row: DocumentListDocument) => ReactNode;
@@ -173,6 +177,7 @@ export type DocumentListFieldHost = Pick<
   readonly documentHref?: (
     document: DocumentListDocument
   ) => string | null | undefined;
+  readonly showSubmissionMetadata?: (fieldId: string) => boolean;
 };
 
 const DocumentListFieldHostContext =
@@ -304,10 +309,10 @@ function createSourceKey(): string {
 
 function publishRows(
   sourceKey: string,
-  rows: readonly DocumentListDocument[]
+  payload: ReturnType<typeof createLocalSourcePayload>
 ): void {
   const windowRecord = window as unknown as Record<string, unknown>;
-  windowRecord[sourceKey] = createLocalSourcePayload(rows);
+  windowRecord[sourceKey] = payload;
 }
 
 function refreshView(view: ComputedView): void {
@@ -317,7 +322,9 @@ function refreshView(view: ComputedView): void {
   view.getData();
 }
 
-function useDocumentListView(rows: readonly DocumentListDocument[]): {
+function useDocumentListView(
+  payload: ReturnType<typeof createLocalSourcePayload>
+): {
   sourceKey: string;
   view: DataVisView;
 } {
@@ -331,7 +338,7 @@ function useDocumentListView(rows: readonly DocumentListDocument[]): {
     if (typeof window === 'undefined' || sourceKey.current === null) return;
 
     const key = sourceKey.current;
-    publishRows(key, rows);
+    publishRows(key, payload);
     const nextView = new NamedComputedView(
       new Source({ type: 'local', varName: key }, undefined, undefined, {
         name: `DocumentListSource:${key}`,
@@ -354,13 +361,13 @@ function useDocumentListView(rows: readonly DocumentListDocument[]): {
     if (typeof window === 'undefined' || sourceKey.current === null) return;
 
     const key = sourceKey.current;
-    publishRows(key, rows);
+    publishRows(key, payload);
     const refreshTimer = window.setTimeout(() => {
       if (viewRef.current) refreshView(viewRef.current);
     }, 0);
 
     return () => window.clearTimeout(refreshTimer);
-  }, [rows]);
+  }, [payload]);
 
   return { sourceKey: sourceKey.current, view };
 }
@@ -374,6 +381,8 @@ export function DocumentListGrid({
   renderActions,
   getRowCapabilities,
   formatCell,
+  submissionMetadata,
+  documentHref,
   onRowClick,
   onRowDoubleClick,
   renderDetailRow,
@@ -385,7 +394,23 @@ export function DocumentListGrid({
   error,
   style,
 }: DocumentListGridProps): React.JSX.Element {
-  const { view } = useDocumentListView(rows);
+  const addendaByOriginal = useMemo(() => {
+    if (!submissionMetadata) return undefined;
+    const addenda = new Map<string, DocumentListDocument[]>();
+    for (const row of rows) {
+      if (row.removed || row.linkedTo?.linkType !== 'addendum') continue;
+      const originalId = row.linkedTo.id;
+      const linked = addenda.get(originalId);
+      if (linked) linked.push(row);
+      else addenda.set(originalId, [row]);
+    }
+    return addenda;
+  }, [rows, submissionMetadata]);
+  const payload = useMemo(
+    () => createLocalSourcePayload(rows, addendaByOriginal),
+    [rows, addendaByOriginal]
+  );
+  const { view } = useDocumentListView(payload);
   const gridColumns = useMemo(() => {
     const displayed = columns.map((column) =>
       column.field === 'docType' ? { ...column, field: 'documentType' } : column
@@ -422,6 +447,37 @@ export function DocumentListGrid({
       // datavis renders exactly what formatCell returns — undefined is a
       // blank cell, not a fallback — so plain cells return their value.
       const text = value == null ? '' : String(value);
+      if (
+        column.field === 'submissionDate' ||
+        column.field === 'submissionTime'
+      ) {
+        const instant = new Date(text);
+        if (!Number.isFinite(instant.getTime())) return '—';
+        const locale = regionalDateLocale();
+        return (
+          <time dateTime={text} className="document-list-grid__nowrap">
+            {column.field === 'submissionDate'
+              ? instant.toLocaleDateString(locale, {
+                  calendar: 'gregory',
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit',
+                })
+              : instant.toLocaleTimeString(locale)}
+          </time>
+        );
+      }
+      if (column.field === 'addendum' && document) {
+        const addenda = addendaByOriginal?.get(document.id);
+        const href =
+          addenda?.length === 1 ? documentHref?.(addenda[0]) : undefined;
+        if (href)
+          return (
+            <a href={href} onClick={(event) => event.stopPropagation()}>
+              {text}
+            </a>
+          );
+      }
       // An ISO date must never break on its hyphens.
       return column.field === 'date' ? (
         <span className="document-list-grid__nowrap">
@@ -431,7 +487,13 @@ export function DocumentListGrid({
         text
       );
     },
-    [formatCell, getRowCapabilities, renderActions]
+    [
+      addendaByOriginal,
+      documentHref,
+      formatCell,
+      getRowCapabilities,
+      renderActions,
+    ]
   );
   const gridOnRowClick = useMemo<DataVisGridProps['onRowClick']>(
     () =>

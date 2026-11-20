@@ -78,6 +78,139 @@ const row: DocumentListDocument = {
 const tableData: Record<string, unknown> = { ...row };
 
 describe('DocumentListGrid host integration', () => {
+  it('replaces Case Notes list columns and the addenda preview bullet without hiding addendum rows', async () => {
+    const submittedAt = '2026-08-19T00:05:06.000Z';
+    const original = {
+      ...row,
+      nativeVersion: 'original-version',
+      submittedAt,
+      recordedAuthor: { id: 'original-author', name: 'Original author' },
+      author: { id: 'editor', name: 'Latest editor' },
+    };
+    const addendum = {
+      ...row,
+      id: 'addendum-1',
+      nativeVersion: 'addendum-version',
+      linkedTo: { id: original.id, linkType: 'addendum' as const },
+    };
+    const removed = {
+      ...addendum,
+      id: 'removed',
+      removed: { reason: 'Removed' },
+    };
+    const hidden = { ...addendum, id: 'hidden' };
+    const nativeWithoutAddenda = {
+      ...original,
+      id: 'without-addenda',
+      submittedAt: '2026-08-19T01:00:00+02:00',
+    };
+    const legacy = { ...row, id: 'legacy' };
+    const invalid = { ...row, id: 'invalid', submittedAt: 'not a timestamp' };
+    const formStore = createFormStore();
+    const props = {
+      field: {
+        definition: {
+          id: 'caseNotes',
+          question: 'Case notes',
+          columns: ['date', 'docType', 'source', 'rev'],
+          documents: [
+            addendum,
+            removed,
+            hidden,
+            legacy,
+            invalid,
+            nativeWithoutAddenda,
+            original,
+          ],
+        },
+      },
+      form: formStore,
+    } as unknown as FieldComponentProps;
+    render(
+      <FormStoreContext.Provider value={formStore}>
+        <DocumentListFieldProvider
+          host={{
+            capabilities: {
+              ...permissiveDocumentListCapabilities,
+              view: (doc) => doc.id !== hidden.id,
+            },
+            showSubmissionMetadata: (fieldId) => fieldId === 'caseNotes',
+            documentHref: (doc) => `#/document/${doc.id}`,
+          }}
+        >
+          <DocumentListField {...props} />
+        </DocumentListFieldProvider>
+      </FormStoreContext.Provider>
+    );
+    const getRows = () =>
+      (
+        window as unknown as Record<string, { data: Record<string, unknown>[] }>
+      )[sourceKeys.at(-1)!]?.data;
+    await waitFor(() =>
+      expect(getRows()?.map((doc) => doc.id)).toEqual([
+        original.id,
+        nativeWithoutAddenda.id,
+        addendum.id,
+        legacy.id,
+        invalid.id,
+      ])
+    );
+    const [main, none, linked, unverified] = getRows();
+    expect(main).toMatchObject({
+      submissionDate: submittedAt,
+      submissionTime: submittedAt,
+      submissionAuthor: 'Original author',
+      addendum: '1 addendum',
+    });
+    expect(none.addendum).toBe('No');
+    expect(linked.addendum).toBe('Addendum');
+    expect(unverified).toMatchObject({ submissionAuthor: '—', addendum: '—' });
+    const grid = captured.props as {
+      columns: readonly { header: string }[];
+      formatCell: (
+        value: unknown,
+        data: Record<string, unknown>,
+        column: { field: string }
+      ) => ReactNode;
+      renderDetailRow: (row: { data: Record<string, unknown> }) => ReactNode;
+    };
+    expect(
+      grid.columns
+        .map(({ header }) => header)
+        .filter((header) => header !== 'Actions')
+    ).toEqual(['Date', 'Time', 'Author', 'Addendum', 'Rev']);
+    const detail = render(
+      <>
+        {grid.formatCell(main.addendum, main, { field: 'addendum' })}
+        {grid.formatCell(main.submissionDate, main, {
+          field: 'submissionDate',
+        })}
+        {grid.formatCell(main.submissionTime, main, {
+          field: 'submissionTime',
+        })}
+        {grid.formatCell(unverified.submissionDate, unverified, {
+          field: 'submissionDate',
+        })}
+        {grid.renderDetailRow({ data: main })}
+      </>
+    );
+    expect(
+      screen.getByRole('link', { name: '1 addendum' }).getAttribute('href')
+    ).toBe('#/document/addendum-1');
+    expect(
+      screen
+        .getByRole('link', { name: 'Revision history' })
+        .getAttribute('href')
+    ).toBe('#/document/doc-1');
+    expect(screen.queryByRole('list', { name: 'Addenda' })).toBeNull();
+    expect(
+      Array.from(
+        detail.container.querySelectorAll('time'),
+        (node) => node.dateTime
+      )
+    ).toEqual([submittedAt, submittedAt]);
+  });
+
   it('keeps title-less presence badges regional without mutating document dates', async () => {
     const languages = vi
       .spyOn(navigator, 'languages', 'get')
