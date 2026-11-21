@@ -57,6 +57,11 @@ export function LandingPage() {
             to="/renderer"
           />
           <DemoCard
+            title="Form Renderer PDF"
+            desc="Complete imported PDF forms with editable AcroForm fields."
+            to="/renderer-pdf"
+          />
+          <DemoCard
             title="Linked Responses"
             desc="Edit two independent responses and follow their links in either direction."
             to="/linked-responses"

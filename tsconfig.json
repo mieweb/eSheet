@@ -34,6 +34,9 @@
       "path": "./packages/field-kerebron"
     },
     {
+      "path": "./packages/pdf"
+    },
+    {
       "path": "./packages/field-health"
     },
     {

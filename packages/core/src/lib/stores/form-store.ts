@@ -112,6 +112,11 @@ export interface FormState {
     definition: FormDefinition,
     responses?: FieldResponseMap
   ) => void;
+  /** Replace the form definition and imported responses in one store update. */
+  replaceDefinitionAndResponses: (
+    definition: FormDefinition,
+    responses: FieldResponseMap
+  ) => void;
   /** Update the top-level form id without replacing fields. */
   setFormId: (id: string) => void;
   /** Update the form title. */
@@ -609,6 +614,9 @@ export function createFormStore(
           extensions: {},
         });
       })(),
+
+    replaceDefinitionAndResponses: (definition, responses) =>
+      get().loadDefinition(definition, responses),
 
     setFormId: (id) => {
       const nextId = id.trim();

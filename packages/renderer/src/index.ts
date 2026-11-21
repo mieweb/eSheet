@@ -4,7 +4,10 @@ import '@esheet/styles';
 export {
   EsheetRenderer,
   type EsheetRendererProps,
+  type EsheetRendererEsheetProps,
+  type EsheetRendererPdfProps,
   type EsheetRendererHandle,
+  type RendererRepresentation,
   type GetResponseOptions,
   type GetResponseResult,
   type ResponseFormat,

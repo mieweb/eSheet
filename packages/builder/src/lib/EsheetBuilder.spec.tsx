@@ -6,6 +6,7 @@ import {
   waitFor,
   screen,
 } from '@testing-library/react';
+import React from 'react';
 import {
   createFormStore,
   createUIStore,
@@ -15,6 +16,7 @@ import {
 } from '@esheet/core';
 import {
   EsheetBuilder,
+  type EsheetBuilderHandle,
   useFormStore,
   useUI,
   FormStoreContext,
@@ -22,12 +24,36 @@ import {
 } from './EsheetBuilder.js';
 import { registerCustomFieldTypes } from '@esheet/fields';
 import { BuilderHeader } from './components/BuilderHeader.js';
+import { PdfView, type ImportedPdfSession } from './components/PdfView.js';
 import { EditPanel } from './components/edit-panel/EditPanel.js';
 import { useFormApi } from './hooks/useFormApi.js';
 import { createBuilderTools } from './builder-tools.js';
 import { executeToolCall } from './mcp/tool-executor.js';
 import type { StoreApi } from 'zustand';
 import { vi } from 'vitest';
+
+const mockImportPdf = vi.hoisted(() => vi.fn());
+const mockGetDocument = vi.hoisted(() => vi.fn());
+
+vi.mock('@esheet/pdf', () => ({
+  applyPdfFieldLayout: vi.fn(),
+  applyPdfPlacementOverrides: vi.fn((_, mappings) => mappings),
+  generatePdf: vi.fn().mockResolvedValue({
+    bytes: new Uint8Array([1]),
+    mappings: [],
+    pageCount: 1,
+  }),
+  importPdf: mockImportPdf,
+}));
+
+vi.mock('pdfjs-dist', () => ({
+  GlobalWorkerOptions: {},
+  getDocument: mockGetDocument,
+}));
+
+vi.mock('pdfjs-dist/build/pdf.worker.min.mjs?url', () => ({
+  default: 'pdf-worker.js',
+}));
 
 function renderWithContexts(
   form: FormStore,
@@ -65,6 +91,50 @@ afterEach(() => {
 });
 
 describe('EsheetBuilder', () => {
+  it('loads a PDF through its handle and retains the document session', async () => {
+    const ref = React.createRef<EsheetBuilderHandle>();
+    let form: FormStore | null = null;
+    mockImportPdf.mockResolvedValue({
+      definition: {
+        id: 'imported-form',
+        pages: [
+          {
+            id: 'imported-page',
+            fields: [{ id: 'name', fieldType: 'text', question: 'Name' }],
+          },
+        ],
+      },
+      responses: { name: { answer: 'Ada Lovelace' } },
+      mappings: [],
+      sourcePdf: new Uint8Array([37, 80, 68, 70]),
+      warnings: [],
+      pageCount: 1,
+    });
+
+    function Capture() {
+      form = useFormStore();
+      return null;
+    }
+
+    render(
+      <EsheetBuilder ref={ref}>
+        <Capture />
+      </EsheetBuilder>
+    );
+
+    let session: ImportedPdfSession | undefined;
+    await act(async () => {
+      session = await ref.current?.loadPdf(new Uint8Array([37, 80, 68, 70]));
+    });
+
+    expect(mockImportPdf).toHaveBeenCalledWith(expect.any(Uint8Array));
+    expect(session?.pageCount).toBe(1);
+    expect(form!.getState().responses).toEqual({
+      name: { answer: 'Ada Lovelace' },
+    });
+    expect(screen.getByText('PDF designer')).toBeTruthy();
+  });
+
   it('edits diagram attachments for root and section child fields in the Edit panel', () => {
     const form = createFormStore({
       id: 'diagram-attachments',
@@ -834,6 +904,744 @@ describe('BuilderHeader import feedback', () => {
     });
 
     expect(form.getState().normalized.pages[0]?.fieldIds ?? []).toContain('ok');
+  });
+});
+
+describe('BuilderHeader PDF representation', () => {
+  it('keeps Build and Preview activity while switching their representations', () => {
+    render(<EsheetBuilder />);
+    fireEvent.click(screen.getByRole('button', { name: 'PDF' }));
+
+    expect(screen.getByText('PDF designer')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Build' })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Preview' }));
+    fireEvent.click(screen.getByRole('button', { name: 'PDF' }));
+
+    expect(screen.getByText('PDF preview')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Open PDF' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '+ Add field' })).toBeNull();
+  });
+});
+
+describe('PdfView import workflow', () => {
+  beforeEach(() => {
+    mockImportPdf.mockReset();
+    mockGetDocument.mockReset();
+    mockGetDocument.mockReturnValue({
+      destroy: vi.fn(),
+      promise: new Promise(() => undefined),
+    });
+  });
+
+  it('confirms replacement then loads imported fields and responses', async () => {
+    const form = createFormStore({
+      id: 'existing-form',
+      pages: [
+        {
+          id: 'page-1',
+          fields: [{ id: 'existing', fieldType: 'text', question: 'Existing' }],
+        },
+      ],
+    });
+    const ui = createUIStore();
+    mockImportPdf.mockResolvedValue({
+      definition: {
+        id: 'imported-form',
+        pages: [
+          {
+            id: 'imported-page',
+            fields: [
+              { id: 'imported-name', fieldType: 'text', question: 'Name' },
+            ],
+          },
+        ],
+      },
+      responses: { 'imported-name': { answer: 'Ada Lovelace' } },
+      mappings: [],
+      sourcePdf: new Uint8Array([37, 80, 68, 70]),
+      warnings: [],
+      pageCount: 1,
+    });
+
+    renderWithContexts(form, ui, <PdfView />);
+    fireEvent.change(screen.getByLabelText('Open PDF'), {
+      target: {
+        files: [new File(['pdf'], 'intake.pdf', { type: 'application/pdf' })],
+      },
+    });
+
+    expect(mockImportPdf).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole('heading', {
+        name: 'Replace the current questionnaire?',
+      })
+    ).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Replace and open' }));
+
+    await waitFor(() => {
+      expect(mockImportPdf).toHaveBeenCalledTimes(1);
+    });
+    expect(form.getState().normalized.pages[0]?.fieldIds).toEqual([
+      'imported-name',
+    ]);
+    expect(form.getState().responses).toEqual({
+      'imported-name': { answer: 'Ada Lovelace' },
+    });
+  });
+
+  it('shows fieldless import warnings and failures', async () => {
+    const form = createFormStore();
+    const ui = createUIStore();
+    mockImportPdf.mockResolvedValueOnce({
+      definition: {
+        id: 'fieldless-pdf',
+        pages: [{ id: 'pdf-page-1', fields: [] }],
+      },
+      responses: {},
+      mappings: [],
+      sourcePdf: new Uint8Array([37, 80, 68, 70]),
+      warnings: [
+        {
+          code: 'no-acroform-fields',
+          message: 'The PDF has no supported AcroForm fields.',
+        },
+      ],
+      pageCount: 1,
+    });
+
+    renderWithContexts(form, ui, <PdfView />);
+    const input = screen.getByLabelText('Open PDF');
+    fireEvent.change(input, {
+      target: {
+        files: [new File(['pdf'], 'flat.pdf', { type: 'application/pdf' })],
+      },
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('The PDF has no supported AcroForm fields.')
+      ).toBeTruthy();
+    });
+
+    mockImportPdf.mockRejectedValueOnce(new Error('The PDF is malformed.'));
+    fireEvent.change(input, {
+      target: {
+        files: [new File(['pdf'], 'bad.pdf', { type: 'application/pdf' })],
+      },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Replace and open' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert').textContent).toContain(
+        'The PDF is malformed.'
+      );
+    });
+  });
+
+  it('retains an imported PDF session when the view remounts', async () => {
+    const form = createFormStore();
+    const ui = createUIStore();
+    mockImportPdf.mockResolvedValue({
+      definition: {
+        id: 'imported-form',
+        pages: [{ id: 'page-1', fields: [] }],
+      },
+      responses: {},
+      mappings: [],
+      sourcePdf: new Uint8Array([37, 80, 68, 70]),
+      warnings: [],
+      pageCount: 1,
+    });
+
+    function SessionHost() {
+      const [visible, setVisible] = React.useState(true);
+      const [session, setSession] = React.useState<ImportedPdfSession | null>(
+        null
+      );
+      return (
+        <>
+          <button type="button" onClick={() => setVisible((value) => !value)}>
+            Toggle PDF view
+          </button>
+          {visible && (
+            <PdfView
+              importedSession={session}
+              onImportedSessionChange={setSession}
+            />
+          )}
+        </>
+      );
+    }
+
+    renderWithContexts(form, ui, <SessionHost />);
+    fireEvent.change(screen.getByLabelText('Open PDF'), {
+      target: {
+        files: [new File(['pdf'], 'intake.pdf', { type: 'application/pdf' })],
+      },
+    });
+
+    await waitFor(() => {
+      expect(mockGetDocument).toHaveBeenCalledTimes(1);
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle PDF view' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle PDF view' }));
+
+    await waitFor(() => {
+      expect(mockGetDocument).toHaveBeenCalledTimes(2);
+    });
+    expect(screen.getByText(/Imported source and field layer/)).toBeTruthy();
+  });
+
+  it('updates an imported mapping when its placed field is renamed', async () => {
+    const form = createFormStore({
+      id: 'imported-form',
+      pages: [
+        {
+          id: 'page-1',
+          fields: [
+            {
+              id: 'text-field-2',
+              fieldType: 'text',
+              question: 'Ref. Dr.',
+              _sourceData: {
+                source: 'pdf',
+                fieldName: 'ref-doctor-source',
+              },
+            },
+          ],
+        },
+      ],
+    });
+    const ui = createUIStore();
+
+    function SessionHost() {
+      const [session, setSession] = React.useState<ImportedPdfSession | null>({
+        sourcePdf: new Uint8Array([37, 80, 68, 70]),
+        mappings: [
+          {
+            esheetFieldId: 'text-field-2',
+            pdfFieldName: 'ref-doctor-source',
+            kind: 'text',
+            page: 0,
+            rect: [292, 723, 104, 24],
+          },
+        ],
+        sourceFieldNames: [],
+        warnings: [],
+        pageCount: 1,
+      });
+      return (
+        <>
+          <output>
+            {session?.mappings[0]?.esheetFieldId}|
+            {session?.mappings[0]?.pdfFieldName}
+          </output>
+          <PdfView
+            importedSession={session}
+            onImportedSessionChange={setSession}
+          />
+        </>
+      );
+    }
+
+    renderWithContexts(form, ui, <SessionHost />);
+
+    act(() => {
+      form.getState().updateField('text-field-2', { id: 'ref-doctor' });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('ref-doctor|ref-doctor-source')).toBeTruthy();
+    });
+  });
+
+  it('creates distinct fields for manually added PDF text boxes and deletes the selected field', async () => {
+    const form = createFormStore({
+      id: 'imported-form',
+      pages: [
+        {
+          id: 'page-1',
+          fields: [
+            { id: 'question-1', fieldType: 'text', question: 'Question 1' },
+          ],
+        },
+      ],
+    });
+    const ui = createUIStore();
+    mockGetDocument.mockReturnValue({
+      destroy: vi.fn(),
+      promise: Promise.resolve({
+        numPages: 1,
+        getPage: vi.fn().mockResolvedValue({
+          getViewport: () => ({
+            width: 612,
+            height: 792,
+            viewBox: [0, 0, 612, 792],
+            convertToViewportPoint: (x: number, y: number) => [x, y],
+            convertToPdfPoint: (x: number, y: number) => [x, y],
+          }),
+          render: () => ({ cancel: vi.fn(), promise: Promise.resolve() }),
+        }),
+      }),
+    });
+
+    function SessionHost() {
+      const [session, setSession] = React.useState<ImportedPdfSession | null>({
+        sourcePdf: new Uint8Array([37, 80, 68, 70]),
+        mappings: [],
+        sourceFieldNames: [],
+        warnings: [],
+        pageCount: 1,
+      });
+      return (
+        <>
+          <output>
+            {session?.mappings
+              .map((mapping) => mapping.esheetFieldId)
+              .join(',')}
+          </output>
+          <PdfView
+            importedSession={session}
+            onImportedSessionChange={setSession}
+          />
+        </>
+      );
+    }
+
+    renderWithContexts(form, ui, <SessionHost />);
+
+    await waitFor(() => {
+      expect(
+        screen
+          .getByRole('button', { name: '+ Add field' })
+          .hasAttribute('disabled')
+      ).toBe(false);
+    });
+    fireEvent.click(screen.getByRole('button', { name: '+ Add field' }));
+    expect(screen.getByRole('menuitem', { name: 'Checkbox' })).toBeTruthy();
+    expect(screen.getByRole('menuitem', { name: 'Radio button' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Text field' }));
+    fireEvent.click(screen.getByRole('button', { name: '+ Add field' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Text field' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('text-field,text-field-1')).toBeTruthy();
+    });
+    expect(form.getState().normalized.byId['question-1']).toBeDefined();
+    expect(form.getState().normalized.byId['text-field']).toBeDefined();
+    expect(form.getState().normalized.byId['text-field-1']).toBeDefined();
+
+    fireEvent.change(screen.getByLabelText('PDF field label'), {
+      target: { value: 'Custom field' },
+    });
+    fireEvent.change(screen.getByLabelText('PDF field name'), {
+      target: { value: 'custom_field_name' },
+    });
+    fireEvent.blur(screen.getByLabelText('PDF field name'));
+    fireEvent.click(screen.getByLabelText('Required PDF field'));
+
+    expect(form.getState().getField('text-field-1')?.definition.question).toBe(
+      'Custom field'
+    );
+    expect(form.getState().getField('text-field-1')?.definition.required).toBe(
+      true
+    );
+    expect(
+      form.getState().getField('text-field-1')?.definition._sourceData
+    ).toMatchObject({
+      esheet: { pdf: { fieldName: 'custom_field_name' } },
+    });
+    fireEvent.change(screen.getByLabelText('Width (pt)'), {
+      target: { value: '260' },
+    });
+    fireEvent.change(screen.getByLabelText('Height (pt)'), {
+      target: { value: '32' },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('text-field,text-field-1')).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete PDF field' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('text-field')).toBeTruthy();
+    });
+    expect(form.getState().normalized.byId['question-1']).toBeDefined();
+    expect(form.getState().normalized.byId['text-field']).toBeDefined();
+    expect(form.getState().normalized.byId['text-field-1']).toBeUndefined();
+  });
+
+  it('duplicates a manually authored PDF field with an offset mapping', async () => {
+    const form = createFormStore({
+      id: 'imported-form',
+      pages: [{ id: 'page-1', fields: [] }],
+    });
+    const ui = createUIStore();
+    mockGetDocument.mockReturnValue({
+      destroy: vi.fn(),
+      promise: Promise.resolve({
+        numPages: 1,
+        getPage: vi.fn().mockResolvedValue({
+          getViewport: () => ({
+            width: 612,
+            height: 792,
+            viewBox: [0, 0, 612, 792],
+            convertToViewportPoint: (x: number, y: number) => [x, y],
+            convertToPdfPoint: (x: number, y: number) => [x, y],
+          }),
+          render: () => ({ cancel: vi.fn(), promise: Promise.resolve() }),
+        }),
+      }),
+    });
+
+    function SessionHost() {
+      const [session, setSession] = React.useState<ImportedPdfSession | null>({
+        sourcePdf: new Uint8Array([37, 80, 68, 70]),
+        mappings: [],
+        sourceFieldNames: [],
+        warnings: [],
+        pageCount: 1,
+      });
+      return (
+        <>
+          <output>
+            {session?.mappings
+              .map(
+                (mapping) =>
+                  `${mapping.esheetFieldId}/${mapping.pdfFieldName}/${mapping.rect[0]}`
+              )
+              .join(',')}
+          </output>
+          <PdfView
+            importedSession={session}
+            onImportedSessionChange={setSession}
+          />
+        </>
+      );
+    }
+
+    renderWithContexts(form, ui, <SessionHost />);
+
+    await waitFor(() => {
+      expect(
+        screen
+          .getByRole('button', { name: '+ Add field' })
+          .hasAttribute('disabled')
+      ).toBe(false);
+    });
+    fireEvent.click(screen.getByRole('button', { name: '+ Add field' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Text field' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Duplicate PDF field' })
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          'text-field/text-field/72,text-field-1/text-field-1/88'
+        )
+      ).toBeTruthy();
+    });
+    expect(form.getState().getField('text-field-1')?.definition).toMatchObject({
+      fieldType: 'text',
+      question: 'Text field',
+    });
+    expect(form.getState().responses['text-field-1']).toBeUndefined();
+  });
+
+  it('selects, resizes, and reorders widgets in PDF Build without answer inputs', async () => {
+    const form = createFormStore({
+      id: 'imported-form',
+      pages: [
+        {
+          id: 'page-1',
+          fields: [
+            { id: 'first-name', fieldType: 'text', question: 'First name' },
+            { id: 'patient-name', fieldType: 'text', question: 'Patient name' },
+          ],
+        },
+      ],
+    });
+    const ui = createUIStore();
+    mockGetDocument.mockReturnValue({
+      destroy: vi.fn(),
+      promise: Promise.resolve({
+        numPages: 2,
+        getPage: vi.fn().mockResolvedValue({
+          getViewport: () => ({
+            width: 612,
+            height: 792,
+            viewBox: [0, 0, 612, 792],
+            convertToViewportPoint: (x: number, y: number) => [x, y],
+            convertToPdfPoint: (x: number, y: number) => [x, y],
+          }),
+          render: () => ({ cancel: vi.fn(), promise: Promise.resolve() }),
+        }),
+      }),
+    });
+
+    function SessionHost() {
+      const [session, setSession] = React.useState<ImportedPdfSession | null>({
+        sourcePdf: new Uint8Array([37, 80, 68, 70]),
+        mappings: [
+          {
+            esheetFieldId: 'patient-name',
+            pdfFieldName: 'patient-name',
+            kind: 'text',
+            page: 0,
+            rect: [72, 620, 220, 28],
+          },
+          {
+            esheetFieldId: 'patient-name',
+            pdfFieldName: 'patient-name',
+            kind: 'text',
+            page: 1,
+            rect: [72, 620, 220, 28],
+          },
+        ],
+        sourceFieldNames: ['patient-name'],
+        warnings: [],
+        pageCount: 2,
+      });
+      return (
+        <>
+          <output>
+            {session?.mappings
+              .map((mapping) => mapping.rect.join('/'))
+              .join(',')}
+          </output>
+          <PdfView
+            importedSession={session}
+            onImportedSessionChange={setSession}
+          />
+        </>
+      );
+    }
+
+    renderWithContexts(form, ui, <SessionHost />);
+
+    await waitFor(() => {
+      expect(screen.getAllByLabelText('PDF field patient-name')).toHaveLength(
+        2
+      );
+    });
+    expect(screen.queryByLabelText('PDF text field patient-name')).toBeNull();
+    fireEvent.click(screen.getAllByLabelText('PDF field patient-name')[0]);
+    expect(
+      screen.getByText(
+        '2 PDF widgets across pages 1, 2 share this questionnaire response.'
+      )
+    ).toBeTruthy();
+    fireEvent.change(screen.getByLabelText('Width (pt)'), {
+      target: { value: '260' },
+    });
+    fireEvent.change(screen.getByLabelText('Height (pt)'), {
+      target: { value: '32' },
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Move PDF field earlier' })
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('72/620/260/32,72/620/220/28')).toBeTruthy();
+    });
+    expect(form.getState().normalized.pages[0]?.fieldIds).toEqual([
+      'patient-name',
+      'first-name',
+    ]);
+    expect(form.getState().responses['patient-name']).toBeUndefined();
+  });
+
+  it('fills multi-page widgets in PDF Preview without authoring controls', async () => {
+    const form = createFormStore({
+      id: 'imported-form',
+      pages: [
+        {
+          id: 'page-1',
+          fields: [
+            { id: 'patient-name', fieldType: 'text', question: 'Patient name' },
+          ],
+        },
+      ],
+    });
+    const ui = createUIStore();
+    mockGetDocument.mockReturnValue({
+      destroy: vi.fn(),
+      promise: Promise.resolve({
+        numPages: 2,
+        getPage: vi.fn().mockResolvedValue({
+          getViewport: () => ({
+            width: 612,
+            height: 792,
+            viewBox: [0, 0, 612, 792],
+            convertToViewportPoint: (x: number, y: number) => [x, y],
+            convertToPdfPoint: (x: number, y: number) => [x, y],
+          }),
+          render: () => ({ cancel: vi.fn(), promise: Promise.resolve() }),
+        }),
+      }),
+    });
+
+    function PreviewSessionHost() {
+      const [session, setSession] = React.useState<ImportedPdfSession | null>({
+        sourcePdf: new Uint8Array([37, 80, 68, 70]),
+        mappings: [
+          {
+            esheetFieldId: 'patient-name',
+            pdfFieldName: 'patient-name',
+            kind: 'text',
+            page: 0,
+            rect: [72, 620, 220, 28],
+          },
+          {
+            esheetFieldId: 'patient-name',
+            pdfFieldName: 'patient-name',
+            kind: 'text',
+            page: 1,
+            rect: [72, 620, 220, 28],
+          },
+        ],
+        sourceFieldNames: ['patient-name'],
+        warnings: [],
+        pageCount: 2,
+      });
+      return (
+        <PdfView
+          authoring={false}
+          importedSession={session}
+          onImportedSessionChange={setSession}
+        />
+      );
+    }
+
+    renderWithContexts(form, ui, <PreviewSessionHost />);
+
+    await waitFor(() => {
+      expect(
+        screen.getAllByLabelText('PDF text field patient-name')
+      ).toHaveLength(2);
+    });
+    expect(screen.queryByRole('button', { name: 'Move PDF field' })).toBeNull();
+    fireEvent.change(
+      screen.getAllByLabelText('PDF text field patient-name')[1],
+      {
+        target: { value: 'Ada' },
+      }
+    );
+
+    expect(form.getState().responses['patient-name']).toEqual({
+      answer: 'Ada',
+    });
+  });
+
+  it('edits options for selected PDF radio groups and dropdowns', async () => {
+    const form = createFormStore({
+      id: 'imported-form',
+      pages: [{ id: 'page-1', fields: [] }],
+    });
+    const ui = createUIStore();
+    mockGetDocument.mockReturnValue({
+      destroy: vi.fn(),
+      promise: Promise.resolve({
+        numPages: 1,
+        getPage: vi.fn().mockResolvedValue({
+          getViewport: () => ({
+            width: 612,
+            height: 792,
+            viewBox: [0, 0, 612, 792],
+            convertToViewportPoint: (x: number, y: number) => [x, y],
+            convertToPdfPoint: (x: number, y: number) => [x, y],
+          }),
+          render: () => ({ cancel: vi.fn(), promise: Promise.resolve() }),
+        }),
+      }),
+    });
+
+    function SessionHost() {
+      const [session, setSession] = React.useState<ImportedPdfSession | null>({
+        sourcePdf: new Uint8Array([37, 80, 68, 70]),
+        mappings: [],
+        sourceFieldNames: [],
+        warnings: [],
+        pageCount: 1,
+      });
+      return (
+        <>
+          <output>
+            {session?.mappings
+              .map((mapping) => `${mapping.pdfFieldName}/${mapping.optionId}`)
+              .join(',')}
+          </output>
+          <PdfView
+            importedSession={session}
+            onImportedSessionChange={setSession}
+          />
+        </>
+      );
+    }
+
+    renderWithContexts(form, ui, <SessionHost />);
+
+    await waitFor(() => {
+      expect(
+        screen
+          .getByRole('button', { name: '+ Add field' })
+          .hasAttribute('disabled')
+      ).toBe(false);
+    });
+    fireEvent.click(screen.getByRole('button', { name: '+ Add field' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Radio button' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Add option to group' })
+    );
+    fireEvent.change(screen.getByLabelText('PDF option 1'), {
+      target: { value: 'Email' },
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          'radio-button/option-1,radio-button/radio-button-option'
+        )
+      ).toBeTruthy();
+    });
+    const radioField = form.getState().getField('radio-button')?.definition;
+    expect(radioField?.fieldType).toBe('radio');
+    if (radioField?.fieldType !== 'radio') {
+      throw new Error('Expected the PDF field to be a radio group.');
+    }
+    expect(radioField.options).toHaveLength(2);
+    expect(radioField.options?.[0]?.value).toBe('Email');
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Remove PDF option 2' })
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('radio-button/option-1')).toBeTruthy();
+    });
+    expect(form.getState().getField('radio-button')?.definition).toMatchObject({
+      options: [{ id: 'option-1', value: 'Email' }],
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: '+ Add field' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Dropdown' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Add dropdown option' })
+    );
+    fireEvent.change(screen.getByLabelText('PDF option 1'), {
+      target: { value: 'North' },
+    });
+
+    const dropdownField = form.getState().getField('dropdown')?.definition;
+    expect(dropdownField?.fieldType).toBe('dropdown');
+    if (dropdownField?.fieldType !== 'dropdown') {
+      throw new Error('Expected the PDF field to be a dropdown.');
+    }
+    expect(dropdownField.options).toHaveLength(2);
+    expect(dropdownField.options?.[0]?.value).toBe('North');
   });
 });
 
