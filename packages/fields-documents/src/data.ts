@@ -28,6 +28,24 @@ export function today(at?: string): string {
   return (at ?? new Date().toISOString()).slice(0, 10);
 }
 
+export function formatSubmissionTimestamp(
+  value: string,
+  locale: string | string[] | undefined,
+  part: 'date' | 'time'
+): string | undefined {
+  const instant = new Date(value);
+  if (!Number.isFinite(instant.getTime())) return undefined;
+  const dateOptions = {
+    calendar: 'gregory',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  } as const;
+  return part === 'date'
+    ? instant.toLocaleDateString(locale, dateOptions)
+    : instant.toLocaleTimeString(locale);
+}
+
 /**
  * The serialization a doc type's saves use: its explicit choice, else what it
  * carries — a definition has answers for front matter, a plain type does not.
@@ -99,16 +117,27 @@ export const DOCUMENT_LIST_COLUMNS = [
 ] as const;
 
 export const SUBMISSION_COLUMNS = [
-  { field: 'submissionDate', header: 'Date', sortable: true, resizable: true },
-  { field: 'submissionTime', header: 'Time', resizable: true },
+  {
+    field: 'submissionDate',
+    header: 'Date',
+    className: 'document-list-grid__submission-date',
+    sortable: true,
+    resizable: true,
+  },
+  {
+    field: 'submissionTime',
+    header: 'Time',
+    className: 'document-list-grid__submission-time',
+    resizable: true,
+  },
   {
     field: 'submissionAuthor',
     header: 'Author',
+    className: 'document-list-grid__submission-author',
     sortable: true,
     filterable: true,
     resizable: true,
   },
-  { field: 'addendum', header: 'Addendum', filterable: true, resizable: true },
 ] as const;
 
 export const DOCUMENT_LIST_ACTIONS_COLUMN = {
@@ -365,17 +394,15 @@ export function priorRevisionOf(row: DocumentListDocument): DocumentRevision {
   };
 }
 
-/** Pass an addenda map (even when empty) to include submission metadata. */
 export function createLocalSourcePayload(
   rows: readonly DocumentListDocument[],
-  addendaByOriginal?: ReadonlyMap<string, readonly DocumentListDocument[]>
+  submissionMetadata = false
 ): {
   data: (DocumentListDocument & {
     documentType: string;
     submissionDate?: string;
     submissionTime?: string;
     submissionAuthor?: string;
-    addendum?: string;
   })[];
   typeInfo: typeof DOCUMENT_LIST_TYPE_INFO;
 } {
@@ -388,25 +415,14 @@ export function createLocalSourcePayload(
         row.nativeDocTypeLabel?.trim() ||
         row.nativeDocType?.trim() ||
         row.docType,
-      ...(addendaByOriginal && {
+      ...(submissionMetadata && {
         submissionDate: row.submittedAt ?? '',
         submissionTime: row.submittedAt ?? '',
         submissionAuthor: displayValue(row.recordedAuthor?.name),
-        addendum: addendumLabel(
-          row,
-          addendaByOriginal.get(row.id)?.length ?? 0
-        ),
       }),
     })),
-    typeInfo: addendaByOriginal
+    typeInfo: submissionMetadata
       ? SUBMISSION_TYPE_INFO
       : DOCUMENT_LIST_TYPE_INFO,
   };
-}
-
-function addendumLabel(row: DocumentListDocument, count: number): string {
-  if (row.linkedTo?.linkType === 'addendum') return 'Addendum';
-  if (count > 0) return count === 1 ? '1 addendum' : `${count} addenda`;
-  // The host's native rows carry a complete relationship even without a link.
-  return row.nativeVersion ? 'No' : EMPTY_DISPLAY;
 }

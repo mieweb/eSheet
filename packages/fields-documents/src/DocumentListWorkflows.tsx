@@ -1385,6 +1385,8 @@ export interface DocumentListDetailRowProps {
   readonly runtime: DocumentListRuntimeState;
   /** Rows linked to this one (addenda), rendered beneath the content. */
   readonly related?: readonly DocumentListDocument[];
+  readonly relatedContent?: ReactNode;
+  readonly renderContent?: (content: ReactNode) => ReactNode;
   /** The host's full-page document view (revision history lives there). */
   readonly historyHref?: string;
   readonly onViewed?: () => void;
@@ -1410,6 +1412,8 @@ export function DocumentListDetailRow({
   document,
   runtime,
   related,
+  relatedContent,
+  renderContent,
   historyHref,
   onViewed,
 }: DocumentListDetailRowProps): React.JSX.Element {
@@ -1483,10 +1487,8 @@ export function DocumentListDetailRow({
       content?.contentType === DOCUMENT_LIST_MDY_TYPE) &&
     content.text != null;
 
-  return (
-    // The row is the document. Date, title, type and source are already
-    // columns in the grid above, so repeating them here says nothing.
-    <div className="document-list-detail">
+  const preview = (
+    <>
       {loading && <p role="status">Loading document content…</p>}
       {error && (
         <p className="document-list-workflow__error" role="alert">
@@ -1536,6 +1538,12 @@ export function DocumentListDetailRow({
           No preview for this document.
         </p>
       )}
+    </>
+  );
+
+  return (
+    <div className="document-list-detail">
+      {renderContent ? renderContent(preview) : preview}
       {related && related.length > 0 && (
         <ul className="document-list-detail__addenda" aria-label="Addenda">
           {related.map((addendum) => (
@@ -1553,6 +1561,7 @@ export function DocumentListDetailRow({
           ))}
         </ul>
       )}
+      {relatedContent}
       {historyHref && (
         <p className="document-list-detail__history-link">
           <a href={historyHref}>

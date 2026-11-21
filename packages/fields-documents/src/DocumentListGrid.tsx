@@ -21,6 +21,7 @@ import {
   DOCUMENT_LIST_ACTIONS_COLUMN,
   DOCUMENT_LIST_COLUMNS,
   DOCUMENT_LIST_DEFAULT_NOUN,
+  formatSubmissionTimestamp,
   normalizeDocumentRow,
   SUBMISSION_COLUMNS,
 } from './data.js';
@@ -108,7 +109,6 @@ export interface DocumentListGridProps extends DocumentListToolbarProps {
   ) => DocumentListRowCapabilities;
   formatCell?: DataVisGridProps['formatCell'];
   submissionMetadata?: boolean;
-  documentHref?: DocumentListFieldHost['documentHref'];
   onRowClick?: (row: DocumentListDocument, event: MouseEvent) => void;
   onRowDoubleClick?: (row: DocumentListDocument, event: MouseEvent) => void;
   renderDetailRow?: (row: DocumentListDocument) => ReactNode;
@@ -178,6 +178,8 @@ export type DocumentListFieldHost = Pick<
     document: DocumentListDocument
   ) => string | null | undefined;
   readonly showSubmissionMetadata?: (fieldId: string) => boolean;
+  /** Align built-in detail previews to the first data column without changing columns or addenda. */
+  readonly alignDetailPreview?: (fieldId: string) => boolean;
 };
 
 const DocumentListFieldHostContext =
@@ -382,7 +384,6 @@ export function DocumentListGrid({
   getRowCapabilities,
   formatCell,
   submissionMetadata,
-  documentHref,
   onRowClick,
   onRowDoubleClick,
   renderDetailRow,
@@ -394,21 +395,9 @@ export function DocumentListGrid({
   error,
   style,
 }: DocumentListGridProps): React.JSX.Element {
-  const addendaByOriginal = useMemo(() => {
-    if (!submissionMetadata) return undefined;
-    const addenda = new Map<string, DocumentListDocument[]>();
-    for (const row of rows) {
-      if (row.removed || row.linkedTo?.linkType !== 'addendum') continue;
-      const originalId = row.linkedTo.id;
-      const linked = addenda.get(originalId);
-      if (linked) linked.push(row);
-      else addenda.set(originalId, [row]);
-    }
-    return addenda;
-  }, [rows, submissionMetadata]);
   const payload = useMemo(
-    () => createLocalSourcePayload(rows, addendaByOriginal),
-    [rows, addendaByOriginal]
+    () => createLocalSourcePayload(rows, submissionMetadata),
+    [rows, submissionMetadata]
   );
   const { view } = useDocumentListView(payload);
   const gridColumns = useMemo(() => {
@@ -451,32 +440,18 @@ export function DocumentListGrid({
         column.field === 'submissionDate' ||
         column.field === 'submissionTime'
       ) {
-        const instant = new Date(text);
-        if (!Number.isFinite(instant.getTime())) return '—';
-        const locale = regionalDateLocale();
-        return (
-          <time dateTime={text} className="document-list-grid__nowrap">
-            {column.field === 'submissionDate'
-              ? instant.toLocaleDateString(locale, {
-                  calendar: 'gregory',
-                  year: 'numeric',
-                  month: '2-digit',
-                  day: '2-digit',
-                })
-              : instant.toLocaleTimeString(locale)}
-          </time>
+        const label = formatSubmissionTimestamp(
+          text,
+          regionalDateLocale(),
+          column.field === 'submissionDate' ? 'date' : 'time'
         );
-      }
-      if (column.field === 'addendum' && document) {
-        const addenda = addendaByOriginal?.get(document.id);
-        const href =
-          addenda?.length === 1 ? documentHref?.(addenda[0]) : undefined;
-        if (href)
-          return (
-            <a href={href} onClick={(event) => event.stopPropagation()}>
-              {text}
-            </a>
-          );
+        return label ? (
+          <time dateTime={text} className="document-list-grid__nowrap">
+            {label}
+          </time>
+        ) : (
+          '—'
+        );
       }
       // An ISO date must never break on its hyphens.
       return column.field === 'date' ? (
@@ -487,13 +462,7 @@ export function DocumentListGrid({
         text
       );
     },
-    [
-      addendaByOriginal,
-      documentHref,
-      formatCell,
-      getRowCapabilities,
-      renderActions,
-    ]
+    [formatCell, getRowCapabilities, renderActions]
   );
   const gridOnRowClick = useMemo<DataVisGridProps['onRowClick']>(
     () =>
@@ -608,6 +577,9 @@ export function DocumentListGrid({
           </div>
         )}
         <OptionalDataVisNitroGrid
+          // PlainTable initializes its column state at mount. Reinitialize it
+          // when access changes the schema, not when rows or actions update.
+          key={JSON.stringify(gridColumns.map(({ field }) => field))}
           title={title}
           titleActions={gridTitleActions}
           columns={gridColumns as DataVisGridProps['columns']}

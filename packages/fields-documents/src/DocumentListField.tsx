@@ -2,14 +2,23 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
   useSyncExternalStore,
+  type ReactNode,
 } from 'react';
 import type { FieldComponentProps } from '@esheet/core';
 import { FormStoreContext } from '@esheet/fields';
-import { Button, Input, formatRegionalDate } from '@mieweb/ui';
+import { TableRenderer, type TableRendererProps } from '@mieweb/datavis';
+import {
+  Button,
+  Input,
+  formatRegionalDate,
+  regionalDateLocale,
+} from '@mieweb/ui';
 import {
   ArchiveRestore,
   FileDown,
@@ -32,11 +41,14 @@ import {
   useDocumentListFieldHost,
   useDocumentListFieldRuntime,
   type DocumentListColumn,
+  type DocumentListFieldHost,
 } from './DocumentListGrid.js';
 import {
+  DOCUMENT_LIST_ACTIONS_COLUMN,
   DOCUMENT_LIST_COLUMNS,
   SUBMISSION_COLUMNS,
   documentListValueFromRows,
+  formatSubmissionTimestamp,
   normalizeDocumentRows,
   normalizeDocumentRow,
   parseDocumentListAnswer,
@@ -125,6 +137,286 @@ function canCreateAny(
   return definition.docTypes.some((docType) => capabilities.create(docType.id));
 }
 
+function DocumentListBranchBody({
+  className,
+  children,
+}: {
+  readonly className: string;
+  readonly children: ReactNode;
+}): React.JSX.Element {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const body = ref.current;
+    const row = body?.closest('.wcdv-detail-tr')?.previousElementSibling;
+    const toggle = row?.querySelector('.wcdv-td-detail-toggle');
+    const chevron = toggle?.querySelector('button svg');
+    if (!body || !toggle || !chevron) return;
+
+    const align = () => {
+      const bounds = body.getBoundingClientRect();
+      const icon = chevron.getBoundingClientRect();
+      if (!icon.width) return;
+      const center = icon.left + icon.width / 2;
+      const offset =
+        getComputedStyle(body).direction === 'rtl'
+          ? bounds.right - center
+          : center - bounds.left;
+      body.style.setProperty(
+        '--document-list-elbow-start',
+        `${offset - 0.5}px`
+      );
+    };
+
+    align();
+    window.addEventListener('resize', align);
+    const resize =
+      typeof ResizeObserver === 'undefined'
+        ? undefined
+        : new ResizeObserver(align);
+    resize?.observe(body);
+    resize?.observe(toggle);
+    resize?.observe(chevron);
+    return () => {
+      window.removeEventListener('resize', align);
+      resize?.disconnect();
+    };
+  }, []);
+
+  return (
+    <div className={className} ref={ref}>
+      {children}
+    </div>
+  );
+}
+
+function DocumentListNotePreview({
+  children,
+  addenda,
+}: {
+  readonly children: ReactNode;
+  readonly addenda?: ReactNode;
+}): React.JSX.Element {
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const detail = panelRef.current?.parentElement;
+    const cell = detail?.closest('.wcdv-detail-td');
+    const row = cell?.parentElement?.previousElementSibling;
+    if (!detail || !cell || !row) return;
+
+    const align = () => {
+      const toggle = row.querySelector('.wcdv-td-detail-toggle');
+      const firstColumn = toggle?.nextElementSibling;
+      if (!firstColumn) return;
+
+      const style = getComputedStyle(detail);
+      const rtl = style.direction === 'rtl';
+      const detailBounds = detail.getBoundingClientRect();
+      const columnBounds = firstColumn.getBoundingClientRect();
+      const offset = rtl
+        ? detailBounds.right - columnBounds.right
+        : columnBounds.left - detailBounds.left;
+      detail.style.setProperty(
+        '--document-list-preview-inset',
+        `${Math.max(0, offset)}px`
+      );
+
+      const time = firstColumn.nextElementSibling;
+      const author = time?.nextElementSibling;
+      const widths =
+        firstColumn.classList.contains('document-list-grid__submission-date') &&
+        time?.classList.contains('document-list-grid__submission-time') &&
+        author?.classList.contains('document-list-grid__submission-author')
+          ? [
+              columnBounds.width,
+              time.getBoundingClientRect().width,
+              author.getBoundingClientRect().width,
+            ]
+          : undefined;
+      const canAlign = widths?.every((width) => width > 0);
+      ['date', 'time', 'author'].forEach((column, index) => {
+        const property = `--document-list-outer-${column}-width`;
+        if (canAlign && widths) {
+          detail.style.setProperty(property, `${widths[index]}px`);
+        } else {
+          detail.style.removeProperty(property);
+        }
+      });
+      if (canAlign && author?.nextElementSibling) {
+        detail.style.setProperty(
+          '--document-list-addenda-trailing-display',
+          'table-cell'
+        );
+      } else {
+        detail.style.removeProperty('--document-list-addenda-trailing-display');
+      }
+    };
+
+    const resize =
+      typeof ResizeObserver === 'undefined'
+        ? undefined
+        : new ResizeObserver(align);
+    const observeColumns = () => {
+      resize?.disconnect();
+      resize?.observe(cell);
+      for (const column of Array.from(row.children)) resize?.observe(column);
+      align();
+    };
+    observeColumns();
+    const mutations = new MutationObserver(observeColumns);
+    mutations.observe(row, { childList: true });
+    return () => {
+      mutations.disconnect();
+      resize?.disconnect();
+    };
+  }, []);
+
+  return (
+    <div className="document-list-note-preview" ref={panelRef}>
+      <DocumentListBranchBody className="document-list-note-preview__body">
+        {children}
+      </DocumentListBranchBody>
+      {addenda}
+    </div>
+  );
+}
+
+const ADDENDA_COLUMNS = SUBMISSION_COLUMNS.map((column) => ({
+  ...column,
+  sortable: false,
+  filterable: false,
+  resizable: false,
+}));
+const ADDENDA_COLUMNS_WITH_SPACER: TableRendererProps['columns'] = [
+  ...ADDENDA_COLUMNS,
+  {
+    field: '_spacer',
+    header: '',
+    sortable: false,
+    className: 'document-list-addenda-preview__spacer',
+  },
+];
+const ADDENDA_COLUMNS_WITH_ACTIONS = [
+  ...ADDENDA_COLUMNS,
+  DOCUMENT_LIST_ACTIONS_COLUMN,
+];
+
+function DocumentListAddendaPreview({
+  addenda,
+  runtime,
+  onViewed,
+  documentHref,
+  renderDocumentActions,
+}: {
+  readonly addenda: readonly DocumentListDocument[];
+  readonly runtime: DocumentListRuntimeState;
+  readonly onViewed: (row: DocumentListDocument) => void;
+  readonly documentHref?: DocumentListFieldHost['documentHref'];
+  readonly renderDocumentActions?: (row: DocumentListDocument) => ReactNode;
+}): React.JSX.Element {
+  const documentsById = useMemo(
+    () => new Map(addenda.map((document) => [document.id, document])),
+    [addenda]
+  );
+  const viewData = useMemo(
+    () => ({
+      isPlain: true,
+      isGroup: false,
+      isPivot: false,
+      data: addenda.map((document) => ({
+        _rowId: document.id,
+        submissionDate: document.submittedAt,
+        submissionTime: document.submittedAt,
+        submissionAuthor: `${document.recordedAuthor?.name || '—'}${
+          document.removed ? ' · Removed' : ''
+        }`,
+      })),
+    }),
+    [addenda]
+  );
+  const locale = regionalDateLocale();
+  const headingId = useId();
+  return (
+    <section
+      className="document-list-addenda-preview"
+      aria-labelledby={headingId}
+      onClick={(event) => event.stopPropagation()}
+      onKeyDown={(event) => event.stopPropagation()}
+    >
+      <h3 id={headingId} className="document-list-addenda-preview__heading">
+        Addenda
+      </h3>
+      <TableRenderer
+        key={renderDocumentActions ? 'with-actions' : 'without-actions'}
+        viewData={viewData}
+        columns={
+          renderDocumentActions
+            ? ADDENDA_COLUMNS_WITH_ACTIONS
+            : ADDENDA_COLUMNS_WITH_SPACER
+        }
+        features={{
+          columnResize: false,
+          columnReorder: false,
+          headerContextMenu: false,
+          keyboardNav: false,
+          rowSelection: false,
+          stickyHeaders: false,
+        }}
+        sorts={null}
+        showRowCount={false}
+        detailRowsExpanded
+        onRowClick={(_, event) => {
+          if (
+            event.target instanceof Element &&
+            event.target.closest('.document-list-addenda-preview__actions')
+          ) {
+            return;
+          }
+          event.currentTarget
+            .querySelector<HTMLButtonElement>('.wcdv-td-detail-toggle button')
+            ?.click();
+        }}
+        formatCell={(value, { _rowId }, column) => {
+          if (column.field === '_spacer') return null;
+          if (column.field === DOCUMENT_LIST_ACTIONS_COLUMN.field) {
+            const addendum =
+              typeof _rowId === 'string'
+                ? documentsById.get(_rowId)
+                : undefined;
+            return addendum ? (
+              <span className="document-list-addenda-preview__actions">
+                {renderDocumentActions?.(addendum)}
+              </span>
+            ) : null;
+          }
+          if (column.field === 'submissionAuthor') return String(value);
+          const timestamp = typeof value === 'string' ? value : '';
+          const label = formatSubmissionTimestamp(
+            timestamp,
+            locale,
+            column.field === 'submissionDate' ? 'date' : 'time'
+          );
+          return label ? <time dateTime={timestamp}>{label}</time> : '—';
+        }}
+        renderDetailRow={({ rowId }) => {
+          const addendum = rowId ? documentsById.get(rowId) : undefined;
+          return addendum ? (
+            <DocumentListBranchBody className="document-list-addenda-preview__content">
+              <DocumentListDetailRow
+                document={addendum}
+                runtime={runtime}
+                historyHref={documentHref?.(addendum) ?? undefined}
+                onViewed={() => onViewed(addendum)}
+              />
+            </DocumentListBranchBody>
+          ) : null;
+        }}
+      />
+    </section>
+  );
+}
+
 export function DocumentListField({
   field,
   form,
@@ -187,6 +479,8 @@ export function DocumentListField({
   const [showRemoved, setShowRemoved] = useState(false);
   const submissionMetadata =
     host?.showSubmissionMetadata?.(field.definition.id) === true;
+  const alignDetailPreview =
+    submissionMetadata || host?.alignDetailPreview?.(field.definition.id);
   const [removing, setRemoving] = useState<DocumentListDocument | null>(null);
   const [renaming, setRenaming] = useState<DocumentListDocument | null>(null);
   const [exporting, setExporting] = useState<DocumentListDocument | null>(null);
@@ -214,6 +508,30 @@ export function DocumentListField({
         }),
     [rows, showRemoved, submissionMetadata]
   );
+  const groupAddenda =
+    submissionMetadata && runtimeState !== null && !host?.renderDetailRow;
+  const { gridRows, addendaByOriginal } = useMemo(() => {
+    const addendaByOriginal = new Map<string, DocumentListDocument[]>();
+    if (!groupAddenda) {
+      return { gridRows: visibleRows, addendaByOriginal };
+    }
+    const originalIds = new Set(
+      visibleRows
+        .filter((row) => row.linkedTo?.linkType !== 'addendum')
+        .map((row) => row.id)
+    );
+    const gridRows = visibleRows.filter((row) => {
+      const link = row.linkedTo;
+      // An addendum with no visible original must still be readable.
+      if (link?.linkType !== 'addendum' || !originalIds.has(link.id))
+        return true;
+      const addenda = addendaByOriginal.get(link.id);
+      if (addenda) addenda.push(row);
+      else addendaByOriginal.set(link.id, [row]);
+      return false;
+    });
+    return { gridRows, addendaByOriginal };
+  }, [visibleRows, groupAddenda]);
 
   // ED.38 — who is drafting each row, said on the row itself. One presence
   // subscription per visible row; the channel keeps them body-free. Keyed by
@@ -607,32 +925,6 @@ export function DocumentListField({
         },
       }
     : undefined;
-  const detailRenderer = host?.renderDetailRow
-    ? host.renderDetailRow
-    : runtimeState
-    ? (row: DocumentListDocument) => (
-        <DocumentListDetailRow
-          document={row}
-          runtime={runtimeState}
-          historyHref={host?.documentHref?.(row) ?? undefined}
-          onViewed={() =>
-            form.getState().appendActivity({
-              fieldId: field.definition.id,
-              question: title,
-              category: 'Viewed',
-              detail: `${row.title} (${row.id}), rev ${row.rev ?? 0}`,
-            })
-          }
-          // ED.41 — the original renders its addenda beneath itself.
-          related={
-            submissionMetadata
-              ? undefined
-              : rows.filter((candidate) => candidate.linkedTo?.id === row.id)
-          }
-        />
-      )
-    : undefined;
-
   const canPrint =
     offersAction(definition, 'downloadPdf') && runtimeState !== null;
 
@@ -750,6 +1042,70 @@ export function DocumentListField({
       ? defaultRenderActions
       : undefined
     : host?.renderActions ?? defaultRenderActions;
+  const renderAddendumActions =
+    renderActions &&
+    ((addendum: DocumentListDocument) =>
+      renderActions(addendum, getRowCapabilities(addendum)));
+
+  const sharedGridProps = {
+    columns: submissionMetadata ? submissionColumns : columns,
+    submissionMetadata,
+    renderActions,
+    getRowCapabilities,
+    formatCell: presenceFormatCell,
+    onRowClick: host?.onRowClick,
+    onRowDoubleClick: host?.onRowDoubleClick,
+  };
+  const recordView = (row: DocumentListDocument) =>
+    form.getState().appendActivity({
+      fieldId: field.definition.id,
+      question: title,
+      category: 'Viewed',
+      detail: `${row.title} (${row.id}), rev ${row.rev ?? 0}`,
+    });
+  const detailRenderer =
+    host?.renderDetailRow ??
+    (runtimeState
+      ? (row: DocumentListDocument) => {
+          const addenda = addendaByOriginal.get(row.id);
+          return (
+            <DocumentListDetailRow
+              document={row}
+              runtime={runtimeState}
+              historyHref={host?.documentHref?.(row) ?? undefined}
+              onViewed={() => recordView(row)}
+              related={
+                submissionMetadata
+                  ? undefined
+                  : rows.filter(
+                      (candidate) => candidate.linkedTo?.id === row.id
+                    )
+              }
+              renderContent={
+                alignDetailPreview
+                  ? (content) => (
+                      <DocumentListNotePreview
+                        addenda={
+                          addenda && (
+                            <DocumentListAddendaPreview
+                              addenda={addenda}
+                              runtime={runtimeState}
+                              onViewed={recordView}
+                              documentHref={host?.documentHref}
+                              renderDocumentActions={renderAddendumActions}
+                            />
+                          )
+                        }
+                      >
+                        {content}
+                      </DocumentListNotePreview>
+                    )
+                  : undefined
+              }
+            />
+          );
+        }
+      : undefined);
 
   const titleActions = (
     <>
@@ -772,23 +1128,20 @@ export function DocumentListField({
     <section
       className={`document-list-field${
         dropActive ? ' document-list-field--drop-active' : ''
+      }${
+        alignDetailPreview && !host?.renderDetailRow
+          ? ' document-list-field--branch-details'
+          : ''
       }`}
       aria-label={title}
       {...dropHandlers}
     >
       <DocumentListGrid
-        rows={visibleRows}
+        {...sharedGridProps}
+        rows={gridRows}
         title={title}
         noun={noun}
-        columns={submissionMetadata ? submissionColumns : columns}
-        submissionMetadata={submissionMetadata}
-        documentHref={host?.documentHref}
         titleActions={titleActions}
-        renderActions={renderActions}
-        getRowCapabilities={getRowCapabilities}
-        formatCell={presenceFormatCell}
-        onRowClick={host?.onRowClick}
-        onRowDoubleClick={host?.onRowDoubleClick}
         renderDetailRow={detailRenderer}
         detailRowsExpanded={gridDetailRowsExpanded}
         onToggleDetails={handleToggleDetails}
